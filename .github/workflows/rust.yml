@@ -224,7 +224,6 @@ jobs:
           PACKAGES='${{ needs.setup.outputs.packages_json }}'
           CHANGED=false
           for row in $(echo "$PACKAGES" | jq -c '.[]'); do
-            DIR=$(echo "$row" | jq -r '.dir')
             PACKAGE_NAME=$(echo "$row" | jq -r '.name')
             VERSION=$(echo "$row" | jq -r '.version')
             CURRENT_VERSION=$(toml get Cargo.toml "workspace.dependencies.$PACKAGE_NAME.version" --raw 2>/dev/null || echo "")
@@ -234,7 +233,7 @@ jobs:
             fi
             if [ "$CURRENT_VERSION" != "$VERSION" ]; then
               echo "🔄 Updating $PACKAGE_NAME: $CURRENT_VERSION -> $VERSION"
-              sed -i "s|^$PACKAGE_NAME = { version = \"$CURRENT_VERSION\"|$PACKAGE_NAME = { version = \"$VERSION\"|" Cargo.toml
+              toml set Cargo.toml "workspace.dependencies.$PACKAGE_NAME.version" "$VERSION" > Cargo.toml.tmp && mv Cargo.toml.tmp Cargo.toml
               CHANGED=true
             else
               echo "✅ $PACKAGE_NAME already up to date: $VERSION"
