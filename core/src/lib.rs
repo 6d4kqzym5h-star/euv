@@ -12,8 +12,6 @@ pub mod vdom;
 
 pub use {component::*, event::*, reactive::*, renderer::*, vdom::*};
 
-pub use euv_macros::*;
-
 #[cfg(test)]
 use std::cell::Cell;
 

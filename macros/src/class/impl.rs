@@ -58,7 +58,7 @@ impl Parse for ClassInput {
     }
 }
 
-/// Converts a `ClassDef` into token stream generating a `euv::vdom::CssClass` function.
+/// Converts a `ClassDef` into token stream generating a `euv_core::vdom::CssClass` function.
 impl ToTokens for ClassDef {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let vis: &syn::Visibility = &self.visibility;
@@ -93,10 +93,10 @@ impl ToTokens for ClassDef {
                     .collect();
                 tokens.extend(quote! {
                     #[allow(non_snake_case)]
-                    #vis fn #name(#(#param_defs),*) -> euv::vdom::CssClass {
+                    #vis fn #name(#(#param_defs),*) -> euv_core::vdom::CssClass {
                         let __css_string: String = [#(#css_string_parts),*].concat();
                         let __unique_name: String = format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-"));
-                        euv::vdom::CssClass::new(__unique_name, __css_string)
+                        euv_core::vdom::CssClass::new(__unique_name, __css_string)
                     }
                 });
             }
@@ -123,9 +123,9 @@ impl ToTokens for ClassDef {
                 let fn_name: Ident = name.clone();
                 tokens.extend(quote! {
                     #[allow(non_snake_case)]
-                    #vis fn #fn_name() -> &'static euv::vdom::CssClass {
-                        static #const_name: std::sync::OnceLock<euv::vdom::CssClass> = std::sync::OnceLock::new();
-                        #const_name.get_or_init(|| euv::vdom::CssClass::new(#class_name_str.to_string(), #css_string.to_string()))
+                    #vis fn #fn_name() -> &'static euv_core::vdom::CssClass {
+                        static #const_name: std::sync::OnceLock<euv_core::vdom::CssClass> = std::sync::OnceLock::new();
+                        #const_name.get_or_init(|| euv_core::vdom::CssClass::new(#class_name_str.to_string(), #css_string.to_string()))
                     }
                 });
             }

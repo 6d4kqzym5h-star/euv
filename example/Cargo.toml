@@ -21,7 +21,7 @@ exclude = [
 ]
 
 [dependencies]
-euv = { workspace = true }
+euv-core = { workspace = true }
 euv-macros = { workspace = true }
 
 js-sys = { workspace = true }

@@ -11,9 +11,9 @@ mod style;
 
 use {app::*, component::*, page::*, router::*, style::*};
 
-use {euv::*, wasm_bindgen::prelude::*, web_sys::*};
+use {euv_core::*, euv_macros::*};
 
-use wasm_bindgen::JsCast;
+use {wasm_bindgen::prelude::*, web_sys::*};
 
 /// Entry point for the euv example application.
 #[wasm_bindgen]
