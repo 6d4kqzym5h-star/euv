@@ -6,8 +6,9 @@
 
 mod class;
 mod rsx;
+mod watch;
 
-pub(crate) use {class::*, rsx::*};
+pub(crate) use {class::*, rsx::*, watch::*};
 
 use {
     proc_macro::TokenStream,
@@ -65,6 +66,27 @@ pub fn rsx(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn class(input: TokenStream) -> TokenStream {
     class::parse_class(input)
+}
+
+/// The `watch!` macro for creating reactive side effects.
+///
+/// Watches one or more signals and executes a closure whenever any of them changes.
+/// The closure is also executed once immediately with the current signal values.
+///
+/// The number of signal expressions must match the number of closure parameters.
+/// Each closure parameter receives the current value (via `.get()`) of the
+/// corresponding signal.
+///
+/// ```ignore
+/// let count = use_signal(|| 0_i32);
+/// let name = use_signal(|| String::from("euv"));
+/// watch!(count, name, |count_val, name_val| {
+///     web_sys::console::log_1(&format!("count={}, name={}", count_val, name_val).into());
+/// });
+/// ```
+#[proc_macro]
+pub fn watch(input: TokenStream) -> TokenStream {
+    watch::parse_watch(input)
 }
 
 /// The `component` attribute macro for marking component functions.
