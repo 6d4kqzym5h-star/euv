@@ -16,10 +16,10 @@ members = ["core", "macros", "example", "cli"]
 resolver = "3"
 
 [workspace.dependencies]
-euv-cli = { path = "cli", version = "0.1.2" }
-euv-core = { path = "core", version = "0.1.2" }
-euv-macros = { path = "macros", version = "0.1.2" }
-euv-example = { path = "example", version = "0.1.2" }
+euv-cli = { path = "cli", version = "0.2.1" }
+euv-core = { path = "core", version = "0.2.1" }
+euv-macros = { path = "macros", version = "0.2.1" }
+euv-example = { path = "example", version = "0.2.1" }
 
 quote = "1.0"
 js-sys = "0.3"
@@ -84,8 +84,8 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [dependencies]
-euv-core = { path = "core" }
-euv-macros = { path = "macros" }
+euv-core = { workspace = true }
+euv-macros = { workspace = true }
 
 [patch.crates-io]
 euv-cli = { path = "cli" }
