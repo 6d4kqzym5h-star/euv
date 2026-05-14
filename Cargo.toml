@@ -3,8 +3,10 @@ members = ["core", "macros", "example", "cli"]
 resolver = "3"
 
 [workspace.dependencies]
-euv = { path = "./core" }
-euv-macros = { path = "./macros" }
+euv = { path = "./core", version = "0.1.0" }
+euv-cli = { path = "./cli", version = "0.1.3" }
+euv-macros = { path = "./macros", version = "0.1.0" }
+euv-example = { path = "./example", version = "0.1.0" }
 
 quote = "1.0"
 js-sys = "0.3"
@@ -67,6 +69,12 @@ web-sys = { version = "0.3", features = [
     "SubmitEvent",
     "HtmlCollection",
 ] }
+
+[patch.crates-io]
+euv = { path = "core" }
+euv-macros = { path = "macros" }
+euv-example = { path = "example" }
+euv-cli = { path = "cli" }
 
 [profile.dev]
 incremental = true
