@@ -2,13 +2,13 @@
 
 ## euv
 
-<img src="https://docs.ltpp.vip/img/euv.png" alt="" height="160">
+<img src="https://docs.ltpp.vip/img/euv-core.png" alt="" height="160">
 
-[![](https://img.shields.io/crates/v/euv.svg)](https://crates.io/crates/euv)
-[![](https://img.shields.io/crates/d/euv.svg)](https://img.shields.io/crates/d/euv.svg)
-[![](https://docs.rs/euv/badge.svg)](https://docs.rs/euv)
+[![](https://img.shields.io/crates/v/euv-core.svg)](https://crates.io/crates/euv-core)
+[![](https://img.shields.io/crates/d/euv-core.svg)](https://img.shields.io/crates/d/euv-core.svg)
+[![](https://docs.rs/euv-core/badge.svg)](https://docs.rs/euv-core)
 [![](https://github.com/euv-dev/euv/workflows/Rust/badge.svg)](https://github.com/euv-dev/euv/actions?query=workflow:Rust)
-[![](https://img.shields.io/crates/l/euv.svg)](./LICENSE)
+[![](https://img.shields.io/crates/l/euv-core.svg)](./LICENSE)
 
 </center>
 
