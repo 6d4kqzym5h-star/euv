@@ -1,0 +1,26 @@
+[package]
+name = "euv-cli"
+version = "0.1.2"
+readme = "README.md"
+edition = "2024"
+authors = ["root@ltpp.vip"]
+license = "MIT"
+description = """The official CLI tool for the euv UI framework, providing a development server with hot reload and wasm-pack integration."""
+keywords = ["cross-platform"]
+repository = "https://github.com/euv-dev/euv.git"
+categories = ["network-programming", "web-programming"]
+exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
+
+[[bin]]
+name = "euv-cli"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+which = { workspace = true }
+anyhow = { workspace = true }
+notify = { workspace = true }
+hyperlane = { workspace = true }
+serde_json = { workspace = true }

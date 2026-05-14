@@ -1,0 +1,35 @@
+[package]
+name = "euv-example"
+version = "0.1.0"
+readme = "README.md"
+edition = "2024"
+authors = ["root@ltpp.vip"]
+license = "MIT"
+description = """An example application demonstrating the euv UI framework with reactive signals, custom components, and WebAssembly."""
+keywords = ["cross-platform"]
+repository = "https://github.com/euv-dev/euv.git"
+categories = ["network-programming", "web-programming"]
+exclude = [
+  "target",
+  "Cargo.lock",
+  "sh",
+  ".github",
+  "logs",
+  "img",
+  "**/*.log",
+  "www",
+]
+
+[dependencies]
+euv = { workspace = true }
+euv-macros = { workspace = true }
+
+js-sys = { workspace = true }
+web-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+lombok-macros = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+console_error_panic_hook = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]

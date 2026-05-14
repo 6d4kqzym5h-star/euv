@@ -1,0 +1,24 @@
+[package]
+name = "euv"
+version = "0.1.0"
+readme = "README.md"
+edition = "2024"
+authors = ["root@ltpp.vip"]
+license = "MIT"
+description = """A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and RSX macros for WebAssembly."""
+keywords = ["cross-platform"]
+repository = "https://github.com/euv-dev/euv.git"
+categories = ["network-programming", "web-programming"]
+exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
+
+[dependencies]
+euv-macros = { workspace = true }
+
+js-sys = { workspace = true }
+web-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+lombok-macros = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+
+[dev-dependencies]
+wasm-bindgen-test = { workspace = true }

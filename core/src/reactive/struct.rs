@@ -1,0 +1,70 @@
+use crate::*;
+
+/// Inner state of a signal, holding the value and subscribed listeners.
+///
+/// This struct is not exposed directly; use `Signal` instead.
+#[derive(Data)]
+pub struct SignalInner<T>
+where
+    T: Clone,
+{
+    /// The current value of the signal.
+    #[set(pub(crate))]
+    pub(crate) value: T,
+    /// Callbacks to invoke when the value changes.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) listeners: Vec<Rc<RefCell<dyn FnMut()>>>,
+}
+
+/// A reactive signal handle.
+///
+/// Allows reading, writing, and subscribing to changes.
+/// Implements `Copy` for ergonomic use; all copies share the same underlying state.
+///
+/// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
+/// entire program. This is safe in single-threaded WASM contexts where no
+/// concurrent access can occur.
+pub struct Signal<T>
+where
+    T: Clone + PartialEq,
+{
+    pub(crate) inner: *mut SignalInner<T>,
+}
+
+/// Internal storage for hook state, holding boxed `Any` values and an index.
+///
+/// This struct is not exposed directly; use `HookContext` instead.
+#[derive(Data)]
+pub struct HookContextInner {
+    /// Internal storage for hook state values.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) hooks: Vec<Box<dyn Any>>,
+    /// Current hook index, incremented on each hook call and reset per render.
+    #[set(pub(crate))]
+    pub(crate) hook_index: usize,
+}
+
+/// Manages hook state across render cycles for a DynamicNode.
+///
+/// Stores boxed `Any` values keyed by hook call order, enabling `use_signal`
+/// and similar hooks to persist state between re-renders of the same
+/// dynamic node.
+///
+/// Implements `Copy` for ergonomic use; all copies share the same underlying state.
+///
+/// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
+/// entire program. This is safe in single-threaded WASM contexts where no
+/// concurrent access can occur.
+pub struct HookContext {
+    pub(crate) inner: *mut HookContextInner,
+}
+
+/// A `Sync` wrapper for single-threaded global `HookContextInner` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+pub struct HookContextCell(pub(crate) UnsafeCell<HookContextInner>);

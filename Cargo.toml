@@ -1,0 +1,87 @@
+[workspace]
+members = ["core", "macros", "example", "cli"]
+resolver = "3"
+
+[workspace.dependencies]
+euv = { path = "./core" }
+euv-macros = { path = "./macros" }
+
+quote = "1.0"
+js-sys = "0.3"
+which = "8.0.2"
+anyhow = "1.0.102"
+hyperlane = "21.2.1"
+serde_json = "1.0.149"
+proc-macro2 = "1.0"
+wasm-bindgen = "0.2"
+lombok-macros = "2.0.27"
+wasm-bindgen-test = "0.3"
+wasm-bindgen-futures = "0.4"
+console_error_panic_hook = "0.1"
+clap = { version = "4.6.1", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+notify = { version = "8.2.0", default-features = false, features = [
+    "macos_fsevent",
+] }
+tokio = { version = "1.52.3", features = [
+    "rt-multi-thread",
+    "macros",
+    "process",
+    "fs",
+    "sync",
+    "time",
+] }
+web-sys = { version = "0.3", features = [
+    "console",
+    "Document",
+    "Element",
+    "Event",
+    "EventTarget",
+    "HtmlElement",
+    "HtmlInputElement",
+    "HtmlTextAreaElement",
+    "HtmlSelectElement",
+    "HtmlStyleElement",
+    "HtmlButtonElement",
+    "HtmlFormElement",
+    "HtmlHeadElement",
+    "HtmlMediaElement",
+    "HtmlOptionElement",
+    "Node",
+    "Text",
+    "Window",
+    "Location",
+    "Response",
+    "MouseEvent",
+    "InputEvent",
+    "KeyboardEvent",
+    "FocusEvent",
+    "DragEvent",
+    "TouchEvent",
+    "TouchList",
+    "Touch",
+    "WheelEvent",
+    "ClipboardEvent",
+    "DataTransfer",
+    "SubmitEvent",
+    "HtmlCollection",
+] }
+
+[profile.dev]
+incremental = true
+opt-level = 0
+lto = false
+panic = "unwind"
+debug = false
+codegen-units = 16
+strip = "none"
+
+[profile.release]
+incremental = false
+opt-level = 3
+lto = true
+panic = "unwind"
+debug = false
+codegen-units = 1
+strip = "debuginfo"

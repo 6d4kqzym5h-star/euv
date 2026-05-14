@@ -1,0 +1,20 @@
+[package]
+name = "euv-macros"
+version = "0.1.0"
+readme = "README.md"
+edition = "2024"
+authors = ["root@ltpp.vip"]
+license = "MIT"
+description = """Procedural macros for the euv UI framework, providing the macro and attribute for declarative UI composition."""
+keywords = ["cross-platform"]
+repository = "https://github.com/euv-dev/euv.git"
+categories = ["network-programming", "web-programming"]
+exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
