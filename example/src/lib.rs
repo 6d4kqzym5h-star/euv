@@ -1,7 +1,7 @@
 //! euv Example
 //!
 //! A demonstration application showcasing the euv component system,
-//! reactive signals, routing, and RSX macros.
+//! reactive signals, routing, and HTML macros.
 
 mod app;
 mod component;

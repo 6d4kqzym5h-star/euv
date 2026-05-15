@@ -155,7 +155,7 @@ impl IntoNode for VirtualNode {
 
 /// Wraps a `FnMut() -> VirtualNode` closure into a `DynamicNode` via `IntoNode`.
 ///
-/// This enables writing `{move || rsx! { ... }}` directly in RSX markup
+/// This enables writing `{move || html! { ... }}` directly in HTML markup
 /// without explicit `DynamicNode` construction.
 impl<F> IntoNode for F
 where
@@ -286,6 +286,24 @@ impl VirtualNode {
                         AttributeValue::Signal(signal) => return Some(signal.get()),
                         _ => {}
                     }
+                }
+            }
+        }
+        None
+    }
+
+    /// Extracts a signal property from this node if it is an element with the named attribute.
+    ///
+    /// Returns the raw `Signal<String>` so components can reactively read the current value
+    /// and subscribe to future changes, rather than receiving a snapshot string.
+    pub fn try_get_signal_prop(&self, name: &Attribute) -> Option<Signal<String>> {
+        let name_str: String = name.as_str();
+        if let VirtualNode::Element { attributes, .. } = self {
+            for attr in attributes {
+                if attr.get_name() == &name_str
+                    && let AttributeValue::Signal(signal) = attr.get_value()
+                {
+                    return Some(*signal);
                 }
             }
         }
@@ -451,8 +469,9 @@ impl CssClass {
                         .dyn_into::<web_sys::HtmlStyleElement>()
                         .unwrap();
                     el.set_id(style_id);
-                    let keyframes: &str = "@keyframes euv-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }";
-                    el.set_inner_text(keyframes);
+                    let keyframes: &str = "@keyframes euv-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } @keyframes euv-fade-in { from { opacity: 0; } to { opacity: 1; } } @keyframes euv-scale-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } } @keyframes euv-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } } @keyframes euv-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }";
+                    let global: &str = "html, body, #app { height: 100%; margin: 0; padding: 0; overflow: hidden; }";
+                    el.set_inner_text(&format!("{} {}", global, keyframes));
                     document.head().unwrap().append_child(&el).unwrap();
                     el
                 }

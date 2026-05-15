@@ -3,7 +3,7 @@ use crate::*;
 /// Trait for types that can be converted into a reactive string value.
 ///
 /// This allows both static strings and signals to be used interchangeably
-/// in RSX attributes.
+/// in HTML attributes.
 pub trait IntoReactiveValue {
     /// Converts this value into an `AttributeValue`, wrapping signals
     /// for reactive updates or converting static values to text.

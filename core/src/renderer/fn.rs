@@ -246,6 +246,14 @@ where
 ///
 /// Lazily initializes the registry on first access via `Box::leak`.
 /// The allocated memory lives for the remainder of the program.
+///
+/// # Returns
+///
+/// - `&'static mut HashMap<(usize, String), HandlerEntry>`: A mutable reference to the global handler registry.
+///
+/// # Panics
+///
+/// Panics if the registry pointer is invalid after lazy initialization.
 pub fn get_handler_registry() -> &'static mut HashMap<(usize, String), HandlerEntry> {
     // SAFETY: WASM is single-threaded; no concurrent access.
     unsafe {

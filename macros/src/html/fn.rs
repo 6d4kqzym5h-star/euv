@@ -4,13 +4,13 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `TokenStream`: The raw token stream representing RSX markup.
+/// - `TokenStream`: The raw token stream representing HTML markup.
 ///
 /// # Returns
 ///
 /// - `TokenStream`: The generated token stream constructing the corresponding virtual node.
-pub fn parse_rsx(input: TokenStream) -> TokenStream {
-    let root: RsxNode = parse_macro_input!(input as RsxNode);
+pub fn parse_html(input: TokenStream) -> TokenStream {
+    let root: HtmlNode = parse_macro_input!(input as HtmlNode);
     let tokens: TokenStream2 = root.into_token_stream();
     TokenStream::from(tokens)
 }
@@ -41,43 +41,62 @@ pub(crate) fn camel_case_event_name(name: &str) -> String {
     result
 }
 
-/// Parses a stream of tokens into a list of RSX child nodes.
-pub(crate) fn parse_rsx_children(content: ParseStream) -> SynResult<Vec<RsxNode>> {
-    let mut children: Vec<RsxNode> = Vec::new();
+/// Parses a stream of tokens into a list of HTML child nodes.
+///
+/// # Arguments
+///
+/// - `ParseStream`: The parse stream containing HTML child content.
+///
+/// # Returns
+///
+/// - `SynResult<Vec<HtmlNode>>`: The parsed list of HTML child nodes, or a syntax error.
+pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNode>> {
+    let mut children: Vec<HtmlNode> = Vec::new();
     while !content.is_empty() {
         if content.peek(LitStr) {
             let lit: LitStr = content.parse()?;
-            children.push(RsxNode::Text(lit.value()));
+            children.push(HtmlNode::Text(lit.value()));
         } else if content.peek(Token![if]) {
-            let rsx_if: RsxIf = content.parse()?;
-            children.push(RsxNode::If(rsx_if));
+            let html_if: HtmlIf = content.parse()?;
+            children.push(HtmlNode::If(html_if));
         } else if content.peek(Token![match]) {
-            let rsx_match: RsxMatch = content.parse()?;
-            children.push(RsxNode::Match(rsx_match));
+            let html_match: HtmlMatch = content.parse()?;
+            children.push(HtmlNode::Match(html_match));
+        } else if content.peek(Token![for]) {
+            let html_for: HtmlFor = content.parse()?;
+            children.push(HtmlNode::For(html_for));
         } else if content.peek(syn::token::Brace) {
             let child_content;
             braced!(child_content in content);
             let expr: Expr = child_content.parse()?;
-            children.push(RsxNode::Dynamic(expr));
+            children.push(HtmlNode::Dynamic(expr));
         } else if (content.peek(Ident) || content.peek(syn::LitStr)) && content.peek2(Colon) {
             break;
         } else if content.peek(Ident) {
             if content.peek2(syn::token::Brace) {
-                let element: RsxElement = content.parse()?;
-                children.push(RsxNode::Element(element));
+                let element: HtmlElement = content.parse()?;
+                children.push(HtmlNode::Element(element));
             } else {
                 let expr: Expr = content.parse()?;
-                children.push(RsxNode::Expr(expr));
+                children.push(HtmlNode::Expr(expr));
             }
         } else {
-            return Err(content.error("unexpected token in RSX"));
+            return Err(content.error("unexpected token in HTML"));
         }
     }
     Ok(children)
 }
 
-/// Converts a list of `RsxNode` children into a `Vec<VirtualNode>` token stream.
-pub(crate) fn children_to_tokens(children: &[RsxNode]) -> TokenStream2 {
+/// Converts a list of `HtmlNode` children into a `Vec<VirtualNode>` token stream.
+///
+/// # Arguments
+///
+/// - `&[HtmlNode]`: The slice of HTML child nodes to convert.
+///
+/// # Returns
+///
+/// - `TokenStream2`: The generated token stream representing a `Vec<VirtualNode>`.
+pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
     let child_tokens: Vec<TokenStream2> = children
         .iter()
         .map(|child| {

@@ -17,7 +17,7 @@ pub fn form_input(props: VirtualNode) -> VirtualNode {
         .try_get_prop(&Attribute::Placeholder)
         .unwrap_or_default();
     let value: String = props.try_get_prop(&Attribute::Value).unwrap_or_default();
-    rsx! {
+    html! {
         div {
             class: c_form_input_wrapper()
             label {

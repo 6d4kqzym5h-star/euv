@@ -1,49 +1,53 @@
 use crate::*;
 
-/// Parses RSX input into an `RsxNode` from a token stream.
-impl Parse for RsxNode {
+/// Parses HTML input into an `HtmlNode` from a token stream.
+impl Parse for HtmlNode {
     fn parse(input: ParseStream) -> SynResult<Self> {
         if input.peek(LitStr) {
             let lit: LitStr = input.parse()?;
-            return Ok(RsxNode::Text(lit.value()));
+            return Ok(HtmlNode::Text(lit.value()));
         }
         if input.peek(Token![if]) {
-            let rsx_if: RsxIf = input.parse()?;
-            return Ok(RsxNode::If(rsx_if));
+            let html_if: HtmlIf = input.parse()?;
+            return Ok(HtmlNode::If(html_if));
         }
         if input.peek(Token![match]) {
-            let rsx_match: RsxMatch = input.parse()?;
-            return Ok(RsxNode::Match(rsx_match));
+            let html_match: HtmlMatch = input.parse()?;
+            return Ok(HtmlNode::Match(html_match));
+        }
+        if input.peek(Token![for]) {
+            let html_for: HtmlFor = input.parse()?;
+            return Ok(HtmlNode::For(html_for));
         }
         if input.peek(syn::token::Brace) {
             let content;
             braced!(content in input);
             let expr: Expr = content.parse()?;
-            return Ok(RsxNode::Dynamic(expr));
+            return Ok(HtmlNode::Dynamic(expr));
         }
         if input.peek(Ident) {
             if input.peek2(syn::token::Brace) {
-                let element: RsxElement = input.parse()?;
-                return Ok(RsxNode::Element(element));
+                let element: HtmlElement = input.parse()?;
+                return Ok(HtmlNode::Element(element));
             }
             let expr: Expr = input.parse()?;
-            return Ok(RsxNode::Expr(expr));
+            return Ok(HtmlNode::Expr(expr));
         }
-        Err(input.error("expected an element, string literal, if, match, or expression"))
+        Err(input.error("expected an element, string literal, if, match, for, or expression"))
     }
 }
 
 /// Parses reactive `if {expr} { children } [else if {expr} { children }]* [else { children }]`.
-impl Parse for RsxIf {
+impl Parse for HtmlIf {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let mut branches: Vec<(Option<Expr>, Vec<RsxNode>)> = Vec::new();
+        let mut branches: Vec<(Option<Expr>, Vec<HtmlNode>)> = Vec::new();
         input.parse::<Token![if]>()?;
         let cond_content;
         braced!(cond_content in input);
         let condition: Expr = cond_content.parse()?;
         let body_content;
         braced!(body_content in input);
-        let body: Vec<RsxNode> = parse_rsx_children(&body_content)?;
+        let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
         branches.push((Some(condition), body));
         while input.peek(Token![else]) {
             input.parse::<Token![else]>()?;
@@ -54,22 +58,22 @@ impl Parse for RsxIf {
                 let condition: Expr = cond_content.parse()?;
                 let body_content;
                 braced!(body_content in input);
-                let body: Vec<RsxNode> = parse_rsx_children(&body_content)?;
+                let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
                 branches.push((Some(condition), body));
             } else {
                 let body_content;
                 braced!(body_content in input);
-                let body: Vec<RsxNode> = parse_rsx_children(&body_content)?;
+                let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
                 branches.push((None, body));
                 break;
             }
         }
-        Ok(RsxIf { branches })
+        Ok(HtmlIf { branches })
     }
 }
 
 /// Parses reactive `match {expr} { pattern => { children } ... }`.
-impl Parse for RsxMatch {
+impl Parse for HtmlMatch {
     fn parse(input: ParseStream) -> SynResult<Self> {
         input.parse::<Token![match]>()?;
         let scrutinee_content;
@@ -77,28 +81,52 @@ impl Parse for RsxMatch {
         let scrutinee: Expr = scrutinee_content.parse()?;
         let arms_content;
         braced!(arms_content in input);
-        let mut arms: Vec<(TokenStream2, Vec<RsxNode>)> = Vec::new();
+        let mut arms: Vec<(TokenStream2, Vec<HtmlNode>)> = Vec::new();
         while !arms_content.is_empty() {
             let mut pattern_tokens: TokenStream2 = TokenStream2::new();
             while !arms_content.peek(Token![=>]) {
                 let tt: proc_macro2::TokenTree = arms_content.parse()?;
-                pattern_tokens.extend(std::iter::once(tt));
+                pattern_tokens.extend([tt]);
             }
             arms_content.parse::<Token![=>]>()?;
             let arm_content;
             braced!(arm_content in arms_content);
-            let body: Vec<RsxNode> = parse_rsx_children(&arm_content)?;
+            let body: Vec<HtmlNode> = parse_html_children(&arm_content)?;
             arms.push((pattern_tokens, body));
             if arms_content.peek(Token![,]) {
                 arms_content.parse::<Token![,]>()?;
             }
         }
-        Ok(RsxMatch { scrutinee, arms })
+        Ok(HtmlMatch { scrutinee, arms })
     }
 }
 
-/// Parses RSX element syntax including tag, attributes, and children.
-impl Parse for RsxElement {
+/// Parses reactive `for pattern in {expr} { children }`.
+impl Parse for HtmlFor {
+    fn parse(input: ParseStream) -> SynResult<Self> {
+        input.parse::<Token![for]>()?;
+        let mut pattern_tokens: TokenStream2 = TokenStream2::new();
+        while !input.peek(Token![in]) {
+            let tt: proc_macro2::TokenTree = input.parse()?;
+            pattern_tokens.extend([tt]);
+        }
+        input.parse::<Token![in]>()?;
+        let iter_content;
+        braced!(iter_content in input);
+        let iterable: Expr = iter_content.parse()?;
+        let body_content;
+        braced!(body_content in input);
+        let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+        Ok(HtmlFor {
+            pattern: pattern_tokens,
+            iterable,
+            body,
+        })
+    }
+}
+
+/// Parses HTML element syntax including tag, attributes, and children.
+impl Parse for HtmlElement {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let tag: Ident = input.parse()?;
         let tag_str: String = tag.to_string();
@@ -107,24 +135,27 @@ impl Parse for RsxElement {
         let content;
         braced!(content in input);
 
-        let mut attributes: Vec<(Ident, RsxAttrValue)> = Vec::new();
-        let mut children: Vec<RsxNode> = Vec::new();
+        let mut attributes: Vec<(Ident, HtmlAttrValue)> = Vec::new();
+        let mut children: Vec<HtmlNode> = Vec::new();
 
         while !content.is_empty() {
             if content.peek(LitStr) {
                 let lit: LitStr = content.parse()?;
-                children.push(RsxNode::Text(lit.value()));
+                children.push(HtmlNode::Text(lit.value()));
             } else if content.peek(Token![if]) {
-                let rsx_if: RsxIf = content.parse()?;
-                children.push(RsxNode::If(rsx_if));
+                let html_if: HtmlIf = content.parse()?;
+                children.push(HtmlNode::If(html_if));
             } else if content.peek(Token![match]) {
-                let rsx_match: RsxMatch = content.parse()?;
-                children.push(RsxNode::Match(rsx_match));
+                let html_match: HtmlMatch = content.parse()?;
+                children.push(HtmlNode::Match(html_match));
+            } else if content.peek(Token![for]) {
+                let html_for: HtmlFor = content.parse()?;
+                children.push(HtmlNode::For(html_for));
             } else if content.peek(syn::token::Brace) {
                 let child_content;
                 braced!(child_content in content);
                 let expr: Expr = child_content.parse()?;
-                children.push(RsxNode::Dynamic(expr));
+                children.push(HtmlNode::Dynamic(expr));
             } else if (content.peek(Ident) || content.peek(syn::LitStr)) && content.peek2(Colon) {
                 let key: Ident = if content.peek(Ident) {
                     content.parse()?
@@ -134,55 +165,56 @@ impl Parse for RsxElement {
                 };
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
-                let value: RsxAttrValue = if key_str == "style" && content.peek(syn::token::Brace) {
+                let value: HtmlAttrValue = if key_str == "style" && content.peek(syn::token::Brace)
+                {
                     let style_content;
                     braced!(style_content in content);
                     let is_style_object: bool =
                         style_content.peek(Ident) && style_content.peek2(Colon);
                     if is_style_object {
-                        let mut style_props: Vec<(Ident, StylePropValue)> = Vec::new();
+                        let mut style_props: Vec<(Ident, HtmlStylePropValue)> = Vec::new();
                         while !style_content.is_empty() {
                             let prop_key: Ident = style_content.parse()?;
                             style_content.parse::<Colon>()?;
-                            let prop_value: StylePropValue = if style_content.peek(LitStr) {
+                            let prop_value: HtmlStylePropValue = if style_content.peek(LitStr) {
                                 let lit: LitStr = style_content.parse()?;
-                                StylePropValue::Literal(lit.value())
+                                HtmlStylePropValue::Literal(lit.value())
                             } else if style_content.peek(syn::token::Brace) {
                                 let expr_content;
                                 braced!(expr_content in style_content);
                                 let expr: Expr = expr_content.parse()?;
-                                StylePropValue::Expr(expr)
+                                HtmlStylePropValue::Expr(expr)
                             } else {
                                 let expr: Expr = style_content.parse()?;
-                                StylePropValue::Expr(expr)
+                                HtmlStylePropValue::Expr(expr)
                             };
                             style_props.push((prop_key, prop_value));
                             if style_content.peek(Semi) {
                                 style_content.parse::<Semi>()?;
                             }
                         }
-                        RsxAttrValue::Style(style_props)
+                        HtmlAttrValue::Style(style_props)
                     } else {
-                        RsxAttrValue::Expr(style_content.parse()?)
+                        HtmlAttrValue::Expr(style_content.parse()?)
                     }
                 } else {
-                    RsxAttrValue::Expr(content.parse()?)
+                    HtmlAttrValue::Expr(content.parse()?)
                 };
                 attributes.push((key, value));
             } else if content.peek(Ident) {
                 if content.peek2(syn::token::Brace) {
-                    let element: RsxElement = content.parse()?;
-                    children.push(RsxNode::Element(element));
+                    let element: HtmlElement = content.parse()?;
+                    children.push(HtmlNode::Element(element));
                 } else {
                     let expr: Expr = content.parse()?;
-                    children.push(RsxNode::Expr(expr));
+                    children.push(HtmlNode::Expr(expr));
                 }
             } else {
-                return Err(content.error("unexpected token in RSX element"));
+                return Err(content.error("unexpected token in HTML element"));
             }
         }
 
-        Ok(RsxElement {
+        Ok(HtmlElement {
             tag,
             attributes,
             children,
@@ -191,23 +223,23 @@ impl Parse for RsxElement {
     }
 }
 
-/// Converts an `RsxNode` into the corresponding euv virtual node tokens.
-impl ToTokens for RsxNode {
+/// Converts an `HtmlNode` into the corresponding euv virtual node tokens.
+impl ToTokens for HtmlNode {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
-            RsxNode::Element(element) => element.to_tokens(tokens),
-            RsxNode::Text(text) => {
+            HtmlNode::Element(element) => element.to_tokens(tokens),
+            HtmlNode::Text(text) => {
                 let text_clone: String = text.clone();
                 tokens.extend(quote! {
                     euv_core::vdom::VirtualNode::Text(euv_core::vdom::TextNode::new(#text_clone.to_string(), None))
                 });
             }
-            RsxNode::Expr(expr) => {
+            HtmlNode::Expr(expr) => {
                 tokens.extend(quote! {
                     euv_core::vdom::IntoNode::into_node(#expr)
                 });
             }
-            RsxNode::Dynamic(expr) => {
+            HtmlNode::Dynamic(expr) => {
                 tokens.extend(quote! {{
                     let mut __euv_hook_context: euv_core::reactive::HookContext = euv_core::reactive::create_hook_context();
                     let __euv_render_fn: std::rc::Rc<std::cell::RefCell<dyn FnMut() -> euv_core::vdom::VirtualNode>> = {
@@ -223,9 +255,9 @@ impl ToTokens for RsxNode {
                     })
                 }});
             }
-            RsxNode::If(rsx_if) => {
+            HtmlNode::If(html_if) => {
                 let mut if_chain: TokenStream2 = TokenStream2::new();
-                for (i, (condition, body)) in rsx_if.branches.iter().enumerate() {
+                for (i, (condition, body)) in html_if.branches.iter().enumerate() {
                     let body_tokens: TokenStream2 = children_to_tokens(body);
                     let body_expr: TokenStream2 = quote! {
                         euv_core::vdom::VirtualNode::Fragment(#body_tokens)
@@ -269,9 +301,9 @@ impl ToTokens for RsxNode {
                     })
                 }});
             }
-            RsxNode::Match(rsx_match) => {
-                let scrutinee: &Expr = &rsx_match.scrutinee;
-                let arm_tokens: Vec<TokenStream2> = rsx_match
+            HtmlNode::Match(html_match) => {
+                let scrutinee: &Expr = &html_match.scrutinee;
+                let arm_tokens: Vec<TokenStream2> = html_match
                     .arms
                     .iter()
                     .map(|(pattern, body)| {
@@ -298,26 +330,51 @@ impl ToTokens for RsxNode {
                     })
                 }});
             }
+            HtmlNode::For(html_for) => {
+                let pattern: &TokenStream2 = &html_for.pattern;
+                let iterable: &Expr = &html_for.iterable;
+                let body_tokens: TokenStream2 = children_to_tokens(&html_for.body);
+                tokens.extend(quote! {{
+                    let mut __euv_hook_context: euv_core::reactive::HookContext = euv_core::reactive::create_hook_context();
+                    let __euv_render_fn: std::rc::Rc<std::cell::RefCell<dyn FnMut() -> euv_core::vdom::VirtualNode>> = {
+                        let mut __euv_hook_context: euv_core::reactive::HookContext = __euv_hook_context;
+                        std::rc::Rc::new(std::cell::RefCell::new(move || {
+                            __euv_hook_context.reset_hook_index();
+                            let mut __euv_for_nodes: Vec<euv_core::vdom::VirtualNode> = Vec::new();
+                            for #pattern in #iterable {
+                                __euv_hook_context.reset_hook_index();
+                                let __euv_for_body: Vec<euv_core::vdom::VirtualNode> = #body_tokens;
+                                __euv_for_nodes.extend(__euv_for_body);
+                            }
+                            euv_core::vdom::VirtualNode::Fragment(__euv_for_nodes)
+                        }))
+                    };
+                    euv_core::vdom::VirtualNode::Dynamic(euv_core::vdom::DynamicNode {
+                        render_fn: __euv_render_fn,
+                        hook_context: __euv_hook_context,
+                    })
+                }});
+            }
         }
     }
 }
 
-/// Converts a `StylePropValue` into its token representation.
-impl ToTokens for StylePropValue {
+/// Converts a `HtmlStylePropValue` into its token representation.
+impl ToTokens for HtmlStylePropValue {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
-            StylePropValue::Literal(s) => s.to_tokens(tokens),
-            StylePropValue::Expr(expr) => expr.to_tokens(tokens),
+            HtmlStylePropValue::Literal(s) => s.to_tokens(tokens),
+            HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
         }
     }
 }
 
-/// Converts an `RsxAttrValue` into its token representation.
-impl ToTokens for RsxAttrValue {
+/// Converts an `HtmlAttrValue` into its token representation.
+impl ToTokens for HtmlAttrValue {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
-            RsxAttrValue::Expr(expr) => expr.to_tokens(tokens),
-            RsxAttrValue::Style(props) => {
+            HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
+            HtmlAttrValue::Style(props) => {
                 let prop_tokens: Vec<TokenStream2> = props
                     .iter()
                     .map(|(key, value)| {
@@ -336,8 +393,8 @@ impl ToTokens for RsxAttrValue {
     }
 }
 
-/// Converts an `RsxElement` into the corresponding euv virtual element tokens.
-impl ToTokens for RsxElement {
+/// Converts an `HtmlElement` into the corresponding euv virtual element tokens.
+impl ToTokens for HtmlElement {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let tag_name: String = self.tag.to_string();
         let is_component: bool = self.is_component;
@@ -345,11 +402,11 @@ impl ToTokens for RsxElement {
         let attr_tokens: Vec<TokenStream2> = self.attributes.iter().map(|(key, value)| {
             let key_str: String = key.to_string();
             let value_tokens: TokenStream2 = match value {
-                RsxAttrValue::Style(_) => {
+                HtmlAttrValue::Style(_) => {
                     let style_expr: TokenStream2 = quote! { #value };
                     quote! { euv_core::vdom::AttributeValue::Text(#style_expr) }
                 }
-                RsxAttrValue::Expr(expr) => {
+                HtmlAttrValue::Expr(expr) => {
                     let value_expr: TokenStream2 = quote! { #expr };
                     if let Some(event_name_str) = key_str.strip_prefix("on") {
                         let event_name_ident: Ident = syn::Ident::new(

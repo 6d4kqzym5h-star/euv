@@ -1,7 +1,7 @@
 //! euv
 //!
 //! A declarative, cross-platform UI framework for Rust with virtual DOM,
-//! reactive signals, and RSX macros for WebAssembly.
+//! reactive signals, and HTML macros for WebAssembly.
 
 pub mod component;
 pub mod event;
@@ -14,7 +14,6 @@ pub use {component::*, event::*, reactive::*, renderer::*, vdom::*};
 
 #[cfg(test)]
 use std::cell::Cell;
-
 use std::{
     any::Any,
     cell::{RefCell, RefMut, UnsafeCell},

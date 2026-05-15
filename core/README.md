@@ -16,7 +16,7 @@
 
 [Api Docs](https://docs.rs/euv/latest/)
 
-> A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and RSX macros for WebAssembly.
+> A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and HTML macros for WebAssembly.
 
 ## Installation
 

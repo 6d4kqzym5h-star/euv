@@ -1,14 +1,14 @@
 //! euv Macros
 //!
-//! Procedural macros for the euv UI framework, including the `rsx!` macro
+//! Procedural macros for the euv UI framework, including the `html!` macro
 //! for declarative UI syntax, the `class!` macro for CSS class definitions,
 //! and the `component` attribute macro.
 
 mod class;
-mod rsx;
+mod html;
 mod watch;
 
-pub(crate) use {class::*, rsx::*, watch::*};
+pub(crate) use {class::*, html::*, watch::*};
 
 use {
     proc_macro::TokenStream,
@@ -22,12 +22,12 @@ use {
     },
 };
 
-/// The `rsx!` macro for writing declarative UI in euv.
+/// The `html!` macro for writing declarative UI in euv.
 ///
-/// This macro accepts a syntax similar to Dioxus RSX:
+/// This macro accepts a syntax similar to Dioxus HTML:
 ///
 /// ```ignore
-/// rsx! {
+/// html! {
 ///     div {
 ///         class: c_container()
 ///         h1 { "Hello, euv!" }
@@ -39,14 +39,14 @@ use {
 /// }
 /// ```
 #[proc_macro]
-pub fn rsx(input: TokenStream) -> TokenStream {
-    rsx::parse_rsx(input)
+pub fn html(input: TokenStream) -> TokenStream {
+    html::parse_html(input)
 }
 
 /// The `class!` macro for defining CSS classes with style properties.
 ///
 /// Each class definition creates a `CssClass` function that can be used
-/// in `rsx!` via the `class:` attribute. Styles are automatically injected
+/// in `html!` via the `class:` attribute. Styles are automatically injected
 /// into the DOM on first use.
 ///
 /// ```ignore

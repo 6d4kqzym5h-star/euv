@@ -1,9 +1,9 @@
 use crate::*;
 
-/// Trait for types that can be converted into a `VirtualNode` for use in RSX expressions.
+/// Trait for types that can be converted into a `VirtualNode` for use in HTML expressions.
 ///
 /// Implemented by primitive types, strings, and signals to allow seamless
-/// embedding in RSX markup.
+/// embedding in HTML markup.
 pub trait AsNode {
     /// Converts this value into a `VirtualNode`, if possible.
     fn as_node(&self) -> Option<VirtualNode>;

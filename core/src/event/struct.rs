@@ -17,7 +17,7 @@ pub struct NativeEventHandler {
 /// Data associated with a mouse event.
 ///
 /// Captures coordinates, buttons, and modifier key states.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeMouseEvent {
     /// The X coordinate relative to the viewport.
     pub(crate) client_x: i32,
@@ -44,7 +44,7 @@ pub struct NativeMouseEvent {
 /// Data associated with an input event.
 ///
 /// Contains the current value and the type of input change.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeInputEvent {
     /// The current value of the input element.
     value: String,
@@ -55,7 +55,7 @@ pub struct NativeInputEvent {
 /// Data associated with a keyboard event.
 ///
 /// Captures the pressed key, physical code, location, and modifier states.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeKeyboardEvent {
     /// The key that was pressed.
     pub(crate) key: String,
@@ -78,7 +78,7 @@ pub struct NativeKeyboardEvent {
 /// Data associated with a focus event.
 ///
 /// Indicates whether the element is gaining or losing focus.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeFocusEvent {
     /// Whether the element is receiving focus.
     is_focus: bool,
@@ -89,7 +89,7 @@ pub struct NativeFocusEvent {
 /// Data associated with a form submit event.
 ///
 /// Identifies the element that triggered the submission.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeSubmitEvent {
     /// The submitter element identifier.
     submitter: Option<String>,
@@ -98,7 +98,7 @@ pub struct NativeSubmitEvent {
 /// Data associated with a change event.
 ///
 /// Contains the new value and checked state for form controls.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeChangeEvent {
     /// The new value after the change.
     value: String,
@@ -109,7 +109,7 @@ pub struct NativeChangeEvent {
 /// Data associated with a drag event.
 ///
 /// Captures the drag position and available data transfer types.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeDragEvent {
     /// The X coordinate of the drag.
     client_x: i32,
@@ -122,7 +122,7 @@ pub struct NativeDragEvent {
 /// Data associated with a touch event.
 ///
 /// Captures the number of touch points and the first touch coordinates.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeTouchEvent {
     /// The number of touch points.
     touches_count: u32,
@@ -135,7 +135,7 @@ pub struct NativeTouchEvent {
 /// Data associated with a wheel event.
 ///
 /// Captures scroll deltas and the delta mode.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, PartialEq)]
 pub struct NativeWheelEvent {
     /// Horizontal scroll delta.
     delta_x: f64,
@@ -148,7 +148,7 @@ pub struct NativeWheelEvent {
 /// Data associated with a clipboard event.
 ///
 /// Contains the clipboard text data if available.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeClipboardEvent {
     /// The clipboard data if available.
     data: Option<String>,
@@ -157,7 +157,7 @@ pub struct NativeClipboardEvent {
 /// Data associated with a media event.
 ///
 /// Identifies the type of media event that occurred.
-#[derive(Data, Default)]
+#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeMediaEvent {
     /// The type of media event (e.g., "play", "pause", "ended").
     event_type: String,

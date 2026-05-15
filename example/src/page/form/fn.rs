@@ -1,10 +1,18 @@
 use crate::*;
 
 /// Builds the error display node if validation errors exist.
-fn build_error_node(errors_read: Signal<String>) -> VirtualNode {
-    let error_text: String = errors_read.get();
+///
+/// # Arguments
+///
+/// - `Signal<String>`: The reactive signal holding validation error messages.
+///
+/// # Returns
+///
+/// - `VirtualNode`: An error box element if errors exist, or `VirtualNode::Empty`.
+fn build_error_node(errors: Signal<String>) -> VirtualNode {
+    let error_text: String = errors.get();
     if !error_text.is_empty() {
-        rsx! {
+        html! {
             div {
                 class: c_error_box()
                 error_text
@@ -16,10 +24,18 @@ fn build_error_node(errors_read: Signal<String>) -> VirtualNode {
 }
 
 /// Builds the success display node if form was submitted.
-fn build_submitted_node(submitted_read: Signal<String>) -> VirtualNode {
-    let submitted_text: String = submitted_read.get();
+///
+/// # Arguments
+///
+/// - `Signal<String>`: The reactive signal holding the submission result message.
+///
+/// # Returns
+///
+/// - `VirtualNode`: A success box element if submitted, or `VirtualNode::Empty`.
+fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
+    let submitted_text: String = submitted.get();
     if !submitted_text.is_empty() {
-        rsx! {
+        html! {
             div {
                 class: c_success_box()
                 submitted_text
@@ -37,28 +53,37 @@ fn build_submitted_node(submitted_read: Signal<String>) -> VirtualNode {
 /// - `VirtualNode`: The form demo page virtual DOM tree.
 pub fn page_form() -> VirtualNode {
     let username: Signal<String> = use_signal(|| "".to_string());
-    let username_updater_input: Signal<String> = username;
-    let username_updater_submit: Signal<String> = username;
-    let username_read: Signal<String> = username;
     let email: Signal<String> = use_signal(|| "".to_string());
-    let email_updater_input: Signal<String> = email;
-    let email_updater_submit: Signal<String> = email;
-    let email_read: Signal<String> = email;
     let password: Signal<String> = use_signal(|| "".to_string());
-    let password_updater_input: Signal<String> = password;
-    let password_updater_submit: Signal<String> = password;
-    let password_read: Signal<String> = password;
     let agree: Signal<bool> = use_signal(|| true);
-    let agree_updater_change: Signal<bool> = agree;
-    let agree_updater_submit: Signal<bool> = agree;
-    let agree_read: Signal<bool> = agree;
     let submitted: Signal<String> = use_signal(|| "".to_string());
-    let submitted_updater: Signal<String> = submitted;
-    let submitted_read: Signal<String> = submitted;
     let errors: Signal<String> = use_signal(|| "".to_string());
-    let errors_updater: Signal<String> = errors;
-    let errors_read: Signal<String> = errors;
-    rsx! {
+    watch!(
+        username,
+        email,
+        password,
+        |username_value, email_value, password_value| {
+            let mut validation_warnings: Vec<String> = Vec::new();
+            if username_value.trim().is_empty() {
+                validation_warnings.push("username is empty".to_string());
+            }
+            if email_value.trim().is_empty() {
+                validation_warnings.push("email is empty".to_string());
+            }
+            if password_value.len() < 6 {
+                validation_warnings.push("password too short".to_string());
+            }
+            if validation_warnings.is_empty() {
+                Console::log("watch! all fields valid");
+            } else {
+                Console::log(&format!(
+                    "watch! validation: {}",
+                    validation_warnings.join(", ")
+                ));
+            }
+        }
+    );
+    html! {
         div {
             class: c_page_container()
             div {
@@ -83,11 +108,11 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Enter username"
-                        value: username_read
+                        value: username
                         class: c_form_input_no_transition()
                         oninput: move |event: NativeEvent| {
                             if let NativeEvent::Input(input_event) = event {
-                                username_updater_input.set(input_event.get_value().clone());
+                                username.set(input_event.get_value().clone());
                             }
                         }
                     }
@@ -101,11 +126,11 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "email"
                         placeholder: "Enter email"
-                        value: email_read
+                        value: email
                         class: c_form_input_no_transition()
                         oninput: move |event: NativeEvent| {
                             if let NativeEvent::Input(input_event) = event {
-                                email_updater_input.set(input_event.get_value().clone());
+                                email.set(input_event.get_value().clone());
                             }
                         }
                     }
@@ -119,11 +144,11 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "password"
                         placeholder: "Enter password"
-                        value: password_read
+                        value: password
                         class: c_form_input_no_transition()
                         oninput: move |event: NativeEvent| {
                             if let NativeEvent::Input(input_event) = event {
-                                password_updater_input.set(input_event.get_value().clone());
+                                password.set(input_event.get_value().clone());
                             }
                         }
                     }
@@ -132,11 +157,11 @@ pub fn page_form() -> VirtualNode {
                     class: c_form_checkbox_row()
                     input {
                         r#type: "checkbox"
-                        checked: agree_read
+                        checked: agree
                         class: c_form_checkbox()
                         onchange: move |event: NativeEvent| {
                             if let NativeEvent::Change(change_event) = event {
-                                agree_updater_change.set(*change_event.get_checked());
+                                agree.set(*change_event.get_checked());
                             }
                         }
                     }
@@ -145,33 +170,33 @@ pub fn page_form() -> VirtualNode {
                         "I agree to the terms and conditions"
                     }
                 }
-                build_error_node(errors_read)
+                build_error_node(errors)
                 primary_button {
                     label: "Submit"
                     onclick: move |_event: NativeEvent| {
                         let mut validation_errors: Vec<String> = Vec::new();
-                        if username_updater_submit.get().trim().is_empty() {
+                        if username.get().trim().is_empty() {
                             validation_errors.push("Username is required".to_string());
                         }
-                        if email_updater_submit.get().trim().is_empty() {
+                        if email.get().trim().is_empty() {
                             validation_errors.push("Email is required".to_string());
                         }
-                        if password_updater_submit.get().len() < 6 {
+                        if password.get().len() < 6 {
                             validation_errors.push("Password must be at least 6 characters".to_string());
                         }
-                        if !agree_updater_submit.get() {
+                        if !agree.get() {
                             validation_errors.push("You must agree to the terms".to_string());
                         }
                         if validation_errors.is_empty() {
-                            errors_updater.set("".to_string());
-                            submitted_updater.set(format!("Submitted: username={}, email={}", username_updater_submit.get(), email_updater_submit.get()));
+                            errors.set("".to_string());
+                            submitted.set(format!("Submitted: username={}, email={}", username.get(), email.get()));
                         } else {
-                            errors_updater.set(validation_errors.join("; "));
+                            errors.set(validation_errors.join("; "));
                         }
                     }
                     "Submit"
                 }
-                build_submitted_node(submitted_read)
+                build_submitted_node(submitted)
             }
         }
     }

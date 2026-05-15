@@ -5,7 +5,7 @@ readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
 license = "MIT"
-description = """A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and RSX macros for WebAssembly."""
+description = """A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and HTML macros for WebAssembly."""
 keywords = ["cross-platform"]
 repository = "https://github.com/euv-dev/euv.git"
 categories = ["network-programming", "web-programming"]
@@ -49,6 +49,7 @@ tokio = { version = "1.52.3", features = [
 ] }
 web-sys = { version = "0.3", features = [
     "console",
+    "Clipboard",
     "Document",
     "Element",
     "Event",
@@ -64,9 +65,11 @@ web-sys = { version = "0.3", features = [
     "HtmlMediaElement",
     "HtmlOptionElement",
     "Node",
+    "Storage",
     "Text",
     "Window",
     "Location",
+    "Navigator",
     "Response",
     "MouseEvent",
     "InputEvent",
@@ -95,18 +98,24 @@ euv-example = { path = "example" }
 
 [profile.dev]
 incremental = true
-opt-level = 0
+opt-level = "z"
 lto = false
 panic = "unwind"
 debug = false
 codegen-units = 16
 strip = "none"
 
+[profile.dev.package.euv-cli]
+opt-level = 0
+
 [profile.release]
 incremental = false
-opt-level = 3
+opt-level = "z"
 lto = true
 panic = "unwind"
 debug = false
 codegen-units = 1
 strip = "debuginfo"
+
+[profile.release.package.euv-cli]
+opt-level = 3

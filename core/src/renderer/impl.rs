@@ -618,7 +618,7 @@ impl Renderer {
                 Closure::wrap(Box::new(move |event: Event| {
                     if let Some(active_handler) = wrapper_for_closure.borrow_mut().as_ref() {
                         let euv_event: NativeEvent =
-                            super::r#fn::convert_web_event(&event, &event_name_for_closure);
+                            convert_web_event(&event, &event_name_for_closure);
                         active_handler.handle(euv_event);
                     }
                 }));

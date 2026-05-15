@@ -15,30 +15,10 @@ pub fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> Virt
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
-    let background: String = if is_active {
-        "rgba(79, 70, 229, 0.08)".to_string()
-    } else {
-        "transparent".to_string()
-    };
-    let active_color: String = if is_active {
-        "#4f46e5".to_string()
-    } else {
-        "#6b7280".to_string()
-    };
-    let active_weight: String = if is_active {
-        "600".to_string()
-    } else {
-        "400".to_string()
-    };
-    let active_border: String = if is_active {
-        "3px solid #4f46e5".to_string()
-    } else {
-        "3px solid transparent".to_string()
-    };
-    rsx! {
+    html! {
         a {
             href: format!("#{}", target_string)
-            style: {display: "block"; padding: "11px 20px"; text_decoration: "none"; color: {active_color}; font_weight: {active_weight}; border_left: {active_border}; background: {background}; font_size: "14px"; transition: "all 0.15s ease";}
+            class: if is_active { c_nav_item_active() } else { c_nav_item_inactive() }
             onclick: link_handler(target_string)
             label
         }
@@ -51,12 +31,16 @@ pub fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> Virt
 ///
 /// - `VirtualNode`: The root application virtual DOM tree.
 pub fn app() -> VirtualNode {
+    init_console();
     let route_signal: Signal<String> = use_signal(current_route);
-    let route_updater: Signal<String> = route_signal;
+    let panel_open: Signal<bool> = use_signal(|| false);
+    let theme_state: ThemeState = use_theme();
+    let theme_signal: Signal<String> = theme_state.theme;
+    let theme_style_signal: Signal<String> = theme_state.style;
     let window: Window = window().expect("no global window exists");
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let new_route: String = current_route();
-        route_updater.set(new_route);
+        route_signal.set(new_route);
     }));
     window
         .add_event_listener_with_callback(
@@ -65,9 +49,10 @@ pub fn app() -> VirtualNode {
         )
         .unwrap();
     closure.forget();
-    rsx! {
+    html! {
         div {
             class: c_app_root()
+            style: theme_style_signal
             nav {
                 class: c_app_nav()
                 h2 {
@@ -78,19 +63,45 @@ pub fn app() -> VirtualNode {
                     }
                     span {
                         class: c_inline()
-                        "euv playground"
+                        "euv example"
                     }
                 }
                 p {
                     class: c_nav_section_label()
                     "Pages"
                 }
-                {nav_item(route_signal, "Home", "/")}
+                {nav_item(route_signal, "Signals", "/signals")}
+                {nav_item(route_signal, "Event", "/event")}
                 {nav_item(route_signal, "List", "/list")}
                 {nav_item(route_signal, "Conditional", "/conditional")}
+                {nav_item(route_signal, "Modal", "/modal")}
+                {nav_item(route_signal, "Select", "/select")}
                 {nav_item(route_signal, "Async", "/async")}
                 {nav_item(route_signal, "Form", "/form")}
+                {nav_item(route_signal, "Timer", "/timer")}
+                {nav_item(route_signal, "Animation", "/animation")}
+                {nav_item(route_signal, "Browser", "/browser")}
                 {nav_item(route_signal, "Lifecycle", "/lifecycle")}
+                {nav_item(route_signal, "Custom Attrs", "/custom-attrs")}
+                div {
+                    class: c_nav_theme_toggle()
+                    button {
+                        class: c_nav_theme_button()
+                        onclick: move |_event: NativeEvent| {
+                            let current: String = theme_signal.get();
+                            if current == "light" {
+                                theme_signal.set("dark".to_string());
+                            } else {
+                                theme_signal.set("light".to_string());
+                            }
+                        }
+                        if {theme_signal.get() == "dark"} {
+                            "☀"
+                        } else {
+                            "🌙"
+                        }
+                    }
+                }
                 p {
                     class: c_nav_footer()
                     "Built with euv & WASM"
@@ -99,8 +110,11 @@ pub fn app() -> VirtualNode {
             main {
                 class: c_app_main()
                 match {route_signal.get().as_str()} {
-                    "/" => {
-                        page_home()
+                    "/" | "/signals" => {
+                        page_signals()
+                    }
+                    "/event" => {
+                        page_event()
                     }
                     "/list" => {
                         page_list()
@@ -108,20 +122,39 @@ pub fn app() -> VirtualNode {
                     "/conditional" => {
                         page_conditional()
                     }
+                    "/modal" => {
+                        page_modal()
+                    }
+                    "/select" => {
+                        page_select()
+                    }
                     "/async" => {
                         page_async_demo()
                     }
                     "/form" => {
                         page_form()
                     }
+                    "/timer" => {
+                        page_timer()
+                    }
+                    "/animation" => {
+                        page_animation()
+                    }
+                    "/browser" => {
+                        page_browser()
+                    }
                     "/lifecycle" => {
                         page_lifecycle()
+                    }
+                    "/custom-attrs" => {
+                        page_custom_attrs()
                     }
                     _ => {
                         page_not_found()
                     }
                 }
             }
+            {vconsole_panel(panel_open)}
         }
     }
 }

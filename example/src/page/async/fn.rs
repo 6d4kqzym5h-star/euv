@@ -12,15 +12,15 @@ use crate::*;
 ///
 /// - `VirtualNode`: The status indicator virtual DOM tree.
 fn build_status_node(
-    loading_read: Signal<bool>,
-    error_read: Signal<String>,
-    data_read: Signal<String>,
+    loading: Signal<bool>,
+    error: Signal<String>,
+    data: Signal<String>,
 ) -> VirtualNode {
-    let is_loading: bool = loading_read.get();
-    let error_text: String = error_read.get();
-    let data_text: String = data_read.get();
+    let is_loading: bool = loading.get();
+    let error_text: String = error.get();
+    let data_text: String = data.get();
     if is_loading {
-        rsx! {
+        html! {
             div {
                 class: c_loading_container()
                 div {
@@ -40,7 +40,7 @@ fn build_status_node(
             }
         }
     } else if !error_text.is_empty() {
-        rsx! {
+        html! {
             div {
                 class: c_error_container()
                 div {
@@ -54,7 +54,7 @@ fn build_status_node(
             }
         }
     } else {
-        rsx! {
+        html! {
             div {
                 class: c_data_box()
                 pre {
@@ -73,15 +73,9 @@ fn build_status_node(
 /// - `VirtualNode`: The async demo page virtual DOM tree.
 pub fn page_async_demo() -> VirtualNode {
     let loading: Signal<bool> = use_signal(|| false);
-    let loading_updater: Signal<bool> = loading;
-    let loading_read: Signal<bool> = loading;
     let data: Signal<String> = use_signal(|| "Click fetch to load data".to_string());
-    let data_updater: Signal<String> = data;
-    let data_read: Signal<String> = data;
     let error: Signal<String> = use_signal(|| "".to_string());
-    let error_updater: Signal<String> = error;
-    let error_read: Signal<String> = error;
-    rsx! {
+    html! {
         div {
             class: c_page_container()
             div {
@@ -104,12 +98,9 @@ pub fn page_async_demo() -> VirtualNode {
                 primary_button {
                     label: "Fetch"
                     onclick: move |_event: NativeEvent| {
-                        loading_updater.set(true);
-                        error_updater.set("".to_string());
-                        data_updater.set("".to_string());
-                        let data_updater_clone: Signal<String> = data_updater;
-                        let loading_updater_clone: Signal<bool> = loading_updater;
-                        let error_updater_clone: Signal<String> = error_updater;
+                        loading.set(true);
+                        error.set("".to_string());
+                        data.set("".to_string());
                         wasm_bindgen_futures::spawn_local(async move {
                             let window: web_sys::Window = web_sys::window().expect("no global window exists");
                             let promise: js_sys::Promise = window.fetch_with_str("https://httpbin.org/get");
@@ -122,23 +113,23 @@ pub fn page_async_demo() -> VirtualNode {
                                     match json_future.await {
                                         Ok(json) => {
                                             let json_string: String = js_sys::JSON::stringify(&json).unwrap().as_string().unwrap_or_default();
-                                            data_updater_clone.set(json_string);
+                                            data.set(json_string);
                                         }
                                         Err(_) => {
-                                            error_updater_clone.set("Failed to parse JSON".to_string());
+                                            error.set("Failed to parse JSON".to_string());
                                         }
                                     }
                                 }
                                 Err(_) => {
-                                    error_updater_clone.set("Network request failed".to_string());
+                                    error.set("Network request failed".to_string());
                                 }
                             }
-                            loading_updater_clone.set(false);
+                            loading.set(false);
                         });
                     }
-                    "Fetch Data"
+                    "Fetch"
                 }
-                build_status_node(loading_read, error_read, data_read)
+                build_status_node(loading, error, data)
             }
         }
     }

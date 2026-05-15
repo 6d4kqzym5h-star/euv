@@ -67,10 +67,14 @@ pub fn trigger_update() {
     schedule_signal_update();
 }
 
-/// Returns a mutable reference to the currently active `HookContext`.
+/// Returns the currently active `HookContext`.
 ///
 /// When called outside a `with_hook_context` scope, returns a reference
 /// to the default empty context.
+///
+/// # Returns
+///
+/// - `HookContext`: The currently active hook context.
 fn get_current_hook_context() -> HookContext {
     unsafe { HookContext::from_inner(CURRENT_HOOK_CONTEXT) }
 }
@@ -165,6 +169,14 @@ where
 /// Converts a bool signal into a reactive `Signal<String>` that
 /// yields `"true"` or `"false"`, enabling boolean attributes like `checked` to
 /// reactively update the DOM.
+///
+/// # Arguments
+///
+/// - `Signal<bool>`: The source boolean signal to convert.
+///
+/// # Returns
+///
+/// - `AttributeValue`: A signal-backed attribute value that reactively mirrors the boolean as a string.
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let initial: String = source.get().to_string();
     let string_signal: Signal<String> = {

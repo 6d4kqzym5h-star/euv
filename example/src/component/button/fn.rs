@@ -15,17 +15,18 @@ pub fn primary_button(props: VirtualNode) -> VirtualNode {
         .unwrap_or_else(|| "Button".to_string());
     let children: Vec<VirtualNode> = props.get_children();
     let onclick_handler: Option<NativeEventHandler> = props.try_get_event(&NativeEventName::Click);
-    let child_node: VirtualNode = if let Some(first) = children.into_iter().next() {
-        first
+    let display_children: Vec<VirtualNode> = if children.is_empty() {
+        vec![VirtualNode::Text(vdom::TextNode::new(label, None))]
     } else {
-        VirtualNode::Text(vdom::TextNode::new(label, None))
+        children
     };
-    let child_node_clone: VirtualNode = child_node.clone();
-    rsx! {
+    let children_node: VirtualNode = VirtualNode::Fragment(display_children);
+    html! {
         button {
             class: c_primary_button()
+            style: {display: "inline-flex"; align_items: "center"; gap: "8px";}
             onclick: onclick_handler
-            child_node_clone
+            children_node
         }
     }
 }

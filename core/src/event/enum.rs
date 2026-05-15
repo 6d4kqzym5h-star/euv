@@ -99,6 +99,7 @@ pub enum NativeEventName {
 /// Represents different kinds of UI events.
 ///
 /// Each variant wraps the specific data associated with that event type.
+#[derive(Clone, Debug, PartialEq)]
 pub enum NativeEvent {
     /// A mouse-related event.
     Mouse(NativeMouseEvent),

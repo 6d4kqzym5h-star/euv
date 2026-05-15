@@ -6,7 +6,7 @@ use crate::*;
 ///
 /// - `VirtualNode`: The 404 page virtual DOM tree.
 pub fn page_not_found() -> VirtualNode {
-    rsx! {
+    html! {
         div {
             class: c_not_found_container()
             div {
@@ -22,11 +22,11 @@ pub fn page_not_found() -> VirtualNode {
                 "The requested page does not exist."
             }
             primary_button {
-                label: "Go Home"
+                label: "Go Back"
                 onclick: move |_event: NativeEvent| {
                     navigate("/");
                 }
-                "Go Home"
+                "Go Back"
             }
         }
     }

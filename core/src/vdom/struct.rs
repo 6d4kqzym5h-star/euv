@@ -59,7 +59,7 @@ pub struct DynamicNode {
 
 /// Represents a CSS class with a name and its style declarations.
 ///
-/// Created by the `class!` macro and used in `rsx!` via the `class:` attribute.
+/// Created by the `class!` macro and used in `html!` via the `class:` attribute.
 /// When the renderer encounters a `CssClass`, it injects the styles into the
 /// DOM's `<style>` element on first use and applies the class name to the element.
 #[derive(Clone, Data, Default)]
