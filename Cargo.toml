@@ -16,10 +16,10 @@ members = ["core", "macros", "example", "cli"]
 resolver = "3"
 
 [workspace.dependencies]
-euv-cli = { path = "cli", version = "0.2.1" }
-euv-core = { path = "core", version = "0.2.1" }
-euv-macros = { path = "macros", version = "0.2.1" }
-euv-example = { path = "example", version = "0.2.1" }
+euv-cli = { path = "cli", version = "0.3.0" }
+euv-core = { path = "core", version = "0.3.0" }
+euv-macros = { path = "macros", version = "0.3.0" }
+euv-example = { path = "example", version = "0.3.0" }
 
 quote = "1.0"
 js-sys = "0.3"
