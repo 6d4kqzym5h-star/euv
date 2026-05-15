@@ -71,7 +71,10 @@ pub fn class(input: TokenStream) -> TokenStream {
 /// The `watch!` macro for creating reactive side effects.
 ///
 /// Watches one or more signals and executes a closure whenever any of them changes.
-/// The closure is also executed once immediately with the current signal values.
+/// The closure is also executed once immediately with the current signal values
+/// during initialisation. This initial execution is wrapped in a suppressed-update
+/// scope so that any `.set()` calls inside the body do not trigger unnecessary
+/// DynamicNode re-renders.
 ///
 /// The number of signal expressions must match the number of closure parameters.
 /// Each closure parameter receives the current value (via `.get()`) of the

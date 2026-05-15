@@ -25,11 +25,15 @@ pub(crate) fn dispatch_signal_update() {
 /// preventing DynamicNode re-renders from interfering with in-flight
 /// signal updates.
 ///
+/// When `SUPPRESS_SCHEDULE` is `true`, this function is a no-op so that
+/// internal operations (such as `watch!` initialisation) can perform
+/// signal mutations without triggering premature DOM re-renders.
+///
 /// # Panics
 ///
 /// Panics if `Promise::new()` or `Event::new()` fails.
 pub(crate) fn schedule_signal_update() {
-    if SCHEDULED.load(Ordering::Relaxed) {
+    if SCHEDULED.load(Ordering::Relaxed) || SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
         return;
     }
     SCHEDULED.store(true, Ordering::Relaxed);
@@ -65,6 +69,34 @@ pub(crate) fn schedule_signal_update() {
 /// Panics if `Event::new("__euv_signal_update__")` fails.
 pub fn trigger_update() {
     schedule_signal_update();
+}
+
+/// Executes a closure with signal update scheduling suppressed.
+///
+/// Any `schedule_signal_update()` calls that occur within the closure
+/// (including those triggered by `Signal::set()`) are silently ignored.
+/// After the closure returns, the suppress flag is restored to its
+/// previous value.
+///
+/// This is used internally by `watch!` to prevent its initial body
+/// execution from triggering unnecessary DynamicNode re-renders.
+///
+/// # Arguments
+///
+/// - `F`: The closure to execute with suppressed scheduling.
+///
+/// # Returns
+///
+/// - `R`: The return value of the closure.
+pub fn with_suppressed_updates<F, R>(f: F) -> R
+where
+    F: FnOnce() -> R,
+{
+    let previous: bool = SUPPRESS_SCHEDULE.load(Ordering::Relaxed);
+    SUPPRESS_SCHEDULE.store(true, Ordering::Relaxed);
+    let result: R = f();
+    SUPPRESS_SCHEDULE.store(previous, Ordering::Relaxed);
+    result
 }
 
 /// Returns the currently active `HookContext`.

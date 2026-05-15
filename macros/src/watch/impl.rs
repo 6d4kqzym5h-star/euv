@@ -49,10 +49,18 @@ impl Parse for WatchInput {
 /// Converts a `WatchInput` into reactive subscription code.
 ///
 /// Generated code:
-/// 1. Clones each signal into a local binding.
-/// 2. Subscribes each signal with a closure that reads all current signal values
-///    and invokes the user-provided body.
-/// 3. Executes the body once immediately with the current signal values.
+/// 1. Uses a `use_signal(|| false)` guard to ensure subscriptions and
+///    initial body execution only happen once per DynamicNode lifecycle,
+///    preventing duplicate subscriptions and infinite re-render loops.
+/// 2. Clones each signal into a local binding.
+/// 3. On first execution, the entire initialisation (subscribe registration
+///    and body execution) is wrapped in `with_suppressed_updates` so that
+///    any `.set()` calls inside the body do not trigger premature
+///    `schedule_signal_update()` dispatches. The guard signal is updated
+///    via `set_silent` to avoid an unnecessary DOM re-render cycle.
+/// 4. Subsequent render_fn invocations skip the block entirely — the body
+///    only fires via the `subscribe` callbacks when a watched signal
+///    actually changes.
 impl ToTokens for WatchInput {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let signal_clones: Vec<Ident> = (0..self.signals.len())
@@ -94,10 +102,16 @@ impl ToTokens for WatchInput {
             .collect();
         tokens.extend(quote! {{
             #(let #signal_clones = #signal_exprs;)*
-            #(#subscribe_calls)*
-            {
-                #(let #param_names = #get_calls;)*
-                { #(#body)* }
+            let __euv_watch_subscribed: euv_core::reactive::Signal<bool> = euv_core::reactive::use_signal(|| false);
+            if !__euv_watch_subscribed.get() {
+                euv_core::reactive::with_suppressed_updates(|| {
+                    #(#subscribe_calls)*
+                    {
+                        #(let #param_names = #get_calls;)*
+                        { #(#body)* }
+                    }
+                    __euv_watch_subscribed.set_silent(true);
+                });
             }
         }});
     }

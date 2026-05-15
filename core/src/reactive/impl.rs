@@ -100,6 +100,39 @@ where
         schedule_signal_update();
     }
 
+    /// Sets the value of the signal and notifies listeners without scheduling
+    /// a global DOM update dispatch.
+    ///
+    /// This is identical to `set` except it does not call
+    /// `schedule_signal_update()`, meaning no `__euv_signal_update__` event
+    /// will be dispatched. Use this for internal bookkeeping signals whose
+    /// changes should not trigger DynamicNode re-renders.
+    ///
+    /// # When to use
+    ///
+    /// Prefer `set` in almost all cases. Only use `set_silent` when the
+    /// signal change is guaranteed not to affect any DynamicNode output
+    /// (e.g., internal guard flags, derived-value caches already at the
+    /// correct value, or within a `with_suppressed_updates` block where
+    /// the caller takes responsibility for batching the update).
+    ///
+    /// If the new value is equal to the current value, no update is performed
+    /// and no listeners are notified.
+    pub fn set_silent(&self, value: T) {
+        let inner: &mut SignalInner<T> = self.get_inner_mut();
+        if inner.get_value() == &value {
+            return;
+        }
+        let listeners: ListenerList = {
+            inner.set_value(value);
+            inner.get_listeners().iter().map(Rc::clone).collect()
+        };
+        for listener in &listeners {
+            let mut borrowed = listener.borrow_mut();
+            borrowed();
+        }
+    }
+
     /// Attempts to set the value of the signal and notify listeners without panicking.
     ///
     /// If the new value is equal to the current value, no update is performed.
