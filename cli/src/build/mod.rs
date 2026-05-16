@@ -1,9 +1,10 @@
 mod r#fn;
+mod formatter;
 mod r#struct;
 
 pub use r#struct::*;
 
-pub(crate) use r#fn::*;
+pub(crate) use {r#fn::*, formatter::*};
 
 use std::{
     path::PathBuf,
@@ -14,6 +15,7 @@ use std::{
 use {
     anyhow::{Context as AnyhowContext, Result},
     clap::Parser,
+    ignore::gitignore::{Gitignore, GitignoreBuilder},
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
     tokio::{
         process::Command,

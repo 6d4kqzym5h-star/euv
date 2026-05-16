@@ -74,10 +74,13 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
                 onclick: move |_event: NativeEvent| {
                     panel_open.set(true);
                 }
-                "E"
                 span {
-                    class: c_vconsole_badge()
-                    badge_display
+                    style: "position: relative; display: flex; align-items: center; justify-content: center;"
+                    "E"
+                    span {
+                        class: c_vconsole_badge()
+                        badge_display
+                    }
                 }
             }
         }
@@ -125,6 +128,9 @@ fn vconsole_drawer(
                     class: c_vconsole_header()
                     h3 {
                         class: c_vconsole_title()
+                        span {
+                            class: c_vconsole_title_dot()
+                        }
                         "Console"
                         span {
                             class: c_vconsole_count()
@@ -152,28 +158,28 @@ fn vconsole_drawer(
                 div {
                     class: c_vconsole_filter_bar()
                     button {
-                        class: if filter_signal.get() == "all" { c_vconsole_filter_active() } else { c_vconsole_filter_button() }
+                        class: if { filter_signal.get() == "all" } { c_vconsole_filter_active() } else { c_vconsole_filter_button() }
                         onclick: move |_event: NativeEvent| {
                             filter_signal.set("all".to_string());
                         }
                         "All"
                     }
                     button {
-                        class: if filter_signal.get() == "log" { c_vconsole_filter_active_log() } else { c_vconsole_filter_button() }
+                        class: if { filter_signal.get() == "log" } { c_vconsole_filter_active_log() } else { c_vconsole_filter_button() }
                         onclick: move |_event: NativeEvent| {
                             filter_signal.set("log".to_string());
                         }
                         "Log"
                     }
                     button {
-                        class: if filter_signal.get() == "warn" { c_vconsole_filter_active_warn() } else { c_vconsole_filter_button() }
+                        class: if { filter_signal.get() == "warn" } { c_vconsole_filter_active_warn() } else { c_vconsole_filter_button() }
                         onclick: move |_event: NativeEvent| {
                             filter_signal.set("warn".to_string());
                         }
                         "Warn"
                     }
                     button {
-                        class: if filter_signal.get() == "error" { c_vconsole_filter_active_error() } else { c_vconsole_filter_button() }
+                        class: if { filter_signal.get() == "error" } { c_vconsole_filter_active_error() } else { c_vconsole_filter_button() }
                         onclick: move |_event: NativeEvent| {
                             filter_signal.set("error".to_string());
                         }
@@ -231,12 +237,12 @@ fn build_vconsole_log_nodes(
         };
     }
     html! {
-        for (index, entry) in {filtered.iter().rev()} {
+        for (index, entry) in { filtered.iter().rev() } {
             div {
                 key: index.to_string()
                 class: { get_log_item_class(&entry.level, *index == total_count - 1) }
                 span {
-                    class: {get_badge_class(&entry.level)}
+                    class: { get_badge_class(&entry.level) }
                     get_log_level_badge(&entry.level)
                 }
                 entry.message.clone()

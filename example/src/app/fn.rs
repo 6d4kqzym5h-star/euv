@@ -18,7 +18,7 @@ pub fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> Virt
     html! {
         a {
             href: format!("#{}", target_string)
-            class: if is_active { c_nav_item_active() } else { c_nav_item_inactive() }
+            class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
             onclick: link_handler(target_string)
             label
         }
@@ -70,7 +70,7 @@ pub fn app() -> VirtualNode {
                 { nav_item(route_signal, "Animation", "/animation") }
                 { nav_item(route_signal, "Browser", "/browser") }
                 { nav_item(route_signal, "Lifecycle", "/lifecycle") }
-                { nav_item(route_signal, "Custom Attrs", "/custo m-attrs")}
+                { nav_item(route_signal, "Custom Attrs", "/custo m-attrs") }
                 div {
                     class: c_nav_theme_toggle()
                     button {

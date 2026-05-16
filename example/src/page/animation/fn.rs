@@ -10,6 +10,7 @@ pub fn page_animation() -> VirtualNode {
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);
     let progress_value: Signal<i32> = use_signal(|| 0);
+    let progress_running: Signal<bool> = use_signal(|| false);
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
     html! {
@@ -53,12 +54,12 @@ pub fn page_animation() -> VirtualNode {
                         let current: bool = spin_active.get();
                         spin_active.set(!current);
                     }
-                    if {spin_active.get()} { "Stop Spin" } else { "Start Spin" }
+                    if { spin_active.get() } { "Stop Spin" } else { "Start Spin" }
                 }
                 div {
                     class: c_anim_spin_container()
                     div {
-                        class: if spin_active.get() { c_anim_spin() } else { c_anim_spin_stopped() }
+                        class: if { spin_active.get() } { c_anim_spin() } else { c_anim_spin_stopped() }
                         "⟳"
                     }
                 }
@@ -71,12 +72,12 @@ pub fn page_animation() -> VirtualNode {
                         let current: bool = pulse_active.get();
                         pulse_active.set(!current);
                     }
-                    if {pulse_active.get()} { "Stop Pulse" } else { "Start Pulse" }
+                    if { pulse_active.get() } { "Stop Pulse" } else { "Start Pulse" }
                 }
                 div {
                     class: c_anim_pulse_container()
                     div {
-                        class: if pulse_active.get() { c_anim_pulse() } else { c_anim_pulse_stopped() }
+                        class: if { pulse_active.get() } { c_anim_pulse() } else { c_anim_pulse_stopped() }
                         "♥"
                     }
                 }
@@ -89,11 +90,17 @@ pub fn page_animation() -> VirtualNode {
                         label: "Start"
                         onclick: move |_event: NativeEvent| {
                             progress_value.set(0);
+                            progress_running.set(true);
                             let progress: Signal<i32> = progress_value;
+                            let running: Signal<bool> = progress_running;
                             let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                                let current: i32 = progress.get();
-                                if current < 100 {
-                                    progress.set(current + 1);
+                                if running.get() {
+                                    let current: i32 = progress.get();
+                                    if current < 100 {
+                                        progress.set(current + 1);
+                                    } else {
+                                        running.set(false);
+                                    }
                                 }
                             }));
                             let window: Window = window().expect("no global window exists");
@@ -108,6 +115,7 @@ pub fn page_animation() -> VirtualNode {
                     primary_button {
                         label: "Reset"
                         onclick: move |_event: NativeEvent| {
+                            progress_running.set(false);
                             progress_value.set(0);
                         }
                         "Reset"
@@ -117,7 +125,7 @@ pub fn page_animation() -> VirtualNode {
                     class: c_progress_container()
                     div {
                         class: c_progress_bar()
-                        style: {width: format!("{}%", progress_value.get()); transition: "width 0.1s ease"; background: if progress_value.get() >= 100 { "#059669".to_string() } else { "#4f46e5".to_string() }; height: "100%"; border-radius: "999px"; transition: "all 0.3s ease";}
+                        style: { width: format!("{}%", progress_value.get()); transition: "width 0.1s ease"; background: if { progress_value.get() >= 100 } { "#059669".to_string() } else { "#4f46e5".to_string() }; height: "100%"; border-radius: "999px"; transition: "all 0.3s ease"; }
                     }
                 }
                 p {
@@ -138,12 +146,12 @@ pub fn page_animation() -> VirtualNode {
                 }
                 div {
                     class: c_anim_color_box()
-                    style: { background: get_anim_color(color_index.get()); transition: "background 0.5s ease, transform 0.3s ease"; transform: if scale_active.get() { "scale(1.1)" } else { "scale(1)" }; }
+                    style: { background: get_anim_color(color_index.get()); transition: "background 0.5s ease, transform 0.3s ease"; transform: if { scale_active.get() } { "scale(0.85)" } else { "scale(1)" }; }
                     onclick: move |_event: NativeEvent| {
                         let current: bool = scale_active.get();
                         scale_active.set(!current);
                     }
-                    "Click me to scale!"
+                    "Click me to shrink!"
                 }
             }
         }

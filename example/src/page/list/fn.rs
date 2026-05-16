@@ -59,10 +59,10 @@ pub fn page_list() -> VirtualNode {
                 }
                 ul {
                     class: c_list_ul()
-                    for (index, item) in {items.get().iter().enumerate()} {
+                    for (index, item) in { items.get().iter().enumerate() } {
                         li {
                             key: index.to_string()
-                            class: if index % 2 == 0 { c_list_item_even() } else { c_list_item_odd() }
+                            class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
                             span {
                                 class: c_list_item_text()
                                 item.clone()

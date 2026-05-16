@@ -37,10 +37,12 @@ pub(crate) enum HtmlNode {
 
 /// Represents the value side of an attribute.
 ///
-/// Supports plain expressions and style objects with multiple properties.
+/// Supports plain expressions, style objects, and reactive conditionals.
 pub(crate) enum HtmlAttrValue {
     /// A normal Rust expression.
     Expr(Expr),
+    /// A reactive conditional: `if {expr} { value } else if {expr} { value } else { value }`.
+    If(HtmlAttrIf),
     /// A style object: {key: value; key2: value2;}
     /// The value can be either a string literal or an expression.
     Style(Vec<(String, HtmlStylePropValue)>),
@@ -48,10 +50,12 @@ pub(crate) enum HtmlAttrValue {
 
 /// Represents a single value in a style property.
 ///
-/// May be a static string literal or a dynamic expression.
+/// May be a static string literal, a dynamic expression, or a reactive conditional.
 pub(crate) enum HtmlStylePropValue {
     /// A static string literal.
     Literal(String),
     /// A dynamic expression.
     Expr(Expr),
+    /// A reactive conditional: `if {expr} { value } else if {expr} { value } else { value }`.
+    If(HtmlAttrIf),
 }

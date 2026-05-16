@@ -55,7 +55,7 @@ pub fn page_modal() -> VirtualNode {
                     }
                     "Ask Confirm"
                 }
-                if {!confirm_result.get().is_empty()} {
+                if { !confirm_result.get().is_empty() } {
                     div {
                         class: c_success_box()
                         confirm_result
@@ -80,7 +80,7 @@ pub fn page_modal() -> VirtualNode {
                     }
                     "Open Form"
                 }
-                if {!modal_submitted.get().is_empty()} {
+                if { !modal_submitted.get().is_empty() } {
                     div {
                         class: c_success_box()
                         modal_submitted
@@ -89,7 +89,7 @@ pub fn page_modal() -> VirtualNode {
                     ""
                 }
             }
-            if {show_basic.get()} {
+            if { show_basic.get() } {
                 my_modal {
                     title: "Basic Modal"
                     onclick: move |_event: NativeEvent| {
@@ -107,7 +107,7 @@ pub fn page_modal() -> VirtualNode {
             } else {
                 ""
             }
-            if {show_confirm.get()} {
+            if { show_confirm.get() } {
                 my_modal {
                     title: "Confirm Action"
                     onclick: move |_event: NativeEvent| {
@@ -139,7 +139,7 @@ pub fn page_modal() -> VirtualNode {
             } else {
                 ""
             }
-            if {show_form.get()} {
+            if { show_form.get() } {
                 my_modal {
                     title: "Quick Sign Up"
                     onclick: move |_event: NativeEvent| {

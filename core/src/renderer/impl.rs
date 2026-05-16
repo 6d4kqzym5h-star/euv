@@ -500,7 +500,7 @@ impl Renderer {
                 let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
                 placeholder.append_child(&initial_dom).unwrap();
                 let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-                    Rc::clone(&dynamic_node.render_fn);
+                    dynamic_node.render_fn.clone();
                 let placeholder_clone: Element = placeholder.clone();
                 let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
                 renderer_for_sub.set_current_tree(Some(initial_unwrapped));
@@ -514,12 +514,18 @@ impl Renderer {
                         return;
                     }
                     hook_context.reset_hook_index();
-                    let new_vnode: VirtualNode = with_hook_context(hook_context, || {
-                        let mut borrowed = render_fn_for_sub.borrow_mut();
-                        borrowed()
-                    });
-                    let mut renderer = renderer_ref_for_sub.borrow_mut();
-                    renderer.render(new_vnode);
+                    let new_vnode: VirtualNode =
+                        with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
+                    {
+                        let renderer: Ref<'_, Renderer> = renderer_ref_for_sub.borrow();
+                        if let Some(old_vnode) = renderer.try_get_current_tree() {
+                            let new_unwrapped: VirtualNode = renderer.unwrap_component(&new_vnode);
+                            if old_vnode == &new_unwrapped {
+                                return;
+                            }
+                        }
+                    }
+                    renderer_ref_for_sub.borrow_mut().render(new_vnode);
                 }));
                 window
                     .add_event_listener_with_callback(
@@ -624,6 +630,7 @@ impl Renderer {
                             convert_web_event(&event, &event_name_for_closure);
                         active_handler.handle(euv_event);
                     }
+                    event.stop_propagation();
                 }));
             element
                 .add_event_listener_with_callback(&event_name, closure.as_ref().unchecked_ref())

@@ -24,7 +24,7 @@ pub fn primary_button(props: VirtualNode) -> VirtualNode {
     html! {
         button {
             class: c_primary_button()
-            style: {display: "inline-flex"; align-items: "center"; gap: "8px";}
+            style: { display: "inline-flex"; align-items: "center"; gap: "8px"; }
             onclick: onclick_handler
             children_node
         }

@@ -43,6 +43,22 @@ async fn main() -> Result<()> {
         is_building: Mutex::new(false),
         args: args.clone(),
     });
+    let src_path: PathBuf = args.crate_path.join("src");
+    if let Err(error) = tokio::task::spawn_blocking(move || format_dir(&src_path)).await {
+        log::warn!("Initial formatter error: {}", error);
+    }
+    if let Err(error) = run_hyperlane_fmt().await {
+        log::warn!("hyperlane-cli fmt error: {}", error);
+    }
+    match build_wasm(&args).await {
+        Ok(()) => {
+            log::info!("Initial WASM build completed successfully");
+        }
+        Err(error) => {
+            log::error!("Initial WASM build failed: {}", error);
+        }
+    }
+    log::info!(".gitignore can exclude unwanted file change events from triggering rebuilds");
     let state_for_watch: Arc<AppState> = Arc::clone(&state);
     tokio::spawn(async move {
         if let Err(error) = watch_and_build(state_for_watch).await {

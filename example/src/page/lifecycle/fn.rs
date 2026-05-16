@@ -58,11 +58,11 @@ pub fn page_lifecycle() -> VirtualNode {
                 title: "Event Log"
                 div {
                     class: c_log_container()
-                    for (index, log) in {logs.get().iter().enumerate()} {
+                    for (index, log) in { logs.get().iter().enumerate() } {
                         div {
                             key: index.to_string()
                             class: c_log_item()
-                            style: {color: if index == 0 { "#059669".to_string() } else { "#6b7280".to_string() }; font-weight: if index == 0 { "600".to_string() } else { "400".to_string() };}
+                            style: { color: if { index == 0 } { "#059669".to_string() } else { "#6b7280".to_string() }; font-weight: if { index == 0 } { "600".to_string() } else { "400".to_string() }; }
                             log.clone()
                         }
                     }

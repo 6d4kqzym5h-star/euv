@@ -47,12 +47,12 @@ pub fn page_timer() -> VirtualNode {
                     class: c_timer_display()
                     span {
                         class: c_timer_value()
-                        {format_time(stopwatch_seconds.get())}
+                        { format_time(stopwatch_seconds.get()) }
                     }
                 }
                 div {
                     class: c_timer_controls()
-                    if {!stopwatch_running.get()} {
+                    if { !stopwatch_running.get() } {
                         primary_button {
                             label: "Start"
                             onclick: move |_event: NativeEvent| {
@@ -122,12 +122,12 @@ pub fn page_timer() -> VirtualNode {
                     class: c_timer_display()
                     span {
                         class: c_timer_value()
-                        {format_time(countdown_remaining.get())}
+                        { format_time(countdown_remaining.get()) }
                     }
                 }
                 div {
                     class: c_timer_controls()
-                    if {!countdown_running.get()} {
+                    if { !countdown_running.get() } {
                         primary_button {
                             label: "Start"
                             onclick: move |_event: NativeEvent| {
@@ -177,7 +177,7 @@ pub fn page_timer() -> VirtualNode {
                         "Reset"
                     }
                 }
-                if {countdown_remaining.get() == 0 && !countdown_running.get()} {
+                if { countdown_remaining.get() == 0 && !countdown_running.get() } {
                     div {
                         class: c_timer_done()
                         "⏰ Time's up!"

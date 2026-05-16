@@ -23,6 +23,7 @@ euv-example = { path = "example", version = "0.3.1" }
 
 log = "0.4"
 quote = "1.0"
+ignore = "0.4"
 js-sys = "0.3"
 which = "8.0.2"
 anyhow = "1.0.102"
@@ -100,15 +101,12 @@ euv-example = { path = "example" }
 
 [profile.dev]
 incremental = true
-opt-level = "z"
+opt-level = 0
 lto = false
 panic = "unwind"
 debug = false
 codegen-units = 16
 strip = "none"
-
-[profile.dev.package.euv-cli]
-opt-level = 0
 
 [profile.release]
 incremental = false

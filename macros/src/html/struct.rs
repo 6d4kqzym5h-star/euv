@@ -37,6 +37,15 @@ pub(crate) struct HtmlIf {
     pub(crate) branches: Vec<(Option<Expr>, Vec<HtmlNode>)>,
 }
 
+/// Represents a reactive `if` conditional in attribute value position.
+///
+/// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
+pub(crate) struct HtmlAttrIf {
+    /// The list of condition-branch pairs. Each condition is a braced expression.
+    /// The last entry may have `None` as condition (representing `else`).
+    pub(crate) branches: Vec<(Option<Expr>, Expr)>,
+}
+
 /// Represents a reactive `match` expression in HTML.
 ///
 /// Syntax: `match {expr} { pattern => { children } ... }`

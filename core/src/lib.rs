@@ -15,7 +15,7 @@ pub use {component::*, event::*, reactive::*, renderer::*, vdom::*};
 use std::cell::Cell;
 use std::{
     any::Any,
-    cell::{RefCell, RefMut, UnsafeCell},
+    cell::{Ref, RefCell, RefMut, UnsafeCell},
     collections::HashMap,
     ops::{Deref, DerefMut},
     ptr::null_mut,

@@ -1020,11 +1020,11 @@ class! {
         position: "fixed";
         bottom: "20px";
         right: "20px";
-        width: "44px";
-        height: "44px";
-        border-radius: "50%";
-        background: var!(border-console-accent);
-        color: "white";
+        width: "48px";
+        height: "48px";
+        border-radius: "14px";
+        background: var!(bg-console-button);
+        color: var!(text-console-button-text);
         border: "none";
         cursor: "pointer";
         font-size: "18px";
@@ -1033,19 +1033,26 @@ class! {
         align-items: "center";
         justify-content: "center";
         z-index: "9999";
-        box-shadow: "0 4px 14px rgba(79, 70, 229, 0.4)";
-        transition: "transform 0.2s ease, box-shadow 0.2s ease";
+        box-shadow: var!(shadow-console-button);
+        transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease";
         padding: "0";
         line-height: "1";
+        letter-spacing: "-0.02em";
+    }
+
+    pub c_vconsole_button_hover {
+        transform: "scale(1.08)";
+        background: var!(bg-console-button-hover);
+        box-shadow: "0 6px 20px rgba(99, 102, 241, 0.4)";
     }
 
     pub c_vconsole_badge {
         position: "absolute";
-        top: "-4px";
-        right: "-4px";
-        min-width: "18px";
-        height: "18px";
-        border-radius: "9px";
+        top: "-5px";
+        right: "-5px";
+        min-width: "20px";
+        height: "20px";
+        border-radius: "10px";
         background: var!(bg-console-badge);
         color: "white";
         font-size: "11px";
@@ -1055,6 +1062,7 @@ class! {
         justify-content: "center";
         padding: "0 5px";
         line-height: "1";
+        box-shadow: "0 2px 6px rgba(239, 68, 68, 0.3)";
     }
 
     pub c_vconsole_overlay {
@@ -1064,6 +1072,7 @@ class! {
         right: "0";
         bottom: "50vh";
         z-index: "10000";
+        background: "rgba(0, 0, 0, 0.15)";
     }
 
     pub c_vconsole_panel {
@@ -1077,7 +1086,8 @@ class! {
         display: "flex";
         flex-direction: "column";
         border-top: format!("3px solid {}", var!(border-console-accent));
-        border-radius: "12px 12px 0 0";
+        border-radius: "16px 16px 0 0";
+        box-shadow: var!(shadow-console-panel);
         animation: "euv-slide-up 0.25s ease";
         overflow: "hidden";
     }
@@ -1086,7 +1096,7 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: "12px 16px";
+        padding: "14px 20px";
         background: var!(bg-console-header);
         border-bottom: format!("1px solid {}", var!(border-console));
         flex-shrink: "0";
@@ -1094,10 +1104,22 @@ class! {
 
     pub c_vconsole_title {
         color: var!(text-console-title);
-        font-size: "14px";
+        font-size: "15px";
         font-weight: "600";
         margin: "0";
         letter-spacing: "0.03em";
+        display: "flex";
+        align-items: "center";
+        gap: "6px";
+    }
+
+    pub c_vconsole_title_dot {
+        width: "8px";
+        height: "8px";
+        border-radius: "4px";
+        background: var!(text-console-log-latest);
+        display: "inline-block";
+        animation: "euv-pulse 2s ease-in-out infinite";
     }
 
     pub c_vconsole_header_actions {
@@ -1110,23 +1132,37 @@ class! {
         background: "transparent";
         border: format!("1px solid {}", var!(border-console-button));
         color: var!(text-console-button);
-        padding: "4px 12px";
-        border-radius: "4px";
+        padding: "5px 14px";
+        border-radius: "6px";
         cursor: "pointer";
         font-size: "12px";
+        font-weight: "500";
         transition: "all 0.15s ease";
+        letter-spacing: "0.02em";
+    }
+
+    pub c_vconsole_clear_button_hover {
+        border-color: var!(text-console-warn);
+        color: var!(text-console-warn);
+        background: "rgba(251, 191, 36, 0.08)";
     }
 
     pub c_vconsole_close_button {
         background: "transparent";
         border: format!("1px solid {}", var!(border-console-button));
         color: var!(text-console-button);
-        padding: "4px 10px";
-        border-radius: "4px";
+        padding: "5px 12px";
+        border-radius: "6px";
         cursor: "pointer";
         font-size: "16px";
         line-height: "1";
         transition: "all 0.15s ease";
+    }
+
+    pub c_vconsole_close_button_hover {
+        border-color: var!(text-console-close-hover);
+        color: var!(text-console-close-hover);
+        background: var!(bg-console-close-hover);
     }
 
     pub c_vconsole_body {
@@ -1179,20 +1215,21 @@ class! {
     pub c_vconsole_count {
         color: var!(text-console-empty);
         font-size: "12px";
+        font-weight: "400";
     }
 
     pub c_vconsole_filter_bar {
         display: "flex";
         gap: "6px";
-        padding: "8px 16px";
+        padding: "10px 20px";
         background: var!(bg-console-filter);
         border-bottom: format!("1px solid {}", var!(border-console));
         flex-shrink: "0";
     }
 
     pub c_vconsole_filter_button {
-        padding: "3px 10px";
-        border-radius: "4px";
+        padding: "4px 12px";
+        border-radius: "6px";
         background: "transparent";
         border: format!("1px solid {}", var!(border-console-button));
         color: var!(text-console-button);
@@ -1201,11 +1238,12 @@ class! {
         cursor: "pointer";
         letter-spacing: "0.05em";
         text-transform: "uppercase";
+        transition: "all 0.15s ease";
     }
 
     pub c_vconsole_filter_active {
-        padding: "3px 10px";
-        border-radius: "4px";
+        padding: "4px 12px";
+        border-radius: "6px";
         background: var!(bg-console-filter-active);
         border: format!("1px solid {}", var!(border-console-filter-active));
         color: var!(text-console-filter-active);
@@ -1217,8 +1255,8 @@ class! {
     }
 
     pub c_vconsole_filter_active_log {
-        padding: "3px 10px";
-        border-radius: "4px";
+        padding: "4px 12px";
+        border-radius: "6px";
         background: var!(bg-console-badge-log);
         border: format!("1px solid {}", var!(text-console-log-latest));
         color: var!(text-console-log-latest);
@@ -1230,8 +1268,8 @@ class! {
     }
 
     pub c_vconsole_filter_active_warn {
-        padding: "3px 10px";
-        border-radius: "4px";
+        padding: "4px 12px";
+        border-radius: "6px";
         background: var!(bg-console-badge-warn);
         border: format!("1px solid {}", var!(text-console-warn-latest));
         color: var!(text-console-warn-latest);
@@ -1243,8 +1281,8 @@ class! {
     }
 
     pub c_vconsole_filter_active_error {
-        padding: "3px 10px";
-        border-radius: "4px";
+        padding: "4px 12px";
+        border-radius: "6px";
         background: var!(bg-console-badge-error);
         border: format!("1px solid {}", var!(text-console-error-latest));
         color: var!(text-console-error-latest);
@@ -1257,11 +1295,11 @@ class! {
 
     pub c_vconsole_level_badge {
         display: "inline-block";
-        padding: "1px 6px";
-        border-radius: "3px";
+        padding: "2px 7px";
+        border-radius: "4px";
         font-size: "10px";
         font-weight: "600";
-        margin-right: "6px";
+        margin-right: "8px";
         letter-spacing: "0.05em";
         color: "inherit";
     }

@@ -3,7 +3,7 @@ use crate::*;
 /// Represents the type of an HTML tag or a component.
 ///
 /// Distinguishes between standard HTML elements and user-defined components.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Tag {
     /// A standard HTML element identified by its tag name.
     Element(String),
@@ -123,7 +123,7 @@ pub enum AttributeValue {
     /// A dynamic signal-backed value.
     Signal(Signal<String>),
     /// An event handler callback.
-    Event(crate::event::NativeEventHandler),
+    Event(NativeEventHandler),
     /// A dynamic expression value of any type (for component props).
     Dynamic(String),
     /// A CSS class reference created by the `class!` macro.

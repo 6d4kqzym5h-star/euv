@@ -1,5 +1,110 @@
 use crate::*;
 
+/// Visual equality comparison for attribute values.
+///
+/// Compares values by their visual output rather than identity. `Signal`
+/// values are compared by their current resolved string, `Event` values
+/// are always considered equal (re-binding is handled by the handler
+/// registry), and `CssClass` values are compared by class name.
+impl PartialEq for AttributeValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (AttributeValue::Text(a_val), AttributeValue::Text(b_val)) => a_val == b_val,
+            (AttributeValue::Signal(a_sig), AttributeValue::Signal(b_sig)) => {
+                a_sig.get() == b_sig.get()
+            }
+            (AttributeValue::Signal(a_sig), AttributeValue::Text(b_val)) => a_sig.get() == *b_val,
+            (AttributeValue::Text(a_val), AttributeValue::Signal(b_sig)) => *a_val == b_sig.get(),
+            (AttributeValue::Event(_), AttributeValue::Event(_)) => true,
+            (AttributeValue::Css(a_css), AttributeValue::Css(b_css)) => {
+                a_css.get_name() == b_css.get_name()
+            }
+            (AttributeValue::Dynamic(a_dyn), AttributeValue::Dynamic(b_dyn)) => a_dyn == b_dyn,
+            _ => false,
+        }
+    }
+}
+
+/// Visual equality comparison for attribute entries.
+///
+/// Two attribute entries are equal when their names match and their values
+/// are visually equal as defined by `AttributeValue::eq`.
+impl PartialEq for AttributeEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_name() == other.get_name() && self.get_value() == other.get_value()
+    }
+}
+
+/// Visual equality comparison for text nodes.
+///
+/// Only compares the text content; the backing signal is not considered
+/// because it does not affect visual output.
+impl PartialEq for TextNode {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_content() == other.get_content()
+    }
+}
+
+/// Visual equality comparison for CSS classes.
+///
+/// Two CSS classes are considered equal when their class names match,
+/// since the name uniquely identifies the visual style rule.
+impl PartialEq for CssClass {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_name() == other.get_name()
+    }
+}
+
+/// Visual equality comparison for virtual DOM nodes.
+///
+/// Used by DynamicNode re-rendering to skip unnecessary DOM patches when
+/// the rendered output has not changed. Event attributes are always
+/// considered equal because re-binding event listeners is handled
+/// separately by the handler registry and does not affect visual output.
+/// Dynamic nodes manage their own subtree re-rendering, so two Dynamic
+/// variants are always considered equal — the inner renderer handles
+/// patching when the dynamic content actually changes.
+impl PartialEq for VirtualNode {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (VirtualNode::Text(a_text), VirtualNode::Text(b_text)) => a_text == b_text,
+            (
+                VirtualNode::Element {
+                    tag: a_tag,
+                    attributes: a_attrs,
+                    children: a_children,
+                    ..
+                },
+                VirtualNode::Element {
+                    tag: b_tag,
+                    attributes: b_attrs,
+                    children: b_children,
+                    ..
+                },
+            ) => {
+                a_tag == b_tag
+                    && a_attrs.len() == b_attrs.len()
+                    && a_attrs.iter().zip(b_attrs.iter()).all(|(a, b)| a == b)
+                    && a_children.len() == b_children.len()
+                    && a_children
+                        .iter()
+                        .zip(b_children.iter())
+                        .all(|(a, b)| a == b)
+            }
+            (VirtualNode::Fragment(a_children), VirtualNode::Fragment(b_children)) => {
+                a_children.len() == b_children.len()
+                    && a_children
+                        .iter()
+                        .zip(b_children.iter())
+                        .all(|(a, b)| a == b)
+            }
+            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => true,
+            (VirtualNode::Empty, VirtualNode::Empty) => true,
+            _ => false,
+        }
+    }
+}
+
 /// Maps each `Attribute` variant to its corresponding DOM attribute string.
 impl Attribute {
     /// Returns the string representation of this attribute name for DOM binding.

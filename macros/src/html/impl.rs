@@ -268,15 +268,17 @@ impl ToTokens for HtmlNode {
                     };
                     match (i, condition) {
                         (0, Some(cond)) => {
+                            let stripped_cond: &Expr = strip_braces_from_expr(cond);
                             if_chain.extend(quote! {
-                                if #cond {
+                                if #stripped_cond {
                                     #body_expr
                                 }
                             });
                         }
                         (_, Some(cond)) => {
+                            let stripped_cond: &Expr = strip_braces_from_expr(cond);
                             if_chain.extend(quote! {
-                                else if #cond {
+                                else if #stripped_cond {
                                     #body_expr
                                 }
                             });
@@ -306,7 +308,7 @@ impl ToTokens for HtmlNode {
                 }});
             }
             HtmlNode::Match(html_match) => {
-                let scrutinee: &Expr = &html_match.scrutinee;
+                let scrutinee: &Expr = strip_braces_from_expr(&html_match.scrutinee);
                 let arm_tokens: Vec<TokenStream2> = html_match
                     .arms
                     .iter()
@@ -369,6 +371,10 @@ impl ToTokens for HtmlStylePropValue {
         match self {
             HtmlStylePropValue::Literal(s) => s.to_tokens(tokens),
             HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
+            HtmlStylePropValue::If(html_attr_if) => {
+                let if_chain: TokenStream2 = attr_if_to_tokens(html_attr_if);
+                if_chain.to_tokens(tokens);
+            }
         }
     }
 }
@@ -378,6 +384,10 @@ impl ToTokens for HtmlAttrValue {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         match self {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
+            HtmlAttrValue::If(html_attr_if) => {
+                let if_chain: TokenStream2 = attr_if_to_tokens(html_attr_if);
+                if_chain.to_tokens(tokens);
+            }
             HtmlAttrValue::Style(props) => {
                 let prop_tokens: Vec<TokenStream2> = props
                     .iter()
@@ -407,6 +417,105 @@ impl ToTokens for HtmlElement {
                 HtmlAttrValue::Style(_) => {
                     let style_expr: TokenStream2 = quote! { #value };
                     quote! { euv_core::AttributeValue::Text(#style_expr) }
+                }
+                HtmlAttrValue::If(html_attr_if) => {
+                    let if_chain: TokenStream2 = attr_if_to_tokens(html_attr_if);
+                    let value_expr: TokenStream2 = if_chain;
+                    if let Some(event_name_str) = key_str.strip_prefix("on") {
+                        let event_name_ident: Ident = syn::Ident::new(
+                            &camel_case_event_name(event_name_str),
+                            proc_macro2::Span::call_site(),
+                        );
+                        quote! {
+                            {
+                                let __expr = #value_expr;
+                                let __attr_value: ::euv_core::AttributeValue = {
+                                    struct __EventWrapper<F>(F);
+                                    impl<F> __EventWrapper<F>
+                                    where
+                                        F: FnMut(euv_core::NativeEvent) + 'static,
+                                    {
+                                        fn into_attr(self, name: ::euv_core::NativeEventName) -> ::euv_core::AttributeValue {
+                                            ::euv_core::AttributeValue::Event(::euv_core::NativeEventHandler::new(name, self.0))
+                                        }
+                                    }
+                                    impl __EventWrapper<::euv_core::NativeEventHandler> {
+                                        fn into_attr(self, _name: ::euv_core::NativeEventName) -> ::euv_core::AttributeValue {
+                                            ::euv_core::AttributeValue::Event(self.0)
+                                        }
+                                    }
+                                    impl __EventWrapper<Option<::euv_core::NativeEventHandler>> {
+                                        fn into_attr(self, _name: ::euv_core::NativeEventName) -> ::euv_core::AttributeValue {
+                                            match self.0 {
+                                                Some(handler) => ::euv_core::AttributeValue::Event(handler),
+                                                None => ::euv_core::AttributeValue::Text(String::new()),
+                                            }
+                                        }
+                                    }
+                                    __EventWrapper(__expr).into_attr(::euv_core::NativeEventName::#event_name_ident)
+                                };
+                                __attr_value
+                            }
+                        }
+                    } else if key_str == "children" {
+                        quote! { euv_core::AttributeValue::Dynamic(Box::new(#value_expr)) }
+                    } else {
+                        quote! {
+                            {
+                                let __expr = #value_expr;
+                                trait __IfIsClosure {
+                                    fn __convert_closure(self) -> euv_core::AttributeValue;
+                                }
+                                impl __IfIsClosure for euv_core::NativeEventHandler {
+                                    fn __convert_closure(self) -> euv_core::AttributeValue {
+                                        euv_core::AttributeValue::Event(self)
+                                    }
+                                }
+                                impl __IfIsClosure for Option<euv_core::NativeEventHandler> {
+                                    fn __convert_closure(self) -> euv_core::AttributeValue {
+                                        match self {
+                                            Some(handler) => euv_core::AttributeValue::Event(handler),
+                                            None => euv_core::AttributeValue::Text(String::new()),
+                                        }
+                                    }
+                                }
+                                impl<F: FnMut(euv_core::NativeEvent) + 'static> __IfIsClosure for F {
+                                    fn __convert_closure(self) -> euv_core::AttributeValue {
+                                        self.into_callback_attribute()
+                                    }
+                                }
+                                struct __IfClosurePicker<T>(T);
+                                impl<T: __IfIsClosure> __IfClosurePicker<T> {
+                                    fn __pick_closure(self) -> euv_core::AttributeValue {
+                                        self.0.__convert_closure()
+                                    }
+                                }
+                                struct __IfValuePicker<T>(T);
+                                impl<T: ::euv_core::IntoReactiveValue> __IfValuePicker<T> {
+                                    fn __pick_value(self) -> euv_core::AttributeValue {
+                                        self.0.into_reactive_value()
+                                    }
+                                }
+                                trait __IfFallbackHelper<T> {
+                                    fn __pick(self) -> euv_core::AttributeValue;
+                                }
+                                impl<T: ::euv_core::IntoReactiveValue> __IfFallbackHelper<T> for __IfValuePicker<T> {
+                                    fn __pick(self) -> euv_core::AttributeValue {
+                                        self.__pick_value()
+                                    }
+                                }
+                                impl<T: __IfIsClosure> __IfFallbackHelper<T> for __IfClosurePicker<T> {
+                                    fn __pick(self) -> euv_core::AttributeValue {
+                                        self.__pick_closure()
+                                    }
+                                }
+                                fn __if_dispatch<T, P: __IfFallbackHelper<T>>(picker: P) -> euv_core::AttributeValue {
+                                    picker.__pick()
+                                }
+                                __if_dispatch::<_, __IfValuePicker<_>>(__IfValuePicker(__expr))
+                            }
+                        }
+                    }
                 }
                 HtmlAttrValue::Expr(expr) => {
                     let value_expr: TokenStream2 = quote! { #expr };
