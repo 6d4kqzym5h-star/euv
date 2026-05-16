@@ -28,7 +28,7 @@ pub fn my_badge(props: VirtualNode) -> VirtualNode {
         html! {
             span {
                 class: c_badge_outline()
-                style: {color: {color}; border_color: {border_color};}
+                style: {color: {color}; border-color: {border_color};}
                 onclick: on_click
                 text_prop
             }

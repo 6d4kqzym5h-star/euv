@@ -42,3 +42,26 @@ pub fn link_handler(route: String) -> NativeEventHandler {
         navigate(&route);
     })
 }
+
+/// Subscribes to browser `hashchange` events and updates the given signal.
+///
+/// Registers a global event listener on `window` that reads the current
+/// route on every hash change and writes it into the provided signal.
+/// The closure is leaked via `Closure::forget` so it persists for the
+/// entire application lifetime.
+///
+/// # Arguments
+///
+/// - `Signal<String>`: The reactive signal that holds the current route and will be updated on each hash change.
+pub fn use_hash_change(route_signal: Signal<String>) {
+    let window: Window = window().expect("no global window exists");
+    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let new_route: String = current_route();
+        route_signal.set(new_route);
+    }));
+    let _ = window.add_event_listener_with_callback(
+        &NativeEventName::HashChange.to_string(),
+        closure.as_ref().unchecked_ref(),
+    );
+    closure.forget();
+}

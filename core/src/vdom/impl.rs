@@ -437,10 +437,13 @@ impl StyleProperty {
 /// Implementation of CssClass construction and style injection.
 impl CssClass {
     /// Creates a new CSS class with the given name and style declarations.
+    ///
+    /// Automatically injects the styles into the DOM upon creation.
     pub fn new(name: String, style: String) -> Self {
         let mut css_class: CssClass = CssClass::default();
         css_class.set_name(name);
         css_class.set_style(style);
+        css_class.inject_style();
         css_class
     }
 

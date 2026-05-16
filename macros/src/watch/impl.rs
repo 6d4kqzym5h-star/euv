@@ -102,9 +102,9 @@ impl ToTokens for WatchInput {
             .collect();
         tokens.extend(quote! {{
             #(let #signal_clones = #signal_exprs;)*
-            let __euv_watch_subscribed: euv_core::reactive::Signal<bool> = euv_core::reactive::use_signal(|| false);
+            let __euv_watch_subscribed: euv_core::Signal<bool> = euv_core::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
-                euv_core::reactive::with_suppressed_updates(|| {
+                euv_core::with_suppressed_updates(|| {
                     #(#subscribe_calls)*
                     {
                         #(let #param_names = #get_calls;)*

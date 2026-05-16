@@ -32,6 +32,10 @@ impl ServerHook for ResponseMiddleware {
 }
 
 /// Implementation of server hook for index route.
+///
+/// When the request targets `index.html`, returns the in-memory HTML
+/// that has the live-reload script injected. For all other files the
+/// handler reads the content from disk.
 impl ServerHook for IndexRoute {
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
@@ -51,6 +55,13 @@ impl ServerHook for IndexRoute {
                 return Status::Continue;
             }
         };
+        if path.is_empty() || path == "index.html" {
+            let html: String = state.html_content.read().await.clone();
+            ctx.get_mut_response()
+                .set_body(&html)
+                .set_header(CONTENT_TYPE, TEXT_HTML);
+            return Status::Continue;
+        }
         let www_absolute: PathBuf = if state.args.www_dir.is_absolute() {
             state.args.www_dir.clone()
         } else {
@@ -95,9 +106,9 @@ impl ServerHook for IndexRoute {
 
 /// Implementation of server hook for reload route.
 ///
-/// Uses SSE-style long-polling: keeps the HTTP connection open until
-/// a reload event is broadcast, then returns "reload" so the client
-/// can refresh the page and immediately reconnect.
+/// Uses long-polling: holds the connection open until a reload event
+/// is broadcast, then returns a single JSON response so the client
+/// can distinguish between a successful rebuild and an error.
 impl ServerHook for ReloadRoute {
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
@@ -113,14 +124,22 @@ impl ServerHook for ReloadRoute {
                 return Status::Continue;
             }
         };
-        let mut rx: broadcast::Receiver<()> = state.reload_tx.subscribe();
-        let result: String = match rx.recv().await {
-            Ok(()) => "reload".to_string(),
-            Err(_) => "error".to_string(),
+        let mut rx: broadcast::Receiver<ReloadEvent> = state.reload_tx.subscribe();
+        let event: ReloadEvent = match rx.recv().await {
+            Ok(event) => event,
+            Err(_) => {
+                ctx.get_mut_response().set_status_code(503);
+                return Status::Continue;
+            }
         };
-        ctx.get_mut_response()
-            .set_header("Content-Type", "text/plain")
-            .set_body(&result);
+        let body: String = match serde_json::to_string(&event) {
+            Ok(json) => json,
+            Err(_) => {
+                ctx.get_mut_response().set_status_code(500);
+                return Status::Continue;
+            }
+        };
+        ctx.get_mut_response().set_body(&body);
         Status::Continue
     }
 }

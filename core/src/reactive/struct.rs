@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// This struct is not exposed directly; use `Signal` instead.
 #[derive(Data)]
-pub struct SignalInner<T>
+pub(crate) struct SignalInner<T>
 where
     T: Clone,
 {
@@ -29,7 +29,22 @@ pub struct Signal<T>
 where
     T: Clone + PartialEq,
 {
+    /// Raw pointer to the heap-allocated signal inner state.
     pub(crate) inner: *mut SignalInner<T>,
+}
+
+/// A `Sync` wrapper for single-threaded global `Signal` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+pub struct SignalCell<T>
+where
+    T: Clone + PartialEq,
+{
+    /// Interior-mutable storage for an optional signal handle.
+    pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }
 
 /// Internal storage for hook state, holding boxed `Any` values and an index.
@@ -58,6 +73,7 @@ pub struct HookContextInner {
 /// entire program. This is safe in single-threaded WASM contexts where no
 /// concurrent access can occur.
 pub struct HookContext {
+    /// Raw pointer to the heap-allocated hook context inner state.
     pub(crate) inner: *mut HookContextInner,
 }
 
@@ -67,4 +83,7 @@ pub struct HookContext {
 /// (e.g., WASM). It implements `Sync` to allow usage as a `static`
 /// variable, but concurrent access from multiple threads would be
 /// undefined behavior.
-pub struct HookContextCell(pub(crate) UnsafeCell<HookContextInner>);
+pub struct HookContextCell(
+    /// Interior-mutable storage for the hook context inner state.
+    pub(crate) UnsafeCell<HookContextInner>,
+);

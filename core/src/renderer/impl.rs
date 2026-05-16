@@ -3,6 +3,10 @@ use crate::*;
 /// Implementation of the virtual DOM renderer.
 impl Renderer {
     /// Renders the given virtual DOM tree into the real DOM.
+    ///
+    /// # Arguments
+    ///
+    /// - `VirtualNode`: The virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         if let Some(old_vnode) = self.try_get_current_tree() {
@@ -602,7 +606,6 @@ impl Renderer {
         };
         let event_name: String = handler.get_event_name().clone();
         let key: (usize, String) = (euv_id, event_name.clone());
-        // SAFETY: WASM is single-threaded; no concurrent access to HANDLER_REGISTRY.
         let registry: &mut HashMap<(usize, String), Rc<RefCell<Option<NativeEventHandler>>>> =
             get_handler_registry();
         if let Some(existing_wrapper) = registry.get(&key) {

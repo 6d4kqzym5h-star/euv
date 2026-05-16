@@ -33,7 +33,7 @@ pub struct AppState {
     /// The generated HTML with injected reload script.
     pub html_content: tokio::sync::RwLock<String>,
     /// Broadcast channel for reload events.
-    pub reload_tx: tokio::sync::broadcast::Sender<()>,
+    pub reload_tx: tokio::sync::broadcast::Sender<ReloadEvent>,
     /// Whether a build is currently in progress.
     pub is_building: tokio::sync::Mutex<bool>,
     /// CLI arguments.
@@ -43,7 +43,7 @@ pub struct AppState {
 /// Request middleware.
 pub struct RequestMiddleware;
 
-/// Response middleware
+/// Response middleware.
 pub struct ResponseMiddleware;
 
 /// Route handler for the root path serving the injected development HTML.

@@ -1,5 +1,17 @@
 use crate::*;
 
+/// Represents the root of an `html!` macro invocation.
+///
+/// Contains zero or more top-level HTML nodes. The generated output depends
+/// on the number of children:
+/// - 0 nodes → `VirtualNode::Empty`
+/// - 1 node → the node's token stream directly
+/// - N nodes → `VirtualNode::Fragment(vec![...])`
+pub(crate) struct HtmlRoot {
+    /// The top-level nodes parsed from the macro input.
+    pub(crate) children: Vec<HtmlNode>,
+}
+
 /// Represents a reactive `for` loop in HTML.
 ///
 /// Syntax: `for pattern in {expr} { children }`

@@ -326,7 +326,7 @@ pub fn page_event() -> VirtualNode {
             my_card {
                 title: "Mouse Over/Out Events"
                 div {
-                    style: {display: "flex"; gap: "16px"; flex_wrap: "wrap";}
+                    style: {display: "flex"; gap: "16px"; flex-wrap: "wrap";}
                     div {
                         class: c_event_drag_zone()
                         onmouse_over: move |_event: NativeEvent| {

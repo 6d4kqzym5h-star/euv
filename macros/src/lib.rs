@@ -1,24 +1,28 @@
-//! euv Macros
+//! euv_macros
 //!
 //! Procedural macros for the euv UI framework, including the `html!` macro
 //! for declarative UI syntax, the `class!` macro for CSS class definitions,
-//! and the `component` attribute macro.
+//! the `css_vars!` macro for CSS custom properties, the `watch!` macro for
+//! reactive side effects, and the `component` attribute macro.
 
 mod class;
+mod css_vars;
 mod html;
+mod kebab;
+mod var;
 mod watch;
 
-pub(crate) use {class::*, html::*, watch::*};
+pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
 
 use {
     proc_macro::TokenStream,
     proc_macro2::TokenStream as TokenStream2,
     quote::{ToTokens, quote},
     syn::{
-        Expr, Ident, LitStr, Result as SynResult, Token, braced,
+        Expr, Ident, LitStr, Result as SynResult, Token, Type as SynType, Visibility, braced,
         parse::{Parse, ParseStream},
         parse_macro_input,
-        token::{Colon, Semi},
+        token::{Colon, Paren, Semi},
     },
 };
 
@@ -90,6 +94,51 @@ pub fn class(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn watch(input: TokenStream) -> TokenStream {
     watch::parse_watch(input)
+}
+
+/// The `css_vars!` macro for defining CSS custom properties.
+///
+/// Each variable block creates a `CssClass` function that, when called,
+/// injects the CSS custom properties into the DOM. Variable names are
+/// automatically prefixed with `--`.
+///
+/// Variable names can be written as unquoted kebab-case identifiers
+/// (e.g., `bg-primary`) or as quoted string literals (e.g., `"bg-primary"`).
+///
+/// ```ignore
+/// css_vars! {
+///     pub c_theme_light {
+///         bg-primary: "#f8f9fb";
+///         text-primary: "#1a1a2e";
+///     }
+/// }
+/// ```
+#[proc_macro]
+pub fn css_vars(input: TokenStream) -> TokenStream {
+    css_vars::parse_css_vars(input)
+}
+
+/// The `var!` macro for referencing CSS custom properties defined via `css_vars!`.
+///
+/// The variable name can be written as an unquoted kebab-case identifier
+/// (e.g., `bg-primary`) or as a quoted string literal (e.g., `"bg-primary"`),
+/// and expands to the CSS string `"var(--bg-primary)"`.
+///
+/// ```ignore
+/// css_vars! {
+///     pub c_theme {
+///         bg-primary: "#f8f9fb";
+///     }
+/// }
+/// class! {
+///     pub c_container {
+///         background: var!(bg-primary);
+///     }
+/// }
+/// ```
+#[proc_macro]
+pub fn var(input: TokenStream) -> TokenStream {
+    var::parse_var(input)
 }
 
 /// The `component` attribute macro for marking component functions.

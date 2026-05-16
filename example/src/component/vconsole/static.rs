@@ -1,8 +1,7 @@
 use crate::*;
 
-/// Global static pointer to the Console log signal.
+/// Global storage for the Console log signal.
 ///
-/// Initialized lazily via `init_console` and never freed.
-/// Safe in single-threaded WASM contexts.
-pub(crate) static mut CONSOLE_LOG_SIGNAL: *mut SignalInner<Vec<ConsoleEntry>> =
-    std::ptr::null_mut();
+/// Initialized via `init_console` and accessed through `get_console_signal`.
+/// Uses `SignalCell` for safe single-threaded WASM contexts without raw pointers.
+pub(crate) static CONSOLE_LOG_SIGNAL: SignalCell<Vec<ConsoleEntry>> = SignalCell::new();

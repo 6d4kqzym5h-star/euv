@@ -43,7 +43,7 @@ pub(crate) enum HtmlAttrValue {
     Expr(Expr),
     /// A style object: {key: value; key2: value2;}
     /// The value can be either a string literal or an expression.
-    Style(Vec<(Ident, HtmlStylePropValue)>),
+    Style(Vec<(String, HtmlStylePropValue)>),
 }
 
 /// Represents a single value in a style property.

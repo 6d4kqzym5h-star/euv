@@ -36,23 +36,11 @@ pub fn app() -> VirtualNode {
     let panel_open: Signal<bool> = use_signal(|| false);
     let theme_state: ThemeState = use_theme();
     let theme_signal: Signal<String> = theme_state.theme;
-    let theme_style_signal: Signal<String> = theme_state.style;
-    let window: Window = window().expect("no global window exists");
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let new_route: String = current_route();
-        route_signal.set(new_route);
-    }));
-    window
-        .add_event_listener_with_callback(
-            &NativeEventName::HashChange.to_string(),
-            closure.as_ref().unchecked_ref(),
-        )
-        .unwrap();
-    closure.forget();
+    let root_class_signal: Signal<String> = theme_state.root_class;
+    use_hash_change(route_signal);
     html! {
         div {
-            class: c_app_root()
-            style: theme_style_signal
+            class: root_class_signal
             nav {
                 class: c_app_nav()
                 h2 {
@@ -87,14 +75,7 @@ pub fn app() -> VirtualNode {
                     class: c_nav_theme_toggle()
                     button {
                         class: c_nav_theme_button()
-                        onclick: move |_event: NativeEvent| {
-                            let current: String = theme_signal.get();
-                            if current == "light" {
-                                theme_signal.set("dark".to_string());
-                            } else {
-                                theme_signal.set("light".to_string());
-                            }
-                        }
+                        onclick: toggle_theme(theme_signal)
                         if {theme_signal.get() == "dark"} {
                             "☀"
                         } else {

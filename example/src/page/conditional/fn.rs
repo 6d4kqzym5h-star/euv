@@ -114,17 +114,17 @@ pub fn page_conditional() -> VirtualNode {
                 div {
                     class: c_tab_bar()
                     div {
-                        style: {padding: "10px 20px"; cursor: "pointer"; border_bottom: {if tab.get() == "info" { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() }}; color: {if tab.get() == "info" { "#4f46e5".to_string() } else { "inherit".to_string() }}; background: {if tab.get() == "info" { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() }}; border_radius: "6px 6px 0 0"; font_size: "14px"; font_weight: "500";}
+                        style: {padding: "10px 20px"; cursor: "pointer"; border-bottom: {if tab.get() == "info" { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() }}; color: {if tab.get() == "info" { "#4f46e5".to_string() } else { "inherit".to_string() }}; background: {if tab.get() == "info" { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() }}; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500";}
                         onclick: move |_event: NativeEvent| { tab.set("info".to_string()); }
                         "Info"
                     }
                     div {
-                        style: {padding: "10px 20px"; cursor: "pointer"; border_bottom: {if tab.get() == "settings" { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() }}; color: {if tab.get() == "settings" { "#4f46e5".to_string() } else { "inherit".to_string() }}; background: {if tab.get() == "settings" { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() }}; border_radius: "6px 6px 0 0"; font_size: "14px"; font_weight: "500";}
+                        style: {padding: "10px 20px"; cursor: "pointer"; border-bottom: {if tab.get() == "settings" { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() }}; color: {if tab.get() == "settings" { "#4f46e5".to_string() } else { "inherit".to_string() }}; background: {if tab.get() == "settings" { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() }}; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500";}
                         onclick: move |_event: NativeEvent| { tab.set("settings".to_string()); }
                         "Settings"
                     }
                     div {
-                        style: {padding: "10px 20px"; cursor: "pointer"; border_bottom: {if tab.get() == "about" { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() }}; color: {if tab.get() == "about" { "#4f46e5".to_string() } else { "inherit".to_string() }}; background: {if tab.get() == "about" { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() }}; border_radius: "6px 6px 0 0"; font_size: "14px"; font_weight: "500";}
+                        style: {padding: "10px 20px"; cursor: "pointer"; border-bottom: {if tab.get() == "about" { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() }}; color: {if tab.get() == "about" { "#4f46e5".to_string() } else { "inherit".to_string() }}; background: {if tab.get() == "about" { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() }}; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500";}
                         onclick: move |_event: NativeEvent| { tab.set("about".to_string()); }
                         "About"
                     }

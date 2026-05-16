@@ -4,12 +4,13 @@
 //! server with hot reload and wasm-pack integration.
 
 mod r#const;
+mod r#enum;
 mod r#fn;
 mod r#impl;
 mod r#static;
 mod r#struct;
 
-use {r#const::*, r#fn::*, r#static::*, r#struct::*};
+use {r#const::*, r#enum::*, r#fn::*, r#static::*, r#struct::*};
 
 use std::{
     net::SocketAddr,
@@ -23,10 +24,14 @@ use {
     clap::Parser,
     hyperlane::*,
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
+    serde::Serialize,
     tokio::{
         fs,
         process::Command,
-        sync::{Mutex, RwLock, broadcast},
+        sync::{
+            Mutex, MutexGuard, RwLock, RwLockWriteGuard, broadcast,
+            mpsc::{Receiver, Sender, channel},
+        },
         time::{Duration, sleep},
     },
 };
@@ -45,7 +50,10 @@ async fn main() -> Result<()> {
     };
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute);
     let initial_html: String = generate_dev_html(&www_absolute).await?;
-    let (reload_tx, _): (broadcast::Sender<()>, broadcast::Receiver<()>) = broadcast::channel(16);
+    let (reload_tx, _): (
+        broadcast::Sender<ReloadEvent>,
+        broadcast::Receiver<ReloadEvent>,
+    ) = broadcast::channel(16);
     let state: Arc<AppState> = Arc::new(AppState {
         html_content: RwLock::new(initial_html),
         reload_tx: reload_tx.clone(),
@@ -74,7 +82,9 @@ async fn main() -> Result<()> {
         };
         let normalized: PathBuf = combined
             .components()
-            .filter(|c: &std::path::Component| !matches!(c, std::path::Component::CurDir))
+            .filter(|component: &std::path::Component| {
+                !matches!(component, std::path::Component::CurDir)
+            })
             .collect();
         normalized.to_string_lossy().replace('\\', "/")
     };
@@ -91,7 +101,7 @@ async fn main() -> Result<()> {
     let server_control_hook: ServerControlHook = server
         .run()
         .await
-        .map_err(|e: ServerError| anyhow::Error::msg(e.to_string()))?;
+        .map_err(|error: ServerError| anyhow::Error::msg(error.to_string()))?;
     server_control_hook.wait().await;
     Ok(())
 }

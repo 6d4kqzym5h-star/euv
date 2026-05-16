@@ -59,18 +59,6 @@ pub(crate) fn schedule_signal_update() {
     }
 }
 
-/// Dispatches the global `__euv_signal_update__` event on the window.
-///
-/// This is the public entry point for manually triggering a signal update
-/// cycle, which causes all `DynamicNode` instances to re-render.
-///
-/// # Panics
-///
-/// Panics if `Event::new("__euv_signal_update__")` fails.
-pub fn trigger_update() {
-    schedule_signal_update();
-}
-
 /// Executes a closure with signal update scheduling suppressed.
 ///
 /// Any `schedule_signal_update()` calls that occur within the closure
@@ -129,14 +117,11 @@ pub fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    // SAFETY: WASM is single-threaded; no data race on CURRENT_HOOK_CONTEXT.
     let previous: *mut HookContextInner = unsafe { CURRENT_HOOK_CONTEXT };
-    // SAFETY: Same as above.
     unsafe {
         CURRENT_HOOK_CONTEXT = context.inner;
     }
     let result: R = f();
-    // SAFETY: Same as above.
     unsafe {
         CURRENT_HOOK_CONTEXT = previous;
     }

@@ -77,7 +77,7 @@ pub(crate) async fn update_html(state: &AppState) -> Result<()> {
     let www_absolute = resolve_www_dir(&www_absolute);
 
     let new_html: String = generate_dev_html(&www_absolute).await?;
-    let mut html: tokio::sync::RwLockWriteGuard<String> = state.html_content.write().await;
+    let mut html: RwLockWriteGuard<String> = state.html_content.write().await;
     *html = new_html;
     Ok(())
 }
@@ -148,12 +148,7 @@ pub(crate) fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
 pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
     let crate_path: PathBuf = state.args.crate_path.clone();
     let src_path: PathBuf = crate_path.join("src");
-
-    let (tx, mut rx): (
-        tokio::sync::mpsc::Sender<Event>,
-        tokio::sync::mpsc::Receiver<Event>,
-    ) = tokio::sync::mpsc::channel(32);
-
+    let (tx, mut rx): (Sender<Event>, Receiver<Event>) = channel(32);
     let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
         move |result: Result<Event, notify::Error>| {
             if let Ok(event) = result {
@@ -162,18 +157,15 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
         },
         Config::default(),
     )?;
-
     watcher.watch(&src_path, RecursiveMode::Recursive)?;
     println!("Watching {} for changes...", src_path.display());
-
     let mut debounce: tokio::time::Interval = tokio::time::interval(Duration::from_millis(500));
     debounce.tick().await;
-
     while let Some(_event) = rx.recv().await {
         debounce.reset();
         sleep(Duration::from_millis(300)).await;
 
-        let mut building: tokio::sync::MutexGuard<bool> = state.is_building.lock().await;
+        let mut building: MutexGuard<bool> = state.is_building.lock().await;
         if *building {
             continue;
         }
@@ -188,14 +180,16 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
                     if let Err(error) = update_html(&state_for_build).await {
                         eprintln!("Failed to update HTML: {}", error);
                     }
-                    let _ = state_for_build.reload_tx.send(());
+                    let _ = state_for_build.reload_tx.send(ReloadEvent::Reload);
                 }
                 Err(error) => {
                     eprintln!("WASM build failed: {}", error);
+                    let _ = state_for_build
+                        .reload_tx
+                        .send(ReloadEvent::Error(error.to_string()));
                 }
             }
-            let mut building: tokio::sync::MutexGuard<bool> =
-                state_for_build.is_building.lock().await;
+            let mut building: MutexGuard<bool> = state_for_build.is_building.lock().await;
             *building = false;
         });
     }

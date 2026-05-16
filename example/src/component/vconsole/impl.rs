@@ -78,12 +78,7 @@ impl Console {
     ///
     /// Panics if `init_console` has not been called.
     fn get_signal() -> Signal<Vec<ConsoleEntry>> {
-        unsafe {
-            if CONSOLE_LOG_SIGNAL.is_null() {
-                panic!("init_console must be called before Console operations");
-            }
-            Signal::from_inner(CONSOLE_LOG_SIGNAL)
-        }
+        CONSOLE_LOG_SIGNAL.get()
     }
 
     /// Appends an entry to the vConsole log signal, trimming if over capacity.

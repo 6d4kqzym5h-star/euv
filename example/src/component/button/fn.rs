@@ -16,7 +16,7 @@ pub fn primary_button(props: VirtualNode) -> VirtualNode {
     let children: Vec<VirtualNode> = props.get_children();
     let onclick_handler: Option<NativeEventHandler> = props.try_get_event(&NativeEventName::Click);
     let display_children: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(vdom::TextNode::new(label, None))]
+        vec![VirtualNode::Text(TextNode::new(label, None))]
     } else {
         children
     };
@@ -24,7 +24,7 @@ pub fn primary_button(props: VirtualNode) -> VirtualNode {
     html! {
         button {
             class: c_primary_button()
-            style: {display: "inline-flex"; align_items: "center"; gap: "8px";}
+            style: {display: "inline-flex"; align-items: "center"; gap: "8px";}
             onclick: onclick_handler
             children_node
         }

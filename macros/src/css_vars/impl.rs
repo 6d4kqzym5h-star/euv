@@ -1,21 +1,21 @@
 use crate::*;
 
-/// Parses the `class!` macro input.
-impl Parse for ClassInput {
+/// Parses the `css_vars!` macro input.
+impl Parse for CssVarInput {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let mut classes: Vec<ClassDef> = Vec::new();
+        let mut defs: Vec<CssVarDef> = Vec::new();
         while !input.is_empty() {
-            let visibility: syn::Visibility = input.parse()?;
+            let visibility: Visibility = input.parse()?;
             let name: Ident = input.parse()?;
-            let params: Option<Vec<ClassParam>> = if input.peek(syn::token::Paren) {
+            let params: Option<Vec<CssVarParam>> = if input.peek(Paren) {
                 let param_content;
                 syn::parenthesized!(param_content in input);
-                let mut param_list: Vec<ClassParam> = Vec::new();
+                let mut param_list: Vec<CssVarParam> = Vec::new();
                 while !param_content.is_empty() {
                     let param_name: Ident = param_content.parse()?;
                     param_content.parse::<Token![:]>()?;
-                    let ty: syn::Type = param_content.parse()?;
-                    param_list.push(ClassParam {
+                    let ty: SynType = param_content.parse()?;
+                    param_list.push(CssVarParam {
                         name: param_name,
                         ty,
                     });
@@ -29,33 +29,39 @@ impl Parse for ClassInput {
             };
             let content;
             braced!(content in input);
-            let mut properties: Vec<(String, ClassPropValue)> = Vec::new();
+            let mut vars: Vec<(String, CssVarValue)> = Vec::new();
             while !content.is_empty() {
-                let css_key: String = parse_kebab_name(&content)?;
+                let var_name: String = parse_kebab_name(&content)?;
+                let css_key: String = format!("--{}", var_name);
                 content.parse::<Token![:]>()?;
-                let expr: Expr = content.parse()?;
-                let expanded: TokenStream2 = expand_var_macros(&expr);
-                let prop_value: ClassPropValue = ClassPropValue::Expr(expanded);
-                properties.push((css_key, prop_value));
+                let var_value: CssVarValue = {
+                    let expr: Expr = content.parse()?;
+                    CssVarValue::Expr(expr.into_token_stream())
+                };
+                vars.push((css_key, var_value));
                 if content.peek(Semi) {
                     content.parse::<Semi>()?;
                 }
             }
-            classes.push(ClassDef {
+            defs.push(CssVarDef {
                 visibility,
                 name,
                 params,
-                properties,
+                vars,
             });
         }
-        Ok(ClassInput { classes })
+        Ok(CssVarInput { defs })
     }
 }
 
-/// Converts a `ClassDef` into token stream generating a `euv_core::CssClass` function.
-impl ToTokens for ClassDef {
+/// Converts a `CssVarDef` into token stream generating a `euv_core::CssClass` function.
+///
+/// Each CSS variable block becomes a `CssClass` function that, when called, injects
+/// the CSS custom properties into the DOM and returns a reference to the class.
+/// The CSS key names are prefixed with `--`.
+impl ToTokens for CssVarDef {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        let vis: &syn::Visibility = &self.visibility;
+        let vis: &Visibility = &self.visibility;
         let name: &Ident = &self.name;
         let class_name_str: String = name.to_string();
         match &self.params {
@@ -64,17 +70,17 @@ impl ToTokens for ClassDef {
                     .iter()
                     .map(|param| {
                         let param_name: &Ident = &param.name;
-                        let ty: &syn::Type = &param.ty;
+                        let ty: &SynType = &param.ty;
                         quote! { #param_name: #ty }
                     })
                     .collect();
                 let param_names: Vec<&Ident> = params.iter().map(|p| &p.name).collect();
                 let css_string_parts: Vec<TokenStream2> = self
-                    .properties
+                    .vars
                     .iter()
                     .map(|(key, value)| match value {
-                        ClassPropValue::Expr(expr) => {
-                            quote! { #key.to_string() + ": " + &(#expr) + "; " }
+                        CssVarValue::Expr(expr) => {
+                            quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
                         }
                     })
                     .collect();
@@ -88,10 +94,10 @@ impl ToTokens for ClassDef {
             }
             None => {
                 let css_string_parts: Vec<TokenStream2> = self
-                    .properties
+                    .vars
                     .iter()
                     .map(|(key, value)| match value {
-                        ClassPropValue::Expr(expr) => {
+                        CssVarValue::Expr(expr) => {
                             quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
                         }
                     })
@@ -112,11 +118,11 @@ impl ToTokens for ClassDef {
     }
 }
 
-/// Converts a `ClassInput` into a token stream of `CssClass` function definitions.
-impl ToTokens for ClassInput {
+/// Converts a `CssVarInput` into a token stream of `CssClass` function definitions.
+impl ToTokens for CssVarInput {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        for class_def in &self.classes {
-            class_def.to_tokens(tokens);
+        for css_var_def in &self.defs {
+            css_var_def.to_tokens(tokens);
         }
     }
 }

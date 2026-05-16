@@ -22,7 +22,7 @@ pub(crate) struct ClassDef {
     /// Optional parameter list for a parameterized class.
     pub(crate) params: Option<Vec<ClassParam>>,
     /// The style properties for this class.
-    pub(crate) properties: Vec<(Ident, ClassPropValue)>,
+    pub(crate) properties: Vec<(String, ClassPropValue)>,
 }
 
 /// The entire `class!` macro input, containing multiple class definitions.

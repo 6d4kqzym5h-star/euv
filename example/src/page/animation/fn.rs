@@ -117,7 +117,7 @@ pub fn page_animation() -> VirtualNode {
                     class: c_progress_container()
                     div {
                         class: c_progress_bar()
-                        style: {width: format!("{}%", progress_value.get()); transition: "width 0.1s ease"; background: if progress_value.get() >= 100 { "#059669".to_string() } else { "#4f46e5".to_string() }; height: "100%"; border_radius: "999px"; transition: "all 0.3s ease";}
+                        style: {width: format!("{}%", progress_value.get()); transition: "width 0.1s ease"; background: if progress_value.get() >= 100 { "#059669".to_string() } else { "#4f46e5".to_string() }; height: "100%"; border-radius: "999px"; transition: "all 0.3s ease";}
                     }
                 }
                 p {

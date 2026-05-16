@@ -255,7 +255,6 @@ where
 ///
 /// Panics if the registry pointer is invalid after lazy initialization.
 pub fn get_handler_registry() -> &'static mut HashMap<(usize, String), HandlerEntry> {
-    // SAFETY: WASM is single-threaded; no concurrent access.
     unsafe {
         if HANDLER_REGISTRY.is_null() {
             let registry: Box<HashMap<(usize, String), HandlerEntry>> = Box::default();

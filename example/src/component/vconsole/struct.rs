@@ -11,10 +11,10 @@ pub(crate) struct Console;
 ///
 /// Used to store entries in the global vConsole signal for both
 /// browser console output and vConsole panel rendering.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Data, Debug, PartialEq)]
 pub struct ConsoleEntry {
     /// The log level determining the entry's category and display color.
-    pub level: LogLevel,
+    pub(super) level: LogLevel,
     /// The text content of the log message.
-    pub message: String,
+    pub(super) message: String,
 }

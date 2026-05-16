@@ -3,15 +3,10 @@ use crate::*;
 /// Initializes the global Console log signal.
 ///
 /// Must be called once during application startup before any `Console::log`,
-/// `Console::warn`, or `Console::error` calls. The allocated memory lives
-/// for the remainder of the program.
+/// `Console::warn`, or `Console::error` calls.
 pub fn init_console() {
-    let boxed: Box<SignalInner<Vec<ConsoleEntry>>> = Box::new(SignalInner::new(Vec::new()));
-    let pointer: *mut SignalInner<Vec<ConsoleEntry>> =
-        Box::leak(boxed) as *mut SignalInner<Vec<ConsoleEntry>>;
-    unsafe {
-        CONSOLE_LOG_SIGNAL = pointer;
-    }
+    let signal: Signal<Vec<ConsoleEntry>> = Signal::new(Vec::new());
+    CONSOLE_LOG_SIGNAL.set(signal);
 }
 
 /// Returns the global vConsole log signal.
@@ -24,12 +19,7 @@ pub fn init_console() {
 ///
 /// Panics if `init_console` has not been called.
 pub(crate) fn get_console_signal() -> Signal<Vec<ConsoleEntry>> {
-    unsafe {
-        if CONSOLE_LOG_SIGNAL.is_null() {
-            panic!("init_console must be called before get_console_signal");
-        }
-        Signal::from_inner(CONSOLE_LOG_SIGNAL)
-    }
+    CONSOLE_LOG_SIGNAL.get()
 }
 
 /// Renders a vConsole-style floating debug panel with a toggle button and a half-page drawer.
@@ -244,11 +234,9 @@ fn build_vconsole_log_nodes(
         for (index, entry) in {filtered.iter().rev()} {
             div {
                 key: index.to_string()
-                class: c_vconsole_log_item()
-                style: {color: get_log_entry_color(&entry.level, *index == total_count - 1); font_weight: if *index == total_count - 1 { "500".to_string() } else { "400".to_string() };}
+                class: {get_log_item_class(&entry.level, *index == total_count - 1)}
                 span {
-                    class: c_vconsole_level_badge()
-                    style: {background: get_log_badge_background(&entry.level);}
+                    class: {get_badge_class(&entry.level)}
                     get_log_level_badge(&entry.level)
                 }
                 entry.message.clone()
@@ -257,7 +245,10 @@ fn build_vconsole_log_nodes(
     }
 }
 
-/// Returns the text color for a log entry based on its level and recency.
+/// Returns the combined CSS class string for a log entry based on its level and recency.
+///
+/// Injects styles for all referenced classes and concatenates their class names
+/// so that the appropriate theme-aware colors are applied.
 ///
 /// # Arguments
 ///
@@ -266,20 +257,52 @@ fn build_vconsole_log_nodes(
 ///
 /// # Returns
 ///
-/// - `String`: The CSS color string.
-fn get_log_entry_color(level: &LogLevel, is_latest: bool) -> String {
-    if is_latest {
-        return match level {
-            LogLevel::Log => "#34d399".to_string(),
-            LogLevel::Warn => "#fbbf24".to_string(),
-            LogLevel::Error => "#f87171".to_string(),
-        };
-    }
-    match level {
-        LogLevel::Log => "#9ca3af".to_string(),
-        LogLevel::Warn => "#d97706".to_string(),
-        LogLevel::Error => "#ef4444".to_string(),
-    }
+/// - `String`: The space-separated CSS class names.
+fn get_log_item_class(level: &LogLevel, is_latest: bool) -> String {
+    let base_name: &'static str = c_vconsole_log_item().get_name();
+    let level_class: &'static str = match level {
+        LogLevel::Log => {
+            if is_latest {
+                c_vconsole_log_latest().get_name()
+            } else {
+                c_vconsole_log_item().get_name()
+            }
+        }
+        LogLevel::Warn => {
+            if is_latest {
+                c_vconsole_log_warn_latest().get_name()
+            } else {
+                c_vconsole_log_warn().get_name()
+            }
+        }
+        LogLevel::Error => {
+            if is_latest {
+                c_vconsole_log_error_latest().get_name()
+            } else {
+                c_vconsole_log_error().get_name()
+            }
+        }
+    };
+    format!("{} {}", base_name, level_class)
+}
+
+/// Returns the combined CSS class string for the level badge based on log level.
+///
+/// # Arguments
+///
+/// - `&LogLevel`: The log level.
+///
+/// # Returns
+///
+/// - `String`: The space-separated CSS class names.
+fn get_badge_class(level: &LogLevel) -> String {
+    let base_name: &'static str = c_vconsole_level_badge().get_name();
+    let badge_class: &'static str = match level {
+        LogLevel::Log => c_vconsole_badge_log().get_name(),
+        LogLevel::Warn => c_vconsole_badge_warn().get_name(),
+        LogLevel::Error => c_vconsole_badge_error().get_name(),
+    };
+    format!("{} {}", base_name, badge_class)
 }
 
 /// Returns the short badge label for a log level.
@@ -296,22 +319,5 @@ fn get_log_level_badge(level: &LogLevel) -> String {
         LogLevel::Log => "LOG".to_string(),
         LogLevel::Warn => "WRN".to_string(),
         LogLevel::Error => "ERR".to_string(),
-    }
-}
-
-/// Returns the background color for the level badge.
-///
-/// # Arguments
-///
-/// - `&LogLevel`: The log level.
-///
-/// # Returns
-///
-/// - `String`: The CSS background color string.
-fn get_log_badge_background(level: &LogLevel) -> String {
-    match level {
-        LogLevel::Log => "rgba(52, 211, 153, 0.15)".to_string(),
-        LogLevel::Warn => "rgba(251, 191, 36, 0.15)".to_string(),
-        LogLevel::Error => "rgba(248, 113, 113, 0.15)".to_string(),
     }
 }

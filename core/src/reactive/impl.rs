@@ -15,32 +15,38 @@ where
     }
 }
 
-/// Implementation of signal inner state notification.
-impl<T> SignalInner<T>
-where
-    T: Clone,
-{
-    /// Notifies all subscribed listeners that the value has changed.
-    pub fn notify(&mut self) {
-        for listener in self.get_listeners() {
-            let mut borrowed = listener.borrow_mut();
-            borrowed();
-        }
-    }
-}
-
 /// Implementation of reactive signal operations.
 impl<T> Signal<T>
 where
     T: Clone + PartialEq,
 {
+    /// Creates a new `Signal` with the given initial value.
+    ///
+    /// The inner state is allocated via `Box::leak` and lives for the
+    /// remainder of the program. This is safe in single-threaded WASM
+    /// contexts where no concurrent access can occur.
+    ///
+    /// # Arguments
+    ///
+    /// - `T`: The initial value of the signal.
+    ///
+    /// # Returns
+    ///
+    /// - `Signal<T>`: A handle to the newly created reactive signal.
+    pub fn new(value: T) -> Self {
+        let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(value));
+        Signal {
+            inner: Box::leak(boxed) as *mut SignalInner<T>,
+        }
+    }
+
     /// Creates a new `Signal` from an existing raw pointer.
     ///
     /// # Safety
     ///
     /// The caller must ensure the pointer was allocated via `Box::leak`
     /// and remains valid for the entire program lifetime.
-    pub fn from_inner(inner: *mut SignalInner<T>) -> Self {
+    pub(crate) fn from_inner(inner: *mut SignalInner<T>) -> Self {
         Signal { inner }
     }
 
@@ -56,6 +62,10 @@ where
     }
 
     /// Returns the current value of the signal.
+    ///
+    /// # Returns
+    ///
+    /// - `T`: The current value of the signal.
     pub fn get(&self) -> T {
         self.get_inner_mut().get_value().clone()
     }
@@ -63,6 +73,7 @@ where
     /// Attempts to return the current value of the signal without panicking.
     ///
     /// # Returns
+    ///
     /// - `Some(T)`: The current value if the borrow succeeds.
     /// - `None`: If the inner value is already mutably borrowed.
     pub fn try_get(&self) -> Option<T> {
@@ -70,6 +81,10 @@ where
     }
 
     /// Subscribes a callback to be invoked when the signal changes.
+    ///
+    /// # Arguments
+    ///
+    /// - `F`: The callback to invoke when the signal changes.
     pub fn subscribe<F>(&self, callback: F)
     where
         F: FnMut() + 'static,
@@ -84,6 +99,10 @@ where
     /// If the new value is equal to the current value, no update is performed
     /// and no listeners are notified. This prevents unnecessary re-renders and
     /// avoids cascading no-op updates through intermediate signal chains.
+    ///
+    /// # Arguments
+    ///
+    /// - `T`: The new value to assign to the signal.
     pub fn set(&self, value: T) {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
         if inner.get_value() == &value {
@@ -138,11 +157,12 @@ where
     /// If the new value is equal to the current value, no update is performed.
     ///
     /// # Arguments
-    /// - `value`: The new value to assign to the signal.
+    ///
+    /// - `T`: The new value to assign to the signal.
     ///
     /// # Returns
-    /// - `true`: If the value was successfully updated and listeners were notified.
-    /// - `false`: If the value is unchanged and no update was performed.
+    ///
+    /// - `bool`: `true` if the value was successfully updated and listeners were notified, `false` if unchanged.
     pub fn try_set(&self, value: T) -> bool {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
         if inner.get_value() == &value {
@@ -301,6 +321,10 @@ impl HookContext {
     }
 
     /// Sets the hook index.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize`: The new hook index value.
     pub fn set_hook_index(&mut self, index: usize) {
         self.get_inner_mut().set_hook_index(index);
     }
@@ -362,3 +386,72 @@ impl Default for HookContextInner {
 /// SAFETY: `HookContextCell` is only used in single-threaded WASM contexts.
 /// Concurrent access from multiple threads would be undefined behavior.
 unsafe impl Sync for HookContextCell {}
+
+/// Implementation of SignalCell construction and access.
+impl<T> SignalCell<T>
+where
+    T: Clone + PartialEq,
+{
+    /// Creates a new empty `SignalCell` with no signal stored.
+    ///
+    /// # Returns
+    ///
+    /// - `SignalCell<T>`: An empty cell ready to hold a signal.
+    pub const fn new() -> Self {
+        SignalCell {
+            inner: UnsafeCell::new(None),
+        }
+    }
+
+    /// Stores a signal into the cell.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<T>`: The signal to store.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a signal has already been stored.
+    pub fn set(&self, signal: Signal<T>) {
+        unsafe {
+            let ptr: &mut Option<Signal<T>> = &mut *self.inner.get();
+            if ptr.is_some() {
+                panic!("SignalCell::set called on an already-initialized cell");
+            }
+            *ptr = Some(signal);
+        }
+    }
+
+    /// Returns the signal stored in the cell.
+    ///
+    /// # Returns
+    ///
+    /// - `Signal<T>`: The stored signal.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no signal has been stored via `set`.
+    pub fn get(&self) -> Signal<T> {
+        unsafe {
+            let ptr: &Option<Signal<T>> = &*self.inner.get();
+            match ptr {
+                Some(signal) => *signal,
+                None => panic!("SignalCell::get called on an uninitialized cell"),
+            }
+        }
+    }
+}
+
+/// SAFETY: `SignalCell` is only used in single-threaded WASM contexts.
+/// Concurrent access from multiple threads would be undefined behavior.
+unsafe impl<T> Sync for SignalCell<T> where T: Clone + PartialEq {}
+
+/// Provides a default empty `SignalCell`.
+impl<T> Default for SignalCell<T>
+where
+    T: Clone + PartialEq,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}

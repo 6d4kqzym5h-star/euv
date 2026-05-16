@@ -1,11 +1,10 @@
 use crate::*;
 
-/// The value side of a CSS property in a class definition.
+/// The value side of a CSS variable definition.
 ///
 /// Always stored as an expression token stream. String literals like `"#fff"`
-/// and dynamic expressions (including `var!()` calls) are all parsed as
-/// Rust expressions.
-pub(crate) enum ClassPropValue {
+/// and dynamic expressions are all parsed as Rust expressions.
+pub(crate) enum CssVarValue {
     /// A dynamic expression (Rust code token stream) that evaluates to a string.
     Expr(TokenStream2),
 }

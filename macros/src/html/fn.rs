@@ -2,6 +2,11 @@ use crate::*;
 
 /// Parses the input tokens into a euv VNode expression.
 ///
+/// Supports zero, one, or multiple root-level HTML nodes:
+/// - `html! {}` → `VirtualNode::Empty`
+/// - `html! { div { ... } }` → single `VirtualNode`
+/// - `html! { div { ... } span { ... } }` → `VirtualNode::Fragment(vec![...])`
+///
 /// # Arguments
 ///
 /// - `TokenStream`: The raw token stream representing HTML markup.
@@ -10,8 +15,8 @@ use crate::*;
 ///
 /// - `TokenStream`: The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
-    let root: HtmlNode = parse_macro_input!(input as HtmlNode);
-    let tokens: TokenStream2 = root.into_token_stream();
+    let nodes: HtmlRoot = parse_macro_input!(input as HtmlRoot);
+    let tokens: TokenStream2 = nodes.into_token_stream();
     TokenStream::from(tokens)
 }
 
@@ -106,4 +111,54 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
         })
         .collect();
     quote! { vec![#(#child_tokens),*] }
+}
+
+/// Parses the value side of an attribute, handling the special `style:` attribute.
+///
+/// If the key is `"style"` and the value is a braced expression that looks like
+/// a style object (key-value pairs separated by `;`), it is parsed as
+/// `HtmlAttrValue::Style`. Otherwise, the value is parsed as a normal expression.
+///
+/// # Arguments
+///
+/// - `ParseStream`: The parse stream positioned after the `:` token.
+/// - `&str`: The attribute key string (e.g., `"style"`, `"class"`).
+///
+/// # Returns
+///
+/// - `SynResult<HtmlAttrValue>`: The parsed attribute value.
+pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> SynResult<HtmlAttrValue> {
+    if key_str == "style" && content.peek(syn::token::Brace) {
+        let style_content;
+        braced!(style_content in content);
+        let is_style_object: bool = style_content.peek(LitStr) || style_content.peek(Ident);
+        if is_style_object {
+            let mut style_props: Vec<(String, HtmlStylePropValue)> = Vec::new();
+            while !style_content.is_empty() {
+                let css_key: String = parse_kebab_name(&style_content)?;
+                style_content.parse::<Colon>()?;
+                let prop_value: HtmlStylePropValue = if style_content.peek(LitStr) {
+                    let lit: LitStr = style_content.parse()?;
+                    HtmlStylePropValue::Literal(lit.value())
+                } else if style_content.peek(syn::token::Brace) {
+                    let expr_content;
+                    braced!(expr_content in style_content);
+                    let expr: Expr = expr_content.parse()?;
+                    HtmlStylePropValue::Expr(expr)
+                } else {
+                    let expr: Expr = style_content.parse()?;
+                    HtmlStylePropValue::Expr(expr)
+                };
+                style_props.push((css_key, prop_value));
+                if style_content.peek(Semi) {
+                    style_content.parse::<Semi>()?;
+                }
+            }
+            Ok(HtmlAttrValue::Style(style_props))
+        } else {
+            Ok(HtmlAttrValue::Expr(style_content.parse()?))
+        }
+    } else {
+        Ok(HtmlAttrValue::Expr(content.parse()?))
+    }
 }
