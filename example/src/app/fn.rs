@@ -58,25 +58,25 @@ pub fn app() -> VirtualNode {
                     class: c_nav_section_label()
                     "Pages"
                 }
-                {nav_item(route_signal, "Signals", "/signals")}
-                {nav_item(route_signal, "Event", "/event")}
-                {nav_item(route_signal, "List", "/list")}
-                {nav_item(route_signal, "Conditional", "/conditional")}
-                {nav_item(route_signal, "Modal", "/modal")}
-                {nav_item(route_signal, "Select", "/select")}
-                {nav_item(route_signal, "Async", "/async")}
-                {nav_item(route_signal, "Form", "/form")}
-                {nav_item(route_signal, "Timer", "/timer")}
-                {nav_item(route_signal, "Animation", "/animation")}
-                {nav_item(route_signal, "Browser", "/browser")}
-                {nav_item(route_signal, "Lifecycle", "/lifecycle")}
-                {nav_item(route_signal, "Custom Attrs", "/custom-attrs")}
+                { nav_item(route_signal, "Signals", "/signals") }
+                { nav_item(route_signal, "Event", "/event") }
+                { nav_item(route_signal, "List", "/list") }
+                { nav_item(route_signal, "Conditional", "/conditional") }
+                { nav_item(route_signal, "Modal", "/modal") }
+                { nav_item(route_signal, "Select", "/select") }
+                { nav_item(route_signal, "Async", "/async") }
+                { nav_item(route_signal, "Form", "/form") }
+                { nav_item(route_signal, "Timer", "/timer") }
+                { nav_item(route_signal, "Animation", "/animation") }
+                { nav_item(route_signal, "Browser", "/browser") }
+                { nav_item(route_signal, "Lifecycle", "/lifecycle") }
+                { nav_item(route_signal, "Custom Attrs", "/custo m-attrs")}
                 div {
                     class: c_nav_theme_toggle()
                     button {
                         class: c_nav_theme_button()
                         onclick: toggle_theme(theme_signal)
-                        if {theme_signal.get() == "dark"} {
+                        if { theme_signal.get() == "dark" } {
                             "☀"
                         } else {
                             "🌙"
@@ -90,7 +90,7 @@ pub fn app() -> VirtualNode {
             }
             main {
                 class: c_app_main()
-                match {route_signal.get().as_str()} {
+                match { route_signal.get().as_str() } {
                     "/" | "/signals" => {
                         page_signals()
                     }
@@ -135,7 +135,7 @@ pub fn app() -> VirtualNode {
                     }
                 }
             }
-            {vconsole_panel(panel_open)}
+            { vconsole_panel(panel_open) }
         }
     }
 }

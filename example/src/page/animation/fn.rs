@@ -36,7 +36,7 @@ pub fn page_animation() -> VirtualNode {
                     }
                     "Toggle Visibility"
                 }
-                if {box_visible.get()} {
+                if { box_visible.get() } {
                     div {
                         class: c_anim_fade_in()
                         "This element fades in and out with a smooth transition."
@@ -138,7 +138,7 @@ pub fn page_animation() -> VirtualNode {
                 }
                 div {
                     class: c_anim_color_box()
-                    style: {background: get_anim_color(color_index.get()); transition: "background 0.5s ease, transform 0.3s ease"; transform: if scale_active.get() { "scale(1.1)" } else { "scale(1)" };}
+                    style: { background: get_anim_color(color_index.get()); transition: "background 0.5s ease, transform 0.3s ease"; transform: if scale_active.get() { "scale(1.1)" } else { "scale(1)" }; }
                     onclick: move |_event: NativeEvent| {
                         let current: bool = scale_active.get();
                         scale_active.set(!current);

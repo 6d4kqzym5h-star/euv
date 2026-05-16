@@ -128,7 +128,7 @@ fn vconsole_drawer(
                         "Console"
                         span {
                             class: c_vconsole_count()
-                            {format!(" ({})", log_count)}
+                            format!(" ({log_count})")
                         }
                     }
                     div {
@@ -182,7 +182,7 @@ fn vconsole_drawer(
                 }
                 div {
                     class: c_vconsole_body()
-                    {build_vconsole_log_nodes(console_signal, filter_signal)}
+                    { build_vconsole_log_nodes(console_signal, filter_signal) }
                 }
             }
         }
@@ -234,7 +234,7 @@ fn build_vconsole_log_nodes(
         for (index, entry) in {filtered.iter().rev()} {
             div {
                 key: index.to_string()
-                class: {get_log_item_class(&entry.level, *index == total_count - 1)}
+                class: { get_log_item_class(&entry.level, *index == total_count - 1) }
                 span {
                     class: {get_badge_class(&entry.level)}
                     get_log_level_badge(&entry.level)

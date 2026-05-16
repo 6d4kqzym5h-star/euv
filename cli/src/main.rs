@@ -3,37 +3,19 @@
 //! The official CLI tool for the euv UI framework, providing a development
 //! server with hot reload and wasm-pack integration.
 
-mod r#const;
-mod r#enum;
-mod r#fn;
-mod r#impl;
-mod r#static;
-mod r#struct;
+mod build;
+mod logger;
+mod server;
 
-use {r#const::*, r#enum::*, r#fn::*, r#static::*, r#struct::*};
+use {build::*, logger::*, server::*};
 
-use std::{
-    net::SocketAddr,
-    path::{Path, PathBuf},
-    process::{Output, Stdio},
-    sync::{Arc, OnceLock},
-};
+use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
 use {
-    anyhow::{Context as AnyhowContext, Result},
+    anyhow::Result,
     clap::Parser,
     hyperlane::*,
-    notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
-    serde::Serialize,
-    tokio::{
-        fs,
-        process::Command,
-        sync::{
-            Mutex, MutexGuard, RwLock, RwLockWriteGuard, broadcast,
-            mpsc::{Receiver, Sender, channel},
-        },
-        time::{Duration, sleep},
-    },
+    tokio::sync::{Mutex, RwLock, broadcast},
 };
 
 /// Entry point for the euv CLI development server.
@@ -42,6 +24,7 @@ use {
 /// the application with live reload support.
 #[tokio::main]
 async fn main() -> Result<()> {
+    Logger::init(log::LevelFilter::Info);
     let args: Cli = Cli::parse();
     let www_absolute: PathBuf = if args.www_dir.is_absolute() {
         args.www_dir.clone()
@@ -63,11 +46,11 @@ async fn main() -> Result<()> {
     let state_for_watch: Arc<AppState> = Arc::clone(&state);
     tokio::spawn(async move {
         if let Err(error) = watch_and_build(state_for_watch).await {
-            eprintln!("Watch error: {}", error);
+            log::error!("Watch error: {}", error);
         }
     });
     let pkg_dir: PathBuf = resolve_pkg_dir(&www_absolute);
-    println!("Serving pkg from: {}", pkg_dir.display());
+    log::info!("Serving pkg from: {}", pkg_dir.display());
     let mut server: Server = Server::default();
     let mut server_config: ServerConfig = ServerConfig::default();
     server_config.set_address(Server::format_bind_address("127.0.0.1", args.port));
@@ -91,12 +74,13 @@ async fn main() -> Result<()> {
     server.route::<IndexRoute>(format!("{}/{{path:.*}}", www_route_prefix));
     server.route::<ReloadRoute>("/__euv_reload");
     if let Err(error) = set_global_state(Arc::clone(&state)) {
-        eprintln!("Failed to set global state: {}", error);
+        log::error!("Failed to set global state: {}", error);
     }
     let addr: SocketAddr = SocketAddr::from(([127, 0, 0, 1], args.port));
-    println!(
+    log::info!(
         "euv dev server running at http://{}/{}/index.html",
-        addr, www_route_prefix,
+        addr,
+        www_route_prefix,
     );
     let server_control_hook: ServerControlHook = server
         .run()
