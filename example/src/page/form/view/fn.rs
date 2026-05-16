@@ -52,16 +52,11 @@ fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
 ///
 /// - `VirtualNode`: The form demo page virtual DOM tree.
 pub fn page_form() -> VirtualNode {
-    let username: Signal<String> = use_signal(|| "".to_string());
-    let email: Signal<String> = use_signal(|| "".to_string());
-    let password: Signal<String> = use_signal(|| "".to_string());
-    let agree: Signal<bool> = use_signal(|| true);
-    let submitted: Signal<String> = use_signal(|| "".to_string());
-    let errors: Signal<String> = use_signal(|| "".to_string());
+    let form: UseForm = use_form();
     watch!(
-        username,
-        email,
-        password,
+        form.username,
+        form.email,
+        form.password,
         |username_value, email_value, password_value| {
             let mut validation_warnings: Vec<String> = Vec::new();
             if username_value.trim().is_empty() {
@@ -98,13 +93,9 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Enter username"
-                        value: username
+                        value: form.username
                         class: c_form_input_no_transition()
-                        oninput: move |event: NativeEvent| {
-                            if let NativeEvent::Input(input_event) = event {
-                                username.set(input_event.get_value().clone());
-                            }
-                        }
+                        oninput: on_input_value(form.username)
                     }
                 }
                 div {
@@ -116,13 +107,9 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "email"
                         placeholder: "Enter email"
-                        value: email
+                        value: form.email
                         class: c_form_input_no_transition()
-                        oninput: move |event: NativeEvent| {
-                            if let NativeEvent::Input(input_event) = event {
-                                email.set(input_event.get_value().clone());
-                            }
-                        }
+                        oninput: on_input_value(form.email)
                     }
                 }
                 div {
@@ -134,59 +121,31 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "password"
                         placeholder: "Enter password"
-                        value: password
+                        value: form.password
                         class: c_form_input_no_transition()
-                        oninput: move |event: NativeEvent| {
-                            if let NativeEvent::Input(input_event) = event {
-                                password.set(input_event.get_value().clone());
-                            }
-                        }
+                        oninput: on_input_value(form.password)
                     }
                 }
                 div {
                     class: c_form_checkbox_row()
                     input {
                         r#type: "checkbox"
-                        checked: agree
+                        checked: form.agree
                         class: c_form_checkbox()
-                        onchange: move |event: NativeEvent| {
-                            if let NativeEvent::Change(change_event) = event {
-                                agree.set(*change_event.get_checked());
-                            }
-                        }
+                        onchange: on_change_checked(form.agree)
                     }
                     label {
                         class: c_form_checkbox_label()
                         "I agree to the terms and conditions"
                     }
                 }
-                build_error_node(errors)
+                build_error_node(form.errors)
                 primary_button {
                     label: "Submit"
-                    onclick: move |_event: NativeEvent| {
-                        let mut validation_errors: Vec<String> = Vec::new();
-                        if username.get().trim().is_empty() {
-                            validation_errors.push("Username is required".to_string());
-                        }
-                        if email.get().trim().is_empty() {
-                            validation_errors.push("Email is required".to_string());
-                        }
-                        if password.get().len() < 6 {
-                            validation_errors.push("Password must be at least 6 characters".to_string());
-                        }
-                        if !agree.get() {
-                            validation_errors.push("You must agree to the terms".to_string());
-                        }
-                        if validation_errors.is_empty() {
-                            errors.set("".to_string());
-                            submitted.set(format!("Submitted: username={}, email={}", username.get(), email.get()));
-                        } else {
-                            errors.set(validation_errors.join("; "));
-                        }
-                    }
+                    onclick: form_on_submit(form)
                     "Submit"
                 }
-                build_submitted_node(submitted)
+                build_submitted_node(form.submitted)
             }
         }
     }

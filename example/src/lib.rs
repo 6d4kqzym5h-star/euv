@@ -14,8 +14,6 @@ use {app::*, component::*, page::*, router::*, style::*, theme::*};
 
 use {euv_core::*, euv_macros::*};
 
-use std::rc::Rc;
-
 use {lombok_macros::*, wasm_bindgen::prelude::*, web_sys::*};
 
 /// Entry point for the euv example application.

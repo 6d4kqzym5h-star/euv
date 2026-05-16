@@ -6,11 +6,7 @@ use crate::*;
 ///
 /// - `VirtualNode`: The select demo page virtual DOM tree.
 pub fn page_select() -> VirtualNode {
-    let selected_fruit: Signal<String> = use_signal(|| "apple".to_string());
-    let selected_country: Signal<String> = use_signal(|| "".to_string());
-    let selected_city: Signal<String> = use_signal(|| "".to_string());
-    let feedback: Signal<String> = use_signal(|| "".to_string());
-    let textarea_content: Signal<String> = use_signal(|| "".to_string());
+    let state: UseSelect = use_select();
     html! {
         div {
             class: c_page_container()
@@ -25,12 +21,8 @@ pub fn page_select() -> VirtualNode {
                     }
                     select {
                         class: c_select_input()
-                        value: selected_fruit
-                        onchange: move |event: NativeEvent| {
-                            if let NativeEvent::Change(change_event) = event {
-                                selected_fruit.set(change_event.get_value().clone());
-                            }
-                        }
+                        value: state.selected_fruit
+                        onchange: on_change_value(state.selected_fruit)
                         option {
                             value: "apple"
                             "Apple"
@@ -54,7 +46,7 @@ pub fn page_select() -> VirtualNode {
                     "Selected: "
                     span {
                         class: c_event_highlight()
-                        selected_fruit
+                        state.selected_fruit
                     }
                 }
             }
@@ -68,13 +60,8 @@ pub fn page_select() -> VirtualNode {
                     }
                     select {
                         class: c_select_input()
-                        value: selected_country
-                        onchange: move |event: NativeEvent| {
-                            if let NativeEvent::Change(change_event) = event {
-                                selected_country.set(change_event.get_value().clone());
-                                selected_city.set("".to_string());
-                            }
-                        }
+                        value: state.selected_country
+                        onchange: select_on_country_change(state)
                         option {
                             value: ""
                             "-- Select Country --"
@@ -93,7 +80,7 @@ pub fn page_select() -> VirtualNode {
                         }
                     }
                 }
-                if { !selected_country.get().is_empty() } {
+                if { !state.selected_country.get().is_empty() } {
                     div {
                         class: c_form_input_wrapper()
                         label {
@@ -102,17 +89,13 @@ pub fn page_select() -> VirtualNode {
                         }
                         select {
                             class: c_select_input()
-                            value: selected_city
-                            onchange: move |event: NativeEvent| {
-                                if let NativeEvent::Change(change_event) = event {
-                                    selected_city.set(change_event.get_value().clone());
-                                }
-                            }
+                            value: state.selected_city
+                            onchange: on_change_value(state.selected_city)
                             option {
                                 value: ""
                                 "-- Select City --"
                             }
-                            for (city_value, city_label) in { match selected_country.get().as_str() { "china" => vec![("beijing".to_string(), "Beijing".to_string()), ("shanghai".to_string(), "Shanghai".to_string()), ("guangzhou".to_string(), "Guangzhou".to_string())], "japan" => vec![("tokyo".to_string(), "Tokyo".to_string()), ("osaka".to_string(), "Osaka".to_string()), ("kyoto".to_string(), "Kyoto".to_string())], "usa" => vec![("new-york".to_string(), "New York".to_string()), ("los-angeles".to_string(), "Los Angeles".to_string()), ("chicago".to_string(), "Chicago".to_string())], _ => vec![] } } {
+                            for (city_value, city_label) in { match state.selected_country.get().as_str() { "china" => vec![("beijing".to_string(), "Beijing".to_string()), ("shanghai".to_string(), "Shanghai".to_string()), ("guangzhou".to_string(), "Guangzhou".to_string())], "japan" => vec![("tokyo".to_string(), "Tokyo".to_string()), ("osaka".to_string(), "Osaka".to_string()), ("kyoto".to_string(), "Kyoto".to_string())], "usa" => vec![("new-york".to_string(), "New York".to_string()), ("los-angeles".to_string(), "Los Angeles".to_string()), ("chicago".to_string(), "Chicago".to_string())], _ => vec![] } } {
                                 option {
                                     value: city_value
                                     city_label
@@ -123,13 +106,13 @@ pub fn page_select() -> VirtualNode {
                 } else {
                     ""
                 }
-                if { !selected_city.get().is_empty() } {
+                if { !state.selected_city.get().is_empty() } {
                     div {
                         class: c_success_box()
                         "You selected: "
                         span {
                             class: c_event_highlight()
-                            selected_city
+                            state.selected_city
                         }
                     }
                 } else {
@@ -147,12 +130,8 @@ pub fn page_select() -> VirtualNode {
                     textarea {
                         class: c_textarea_input()
                         placeholder: "Share your thoughts..."
-                        value: textarea_content
-                        oninput: move |event: NativeEvent| {
-                            if let NativeEvent::Input(input_event) = event {
-                                textarea_content.set(input_event.get_value().clone());
-                            }
-                        }
+                        value: state.textarea_content
+                        oninput: on_input_value(state.textarea_content)
                         rows: "4"
                         cols: "50"
                     }
@@ -161,28 +140,18 @@ pub fn page_select() -> VirtualNode {
                     class: c_textarea_counter()
                     span {
                         class: c_textarea_counter_text()
-                        { format!("{} / 200 characters", textarea_content.get().len()) }
+                        { format!("{} / 200 characters", state.textarea_content.get().len()) }
                     }
                 }
                 primary_button {
                     label: "Submit"
-                    onclick: move |_event: NativeEvent| {
-                        let content: String = textarea_content.get();
-                        if content.trim().is_empty() {
-                            feedback.set("Please enter some feedback.".to_string());
-                        } else if content.len() > 200 {
-                            feedback.set("Feedback is too long (max 200 chars).".to_string());
-                        } else {
-                            feedback.set(format!("Thank you for your feedback: \"{}\"", content));
-                            textarea_content.set("".to_string());
-                        }
-                    }
+                    onclick: select_on_submit_feedback(state)
                     "Submit"
                 }
-                if { !feedback.get().is_empty() } {
+                if { !state.feedback.get().is_empty() } {
                     div {
                         class: c_success_box()
-                        feedback
+                        state.feedback
                     }
                 } else {
                     ""

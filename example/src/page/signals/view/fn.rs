@@ -26,10 +26,7 @@ pub fn page_signals() -> VirtualNode {
                     }
                     primary_button {
                         label: "Increment"
-                        onclick: move |_event: NativeEvent| {
-                            let current: i32 = count.get();
-                            count.set(current + 1);
-                        }
+                        onclick: counter_on_increment(count)
                         "Increment"
                     }
                 }
@@ -45,16 +42,12 @@ pub fn page_signals() -> VirtualNode {
                     my_badge {
                         color: "#059669"
                         text: "Success"
-                        on_click: move |_event: NativeEvent| {
-                            Console::log("Success badge clicked!");
-                        }
+                        on_click: badge_on_click("Success")
                     }
                     my_badge {
                         color: "#dc2626"
                         text: "Error"
-                        on_click: move |_event: NativeEvent| {
-                            Console::log("Error badge clicked!");
-                        }
+                        on_click: badge_on_click("Error")
                     }
                     my_badge {
                         color: "#d97706"

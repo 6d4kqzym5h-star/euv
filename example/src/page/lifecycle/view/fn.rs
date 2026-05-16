@@ -6,20 +6,12 @@ use crate::*;
 ///
 /// - `VirtualNode`: The lifecycle demo page virtual DOM tree.
 pub fn page_lifecycle() -> VirtualNode {
-    let render_count: Signal<i32> = use_signal(|| 1);
-    let logs: Signal<Vec<String>> = use_signal(|| vec!["Component mounted".to_string()]);
-    watch!(render_count, |render_count_value| {
+    let state: UseLifecycle = use_lifecycle();
+    watch!(state.render_count, |render_count_value| {
         Console::log(&format!(
             "watch! render count changed: {}",
             render_count_value
         ));
-    });
-    let increment_and_log: Rc<dyn Fn()> = Rc::new(move || {
-        let current: i32 = render_count.get();
-        render_count.set(current + 1);
-        let mut current_logs: Vec<String> = logs.get();
-        current_logs.push(format!("Updated: render count = {}", current + 1));
-        logs.set(current_logs);
     });
     html! {
         div {
@@ -32,15 +24,13 @@ pub fn page_lifecycle() -> VirtualNode {
                     "This page has been rendered "
                     span {
                         class: c_counter_value()
-                        render_count
+                        state.render_count
                     }
                     " times."
                 }
                 primary_button {
                     label: "Trigger Update"
-                    onclick: move |_event: NativeEvent| {
-                        increment_and_log();
-                    }
+                    onclick: lifecycle_on_trigger(state)
                     "Trigger Update"
                 }
             }
@@ -48,7 +38,7 @@ pub fn page_lifecycle() -> VirtualNode {
                 title: "Event Log"
                 div {
                     class: c_log_container()
-                    for (index, log) in { logs.get().iter().enumerate() } {
+                    for (index, log) in { state.logs.get().iter().enumerate() } {
                         div {
                             key: index.to_string()
                             class: c_log_item()

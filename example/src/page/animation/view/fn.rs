@@ -9,9 +9,7 @@ pub fn page_animation() -> VirtualNode {
     let box_visible: Signal<bool> = use_signal(|| false);
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);
-    let progress_value: Signal<i32> = use_signal(|| 0);
-    let progress_running: Signal<bool> = use_signal(|| false);
-    let progress_handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
+    let progress: UseProgress = use_progress();
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
     html! {
@@ -70,54 +68,22 @@ pub fn page_animation() -> VirtualNode {
                     class: c_timer_controls()
                     primary_button {
                         label: "Start"
-                        onclick: move |_event: NativeEvent| {
-                            progress_value.set(0);
-                            progress_running.set(true);
-                            let handle_opt: Option<IntervalHandle> = progress_handle.get();
-                            if let Some(handle) = handle_opt {
-                                handle.clear();
-                            }
-                            let progress: Signal<i32> = progress_value;
-                            let running: Signal<bool> = progress_running;
-                            let handle: Signal<Option<IntervalHandle>> = progress_handle;
-                            let new_handle: IntervalHandle = use_interval(30, move || {
-                                if running.get() {
-                                    let current: i32 = progress.get();
-                                    if current < 100 {
-                                        progress.set(current + 1);
-                                    } else {
-                                        running.set(false);
-                                    }
-                                }
-                            });
-                            handle.set(Some(new_handle));
-                        }
+                        onclick: progress_on_start(progress)
                         "Start"
                     }
                     primary_button {
                         label: "Reset"
-                        onclick: move |_event: NativeEvent| {
-                            progress_running.set(false);
-                            let handle_opt: Option<IntervalHandle> = progress_handle.get();
-                            if let Some(handle) = handle_opt {
-                                handle.clear();
-                            }
-                            progress_handle.set(None);
-                            progress_value.set(0);
-                        }
+                        onclick: progress_on_reset(progress)
                         "Reset"
                     }
                 }
-                { build_progress_bar(progress_value) }
+                { build_progress_bar(progress.value) }
             }
             my_card {
                 title: "Color Cycle"
                 primary_button {
                     label: "Next"
-                    onclick: move |_event: NativeEvent| {
-                        let current: i32 = color_index.get();
-                        color_index.set((current + 1) % 5);
-                    }
+                    onclick: color_cycle_on_next(color_index)
                     "Next Color"
                 }
                 div {

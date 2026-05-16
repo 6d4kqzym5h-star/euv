@@ -72,9 +72,7 @@ fn build_status_node(
 ///
 /// - `VirtualNode`: The async demo page virtual DOM tree.
 pub fn page_async_demo() -> VirtualNode {
-    let loading: Signal<bool> = use_signal(|| false);
-    let data: Signal<String> = use_signal(|| "Click fetch to load data".to_string());
-    let error: Signal<String> = use_signal(|| "".to_string());
+    let fetch: UseFetch = use_fetch();
     html! {
         div {
             class: c_page_container()
@@ -87,39 +85,10 @@ pub fn page_async_demo() -> VirtualNode {
                 }
                 primary_button {
                     label: "Fetch"
-                    onclick: move |_event: NativeEvent| {
-                        loading.set(true);
-                        error.set("".to_string());
-                        data.set("".to_string());
-                        wasm_bindgen_futures::spawn_local(async move {
-                            let window: web_sys::Window = web_sys::window().expect("no global window exists");
-                            let promise: js_sys::Promise = window.fetch_with_str("https://httpbin.org/get");
-                            let future: wasm_bindgen_futures::JsFuture = wasm_bindgen_futures::JsFuture::from(promise);
-                            match future.await {
-                                Ok(response) => {
-                                    let resp: web_sys::Response = response.dyn_into().unwrap();
-                                    let json_promise: js_sys::Promise = resp.json().unwrap();
-                                    let json_future: wasm_bindgen_futures::JsFuture = wasm_bindgen_futures::JsFuture::from(json_promise);
-                                    match json_future.await {
-                                        Ok(json) => {
-                                            let json_string: String = js_sys::JSON::stringify(&json).unwrap().as_string().unwrap_or_default();
-                                            data.set(json_string);
-                                        }
-                                        Err(_) => {
-                                            error.set("Failed to parse JSON".to_string());
-                                        }
-                                    }
-                                }
-                                Err(_) => {
-                                    error.set("Network request failed".to_string());
-                                }
-                            }
-                            loading.set(false);
-                        });
-                    }
+                    onclick: fetch_on_fetch(fetch)
                     "Fetch"
                 }
-                build_status_node(loading, error, data)
+                build_status_node(fetch.loading, fetch.error, fetch.data)
             }
         }
     }

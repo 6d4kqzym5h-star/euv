@@ -17,3 +17,5 @@ pub use {
     animation::*, r#async::*, browser::*, conditional::*, custom_attrs::*, event::*, form::*,
     lifecycle::*, list::*, modal::*, not_found::*, select::*, signals::*, timer::*,
 };
+
+pub(crate) use timer::use_interval;

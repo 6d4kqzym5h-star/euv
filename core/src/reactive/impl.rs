@@ -84,7 +84,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `F`: The callback to invoke when the signal changes.
+    /// - `FnMut() + 'static`: The callback to invoke when the signal changes.
     pub fn subscribe<F>(&self, callback: F)
     where
         F: FnMut() + 'static,

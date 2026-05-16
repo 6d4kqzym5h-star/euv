@@ -1,38 +1,105 @@
 use crate::*;
 
-/// Starts a recurring interval that invokes the given closure at the specified period.
+/// Reactive state for a progress bar feature.
 ///
-/// Internally creates a `Closure<dyn FnMut()>` and registers it with
-/// `window.setInterval`. The closure is leaked via `Closure::forget` so it
-/// persists for the application lifetime.
+/// # Fields
 ///
-/// Returns an `IntervalHandle` that can be used to cancel the timer via
-/// `IntervalHandle::clear`.
-///
-/// # Arguments
-///
-/// - `i32`: The interval period in milliseconds.
-/// - `F`: The closure to invoke on each interval tick.
+/// - `Signal<i32>`: The progress value (0-100).
+/// - `Signal<bool>`: Whether the progress is currently running.
+/// - `Signal<Option<IntervalHandle>>`: The active interval handle, if any.
+#[derive(Clone, Copy)]
+pub struct UseProgress {
+    pub value: Signal<i32>,
+    pub running: Signal<bool>,
+    pub handle: Signal<Option<IntervalHandle>>,
+}
+
+/// Creates progress bar state signals wrapped in a `UseProgress` struct.
 ///
 /// # Returns
 ///
-/// - `IntervalHandle`: A handle that can be used to cancel the interval.
+/// - `UseProgress`: The progress state containing value, running, and handle signals.
+pub fn use_progress() -> UseProgress {
+    let value: Signal<i32> = use_signal(|| 0);
+    let running: Signal<bool> = use_signal(|| false);
+    let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
+    UseProgress {
+        value,
+        running,
+        handle,
+    }
+}
+
+/// Creates a click event handler that starts the progress bar animation.
 ///
-/// # Panics
+/// Resets the progress value to 0, sets running to true, and starts a
+/// 30ms interval that increments the progress until it reaches 100.
 ///
-/// Panics if `window()` is unavailable on the current platform.
-pub fn use_interval<F>(millis: i32, callback: F) -> IntervalHandle
-where
-    F: FnMut() + 'static,
-{
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(callback));
-    let window: Window = window().expect("no global window exists");
-    let interval_id: i32 = window
-        .set_interval_with_callback_and_timeout_and_arguments_0(
-            closure.as_ref().unchecked_ref(),
-            millis,
-        )
-        .expect("failed to set interval");
-    closure.forget();
-    IntervalHandle { interval_id }
+/// # Arguments
+///
+/// - `UseProgress`: The progress state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler`: A click handler to start the progress bar.
+pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+        state.value.set(0);
+        state.running.set(true);
+        let handle_opt: Option<IntervalHandle> = state.handle.get();
+        if let Some(existing_handle) = handle_opt {
+            existing_handle.clear();
+        }
+        let value_signal: Signal<i32> = state.value;
+        let running_signal: Signal<bool> = state.running;
+        let handle_signal: Signal<Option<IntervalHandle>> = state.handle;
+        let new_handle: IntervalHandle = use_interval(30, move || {
+            if running_signal.get() {
+                let current: i32 = value_signal.get();
+                if current < 100 {
+                    value_signal.set(current + 1);
+                } else {
+                    running_signal.set(false);
+                }
+            }
+        });
+        handle_signal.set(Some(new_handle));
+    })
+}
+
+/// Creates a click event handler that resets the progress bar.
+///
+/// # Arguments
+///
+/// - `UseProgress`: The progress state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler`: A click handler to reset the progress bar.
+pub fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+        state.running.set(false);
+        let handle_opt: Option<IntervalHandle> = state.handle.get();
+        if let Some(existing_handle) = handle_opt {
+            existing_handle.clear();
+        }
+        state.handle.set(None);
+        state.value.set(0);
+    })
+}
+
+/// Creates a click event handler that cycles to the next animation color.
+///
+/// # Arguments
+///
+/// - `Signal<i32>`: The color index signal (0-4).
+///
+/// # Returns
+///
+/// - `NativeEventHandler`: A click handler to advance the color index.
+pub fn color_cycle_on_next(color_index: Signal<i32>) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+        let current: i32 = color_index.get();
+        color_index.set((current + 1) % 5);
+    })
 }

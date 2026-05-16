@@ -71,7 +71,7 @@ pub(crate) fn schedule_signal_update() {
 ///
 /// # Arguments
 ///
-/// - `F`: The closure to execute with suppressed scheduling.
+/// - `FnOnce() -> R`: The closure to execute with suppressed scheduling.
 ///
 /// # Returns
 ///
@@ -99,7 +99,7 @@ where
 /// # Arguments
 ///
 /// - `Signal<String>`: The attribute signal to update when signals change.
-/// - `F`: A closure that recomputes the attribute value string.
+/// - `Fn() -> String + 'static`: A closure that recomputes the attribute value string.
 ///
 /// # Panics
 ///
@@ -151,7 +151,7 @@ fn get_current_hook_context() -> HookContext {
 /// # Arguments
 ///
 /// - `HookContext`: The hook context to set as active.
-/// - `F`: The closure to execute with the active context.
+/// - `FnOnce() -> R`: The closure to execute with the active context.
 ///
 /// # Returns
 ///

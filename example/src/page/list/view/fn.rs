@@ -6,14 +6,7 @@ use crate::*;
 ///
 /// - `VirtualNode`: The list demo page virtual DOM tree.
 pub fn page_list() -> VirtualNode {
-    let items: Signal<Vec<String>> = use_signal(|| {
-        vec![
-            "Learn Rust".to_string(),
-            "Build a UI framework".to_string(),
-            "Write documentation".to_string(),
-        ]
-    });
-    let new_item: Signal<String> = use_signal(|| "".to_string());
+    let state: UseTodoList = use_todo_list();
     html! {
         div {
             class: c_page_container()
@@ -25,31 +18,19 @@ pub fn page_list() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Enter new item"
-                        value: new_item
+                        value: state.new_item
                         class: c_list_input()
-                        oninput: move |event: NativeEvent| {
-                            if let NativeEvent::Input(input_event) = event {
-                                new_item.set(input_event.get_value().clone());
-                            }
-                        }
+                        oninput: on_input_value(state.new_item)
                     }
                     primary_button {
                         label: "Add"
-                        onclick: move |_event: NativeEvent| {
-                            let text: String = new_item.get();
-                            if !text.trim().is_empty() {
-                                let mut current: Vec<String> = items.get();
-                                current.push(text.clone());
-                                items.set(current);
-                                new_item.set("".to_string());
-                            }
-                        }
+                        onclick: todo_list_on_add(state)
                         "Add Item"
                     }
                 }
                 ul {
                     class: c_list_ul()
-                    for (index, item) in { items.get().iter().enumerate() } {
+                    for (index, item) in { state.items.get().iter().enumerate() } {
                         li {
                             key: index.to_string()
                             class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
@@ -59,13 +40,7 @@ pub fn page_list() -> VirtualNode {
                             }
                             primary_button {
                                 label: "Remove"
-                                onclick: move |_event: NativeEvent| {
-                                    let mut current: Vec<String> = items.get();
-                                    if index < current.len() {
-                                        current.remove(index);
-                                        items.set(current);
-                                    }
-                                }
+                                onclick: todo_list_on_remove(state.items, index)
                                 "Remove"
                             }
                         }
