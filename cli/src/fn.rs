@@ -47,15 +47,12 @@ pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
     let original: String = fs::read_to_string(&index_path)
         .await
         .context("Failed to read index.html")?;
-
     let mut html: String = if original.contains("</body>") {
         original.replace("</body>", &format!("{}\n</body>", RELOAD_SCRIPT))
     } else {
         format!("{}\n{}", original, RELOAD_SCRIPT)
     };
-
     html = html.replace("./euv_example.js", "./pkg/euv_example.js");
-
     Ok(html)
 }
 
@@ -74,8 +71,7 @@ pub(crate) async fn update_html(state: &AppState) -> Result<()> {
     } else {
         state.args.crate_path.join(&state.args.www_dir)
     };
-    let www_absolute = resolve_www_dir(&www_absolute);
-
+    let www_absolute: PathBuf = resolve_www_dir(&www_absolute);
     let new_html: String = generate_dev_html(&www_absolute).await?;
     let mut html: RwLockWriteGuard<String> = state.html_content.write().await;
     *html = new_html;
@@ -95,7 +91,7 @@ pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
     if www_dir.join("index.html").exists() {
         return www_dir.to_path_buf();
     }
-    let parent_name = www_dir.file_name().and_then(|n| n.to_str());
+    let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
     if let Some(name) = parent_name {
         let nested = www_dir.join(name);
         if nested.join("index.html").exists() {
@@ -115,18 +111,18 @@ pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
 ///
 /// - `PathBuf`: The resolved pkg directory containing WASM build artifacts.
 pub(crate) fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
-    let direct_pkg = www_dir.join("pkg");
+    let direct_pkg: PathBuf = www_dir.join("pkg");
     if direct_pkg.join("euv_example.js").exists() || direct_pkg.join(".gitignore").exists() {
         return direct_pkg;
     }
-    let parent_name = www_dir.file_name().and_then(|n| n.to_str());
+    let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
     if let Some(name) = parent_name {
-        let nested_pkg = www_dir.join(name).join("pkg");
+        let nested_pkg: PathBuf = www_dir.join(name).join("pkg");
         if nested_pkg.join("euv_example.js").exists() || nested_pkg.join(".gitignore").exists() {
             return nested_pkg;
         }
     }
-    let grandparent = www_dir.parent();
+    let grandparent: Option<&Path> = www_dir.parent();
     if let Some(parent) = grandparent {
         let sibling_pkg = parent.join("pkg");
         if sibling_pkg.join("euv_example.js").exists() || sibling_pkg.join(".gitignore").exists() {
@@ -171,7 +167,6 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
         }
         *building = true;
         drop(building);
-
         let state_for_build: Arc<AppState> = Arc::clone(&state);
         tokio::spawn(async move {
             match build_wasm(&state_for_build.args).await {
@@ -217,21 +212,17 @@ pub(crate) async fn build_wasm(args: &Cli) -> Result<()> {
         .current_dir(&args.crate_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-
     println!(
         "Running: wasm-pack build --target web --out-dir {} ...",
         args.out_dir.display()
     );
-
-    let output = command
+    let output: Output = command
         .output()
         .await
         .context("Failed to execute wasm-pack")?;
-
     if !output.status.success() {
         let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
         anyhow::bail!("wasm-pack build failed:\n{}", stderr);
     }
-
     Ok(())
 }

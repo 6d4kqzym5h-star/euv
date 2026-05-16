@@ -15,7 +15,7 @@ use {r#const::*, r#enum::*, r#fn::*, r#static::*, r#struct::*};
 use std::{
     net::SocketAddr,
     path::{Path, PathBuf},
-    process::Stdio,
+    process::{Output, Stdio},
     sync::{Arc, OnceLock},
 };
 
