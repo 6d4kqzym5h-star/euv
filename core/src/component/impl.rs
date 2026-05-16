@@ -18,13 +18,3 @@ impl ComponentContext {
         self.set_hook_index(0_usize);
     }
 }
-
-/// Implementation of ComponentHandle construction.
-impl ComponentHandle {
-    /// Creates a new component handle with the given identifier.
-    pub fn new(id: usize) -> Self {
-        let mut handle: ComponentHandle = ComponentHandle::default();
-        handle.set_id(id);
-        handle
-    }
-}

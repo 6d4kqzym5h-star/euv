@@ -4,41 +4,91 @@ use crate::*;
 ///
 /// Aggregates all signals needed for the localStorage, sessionStorage,
 /// clipboard, window, navigator, location, and console sections.
-///
-/// # Fields
-///
-/// - `Signal<String>`: The localStorage key input.
-/// - `Signal<String>`: The localStorage value input.
-/// - `Signal<String>`: The localStorage operation result.
-/// - `Signal<String>`: The sessionStorage key input.
-/// - `Signal<String>`: The sessionStorage value input.
-/// - `Signal<String>`: The sessionStorage operation result.
-/// - `Signal<String>`: The clipboard text input.
-/// - `Signal<String>`: The clipboard operation result.
-/// - `Signal<String>`: The window size display.
-/// - `Signal<String>`: The user agent string.
-/// - `Signal<String>`: The navigator language.
-/// - `Signal<String>`: The location href.
-/// - `Signal<String>`: The location origin.
-/// - `Signal<String>`: The location pathname.
-/// - `Signal<String>`: The console message input.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data)]
 pub struct UseBrowserApi {
+    /// The localStorage key input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub local_key: Signal<String>,
+    /// The localStorage value input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub local_value: Signal<String>,
+    /// The localStorage operation result.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub local_result: Signal<String>,
+    /// The sessionStorage key input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub session_key: Signal<String>,
+    /// The sessionStorage value input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub session_value: Signal<String>,
+    /// The sessionStorage operation result.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub session_result: Signal<String>,
+    /// The clipboard text input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub clipboard_text: Signal<String>,
+    /// The clipboard operation result.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub clipboard_result: Signal<String>,
+    /// The window size display.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub window_size: Signal<String>,
+    /// The user agent string.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub user_agent: Signal<String>,
+    /// The navigator language.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub language: Signal<String>,
+    /// The location href.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub location_url: Signal<String>,
+    /// The location origin.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub location_origin_val: Signal<String>,
+    /// The location pathname.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub location_pathname_val: Signal<String>,
+    /// The console message input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub console_input: Signal<String>,
+}
+
+/// Provides a default empty browser API state with placeholder signals.
+impl Default for UseBrowserApi {
+    fn default() -> Self {
+        UseBrowserApi {
+            local_key: Signal::new("".to_string()),
+            local_value: Signal::new("".to_string()),
+            local_result: Signal::new("".to_string()),
+            session_key: Signal::new("".to_string()),
+            session_value: Signal::new("".to_string()),
+            session_result: Signal::new("".to_string()),
+            clipboard_text: Signal::new("".to_string()),
+            clipboard_result: Signal::new("".to_string()),
+            window_size: Signal::new("".to_string()),
+            user_agent: Signal::new("".to_string()),
+            language: Signal::new("".to_string()),
+            location_url: Signal::new("".to_string()),
+            location_origin_val: Signal::new("".to_string()),
+            location_pathname_val: Signal::new("".to_string()),
+            console_input: Signal::new("".to_string()),
+        }
+    }
 }
 
 /// Creates browser API demo state signals wrapped in a `UseBrowserApi` struct.
@@ -47,26 +97,26 @@ pub struct UseBrowserApi {
 ///
 /// - `UseBrowserApi`: The browser API demo state.
 pub fn use_browser_api() -> UseBrowserApi {
-    UseBrowserApi {
-        local_key: use_signal(|| "euv-demo-key".to_string()),
-        local_value: use_signal(|| "".to_string()),
-        local_result: use_signal(|| "No data yet".to_string()),
-        session_key: use_signal(|| "euv-session-key".to_string()),
-        session_value: use_signal(|| "".to_string()),
-        session_result: use_signal(|| "No data yet".to_string()),
-        clipboard_text: use_signal(|| "".to_string()),
-        clipboard_result: use_signal(|| "".to_string()),
-        window_size: use_signal(|| {
-            let (width, height): (i32, i32) = window_inner_size();
-            format!("{} x {}", width, height)
-        }),
-        user_agent: use_signal(navigator_user_agent),
-        language: use_signal(navigator_language),
-        location_url: use_signal(location_href),
-        location_origin_val: use_signal(location_origin),
-        location_pathname_val: use_signal(location_pathname),
-        console_input: use_signal(|| "".to_string()),
-    }
+    let mut state: UseBrowserApi = UseBrowserApi::default();
+    state.set_local_key(use_signal(|| "euv-demo-key".to_string()));
+    state.set_local_value(use_signal(|| "".to_string()));
+    state.set_local_result(use_signal(|| "No data yet".to_string()));
+    state.set_session_key(use_signal(|| "euv-session-key".to_string()));
+    state.set_session_value(use_signal(|| "".to_string()));
+    state.set_session_result(use_signal(|| "No data yet".to_string()));
+    state.set_clipboard_text(use_signal(|| "".to_string()));
+    state.set_clipboard_result(use_signal(|| "".to_string()));
+    state.set_window_size(use_signal(|| {
+        let (width, height): (i32, i32) = window_inner_size();
+        format!("{} x {}", width, height)
+    }));
+    state.set_user_agent(use_signal(navigator_user_agent));
+    state.set_language(use_signal(navigator_language));
+    state.set_location_url(use_signal(location_href));
+    state.set_location_origin_val(use_signal(location_origin));
+    state.set_location_pathname_val(use_signal(location_pathname));
+    state.set_console_input(use_signal(|| "".to_string()));
+    state
 }
 
 /// Reads a value from the browser localStorage.

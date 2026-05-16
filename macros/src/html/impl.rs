@@ -253,10 +253,10 @@ impl ToTokens for HtmlNode {
                             euv_core::IntoNode::into_node(#expr)
                         }))
                     };
-                    euv_core::VirtualNode::Dynamic(euv_core::DynamicNode {
-                        render_fn: __euv_render_fn,
-                        hook_context: __euv_hook_context,
-                    })
+                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
+                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
+                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
+                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
                 }});
             }
             HtmlNode::If(html_if) => {
@@ -301,10 +301,10 @@ impl ToTokens for HtmlNode {
                             #if_chain
                         }))
                     };
-                    euv_core::VirtualNode::Dynamic(euv_core::DynamicNode {
-                        render_fn: __euv_render_fn,
-                        hook_context: __euv_hook_context,
-                    })
+                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
+                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
+                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
+                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
                 }});
             }
             HtmlNode::Match(html_match) => {
@@ -330,10 +330,10 @@ impl ToTokens for HtmlNode {
                             }
                         }))
                     };
-                    euv_core::VirtualNode::Dynamic(euv_core::DynamicNode {
-                        render_fn: __euv_render_fn,
-                        hook_context: __euv_hook_context,
-                    })
+                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
+                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
+                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
+                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
                 }});
             }
             HtmlNode::For(html_for) => {
@@ -355,10 +355,10 @@ impl ToTokens for HtmlNode {
                             euv_core::VirtualNode::Fragment(__euv_for_nodes)
                         }))
                     };
-                    euv_core::VirtualNode::Dynamic(euv_core::DynamicNode {
-                        render_fn: __euv_render_fn,
-                        hook_context: __euv_hook_context,
-                    })
+                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
+                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
+                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
+                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
                 }});
             }
         }

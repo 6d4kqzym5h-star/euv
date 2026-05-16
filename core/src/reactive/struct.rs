@@ -9,6 +9,7 @@ where
     T: Clone,
 {
     /// The current value of the signal.
+    #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) value: T,
     /// Callbacks to invoke when the value changes.
@@ -57,6 +58,7 @@ pub struct HookContextInner {
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
     /// Current hook index, incremented on each hook call and reset per render.
+    #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
     pub(crate) hook_index: usize,
 }

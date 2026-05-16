@@ -1,20 +1,27 @@
 use crate::*;
 
 /// Reactive state for the select and textarea demo feature.
-///
-/// # Fields
-///
-/// - `Signal<String>`: The selected fruit value.
-/// - `Signal<String>`: The selected country value.
-/// - `Signal<String>`: The selected city value.
-/// - `Signal<String>`: The feedback result message.
-/// - `Signal<String>`: The textarea content.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseSelect {
+    /// The selected fruit value.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub selected_fruit: Signal<String>,
+    /// The selected country value.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub selected_country: Signal<String>,
+    /// The selected city value.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub selected_city: Signal<String>,
+    /// The feedback result message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub feedback: Signal<String>,
+    /// The textarea content.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub textarea_content: Signal<String>,
 }
 
@@ -24,13 +31,13 @@ pub struct UseSelect {
 ///
 /// - `UseSelect`: The select state.
 pub fn use_select() -> UseSelect {
-    UseSelect {
-        selected_fruit: use_signal(|| "apple".to_string()),
-        selected_country: use_signal(|| "".to_string()),
-        selected_city: use_signal(|| "".to_string()),
-        feedback: use_signal(|| "".to_string()),
-        textarea_content: use_signal(|| "".to_string()),
-    }
+    UseSelect::new(
+        use_signal(|| "apple".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+    )
 }
 
 /// Creates a change event handler that updates the country and resets the city.

@@ -34,7 +34,7 @@ where
         )
         .expect("failed to set interval");
     closure.forget();
-    IntervalHandle { interval_id }
+    IntervalHandle::new(interval_id)
 }
 
 /// Creates stopwatch state signals wrapped in a `UseStopwatch` struct.
@@ -46,14 +46,7 @@ where
 ///
 /// - `UseStopwatch`: The stopwatch state containing seconds, running, and handle signals.
 pub fn use_stopwatch() -> UseStopwatch {
-    let seconds: Signal<i32> = use_signal(|| 0);
-    let running: Signal<bool> = use_signal(|| false);
-    let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
-    UseStopwatch {
-        seconds,
-        running,
-        handle,
-    }
+    UseStopwatch::new(use_signal(|| 0), use_signal(|| false), use_signal(|| None))
 }
 
 /// Creates countdown state signals wrapped in a `UseCountdown` struct.
@@ -65,18 +58,13 @@ pub fn use_stopwatch() -> UseStopwatch {
 ///
 /// - `UseCountdown`: The countdown state containing total, remaining, running, handle, and input signals.
 pub fn use_countdown() -> UseCountdown {
-    let total: Signal<i32> = use_signal(|| 60);
-    let remaining: Signal<i32> = use_signal(|| 60);
-    let running: Signal<bool> = use_signal(|| false);
-    let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
-    let input: Signal<String> = use_signal(|| "60".to_string());
-    UseCountdown {
-        total,
-        remaining,
-        running,
-        handle,
-        input,
-    }
+    UseCountdown::new(
+        use_signal(|| 60),
+        use_signal(|| 60),
+        use_signal(|| false),
+        use_signal(|| None),
+        use_signal(|| "60".to_string()),
+    )
 }
 
 /// Creates a click event handler that starts the stopwatch.

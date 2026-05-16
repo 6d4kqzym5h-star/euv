@@ -1,14 +1,15 @@
 use crate::*;
 
 /// Reactive state for a todo list feature.
-///
-/// # Fields
-///
-/// - `Signal<Vec<String>>`: The list of todo items.
-/// - `Signal<String>`: The new item input text.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseTodoList {
+    /// The list of todo items.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub items: Signal<Vec<String>>,
+    /// The new item input text.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub new_item: Signal<String>,
 }
 
@@ -18,16 +19,16 @@ pub struct UseTodoList {
 ///
 /// - `UseTodoList`: The todo list state.
 pub fn use_todo_list() -> UseTodoList {
-    UseTodoList {
-        items: use_signal(|| {
+    UseTodoList::new(
+        use_signal(|| {
             vec![
                 "Learn Rust".to_string(),
                 "Build a UI framework".to_string(),
                 "Write documentation".to_string(),
             ]
         }),
-        new_item: use_signal(|| "".to_string()),
-    }
+        use_signal(|| "".to_string()),
+    )
 }
 
 /// Creates a click event handler that adds a new item to the list.

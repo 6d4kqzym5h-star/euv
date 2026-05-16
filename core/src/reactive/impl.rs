@@ -387,7 +387,7 @@ impl HookContext {
 
     /// Returns the current hook index.
     pub fn get_hook_index(&self) -> usize {
-        *self.get_inner_mut().get_hook_index()
+        self.get_inner_mut().get_hook_index()
     }
 
     /// Sets the hook index.

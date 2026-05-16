@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// Stores the numeric interval ID returned by `window.setInterval` so the
 /// timer can be cancelled later via `clear_interval`.
-///
-/// # Fields
-///
-/// - `i32`: The interval ID assigned by the browser.
+#[derive(Clone, Copy, Data, New)]
 pub struct IntervalHandle {
+    /// The interval ID assigned by the browser.
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
     pub(crate) interval_id: i32,
 }
 
@@ -16,16 +16,19 @@ pub struct IntervalHandle {
 ///
 /// Contains only `Copy` signal fields so the struct can be freely
 /// captured inside `html!` closures without causing `FnOnce` issues.
-///
-/// # Fields
-///
-/// - `Signal<i32>`: The elapsed seconds counter.
-/// - `Signal<bool>`: Whether the stopwatch is currently running.
-/// - `Signal<Option<IntervalHandle>>`: The active interval handle, if any.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseStopwatch {
+    /// The elapsed seconds counter.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub seconds: Signal<i32>,
+    /// Whether the stopwatch is currently running.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub running: Signal<bool>,
+    /// The active interval handle, if any.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub handle: Signal<Option<IntervalHandle>>,
 }
 
@@ -33,19 +36,26 @@ pub struct UseStopwatch {
 ///
 /// Contains only `Copy` signal fields so the struct can be freely
 /// captured inside `html!` closures without causing `FnOnce` issues.
-///
-/// # Fields
-///
-/// - `Signal<i32>`: The total countdown seconds.
-/// - `Signal<i32>`: The remaining countdown seconds.
-/// - `Signal<bool>`: Whether the countdown is currently running.
-/// - `Signal<Option<IntervalHandle>>`: The active interval handle, if any.
-/// - `Signal<String>`: The user input string for setting countdown seconds.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseCountdown {
+    /// The total countdown seconds.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub total: Signal<i32>,
+    /// The remaining countdown seconds.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub remaining: Signal<i32>,
+    /// Whether the countdown is currently running.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub running: Signal<bool>,
+    /// The active interval handle, if any.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub handle: Signal<Option<IntervalHandle>>,
+    /// The user input string for setting countdown seconds.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub input: Signal<String>,
 }

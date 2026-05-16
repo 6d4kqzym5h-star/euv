@@ -1,14 +1,15 @@
 use crate::*;
 
 /// Reactive state for a lifecycle demo feature.
-///
-/// # Fields
-///
-/// - `Signal<i32>`: The render count.
-/// - `Signal<Vec<String>>`: The event log entries.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseLifecycle {
+    /// The render count.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub render_count: Signal<i32>,
+    /// The event log entries.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub logs: Signal<Vec<String>>,
 }
 
@@ -18,10 +19,10 @@ pub struct UseLifecycle {
 ///
 /// - `UseLifecycle`: The lifecycle state.
 pub fn use_lifecycle() -> UseLifecycle {
-    UseLifecycle {
-        render_count: use_signal(|| 1),
-        logs: use_signal(|| vec!["Component mounted".to_string()]),
-    }
+    UseLifecycle::new(
+        use_signal(|| 1),
+        use_signal(|| vec!["Component mounted".to_string()]),
+    )
 }
 
 /// Creates a click event handler that increments the render count and logs the update.

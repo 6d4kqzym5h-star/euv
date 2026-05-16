@@ -57,19 +57,19 @@ pub fn page_event() -> VirtualNode {
                             last_key.set(key_name);
                             let code_name: String = keyboard_event.get_code().clone();
                             last_key_code.set(code_name);
-                            let is_repeat: bool = *keyboard_event.get_repeat();
+                            let is_repeat: bool = keyboard_event.get_repeat();
                             key_repeat.set(is_repeat);
                             let mut modifier: String = String::new();
-                            if *keyboard_event.get_ctrl_key() {
+                            if keyboard_event.get_ctrl_key() {
                                 modifier.push_str("Ctrl+");
                             }
-                            if *keyboard_event.get_shift_key() {
+                            if keyboard_event.get_shift_key() {
                                 modifier.push_str("Shift+");
                             }
-                            if *keyboard_event.get_alt_key() {
+                            if keyboard_event.get_alt_key() {
                                 modifier.push_str("Alt+");
                             }
-                            if *keyboard_event.get_meta_key() {
+                            if keyboard_event.get_meta_key() {
                                 modifier.push_str("Meta+");
                             }
                             if modifier.is_empty() {
@@ -143,13 +143,13 @@ pub fn page_event() -> VirtualNode {
                     class: c_event_mouse_area()
                     onclick: move |event: NativeEvent| {
                         if let NativeEvent::Mouse(mouse_event) = event {
-                            let pos: String = format!("({}, {})", *mouse_event.get_client_x(), *mouse_event.get_client_y());
+                            let pos: String = format!("({}, {})", mouse_event.get_client_x(), mouse_event.get_client_y());
                             mouse_pos.set(pos);
-                            let screen: String = format!("({}, {})", *mouse_event.get_screen_x(), *mouse_event.get_screen_y());
+                            let screen: String = format!("({}, {})", mouse_event.get_screen_x(), mouse_event.get_screen_y());
                             mouse_screen_pos.set(screen);
                             let current: i32 = click_count.get();
                             click_count.set(current + 1);
-                            Console::log(&format!("Click: {} at ({}, {})", current + 1, *mouse_event.get_client_x(), *mouse_event.get_client_y()));
+                            Console::log(&format!("Click: {} at ({}, {})", current + 1, mouse_event.get_client_x(), mouse_event.get_client_y()));
                         }
                     }
                     ondbl_click: move |_event: NativeEvent| {
@@ -159,11 +159,11 @@ pub fn page_event() -> VirtualNode {
                     }
                     onmouse_down: move |event: NativeEvent| {
                         if let NativeEvent::Mouse(mouse_event) = event {
-                            let button_name: String = match *mouse_event.get_button() {
+                            let button_name: String = match mouse_event.get_button() {
                                 0 => "Left".to_string(),
                                 1 => "Middle".to_string(),
                                 2 => "Right".to_string(),
-                                _ => format!("Button {}", *mouse_event.get_button()),
+                                _ => format!("Button {}", mouse_event.get_button()),
                             };
                             mouse_button.set(button_name);
                             let current: i32 = mouse_down_count.get();
@@ -176,9 +176,9 @@ pub fn page_event() -> VirtualNode {
                     }
                     onmouse_move: move |event: NativeEvent| {
                         if let NativeEvent::Mouse(mouse_event) = event {
-                            let pos: String = format!("({}, {})", *mouse_event.get_client_x(), *mouse_event.get_client_y());
+                            let pos: String = format!("({}, {})", mouse_event.get_client_x(), mouse_event.get_client_y());
                             mouse_pos.set(pos);
-                            let buttons_mask: String = format!("{}", *mouse_event.get_buttons());
+                            let buttons_mask: String = format!("{}", mouse_event.get_buttons());
                             mouse_buttons.set(buttons_mask);
                         }
                     }
@@ -412,7 +412,7 @@ pub fn page_event() -> VirtualNode {
                     }
                     ondrag: move |event: NativeEvent| {
                         if let NativeEvent::Drag(drag_event) = event {
-                            let pos: String = format!("({}, {})", *drag_event.get_client_x(), *drag_event.get_client_y());
+                            let pos: String = format!("({}, {})", drag_event.get_client_x(), drag_event.get_client_y());
                             drag_pos.set(pos);
                         }
                     }
@@ -484,17 +484,17 @@ pub fn page_event() -> VirtualNode {
                     class: c_event_wheel_zone()
                     onwheel: move |event: NativeEvent| {
                         if let NativeEvent::Wheel(wheel_event) = event {
-                            let delta: String = format!("({:.1}, {:.1})", *wheel_event.get_delta_x(), *wheel_event.get_delta_y());
+                            let delta: String = format!("({:.1}, {:.1})", wheel_event.get_delta_x(), wheel_event.get_delta_y());
                             wheel_delta.set(delta);
                             let current: f64 = wheel_total.get();
-                            wheel_total.set(current + *wheel_event.get_delta_y());
-                            let mode_name: String = match *wheel_event.get_delta_mode() {
+                            wheel_total.set(current + wheel_event.get_delta_y());
+                            let mode_name: String = match wheel_event.get_delta_mode() {
                                 0 => "pixel".to_string(),
                                 1 => "line".to_string(),
                                 2 => "page".to_string(),
                                 _ => "unknown".to_string(),
                             };
-                            Console::log(&format!("Wheel: dx={:.1}, dy={:.1}, mode={}", *wheel_event.get_delta_x(), *wheel_event.get_delta_y(), mode_name));
+                            Console::log(&format!("Wheel: dx={:.1}, dy={:.1}, mode={}", wheel_event.get_delta_x(), wheel_event.get_delta_y(), mode_name));
                         }
                     }
                     p {
@@ -587,20 +587,20 @@ pub fn page_event() -> VirtualNode {
                     class: c_event_touch_zone()
                     ontouch_start: move |event: NativeEvent| {
                         if let NativeEvent::Touch(touch_event) = event {
-                            let info: String = format!("Start: {} touches at ({}, {})", *touch_event.get_touches_count(), *touch_event.get_client_x(), *touch_event.get_client_y());
+                            let info: String = format!("Start: {} touches at ({}, {})", touch_event.get_touches_count(), touch_event.get_client_x(), touch_event.get_client_y());
                             touch_info.set(info);
-                            Console::log(&format!("TouchStart: {} touches", *touch_event.get_touches_count()));
+                            Console::log(&format!("TouchStart: {} touches", touch_event.get_touches_count()));
                         }
                     }
                     ontouch_move: move |event: NativeEvent| {
                         if let NativeEvent::Touch(touch_event) = event {
-                            let info: String = format!("Move: {} touches at ({}, {})", *touch_event.get_touches_count(), *touch_event.get_client_x(), *touch_event.get_client_y());
+                            let info: String = format!("Move: {} touches at ({}, {})", touch_event.get_touches_count(), touch_event.get_client_x(), touch_event.get_client_y());
                             touch_info.set(info);
                         }
                     }
                     ontouch_end: move |event: NativeEvent| {
                         if let NativeEvent::Touch(touch_event) = event {
-                            let info: String = format!("End: {} touches remaining", *touch_event.get_touches_count());
+                            let info: String = format!("End: {} touches remaining", touch_event.get_touches_count());
                             touch_info.set(info);
                             Console::log("TouchEnd: touch ended");
                         }
@@ -667,7 +667,7 @@ pub fn page_event() -> VirtualNode {
                                 class: c_form_checkbox()
                                 onchange: move |event: NativeEvent| {
                                     if let NativeEvent::Change(change_event) = event {
-                                        form_checkbox.set(*change_event.get_checked());
+                                        form_checkbox.set(change_event.get_checked());
                                     }
                                 }
                             }

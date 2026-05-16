@@ -161,11 +161,22 @@ impl Attribute {
     }
 }
 
+/// Provides a default empty dynamic node with a no-op render function.
+impl Default for DynamicNode {
+    fn default() -> Self {
+        let node: DynamicNode = DynamicNode {
+            render_fn: Rc::new(RefCell::new(|| VirtualNode::Empty)),
+            hook_context: HookContext::default(),
+        };
+        node
+    }
+}
+
 /// Clones a `DynamicNode` by cloning its `HookContext` (Copy) and `render_fn` (Rc).
 impl Clone for DynamicNode {
     fn clone(&self) -> Self {
         DynamicNode {
-            render_fn: Rc::clone(&self.render_fn),
+            render_fn: Rc::clone(self.get_render_fn()),
             hook_context: self.hook_context,
         }
     }
@@ -525,17 +536,6 @@ impl Style {
 impl Default for Style {
     fn default() -> Self {
         Self::new(Vec::new())
-    }
-}
-
-/// Implementation of StyleProperty construction.
-impl StyleProperty {
-    /// Creates a new style property with the given name and value.
-    pub fn new(name: String, value: String) -> Self {
-        let mut prop: StyleProperty = StyleProperty::default();
-        prop.set_name(name);
-        prop.set_value(value);
-        prop
     }
 }
 

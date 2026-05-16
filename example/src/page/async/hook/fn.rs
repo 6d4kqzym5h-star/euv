@@ -1,16 +1,19 @@
 use crate::*;
 
 /// Reactive state for an async data fetch feature.
-///
-/// # Fields
-///
-/// - `Signal<bool>`: Whether data is currently being fetched.
-/// - `Signal<String>`: The fetched data content.
-/// - `Signal<String>`: The error message, empty if no error.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseFetch {
+    /// Whether data is currently being fetched.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub loading: Signal<bool>,
+    /// The fetched data content.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub data: Signal<String>,
+    /// The error message, empty if no error.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub error: Signal<String>,
 }
 
@@ -20,14 +23,11 @@ pub struct UseFetch {
 ///
 /// - `UseFetch`: The fetch state containing loading, data, and error signals.
 pub fn use_fetch() -> UseFetch {
-    let loading: Signal<bool> = use_signal(|| false);
-    let data: Signal<String> = use_signal(|| "Click fetch to load data".to_string());
-    let error: Signal<String> = use_signal(|| "".to_string());
-    UseFetch {
-        loading,
-        data,
-        error,
-    }
+    UseFetch::new(
+        use_signal(|| false),
+        use_signal(|| "Click fetch to load data".to_string()),
+        use_signal(|| "".to_string()),
+    )
 }
 
 /// Creates a click event handler that fetches data from httpbin.org.

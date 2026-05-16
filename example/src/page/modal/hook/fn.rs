@@ -1,24 +1,35 @@
 use crate::*;
 
 /// Reactive state for the modal demo feature.
-///
-/// # Fields
-///
-/// - `Signal<bool>`: Whether the basic modal is visible.
-/// - `Signal<bool>`: Whether the confirm modal is visible.
-/// - `Signal<bool>`: Whether the form modal is visible.
-/// - `Signal<String>`: The confirm action result message.
-/// - `Signal<String>`: The modal form name input.
-/// - `Signal<String>`: The modal form email input.
-/// - `Signal<String>`: The modal form submission result.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseModal {
+    /// Whether the basic modal is visible.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub show_basic: Signal<bool>,
+    /// Whether the confirm modal is visible.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub show_confirm: Signal<bool>,
+    /// Whether the form modal is visible.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub show_form: Signal<bool>,
+    /// The confirm action result message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub confirm_result: Signal<String>,
+    /// The modal form name input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub modal_name: Signal<String>,
+    /// The modal form email input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub modal_email: Signal<String>,
+    /// The modal form submission result.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub modal_submitted: Signal<String>,
 }
 
@@ -28,15 +39,15 @@ pub struct UseModal {
 ///
 /// - `UseModal`: The modal state.
 pub fn use_modal() -> UseModal {
-    UseModal {
-        show_basic: use_signal(|| false),
-        show_confirm: use_signal(|| false),
-        show_form: use_signal(|| false),
-        confirm_result: use_signal(|| "".to_string()),
-        modal_name: use_signal(|| "".to_string()),
-        modal_email: use_signal(|| "".to_string()),
-        modal_submitted: use_signal(|| "".to_string()),
-    }
+    UseModal::new(
+        use_signal(|| false),
+        use_signal(|| false),
+        use_signal(|| false),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+    )
 }
 
 /// Creates a click event handler that opens the basic modal.

@@ -490,18 +490,18 @@ impl Renderer {
                 let placeholder: Element = document.create_element("div").unwrap();
                 let style: &str = "display: contents;";
                 let _ = placeholder.set_attribute("style", style);
-                let mut hook_context: HookContext = dynamic_node.hook_context;
+                let mut hook_context: HookContext = dynamic_node.get_hook_context();
                 hook_context.reset_hook_index();
                 let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
                     let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
-                        dynamic_node.render_fn.borrow_mut();
+                        dynamic_node.get_render_fn().borrow_mut();
                     borrowed()
                 });
                 let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
                 let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
                 placeholder.append_child(&initial_dom).unwrap();
                 let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-                    dynamic_node.render_fn.clone();
+                    dynamic_node.get_render_fn().clone();
                 let placeholder_clone: Element = placeholder.clone();
                 let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
                 renderer_for_sub.set_current_tree(Some(initial_unwrapped));

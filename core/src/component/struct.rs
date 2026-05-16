@@ -6,9 +6,11 @@ use crate::*;
 #[derive(Data, Default)]
 pub struct ComponentContext {
     /// Internal storage for hooks and state.
+    #[get(pub(crate))]
     #[set(pub(crate))]
     hooks: Vec<Box<dyn Any>>,
     /// Current hook index for this render cycle.
+    #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
     hook_index: usize,
 }
@@ -16,8 +18,10 @@ pub struct ComponentContext {
 /// A handle to a mounted component instance.
 ///
 /// Uniquely identifies a component instance within the application.
-#[derive(Data, Default)]
+#[derive(Data, Default, New)]
 pub struct ComponentHandle {
     /// Unique identifier for this component instance.
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
     id: usize,
 }

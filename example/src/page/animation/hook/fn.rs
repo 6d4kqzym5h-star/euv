@@ -1,16 +1,19 @@
 use crate::*;
 
 /// Reactive state for a progress bar feature.
-///
-/// # Fields
-///
-/// - `Signal<i32>`: The progress value (0-100).
-/// - `Signal<bool>`: Whether the progress is currently running.
-/// - `Signal<Option<IntervalHandle>>`: The active interval handle, if any.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseProgress {
+    /// The progress value (0-100).
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub value: Signal<i32>,
+    /// Whether the progress is currently running.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub running: Signal<bool>,
+    /// The active interval handle, if any.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub handle: Signal<Option<IntervalHandle>>,
 }
 
@@ -20,14 +23,7 @@ pub struct UseProgress {
 ///
 /// - `UseProgress`: The progress state containing value, running, and handle signals.
 pub fn use_progress() -> UseProgress {
-    let value: Signal<i32> = use_signal(|| 0);
-    let running: Signal<bool> = use_signal(|| false);
-    let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
-    UseProgress {
-        value,
-        running,
-        handle,
-    }
+    UseProgress::new(use_signal(|| 0), use_signal(|| false), use_signal(|| None))
 }
 
 /// Creates a click event handler that starts the progress bar animation.

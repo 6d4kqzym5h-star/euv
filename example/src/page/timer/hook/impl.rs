@@ -12,22 +12,13 @@ impl IntervalHandle {
     /// Panics if `window()` is unavailable on the current platform.
     pub fn clear(&self) {
         let window: Window = window().expect("no global window exists");
-        window.clear_interval_with_handle(self.interval_id);
-    }
-}
-
-/// Clones the interval handle by copying the interval ID.
-impl Clone for IntervalHandle {
-    fn clone(&self) -> Self {
-        IntervalHandle {
-            interval_id: self.interval_id,
-        }
+        window.clear_interval_with_handle(self.get_interval_id());
     }
 }
 
 /// Compares interval handles by their interval ID.
 impl PartialEq for IntervalHandle {
     fn eq(&self, other: &Self) -> bool {
-        self.interval_id == other.interval_id
+        self.get_interval_id() == other.get_interval_id()
     }
 }

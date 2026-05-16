@@ -1,22 +1,31 @@
 use crate::*;
 
 /// Reactive state for a registration form feature.
-///
-/// # Fields
-///
-/// - `Signal<String>`: The username input.
-/// - `Signal<String>`: The email input.
-/// - `Signal<String>`: The password input.
-/// - `Signal<bool>`: The agree checkbox state.
-/// - `Signal<String>`: The submission result message.
-/// - `Signal<String>`: The validation error message.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Data, New)]
 pub struct UseForm {
+    /// The username input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub username: Signal<String>,
+    /// The email input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub email: Signal<String>,
+    /// The password input.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub password: Signal<String>,
+    /// The agree checkbox state.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub agree: Signal<bool>,
+    /// The submission result message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub submitted: Signal<String>,
+    /// The validation error message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
     pub errors: Signal<String>,
 }
 
@@ -26,14 +35,14 @@ pub struct UseForm {
 ///
 /// - `UseForm`: The form state.
 pub fn use_form() -> UseForm {
-    UseForm {
-        username: use_signal(|| "".to_string()),
-        email: use_signal(|| "".to_string()),
-        password: use_signal(|| "".to_string()),
-        agree: use_signal(|| true),
-        submitted: use_signal(|| "".to_string()),
-        errors: use_signal(|| "".to_string()),
-    }
+    UseForm::new(
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+        use_signal(|| true),
+        use_signal(|| "".to_string()),
+        use_signal(|| "".to_string()),
+    )
 }
 
 /// Creates a click event handler that validates and submits the form.

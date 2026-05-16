@@ -3,11 +3,15 @@ use crate::*;
 /// Represents a CSS style property.
 ///
 /// A single key-value pair representing a CSS declaration.
-#[derive(Data, Default)]
+#[derive(Data, Default, New)]
 pub struct StyleProperty {
     /// The CSS property name (e.g., "margin", "padding").
+    #[get(pub)]
+    #[set(pub)]
     name: String,
     /// The CSS property value.
+    #[get(pub)]
+    #[set(pub)]
     value: String,
 }
 
@@ -15,6 +19,8 @@ pub struct StyleProperty {
 #[derive(Data, New)]
 pub struct Style {
     /// The list of style properties.
+    #[get(pub)]
+    #[set(pub)]
     properties: Vec<StyleProperty>,
 }
 
@@ -24,8 +30,12 @@ pub struct Style {
 #[derive(Clone, Data, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) name: String,
     /// The value of the attribute.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) value: AttributeValue,
 }
 
@@ -35,8 +45,12 @@ pub struct AttributeEntry {
 #[derive(Clone, Data, New)]
 pub struct TextNode {
     /// The text content.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) content: String,
     /// An optional signal that drives reactive text updates.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) signal: Option<Signal<String>>,
 }
 
@@ -47,14 +61,19 @@ pub struct TextNode {
 /// Contains a `HookContext` that persists hook state (like `use_signal`) across
 /// re-renders, ensuring that signal values are not reset when the render function
 /// is called again.
+#[derive(Data)]
 pub struct DynamicNode {
     /// The closure that generates the dynamic virtual node tree.
-    pub render_fn: Rc<RefCell<dyn FnMut() -> VirtualNode>>,
+    #[get(pub)]
+    #[set(pub)]
+    pub(crate) render_fn: Rc<RefCell<dyn FnMut() -> VirtualNode>>,
     /// Persistent hook context for this dynamic node, storing signal
     /// state and other hook values across render cycles.
     ///
     /// Implements `Copy`; all copies share the same underlying state.
-    pub hook_context: HookContext,
+    #[get(pub, type(copy))]
+    #[set(pub)]
+    pub(crate) hook_context: HookContext,
 }
 
 /// Represents a CSS class with a name and its style declarations.
@@ -65,7 +84,11 @@ pub struct DynamicNode {
 #[derive(Clone, Data, Default)]
 pub struct CssClass {
     /// The CSS class name used in the DOM.
+    #[get(pub)]
+    #[set(pub)]
     name: String,
     /// The CSS style declarations (e.g., "max-width: 800px; margin: 0 auto;").
+    #[get(pub)]
+    #[set(pub)]
     style: String,
 }

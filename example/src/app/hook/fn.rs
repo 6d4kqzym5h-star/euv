@@ -66,7 +66,7 @@ pub fn on_change_value(signal: Signal<String>) -> NativeEventHandler {
 pub fn on_change_checked(signal: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
         if let NativeEvent::Change(change_event) = event {
-            signal.set(*change_event.get_checked());
+            signal.set(change_event.get_checked());
         }
     })
 }
