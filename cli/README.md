@@ -24,26 +24,50 @@ cargo install euv-cli
 
 ## Usage
 
-The CLI supports two profiles (`dev` / `release`) and two modes (`run` / `build`):
+The CLI uses the pattern `euv-cli <profile> <action>` where:
+
+- **Profile**: `dev` (debug assertions, hot-reload) or `release` (optimized build)
+- **Action**: `run` (build + start server) or `build` (build only)
+
+### Dev Profile
+
+Build with debug assertions and hot-reload support.
 
 ```shell
-# Development mode: build with debug assertions and start dev server with hot-reload
+# Build and start dev server with hot-reload
 euv-cli dev run
-euv-cli dev run --crate-path ./example --port 8080
 
-# Development mode: build only, do not start the server
+# Build and start dev server with custom crate path and port
+euv-cli dev run --crate-path ./example --port 3000
+
+# Build only, do not start the server
 euv-cli dev build
+
+# Build only with custom crate path
 euv-cli dev build --crate-path ./example
+```
 
-# Release mode: build with optimizations and start the server
+### Release Profile
+
+Build with optimizations for production.
+
+```shell
+# Build and start server
 euv-cli release run
-euv-cli release run --crate-path ./example
 
-# Release mode: build only
+# Build and start server with custom crate path and port
+euv-cli release run --crate-path ./example --port 3000
+
+# Build only
 euv-cli release build
-euv-cli release build --crate-path ./example
 
-# Or via cargo
+# Build only with custom crate path
+euv-cli release build --crate-path ./example
+```
+
+### Via Cargo
+
+```shell
 cargo run -p euv-cli -- dev run --crate-path ./example --port 3000
 cargo run -p euv-cli -- release build --crate-path ./example
 ```
