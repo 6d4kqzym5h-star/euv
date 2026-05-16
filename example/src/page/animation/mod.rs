@@ -1,3 +1,4 @@
-mod r#fn;
+mod hook;
+mod view;
 
-pub use r#fn::*;
+pub use {hook::*, view::*};

@@ -7,4 +7,4 @@ pub use r#struct::*;
 
 pub use {color_output::*, log};
 
-use {r#const::*, r#static::*};
+pub(crate) use {r#const::*, r#static::*};

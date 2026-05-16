@@ -30,6 +30,7 @@ use {
     web_sys::{
         ClipboardEvent, Document, DragEvent, Element, Event, HtmlButtonElement, HtmlElement,
         HtmlInputElement, HtmlOptionElement, HtmlSelectElement, HtmlTextAreaElement, InputEvent,
-        KeyboardEvent, MouseEvent, Node, SubmitEvent, Text, TouchEvent, WheelEvent, Window, window,
+        KeyboardEvent, MouseEvent, Node, SubmitEvent, Text, Touch, TouchEvent, TouchList,
+        WheelEvent, Window, window,
     },
 };

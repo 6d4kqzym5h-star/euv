@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 
 /// Builds a `Gitignore` matcher from the `.gitignore` file at the given root path.
 ///
@@ -57,7 +57,7 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
     )?;
     watcher.watch(&src_path, RecursiveMode::Recursive)?;
     log::info!("Watching {} for changes...", src_path.display());
-    let mut debounce: tokio::time::Interval = tokio::time::interval(Duration::from_millis(500));
+    let mut debounce: Interval = interval(Duration::from_millis(500));
     debounce.tick().await;
     while let Some(event) = rx.recv().await {
         let filtered_paths: Vec<String> = event
@@ -69,7 +69,7 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
         if filtered_paths.is_empty() {
             continue;
         }
-        log::info!("File change detected: {}", filtered_paths.join(", "));
+        log::warn!("File change detected: {}", filtered_paths.join(", "));
         debounce.reset();
         sleep(Duration::from_millis(300)).await;
         let mut building: MutexGuard<bool> = state.is_building.lock().await;
@@ -87,10 +87,10 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
             if let Err(error) = run_hyperlane_fmt().await {
                 log::warn!("hyperlane-cli fmt error: {}", error);
             }
-            match build_wasm(&state_for_build.args).await {
+            match build_wasm(&state_for_build.args, state_for_build.release).await {
                 Ok(()) => {
                     log::info!("WASM build completed successfully");
-                    if let Err(error) = crate::server::update_html(&state_for_build).await {
+                    if let Err(error) = update_html(&state_for_build).await {
                         log::error!("Failed to update HTML: {}", error);
                     }
                     let _ = state_for_build.reload_tx.send(ReloadEvent::Reload);
@@ -113,12 +113,13 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// - `&Cli`: The parsed CLI arguments containing build configuration.
+/// - `&ModeArgs`: The parsed CLI arguments containing build configuration.
+/// - `bool`: Whether to build in release mode.
 ///
 /// # Returns
 ///
 /// - `Result<()>`: Indicates success or failure of the wasm-pack build.
-pub(crate) async fn build_wasm(args: &Cli) -> Result<()> {
+pub(crate) async fn build_wasm(args: &ModeArgs, release: bool) -> Result<()> {
     let mut command: Command = Command::new("wasm-pack");
     command
         .arg("build")
@@ -129,19 +130,39 @@ pub(crate) async fn build_wasm(args: &Cli) -> Result<()> {
         .current_dir(&args.crate_path)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if release {
+        command.arg("--release");
+    }
     log::info!(
-        "Running: wasm-pack build --target web --out-dir {} ...",
-        args.out_dir.display()
+        "Running: wasm-pack build --target web --out-dir {}{} ...",
+        args.out_dir.display(),
+        if release { " --release" } else { "" }
     );
     let output: Output = command
         .output()
         .await
-        .context("Failed to execute wasm-pack")?;
+        .map_err(|e| anyhow!("Failed to execute wasm-pack: {}", e))?;
     if !output.status.success() {
         let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
-        anyhow::bail!("wasm-pack build failed:\n{}", stderr);
+        bail!("wasm-pack build failed:\n{}", stderr);
     }
     Ok(())
+}
+
+/// Prints the startup banner and command information.
+///
+/// # Arguments
+///
+/// - `&str`: The profile name (e.g. "dev" or "release").
+/// - `&str`: The mode name (e.g. "run" or "build").
+/// - `&str`: The server URL (only meaningful in "run" mode).
+pub(crate) fn print_banner(profile: &str, mode: &str, server_url: &str) {
+    log::info!("euv-cli v{}", env!("CARGO_PKG_VERSION"));
+    log::info!("Profile: {} | Mode: {}", profile, mode);
+    if mode == "run" {
+        log::info!("Server: {}", server_url);
+    }
+    log::info!(".gitignore can exclude unwanted file change events from triggering rebuilds");
 }
 
 /// Runs `hyperlane-cli fmt` to format the Rust source files.
@@ -157,7 +178,7 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .context("Failed to check hyperlane-cli availability")?;
+        .map_err(|e| anyhow!("Failed to check hyperlane-cli availability: {}", e))?;
     if !which_output.status.success() {
         log::info!("hyperlane-cli not found, installing via cargo install...");
         let install_output: Output = Command::new("cargo")
@@ -166,10 +187,10 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
             .stderr(Stdio::piped())
             .output()
             .await
-            .context("Failed to execute cargo install hyperlane-cli")?;
+            .map_err(|e| anyhow!("Failed to execute cargo install hyperlane-cli: {}", e))?;
         if !install_output.status.success() {
             let stderr: String = String::from_utf8_lossy(&install_output.stderr).to_string();
-            anyhow::bail!("cargo install hyperlane-cli failed:\n{}", stderr);
+            bail!("cargo install hyperlane-cli failed:\n{}", stderr);
         }
         log::info!("hyperlane-cli installed successfully");
     }
@@ -179,10 +200,10 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .context("Failed to execute hyperlane-cli fmt")?;
+        .map_err(|e| anyhow!("Failed to execute hyperlane-cli fmt: {}", e))?;
     if !fmt_output.status.success() {
         let stderr: String = String::from_utf8_lossy(&fmt_output.stderr).to_string();
-        anyhow::bail!("hyperlane-cli fmt failed:\n{}", stderr);
+        bail!("hyperlane-cli fmt failed:\n{}", stderr);
     }
     Ok(())
 }

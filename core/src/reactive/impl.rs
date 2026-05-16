@@ -113,7 +113,7 @@ where
             inner.get_listeners().iter().map(Rc::clone).collect()
         };
         for listener in &listeners {
-            let mut borrowed = listener.borrow_mut();
+            let mut borrowed: RefMut<dyn FnMut()> = listener.borrow_mut();
             borrowed();
         }
         schedule_signal_update();
@@ -147,7 +147,7 @@ where
             inner.get_listeners().iter().map(Rc::clone).collect()
         };
         for listener in &listeners {
-            let mut borrowed = listener.borrow_mut();
+            let mut borrowed: RefMut<dyn FnMut()> = listener.borrow_mut();
             borrowed();
         }
     }
@@ -249,16 +249,86 @@ impl IntoReactiveValue for Signal<bool> {
 }
 
 /// Converts a CSS class reference into an attribute value.
-impl IntoReactiveValue for crate::vdom::CssClass {
+impl IntoReactiveValue for CssClass {
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Css(self)
     }
 }
 
 /// Converts a reference to a CSS class into an attribute value by cloning.
-impl IntoReactiveValue for &'static crate::vdom::CssClass {
+impl IntoReactiveValue for &'static CssClass {
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Css(self.clone())
+    }
+}
+
+/// Converts a `String` into its own value for reactive string storage.
+impl IntoReactiveString for String {
+    fn into_reactive_string(self) -> String {
+        self
+    }
+}
+
+/// Converts a string slice into an owned string for reactive string storage.
+impl IntoReactiveString for &str {
+    fn into_reactive_string(self) -> String {
+        self.to_string()
+    }
+}
+
+/// Converts a `CssClass` into its class name for reactive string storage.
+impl IntoReactiveString for CssClass {
+    fn into_reactive_string(self) -> String {
+        self.get_name().to_string()
+    }
+}
+
+/// Converts a reference to a `CssClass` into its class name for reactive string storage.
+impl IntoReactiveString for &'static CssClass {
+    fn into_reactive_string(self) -> String {
+        self.get_name().to_string()
+    }
+}
+
+/// Converts a `bool` into `"true"` or `"false"` for reactive string storage.
+impl IntoReactiveString for bool {
+    fn into_reactive_string(self) -> String {
+        self.to_string()
+    }
+}
+
+/// Converts an `i32` into a string for reactive string storage.
+impl IntoReactiveString for i32 {
+    fn into_reactive_string(self) -> String {
+        self.to_string()
+    }
+}
+
+/// Converts a `u32` into a string for reactive string storage.
+impl IntoReactiveString for u32 {
+    fn into_reactive_string(self) -> String {
+        self.to_string()
+    }
+}
+
+/// Converts a `f64` into a string for reactive string storage.
+impl IntoReactiveString for f64 {
+    fn into_reactive_string(self) -> String {
+        self.to_string()
+    }
+}
+
+/// Converts a string signal into a reactive string by resolving its current value.
+impl IntoReactiveString for Signal<String> {
+    fn into_reactive_string(self) -> String {
+        self.get()
+    }
+}
+
+/// Converts a bool signal into a reactive string by resolving its current value.
+impl IntoReactiveString for Signal<bool> {
+    fn into_reactive_string(self) -> String {
+        self.get().to_string()
     }
 }
 

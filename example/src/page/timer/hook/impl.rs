@@ -1,0 +1,33 @@
+use crate::*;
+
+/// Implementation of interval handle lifecycle management.
+impl IntervalHandle {
+    /// Cancels the associated browser interval timer.
+    ///
+    /// Calls `window.clearInterval` with the stored interval ID.
+    /// After calling this method the interval callback will no longer fire.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `window()` is unavailable on the current platform.
+    pub fn clear(&self) {
+        let window: Window = window().expect("no global window exists");
+        window.clear_interval_with_handle(self.interval_id);
+    }
+}
+
+/// Clones the interval handle by copying the interval ID.
+impl Clone for IntervalHandle {
+    fn clone(&self) -> Self {
+        IntervalHandle {
+            interval_id: self.interval_id,
+        }
+    }
+}
+
+/// Compares interval handles by their interval ID.
+impl PartialEq for IntervalHandle {
+    fn eq(&self, other: &Self) -> bool {
+        self.interval_id == other.interval_id
+    }
+}

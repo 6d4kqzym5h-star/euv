@@ -33,7 +33,7 @@ pub(crate) fn convert_web_event(event: &Event, event_name: &str) -> NativeEvent 
         }
         "input" => {
             if let Some(input_event) = event.dyn_ref::<InputEvent>() {
-                let value = get_input_value(event);
+                let value: String = get_input_value(event);
                 NativeEvent::Input(NativeInputEvent::new(value, input_event.input_type()))
             } else {
                 NativeEvent::Input(NativeInputEvent::new(get_input_value(event), String::new()))
@@ -96,8 +96,8 @@ pub(crate) fn convert_web_event(event: &Event, event_name: &str) -> NativeEvent 
         }
         "touchstart" | "touchend" | "touchmove" | "touchcancel" => {
             if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-                let touches = touch_event.touches();
-                let first = touches.get(0);
+                let touches: TouchList = touch_event.touches();
+                let first: Option<Touch> = touches.get(0);
                 NativeEvent::Touch(NativeTouchEvent::new(
                     touches.length(),
                     first.as_ref().map(|t| t.client_x()).unwrap_or(0),

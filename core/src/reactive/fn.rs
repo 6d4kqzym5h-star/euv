@@ -87,6 +87,49 @@ where
     result
 }
 
+/// Subscribes an attribute signal to the global `__euv_signal_update__` event so that
+/// whenever any signal changes, the attribute value is recomputed and the attribute
+/// signal is updated. This enables reactive `if` conditions inside any HTML attribute,
+/// including `style`, `class`, and others.
+///
+/// Works identically to the DOM-level `if {expr} { children }` mechanism: both
+/// re-evaluate their condition expressions when any signal dispatches the global
+/// update event, then apply only the minimal diff to the DOM.
+///
+/// # Arguments
+///
+/// - `Signal<String>`: The attribute signal to update when signals change.
+/// - `F`: A closure that recomputes the attribute value string.
+///
+/// # Panics
+///
+/// Panics if `window()` is unavailable on the current platform.
+pub fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
+where
+    F: Fn() -> String + 'static,
+{
+    #[cfg(target_arch = "wasm32")]
+    {
+        let window: Window = window().expect("no global window exists");
+        let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            let new_value: String = compute();
+            attr_signal.set(new_value);
+        }));
+        window
+            .add_event_listener_with_callback(
+                &NativeEventName::EuvSignalUpdate.to_string(),
+                closure.as_ref().unchecked_ref(),
+            )
+            .unwrap();
+        closure.forget();
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let _ = attr_signal;
+        let _ = compute;
+    }
+}
+
 /// Returns the currently active `HookContext`.
 ///
 /// When called outside a `with_hook_context` scope, returns a reference

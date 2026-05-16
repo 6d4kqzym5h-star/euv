@@ -24,14 +24,38 @@ cargo install euv-cli
 
 ## Usage
 
-Start the development server for your euv project:
+The CLI supports two profiles (`dev` / `release`) and two modes (`run` / `build`):
 
 ```shell
-# cargo
-cargo run -p euv-cli -- --crate-path ./example --www-dir ./www --port 3000
-# euv-cli
-euv-cli --crate-path ./example --www-dir ./www --port 3000
+# Development mode: build with debug assertions and start dev server with hot-reload
+euv-cli dev run
+euv-cli dev run --crate-path ./example --port 8080
+
+# Development mode: build only, do not start the server
+euv-cli dev build
+euv-cli dev build --crate-path ./example
+
+# Release mode: build with optimizations and start the server
+euv-cli release run
+euv-cli release run --crate-path ./example
+
+# Release mode: build only
+euv-cli release build
+euv-cli release build --crate-path ./example
+
+# Or via cargo
+cargo run -p euv-cli -- dev run --crate-path ./example --port 3000
+cargo run -p euv-cli -- release build --crate-path ./example
 ```
+
+### Options
+
+| Option         | Short | Default   | Description                                             |
+| -------------- | ----- | --------- | ------------------------------------------------------- |
+| `--crate-path` | `-c`  | `.`       | Path to the Rust crate containing the WASM application  |
+| `--www-dir`    | `-w`  | `www`     | Directory to serve static files from                    |
+| `--port`       | `-p`  | `3000`    | Port for the development server                         |
+| `--out-dir`    | `-o`  | `www/pkg` | Output directory for wasm-pack (relative to crate_path) |
 
 ## License
 

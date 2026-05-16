@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 
 /// Global static Logger instance.
-pub(super) static LOGGER: Logger = Logger;
+pub(crate) static LOGGER: Logger = Logger;

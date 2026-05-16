@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 
 /// Implementation of server hook for request middleware.
 impl ServerHook for RequestMiddleware {

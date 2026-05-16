@@ -493,7 +493,8 @@ impl Renderer {
                 let mut hook_context: HookContext = dynamic_node.hook_context;
                 hook_context.reset_hook_index();
                 let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
-                    let mut borrowed = dynamic_node.render_fn.borrow_mut();
+                    let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
+                        dynamic_node.render_fn.borrow_mut();
                     borrowed()
                 });
                 let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);

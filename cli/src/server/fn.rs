@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 
 /// Sets the global application state.
 ///
@@ -12,7 +12,7 @@ use super::*;
 pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
     APP_STATE
         .set(state)
-        .map_err(|_| anyhow::anyhow!("Global state already initialized"))
+        .map_err(|_| anyhow!("Global state already initialized"))
 }
 
 /// Retrieves the global application state.
@@ -39,14 +39,14 @@ pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
     if !index_path.exists() {
         fs::create_dir_all(www_dir)
             .await
-            .context("Failed to create www directory")?;
+            .map_err(|e| anyhow!("Failed to create www directory: {}", e))?;
         fs::write(&index_path, DEFAULT_INDEX_HTML)
             .await
-            .context("Failed to write default index.html")?;
+            .map_err(|e| anyhow!("Failed to write default index.html: {}", e))?;
     }
     let original: String = fs::read_to_string(&index_path)
         .await
-        .context("Failed to read index.html")?;
+        .map_err(|e| anyhow!("Failed to read index.html: {}", e))?;
     let mut html: String = if original.contains("</body>") {
         original.replace("</body>", &format!("{}\n</body>", RELOAD_SCRIPT))
     } else {
@@ -93,7 +93,7 @@ pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
     }
     let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
     if let Some(name) = parent_name {
-        let nested = www_dir.join(name);
+        let nested: PathBuf = www_dir.join(name);
         if nested.join("index.html").exists() {
             return nested;
         }
@@ -124,7 +124,7 @@ pub(crate) fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
     }
     let grandparent: Option<&Path> = www_dir.parent();
     if let Some(parent) = grandparent {
-        let sibling_pkg = parent.join("pkg");
+        let sibling_pkg: PathBuf = parent.join("pkg");
         if sibling_pkg.join("euv_example.js").exists() || sibling_pkg.join(".gitignore").exists() {
             return sibling_pkg;
         }

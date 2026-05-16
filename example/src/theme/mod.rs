@@ -1,4 +1,3 @@
-mod r#fn;
-mod r#struct;
+mod view;
 
-pub(crate) use {r#fn::*, r#struct::*};
+pub(crate) use view::*;

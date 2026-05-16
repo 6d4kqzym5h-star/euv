@@ -3,6 +3,7 @@ mod button;
 mod card;
 mod form_input;
 mod modal;
+mod page_header;
 mod vconsole;
 
-pub use {badge::*, button::*, card::*, form_input::*, modal::*, vconsole::*};
+pub use {badge::*, button::*, card::*, form_input::*, modal::*, page_header::*, vconsole::*};

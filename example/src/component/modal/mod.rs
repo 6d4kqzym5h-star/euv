@@ -1,3 +1,3 @@
-mod r#fn;
+mod view;
 
-pub use r#fn::*;
+pub use view::*;

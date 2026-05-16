@@ -1,5 +1,6 @@
-use super::*;
+use crate::*;
 
+/// Implementation of the `log::Log` trait for colored console output.
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         metadata.level() <= log::max_level()
@@ -17,10 +18,10 @@ impl log::Log for Logger {
         let target: &str = record.target();
         let line: u32 = record.line().unwrap_or_default();
         let location: &str = file.unwrap_or(module_path.unwrap_or(target));
-        let time_text: String = format!("{SPACE}{now_time}{SPACE}");
-        let level_text: String = format!("{SPACE}{level}{SPACE}");
-        let args_text: String = format!("{args}{SPACE}");
-        let location_text: String = format!("{SPACE}{location}{COLON}{line}{SPACE}");
+        let time_text: String = format!("{LOG_SPACE}{now_time}{LOG_SPACE}");
+        let level_text: String = format!("{LOG_SPACE}{level}{LOG_SPACE}");
+        let args_text: String = format!("{args}{LOG_SPACE}");
+        let location_text: String = format!("{LOG_SPACE}{location}{LOG_COLON}{line}{LOG_SPACE}");
         let color: ColorType = match record.level() {
             log::Level::Trace => ColorType::Use(Color::Magenta),
             log::Level::Debug => ColorType::Use(Color::Cyan),
@@ -66,6 +67,7 @@ impl log::Log for Logger {
     fn flush(&self) {}
 }
 
+/// Implementation of associated functions for `Logger`.
 impl Logger {
     /// Initializes the global logger with the specified maximum log level.
     ///

@@ -78,7 +78,7 @@ impl NativeEventHandler {
 
     /// Invokes the underlying callback with the given event.
     pub fn handle(&self, event: NativeEvent) {
-        let mut cb = self.get_callback().borrow_mut();
+        let mut cb: RefMut<dyn FnMut(NativeEvent)> = self.get_callback().borrow_mut();
         cb(event);
     }
 }
