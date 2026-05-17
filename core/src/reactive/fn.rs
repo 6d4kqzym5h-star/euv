@@ -18,6 +18,36 @@ pub(crate) fn dispatch_signal_update() {
     }
 }
 
+/// Ensures the global `window.__euv_dispatch` callback is registered.
+///
+/// On first call, creates a single `Closure` that resets the `SCHEDULED`
+/// flag and dispatches the signal update event, then installs it as
+/// `window.__euv_dispatch` via `Reflect::set`. Subsequent calls
+/// are no-ops because the function is already present on the window object.
+///
+/// This avoids the per-call `Closure::forget()` memory leak that would
+/// otherwise occur if a new closure were allocated on every signal update.
+///
+/// # Panics
+///
+/// Panics if `window()` returns `None` or if `Reflect::set` fails.
+#[cfg(target_arch = "wasm32")]
+fn ensure_dispatch_callback() {
+    let win: Window = window().unwrap();
+    let key: JsValue = JsValue::from_str("__euv_dispatch");
+    if Reflect::get(&win, &key)
+        .unwrap_or(JsValue::UNDEFINED)
+        .is_undefined()
+    {
+        let closure: closure::Closure<dyn FnMut()> = closure::Closure::wrap(Box::new(|| {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            dispatch_signal_update();
+        }));
+        let _ = Reflect::set(&win, &key, closure.as_ref());
+        closure.forget();
+    }
+}
+
 /// Schedules a deferred `__euv_signal_update__` event via a microtask.
 ///
 /// Batches multiple signal updates within the same synchronous tick into
@@ -29,9 +59,14 @@ pub(crate) fn dispatch_signal_update() {
 /// internal operations (such as `watch!` initialisation) can perform
 /// signal mutations without triggering premature DOM re-renders.
 ///
+/// Uses `queueMicrotask` to schedule the pre-registered
+/// `window.__euv_dispatch` callback, avoiding repeated `Closure::forget()`
+/// memory leaks. The dispatch callback is registered once via
+/// `ensure_dispatch_callback` and reused on every call.
+///
 /// # Panics
 ///
-/// Panics if `Promise::new()` or `Event::new()` fails.
+/// Panics if `window()` returns `None` or if `Reflect::get` / `Function::call` fails.
 pub(crate) fn schedule_signal_update() {
     if SCHEDULED.load(Ordering::Relaxed) || SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
         return;
@@ -44,14 +79,22 @@ pub(crate) fn schedule_signal_update() {
             SCHEDULED.store(false, Ordering::Relaxed);
             return;
         }
-        let promise: js_sys::Promise = js_sys::Promise::resolve(&wasm_bindgen::JsValue::NULL);
-        let closure: wasm_bindgen::closure::Closure<dyn FnMut(wasm_bindgen::JsValue)> =
-            wasm_bindgen::closure::Closure::wrap(Box::new(move |_value: wasm_bindgen::JsValue| {
-                SCHEDULED.store(false, Ordering::Relaxed);
-                dispatch_signal_update();
-            }));
-        let _ = promise.then(&closure);
-        closure.forget();
+        ensure_dispatch_callback();
+        let win: Window = win.unwrap();
+        let dispatch_fn: JsValue =
+            Reflect::get(&win, &JsValue::from_str("__euv_dispatch")).unwrap_or(JsValue::UNDEFINED);
+        if dispatch_fn.is_undefined() {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            return;
+        }
+        let queue_microtask_val: JsValue =
+            Reflect::get(&win, &JsValue::from_str("queueMicrotask")).unwrap_or(JsValue::UNDEFINED);
+        if queue_microtask_val.is_undefined() {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            return;
+        }
+        let queue_microtask: Function = queue_microtask_val.into();
+        let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -208,10 +251,7 @@ where
     {
         return *existing;
     }
-    let signal: Signal<T> = {
-        let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(init()));
-        Signal::from_inner(Box::leak(boxed) as *mut SignalInner<T>)
-    };
+    let signal: Signal<T> = Signal::new(init());
     let cleanup_signal: Signal<T> = signal;
     ctx.get_mut_cleanups()
         .push(Box::new(move || cleanup_signal.clear_listeners()));
@@ -236,11 +276,7 @@ where
 /// - `AttributeValue` - A signal-backed attribute value that reactively mirrors the boolean as a string.
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let initial: String = source.get().to_string();
-    let string_signal: Signal<String> = {
-        let inner: SignalInner<String> = SignalInner::new(initial);
-        let boxed: Box<SignalInner<String>> = Box::new(inner);
-        Signal::from_inner(Box::leak(boxed) as *mut SignalInner<String>)
-    };
+    let string_signal: Signal<String> = Signal::new(initial);
     let string_signal_clone: Signal<String> = string_signal;
     source.subscribe({
         let source_inner: Signal<bool> = source;

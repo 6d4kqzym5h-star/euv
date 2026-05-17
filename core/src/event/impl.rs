@@ -3,53 +3,60 @@ use crate::*;
 /// Maps each `NativeEventName` variant to its corresponding DOM event string.
 impl NativeEventName {
     /// Returns the string representation of this event name for DOM binding.
-    pub fn as_str(&self) -> String {
+    ///
+    /// Static variants return `Cow::Borrowed` (zero allocation), while
+    /// `Other` variants return `Cow::Owned` (heap allocation).
+    ///
+    /// # Returns
+    ///
+    /// - `Cow<'static, str>` - The event name as a static or owned string.
+    pub fn as_str(&self) -> Cow<'static, str> {
         match self {
-            NativeEventName::Click => "click".to_string(),
-            NativeEventName::DblClick => "dblclick".to_string(),
-            NativeEventName::MouseDown => "mousedown".to_string(),
-            NativeEventName::MouseUp => "mouseup".to_string(),
-            NativeEventName::MouseMove => "mousemove".to_string(),
-            NativeEventName::MouseEnter => "mouseenter".to_string(),
-            NativeEventName::MouseLeave => "mouseleave".to_string(),
-            NativeEventName::MouseOver => "mouseover".to_string(),
-            NativeEventName::MouseOut => "mouseout".to_string(),
-            NativeEventName::ContextMenu => "contextmenu".to_string(),
-            NativeEventName::Input => "input".to_string(),
-            NativeEventName::KeyDown => "keydown".to_string(),
-            NativeEventName::KeyUp => "keyup".to_string(),
-            NativeEventName::KeyPress => "keypress".to_string(),
-            NativeEventName::Focus => "focus".to_string(),
-            NativeEventName::Blur => "blur".to_string(),
-            NativeEventName::FocusIn => "focusin".to_string(),
-            NativeEventName::FocusOut => "focusout".to_string(),
-            NativeEventName::Submit => "submit".to_string(),
-            NativeEventName::Change => "change".to_string(),
-            NativeEventName::Drag => "drag".to_string(),
-            NativeEventName::DragStart => "dragstart".to_string(),
-            NativeEventName::DragEnd => "dragend".to_string(),
-            NativeEventName::DragOver => "dragover".to_string(),
-            NativeEventName::DragEnter => "dragenter".to_string(),
-            NativeEventName::DragLeave => "dragleave".to_string(),
-            NativeEventName::Drop => "drop".to_string(),
-            NativeEventName::TouchStart => "touchstart".to_string(),
-            NativeEventName::TouchEnd => "touchend".to_string(),
-            NativeEventName::TouchMove => "touchmove".to_string(),
-            NativeEventName::TouchCancel => "touchcancel".to_string(),
-            NativeEventName::Wheel => "wheel".to_string(),
-            NativeEventName::Copy => "copy".to_string(),
-            NativeEventName::Cut => "cut".to_string(),
-            NativeEventName::Paste => "paste".to_string(),
-            NativeEventName::Play => "play".to_string(),
-            NativeEventName::Pause => "pause".to_string(),
-            NativeEventName::Ended => "ended".to_string(),
-            NativeEventName::LoadedData => "loadeddata".to_string(),
-            NativeEventName::CanPlay => "canplay".to_string(),
-            NativeEventName::VolumeChange => "volumechange".to_string(),
-            NativeEventName::TimeUpdate => "timeupdate".to_string(),
-            NativeEventName::HashChange => "hashchange".to_string(),
-            NativeEventName::EuvSignalUpdate => "__euv_signal_update__".to_string(),
-            NativeEventName::Other(name) => name.clone(),
+            NativeEventName::Click => Cow::Borrowed("click"),
+            NativeEventName::DblClick => Cow::Borrowed("dblclick"),
+            NativeEventName::MouseDown => Cow::Borrowed("mousedown"),
+            NativeEventName::MouseUp => Cow::Borrowed("mouseup"),
+            NativeEventName::MouseMove => Cow::Borrowed("mousemove"),
+            NativeEventName::MouseEnter => Cow::Borrowed("mouseenter"),
+            NativeEventName::MouseLeave => Cow::Borrowed("mouseleave"),
+            NativeEventName::MouseOver => Cow::Borrowed("mouseover"),
+            NativeEventName::MouseOut => Cow::Borrowed("mouseout"),
+            NativeEventName::ContextMenu => Cow::Borrowed("contextmenu"),
+            NativeEventName::Input => Cow::Borrowed("input"),
+            NativeEventName::KeyDown => Cow::Borrowed("keydown"),
+            NativeEventName::KeyUp => Cow::Borrowed("keyup"),
+            NativeEventName::KeyPress => Cow::Borrowed("keypress"),
+            NativeEventName::Focus => Cow::Borrowed("focus"),
+            NativeEventName::Blur => Cow::Borrowed("blur"),
+            NativeEventName::FocusIn => Cow::Borrowed("focusin"),
+            NativeEventName::FocusOut => Cow::Borrowed("focusout"),
+            NativeEventName::Submit => Cow::Borrowed("submit"),
+            NativeEventName::Change => Cow::Borrowed("change"),
+            NativeEventName::Drag => Cow::Borrowed("drag"),
+            NativeEventName::DragStart => Cow::Borrowed("dragstart"),
+            NativeEventName::DragEnd => Cow::Borrowed("dragend"),
+            NativeEventName::DragOver => Cow::Borrowed("dragover"),
+            NativeEventName::DragEnter => Cow::Borrowed("dragenter"),
+            NativeEventName::DragLeave => Cow::Borrowed("dragleave"),
+            NativeEventName::Drop => Cow::Borrowed("drop"),
+            NativeEventName::TouchStart => Cow::Borrowed("touchstart"),
+            NativeEventName::TouchEnd => Cow::Borrowed("touchend"),
+            NativeEventName::TouchMove => Cow::Borrowed("touchmove"),
+            NativeEventName::TouchCancel => Cow::Borrowed("touchcancel"),
+            NativeEventName::Wheel => Cow::Borrowed("wheel"),
+            NativeEventName::Copy => Cow::Borrowed("copy"),
+            NativeEventName::Cut => Cow::Borrowed("cut"),
+            NativeEventName::Paste => Cow::Borrowed("paste"),
+            NativeEventName::Play => Cow::Borrowed("play"),
+            NativeEventName::Pause => Cow::Borrowed("pause"),
+            NativeEventName::Ended => Cow::Borrowed("ended"),
+            NativeEventName::LoadedData => Cow::Borrowed("loadeddata"),
+            NativeEventName::CanPlay => Cow::Borrowed("canplay"),
+            NativeEventName::VolumeChange => Cow::Borrowed("volumechange"),
+            NativeEventName::TimeUpdate => Cow::Borrowed("timeupdate"),
+            NativeEventName::HashChange => Cow::Borrowed("hashchange"),
+            NativeEventName::EuvSignalUpdate => Cow::Borrowed("__euv_signal_update__"),
+            NativeEventName::Other(name) => Cow::Owned(name.clone()),
         }
     }
 }
@@ -71,7 +78,7 @@ impl NativeEventHandler {
         F: FnMut(NativeEvent) + 'static,
     {
         NativeEventHandler {
-            event_name: event_name.as_str(),
+            event_name: event_name.as_str().into_owned(),
             callback: Rc::new(RefCell::new(callback)),
         }
     }
@@ -89,23 +96,6 @@ impl Clone for NativeEventHandler {
         NativeEventHandler {
             event_name: self.get_event_name().clone(),
             callback: Rc::clone(self.get_callback()),
-        }
-    }
-}
-
-/// Converts an owned event handler into an attribute value.
-impl IntoEventAttribute for NativeEventHandler {
-    fn into_event_attribute(self) -> AttributeValue {
-        AttributeValue::Event(self)
-    }
-}
-
-/// Converts an optional event handler into an attribute value.
-impl IntoEventAttribute for Option<NativeEventHandler> {
-    fn into_event_attribute(self) -> AttributeValue {
-        match self {
-            Some(handler) => AttributeValue::Event(handler),
-            None => AttributeValue::Text(String::new()),
         }
     }
 }

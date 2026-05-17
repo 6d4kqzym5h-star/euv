@@ -15,7 +15,7 @@ where
     /// Callbacks to invoke when the value changes.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) listeners: Vec<Rc<RefCell<dyn FnMut()>>>,
+    pub(crate) listeners: Vec<Box<dyn FnMut()>>,
     /// Whether this signal is still active. Set to `false` by `clear_listeners()`
     /// to make subsequent `set()` calls complete no-ops (no value update, no
     /// listener invocation, no `schedule_signal_update()`), ensuring stale

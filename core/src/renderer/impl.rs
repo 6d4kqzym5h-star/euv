@@ -87,35 +87,9 @@ impl Renderer {
                     dom_element.remove_child(&child).unwrap();
                 }
                 let dynamic_id: usize = Self::ensure_dynamic_id(dom_element);
-                let mut hook_context: HookContext = new_dynamic.get_hook_context();
-                hook_context.reset_hook_index();
-                let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
-                    let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
-                        new_dynamic.get_render_fn().borrow_mut();
-                    borrowed()
-                });
-                let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
-                let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
+                let initial_dom: Node =
+                    self.setup_dynamic_node(new_dynamic, dynamic_id, dom_element, false);
                 dom_element.append_child(&initial_dom).unwrap();
-                let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-                    new_dynamic.get_render_fn().clone();
-                let placeholder_clone: Element = dom_element.clone();
-                let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
-                renderer_for_sub.set_current_tree(Some(initial_unwrapped));
-                let renderer_ref: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
-                let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
-                let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-                    Rc::clone(&render_fn_clone);
-                let re_render_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                    if placeholder_clone.parent_node().is_none() {
-                        return;
-                    }
-                    hook_context.reset_hook_index();
-                    let new_vnode: VirtualNode =
-                        with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
-                    renderer_ref_for_sub.borrow_mut().render(new_vnode);
-                }));
-                register_dynamic_listener(dynamic_id, re_render_closure);
             }
             _ => {
                 let new_dom: Node = self.create_dom_node(new_node);
@@ -133,39 +107,38 @@ impl Renderer {
         old_attrs: &[AttributeEntry],
         new_attrs: &[AttributeEntry],
     ) {
-        let mut old_map: HashMap<&str, &AttributeValue> = HashMap::new();
-        for attr in old_attrs {
-            old_map.insert(attr.get_name(), attr.get_value());
-        }
-        let mut new_map: HashMap<&str, &AttributeValue> = HashMap::new();
-        for attr in new_attrs {
-            new_map.insert(attr.get_name(), attr.get_value());
-        }
-        for name in old_map.keys() {
-            if !new_map.contains_key(*name) {
-                Self::remove_dom_attribute_or_property(element, name);
+        for old_attr in old_attrs {
+            let removed: bool = !new_attrs
+                .iter()
+                .any(|new_attr| new_attr.get_name() == old_attr.get_name());
+            if removed {
+                remove_dom_attribute_or_property(element, old_attr.get_name());
             }
         }
-        for attr in new_attrs {
-            let should_set: bool = match old_map.get(attr.get_name().as_str()) {
-                Some(old_value) => !Self::attribute_values_equal(old_value, attr.get_value()),
+        for new_attr in new_attrs {
+            let old_value: Option<&AttributeValue> = old_attrs
+                .iter()
+                .find(|old_attr| old_attr.get_name() == new_attr.get_name())
+                .map(AttributeEntry::get_value);
+            let should_set: bool = match old_value {
+                Some(old_val) => !Self::attribute_values_equal(old_val, new_attr.get_value()),
                 None => true,
             };
             if should_set {
-                match attr.get_value() {
+                match new_attr.get_value() {
                     AttributeValue::Text(value) => {
                         if value.is_empty() {
-                            Self::remove_dom_attribute_or_property(element, attr.get_name());
+                            remove_dom_attribute_or_property(element, new_attr.get_name());
                         } else {
-                            Self::set_dom_attribute_or_property(element, attr.get_name(), value);
+                            set_dom_attribute_or_property(element, new_attr.get_name(), value);
                         }
                     }
                     AttributeValue::Signal(signal) => {
                         let value: String = signal.get();
-                        if value.is_empty() && !Self::is_boolean_property(attr.get_name()) {
-                            Self::remove_dom_attribute_or_property(element, attr.get_name());
+                        if value.is_empty() && !is_boolean_property(new_attr.get_name()) {
+                            remove_dom_attribute_or_property(element, new_attr.get_name());
                         } else {
-                            Self::set_dom_attribute_or_property(element, attr.get_name(), &value);
+                            set_dom_attribute_or_property(element, new_attr.get_name(), &value);
                         }
                     }
                     AttributeValue::Event(handler) => {
@@ -174,153 +147,15 @@ impl Renderer {
                     AttributeValue::Dynamic(_) => {}
                     AttributeValue::Css(css_class) => {
                         css_class.inject_style();
-                        Self::set_dom_attribute_or_property(
+                        set_dom_attribute_or_property(
                             element,
-                            attr.get_name(),
+                            new_attr.get_name(),
                             css_class.get_name(),
                         );
                     }
                 }
             }
         }
-    }
-
-    /// Returns true if the given attribute name is a boolean attribute that
-    /// requires DOM property-based manipulation instead of HTML attribute strings.
-    fn is_boolean_property(name: &str) -> bool {
-        matches!(name, "checked" | "disabled" | "selected" | "readonly")
-    }
-
-    /// Removes or clears a DOM attribute/property, depending on the attribute name.
-    ///
-    /// For `value`, sets the DOM property to an empty string rather than calling
-    /// `remove_attribute`, because `remove_attribute("value")` only removes the
-    /// HTML attribute and does not clear the displayed value of input elements.
-    /// For boolean properties (`checked`, `disabled`, `selected`, `readonly`),
-    /// sets the DOM property to `false` rather than calling `remove_attribute`,
-    /// because `remove_attribute` on a previously-set attribute may not correctly
-    /// reset the property in all browsers.
-    fn remove_dom_attribute_or_property(element: &Element, name: &str) {
-        if name == "value" {
-            if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-                input.set_value("");
-                return;
-            }
-            if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-                textarea.set_value("");
-                return;
-            }
-            if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
-                select.set_value("");
-                return;
-            }
-        }
-        if name == "checked"
-            && let Some(input) = element.dyn_ref::<HtmlInputElement>()
-        {
-            input.set_checked(false);
-            return;
-        }
-        if name == "disabled" {
-            if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-                input.set_disabled(false);
-                return;
-            }
-            if let Some(button) = element.dyn_ref::<HtmlButtonElement>() {
-                button.set_disabled(false);
-                return;
-            }
-            if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
-                select.set_disabled(false);
-                return;
-            }
-            if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-                textarea.set_disabled(false);
-                return;
-            }
-        }
-        if name == "selected"
-            && let Some(option) = element.dyn_ref::<HtmlOptionElement>()
-        {
-            option.set_selected(false);
-            return;
-        }
-        if name == "readonly" {
-            if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-                input.set_read_only(false);
-                return;
-            }
-            if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-                textarea.set_read_only(false);
-                return;
-            }
-        }
-        let _ = element.remove_attribute(name);
-    }
-
-    /// Sets a DOM attribute or property, depending on the attribute name.
-    ///
-    /// For `value`, uses the DOM property to ensure input elements update correctly.
-    /// For boolean attributes (`checked`, `disabled`, `selected`, `readonly`),
-    /// uses the DOM property so that the browser honors the value correctly
-    /// (HTML attributes are present-or-absent, not true/false strings).
-    /// For all other attributes, uses `set_attribute`.
-    fn set_dom_attribute_or_property(element: &Element, name: &str, value: &str) {
-        if name == "value" {
-            if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-                input.set_value(value);
-                return;
-            }
-            if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-                textarea.set_value(value);
-                return;
-            }
-            if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
-                select.set_value(value);
-                return;
-            }
-        }
-        if name == "checked"
-            && let Some(input) = element.dyn_ref::<HtmlInputElement>()
-        {
-            input.set_checked(value == "true");
-            return;
-        }
-        if name == "disabled" {
-            if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-                input.set_disabled(value == "true");
-                return;
-            }
-            if let Some(button) = element.dyn_ref::<HtmlButtonElement>() {
-                button.set_disabled(value == "true");
-                return;
-            }
-            if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
-                select.set_disabled(value == "true");
-                return;
-            }
-            if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-                textarea.set_disabled(value == "true");
-                return;
-            }
-        }
-        if name == "selected"
-            && let Some(option) = element.dyn_ref::<HtmlOptionElement>()
-        {
-            option.set_selected(value == "true");
-            return;
-        }
-        if name == "readonly" {
-            if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-                input.set_read_only(value == "true");
-                return;
-            }
-            if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-                textarea.set_read_only(value == "true");
-                return;
-            }
-        }
-        let _ = element.set_attribute(name, value);
     }
 
     /// Compares two tags for equality.
@@ -418,6 +253,14 @@ impl Renderer {
 
     /// Creates a real DOM node from a virtual node.
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
+        let document: Document = window().unwrap().document().unwrap();
+        self.create_dom_node_with_document(node, &document)
+    }
+
+    /// Creates a real DOM node using a pre-acquired document reference.
+    ///
+    /// Avoids repeated `window().document()` calls during recursive node creation.
+    fn create_dom_node_with_document(&mut self, node: &VirtualNode, document: &Document) -> Node {
         match node {
             VirtualNode::Element {
                 tag,
@@ -425,31 +268,24 @@ impl Renderer {
                 children,
                 ..
             } => {
-                let document: Document = window().unwrap().document().unwrap();
                 let element: Element = match tag {
                     Tag::Element(name) => document.create_element(name).unwrap(),
                     Tag::Component(_) => {
                         let unwrapped: VirtualNode = self.unwrap_component(node);
-                        return self.create_dom_node(&unwrapped);
+                        return self.create_dom_node_with_document(&unwrapped, document);
                     }
                 };
                 for attr in attributes {
                     match attr.get_value() {
                         AttributeValue::Text(value) => {
-                            if !value.is_empty() || Self::is_boolean_property(attr.get_name()) {
-                                Self::set_dom_attribute_or_property(
-                                    &element,
-                                    attr.get_name(),
-                                    value,
-                                );
+                            if !value.is_empty() || is_boolean_property(attr.get_name()) {
+                                set_dom_attribute_or_property(&element, attr.get_name(), value);
                             }
                         }
                         AttributeValue::Signal(signal) => {
                             let initial_value: String = signal.get();
-                            if !initial_value.is_empty()
-                                || Self::is_boolean_property(attr.get_name())
-                            {
-                                Self::set_dom_attribute_or_property(
+                            if !initial_value.is_empty() || is_boolean_property(attr.get_name()) {
+                                set_dom_attribute_or_property(
                                     &element,
                                     attr.get_name(),
                                     &initial_value,
@@ -461,13 +297,10 @@ impl Renderer {
                             let signal_inner: Signal<String> = signal_for_sub;
                             signal_for_sub.replace_subscribe(move || {
                                 let new_value: String = signal_inner.get();
-                                if new_value.is_empty() && !Self::is_boolean_property(&attr_name) {
-                                    Self::remove_dom_attribute_or_property(
-                                        &element_clone,
-                                        &attr_name,
-                                    );
+                                if new_value.is_empty() && !is_boolean_property(&attr_name) {
+                                    remove_dom_attribute_or_property(&element_clone, &attr_name);
                                 } else {
-                                    Self::set_dom_attribute_or_property(
+                                    set_dom_attribute_or_property(
                                         &element_clone,
                                         &attr_name,
                                         &new_value,
@@ -481,7 +314,7 @@ impl Renderer {
                         AttributeValue::Dynamic(_) => {}
                         AttributeValue::Css(css_class) => {
                             css_class.inject_style();
-                            Self::set_dom_attribute_or_property(
+                            set_dom_attribute_or_property(
                                 &element,
                                 attr.get_name(),
                                 css_class.get_name(),
@@ -490,13 +323,12 @@ impl Renderer {
                     }
                 }
                 for child in children {
-                    let child_node: Node = self.create_dom_node(child);
+                    let child_node: Node = self.create_dom_node_with_document(child, document);
                     element.append_child(&child_node).unwrap();
                 }
                 element.into()
             }
             VirtualNode::Text(text_node) => {
-                let document: Document = window().unwrap().document().unwrap();
                 let text: Text = document.create_text_node(text_node.get_content());
                 if let Some(signal) = text_node.try_get_signal() {
                     let text_clone: Text = text.clone();
@@ -512,65 +344,85 @@ impl Renderer {
                 text.into()
             }
             VirtualNode::Fragment(children) => {
-                let document: Document = window().unwrap().document().unwrap();
                 let fragment: Element = document.create_element("div").unwrap();
                 for child in children {
-                    let child_node: Node = self.create_dom_node(child);
+                    let child_node: Node = self.create_dom_node_with_document(child, document);
                     fragment.append_child(&child_node).unwrap();
                 }
                 fragment.into()
             }
             VirtualNode::Dynamic(dynamic_node) => {
-                let document: Document = window().unwrap().document().unwrap();
                 let placeholder: Element = document.create_element("div").unwrap();
                 let style: &str = "display: contents;";
                 let _ = placeholder.set_attribute("style", style);
                 let dynamic_id: usize = Self::assign_dynamic_id(&placeholder);
-                let mut hook_context: HookContext = dynamic_node.get_hook_context();
-                hook_context.reset_hook_index();
-                let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
-                    let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
-                        dynamic_node.get_render_fn().borrow_mut();
-                    borrowed()
-                });
-                let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
-                let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
+                let initial_dom: Node =
+                    self.setup_dynamic_node(dynamic_node, dynamic_id, &placeholder, true);
                 placeholder.append_child(&initial_dom).unwrap();
-                let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-                    dynamic_node.get_render_fn().clone();
-                let placeholder_clone: Element = placeholder.clone();
-                let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
-                renderer_for_sub.set_current_tree(Some(initial_unwrapped));
-                let renderer_ref: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
-                let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
-                let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-                    Rc::clone(&render_fn_clone);
-                let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                    if placeholder_clone.parent_node().is_none() {
-                        return;
-                    }
-                    hook_context.reset_hook_index();
-                    let new_vnode: VirtualNode =
-                        with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
-                    {
-                        let renderer: Ref<'_, Renderer> = renderer_ref_for_sub.borrow();
-                        if let Some(old_vnode) = renderer.try_get_current_tree() {
-                            let new_unwrapped: VirtualNode = renderer.unwrap_component(&new_vnode);
-                            if old_vnode == &new_unwrapped {
-                                return;
-                            }
-                        }
-                    }
-                    renderer_ref_for_sub.borrow_mut().render(new_vnode);
-                }));
-                register_dynamic_listener(dynamic_id, closure);
                 placeholder.into()
             }
-            VirtualNode::Empty => {
-                let document: Document = window().unwrap().document().unwrap();
-                document.create_text_node("").into()
-            }
+            VirtualNode::Empty => document.create_text_node("").into(),
         }
+    }
+
+    /// Initializes a DynamicNode: runs the initial render, creates a sub-renderer,
+    /// and registers the re-render closure as a `__euv_signal_update__` listener.
+    ///
+    /// # Arguments
+    ///
+    /// - `&DynamicNode` - The dynamic node to initialize.
+    /// - `usize` - The `data-euv-dynamic-id` for the placeholder element.
+    /// - `&Element` - The placeholder element that contains the dynamic content.
+    /// - `bool` - Whether to skip re-rendering when the new vnode equals the old one.
+    ///
+    /// # Returns
+    ///
+    /// - `Node` - The initial DOM node produced by the first render.
+    fn setup_dynamic_node(
+        &mut self,
+        dynamic_node: &DynamicNode,
+        dynamic_id: usize,
+        placeholder: &Element,
+        skip_equal: bool,
+    ) -> Node {
+        let mut hook_context: HookContext = dynamic_node.get_hook_context();
+        hook_context.reset_hook_index();
+        let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
+            let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
+                dynamic_node.get_render_fn().borrow_mut();
+            borrowed()
+        });
+        let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
+        let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
+        let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
+            dynamic_node.get_render_fn().clone();
+        let placeholder_clone: Element = placeholder.clone();
+        let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
+        renderer_for_sub.set_current_tree(Some(initial_unwrapped));
+        let renderer_ref: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
+        let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
+        let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
+            Rc::clone(&render_fn_clone);
+        let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            if placeholder_clone.parent_node().is_none() {
+                return;
+            }
+            hook_context.reset_hook_index();
+            let new_vnode: VirtualNode =
+                with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
+            if skip_equal {
+                let renderer: Ref<'_, Renderer> = renderer_ref_for_sub.borrow();
+                if let Some(old_vnode) = renderer.try_get_current_tree() {
+                    let new_unwrapped: VirtualNode = renderer.unwrap_component(&new_vnode);
+                    if old_vnode == &new_unwrapped {
+                        return;
+                    }
+                }
+            }
+            renderer_ref_for_sub.borrow_mut().render(new_vnode);
+        }));
+        register_dynamic_listener(dynamic_id, closure);
+        initial_dom
     }
 
     /// Recursively unwraps component nodes into their rendered output.

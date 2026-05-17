@@ -3,18 +3,18 @@
 //! A declarative, cross-platform UI framework for Rust with virtual DOM,
 //! reactive signals, and HTML macros for WebAssembly.
 
-mod component;
 mod event;
 mod reactive;
 mod renderer;
 mod vdom;
 
-pub use {component::*, event::*, reactive::*, renderer::*, vdom::*};
+pub use {event::*, reactive::*, renderer::*, vdom::*};
 
 #[cfg(test)]
 use std::cell::Cell;
 use std::{
     any::Any,
+    borrow::Cow,
     cell::{Ref, RefCell, RefMut, UnsafeCell},
     collections::HashMap,
     ops::{Deref, DerefMut},
@@ -23,6 +23,11 @@ use std::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
+#[cfg(target_arch = "wasm32")]
+use {
+    js_sys::{Function, Reflect},
+    wasm_bindgen::closure,
+};
 use {
     lombok_macros::*,
     wasm_bindgen::JsCast,
