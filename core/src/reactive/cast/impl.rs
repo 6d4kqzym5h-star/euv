@@ -51,6 +51,51 @@ impl IntoReactiveValue for Signal<bool> {
     }
 }
 
+/// Converts a `bool` into a dynamic attribute value.
+///
+/// Stored as `AttributeValue::Dynamic("true"/"false")` so components can
+/// extract the original boolean via `try_get_typed_prop`.
+impl IntoReactiveValue for bool {
+    /// Converts this boolean into an `AttributeValue::Dynamic`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A dynamic attribute value containing the boolean string.
+    fn into_reactive_value(self) -> AttributeValue {
+        AttributeValue::Dynamic(self.to_string())
+    }
+}
+
+/// Converts an `i32` into a dynamic attribute value.
+///
+/// Stored as `AttributeValue::Dynamic` so components can extract the
+/// original integer via `try_get_typed_prop`.
+impl IntoReactiveValue for i32 {
+    /// Converts this integer into an `AttributeValue::Dynamic`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A dynamic attribute value containing the integer string.
+    fn into_reactive_value(self) -> AttributeValue {
+        AttributeValue::Dynamic(self.to_string())
+    }
+}
+
+/// Converts an `f64` into a dynamic attribute value.
+///
+/// Stored as `AttributeValue::Dynamic` so components can extract the
+/// original float via `try_get_typed_prop`.
+impl IntoReactiveValue for f64 {
+    /// Converts this float into an `AttributeValue::Dynamic`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A dynamic attribute value containing the float string.
+    fn into_reactive_value(self) -> AttributeValue {
+        AttributeValue::Dynamic(self.to_string())
+    }
+}
+
 /// Converts a CSS class reference into an attribute value.
 impl IntoReactiveValue for CssClass {
     /// Converts this CSS class into an `AttributeValue::Css`.
@@ -214,18 +259,26 @@ where
 }
 
 /// Converts an owned event handler into a callback attribute value.
+///
+/// Re-wraps the handler with a generic "callback" event name so that
+/// subsequent `EventAdapter::into_attribute` calls can override it with
+/// the correct DOM event type.
 impl IntoCallbackAttribute for NativeEventHandler {
     /// Converts this event handler into an `AttributeValue::Event`.
     ///
     /// # Returns
     ///
-    /// - `AttributeValue` - An event attribute value.
+    /// - `AttributeValue` - An event attribute value with a generic callback event name.
     fn into_callback_attribute(self) -> AttributeValue {
-        AttributeValue::Event(self)
+        AttrValueAdapter::new(self).into_callback_attribute_value()
     }
 }
 
 /// Converts an optional event handler into a callback attribute value.
+///
+/// Re-wraps a `Some` handler with a generic "callback" event name so that
+/// subsequent `EventAdapter::into_attribute` calls can override it with
+/// the correct DOM event type.
 impl IntoCallbackAttribute for Option<NativeEventHandler> {
     /// Converts this optional handler into an `AttributeValue::Event` or `AttributeValue::Text` if `None`.
     ///
@@ -233,9 +286,6 @@ impl IntoCallbackAttribute for Option<NativeEventHandler> {
     ///
     /// - `AttributeValue` - An event attribute value if `Some`, otherwise an empty text attribute.
     fn into_callback_attribute(self) -> AttributeValue {
-        match self {
-            Some(handler) => AttributeValue::Event(handler),
-            None => AttributeValue::Text(String::new()),
-        }
+        AttrValueAdapter::new(self).into_callback_attribute_value()
     }
 }

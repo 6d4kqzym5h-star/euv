@@ -1,18 +1,5 @@
 use crate::*;
 
-/// Reactive state for a todo list feature.
-#[derive(Clone, Copy, Data, New)]
-pub struct UseTodoList {
-    /// The list of todo items.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub items: Signal<Vec<String>>,
-    /// The new item input text.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub new_item: Signal<String>,
-}
-
 /// Creates todo list state signals wrapped in a `UseTodoList` struct.
 ///
 /// # Returns
@@ -27,6 +14,7 @@ pub fn use_todo_list() -> UseTodoList {
                 "Write documentation".to_string(),
             ]
         }),
+        use_signal(String::new),
         use_signal(String::new),
     )
 }
@@ -43,11 +31,20 @@ pub fn use_todo_list() -> UseTodoList {
 pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let text: String = state.get_new_item().get();
-        if !text.trim().is_empty() {
+        if text.trim().is_empty() {
+            state
+                .get_add_error()
+                .set("Please enter an item name.".to_string());
+        } else if text.trim().len() > 50 {
+            state
+                .get_add_error()
+                .set("Item name is too long (max 50 chars).".to_string());
+        } else {
             let mut current: Vec<String> = state.get_items().get();
-            current.push(text.clone());
+            current.push(text.trim().to_string());
             state.get_items().set(current);
             state.get_new_item().set("".to_string());
+            state.get_add_error().set("".to_string());
         }
     })
 }

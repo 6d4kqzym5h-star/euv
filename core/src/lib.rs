@@ -29,14 +29,4 @@ use {
     js_sys::{Function, Reflect},
     wasm_bindgen::closure,
 };
-use {
-    lombok_macros::*,
-    wasm_bindgen::JsCast,
-    wasm_bindgen::prelude::*,
-    web_sys::{
-        ClipboardEvent, Document, DragEvent, Element, Event, HtmlButtonElement, HtmlElement,
-        HtmlInputElement, HtmlOptionElement, HtmlSelectElement, HtmlTextAreaElement, InputEvent,
-        KeyboardEvent, MouseEvent, Node, SubmitEvent, Text, Touch, TouchEvent, TouchList,
-        WheelEvent, Window, window,
-    },
-};
+use {lombok_macros::*, wasm_bindgen::JsCast, wasm_bindgen::prelude::*, web_sys::*};

@@ -10,8 +10,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled card element.
 pub fn my_card(props: VirtualNode) -> VirtualNode {
-    let title: String = props.try_get_prop(&Attribute::Title).unwrap_or_default();
     let children: Vec<VirtualNode> = props.get_children();
+    let MyCardProps { title, .. }: MyCardProps = props.into();
     let children_node: VirtualNode = VirtualNode::Fragment(children);
     html! {
         div {

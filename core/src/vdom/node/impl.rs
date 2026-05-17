@@ -292,21 +292,53 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&Attribute` - The attribute to look up.
+    /// - `&str` - The attribute name to look up.
     ///
     /// # Returns
     ///
     /// - `Option<String>` - The attribute value as a string, or `None` if not found.
-    pub fn try_get_prop(&self, name: &Attribute) -> Option<String> {
-        let name_str: Cow<'static, str> = name.as_str();
+    pub fn try_get_prop(&self, name: &str) -> Option<String> {
         if let VirtualNode::Element { attributes, .. } = self {
             for attr in attributes {
-                if attr.get_name() == &name_str {
+                if attr.get_name() == name {
                     match attr.get_value() {
                         AttributeValue::Text(value) => return Some(value.clone()),
                         AttributeValue::Signal(signal) => return Some(signal.get()),
+                        AttributeValue::Dynamic(value) => return Some(value.clone()),
                         _ => {}
                     }
+                }
+            }
+        }
+        None
+    }
+
+    /// Extracts a typed property from this node by parsing the attribute value string.
+    ///
+    /// Supports `Text`, `Signal`, and `Dynamic` attribute values. The string
+    /// representation is parsed into the target type `T` via `FromStr`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The attribute name to look up.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<T>` - The parsed value, or `None` if not found or parsing fails.
+    pub fn try_get_typed_prop<T>(&self, name: &str) -> Option<T>
+    where
+        T: std::str::FromStr,
+    {
+        if let VirtualNode::Element { attributes, .. } = self {
+            for attr in attributes {
+                if attr.get_name() == name {
+                    let raw: String = match attr.get_value() {
+                        AttributeValue::Text(value) => value.clone(),
+                        AttributeValue::Signal(signal) => signal.get(),
+                        AttributeValue::Dynamic(value) => value.clone(),
+                        _ => continue,
+                    };
+                    return raw.parse::<T>().ok();
                 }
             }
         }
@@ -320,16 +352,15 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&Attribute` - The attribute to look up.
+    /// - `&str` - The attribute name to look up.
     ///
     /// # Returns
     ///
     /// - `Option<Signal<String>>` - The signal if found, or `None`.
-    pub fn try_get_signal_prop(&self, name: &Attribute) -> Option<Signal<String>> {
-        let name_str: Cow<'static, str> = name.as_str();
+    pub fn try_get_signal_prop(&self, name: &str) -> Option<Signal<String>> {
         if let VirtualNode::Element { attributes, .. } = self {
             for attr in attributes {
-                if attr.get_name() == &name_str
+                if attr.get_name() == name
                     && let AttributeValue::Signal(signal) = attr.get_value()
                 {
                     return Some(*signal);
@@ -371,19 +402,15 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&NativeEventName` - The event name to look up.
+    /// - `&str` - The event name to look up.
     ///
     /// # Returns
     ///
     /// - `Option<NativeEventHandler>` - The event handler if found, or `None`.
-    pub fn try_get_event(
-        &self,
-        name: &NativeEventName,
-    ) -> Option<crate::event::NativeEventHandler> {
-        let name_str: Cow<'static, str> = name.as_str();
+    pub fn try_get_event(&self, name: &str) -> Option<NativeEventHandler> {
         if let VirtualNode::Element { attributes, .. } = self {
             for attr in attributes {
-                if attr.get_name() == &name_str
+                if attr.get_name() == name
                     && let AttributeValue::Event(handler) = attr.get_value()
                 {
                     return Some(handler.clone());
@@ -402,7 +429,7 @@ impl VirtualNode {
     /// # Returns
     ///
     /// - `Option<NativeEventHandler>` - The event handler if found, or `None`.
-    pub fn try_get_callback(&self, name: &str) -> Option<crate::event::NativeEventHandler> {
+    pub fn try_get_callback(&self, name: &str) -> Option<NativeEventHandler> {
         if let VirtualNode::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name

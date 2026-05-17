@@ -1,53 +1,12 @@
 use crate::*;
 
-/// Reactive state for the modal demo feature.
-#[derive(Clone, Copy, Data, New)]
-pub struct UseModal {
-    /// Whether the basic modal is visible.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub show_basic: Signal<bool>,
-    /// Whether the confirm modal is visible.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub show_confirm: Signal<bool>,
-    /// Whether the form modal is visible.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub show_form: Signal<bool>,
-    /// The confirm action result message.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub confirm_result: Signal<String>,
-    /// The modal form name input.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub modal_name: Signal<String>,
-    /// The modal form email input.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub modal_email: Signal<String>,
-    /// The modal form submission result.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub modal_submitted: Signal<String>,
-}
-
 /// Creates modal demo state signals wrapped in a `UseModal` struct.
 ///
 /// # Returns
 ///
 /// - `UseModal` - The modal state.
 pub fn use_modal() -> UseModal {
-    UseModal::new(
-        use_signal(|| false),
-        use_signal(|| false),
-        use_signal(|| false),
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(String::new),
-    )
+    UseModal::default()
 }
 
 /// Creates a click event handler that opens the basic modal.
@@ -96,6 +55,7 @@ pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
         state.get_modal_name().set("".to_string());
         state.get_modal_email().set("".to_string());
         state.get_modal_submitted().set("".to_string());
+        state.get_modal_error().set("".to_string());
     })
 }
 
@@ -130,11 +90,23 @@ pub fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let name: String = state.get_modal_name().get();
         let email: String = state.get_modal_email().get();
-        if !name.trim().is_empty() && !email.trim().is_empty() {
+        let mut validation_errors: Vec<String> = Vec::new();
+        if name.trim().is_empty() {
+            validation_errors.push("Name is required".to_string());
+        }
+        if email.trim().is_empty() {
+            validation_errors.push("Email is required".to_string());
+        } else if !email.contains('@') || !email.contains('.') {
+            validation_errors.push("Please enter a valid email".to_string());
+        }
+        if validation_errors.is_empty() {
+            state.get_modal_error().set("".to_string());
             state
                 .get_modal_submitted()
                 .set(format!("Signed up: {} ({})", name, email));
             state.get_show_form().set(false);
+        } else {
+            state.get_modal_error().set(validation_errors.join("; "));
         }
     })
 }

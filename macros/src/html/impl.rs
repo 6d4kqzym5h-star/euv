@@ -15,22 +15,8 @@ impl Parse for HtmlRoot {
 /// - N children → `VirtualNode::Fragment(vec![...])`
 impl ToTokens for HtmlRoot {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        match self.children.len() {
-            0 => {
-                tokens.extend(quote! {
-                    euv_core::VirtualNode::Empty
-                });
-            }
-            1 => {
-                self.children[0].to_tokens(tokens);
-            }
-            _ => {
-                let child_tokens: TokenStream2 = children_to_tokens(&self.children);
-                tokens.extend(quote! {
-                    euv_core::VirtualNode::Fragment(#child_tokens)
-                });
-            }
-        }
+        let node_tokens: TokenStream2 = children_to_node_tokens(&self.children);
+        tokens.extend(node_tokens);
     }
 }
 
@@ -229,9 +215,8 @@ impl ToTokens for HtmlNode {
         match self {
             HtmlNode::Element(element) => element.to_tokens(tokens),
             HtmlNode::Text(text) => {
-                let text_clone: String = text.clone();
                 tokens.extend(quote! {
-                    euv_core::VirtualNode::Text(euv_core::TextNode::new(#text_clone.to_string(), None))
+                    euv_core::VirtualNode::Text(euv_core::TextNode::new(#text.to_string(), None))
                 });
             }
             HtmlNode::Expr(expr) => {
@@ -247,10 +232,7 @@ impl ToTokens for HtmlNode {
             HtmlNode::If(html_if) => {
                 let mut if_chain: TokenStream2 = TokenStream2::new();
                 for (i, (condition, body)) in html_if.branches.iter().enumerate() {
-                    let body_tokens: TokenStream2 = children_to_tokens(body);
-                    let body_expr: TokenStream2 = quote! {
-                        euv_core::VirtualNode::Fragment(#body_tokens)
-                    };
+                    let body_expr: TokenStream2 = children_to_node_tokens(body);
                     match (i, condition) {
                         (0, Some(cond)) => {
                             let stripped_cond: &Expr = strip_braces_from_expr(cond);
@@ -289,11 +271,11 @@ impl ToTokens for HtmlNode {
                     .enumerate()
                     .map(|(arm_index, (pattern, body))| {
                         let arm_changed: bool = arm_index % 2 == 0;
-                        let body_tokens: TokenStream2 = children_to_tokens_inline(body);
+                        let body_expr: TokenStream2 = children_to_node_tokens_inline(body);
                         quote! {
                             #pattern => {
                                 __euv_hook_context.set_arm_changed(#arm_changed);
-                                euv_core::VirtualNode::Fragment(#body_tokens)
+                                #body_expr
                             }
                         }
                     })
@@ -360,21 +342,44 @@ impl ToTokens for HtmlAttrValue {
                 let has_if: bool = props
                     .iter()
                     .any(|(_, value)| matches!(value, HtmlStylePropValue::If(_)));
-                let prop_tokens: Vec<TokenStream2> = props
+                let all_literal: bool = props
                     .iter()
-                    .map(|(key, value)| {
-                        quote! { .property(#key, #value) }
-                    })
-                    .collect();
+                    .all(|(_, value)| matches!(value, HtmlStylePropValue::Literal(_)));
                 if has_if {
+                    let prop_tokens: Vec<TokenStream2> = props
+                        .iter()
+                        .map(|(key, value)| {
+                            quote! { .property(#key, #value) }
+                        })
+                        .collect();
                     tokens.extend(quote! {
                         euv_core::create_reactive_style_attribute(move || euv_core::Style::default()#(#prop_tokens)*.to_css_string())
                     });
-                } else {
-                    tokens.extend(quote! {
-                        {
-                            ::euv_core::Style::default()#(#prop_tokens)*.to_css_string()
+                } else if all_literal {
+                    let mut css_string: String = String::new();
+                    for (key, value) in props {
+                        if !css_string.is_empty() {
+                            css_string.push(' ');
                         }
+                        css_string.push_str(&key.replace('_', "-"));
+                        css_string.push_str(": ");
+                        if let HtmlStylePropValue::Literal(lit) = value {
+                            css_string.push_str(lit);
+                        }
+                        css_string.push(';');
+                    }
+                    tokens.extend(quote! {
+                        #css_string.to_string()
+                    });
+                } else {
+                    let kv_tokens: Vec<TokenStream2> = props
+                        .iter()
+                        .map(|(key, value)| {
+                            quote! { (#key, #value) }
+                        })
+                        .collect();
+                    tokens.extend(quote! {
+                        euv_core::Style::create_style_string(&[#(#kv_tokens),*])
                     });
                 }
             }
@@ -401,54 +406,56 @@ impl ToTokens for HtmlElement {
                 HtmlAttrValue::Style(props) => {
                     let has_if: bool = props.iter().any(|(_, v)| matches!(v, HtmlStylePropValue::If(_)));
                     if has_if {
-                        let style_expr: TokenStream2 = quote! { #value };
-                        quote! { #style_expr }
+                        quote! { #value }
                     } else {
-                        let style_expr: TokenStream2 = quote! { #value };
-                        quote! { euv_core::AttributeValue::Text(#style_expr) }
+                        quote! { euv_core::AttributeValue::Text(#value) }
                     }
                 }
                 HtmlAttrValue::If(_) => {
-                    let value_expr: TokenStream2 = quote! { #value };
-                    quote! { #value_expr }
+                    quote! { #value }
                 }
                 HtmlAttrValue::Expr(expr) => {
-                    let value_expr: TokenStream2 = quote! { #expr };
                     if let Some(event_name_str) = key_str.strip_prefix("on") {
-                        let event_name_ident: Ident = syn::Ident::new(
-                            &camel_case_event_name(event_name_str),
-                            key.span(),
-                        );
-                        quote! {
-                            euv_core::EventAdapter::new(#value_expr).into_attribute(euv_core::NativeEventName::#event_name_ident)
+                        if is_component {
+                            let callback_name: String = key_str.replace('_', "-");
+                            quote! {
+                                euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+                            }
+                        } else {
+                            let event_name_ident: Ident = syn::Ident::new(
+                                &camel_case_event_name(event_name_str),
+                                key.span(),
+                            );
+                            quote! {
+                                euv_core::EventAdapter::new(#expr).into_attribute(euv_core::NativeEventName::#event_name_ident)
+                            }
                         }
                     } else if key_str == "children" {
-                        quote! { euv_core::AttributeValue::Dynamic(Box::new(#value_expr)) }
+                        quote! { euv_core::AttributeValue::Dynamic(Box::new(#expr)) }
                     } else {
                         quote! {
-                            euv_core::AttrValueAdapter::new(#value_expr).into_reactive_attribute_value()
+                            euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
                         }
                     }
                 }
             };
-            let raw_key: String = key_str.strip_prefix("on").unwrap_or(&key_str).replace('_', "-");
+            let raw_key: String = if is_component {
+                key_str.replace('_', "-")
+            } else {
+                key_str.strip_prefix("on").unwrap_or(&key_str).replace('_', "-")
+            };
             let attr_name_str: String = raw_key.strip_prefix("r#").unwrap_or(&raw_key).to_string();
-            let key_span: Span = key.span();
-            let attr_name_token: TokenStream2 = quote_spanned!(key_span=> #attr_name_str);
             quote! {
-                euv_core::AttributeEntry::new(#attr_name_token.to_string(), #value_tokens)
+                euv_core::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
             }
         }).collect();
         let child_tokens: Vec<TokenStream2> = self
             .children
             .iter()
             .map(|child| {
-                let child_stream: TokenStream2 = {
-                    let mut ts: TokenStream2 = TokenStream2::new();
-                    child.to_tokens(&mut ts);
-                    ts
-                };
-                quote! { #child_stream }
+                let mut ts: TokenStream2 = TokenStream2::new();
+                child.to_tokens(&mut ts);
+                ts
             })
             .collect();
         if is_component {

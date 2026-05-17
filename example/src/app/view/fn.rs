@@ -81,10 +81,13 @@ fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
             { nav_item(route_signal, "Select", "/select") }
             { nav_item(route_signal, "Async", "/async") }
             { nav_item(route_signal, "Form", "/form") }
+            { nav_item(route_signal, "File Upload", "/file-upload") }
             { nav_item(route_signal, "Timer", "/timer") }
             { nav_item(route_signal, "Animation", "/animation") }
             { nav_item(route_signal, "Browser", "/browser") }
             { nav_item(route_signal, "Lifecycle", "/lifecycle") }
+            { nav_item(route_signal, "Keep-Alive", "/keep-alive") }
+            { nav_item(route_signal, "Component Binding", "/component-binding") }
             { nav_item(route_signal, "Custom Attrs", "/custom-attrs") }
         }
     }
@@ -114,10 +117,13 @@ fn build_mobile_nav_items(route_signal: Signal<String>, drawer_open: Signal<bool
             { mobile_nav_item(route_signal, drawer_open, "Select", "/select") }
             { mobile_nav_item(route_signal, drawer_open, "Async", "/async") }
             { mobile_nav_item(route_signal, drawer_open, "Form", "/form") }
+            { mobile_nav_item(route_signal, drawer_open, "File Upload", "/file-upload") }
             { mobile_nav_item(route_signal, drawer_open, "Timer", "/timer") }
             { mobile_nav_item(route_signal, drawer_open, "Animation", "/animation") }
             { mobile_nav_item(route_signal, drawer_open, "Browser", "/browser") }
             { mobile_nav_item(route_signal, drawer_open, "Lifecycle", "/lifecycle") }
+            { mobile_nav_item(route_signal, drawer_open, "Keep-Alive", "/keep-alive") }
+            { mobile_nav_item(route_signal, drawer_open, "Component Binding", "/component-binding") }
             { mobile_nav_item(route_signal, drawer_open, "Custom Attrs", "/custom-attrs") }
         }
     }
@@ -194,10 +200,13 @@ fn desktop_layout(
                     "/select" => { { page_select() } }
                     "/async" => { { page_async_demo() } }
                     "/form" => { { page_form() } }
+                    "/file-upload" => { { page_file_upload() } }
                     "/timer" => { { page_timer() } }
                     "/animation" => { { page_animation() } }
                     "/browser" => { { page_browser() } }
                     "/lifecycle" => { { page_lifecycle() } }
+                    "/keep-alive" => { { page_keep_alive() } }
+                    "/component-binding" => { { page_component_binding() } }
                     "/custom-attrs" => { { page_custom_attrs() } }
                     _ => { { page_not_found() } }
                 }
@@ -269,10 +278,13 @@ fn mobile_layout(
                     "/select" => { { page_select() } }
                     "/async" => { { page_async_demo() } }
                     "/form" => { { page_form() } }
+                    "/file-upload" => { { page_file_upload() } }
                     "/timer" => { { page_timer() } }
                     "/animation" => { { page_animation() } }
                     "/browser" => { { page_browser() } }
                     "/lifecycle" => { { page_lifecycle() } }
+                    "/keep-alive" => { { page_keep_alive() } }
+                    "/component-binding" => { { page_component_binding() } }
                     "/custom-attrs" => { { page_custom_attrs() } }
                     _ => { { page_not_found() } }
                 }

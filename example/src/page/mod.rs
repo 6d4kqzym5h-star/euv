@@ -1,10 +1,13 @@
 mod animation;
 mod r#async;
+mod attrs;
+mod binding;
 mod browser;
 mod conditional;
-mod custom_attrs;
 mod event;
+mod file;
 mod form;
+mod keep_alive;
 mod lifecycle;
 mod list;
 mod modal;
@@ -14,8 +17,9 @@ mod signals;
 mod timer;
 
 pub use {
-    animation::*, r#async::*, browser::*, conditional::*, custom_attrs::*, event::*, form::*,
-    lifecycle::*, list::*, modal::*, not_found::*, select::*, signals::*, timer::*,
+    animation::*, r#async::*, attrs::*, binding::*, browser::*, conditional::*, event::*, file::*,
+    form::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, select::*, signals::*,
+    timer::*,
 };
 
 pub(crate) use timer::use_interval;

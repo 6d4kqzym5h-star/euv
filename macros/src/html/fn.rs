@@ -94,7 +94,43 @@ pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNod
     Ok(children)
 }
 
+/// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream.
+///
+/// - 0 children → `VirtualNode::Empty`
+/// - 1 child → the child's token stream directly (no Fragment wrapper)
+/// - N children → `VirtualNode::Fragment(vec![...])`
+///
+/// # Arguments
+///
+/// - `&[HtmlNode]` - The slice of HTML child nodes to convert.
+///
+/// # Returns
+///
+/// - `TokenStream2` - The generated token stream representing a single `VirtualNode`.
+pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> TokenStream2 {
+    match children.len() {
+        0 => quote! { euv_core::VirtualNode::Empty },
+        1 => {
+            let mut ts: TokenStream2 = TokenStream2::new();
+            children[0].to_tokens(&mut ts);
+            ts
+        }
+        _ => {
+            let mut child_tokens: Vec<TokenStream2> = Vec::with_capacity(children.len());
+            for child in children {
+                let mut ts: TokenStream2 = TokenStream2::new();
+                child.to_tokens(&mut ts);
+                child_tokens.push(ts);
+            }
+            quote! { euv_core::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
+        }
+    }
+}
+
 /// Converts a list of `HtmlNode` children into a `Vec<VirtualNode>` token stream.
+///
+/// Always produces `vec![...]` format, used by `for` loops where the body
+/// is collected and then extended into an accumulator.
 ///
 /// # Arguments
 ///
@@ -104,23 +140,23 @@ pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNod
 ///
 /// - `TokenStream2` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
-    let child_tokens: Vec<TokenStream2> = children
-        .iter()
-        .map(|child| {
-            let mut ts: TokenStream2 = TokenStream2::new();
-            child.to_tokens(&mut ts);
-            ts
-        })
-        .collect();
+    let mut child_tokens: Vec<TokenStream2> = Vec::with_capacity(children.len());
+    for child in children {
+        let mut ts: TokenStream2 = TokenStream2::new();
+        child.to_tokens(&mut ts);
+        child_tokens.push(ts);
+    }
     quote! { vec![#(#child_tokens),*] }
 }
 
-/// Converts a list of `HtmlNode` children into a `Vec<VirtualNode>` token stream,
-/// but treats `HtmlNode::Dynamic` the same as `HtmlNode::Expr` — i.e. the
-/// expression is converted via `IntoNode::into_node` without creating a separate
-/// `DynamicNode`. This is used inside `match` arms where the parent
-/// `DynamicNode`'s `HookContext` already provides hook isolation via
-/// `check_scrutinee_changed`.
+/// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream,
+/// treating `HtmlNode::Dynamic` the same as `HtmlNode::Expr`. This is used inside
+/// `match` arms where the parent `DynamicNode`'s `HookContext` already provides
+/// hook isolation.
+///
+/// - 0 children → `VirtualNode::Empty`
+/// - 1 child → the child's token stream directly (no Fragment wrapper)
+/// - N children → `VirtualNode::Fragment(vec![...])`
 ///
 /// # Arguments
 ///
@@ -128,20 +164,34 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The generated token stream representing a `Vec<VirtualNode>`.
-pub(crate) fn children_to_tokens_inline(children: &[HtmlNode]) -> TokenStream2 {
-    let child_tokens: Vec<TokenStream2> = children
-        .iter()
-        .map(|child| match child {
+/// - `TokenStream2` - The generated token stream representing a single `VirtualNode`.
+pub(crate) fn children_to_node_tokens_inline(children: &[HtmlNode]) -> TokenStream2 {
+    match children.len() {
+        0 => quote! { euv_core::VirtualNode::Empty },
+        1 => match &children[0] {
             HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
-            _ => {
+            child => {
                 let mut ts: TokenStream2 = TokenStream2::new();
                 child.to_tokens(&mut ts);
                 ts
             }
-        })
-        .collect();
-    quote! { vec![#(#child_tokens),*] }
+        },
+        _ => {
+            let mut child_tokens: Vec<TokenStream2> = Vec::with_capacity(children.len());
+            for child in children {
+                let ts: TokenStream2 = match child {
+                    HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
+                    _ => {
+                        let mut ts: TokenStream2 = TokenStream2::new();
+                        child.to_tokens(&mut ts);
+                        ts
+                    }
+                };
+                child_tokens.push(ts);
+            }
+            quote! { euv_core::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
+        }
+    }
 }
 
 /// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.

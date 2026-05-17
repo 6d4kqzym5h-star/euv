@@ -10,16 +10,13 @@ use crate::*;
 ///
 /// - `VirtualNode` - A modal overlay element.
 pub fn my_modal(props: VirtualNode) -> VirtualNode {
-    let title: String = props.try_get_prop(&Attribute::Title).unwrap_or_default();
-    let on_close: Option<NativeEventHandler> = props.try_get_event(&NativeEventName::Click);
-    let on_close_overlay: Option<NativeEventHandler> = on_close.clone();
-    let on_close_button: Option<NativeEventHandler> = on_close.clone();
     let children: Vec<VirtualNode> = props.get_children();
+    let MyModalProps { title, on_close }: MyModalProps = props.into();
     let children_node: VirtualNode = VirtualNode::Fragment(children);
     html! {
         div {
             class: c_modal_overlay()
-            onclick: on_close_overlay
+            onclick: on_close.clone()
             div {
                 class: c_modal_content()
                 onclick: move |_event: NativeEvent| { }
@@ -31,7 +28,7 @@ pub fn my_modal(props: VirtualNode) -> VirtualNode {
                     }
                     primary_button {
                         label: "Close"
-                        onclick: on_close_button
+                        onclick: on_close
                         "×"
                     }
                 }

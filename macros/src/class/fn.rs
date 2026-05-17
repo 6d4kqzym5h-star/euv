@@ -108,3 +108,46 @@ pub(crate) fn expand_var_macros_in_tokens(tokens: &TokenStream2) -> TokenStream2
     }
     result.into_iter().collect()
 }
+
+/// Checks whether a `TokenStream2` consists entirely of string literals,
+/// meaning its value can be computed at compile time.
+///
+/// # Arguments
+///
+/// - `&TokenStream2` - The token stream to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if all tokens are string literals.
+pub(crate) fn is_static_string_expr(tokens: &TokenStream2) -> bool {
+    for token in tokens.clone() {
+        match token {
+            proc_macro2::TokenTree::Literal(_) => continue,
+            _ => return false,
+        }
+    }
+    true
+}
+
+/// Extracts the string value from a token stream that consists entirely of
+/// string literals, concatenating them.
+///
+/// # Arguments
+///
+/// - `&TokenStream2` - The token stream consisting of string literals only.
+///
+/// # Returns
+///
+/// - `String` - The concatenated string value.
+pub(crate) fn expr_to_string(tokens: &TokenStream2) -> String {
+    let mut result: String = String::new();
+    for token in tokens.clone() {
+        if let proc_macro2::TokenTree::Literal(lit) = token {
+            let lit_ts: TokenStream2 = proc_macro2::TokenTree::Literal(lit).into();
+            if let Ok(lit_str) = syn::parse2::<LitStr>(lit_ts) {
+                result.push_str(&lit_str.value());
+            }
+        }
+    }
+    result
+}

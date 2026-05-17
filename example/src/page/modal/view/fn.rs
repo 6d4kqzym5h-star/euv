@@ -136,6 +136,14 @@ pub fn page_modal() -> VirtualNode {
                             oninput: on_input_value(state.get_modal_email())
                         }
                     }
+                    if { !state.get_modal_error().get().is_empty() } {
+                        div {
+                            class: c_error_box()
+                            state.get_modal_error()
+                        }
+                    } else {
+                        ""
+                    }
                     div {
                         class: c_modal_actions()
                         primary_button {

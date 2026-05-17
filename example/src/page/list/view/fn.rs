@@ -19,14 +19,27 @@ pub fn page_list() -> VirtualNode {
                         r#type: "text"
                         placeholder: "Enter new item"
                         value: state.get_new_item()
-                        class: c_list_input()
-                        oninput: on_input_value(state.get_new_item())
+                        class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_form_input_error() }
+                        oninput: move |_event: NativeEvent| {
+                            state.get_add_error().set("".to_string());
+                            if let NativeEvent::Input(input_event) = _event {
+                                state.get_new_item().set(input_event.get_value().clone());
+                            }
+                        }
                     }
                     primary_button {
                         label: "Add"
                         onclick: todo_list_on_add(state)
                         "Add Item"
                     }
+                }
+                if { !state.get_add_error().get().is_empty() } {
+                    p {
+                        class: c_field_error_text()
+                        state.get_add_error()
+                    }
+                } else {
+                    ""
                 }
                 ul {
                     class: c_list_ul()

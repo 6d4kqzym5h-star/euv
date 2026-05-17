@@ -53,6 +53,12 @@ fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
 /// - `VirtualNode` - The form demo page virtual DOM tree.
 pub fn page_form() -> VirtualNode {
     let form: UseForm = use_form();
+    let username_touched: Signal<bool> = use_signal(|| false);
+    let email_touched: Signal<bool> = use_signal(|| false);
+    let password_touched: Signal<bool> = use_signal(|| false);
+    let username_error: Signal<String> = use_signal(String::new);
+    let email_error: Signal<String> = use_signal(String::new);
+    let password_error: Signal<String> = use_signal(String::new);
     watch!(
         form.get_username(),
         form.get_email(),
@@ -78,6 +84,45 @@ pub fn page_form() -> VirtualNode {
             }
         }
     );
+    watch!(
+        form.get_username(),
+        username_touched,
+        |username_value, touched| {
+            if touched {
+                if username_value.trim().is_empty() {
+                    username_error.set("Username is required".to_string());
+                } else {
+                    username_error.set("".to_string());
+                }
+            }
+        }
+    );
+    watch!(form.get_email(), email_touched, |email_value, touched| {
+        if touched {
+            if email_value.trim().is_empty() {
+                email_error.set("Email is required".to_string());
+            } else if !email_value.contains('@') || !email_value.contains('.') {
+                email_error.set("Please enter a valid email".to_string());
+            } else {
+                email_error.set("".to_string());
+            }
+        }
+    });
+    watch!(
+        form.get_password(),
+        password_touched,
+        |password_value, touched| {
+            if touched {
+                if password_value.is_empty() {
+                    password_error.set("Password is required".to_string());
+                } else if password_value.len() < 6 {
+                    password_error.set("Password must be at least 6 characters".to_string());
+                } else {
+                    password_error.set("".to_string());
+                }
+            }
+        }
+    );
     html! {
         div {
             class: c_page_container()
@@ -94,8 +139,19 @@ pub fn page_form() -> VirtualNode {
                         r#type: "text"
                         placeholder: "Enter username"
                         value: form.get_username()
-                        class: c_form_input_no_transition()
+                        class: if { username_error.get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                         oninput: on_input_value(form.get_username())
+                        onblur: move |_event: NativeEvent| {
+                            username_touched.set(true);
+                        }
+                    }
+                    if { !username_error.get().is_empty() } {
+                        p {
+                            class: c_field_error_text()
+                            username_error
+                        }
+                    } else {
+                        ""
                     }
                 }
                 div {
@@ -108,8 +164,19 @@ pub fn page_form() -> VirtualNode {
                         r#type: "email"
                         placeholder: "Enter email"
                         value: form.get_email()
-                        class: c_form_input_no_transition()
+                        class: if { email_error.get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                         oninput: on_input_value(form.get_email())
+                        onblur: move |_event: NativeEvent| {
+                            email_touched.set(true);
+                        }
+                    }
+                    if { !email_error.get().is_empty() } {
+                        p {
+                            class: c_field_error_text()
+                            email_error
+                        }
+                    } else {
+                        ""
                     }
                 }
                 div {
@@ -122,8 +189,19 @@ pub fn page_form() -> VirtualNode {
                         r#type: "password"
                         placeholder: "Enter password"
                         value: form.get_password()
-                        class: c_form_input_no_transition()
+                        class: if { password_error.get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                         oninput: on_input_value(form.get_password())
+                        onblur: move |_event: NativeEvent| {
+                            password_touched.set(true);
+                        }
+                    }
+                    if { !password_error.get().is_empty() } {
+                        p {
+                            class: c_field_error_text()
+                            password_error
+                        }
+                    } else {
+                        ""
                     }
                 }
                 div {

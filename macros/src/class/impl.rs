@@ -87,28 +87,51 @@ impl ToTokens for ClassDef {
                 });
             }
             None => {
-                let css_string_parts: Vec<TokenStream2> = self
-                    .properties
-                    .iter()
-                    .map(|(key, value)| match value {
-                        ClassPropValue::Expr(expr) => {
-                            quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
-                        }
-                    })
-                    .collect();
                 let name_span: Span = name.span();
                 let const_name: Ident = Ident::new(&class_name_str.to_uppercase(), name.span());
                 let const_name_token: TokenStream2 = quote_spanned!(name_span=> #const_name);
                 let fn_name_token: TokenStream2 = quote_spanned!(name_span=> #name);
-                tokens.extend(quote! {
-                    #vis fn #fn_name_token() -> &'static euv_core::CssClass {
-                        static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
-                        #const_name_token.get_or_init(|| {
-                            let __css_string: String = [#(#css_string_parts),*].concat();
-                            euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
-                        })
-                    }
+                let all_static: bool = self.properties.iter().all(|(_, value)| {
+                    let ClassPropValue::Expr(expr) = value;
+                    is_static_string_expr(expr)
                 });
+                if all_static {
+                    let mut css_string: String = String::new();
+                    for (key, value) in &self.properties {
+                        let ClassPropValue::Expr(expr) = value;
+                        css_string.push_str(key);
+                        css_string.push_str(": ");
+                        css_string.push_str(&expr_to_string(expr));
+                        css_string.push_str("; ");
+                    }
+                    tokens.extend(quote! {
+                        #vis fn #fn_name_token() -> &'static euv_core::CssClass {
+                            static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                            #const_name_token.get_or_init(|| {
+                                euv_core::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
+                            })
+                        }
+                    });
+                } else {
+                    let css_string_parts: Vec<TokenStream2> = self
+                        .properties
+                        .iter()
+                        .map(|(key, value)| match value {
+                            ClassPropValue::Expr(expr) => {
+                                quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
+                            }
+                        })
+                        .collect();
+                    tokens.extend(quote! {
+                        #vis fn #fn_name_token() -> &'static euv_core::CssClass {
+                            static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                            #const_name_token.get_or_init(|| {
+                                let __css_string: String = [#(#css_string_parts),*].concat();
+                                euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
+                            })
+                        }
+                    });
+                }
             }
         }
     }

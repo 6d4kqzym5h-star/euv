@@ -326,43 +326,57 @@ where
 
 /// Adapts an owned `NativeEventHandler` into an `AttributeValue::Event` directly.
 ///
-/// When the user already provides a `NativeEventHandler`, no wrapping is needed;
-/// the handler is returned as-is. This replaces the `impl __EventWrapper<NativeEventHandler>`
-/// that was previously generated inline.
+/// When the user already provides a `NativeEventHandler`, the handler is
+/// re-wrapped with the given `event_name` to ensure the DOM event listener
+/// is bound to the correct event type (e.g., "click" rather than "onclick").
+/// This replaces the `impl __EventWrapper<NativeEventHandler>` that was
+/// previously generated inline.
 impl EventAdapter<NativeEventHandler> {
     /// Converts the wrapped handler into an event `AttributeValue`.
     ///
+    /// Re-wraps the handler with the provided `event_name` so that the
+    /// DOM event listener uses the correct event type string.
+    ///
     /// # Arguments
     ///
-    /// - `NativeEventName` - The event name (unused, since the handler already carries it).
+    /// - `NativeEventName` - The event name to bind the handler to.
     ///
     /// # Returns
     ///
-    /// - `AttributeValue` - An `AttributeValue::Event` containing the handler.
-    pub fn into_attribute(self, _event_name: NativeEventName) -> AttributeValue {
-        AttributeValue::Event(self.into_inner())
+    /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
+    pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
+        let handler: NativeEventHandler = self.into_inner();
+        AttributeValue::Event(NativeEventHandler::new(
+            event_name,
+            move |event: NativeEvent| {
+                handler.handle(event);
+            },
+        ))
     }
 }
 
 /// Adapts an `Option<NativeEventHandler>` into an `AttributeValue`.
 ///
-/// `Some(handler)` becomes `AttributeValue::Event(handler)`, and `None` becomes
-/// `AttributeValue::Text(String::new())`. This replaces the
-/// `impl __EventWrapper<Option<NativeEventHandler>>` that was previously
-/// generated inline by the `html!` macro.
+/// `Some(handler)` becomes `AttributeValue::Event(handler)` re-wrapped with the
+/// given event name, and `None` becomes `AttributeValue::Text(String::new())`.
+/// This replaces the `impl __EventWrapper<Option<NativeEventHandler>>` that was
+/// previously generated inline by the `html!` macro.
 impl EventAdapter<Option<NativeEventHandler>> {
     /// Converts the wrapped optional handler into an attribute value.
     ///
+    /// Re-wraps a `Some` handler with the provided `event_name` so that the
+    /// DOM event listener uses the correct event type string.
+    ///
     /// # Arguments
     ///
-    /// - `NativeEventName` - The event name (unused when handler is `None`).
+    /// - `NativeEventName` - The event name to bind the handler to.
     ///
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
-    pub fn into_attribute(self, _event_name: NativeEventName) -> AttributeValue {
+    pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
         match self.into_inner() {
-            Some(handler) => AttributeValue::Event(handler),
+            Some(handler) => EventAdapter::new(handler).into_attribute(event_name),
             None => AttributeValue::Text(String::new()),
         }
     }
@@ -410,39 +424,112 @@ where
     pub fn into_callback_attribute_value(self) -> AttributeValue {
         self.into_inner().into_callback_attribute()
     }
+
+    /// Converts the wrapped closure into a callback `AttributeValue` with a
+    /// custom event name for component props.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - The custom attribute name (e.g., "on-increment", "on-change").
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute value with the custom name.
+    pub fn into_callback_attribute_value_with_name(self, name: String) -> AttributeValue {
+        AttributeValue::Event(NativeEventHandler::new(
+            NativeEventName::Other(name),
+            self.into_inner(),
+        ))
+    }
 }
 
 /// Adapts an owned `NativeEventHandler` into an `AttributeValue::Event` directly.
 ///
-/// When the user already provides a `NativeEventHandler`, it is returned as-is.
-/// This replaces the `__IsClosure for NativeEventHandler` impl that was previously
-/// generated inline by the `html!` macro.
+/// When the user already provides a `NativeEventHandler`, the handler is
+/// re-wrapped with a generic "callback" event name so that subsequent
+/// `EventAdapter::into_attribute` calls can override it with the correct
+/// DOM event type. This replaces the `__IsClosure for NativeEventHandler`
+/// impl that was previously generated inline by the `html!` macro.
 impl AttrValueAdapter<NativeEventHandler> {
     /// Converts the wrapped handler into an event `AttributeValue`.
     ///
+    /// Re-wraps the handler with a generic callback event name so that the
+    /// DOM event type can be correctly resolved when the handler is later
+    /// bound to a real element via `EventAdapter::into_attribute`.
+    ///
     /// # Returns
     ///
-    /// - `AttributeValue` - An `AttributeValue::Event` containing the handler.
+    /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
     pub fn into_callback_attribute_value(self) -> AttributeValue {
-        AttributeValue::Event(self.into_inner())
+        let handler: NativeEventHandler = self.into_inner();
+        AttributeValue::Event(NativeEventHandler::new(
+            NativeEventName::Other("callback".to_string()),
+            move |event: NativeEvent| {
+                handler.handle(event);
+            },
+        ))
+    }
+
+    /// Converts the wrapped handler into a callback `AttributeValue` with a
+    /// custom event name for component props.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - The custom attribute name.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute value with the custom name.
+    pub fn into_callback_attribute_value_with_name(self, name: String) -> AttributeValue {
+        let handler: NativeEventHandler = self.into_inner();
+        AttributeValue::Event(NativeEventHandler::new(
+            NativeEventName::Other(name),
+            move |event: NativeEvent| {
+                handler.handle(event);
+            },
+        ))
     }
 }
 
 /// Adapts an `Option<NativeEventHandler>` into an `AttributeValue`.
 ///
-/// `Some(handler)` becomes `AttributeValue::Event(handler)`, and `None` becomes
-/// `AttributeValue::Text(String::new())`. This replaces the
-/// `__IsClosure for Option<NativeEventHandler>` impl that was previously
-/// generated inline by the `html!` macro.
+/// `Some(handler)` becomes `AttributeValue::Event(handler)` re-wrapped with
+/// a generic callback event name, and `None` becomes `AttributeValue::Text(String::new())`.
+/// This replaces the `__IsClosure for Option<NativeEventHandler>` impl that was
+/// previously generated inline by the `html!` macro.
 impl AttrValueAdapter<Option<NativeEventHandler>> {
     /// Converts the wrapped optional handler into an attribute value.
+    ///
+    /// Re-wraps a `Some` handler with a generic callback event name so that the
+    /// DOM event type can be correctly resolved when the handler is later bound
+    /// to a real element via `EventAdapter::into_attribute`.
     ///
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
     pub fn into_callback_attribute_value(self) -> AttributeValue {
         match self.into_inner() {
-            Some(handler) => AttributeValue::Event(handler),
+            Some(handler) => AttrValueAdapter::new(handler).into_callback_attribute_value(),
+            None => AttributeValue::Text(String::new()),
+        }
+    }
+
+    /// Converts this optional handler into a callback `AttributeValue` with a
+    /// custom event name for component props.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - The custom attribute name.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute with the custom name if `Some`,
+    ///   otherwise an empty text attribute.
+    pub fn into_callback_attribute_value_with_name(self, name: String) -> AttributeValue {
+        match self.into_inner() {
+            Some(handler) => {
+                AttrValueAdapter::new(handler).into_callback_attribute_value_with_name(name)
+            }
             None => AttributeValue::Text(String::new()),
         }
     }

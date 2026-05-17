@@ -76,20 +76,20 @@ impl ToTokens for WatchInput {
                 quote! { #signal_clone.get() }
             })
             .collect();
+        let all_gets: Vec<TokenStream2> = signal_clones
+            .iter()
+            .zip(param_names.iter())
+            .map(|(sc, param)| quote! { let #param = #sc.get(); })
+            .collect();
         let subscribe_calls: Vec<TokenStream2> = signal_clones
             .iter()
             .map(|signal_clone| {
-                let all_gets: Vec<TokenStream2> = signal_clones
-                    .iter()
-                    .zip(param_names.iter())
-                    .map(|(sc, _p)| quote! { let #_p = #sc.get(); })
-                    .collect();
                 quote! {
                     {
                         let #signal_clone: _ = #signal_clone;
+                        let __euv_watch_fire_clone: std::rc::Rc<std::cell::RefCell<dyn std::ops::FnMut()>> = std::rc::Rc::clone(&__euv_watch_fire);
                         #signal_clone.subscribe(move || {
-                            #(#all_gets)*
-                            { #(#body)* }
+                            (__euv_watch_fire_clone.borrow_mut())();
                         });
                     }
                 }
@@ -99,6 +99,10 @@ impl ToTokens for WatchInput {
             #(let #signal_clones = #signal_exprs;)*
             let __euv_watch_subscribed: euv_core::Signal<bool> = euv_core::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
+                let __euv_watch_fire: std::rc::Rc<std::cell::RefCell<dyn std::ops::FnMut()>> = std::rc::Rc::new(std::cell::RefCell::new(move || {
+                    #(#all_gets)*
+                    { #(#body)* }
+                }));
                 euv_core::with_suppressed_updates(|| {
                     #(#subscribe_calls)*
                     {

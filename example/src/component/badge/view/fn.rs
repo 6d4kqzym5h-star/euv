@@ -13,33 +13,29 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled span badge element.
 pub fn my_badge(props: VirtualNode) -> VirtualNode {
-    let color: String = props
-        .try_get_prop(&Attribute::Other("color".to_string()))
-        .unwrap_or_else(|| "#4f46e5".to_string());
-    let text_prop: String = props
-        .try_get_prop(&Attribute::Other("text".to_string()))
-        .unwrap_or_default();
-    let outline: bool = props
-        .try_get_prop(&Attribute::Other("outline".to_string()))
-        .is_some();
-    let on_click: Option<NativeEventHandler> = props.try_get_callback("on_click");
+    let MyBadgeProps {
+        color,
+        text,
+        outline,
+        on_click,
+    }: MyBadgeProps = props.into();
     if outline {
         let border_color: String = color.clone();
         html! {
             span {
                 class: c_badge_outline()
-                style: { color: { color }; border-color: { border_color }; }
+                style: { color: { &color }; border-color: { &border_color }; }
                 onclick: on_click
-                text_prop
+                text
             }
         }
     } else {
         html! {
             span {
                 class: c_badge()
-                style: { background: { color }; }
+                style: { background: { &color }; }
                 onclick: on_click
-                text_prop
+                text
             }
         }
     }

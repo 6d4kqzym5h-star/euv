@@ -133,7 +133,6 @@ pub fn page_select() -> VirtualNode {
                         value: state.get_textarea_content()
                         oninput: on_input_value(state.get_textarea_content())
                         rows: "4"
-                        cols: "50"
                     }
                 }
                 div {
