@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode`: The props node containing label, placeholder, and value.
+/// - `VirtualNode` - The props node containing label, placeholder, and value.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A labeled input element.
+/// - `VirtualNode` - A labeled input element.
 pub fn form_input(props: VirtualNode) -> VirtualNode {
     let label_text: String = props
         .try_get_prop(&Attribute::Other("label".to_string()))

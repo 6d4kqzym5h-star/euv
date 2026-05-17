@@ -8,11 +8,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The boolean signal to toggle.
+/// - `Signal<bool>` - The boolean signal to toggle.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click event handler that toggles the signal.
+/// - `NativeEventHandler` - A click event handler that toggles the signal.
 pub fn use_toggle(signal: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let current: bool = signal.get();
@@ -24,11 +24,11 @@ pub fn use_toggle(signal: Signal<bool>) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The signal to update with the input value.
+/// - `Signal<String>` - The signal to update with the input value.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: An input handler.
+/// - `NativeEventHandler` - An input handler.
 pub fn on_input_value(signal: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
         if let NativeEvent::Input(input_event) = event {
@@ -41,11 +41,11 @@ pub fn on_input_value(signal: Signal<String>) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The signal to update with the change value.
+/// - `Signal<String>` - The signal to update with the change value.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A change handler.
+/// - `NativeEventHandler` - A change handler.
 pub fn on_change_value(signal: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
         if let NativeEvent::Change(change_event) = event {
@@ -58,11 +58,11 @@ pub fn on_change_value(signal: Signal<String>) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The signal to update with the checked state.
+/// - `Signal<bool>` - The signal to update with the checked state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A change handler.
+/// - `NativeEventHandler` - A change handler.
 pub fn on_change_checked(signal: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
         if let NativeEvent::Change(change_event) = event {

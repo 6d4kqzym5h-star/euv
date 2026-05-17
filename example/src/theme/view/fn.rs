@@ -154,7 +154,7 @@ css_vars! {
 ///
 /// # Returns
 ///
-/// - `ThemeState`: The reactive theme state containing the theme signal and root class signal.
+/// - `ThemeState` - The reactive theme state containing the theme signal and root class signal.
 pub(crate) fn use_theme() -> ThemeState {
     let theme: Signal<String> = use_signal(|| "light".to_string());
     let root_class: Signal<String> =
@@ -173,11 +173,11 @@ pub(crate) fn use_theme() -> ThemeState {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The theme signal to toggle.
+/// - `Signal<String>` - The theme signal to toggle.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click event handler that flips the theme value.
+/// - `NativeEventHandler` - A click event handler that flips the theme value.
 pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let current: String = theme_signal.get();
@@ -193,11 +193,11 @@ pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `&str`: The theme name ("light" or "dark").
+/// - `&str` - The theme name ("light" or "dark").
 ///
 /// # Returns
 ///
-/// - `&'static str`: The CSS class name for the theme.
+/// - `&'static str` - The CSS class name for the theme.
 pub(crate) fn theme_class_name(theme: &str) -> &'static str {
     if theme == "dark" {
         c_theme_dark().get_name()

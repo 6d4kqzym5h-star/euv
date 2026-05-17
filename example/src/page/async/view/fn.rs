@@ -4,21 +4,15 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The loading state signal.
-/// - `Signal<String>`: The error message signal.
-/// - `Signal<String>`: The fetched data signal.
+/// - `UseFetch` - The fetch state containing loading, data, and error signals.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The status indicator virtual DOM tree.
-fn build_status_node(
-    loading: Signal<bool>,
-    error: Signal<String>,
-    data: Signal<String>,
-) -> VirtualNode {
-    let is_loading: bool = loading.get();
-    let error_text: String = error.get();
-    let data_text: String = data.get();
+/// - `VirtualNode` - The status indicator virtual DOM tree.
+fn build_status_node(state: UseFetch) -> VirtualNode {
+    let is_loading: bool = state.get_loading().get();
+    let error_text: String = state.get_error().get();
+    let data_text: String = state.get_data().get();
     if is_loading {
         html! {
             div {
@@ -70,7 +64,7 @@ fn build_status_node(
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The async demo page virtual DOM tree.
+/// - `VirtualNode` - The async demo page virtual DOM tree.
 pub fn page_async_demo() -> VirtualNode {
     let fetch: UseFetch = use_fetch();
     html! {
@@ -88,7 +82,7 @@ pub fn page_async_demo() -> VirtualNode {
                     onclick: fetch_on_fetch(fetch)
                     "Fetch"
                 }
-                build_status_node(fetch.loading, fetch.error, fetch.data)
+                build_status_node(fetch)
             }
         }
     }

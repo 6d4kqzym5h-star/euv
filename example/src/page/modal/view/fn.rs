@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The modal demo page virtual DOM tree.
+/// - `VirtualNode` - The modal demo page virtual DOM tree.
 pub fn page_modal() -> VirtualNode {
     let state: UseModal = use_modal();
     html! {

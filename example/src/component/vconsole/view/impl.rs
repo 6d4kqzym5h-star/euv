@@ -11,7 +11,7 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The message to log.
+    /// - `&str` - The message to log.
     ///
     /// # Panics
     ///
@@ -28,7 +28,7 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The warning message to log.
+    /// - `&str` - The warning message to log.
     ///
     /// # Panics
     ///
@@ -45,7 +45,7 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The error message to log.
+    /// - `&str` - The error message to log.
     ///
     /// # Panics
     ///
@@ -72,7 +72,7 @@ impl Console {
     ///
     /// # Returns
     ///
-    /// - `Signal<Vec<ConsoleEntry>>`: The console log signal.
+    /// - `Signal<Vec<ConsoleEntry>>` - The console log signal.
     ///
     /// # Panics
     ///
@@ -85,7 +85,7 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `ConsoleEntry`: The console entry to append.
+    /// - `ConsoleEntry` - The console entry to append.
     ///
     /// # Panics
     ///

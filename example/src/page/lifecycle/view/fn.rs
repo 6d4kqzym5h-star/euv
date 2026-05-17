@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The lifecycle demo page virtual DOM tree.
+/// - `VirtualNode` - The lifecycle demo page virtual DOM tree.
 pub fn page_lifecycle() -> VirtualNode {
     let state: UseLifecycle = use_lifecycle();
     watch!(state.render_count, |render_count_value| {

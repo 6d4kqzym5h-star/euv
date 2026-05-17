@@ -48,15 +48,23 @@ where
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }
 
-/// Internal storage for hook state, holding boxed `Any` values and an index.
+/// Internal storage for hook state, holding boxed `Any` values.
 ///
 /// This struct is not exposed directly; use `HookContext` instead.
+/// The `current_id` field tracks which match arm owns the hooks;
+/// when the ID changes, the hook array is cleared to prevent
+/// signal leakage between different match arms.
 #[derive(Data)]
 pub struct HookContextInner {
-    /// Internal storage for hook state values.
+    /// Storage for hook state values (signals, etc.).
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
+    /// Current context ID, determined by the active match arm.
+    /// When this changes, the hooks array is cleared.
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
+    pub(crate) current_id: u64,
     /// Current hook index, incremented on each hook call and reset per render.
     #[get(pub(crate), type(copy))]
     #[set(pub(crate))]

@@ -10,11 +10,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `ParseStream`: The syn parse stream to read from.
+/// - `ParseStream` - The syn parse stream to read from.
 ///
 /// # Returns
 ///
-/// - `SynResult<String>`: The clean identifier name (without `r#`).
+/// - `SynResult<String>` - The clean identifier name (without `r#`).
 pub(crate) fn parse_ident_segment(input: ParseStream) -> SynResult<String> {
     let tt: proc_macro2::TokenTree = input.parse()?;
     match tt {
@@ -42,11 +42,11 @@ pub(crate) fn parse_ident_segment(input: ParseStream) -> SynResult<String> {
 ///
 /// # Arguments
 ///
-/// - `ParseStream`: The syn parse stream to read from.
+/// - `ParseStream` - The syn parse stream to read from.
 ///
 /// # Returns
 ///
-/// - `SynResult<String>`: The reconstructed kebab-case name string.
+/// - `SynResult<String>` - The reconstructed kebab-case name string.
 pub(crate) fn parse_kebab_name(input: ParseStream) -> SynResult<String> {
     if input.peek(LitStr) {
         let lit: LitStr = input.parse()?;
@@ -78,11 +78,11 @@ pub(crate) fn parse_kebab_name(input: ParseStream) -> SynResult<String> {
 ///
 /// # Arguments
 ///
-/// - `&TokenStream2`: The raw token stream to reconstruct.
+/// - `&TokenStream2` - The raw token stream to reconstruct.
 ///
 /// # Returns
 ///
-/// - `String`: The reconstructed kebab-case name.
+/// - `String` - The reconstructed kebab-case name.
 pub(crate) fn reconstruct_kebab_from_tokens(tokens: &TokenStream2) -> String {
     let iter: std::iter::Peekable<proc_macro2::token_stream::IntoIter> =
         tokens.clone().into_iter().peekable();

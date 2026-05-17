@@ -8,11 +8,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `TokenStream`: The raw token stream containing the variable name.
+/// - `TokenStream` - The raw token stream containing the variable name.
 ///
 /// # Returns
 ///
-/// - `TokenStream`: The generated token stream producing the CSS `var()` string.
+/// - `TokenStream` - The generated token stream producing the CSS `var()` string.
 pub(crate) fn parse_var(input: TokenStream) -> TokenStream {
     let tokens: TokenStream2 = input.into();
     let var_name: String = reconstruct_kebab_from_tokens(&tokens);

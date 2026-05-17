@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The animation demo page virtual DOM tree.
+/// - `VirtualNode` - The animation demo page virtual DOM tree.
 pub fn page_animation() -> VirtualNode {
     let box_visible: Signal<bool> = use_signal(|| false);
     let spin_active: Signal<bool> = use_signal(|| false);
@@ -101,11 +101,11 @@ pub fn page_animation() -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `Signal<i32>`: The progress value signal (0-100).
+/// - `Signal<i32>` - The progress value signal (0-100).
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A fragment containing the progress bar and percentage text.
+/// - `VirtualNode` - A fragment containing the progress bar and percentage text.
 fn build_progress_bar(progress_value: Signal<i32>) -> VirtualNode {
     html! {
         div {
@@ -127,11 +127,11 @@ fn build_progress_bar(progress_value: Signal<i32>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `i32`: The color index (0-4).
+/// - `i32` - The color index (0-4).
 ///
 /// # Returns
 ///
-/// - `String`: The CSS color string.
+/// - `String` - The CSS color string.
 fn get_anim_color(index: i32) -> String {
     let colors: Vec<String> = vec![
         "#4f46e5".to_string(),

@@ -37,16 +37,16 @@ pub struct UseModal {
 ///
 /// # Returns
 ///
-/// - `UseModal`: The modal state.
+/// - `UseModal` - The modal state.
 pub fn use_modal() -> UseModal {
     UseModal::new(
         use_signal(|| false),
         use_signal(|| false),
         use_signal(|| false),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
+        use_signal(String::new),
+        use_signal(String::new),
+        use_signal(String::new),
+        use_signal(String::new),
     )
 }
 
@@ -54,11 +54,11 @@ pub fn use_modal() -> UseModal {
 ///
 /// # Arguments
 ///
-/// - `UseModal`: The modal state.
+/// - `UseModal` - The modal state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to open the basic modal.
+/// - `NativeEventHandler` - A click handler to open the basic modal.
 pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.show_basic.set(true);
@@ -69,11 +69,11 @@ pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseModal`: The modal state.
+/// - `UseModal` - The modal state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to open the confirm modal.
+/// - `NativeEventHandler` - A click handler to open the confirm modal.
 pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.show_confirm.set(true);
@@ -85,11 +85,11 @@ pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseModal`: The modal state.
+/// - `UseModal` - The modal state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to open the form modal.
+/// - `NativeEventHandler` - A click handler to open the form modal.
 pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.show_form.set(true);
@@ -103,11 +103,11 @@ pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseModal`: The modal state.
+/// - `UseModal` - The modal state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to confirm the action.
+/// - `NativeEventHandler` - A click handler to confirm the action.
 pub fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.confirm_result.set("Action confirmed!".to_string());
@@ -119,11 +119,11 @@ pub fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseModal`: The modal state.
+/// - `UseModal` - The modal state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to submit the form modal.
+/// - `NativeEventHandler` - A click handler to submit the form modal.
 pub fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let name: String = state.modal_name.get();

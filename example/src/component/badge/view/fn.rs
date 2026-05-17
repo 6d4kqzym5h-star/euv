@@ -7,11 +7,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode`: The props node containing color, text, outline, and on_click.
+/// - `VirtualNode` - The props node containing color, text, outline, and on_click.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A styled span badge element.
+/// - `VirtualNode` - A styled span badge element.
 pub fn my_badge(props: VirtualNode) -> VirtualNode {
     let color: String = props
         .try_get_prop(&Attribute::Other("color".to_string()))

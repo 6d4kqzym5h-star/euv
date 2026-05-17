@@ -14,7 +14,7 @@ use {app::*, component::*, page::*, router::*, style::*, theme::*};
 
 use {euv_core::*, euv_macros::*};
 
-use {lombok_macros::*, wasm_bindgen::prelude::*, web_sys::*};
+use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*};
 
 /// Entry point for the euv example application.
 #[wasm_bindgen]

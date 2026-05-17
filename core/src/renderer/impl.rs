@@ -6,7 +6,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `VirtualNode`: The virtual DOM tree to render.
+    /// - `VirtualNode` - The virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         if let Some(old_vnode) = self.try_get_current_tree() {
@@ -81,6 +81,47 @@ impl Renderer {
             }
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 self.patch_children(dom_element, old_children, new_children);
+            }
+            (VirtualNode::Dynamic(new_dynamic), VirtualNode::Dynamic(_old_dynamic)) => {
+                while let Some(child) = dom_element.first_child() {
+                    dom_element.remove_child(&child).unwrap();
+                }
+                let mut hook_context: HookContext = new_dynamic.get_hook_context();
+                hook_context.reset_hook_index();
+                let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
+                    let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
+                        new_dynamic.get_render_fn().borrow_mut();
+                    borrowed()
+                });
+                let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
+                let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
+                dom_element.append_child(&initial_dom).unwrap();
+                let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
+                    new_dynamic.get_render_fn().clone();
+                let placeholder_clone: Element = dom_element.clone();
+                let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
+                renderer_for_sub.set_current_tree(Some(initial_unwrapped));
+                let renderer_ref: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
+                let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
+                let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
+                    Rc::clone(&render_fn_clone);
+                let window: Window = window().unwrap();
+                let re_render_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                    if placeholder_clone.parent_node().is_none() {
+                        return;
+                    }
+                    hook_context.reset_hook_index();
+                    let new_vnode: VirtualNode =
+                        with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
+                    renderer_ref_for_sub.borrow_mut().render(new_vnode);
+                }));
+                window
+                    .add_event_listener_with_callback(
+                        &NativeEventName::EuvSignalUpdate.to_string(),
+                        re_render_closure.as_ref().unchecked_ref(),
+                    )
+                    .unwrap();
+                re_render_closure.forget();
             }
             _ => {
                 let new_dom: Node = self.create_dom_node(new_node);

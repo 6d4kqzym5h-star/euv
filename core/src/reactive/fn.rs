@@ -71,11 +71,11 @@ pub(crate) fn schedule_signal_update() {
 ///
 /// # Arguments
 ///
-/// - `FnOnce() -> R`: The closure to execute with suppressed scheduling.
+/// - `FnOnce() -> R` - The closure to execute with suppressed scheduling.
 ///
 /// # Returns
 ///
-/// - `R`: The return value of the closure.
+/// - `R` - The return value of the closure.
 pub fn with_suppressed_updates<F, R>(f: F) -> R
 where
     F: FnOnce() -> R,
@@ -98,8 +98,8 @@ where
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The attribute signal to update when signals change.
-/// - `Fn() -> String + 'static`: A closure that recomputes the attribute value string.
+/// - `Signal<String>` - The attribute signal to update when signals change.
+/// - `Fn() -> String + 'static` - A closure that recomputes the attribute value string.
 ///
 /// # Panics
 ///
@@ -137,7 +137,7 @@ where
 ///
 /// # Returns
 ///
-/// - `HookContext`: The currently active hook context.
+/// - `HookContext` - The currently active hook context.
 fn get_current_hook_context() -> HookContext {
     unsafe { HookContext::from_inner(CURRENT_HOOK_CONTEXT) }
 }
@@ -150,12 +150,12 @@ fn get_current_hook_context() -> HookContext {
 ///
 /// # Arguments
 ///
-/// - `HookContext`: The hook context to set as active.
-/// - `FnOnce() -> R`: The closure to execute with the active context.
+/// - `HookContext` - The hook context to set as active.
+/// - `FnOnce() -> R` - The closure to execute with the active context.
 ///
 /// # Returns
 ///
-/// - `R`: The return value of the closure.
+/// - `R` - The return value of the closure.
 pub fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
@@ -179,7 +179,7 @@ where
 ///
 /// # Returns
 ///
-/// - `HookContext`: A handle to the newly allocated hook context.
+/// - `HookContext` - A handle to the newly allocated hook context.
 pub fn create_hook_context() -> HookContext {
     let ctx: Box<HookContextInner> = Box::default();
     HookContext::from_inner(Box::leak(ctx) as *mut HookContextInner)
@@ -196,11 +196,11 @@ pub fn create_hook_context() -> HookContext {
 ///
 /// # Arguments
 ///
-/// - `FnOnce() -> T`: A closure that returns the initial value of the signal.
+/// - `FnOnce() -> T` - A closure that returns the initial value of the signal.
 ///
 /// # Returns
 ///
-/// - `Signal<T>`: A mutable handle to the newly created or persisted reactive signal.
+/// - `Signal<T>` - A mutable handle to the newly created or persisted reactive signal.
 pub fn use_signal<T, F>(init: F) -> Signal<T>
 where
     T: Clone + PartialEq + 'static,
@@ -232,11 +232,11 @@ where
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The source boolean signal to convert.
+/// - `Signal<bool>` - The source boolean signal to convert.
 ///
 /// # Returns
 ///
-/// - `AttributeValue`: A signal-backed attribute value that reactively mirrors the boolean as a string.
+/// - `AttributeValue` - A signal-backed attribute value that reactively mirrors the boolean as a string.
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let initial: String = source.get().to_string();
     let string_signal: Signal<String> = {

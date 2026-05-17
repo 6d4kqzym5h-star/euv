@@ -95,17 +95,17 @@ impl Default for UseBrowserApi {
 ///
 /// # Returns
 ///
-/// - `UseBrowserApi`: The browser API demo state.
+/// - `UseBrowserApi` - The browser API demo state.
 pub fn use_browser_api() -> UseBrowserApi {
     let mut state: UseBrowserApi = UseBrowserApi::default();
     state.set_local_key(use_signal(|| "euv-demo-key".to_string()));
-    state.set_local_value(use_signal(|| "".to_string()));
+    state.set_local_value(use_signal(String::new));
     state.set_local_result(use_signal(|| "No data yet".to_string()));
     state.set_session_key(use_signal(|| "euv-session-key".to_string()));
-    state.set_session_value(use_signal(|| "".to_string()));
+    state.set_session_value(use_signal(String::new));
     state.set_session_result(use_signal(|| "No data yet".to_string()));
-    state.set_clipboard_text(use_signal(|| "".to_string()));
-    state.set_clipboard_result(use_signal(|| "".to_string()));
+    state.set_clipboard_text(use_signal(String::new));
+    state.set_clipboard_result(use_signal(String::new));
     state.set_window_size(use_signal(|| {
         let (width, height): (i32, i32) = window_inner_size();
         format!("{} x {}", width, height)
@@ -115,7 +115,7 @@ pub fn use_browser_api() -> UseBrowserApi {
     state.set_location_url(use_signal(location_href));
     state.set_location_origin_val(use_signal(location_origin));
     state.set_location_pathname_val(use_signal(location_pathname));
-    state.set_console_input(use_signal(|| "".to_string()));
+    state.set_console_input(use_signal(String::new));
     state
 }
 
@@ -123,11 +123,11 @@ pub fn use_browser_api() -> UseBrowserApi {
 ///
 /// # Arguments
 ///
-/// - `&str`: The key to look up.
+/// - `&str` - The key to look up.
 ///
 /// # Returns
 ///
-/// - `Option<String>`: The stored value if found, or None.
+/// - `Option<String>` - The stored value if found, or None.
 pub fn local_storage_get(key: &str) -> Option<String> {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = window.local_storage().ok()??;
@@ -138,8 +138,8 @@ pub fn local_storage_get(key: &str) -> Option<String> {
 ///
 /// # Arguments
 ///
-/// - `&str`: The key to store.
-/// - `&str`: The value to store.
+/// - `&str` - The key to store.
+/// - `&str` - The value to store.
 pub fn local_storage_set(key: &str, value: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.local_storage() {
@@ -153,7 +153,7 @@ pub fn local_storage_set(key: &str, value: &str) {
 ///
 /// # Arguments
 ///
-/// - `&str`: The key to remove.
+/// - `&str` - The key to remove.
 pub fn local_storage_remove(key: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.local_storage() {
@@ -167,11 +167,11 @@ pub fn local_storage_remove(key: &str) {
 ///
 /// # Arguments
 ///
-/// - `&str`: The key to look up.
+/// - `&str` - The key to look up.
 ///
 /// # Returns
 ///
-/// - `Option<String>`: The stored value if found, or None.
+/// - `Option<String>` - The stored value if found, or None.
 pub fn session_storage_get(key: &str) -> Option<String> {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = window.session_storage().ok()??;
@@ -182,8 +182,8 @@ pub fn session_storage_get(key: &str) -> Option<String> {
 ///
 /// # Arguments
 ///
-/// - `&str`: The key to store.
-/// - `&str`: The value to store.
+/// - `&str` - The key to store.
+/// - `&str` - The value to store.
 pub fn session_storage_set(key: &str, value: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.session_storage() {
@@ -197,7 +197,7 @@ pub fn session_storage_set(key: &str, value: &str) {
 ///
 /// # Arguments
 ///
-/// - `&str`: The key to remove.
+/// - `&str` - The key to remove.
 pub fn session_storage_remove(key: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.session_storage() {
@@ -211,7 +211,7 @@ pub fn session_storage_remove(key: &str) {
 ///
 /// # Returns
 ///
-/// - `String`: The clipboard text content, or an error message.
+/// - `String` - The clipboard text content, or an error message.
 pub async fn clipboard_read_text() -> String {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
@@ -230,11 +230,11 @@ pub async fn clipboard_read_text() -> String {
 ///
 /// # Arguments
 ///
-/// - `&str`: The text to write.
+/// - `&str` - The text to write.
 ///
 /// # Returns
 ///
-/// - `bool`: Whether the write succeeded.
+/// - `bool` - Whether the write succeeded.
 pub async fn clipboard_write_text(text: &str) -> bool {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
@@ -248,7 +248,7 @@ pub async fn clipboard_write_text(text: &str) -> bool {
 ///
 /// # Returns
 ///
-/// - `(i32, i32)`: A tuple of (inner_width, inner_height).
+/// - `(i32, i32)` - A tuple of (inner_width, inner_height).
 pub fn window_inner_size() -> (i32, i32) {
     let window: Window = window().expect("no global window exists");
     let width: i32 = window
@@ -270,7 +270,7 @@ pub fn window_inner_size() -> (i32, i32) {
 ///
 /// # Returns
 ///
-/// - `String`: The user agent string.
+/// - `String` - The user agent string.
 pub fn navigator_user_agent() -> String {
     let window: Window = window().expect("no global window exists");
     window
@@ -283,7 +283,7 @@ pub fn navigator_user_agent() -> String {
 ///
 /// # Returns
 ///
-/// - `String`: The preferred language string.
+/// - `String` - The preferred language string.
 pub fn navigator_language() -> String {
     let window: Window = window().expect("no global window exists");
     window
@@ -296,7 +296,7 @@ pub fn navigator_language() -> String {
 ///
 /// # Returns
 ///
-/// - `String`: The current full URL.
+/// - `String` - The current full URL.
 pub fn location_href() -> String {
     let window: Window = window().expect("no global window exists");
     window
@@ -309,7 +309,7 @@ pub fn location_href() -> String {
 ///
 /// # Returns
 ///
-/// - `String`: The origin portion of the URL.
+/// - `String` - The origin portion of the URL.
 pub fn location_origin() -> String {
     let window: Window = window().expect("no global window exists");
     window
@@ -322,7 +322,7 @@ pub fn location_origin() -> String {
 ///
 /// # Returns
 ///
-/// - `String`: The pathname portion of the URL.
+/// - `String` - The pathname portion of the URL.
 pub fn location_pathname() -> String {
     let window: Window = window().expect("no global window exists");
     window
@@ -335,11 +335,11 @@ pub fn location_pathname() -> String {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to set the localStorage item.
+/// - `NativeEventHandler` - A click handler to set the localStorage item.
 pub fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let key: String = state.local_key.get();
@@ -355,11 +355,11 @@ pub fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to get the localStorage item.
+/// - `NativeEventHandler` - A click handler to get the localStorage item.
 pub fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let key: String = state.local_key.get();
@@ -375,11 +375,11 @@ pub fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to remove the localStorage item.
+/// - `NativeEventHandler` - A click handler to remove the localStorage item.
 pub fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let key: String = state.local_key.get();
@@ -392,11 +392,11 @@ pub fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to set the sessionStorage item.
+/// - `NativeEventHandler` - A click handler to set the sessionStorage item.
 pub fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let key: String = state.session_key.get();
@@ -414,11 +414,11 @@ pub fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to get the sessionStorage item.
+/// - `NativeEventHandler` - A click handler to get the sessionStorage item.
 pub fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let key: String = state.session_key.get();
@@ -434,11 +434,11 @@ pub fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to remove the sessionStorage item.
+/// - `NativeEventHandler` - A click handler to remove the sessionStorage item.
 pub fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let key: String = state.session_key.get();
@@ -451,11 +451,11 @@ pub fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to copy text to clipboard.
+/// - `NativeEventHandler` - A click handler to copy text to clipboard.
 pub fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let text: String = state.clipboard_text.get();
@@ -480,11 +480,11 @@ pub fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to read text from clipboard.
+/// - `NativeEventHandler` - A click handler to read text from clipboard.
 pub fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let result: Signal<String> = state.clipboard_result;
@@ -499,11 +499,11 @@ pub fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseBrowserApi`: The browser API state.
+/// - `UseBrowserApi` - The browser API state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to refresh the window size.
+/// - `NativeEventHandler` - A click handler to refresh the window size.
 pub fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let (width, height): (i32, i32) = window_inner_size();
@@ -515,11 +515,11 @@ pub fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The console input signal.
+/// - `Signal<String>` - The console input signal.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler for console.log.
+/// - `NativeEventHandler` - A click handler for console.log.
 pub fn console_on_log(console_input: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let message: String = console_input.get();
@@ -531,11 +531,11 @@ pub fn console_on_log(console_input: Signal<String>) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The console input signal.
+/// - `Signal<String>` - The console input signal.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler for console.warn.
+/// - `NativeEventHandler` - A click handler for console.warn.
 pub fn console_on_warn(console_input: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let message: String = console_input.get();
@@ -547,11 +547,11 @@ pub fn console_on_warn(console_input: Signal<String>) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The console input signal.
+/// - `Signal<String>` - The console input signal.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler for console.error.
+/// - `NativeEventHandler` - A click handler for console.error.
 pub fn console_on_error(console_input: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let message: String = console_input.get();

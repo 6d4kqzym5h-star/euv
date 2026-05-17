@@ -7,12 +7,12 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&str`: The page title text.
-/// - `&str`: The page subtitle / description text.
+/// - `&str` - The page title text.
+/// - `&str` - The page subtitle / description text.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The page header virtual DOM tree.
+/// - `VirtualNode` - The page header virtual DOM tree.
 pub fn page_header(title: &str, subtitle: &str) -> VirtualNode {
     html! {
         div {

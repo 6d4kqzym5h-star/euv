@@ -33,15 +33,15 @@ pub struct UseForm {
 ///
 /// # Returns
 ///
-/// - `UseForm`: The form state.
+/// - `UseForm` - The form state.
 pub fn use_form() -> UseForm {
     UseForm::new(
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
+        use_signal(String::new),
+        use_signal(String::new),
+        use_signal(String::new),
         use_signal(|| true),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
+        use_signal(String::new),
+        use_signal(String::new),
     )
 }
 
@@ -49,11 +49,11 @@ pub fn use_form() -> UseForm {
 ///
 /// # Arguments
 ///
-/// - `UseForm`: The form state.
+/// - `UseForm` - The form state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler for form submission.
+/// - `NativeEventHandler` - A click handler for form submission.
 pub fn form_on_submit(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let mut validation_errors: Vec<String> = Vec::new();

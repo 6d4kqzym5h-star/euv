@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `i32`: The total seconds to format.
+/// - `i32` - The total seconds to format.
 ///
 /// # Returns
 ///
-/// - `String`: The formatted time string in MM:SS format.
+/// - `String` - The formatted time string in MM:SS format.
 fn format_time(total_seconds: i32) -> String {
     let minutes: i32 = total_seconds / 60;
     let seconds: i32 = total_seconds % 60;
@@ -19,7 +19,7 @@ fn format_time(total_seconds: i32) -> String {
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The timer demo page virtual DOM tree.
+/// - `VirtualNode` - The timer demo page virtual DOM tree.
 pub fn page_timer() -> VirtualNode {
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();

@@ -167,6 +167,7 @@ impl Default for DynamicNode {
         let node: DynamicNode = DynamicNode {
             render_fn: Rc::new(RefCell::new(|| VirtualNode::Empty)),
             hook_context: HookContext::default(),
+            id: 0_u64,
         };
         node
     }
@@ -178,6 +179,7 @@ impl Clone for DynamicNode {
         DynamicNode {
             render_fn: Rc::clone(self.get_render_fn()),
             hook_context: self.hook_context,
+            id: self.id,
         }
     }
 }
@@ -278,9 +280,13 @@ where
     F: FnMut() -> VirtualNode + 'static,
 {
     fn into_node(self) -> VirtualNode {
+        static NEXT_DYNAMIC_ID: std::sync::atomic::AtomicU64 =
+            std::sync::atomic::AtomicU64::new(1_u64);
+        let id: u64 = NEXT_DYNAMIC_ID.fetch_add(1_u64, std::sync::atomic::Ordering::Relaxed);
         VirtualNode::Dynamic(DynamicNode {
             render_fn: Rc::new(RefCell::new(self)),
             hook_context: crate::reactive::create_hook_context(),
+            id,
         })
     }
 }
@@ -332,6 +338,74 @@ where
 
 /// Implementation of virtual node construction and property extraction.
 impl VirtualNode {
+    /// Determines whether the DOM needs to be patched when transitioning
+    /// from `old` to `new`.
+    ///
+    /// Unlike `PartialEq`, this method treats two `Dynamic` variants as
+    /// **different** so that the renderer always re-evaluates dynamic
+    /// subtrees. This is essential for route-based `match` expressions
+    /// where different pages may occupy the same DynamicNode slot.
+    pub fn needs_patch(old: &VirtualNode, new: &VirtualNode) -> bool {
+        match (old, new) {
+            (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => {
+                old_text.get_content() != new_text.get_content()
+            }
+            (
+                VirtualNode::Element {
+                    tag: old_tag,
+                    attributes: old_attrs,
+                    children: old_children,
+                    key: _old_key,
+                },
+                VirtualNode::Element {
+                    tag: new_tag,
+                    attributes: new_attrs,
+                    children: new_children,
+                    key: _new_key,
+                },
+            ) => {
+                if old_tag != new_tag {
+                    return true;
+                }
+                if old_attrs.len() != new_attrs.len() {
+                    return true;
+                }
+                for (old_attr, new_attr) in old_attrs.iter().zip(new_attrs.iter()) {
+                    if old_attr.get_name() != new_attr.get_name()
+                        || old_attr.get_value() != new_attr.get_value()
+                    {
+                        return true;
+                    }
+                }
+                if old_children.len() != new_children.len() {
+                    return true;
+                }
+                for (old_child, new_child) in old_children.iter().zip(new_children.iter()) {
+                    if Self::needs_patch(old_child, new_child) {
+                        return true;
+                    }
+                }
+                false
+            }
+            (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
+                if old_children.len() != new_children.len() {
+                    return true;
+                }
+                for (old_child, new_child) in old_children.iter().zip(new_children.iter()) {
+                    if Self::needs_patch(old_child, new_child) {
+                        return true;
+                    }
+                }
+                false
+            }
+            (VirtualNode::Dynamic(old_dyn), VirtualNode::Dynamic(new_dyn)) => {
+                old_dyn.get_id() != new_dyn.get_id()
+            }
+            (VirtualNode::Empty, VirtualNode::Empty) => false,
+            _ => true,
+        }
+    }
+
     /// Creates a new element node with the given tag name.
     pub fn get_element_node(tag_name: &str) -> Self {
         VirtualNode::Element {

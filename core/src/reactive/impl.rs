@@ -28,11 +28,11 @@ where
     ///
     /// # Arguments
     ///
-    /// - `T`: The initial value of the signal.
+    /// - `T` - The initial value of the signal.
     ///
     /// # Returns
     ///
-    /// - `Signal<T>`: A handle to the newly created reactive signal.
+    /// - `Signal<T>` - A handle to the newly created reactive signal.
     pub fn new(value: T) -> Self {
         let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(value));
         Signal {
@@ -65,7 +65,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `T`: The current value of the signal.
+    /// - `T` - The current value of the signal.
     pub fn get(&self) -> T {
         self.get_inner_mut().get_value().clone()
     }
@@ -74,8 +74,8 @@ where
     ///
     /// # Returns
     ///
-    /// - `Some(T)`: The current value if the borrow succeeds.
-    /// - `None`: If the inner value is already mutably borrowed.
+    /// - `Some(T)` - The current value if the borrow succeeds.
+    /// - `None` - If the inner value is already mutably borrowed.
     pub fn try_get(&self) -> Option<T> {
         Some(self.get_inner_mut().get_value().clone())
     }
@@ -84,7 +84,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `FnMut() + 'static`: The callback to invoke when the signal changes.
+    /// - `FnMut() + 'static` - The callback to invoke when the signal changes.
     pub fn subscribe<F>(&self, callback: F)
     where
         F: FnMut() + 'static,
@@ -102,7 +102,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `T`: The new value to assign to the signal.
+    /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
         if inner.get_value() == &value {
@@ -158,11 +158,11 @@ where
     ///
     /// # Arguments
     ///
-    /// - `T`: The new value to assign to the signal.
+    /// - `T` - The new value to assign to the signal.
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the value was successfully updated and listeners were notified, `false` if unchanged.
+    /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged.
     pub fn try_set(&self, value: T) -> bool {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
         if inner.get_value() == &value {
@@ -394,7 +394,7 @@ impl HookContext {
     ///
     /// # Arguments
     ///
-    /// - `usize`: The new hook index value.
+    /// - `usize` - The new hook index value.
     pub fn set_hook_index(&mut self, index: usize) {
         self.get_inner_mut().set_hook_index(index);
     }
@@ -412,6 +412,19 @@ impl HookContext {
     /// Resets the hook index for a new render cycle.
     pub fn reset_hook_index(&mut self) {
         self.set_hook_index(0_usize);
+    }
+
+    /// Sets the current context ID. This is called by match expressions
+    /// to switch to the appropriate hook storage for the selected arm.
+    /// When the ID changes, the hooks array is cleared to prevent
+    /// signal leakage between different match arms.
+    pub fn set_context_id(&mut self, id: u64) {
+        let inner: &mut HookContextInner = self.get_inner_mut();
+        if inner.get_current_id() != id {
+            inner.get_mut_hooks().clear();
+            inner.set_current_id(id);
+        }
+        self.reset_hook_index();
     }
 }
 
@@ -441,6 +454,7 @@ impl HookContextInner {
     pub const fn new() -> Self {
         HookContextInner {
             hooks: Vec::new(),
+            current_id: 0_u64,
             hook_index: 0_usize,
         }
     }
@@ -466,7 +480,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `SignalCell<T>`: An empty cell ready to hold a signal.
+    /// - `SignalCell<T>` - An empty cell ready to hold a signal.
     pub const fn new() -> Self {
         SignalCell {
             inner: UnsafeCell::new(None),
@@ -477,7 +491,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `Signal<T>`: The signal to store.
+    /// - `Signal<T>` - The signal to store.
     ///
     /// # Panics
     ///
@@ -496,7 +510,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `Signal<T>`: The stored signal.
+    /// - `Signal<T>` - The stored signal.
     ///
     /// # Panics
     ///

@@ -13,7 +13,7 @@ pub fn init_console() {
 ///
 /// # Returns
 ///
-/// - `Signal<Vec<ConsoleEntry>>`: The global vConsole log signal.
+/// - `Signal<Vec<ConsoleEntry>>` - The global vConsole log signal.
 ///
 /// # Panics
 ///
@@ -31,11 +31,11 @@ pub(crate) fn get_console_signal() -> Signal<Vec<ConsoleEntry>> {
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The reactive signal controlling panel visibility.
+/// - `Signal<bool>` - The reactive signal controlling panel visibility.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The vConsole panel virtual DOM tree.
+/// - `VirtualNode` - The vConsole panel virtual DOM tree.
 pub fn vconsole_panel(panel_open: Signal<bool>) -> VirtualNode {
     let console_signal: Signal<Vec<ConsoleEntry>> = get_console_signal();
     let log_count: usize = console_signal.get().len();
@@ -55,12 +55,12 @@ pub fn vconsole_panel(panel_open: Signal<bool>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The reactive signal controlling panel visibility.
-/// - `usize`: The current log count.
+/// - `Signal<bool>` - The reactive signal controlling panel visibility.
+/// - `usize` - The current log count.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The floating action button virtual DOM tree.
+/// - `VirtualNode` - The floating action button virtual DOM tree.
 fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
     if log_count > 0 {
         let badge_display: String = if log_count > 99 {
@@ -98,13 +98,13 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `Signal<Vec<ConsoleEntry>>`: The reactive signal holding console log entries.
-/// - `Signal<bool>`: The reactive signal controlling panel visibility.
-/// - `usize`: The current log count.
+/// - `Signal<Vec<ConsoleEntry>>` - The reactive signal holding console log entries.
+/// - `Signal<bool>` - The reactive signal controlling panel visibility.
+/// - `usize` - The current log count.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The drawer panel virtual DOM tree.
+/// - `VirtualNode` - The drawer panel virtual DOM tree.
 fn vconsole_drawer(
     console_signal: Signal<Vec<ConsoleEntry>>,
     panel_open: Signal<bool>,
@@ -196,12 +196,12 @@ fn vconsole_drawer(
 ///
 /// # Arguments
 ///
-/// - `Signal<Vec<ConsoleEntry>>`: The reactive signal holding console log entries.
-/// - `Signal<String>`: The reactive signal holding the current filter level.
+/// - `Signal<Vec<ConsoleEntry>>` - The reactive signal holding console log entries.
+/// - `Signal<String>` - The reactive signal holding the current filter level.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A fragment of log item virtual nodes.
+/// - `VirtualNode` - A fragment of log item virtual nodes.
 fn build_vconsole_log_nodes(
     logs: Signal<Vec<ConsoleEntry>>,
     filter: Signal<String>,
@@ -255,12 +255,12 @@ fn build_vconsole_log_nodes(
 ///
 /// # Arguments
 ///
-/// - `&LogLevel`: The log level of the entry.
-/// - `bool`: Whether this is the most recent log entry.
+/// - `&LogLevel` - The log level of the entry.
+/// - `bool` - Whether this is the most recent log entry.
 ///
 /// # Returns
 ///
-/// - `String`: The space-separated CSS class names.
+/// - `String` - The space-separated CSS class names.
 fn get_log_item_class(level: &LogLevel, is_latest: bool) -> String {
     let base_name: &'static str = c_vconsole_log_item().get_name();
     let level_class: &'static str = match level {
@@ -293,11 +293,11 @@ fn get_log_item_class(level: &LogLevel, is_latest: bool) -> String {
 ///
 /// # Arguments
 ///
-/// - `&LogLevel`: The log level.
+/// - `&LogLevel` - The log level.
 ///
 /// # Returns
 ///
-/// - `String`: The space-separated CSS class names.
+/// - `String` - The space-separated CSS class names.
 fn get_badge_class(level: &LogLevel) -> String {
     let base_name: &'static str = c_vconsole_level_badge().get_name();
     let badge_class: &'static str = match level {
@@ -312,11 +312,11 @@ fn get_badge_class(level: &LogLevel) -> String {
 ///
 /// # Arguments
 ///
-/// - `&LogLevel`: The log level.
+/// - `&LogLevel` - The log level.
 ///
 /// # Returns
 ///
-/// - `String`: The badge label string (e.g., "LOG", "WRN", "ERR").
+/// - `String` - The badge label string (e.g., "LOG", "WRN", "ERR").
 fn get_log_level_badge(level: &LogLevel) -> String {
     match level {
         LogLevel::Log => "LOG".to_string(),

@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The 404 page virtual DOM tree.
+/// - `VirtualNode` - The 404 page virtual DOM tree.
 pub fn page_not_found() -> VirtualNode {
     html! {
         div {

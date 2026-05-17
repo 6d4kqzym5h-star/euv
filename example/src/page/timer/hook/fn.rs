@@ -11,12 +11,12 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `i32`: The interval period in milliseconds.
-/// - `FnMut() + 'static`: The closure to invoke on each interval tick.
+/// - `i32` - The interval period in milliseconds.
+/// - `FnMut() + 'static` - The closure to invoke on each interval tick.
 ///
 /// # Returns
 ///
-/// - `IntervalHandle`: A handle that can be used to cancel the interval.
+/// - `IntervalHandle` - A handle that can be used to cancel the interval.
 ///
 /// # Panics
 ///
@@ -44,7 +44,7 @@ where
 ///
 /// # Returns
 ///
-/// - `UseStopwatch`: The stopwatch state containing seconds, running, and handle signals.
+/// - `UseStopwatch` - The stopwatch state containing seconds, running, and handle signals.
 pub fn use_stopwatch() -> UseStopwatch {
     UseStopwatch::new(use_signal(|| 0), use_signal(|| false), use_signal(|| None))
 }
@@ -56,7 +56,7 @@ pub fn use_stopwatch() -> UseStopwatch {
 ///
 /// # Returns
 ///
-/// - `UseCountdown`: The countdown state containing total, remaining, running, handle, and input signals.
+/// - `UseCountdown` - The countdown state containing total, remaining, running, handle, and input signals.
 pub fn use_countdown() -> UseCountdown {
     UseCountdown::new(
         use_signal(|| 60),
@@ -71,11 +71,11 @@ pub fn use_countdown() -> UseCountdown {
 ///
 /// # Arguments
 ///
-/// - `UseStopwatch`: The stopwatch state (only `Copy` signals are read from this).
+/// - `UseStopwatch` - The stopwatch state (only `Copy` signals are read from this).
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to start the stopwatch.
+/// - `NativeEventHandler` - A click handler to start the stopwatch.
 pub fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let was_running: bool = state.running.get();
@@ -103,11 +103,11 @@ pub fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseStopwatch`: The stopwatch state.
+/// - `UseStopwatch` - The stopwatch state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to pause the stopwatch.
+/// - `NativeEventHandler` - A click handler to pause the stopwatch.
 pub fn stopwatch_on_pause(state: UseStopwatch) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.running.set(false);
@@ -123,11 +123,11 @@ pub fn stopwatch_on_pause(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseStopwatch`: The stopwatch state.
+/// - `UseStopwatch` - The stopwatch state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to reset the stopwatch.
+/// - `NativeEventHandler` - A click handler to reset the stopwatch.
 pub fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.running.set(false);
@@ -144,11 +144,11 @@ pub fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseCountdown`: The countdown state.
+/// - `UseCountdown` - The countdown state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to start the countdown.
+/// - `NativeEventHandler` - A click handler to start the countdown.
 pub fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let input_text: String = state.input.get();
@@ -182,11 +182,11 @@ pub fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseCountdown`: The countdown state.
+/// - `UseCountdown` - The countdown state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to pause the countdown.
+/// - `NativeEventHandler` - A click handler to pause the countdown.
 pub fn countdown_on_pause(state: UseCountdown) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.running.set(false);
@@ -202,11 +202,11 @@ pub fn countdown_on_pause(state: UseCountdown) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseCountdown`: The countdown state.
+/// - `UseCountdown` - The countdown state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to reset the countdown.
+/// - `NativeEventHandler` - A click handler to reset the countdown.
 pub fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.running.set(false);
@@ -224,11 +224,11 @@ pub fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseCountdown`: The countdown state.
+/// - `UseCountdown` - The countdown state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: An input handler for the countdown input field.
+/// - `NativeEventHandler` - An input handler for the countdown input field.
 pub fn countdown_on_input(state: UseCountdown) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
         if let NativeEvent::Input(input_event) = event {

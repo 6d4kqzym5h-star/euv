@@ -17,7 +17,7 @@ pub struct UseLifecycle {
 ///
 /// # Returns
 ///
-/// - `UseLifecycle`: The lifecycle state.
+/// - `UseLifecycle` - The lifecycle state.
 pub fn use_lifecycle() -> UseLifecycle {
     UseLifecycle::new(
         use_signal(|| 1),
@@ -29,11 +29,11 @@ pub fn use_lifecycle() -> UseLifecycle {
 ///
 /// # Arguments
 ///
-/// - `UseLifecycle`: The lifecycle state.
+/// - `UseLifecycle` - The lifecycle state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to trigger an update.
+/// - `NativeEventHandler` - A click handler to trigger an update.
 pub fn lifecycle_on_trigger(state: UseLifecycle) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let current: i32 = state.render_count.get();

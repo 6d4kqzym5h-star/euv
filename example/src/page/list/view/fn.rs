@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The list demo page virtual DOM tree.
+/// - `VirtualNode` - The list demo page virtual DOM tree.
 pub fn page_list() -> VirtualNode {
     let state: UseTodoList = use_todo_list();
     html! {

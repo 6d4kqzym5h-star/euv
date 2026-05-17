@@ -6,7 +6,7 @@ const MOBILE_BREAKPOINT: i32 = 768;
 ///
 /// # Returns
 ///
-/// - `String`: The hash fragment without the leading `#`, or `"/"` if empty.
+/// - `String` - The hash fragment without the leading `#`, or `"/"` if empty.
 pub fn current_route() -> String {
     let window: Window = window().expect("no global window exists");
     let hash: String = window.location().hash().unwrap_or_default();
@@ -22,7 +22,7 @@ pub fn current_route() -> String {
 ///
 /// # Arguments
 ///
-/// - `&str`: The target route path.
+/// - `&str` - The target route path.
 pub fn navigate(route: &str) {
     let window: Window = window().expect("no global window exists");
     let location: Location = window.location();
@@ -34,11 +34,11 @@ pub fn navigate(route: &str) {
 ///
 /// # Arguments
 ///
-/// - `String`: The target route path.
+/// - `String` - The target route path.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: An event handler for click events.
+/// - `NativeEventHandler` - An event handler for click events.
 pub fn link_handler(route: String) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         navigate(&route);
@@ -54,7 +54,7 @@ pub fn link_handler(route: String) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal that holds the current route and will be updated on each hash change.
+/// - `Signal<String>` - The reactive signal that holds the current route and will be updated on each hash change.
 pub fn use_hash_change(route_signal: Signal<String>) {
     let window: Window = window().expect("no global window exists");
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
@@ -74,7 +74,7 @@ pub fn use_hash_change(route_signal: Signal<String>) {
 ///
 /// # Returns
 ///
-/// - `bool`: `true` if the viewport width is less than the mobile breakpoint.
+/// - `bool` - `true` if the viewport width is less than the mobile breakpoint.
 pub fn is_mobile() -> bool {
     let window: Window = window().expect("no global window exists");
     let width: i32 = window
@@ -94,7 +94,7 @@ pub fn is_mobile() -> bool {
 ///
 /// # Returns
 ///
-/// - `Signal<bool>`: A reactive signal that is `true` when the viewport is mobile-sized.
+/// - `Signal<bool>` - A reactive signal that is `true` when the viewport is mobile-sized.
 pub fn use_resize() -> Signal<bool> {
     let mobile_signal: Signal<bool> = use_signal(is_mobile);
     let window: Window = window().expect("no global window exists");

@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The custom attributes demo page virtual DOM tree.
+/// - `VirtualNode` - The custom attributes demo page virtual DOM tree.
 pub fn page_custom_attrs() -> VirtualNode {
     html! {
         div {

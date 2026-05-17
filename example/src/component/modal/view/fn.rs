@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode`: The props node containing title, onclick (close handler), and children.
+/// - `VirtualNode` - The props node containing title, onclick (close handler), and children.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A modal overlay element.
+/// - `VirtualNode` - A modal overlay element.
 pub fn my_modal(props: VirtualNode) -> VirtualNode {
     let title: String = props.try_get_prop(&Attribute::Title).unwrap_or_default();
     let on_close: Option<NativeEventHandler> = props.try_get_event(&NativeEventName::Click);

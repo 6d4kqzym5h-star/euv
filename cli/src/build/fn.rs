@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&PathBuf`: The root directory where `.gitignore` is located.
+/// - `&PathBuf` - The root directory where `.gitignore` is located.
 ///
 /// # Returns
 ///
-/// - `Gitignore`: The compiled gitignore matcher.
+/// - `Gitignore` - The compiled gitignore matcher.
 fn build_gitignore(root: &PathBuf) -> Gitignore {
     let gitignore_path: PathBuf = root.join(".gitignore");
     let mut builder: GitignoreBuilder = GitignoreBuilder::new(root);
@@ -37,11 +37,11 @@ fn build_gitignore(root: &PathBuf) -> Gitignore {
 ///
 /// # Arguments
 ///
-/// - `Arc<AppState>`: The shared application state.
+/// - `Arc<AppState>` - The shared application state.
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure of the file watcher.
+/// - `Result<()>` - Indicates success or failure of the file watcher.
 pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
     let crate_path: PathBuf = state.args.crate_path.clone();
     let src_path: PathBuf = crate_path.join("src");
@@ -113,12 +113,12 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// - `&ModeArgs`: The parsed CLI arguments containing build configuration.
-/// - `bool`: Whether to build in release mode.
+/// - `&ModeArgs` - The parsed CLI arguments containing build configuration.
+/// - `bool` - Whether to build in release mode.
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure of the wasm-pack build.
+/// - `Result<()>` - Indicates success or failure of the wasm-pack build.
 pub(crate) async fn build_wasm(args: &ModeArgs, release: bool) -> Result<()> {
     let mut command: Command = Command::new("wasm-pack");
     command
@@ -153,9 +153,9 @@ pub(crate) async fn build_wasm(args: &ModeArgs, release: bool) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// - `&str`: The profile name (e.g. "dev" or "release").
-/// - `&str`: The mode name (e.g. "run" or "build").
-/// - `&str`: The server URL (only meaningful in "run" mode).
+/// - `&str` - The profile name (e.g. "dev" or "release").
+/// - `&str` - The mode name (e.g. "run" or "build").
+/// - `&str` - The server URL (only meaningful in "run" mode).
 pub(crate) fn print_banner(profile: &str, mode: &str, server_url: &str) {
     log::info!("euv-cli v{}", env!("CARGO_PKG_VERSION"));
     log::info!("Profile: {} | Mode: {}", profile, mode);
@@ -170,7 +170,7 @@ pub(crate) fn print_banner(profile: &str, mode: &str, server_url: &str) {
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure of the formatting operation.
+/// - `Result<()>` - Indicates success or failure of the formatting operation.
 pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
     let which_output: Output = Command::new("hyperlane-cli")
         .arg("--version")

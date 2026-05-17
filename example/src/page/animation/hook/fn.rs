@@ -21,7 +21,7 @@ pub struct UseProgress {
 ///
 /// # Returns
 ///
-/// - `UseProgress`: The progress state containing value, running, and handle signals.
+/// - `UseProgress` - The progress state containing value, running, and handle signals.
 pub fn use_progress() -> UseProgress {
     UseProgress::new(use_signal(|| 0), use_signal(|| false), use_signal(|| None))
 }
@@ -33,11 +33,11 @@ pub fn use_progress() -> UseProgress {
 ///
 /// # Arguments
 ///
-/// - `UseProgress`: The progress state.
+/// - `UseProgress` - The progress state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to start the progress bar.
+/// - `NativeEventHandler` - A click handler to start the progress bar.
 pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.value.set(0);
@@ -67,11 +67,11 @@ pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseProgress`: The progress state.
+/// - `UseProgress` - The progress state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to reset the progress bar.
+/// - `NativeEventHandler` - A click handler to reset the progress bar.
 pub fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.running.set(false);
@@ -88,11 +88,11 @@ pub fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<i32>`: The color index signal (0-4).
+/// - `Signal<i32>` - The color index signal (0-4).
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to advance the color index.
+/// - `NativeEventHandler` - A click handler to advance the color index.
 pub fn color_cycle_on_next(color_index: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let current: i32 = color_index.get();

@@ -9,11 +9,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `TokenStream`: The raw token stream representing HTML markup.
+/// - `TokenStream` - The raw token stream representing HTML markup.
 ///
 /// # Returns
 ///
-/// - `TokenStream`: The generated token stream constructing the corresponding virtual node.
+/// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
     let nodes: HtmlRoot = parse_macro_input!(input as HtmlRoot);
     let tokens: TokenStream2 = nodes.into_token_stream();
@@ -25,11 +25,11 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 ///
 /// # Arguments
 ///
-/// - `&str`: The snake_case event name.
+/// - `&str` - The snake_case event name.
 ///
 /// # Returns
 ///
-/// - `String`: The CamelCase event name.
+/// - `String` - The CamelCase event name.
 pub(crate) fn camel_case_event_name(name: &str) -> String {
     let mut result: String = String::new();
     let mut capitalize_next: bool = true;
@@ -50,11 +50,11 @@ pub(crate) fn camel_case_event_name(name: &str) -> String {
 ///
 /// # Arguments
 ///
-/// - `ParseStream`: The parse stream containing HTML child content.
+/// - `ParseStream` - The parse stream containing HTML child content.
 ///
 /// # Returns
 ///
-/// - `SynResult<Vec<HtmlNode>>`: The parsed list of HTML child nodes, or a syntax error.
+/// - `SynResult<Vec<HtmlNode>>` - The parsed list of HTML child nodes, or a syntax error.
 pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNode>> {
     let mut children: Vec<HtmlNode> = Vec::new();
     while !content.is_empty() {
@@ -96,11 +96,11 @@ pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNod
 ///
 /// # Arguments
 ///
-/// - `&[HtmlNode]`: The slice of HTML child nodes to convert.
+/// - `&[HtmlNode]` - The slice of HTML child nodes to convert.
 ///
 /// # Returns
 ///
-/// - `TokenStream2`: The generated token stream representing a `Vec<VirtualNode>`.
+/// - `TokenStream2` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
     let child_tokens: Vec<TokenStream2> = children
         .iter()
@@ -113,17 +113,46 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
     quote! { vec![#(#child_tokens),*] }
 }
 
+/// Converts a list of `HtmlNode` children into a `Vec<VirtualNode>` token stream,
+/// but treats `HtmlNode::Dynamic` the same as `HtmlNode::Expr` — i.e. the
+/// expression is converted via `IntoNode::into_node` without creating a separate
+/// `DynamicNode`. This is used inside `match` arms where the parent
+/// `DynamicNode`'s `HookContext` already provides hook isolation via
+/// `check_scrutinee_changed`.
+///
+/// # Arguments
+///
+/// - `&[HtmlNode]` - The slice of HTML child nodes to convert.
+///
+/// # Returns
+///
+/// - `TokenStream2` - The generated token stream representing a `Vec<VirtualNode>`.
+pub(crate) fn children_to_tokens_inline(children: &[HtmlNode]) -> TokenStream2 {
+    let child_tokens: Vec<TokenStream2> = children
+        .iter()
+        .map(|child| match child {
+            HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
+            _ => {
+                let mut ts: TokenStream2 = TokenStream2::new();
+                child.to_tokens(&mut ts);
+                ts
+            }
+        })
+        .collect();
+    quote! { vec![#(#child_tokens),*] }
+}
+
 /// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.
 ///
 /// Unlike `HtmlIf` (which contains HTML child nodes), each branch body here is a Rust expression.
 ///
 /// # Arguments
 ///
-/// - `ParseStream`: The parse stream positioned at the `if` keyword.
+/// - `ParseStream` - The parse stream positioned at the `if` keyword.
 ///
 /// # Returns
 ///
-/// - `SynResult<HtmlAttrIf>`: The parsed attribute-level reactive conditional.
+/// - `SynResult<HtmlAttrIf>` - The parsed attribute-level reactive conditional.
 pub(crate) fn parse_attr_if(content: ParseStream) -> SynResult<HtmlAttrIf> {
     let mut branches: Vec<(Option<Expr>, Expr)> = Vec::new();
     content.parse::<Token![if]>()?;
@@ -161,11 +190,11 @@ pub(crate) fn parse_attr_if(content: ParseStream) -> SynResult<HtmlAttrIf> {
 ///
 /// # Arguments
 ///
-/// - `&Expr`: The expression to potentially strip.
+/// - `&Expr` - The expression to potentially strip.
 ///
 /// # Returns
 ///
-/// - `&Expr`: The inner expression if the input was a braced single-expression block, otherwise the original.
+/// - `&Expr` - The inner expression if the input was a braced single-expression block, otherwise the original.
 pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
     if let Expr::Block(expr_block) = expr {
         let stmts: &Vec<syn::Stmt> = &expr_block.block.stmts;
@@ -185,11 +214,11 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 ///
 /// # Arguments
 ///
-/// - `&HtmlAttrIf`: The parsed attribute-level reactive conditional.
+/// - `&HtmlAttrIf` - The parsed attribute-level reactive conditional.
 ///
 /// # Returns
 ///
-/// - `TokenStream2`: The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
+/// - `TokenStream2` - The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
 pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> TokenStream2 {
     let mut if_chain: TokenStream2 = TokenStream2::new();
     for (i, (condition, body)) in html_attr_if.branches.iter().enumerate() {
@@ -228,12 +257,12 @@ pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> TokenStream2 {
 ///
 /// # Arguments
 ///
-/// - `ParseStream`: The parse stream positioned after the `:` token.
-/// - `&str`: The attribute key string (e.g., `"style"`, `"class"`).
+/// - `ParseStream` - The parse stream positioned after the ` -` token.
+/// - `&str` - The attribute key string (e.g., `"style"`, `"class"`).
 ///
 /// # Returns
 ///
-/// - `SynResult<HtmlAttrValue>`: The parsed attribute value.
+/// - `SynResult<HtmlAttrValue>` - The parsed attribute value.
 pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> SynResult<HtmlAttrValue> {
     if content.peek(Token![if]) {
         let html_attr_if: HtmlAttrIf = parse_attr_if(content)?;

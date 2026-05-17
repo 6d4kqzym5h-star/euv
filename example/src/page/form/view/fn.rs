@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding validation error messages.
+/// - `Signal<String>` - The reactive signal holding validation error messages.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: An error box element if errors exist, or `VirtualNode::Empty`.
+/// - `VirtualNode` - An error box element if errors exist, or `VirtualNode::Empty`.
 fn build_error_node(errors: Signal<String>) -> VirtualNode {
     let error_text: String = errors.get();
     if !error_text.is_empty() {
@@ -27,11 +27,11 @@ fn build_error_node(errors: Signal<String>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the submission result message.
+/// - `Signal<String>` - The reactive signal holding the submission result message.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A success box element if submitted, or `VirtualNode::Empty`.
+/// - `VirtualNode` - A success box element if submitted, or `VirtualNode::Empty`.
 fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
     let submitted_text: String = submitted.get();
     if !submitted_text.is_empty() {
@@ -50,7 +50,7 @@ fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The form demo page virtual DOM tree.
+/// - `VirtualNode` - The form demo page virtual DOM tree.
 pub fn page_form() -> VirtualNode {
     let form: UseForm = use_form();
     watch!(

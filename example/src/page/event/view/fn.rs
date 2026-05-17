@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The event demo page virtual DOM tree.
+/// - `VirtualNode` - The event demo page virtual DOM tree.
 pub fn page_event() -> VirtualNode {
     let last_key: Signal<String> = use_signal(|| "None".to_string());
     let last_key_code: Signal<String> = use_signal(|| "None".to_string());
@@ -34,7 +34,7 @@ pub fn page_event() -> VirtualNode {
     let clipboard_data: Signal<String> = use_signal(|| "None".to_string());
     let clipboard_event_type: Signal<String> = use_signal(|| "None".to_string());
     let touch_info: Signal<String> = use_signal(|| "No touch".to_string());
-    let form_input_value: Signal<String> = use_signal(|| "".to_string());
+    let form_input_value: Signal<String> = use_signal(String::new);
     let form_change_value: Signal<String> = use_signal(|| "None".to_string());
     let form_checkbox: Signal<bool> = use_signal(|| false);
     let form_select_value: Signal<String> = use_signal(|| "None".to_string());

@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode`: The props node containing label, onclick, and children.
+/// - `VirtualNode` - The props node containing label, onclick, and children.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: A styled button element.
+/// - `VirtualNode` - A styled button element.
 pub fn primary_button(props: VirtualNode) -> VirtualNode {
     let label: String = props
         .try_get_prop(&Attribute::Other("label".to_string()))

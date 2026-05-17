@@ -29,14 +29,14 @@ pub struct UseSelect {
 ///
 /// # Returns
 ///
-/// - `UseSelect`: The select state.
+/// - `UseSelect` - The select state.
 pub fn use_select() -> UseSelect {
     UseSelect::new(
         use_signal(|| "apple".to_string()),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
-        use_signal(|| "".to_string()),
+        use_signal(String::new),
+        use_signal(String::new),
+        use_signal(String::new),
+        use_signal(String::new),
     )
 }
 
@@ -44,11 +44,11 @@ pub fn use_select() -> UseSelect {
 ///
 /// # Arguments
 ///
-/// - `UseSelect`: The select state.
+/// - `UseSelect` - The select state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A change handler for the country select.
+/// - `NativeEventHandler` - A change handler for the country select.
 pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
         if let NativeEvent::Change(change_event) = event {
@@ -62,11 +62,11 @@ pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `UseSelect`: The select state.
+/// - `UseSelect` - The select state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to submit feedback.
+/// - `NativeEventHandler` - A click handler to submit feedback.
 pub fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let content: String = state.textarea_content.get();

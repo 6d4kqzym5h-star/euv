@@ -7,11 +7,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&Path`: Path to the `.rs` file to format.
+/// - `&Path` - Path to the `.rs` file to format.
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure of the formatting operation.
+/// - `Result<()>` - Indicates success or failure of the formatting operation.
 pub(crate) fn format_file(path: &Path) -> Result<()> {
     let source: String = std::fs::read_to_string(path)
         .map_err(|e| anyhow!("Failed to read file {}: {}", path.display(), e))?;
@@ -28,11 +28,11 @@ pub(crate) fn format_file(path: &Path) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// - `&Path`: The root directory to scan recursively.
+/// - `&Path` - The root directory to scan recursively.
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure.
+/// - `Result<()>` - Indicates success or failure.
 pub(crate) fn format_dir(dir: &Path) -> Result<()> {
     if !dir.is_dir() {
         return Ok(());
@@ -58,11 +58,11 @@ pub(crate) fn format_dir(dir: &Path) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// - `&str`: The Rust source code.
+/// - `&str` - The Rust source code.
 ///
 /// # Returns
 ///
-/// - `String`: The source with all supported macros formatted.
+/// - `String` - The source with all supported macros formatted.
 pub(crate) fn format_source(source: &str) -> String {
     let mut result: String = String::new();
     let mut last_end: usize = 0;
@@ -81,11 +81,11 @@ pub(crate) fn format_source(source: &str) -> String {
 ///
 /// # Arguments
 ///
-/// - `&str`: The Rust source code to scan.
+/// - `&str` - The Rust source code to scan.
 ///
 /// # Returns
 ///
-/// - `Vec<MacroSpan>`: The located macro spans, in order of appearance.
+/// - `Vec<MacroSpan>` - The located macro spans, in order of appearance.
 pub(crate) fn find_macro_spans(source: &str) -> Vec<MacroSpan> {
     let chars: Vec<char> = source.chars().collect();
     let len: usize = chars.len();
@@ -130,13 +130,13 @@ pub(crate) fn find_macro_spans(source: &str) -> Vec<MacroSpan> {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The starting index.
-/// - `usize`: The total length.
+/// - `&[char]` - The source characters.
+/// - `usize` - The starting index.
+/// - `usize` - The total length.
 ///
 /// # Returns
 ///
-/// - `Option<usize>`: The end position of the matched name, or `None`.
+/// - `Option<usize>` - The end position of the matched name, or `None`.
 fn try_match_macro_name(chars: &[char], i: usize, len: usize) -> Option<usize> {
     let names: &[&str] = &["html", "class", "css_vars", "var"];
     for name in names {
@@ -170,13 +170,13 @@ fn try_match_macro_name(chars: &[char], i: usize, len: usize) -> Option<usize> {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The starting index.
-/// - `usize`: The total length.
+/// - `&[char]` - The source characters.
+/// - `usize` - The starting index.
+/// - `usize` - The total length.
 ///
 /// # Returns
 ///
-/// - `usize`: The index of the first non-whitespace, non-comment character.
+/// - `usize` - The index of the first non-whitespace, non-comment character.
 fn skip_ws_and_comments(chars: &[char], mut i: usize, len: usize) -> usize {
     while i < len {
         if chars[i] == ' ' || chars[i] == '\t' || chars[i] == '\n' || chars[i] == '\r' {
@@ -196,12 +196,12 @@ fn skip_ws_and_comments(chars: &[char], mut i: usize, len: usize) -> usize {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The starting index of the opening quote.
+/// - `&[char]` - The source characters.
+/// - `usize` - The starting index of the opening quote.
 ///
 /// # Returns
 ///
-/// - `usize`: The index immediately after the closing quote.
+/// - `usize` - The index immediately after the closing quote.
 fn skip_string_literal(chars: &[char], start: usize) -> usize {
     let len: usize = chars.len();
     let mut i: usize = start + 1;
@@ -221,12 +221,12 @@ fn skip_string_literal(chars: &[char], start: usize) -> usize {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The position of the opening `'`.
+/// - `&[char]` - The source characters.
+/// - `usize` - The position of the opening `'`.
 ///
 /// # Returns
 ///
-/// - `bool`: `true` if it looks like a character literal.
+/// - `bool` - `true` if it looks like a character literal.
 fn is_char_literal(chars: &[char], i: usize) -> bool {
     let len: usize = chars.len();
     if i == 0 {
@@ -250,12 +250,12 @@ fn is_char_literal(chars: &[char], i: usize) -> bool {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The starting index.
+/// - `&[char]` - The source characters.
+/// - `usize` - The starting index.
 ///
 /// # Returns
 ///
-/// - `usize`: The index immediately after the closing `'`.
+/// - `usize` - The index immediately after the closing `'`.
 fn skip_char_literal(chars: &[char], start: usize) -> usize {
     let len: usize = chars.len();
     let mut i: usize = start + 1;
@@ -275,12 +275,12 @@ fn skip_char_literal(chars: &[char], start: usize) -> usize {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The position of the first `/`.
+/// - `&[char]` - The source characters.
+/// - `usize` - The position of the first `/`.
 ///
 /// # Returns
 ///
-/// - `usize`: The index of the first character after the newline.
+/// - `usize` - The index of the first character after the newline.
 fn skip_line_comment(chars: &[char], start: usize) -> usize {
     let len: usize = chars.len();
     let mut i: usize = start + 2;
@@ -294,12 +294,12 @@ fn skip_line_comment(chars: &[char], start: usize) -> usize {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The position of the first `/`.
+/// - `&[char]` - The source characters.
+/// - `usize` - The position of the first `/`.
 ///
 /// # Returns
 ///
-/// - `usize`: The index immediately after `*/`.
+/// - `usize` - The index immediately after `*/`.
 fn skip_block_comment(chars: &[char], start: usize) -> usize {
     let len: usize = chars.len();
     let mut i: usize = start + 2;
@@ -316,12 +316,12 @@ fn skip_block_comment(chars: &[char], start: usize) -> usize {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The position of the opening `{`.
+/// - `&[char]` - The source characters.
+/// - `usize` - The position of the opening `{`.
 ///
 /// # Returns
 ///
-/// - `usize`: The position of the matching `}`.
+/// - `usize` - The position of the matching `}`.
 fn find_matching_brace(chars: &[char], open: usize) -> usize {
     let len: usize = chars.len();
     let mut depth: i32 = 1;
@@ -368,11 +368,11 @@ fn find_matching_brace(chars: &[char], open: usize) -> usize {
 ///
 /// # Arguments
 ///
-/// - `char`: The character to check.
+/// - `char` - The character to check.
 ///
 /// # Returns
 ///
-/// - `bool`: Whether the character can continue an identifier.
+/// - `bool` - Whether the character can continue an identifier.
 fn is_identifier_continue(c: char) -> bool {
     c.is_alphanumeric() || c == '_'
 }
@@ -381,11 +381,11 @@ fn is_identifier_continue(c: char) -> bool {
 ///
 /// # Arguments
 ///
-/// - `char`: The character to check.
+/// - `char` - The character to check.
 ///
 /// # Returns
 ///
-/// - `bool`: Whether the character can start an identifier.
+/// - `bool` - Whether the character can start an identifier.
 fn is_identifier_start(c: char) -> bool {
     c.is_alphabetic() || c == '_'
 }
@@ -396,16 +396,16 @@ fn is_identifier_start(c: char) -> bool {
 /// Rules applied:
 /// - `{ content }` : after `{`, skip spaces/tabs (not newlines), emit one space;
 ///   before `}`, remove trailing spaces/tabs on same line, emit one space.
-/// - `key: value`  : identifier followed by `:` gets no space before colon,
+/// - `key: value`  : identifier followed by ` -` gets no space before colon,
 ///   exactly one space after.
 ///
 /// # Arguments
 ///
-/// - `&str`: The raw brace block including outer `{` and `}`.
+/// - `&str` - The raw brace block including outer `{` and `}`.
 ///
 /// # Returns
 ///
-/// - `String`: The formatted block with the same line structure preserved.
+/// - `String` - The formatted block with the same line structure preserved.
 pub(crate) fn format_brace_block(block: &str) -> String {
     let chars: Vec<char> = block.chars().collect();
     let len: usize = chars.len();
@@ -506,13 +506,13 @@ pub(crate) fn format_brace_block(block: &str) -> String {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The starting index.
-/// - `usize`: The total length.
+/// - `&[char]` - The source characters.
+/// - `usize` - The starting index.
+/// - `usize` - The total length.
 ///
 /// # Returns
 ///
-/// - `(String, usize)`: The consumed identifier and the next position.
+/// - `(String, usize)` - The consumed identifier and the next position.
 fn consume_identifier(chars: &[char], i: usize, len: usize) -> (String, usize) {
     let mut result: String = String::new();
     let mut j: usize = i;
@@ -545,13 +545,13 @@ fn consume_identifier(chars: &[char], i: usize, len: usize) -> (String, usize) {
 ///
 /// # Arguments
 ///
-/// - `&[char]`: The source characters.
-/// - `usize`: The starting index.
-/// - `usize`: The total length.
+/// - `&[char]` - The source characters.
+/// - `usize` - The starting index.
+/// - `usize` - The total length.
 ///
 /// # Returns
 ///
-/// - `usize`: The index of the first non-horizontal-whitespace character.
+/// - `usize` - The index of the first non-horizontal-whitespace character.
 fn skip_horizontal_ws(chars: &[char], mut i: usize, len: usize) -> usize {
     while i < len && (chars[i] == ' ' || chars[i] == '\t') {
         i += 1;

@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Arc<AppState>`: The shared application state to store globally.
+/// - `Arc<AppState>` - The shared application state to store globally.
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure of the initialization.
+/// - `Result<()>` - Indicates success or failure of the initialization.
 pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
     APP_STATE
         .set(state)
@@ -19,7 +19,7 @@ pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
 ///
 /// # Returns
 ///
-/// - `Option<Arc<AppState>>`: The global state if initialized.
+/// - `Option<Arc<AppState>>` - The global state if initialized.
 pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
     APP_STATE.get().cloned()
 }
@@ -29,11 +29,11 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
 ///
 /// # Arguments
 ///
-/// - `&Path`: The path to the www directory containing `index.html`.
+/// - `&Path` - The path to the www directory containing `index.html`.
 ///
 /// # Returns
 ///
-/// - `Result<String>`: The modified HTML with the reload script injected.
+/// - `Result<String>` - The modified HTML with the reload script injected.
 pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
     let index_path: PathBuf = www_dir.join("index.html");
     if !index_path.exists() {
@@ -60,11 +60,11 @@ pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
 ///
 /// # Arguments
 ///
-/// - `&AppState`: The shared application state containing the current HTML.
+/// - `&AppState` - The shared application state containing the current HTML.
 ///
 /// # Returns
 ///
-/// - `Result<()>`: Indicates success or failure of the HTML update.
+/// - `Result<()>` - Indicates success or failure of the HTML update.
 pub(crate) async fn update_html(state: &AppState) -> Result<()> {
     let www_absolute: PathBuf = if state.args.www_dir.is_absolute() {
         state.args.www_dir.clone()
@@ -82,11 +82,11 @@ pub(crate) async fn update_html(state: &AppState) -> Result<()> {
 ///
 /// # Arguments
 ///
-/// - `&Path`: The candidate www directory path.
+/// - `&Path` - The candidate www directory path.
 ///
 /// # Returns
 ///
-/// - `PathBuf`: The resolved www directory containing `index.html`.
+/// - `PathBuf` - The resolved www directory containing `index.html`.
 pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
     if www_dir.join("index.html").exists() {
         return www_dir.to_path_buf();
@@ -105,11 +105,11 @@ pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
 ///
 /// # Arguments
 ///
-/// - `&Path`: The www directory path to search within.
+/// - `&Path` - The www directory path to search within.
 ///
 /// # Returns
 ///
-/// - `PathBuf`: The resolved pkg directory containing WASM build artifacts.
+/// - `PathBuf` - The resolved pkg directory containing WASM build artifacts.
 pub(crate) fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
     let direct_pkg: PathBuf = www_dir.join("pkg");
     if direct_pkg.join("euv_example.js").exists() || direct_pkg.join(".gitignore").exists() {

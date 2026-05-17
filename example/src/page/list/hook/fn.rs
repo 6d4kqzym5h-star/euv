@@ -17,7 +17,7 @@ pub struct UseTodoList {
 ///
 /// # Returns
 ///
-/// - `UseTodoList`: The todo list state.
+/// - `UseTodoList` - The todo list state.
 pub fn use_todo_list() -> UseTodoList {
     UseTodoList::new(
         use_signal(|| {
@@ -27,7 +27,7 @@ pub fn use_todo_list() -> UseTodoList {
                 "Write documentation".to_string(),
             ]
         }),
-        use_signal(|| "".to_string()),
+        use_signal(String::new),
     )
 }
 
@@ -35,11 +35,11 @@ pub fn use_todo_list() -> UseTodoList {
 ///
 /// # Arguments
 ///
-/// - `UseTodoList`: The todo list state.
+/// - `UseTodoList` - The todo list state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to add a new item.
+/// - `NativeEventHandler` - A click handler to add a new item.
 pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let text: String = state.new_item.get();
@@ -56,12 +56,12 @@ pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
 ///
 /// # Arguments
 ///
-/// - `Signal<Vec<String>>`: The items signal.
-/// - `usize`: The index of the item to remove.
+/// - `Signal<Vec<String>>` - The items signal.
+/// - `usize` - The index of the item to remove.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to remove the item.
+/// - `NativeEventHandler` - A click handler to remove the item.
 pub fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let mut current: Vec<String> = items.get();

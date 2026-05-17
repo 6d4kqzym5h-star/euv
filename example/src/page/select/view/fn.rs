@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The select demo page virtual DOM tree.
+/// - `VirtualNode` - The select demo page virtual DOM tree.
 pub fn page_select() -> VirtualNode {
     let state: UseSelect = use_select();
     html! {

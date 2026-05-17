@@ -4,12 +4,12 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&Event`: The raw browser event.
-/// - `&str`: The name of the event for dispatching to the correct variant.
+/// - `&Event` - The raw browser event.
+/// - `&str` - The name of the event for dispatching to the correct variant.
 ///
 /// # Returns
 ///
-/// - `NativeEvent`: The corresponding euv event variant.
+/// - `NativeEvent` - The corresponding euv event variant.
 pub(crate) fn convert_web_event(event: &Event, event_name: &str) -> NativeEvent {
     match event_name {
         "click" | "mousedown" | "mouseup" | "mousemove" | "mouseenter" | "mouseleave"
@@ -139,11 +139,11 @@ pub(crate) fn convert_web_event(event: &Event, event_name: &str) -> NativeEvent 
 ///
 /// # Arguments
 ///
-/// - `Event`: The event containing the target element.
+/// - `Event` - The event containing the target element.
 ///
 /// # Returns
 ///
-/// - `String`: The current value of the input, textarea, or select element.
+/// - `String` - The current value of the input, textarea, or select element.
 fn get_input_value(event: &Event) -> String {
     if let Some(target) = event.target() {
         if let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
@@ -163,11 +163,11 @@ fn get_input_value(event: &Event) -> String {
 ///
 /// # Arguments
 ///
-/// - `&Event`: The change event containing the target element.
+/// - `&Event` - The change event containing the target element.
 ///
 /// # Returns
 ///
-/// - `(String, bool)`: A tuple of the element value and its checked state.
+/// - `(String, bool)` - A tuple of the element value and its checked state.
 fn get_change_value(event: &Event) -> (String, bool) {
     if let Some(target) = event.target() {
         if let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
@@ -187,7 +187,7 @@ fn get_change_value(event: &Event) -> (String, bool) {
 ///
 /// # Arguments
 ///
-/// - `FnOnce() -> VirtualNode + 'static`: A closure that returns the virtual DOM tree to render.
+/// - `FnOnce() -> VirtualNode + 'static` - A closure that returns the virtual DOM tree to render.
 ///
 /// # Panics
 ///
@@ -208,8 +208,8 @@ where
 ///
 /// # Arguments
 ///
-/// - `&str`: A CSS selector string to locate the target element.
-/// - `FnOnce() -> VirtualNode + 'static`: A closure that returns the virtual DOM tree to render.
+/// - `&str` - A CSS selector string to locate the target element.
+/// - `FnOnce() -> VirtualNode + 'static` - A closure that returns the virtual DOM tree to render.
 ///
 /// # Panics
 ///
@@ -249,7 +249,7 @@ where
 ///
 /// # Returns
 ///
-/// - `&'static mut HashMap<(usize, String), HandlerEntry>`: A mutable reference to the global handler registry.
+/// - `&'static mut HashMap<(usize, String), HandlerEntry>` - A mutable reference to the global handler registry.
 ///
 /// # Panics
 ///

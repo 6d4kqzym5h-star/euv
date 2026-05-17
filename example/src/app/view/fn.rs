@@ -4,13 +4,13 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the current route.
-/// - `&str`: The display label for the navigation item.
-/// - `&str`: The target route path.
+/// - `Signal<String>` - The reactive signal holding the current route.
+/// - `&str` - The display label for the navigation item.
+/// - `&str` - The target route path.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The navigation item virtual DOM tree.
+/// - `VirtualNode` - The navigation item virtual DOM tree.
 pub fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> VirtualNode {
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
@@ -29,14 +29,14 @@ pub fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> Virt
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the current route.
-/// - `Signal<bool>`: The reactive signal controlling the mobile nav drawer visibility.
-/// - `&str`: The display label for the navigation item.
-/// - `&str`: The target route path.
+/// - `Signal<String>` - The reactive signal holding the current route.
+/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
+/// - `&str` - The display label for the navigation item.
+/// - `&str` - The target route path.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The mobile navigation item virtual DOM tree.
+/// - `VirtualNode` - The mobile navigation item virtual DOM tree.
 fn mobile_nav_item(
     route_signal: Signal<String>,
     drawer_open: Signal<bool>,
@@ -64,11 +64,11 @@ fn mobile_nav_item(
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the current route.
+/// - `Signal<String>` - The reactive signal holding the current route.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The scrollable nav items container virtual DOM tree.
+/// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
     html! {
         div {
@@ -96,12 +96,12 @@ fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the current route.
-/// - `Signal<bool>`: The reactive signal controlling the mobile nav drawer visibility.
+/// - `Signal<String>` - The reactive signal holding the current route.
+/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The scrollable nav items container virtual DOM tree.
+/// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 fn build_mobile_nav_items(route_signal: Signal<String>, drawer_open: Signal<bool>) -> VirtualNode {
     html! {
         div {
@@ -127,14 +127,14 @@ fn build_mobile_nav_items(route_signal: Signal<String>, drawer_open: Signal<bool
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the current route.
-/// - `Signal<String>`: The reactive signal holding the current theme.
-/// - `Signal<String>`: The reactive signal holding the root class name.
-/// - `Signal<bool>`: The reactive signal controlling vconsole panel visibility.
+/// - `Signal<String>` - The reactive signal holding the current route.
+/// - `Signal<String>` - The reactive signal holding the current theme.
+/// - `Signal<String>` - The reactive signal holding the root class name.
+/// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The desktop application shell virtual DOM tree.
+/// - `VirtualNode` - The desktop application shell virtual DOM tree.
 fn desktop_layout(
     route_signal: Signal<String>,
     theme_signal: Signal<String>,
@@ -185,7 +185,22 @@ fn desktop_layout(
             }
             main {
                 class: c_app_main()
-                { render_page(route_signal) }
+                match { route_signal.get().as_str() } {
+                    "/" | "/signals" => { { page_signals() } }
+                    "/event" => { { page_event() } }
+                    "/list" => { { page_list() } }
+                    "/conditional" => { { page_conditional() } }
+                    "/modal" => { { page_modal() } }
+                    "/select" => { { page_select() } }
+                    "/async" => { { page_async_demo() } }
+                    "/form" => { { page_form() } }
+                    "/timer" => { { page_timer() } }
+                    "/animation" => { { page_animation() } }
+                    "/browser" => { { page_browser() } }
+                    "/lifecycle" => { { page_lifecycle() } }
+                    "/custom-attrs" => { { page_custom_attrs() } }
+                    _ => { { page_not_found() } }
+                }
             }
             { vconsole_panel(panel_open) }
         }
@@ -196,15 +211,15 @@ fn desktop_layout(
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The reactive signal holding the current route.
-/// - `Signal<String>`: The reactive signal holding the current theme.
-/// - `Signal<String>`: The reactive signal holding the root class name.
-/// - `Signal<bool>`: The reactive signal controlling vconsole panel visibility.
-/// - `Signal<bool>`: The reactive signal controlling the mobile nav drawer visibility.
+/// - `Signal<String>` - The reactive signal holding the current route.
+/// - `Signal<String>` - The reactive signal holding the current theme.
+/// - `Signal<String>` - The reactive signal holding the root class name.
+/// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
+/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The mobile application shell virtual DOM tree.
+/// - `VirtualNode` - The mobile application shell virtual DOM tree.
 fn mobile_layout(
     route_signal: Signal<String>,
     theme_signal: Signal<String>,
@@ -245,7 +260,22 @@ fn mobile_layout(
             }
             main {
                 class: c_mobile_main()
-                { render_page(route_signal) }
+                match { route_signal.get().as_str() } {
+                    "/" | "/signals" => { { page_signals() } }
+                    "/event" => { { page_event() } }
+                    "/list" => { { page_list() } }
+                    "/conditional" => { { page_conditional() } }
+                    "/modal" => { { page_modal() } }
+                    "/select" => { { page_select() } }
+                    "/async" => { { page_async_demo() } }
+                    "/form" => { { page_form() } }
+                    "/timer" => { { page_timer() } }
+                    "/animation" => { { page_animation() } }
+                    "/browser" => { { page_browser() } }
+                    "/lifecycle" => { { page_lifecycle() } }
+                    "/custom-attrs" => { { page_custom_attrs() } }
+                    _ => { { page_not_found() } }
+                }
             }
             { vconsole_panel(panel_open) }
             if { drawer_open.get() } {
@@ -311,35 +341,6 @@ fn mobile_layout(
     }
 }
 
-/// Renders the route-matched page content.
-///
-/// # Arguments
-///
-/// - `Signal<String>`: The reactive signal holding the current route.
-///
-/// # Returns
-///
-/// - `VirtualNode`: The matched page virtual DOM tree.
-fn render_page(route_signal: Signal<String>) -> VirtualNode {
-    let current_route: String = route_signal.get();
-    match current_route.as_str() {
-        "/" | "/signals" => page_signals(),
-        "/event" => page_event(),
-        "/list" => page_list(),
-        "/conditional" => page_conditional(),
-        "/modal" => page_modal(),
-        "/select" => page_select(),
-        "/async" => page_async_demo(),
-        "/form" => page_form(),
-        "/timer" => page_timer(),
-        "/animation" => page_animation(),
-        "/browser" => page_browser(),
-        "/lifecycle" => page_lifecycle(),
-        "/custom-attrs" => page_custom_attrs(),
-        _ => page_not_found(),
-    }
-}
-
 /// Renders the application shell with navigation and route-based page content.
 ///
 /// Detects viewport size and switches between desktop sidebar layout and
@@ -347,7 +348,7 @@ fn render_page(route_signal: Signal<String>) -> VirtualNode {
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The root application virtual DOM tree.
+/// - `VirtualNode` - The root application virtual DOM tree.
 pub fn app() -> VirtualNode {
     init_console();
     let route_signal: Signal<String> = use_signal(current_route);

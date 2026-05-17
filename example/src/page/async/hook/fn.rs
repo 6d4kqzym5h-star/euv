@@ -6,27 +6,27 @@ pub struct UseFetch {
     /// Whether data is currently being fetched.
     #[get(pub, type(copy))]
     #[set(pub)]
-    pub loading: Signal<bool>,
+    pub(crate) loading: Signal<bool>,
     /// The fetched data content.
     #[get(pub, type(copy))]
     #[set(pub)]
-    pub data: Signal<String>,
+    pub(crate) data: Signal<String>,
     /// The error message, empty if no error.
     #[get(pub, type(copy))]
     #[set(pub)]
-    pub error: Signal<String>,
+    pub(crate) error: Signal<String>,
 }
 
 /// Creates fetch state signals wrapped in a `UseFetch` struct.
 ///
 /// # Returns
 ///
-/// - `UseFetch`: The fetch state containing loading, data, and error signals.
+/// - `UseFetch` - The fetch state containing loading, data, and error signals.
 pub fn use_fetch() -> UseFetch {
     UseFetch::new(
         use_signal(|| false),
         use_signal(|| "Click fetch to load data".to_string()),
-        use_signal(|| "".to_string()),
+        use_signal(String::new),
     )
 }
 
@@ -37,11 +37,11 @@ pub fn use_fetch() -> UseFetch {
 ///
 /// # Arguments
 ///
-/// - `UseFetch`: The fetch state.
+/// - `UseFetch` - The fetch state.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler`: A click handler to trigger the fetch.
+/// - `NativeEventHandler` - A click handler to trigger the fetch.
 pub fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.loading.set(true);
@@ -50,20 +50,18 @@ pub fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
         let data_signal: Signal<String> = state.data;
         let error_signal: Signal<String> = state.error;
         let loading_signal: Signal<bool> = state.loading;
-        wasm_bindgen_futures::spawn_local(async move {
-            let window: web_sys::Window = web_sys::window().expect("no global window exists");
-            let promise: js_sys::Promise = window.fetch_with_str("https://httpbin.org/get");
-            let future: wasm_bindgen_futures::JsFuture =
-                wasm_bindgen_futures::JsFuture::from(promise);
+        spawn_local(async move {
+            let window: Window = window().expect("no global window exists");
+            let promise: Promise = window.fetch_with_str("https://httpbin.org/get");
+            let future: JsFuture = JsFuture::from(promise);
             match future.await {
                 Ok(response) => {
-                    let resp: web_sys::Response = response.dyn_into().unwrap();
-                    let json_promise: js_sys::Promise = resp.json().unwrap();
-                    let json_future: wasm_bindgen_futures::JsFuture =
-                        wasm_bindgen_futures::JsFuture::from(json_promise);
+                    let resp: Response = response.dyn_into().unwrap();
+                    let json_promise: Promise = resp.json().unwrap();
+                    let json_future: JsFuture = JsFuture::from(json_promise);
                     match json_future.await {
                         Ok(json) => {
-                            let json_string: String = js_sys::JSON::stringify(&json)
+                            let json_string: String = JSON::stringify(&json)
                                 .unwrap()
                                 .as_string()
                                 .unwrap_or_default();

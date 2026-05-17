@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `TokenStream`: The raw token stream representing class definitions.
+/// - `TokenStream` - The raw token stream representing class definitions.
 ///
 /// # Returns
 ///
-/// - `TokenStream`: The generated token stream constructing `CssClass` functions.
+/// - `TokenStream` - The generated token stream constructing `CssClass` functions.
 pub fn parse_class(input: TokenStream) -> TokenStream {
     let class_input: ClassInput = parse_macro_input!(input as ClassInput);
     let tokens: TokenStream2 = class_input.into_token_stream();
@@ -20,11 +20,11 @@ pub fn parse_class(input: TokenStream) -> TokenStream {
 ///
 /// # Arguments
 ///
-/// - `&Expr`: The expression to expand.
+/// - `&Expr` - The expression to expand.
 ///
 /// # Returns
 ///
-/// - `TokenStream2`: The expanded token stream with `var!()` calls replaced
+/// - `TokenStream2` - The expanded token stream with `var!()` calls replaced
 ///   by `"var(--xxx-yyy)"` string literals.
 pub(crate) fn expand_var_macros(expr: &Expr) -> TokenStream2 {
     match expr {
@@ -55,11 +55,11 @@ pub(crate) fn expand_var_macros(expr: &Expr) -> TokenStream2 {
 ///
 /// # Arguments
 ///
-/// - `&TokenStream2`: The token stream to scan.
+/// - `&TokenStream2` - The token stream to scan.
 ///
 /// # Returns
 ///
-/// - `TokenStream2`: The token stream with `var!(name)` patterns replaced
+/// - `TokenStream2` - The token stream with `var!(name)` patterns replaced
 ///   by `"var(--xxx-yyy)"` string literals.
 pub(crate) fn expand_var_macros_in_tokens(tokens: &TokenStream2) -> TokenStream2 {
     let mut result: Vec<proc_macro2::TokenTree> = Vec::new();
