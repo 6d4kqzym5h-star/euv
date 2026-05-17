@@ -51,20 +51,21 @@ where
 /// Internal storage for hook state, holding boxed `Any` values.
 ///
 /// This struct is not exposed directly; use `HookContext` instead.
-/// The `current_id` field tracks which match arm owns the hooks;
-/// when the ID changes, the hook array is cleared to prevent
-/// signal leakage between different match arms.
+/// The `arm_changed` flag tracks whether a `match` arm switch occurred;
+/// when toggled, the hook array is cleared to prevent signal leakage
+/// between different match arms.
 #[derive(Data)]
 pub struct HookContextInner {
     /// Storage for hook state values (signals, etc.).
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
-    /// Current context ID, determined by the active match arm.
-    /// When this changes, the hooks array is cleared.
+    /// Whether the match arm has changed since the last render.
+    /// Toggled on each `match` arm entry; when the value differs from
+    /// the previous render, hooks are cleared.
     #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
-    pub(crate) current_id: u64,
+    pub(crate) arm_changed: bool,
     /// Current hook index, incremented on each hook call and reset per render.
     #[get(pub(crate), type(copy))]
     #[set(pub(crate))]

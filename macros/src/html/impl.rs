@@ -314,11 +314,11 @@ impl ToTokens for HtmlNode {
                     .iter()
                     .enumerate()
                     .map(|(arm_index, (pattern, body))| {
-                        let arm_id: u64 = (arm_index + 1) as u64;
+                        let arm_changed: bool = arm_index % 2 == 0;
                         let body_tokens: TokenStream2 = children_to_tokens_inline(body);
                         quote! {
                             #pattern => {
-                                __euv_hook_context.set_context_id(#arm_id);
+                                __euv_hook_context.set_arm_changed(#arm_changed);
                                 euv_core::VirtualNode::Fragment(#body_tokens)
                             }
                         }

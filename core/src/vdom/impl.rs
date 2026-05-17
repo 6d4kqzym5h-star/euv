@@ -98,7 +98,7 @@ impl PartialEq for VirtualNode {
                         .zip(b_children.iter())
                         .all(|(a, b)| a == b)
             }
-            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => true,
+            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => false,
             (VirtualNode::Empty, VirtualNode::Empty) => true,
             _ => false,
         }
@@ -167,7 +167,6 @@ impl Default for DynamicNode {
         let node: DynamicNode = DynamicNode {
             render_fn: Rc::new(RefCell::new(|| VirtualNode::Empty)),
             hook_context: HookContext::default(),
-            id: 0_u64,
         };
         node
     }
@@ -179,7 +178,6 @@ impl Clone for DynamicNode {
         DynamicNode {
             render_fn: Rc::clone(self.get_render_fn()),
             hook_context: self.hook_context,
-            id: self.id,
         }
     }
 }
@@ -280,13 +278,9 @@ where
     F: FnMut() -> VirtualNode + 'static,
 {
     fn into_node(self) -> VirtualNode {
-        static NEXT_DYNAMIC_ID: std::sync::atomic::AtomicU64 =
-            std::sync::atomic::AtomicU64::new(1_u64);
-        let id: u64 = NEXT_DYNAMIC_ID.fetch_add(1_u64, std::sync::atomic::Ordering::Relaxed);
         VirtualNode::Dynamic(DynamicNode {
             render_fn: Rc::new(RefCell::new(self)),
             hook_context: crate::reactive::create_hook_context(),
-            id,
         })
     }
 }
@@ -398,9 +392,7 @@ impl VirtualNode {
                 }
                 false
             }
-            (VirtualNode::Dynamic(old_dyn), VirtualNode::Dynamic(new_dyn)) => {
-                old_dyn.get_id() != new_dyn.get_id()
-            }
+            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => true,
             (VirtualNode::Empty, VirtualNode::Empty) => false,
             _ => true,
         }

@@ -110,18 +110,12 @@ where
 {
     #[cfg(target_arch = "wasm32")]
     {
-        let window: Window = window().expect("no global window exists");
+        let signal_key: usize = attr_signal.inner as usize;
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             let new_value: String = compute();
             attr_signal.set(new_value);
         }));
-        window
-            .add_event_listener_with_callback(
-                &NativeEventName::EuvSignalUpdate.to_string(),
-                closure.as_ref().unchecked_ref(),
-            )
-            .unwrap();
-        closure.forget();
+        register_attr_signal_listener(signal_key, closure);
     }
     #[cfg(not(target_arch = "wasm32"))]
     {

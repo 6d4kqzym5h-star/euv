@@ -71,18 +71,11 @@ pub struct DynamicNode {
     /// state and other hook values across render cycles.
     ///
     /// Implements `Copy`; all copies share the same underlying state.
+    /// When the `arm_changed` flag inside is toggled (by `match` arm switching),
+    /// the hooks array is cleared to prevent signal leakage between arms.
     #[get(pub, type(copy))]
     #[set(pub)]
     pub(crate) hook_context: HookContext,
-    /// A stable identifier used to distinguish different dynamic nodes.
-    ///
-    /// When two `Dynamic` variants occupy the same slot in the virtual DOM tree
-    /// (e.g. different arms of a `match` expression), equal ids indicate the
-    /// same logical node (no DOM replacement needed) while different ids signal
-    /// a structural swap (DOM must be rebuilt).
-    #[get(pub)]
-    #[set(pub)]
-    pub(crate) id: u64,
 }
 
 /// Represents a CSS class with a name and its style declarations.

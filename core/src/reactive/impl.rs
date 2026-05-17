@@ -414,15 +414,14 @@ impl HookContext {
         self.set_hook_index(0_usize);
     }
 
-    /// Sets the current context ID. This is called by match expressions
-    /// to switch to the appropriate hook storage for the selected arm.
-    /// When the ID changes, the hooks array is cleared to prevent
-    /// signal leakage between different match arms.
-    pub fn set_context_id(&mut self, id: u64) {
+    /// Notifies the hook context that a match arm is being entered.
+    /// Toggles the `arm_changed` flag; if it differs from the previous value,
+    /// the hooks array is cleared to prevent signal leakage between arms.
+    pub fn set_arm_changed(&mut self, changed: bool) {
         let inner: &mut HookContextInner = self.get_inner_mut();
-        if inner.get_current_id() != id {
+        if inner.get_arm_changed() != changed {
             inner.get_mut_hooks().clear();
-            inner.set_current_id(id);
+            inner.set_arm_changed(changed);
         }
         self.reset_hook_index();
     }
@@ -454,7 +453,7 @@ impl HookContextInner {
     pub const fn new() -> Self {
         HookContextInner {
             hooks: Vec::new(),
-            current_id: 0_u64,
+            arm_changed: false,
             hook_index: 0_usize,
         }
     }

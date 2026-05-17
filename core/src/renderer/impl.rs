@@ -86,6 +86,7 @@ impl Renderer {
                 while let Some(child) = dom_element.first_child() {
                     dom_element.remove_child(&child).unwrap();
                 }
+                let dynamic_id: usize = Self::ensure_dynamic_id(dom_element);
                 let mut hook_context: HookContext = new_dynamic.get_hook_context();
                 hook_context.reset_hook_index();
                 let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
@@ -105,7 +106,6 @@ impl Renderer {
                 let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
                 let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
                     Rc::clone(&render_fn_clone);
-                let window: Window = window().unwrap();
                 let re_render_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
                     if placeholder_clone.parent_node().is_none() {
                         return;
@@ -115,13 +115,7 @@ impl Renderer {
                         with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
                     renderer_ref_for_sub.borrow_mut().render(new_vnode);
                 }));
-                window
-                    .add_event_listener_with_callback(
-                        &NativeEventName::EuvSignalUpdate.to_string(),
-                        re_render_closure.as_ref().unchecked_ref(),
-                    )
-                    .unwrap();
-                re_render_closure.forget();
+                register_dynamic_listener(dynamic_id, re_render_closure);
             }
             _ => {
                 let new_dom: Node = self.create_dom_node(new_node);
@@ -531,6 +525,7 @@ impl Renderer {
                 let placeholder: Element = document.create_element("div").unwrap();
                 let style: &str = "display: contents;";
                 let _ = placeholder.set_attribute("style", style);
+                let dynamic_id: usize = Self::assign_dynamic_id(&placeholder);
                 let mut hook_context: HookContext = dynamic_node.get_hook_context();
                 hook_context.reset_hook_index();
                 let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
@@ -550,7 +545,6 @@ impl Renderer {
                 let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
                 let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
                     Rc::clone(&render_fn_clone);
-                let window: Window = window().unwrap();
                 let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
                     if placeholder_clone.parent_node().is_none() {
                         return;
@@ -569,13 +563,7 @@ impl Renderer {
                     }
                     renderer_ref_for_sub.borrow_mut().render(new_vnode);
                 }));
-                window
-                    .add_event_listener_with_callback(
-                        &NativeEventName::EuvSignalUpdate.to_string(),
-                        closure.as_ref().unchecked_ref(),
-                    )
-                    .unwrap();
-                closure.forget();
+                register_dynamic_listener(dynamic_id, closure);
                 placeholder.into()
             }
             VirtualNode::Empty => {
@@ -639,6 +627,50 @@ impl Renderer {
     /// `Rc<RefCell<Option<NativeEventHandler>>>`, and registers a DOM
     /// `addEventListener` closure that reads from it. On subsequent patches
     /// for the same element+event, only updates the wrapper content.
+    /// Assigns a new `data-euv-dynamic-id` to a newly created DynamicNode placeholder.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element` - The placeholder element to assign the ID to.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The assigned dynamic ID.
+    fn assign_dynamic_id(placeholder: &Element) -> usize {
+        let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
+        let _ = placeholder.set_attribute("data-euv-dynamic-id", &dynamic_id.to_string());
+        dynamic_id
+    }
+
+    /// Reads or assigns the `data-euv-dynamic-id` of an existing DynamicNode placeholder.
+    ///
+    /// During `patch_node`, the placeholder element already exists in the DOM
+    /// and may already carry a `data-euv-dynamic-id`. If it does, the existing
+    /// ID is returned so the old listener can be looked up and removed. If not,
+    /// a new ID is assigned.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element` - The existing placeholder element.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The existing or newly assigned dynamic ID.
+    fn ensure_dynamic_id(dom_element: &Element) -> usize {
+        match dom_element.get_attribute("data-euv-dynamic-id") {
+            Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {
+                let new_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
+                let _ = dom_element.set_attribute("data-euv-dynamic-id", &new_id.to_string());
+                new_id
+            }),
+            None => {
+                let new_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
+                let _ = dom_element.set_attribute("data-euv-dynamic-id", &new_id.to_string());
+                new_id
+            }
+        }
+    }
+
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
         let euv_id: usize = match element.get_attribute("data-euv-id") {
             Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {
