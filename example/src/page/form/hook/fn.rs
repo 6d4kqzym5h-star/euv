@@ -41,7 +41,7 @@ pub fn form_on_submit(state: UseForm) -> NativeEventHandler {
             validation_errors.push("You must agree to the terms".to_string());
         }
         if validation_errors.is_empty() {
-            state.get_errors().set("".to_string());
+            state.get_errors().set(String::new());
             state.get_submitted().set(format!(
                 "Submitted: username={}, email={}",
                 state.get_username().get(),

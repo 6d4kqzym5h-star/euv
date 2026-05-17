@@ -21,7 +21,7 @@ pub fn page_list() -> VirtualNode {
                         value: state.get_new_item()
                         class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_form_input_error() }
                         oninput: move |_event: NativeEvent| {
-                            state.get_add_error().set("".to_string());
+                            state.get_add_error().set(String::new());
                             if let NativeEvent::Input(input_event) = _event {
                                 state.get_new_item().set(input_event.get_value().clone());
                             }

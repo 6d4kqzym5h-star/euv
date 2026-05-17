@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream constructing `CssClass` functions.
 pub fn parse_class(input: TokenStream) -> TokenStream {
-    let tokens: TokenStream2 = match syn::parse::<ClassInput>(input) {
+    let tokens: proc_macro2::TokenStream = match syn::parse::<ClassInput>(input) {
         Ok(class_input) => class_input.into_token_stream(),
         Err(error) => return error.to_compile_error().into(),
     };
@@ -26,19 +26,19 @@ pub fn parse_class(input: TokenStream) -> TokenStream {
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The expanded token stream with `var!()` calls replaced
+/// - `proc_macro2::TokenStream` - The expanded token stream with `var!()` calls replaced
 ///   by `"var(--xxx-yyy)"` string literals.
-pub(crate) fn expand_var_macros(expr: &Expr) -> TokenStream2 {
+pub(crate) fn expand_var_macros(expr: &Expr) -> proc_macro2::TokenStream {
     match expr {
         Expr::Macro(expr_macro) => {
             if expr_macro.mac.path.is_ident("var") {
-                let body_tokens: &TokenStream2 = &expr_macro.mac.tokens;
+                let body_tokens: &proc_macro2::TokenStream = &expr_macro.mac.tokens;
                 let body_str: String = reconstruct_kebab_from_tokens(body_tokens);
                 let css_name: String = format!("var(--{})", body_str);
                 quote! { #css_name }
             } else if expr_macro.mac.path.is_ident("format") {
-                let mac_tokens: &TokenStream2 = &expr_macro.mac.tokens;
-                let expanded: TokenStream2 = expand_var_macros_in_tokens(mac_tokens);
+                let mac_tokens: &proc_macro2::TokenStream = &expr_macro.mac.tokens;
+                let expanded: proc_macro2::TokenStream = expand_var_macros_in_tokens(mac_tokens);
                 let path: &syn::Path = &expr_macro.mac.path;
                 quote! { #path!(#expanded) }
             } else {
@@ -57,13 +57,15 @@ pub(crate) fn expand_var_macros(expr: &Expr) -> TokenStream2 {
 ///
 /// # Arguments
 ///
-/// - `&TokenStream2` - The token stream to scan.
+/// - `&proc_macro2::TokenStream` - The token stream to scan.
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The token stream with `var!(name)` patterns replaced
+/// - `proc_macro2::TokenStream` - The token stream with `var!(name)` patterns replaced
 ///   by `"var(--xxx-yyy)"` string literals.
-pub(crate) fn expand_var_macros_in_tokens(tokens: &TokenStream2) -> TokenStream2 {
+pub(crate) fn expand_var_macros_in_tokens(
+    tokens: &proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
     let mut result: Vec<proc_macro2::TokenTree> = Vec::new();
     let mut iter: std::iter::Peekable<proc_macro2::token_stream::IntoIter> =
         tokens.clone().into_iter().peekable();
@@ -81,10 +83,10 @@ pub(crate) fn expand_var_macros_in_tokens(tokens: &TokenStream2) -> TokenStream2
                     .is_some_and(|t| matches!(t, proc_macro2::TokenTree::Group(_)))
                 {
                     if let Some(proc_macro2::TokenTree::Group(group)) = iter.next() {
-                        let inner: TokenStream2 = group.stream();
+                        let inner: proc_macro2::TokenStream = group.stream();
                         let var_name: String = reconstruct_kebab_from_tokens(&inner);
                         let css_name: String = format!("var(--{})", var_name);
-                        let expanded: TokenStream2 = quote! { #css_name };
+                        let expanded: proc_macro2::TokenStream = quote! { #css_name };
                         result.extend(expanded);
                     }
                 } else {
@@ -96,7 +98,8 @@ pub(crate) fn expand_var_macros_in_tokens(tokens: &TokenStream2) -> TokenStream2
                 }
             }
             proc_macro2::TokenTree::Group(group) => {
-                let expanded_inner: TokenStream2 = expand_var_macros_in_tokens(&group.stream());
+                let expanded_inner: proc_macro2::TokenStream =
+                    expand_var_macros_in_tokens(&group.stream());
                 let new_group: proc_macro2::Group =
                     proc_macro2::Group::new(group.delimiter(), expanded_inner);
                 result.push(proc_macro2::TokenTree::Group(new_group));
@@ -109,17 +112,17 @@ pub(crate) fn expand_var_macros_in_tokens(tokens: &TokenStream2) -> TokenStream2
     result.into_iter().collect()
 }
 
-/// Checks whether a `TokenStream2` consists entirely of string literals,
+/// Checks whether a `proc_macro2::TokenStream` consists entirely of string literals,
 /// meaning its value can be computed at compile time.
 ///
 /// # Arguments
 ///
-/// - `&TokenStream2` - The token stream to check.
+/// - `&proc_macro2::TokenStream` - The token stream to check.
 ///
 /// # Returns
 ///
 /// - `bool` - `true` if all tokens are string literals.
-pub(crate) fn is_static_string_expr(tokens: &TokenStream2) -> bool {
+pub(crate) fn is_static_string_expr(tokens: &proc_macro2::TokenStream) -> bool {
     for token in tokens.clone() {
         match token {
             proc_macro2::TokenTree::Literal(_) => continue,
@@ -134,16 +137,16 @@ pub(crate) fn is_static_string_expr(tokens: &TokenStream2) -> bool {
 ///
 /// # Arguments
 ///
-/// - `&TokenStream2` - The token stream consisting of string literals only.
+/// - `&proc_macro2::TokenStream` - The token stream consisting of string literals only.
 ///
 /// # Returns
 ///
 /// - `String` - The concatenated string value.
-pub(crate) fn expr_to_string(tokens: &TokenStream2) -> String {
+pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
     let mut result: String = String::new();
     for token in tokens.clone() {
         if let proc_macro2::TokenTree::Literal(lit) = token {
-            let lit_ts: TokenStream2 = proc_macro2::TokenTree::Literal(lit).into();
+            let lit_ts: proc_macro2::TokenStream = proc_macro2::TokenTree::Literal(lit).into();
             if let Ok(lit_str) = syn::parse2::<LitStr>(lit_ts) {
                 result.push_str(&lit_str.value());
             }

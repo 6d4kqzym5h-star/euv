@@ -14,8 +14,8 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `SynResult<String>` - The clean identifier name (without `r#`).
-pub(crate) fn parse_ident_segment(input: ParseStream) -> SynResult<String> {
+/// - `syn::Result<String>` - The clean identifier name (without `r#`).
+pub(crate) fn parse_ident_segment(input: ParseStream) -> syn::Result<String> {
     let tt: proc_macro2::TokenTree = input.parse()?;
     match tt {
         proc_macro2::TokenTree::Ident(ident) => {
@@ -34,6 +34,8 @@ pub(crate) fn parse_ident_segment(input: ParseStream) -> SynResult<String> {
 /// - Raw identifiers for Rust keywords: `r#box-shadow` → `"box-shadow"`
 /// - Keywords in segments: `word-break` → `"word-break"` (where `break`
 ///   is a Rust keyword but accepted as a kebab segment)
+/// - Leading dashes: `-webkit-user-select` → `"-webkit-user-select"`
+/// - Consecutive dashes: `--my-custom-prop` → `"--my-custom-prop"`
 ///
 /// The unquoted form is tokenized by the Rust lexer as a series of
 /// `Ident`, `-`, `Ident`, `-`, `Ident`, … tokens. This function
@@ -46,24 +48,31 @@ pub(crate) fn parse_ident_segment(input: ParseStream) -> SynResult<String> {
 ///
 /// # Returns
 ///
-/// - `SynResult<String>` - The reconstructed kebab-case name string.
-pub(crate) fn parse_kebab_name(input: ParseStream) -> SynResult<String> {
+/// - `syn::Result<String>` - The reconstructed kebab-case name string.
+pub(crate) fn parse_kebab_name(input: ParseStream) -> syn::Result<String> {
     if input.peek(LitStr) {
         let lit: LitStr = input.parse()?;
         return Ok(lit.value());
     }
-    let first: String = parse_ident_segment(input)?;
-    let mut name: String = first;
+    let mut name: String = String::new();
     while input.peek(Token![-]) {
         input.parse::<Token![-]>()?;
-        let next: String = parse_ident_segment(input)?;
         name.push('-');
+    }
+    if !input.is_empty() && !input.peek(Token![:]) {
+        let first: String = parse_ident_segment(input)?;
+        name.push_str(&first);
+    }
+    while input.peek(Token![-]) {
+        input.parse::<Token![-]>()?;
+        name.push('-');
+        let next: String = parse_ident_segment(input)?;
         name.push_str(&next);
     }
     Ok(name)
 }
 
-/// Reconstructs a kebab-case name from a raw `TokenStream2`.
+/// Reconstructs a kebab-case name from a raw `proc_macro2::TokenStream`.
 ///
 /// Used when `var!(bg-primary)` appears inside `class!` and the macro
 /// body tokens are `bg`, `-`, `primary` (three separate tokens). This
@@ -76,39 +85,42 @@ pub(crate) fn parse_kebab_name(input: ParseStream) -> SynResult<String> {
 /// Raw identifiers (e.g., `r#box`) are automatically stripped of their
 /// `r#` prefix.
 ///
+/// Supports leading dashes (e.g., `-webkit-user-select`) and consecutive
+/// dashes (e.g., `--my-custom-prop`) by preserving all `-` punct tokens.
+///
 /// # Arguments
 ///
-/// - `&TokenStream2` - The raw token stream to reconstruct.
+/// - `&proc_macro2::TokenStream` - The raw token stream to reconstruct.
 ///
 /// # Returns
 ///
 /// - `String` - The reconstructed kebab-case name.
-pub(crate) fn reconstruct_kebab_from_tokens(tokens: &TokenStream2) -> String {
+pub(crate) fn reconstruct_kebab_from_tokens(tokens: &proc_macro2::TokenStream) -> String {
     let iter: std::iter::Peekable<proc_macro2::token_stream::IntoIter> =
         tokens.clone().into_iter().peekable();
-    let mut parts: Vec<String> = Vec::new();
+    let mut result: String = String::new();
     for token in iter {
         match token {
             proc_macro2::TokenTree::Ident(ident) => {
                 let raw: String = ident.to_string();
                 let clean: String = raw.strip_prefix("r#").unwrap_or(&raw).to_string();
-                parts.push(clean);
+                result.push_str(&clean);
             }
             proc_macro2::TokenTree::Punct(punct) if punct.as_char() == '-' => {
-                continue;
+                result.push('-');
             }
             proc_macro2::TokenTree::Group(group) => {
                 let inner: String = reconstruct_kebab_from_tokens(&group.stream());
-                parts.push(inner);
+                result.push_str(&inner);
             }
             proc_macro2::TokenTree::Literal(lit) => {
-                let lit_ts: TokenStream2 = proc_macro2::TokenTree::Literal(lit).into();
+                let lit_ts: proc_macro2::TokenStream = proc_macro2::TokenTree::Literal(lit).into();
                 if let Ok(lit_str) = syn::parse2::<LitStr>(lit_ts) {
-                    parts.push(lit_str.value());
+                    result.push_str(&lit_str.value());
                 }
             }
             _ => {}
         }
     }
-    parts.join("-")
+    result
 }

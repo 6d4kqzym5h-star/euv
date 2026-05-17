@@ -90,6 +90,36 @@ pub enum NativeEventName {
     TimeUpdate,
     /// Hash change event.
     HashChange,
+    /// Window resize event.
+    Resize,
+    /// Scroll event.
+    Scroll,
+    /// Window load event.
+    Load,
+    /// Window unload event.
+    Unload,
+    /// Window before unload event.
+    BeforeUnload,
+    /// Window error event.
+    Error,
+    /// Window online event.
+    Online,
+    /// Window offline event.
+    Offline,
+    /// Visibility change event.
+    VisibilityChange,
+    /// Animation start event.
+    AnimationStart,
+    /// Animation end event.
+    AnimationEnd,
+    /// Animation iteration event.
+    AnimationIteration,
+    /// Transition start event.
+    TransitionStart,
+    /// Transition end event.
+    TransitionEnd,
+    /// Transition run event.
+    TransitionRun,
     /// Internal euv signal update event.
     EuvSignalUpdate,
     /// A custom event with an arbitrary name.

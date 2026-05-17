@@ -4,21 +4,21 @@ use crate::*;
 impl Default for UseBrowserApi {
     fn default() -> Self {
         UseBrowserApi {
-            local_key: Signal::new("".to_string()),
-            local_value: Signal::new("".to_string()),
-            local_result: Signal::new("".to_string()),
-            session_key: Signal::new("".to_string()),
-            session_value: Signal::new("".to_string()),
-            session_result: Signal::new("".to_string()),
-            clipboard_text: Signal::new("".to_string()),
-            clipboard_result: Signal::new("".to_string()),
-            window_size: Signal::new("".to_string()),
-            user_agent: Signal::new("".to_string()),
-            language: Signal::new("".to_string()),
-            location_url: Signal::new("".to_string()),
-            location_origin_val: Signal::new("".to_string()),
-            location_pathname_val: Signal::new("".to_string()),
-            console_input: Signal::new("".to_string()),
+            local_key: Signal::new(String::new()),
+            local_value: Signal::new(String::new()),
+            local_result: Signal::new(String::new()),
+            session_key: Signal::new(String::new()),
+            session_value: Signal::new(String::new()),
+            session_result: Signal::new(String::new()),
+            clipboard_text: Signal::new(String::new()),
+            clipboard_result: Signal::new(String::new()),
+            window_size: Signal::new(String::new()),
+            user_agent: Signal::new(String::new()),
+            language: Signal::new(String::new()),
+            location_url: Signal::new(String::new()),
+            location_origin_val: Signal::new(String::new()),
+            location_pathname_val: Signal::new(String::new()),
+            console_input: Signal::new(String::new()),
         }
     }
 }

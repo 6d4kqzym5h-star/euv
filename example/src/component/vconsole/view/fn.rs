@@ -39,15 +39,9 @@ pub(crate) fn get_console_signal() -> Signal<Vec<ConsoleEntry>> {
 pub fn vconsole_panel(panel_open: Signal<bool>) -> VirtualNode {
     let console_signal: Signal<Vec<ConsoleEntry>> = get_console_signal();
     let log_count: usize = console_signal.get().len();
-    let is_open: bool = panel_open.get();
-    if is_open {
-        html! {
-            vconsole_drawer(console_signal, panel_open, log_count)
-        }
-    } else {
-        html! {
-            vconsole_fab(panel_open, log_count)
-        }
+    html! {
+        vconsole_fab(panel_open, log_count)
+        vconsole_drawer(console_signal, panel_open, log_count)
     }
 }
 
@@ -62,6 +56,16 @@ pub fn vconsole_panel(panel_open: Signal<bool>) -> VirtualNode {
 ///
 /// - `VirtualNode` - The floating action button virtual DOM tree.
 fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
+    let is_open: bool = panel_open.get();
+    let fab_class: String = if is_open {
+        format!(
+            "{} {}",
+            c_vconsole_button().get_name(),
+            c_vconsole_fab_hidden().get_name()
+        )
+    } else {
+        c_vconsole_button().get_name().to_string()
+    };
     if log_count > 0 {
         let badge_display: String = if log_count > 99 {
             "99+".to_string()
@@ -70,7 +74,7 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
         };
         html! {
             button {
-                class: c_vconsole_button()
+                class: fab_class
                 onclick: move |_event: NativeEvent| {
                     panel_open.set(true);
                 }
@@ -84,7 +88,7 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
     } else {
         html! {
             button {
-                class: c_vconsole_button()
+                class: fab_class
                 onclick: move |_event: NativeEvent| {
                     panel_open.set(true);
                 }
@@ -111,16 +115,35 @@ fn vconsole_drawer(
     log_count: usize,
 ) -> VirtualNode {
     let filter_signal: Signal<String> = use_signal(|| "all".to_string());
+    let is_open: bool = panel_open.get();
+    let overlay_class: String = if is_open {
+        c_vconsole_overlay().get_name().to_string()
+    } else {
+        format!(
+            "{} {}",
+            c_vconsole_overlay().get_name(),
+            c_vconsole_overlay_hidden().get_name()
+        )
+    };
+    let panel_class: String = if is_open {
+        c_vconsole_panel().get_name().to_string()
+    } else {
+        format!(
+            "{} {}",
+            c_vconsole_panel().get_name(),
+            c_vconsole_panel_closed().get_name()
+        )
+    };
     html! {
         div {
             div {
-                class: c_vconsole_overlay()
+                class: overlay_class
                 onclick: move |_event: NativeEvent| {
                     panel_open.set(false);
                 }
             }
             div {
-                class: c_vconsole_panel()
+                class: panel_class
                 div {
                     class: c_vconsole_header()
                     h3 {

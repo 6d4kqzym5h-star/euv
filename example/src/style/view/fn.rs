@@ -9,6 +9,8 @@ class! {
         background: var!(bg-primary);
         color: var!(text-primary);
         line-height: "1.6";
+        user-select: "none";
+        -webkit-user-select: "none";
     }
 
     pub c_app_nav {
@@ -1087,9 +1089,15 @@ class! {
         top: "0";
         left: "0";
         right: "0";
-        bottom: "50vh";
+        bottom: "0";
         z-index: "10000";
         background: "rgba(0, 0, 0, 0.15)";
+        transition: "opacity 0.25s ease";
+    }
+
+    pub c_vconsole_overlay_hidden {
+        opacity: "0";
+        pointer-events: "none";
     }
 
     pub c_vconsole_panel {
@@ -1099,14 +1107,22 @@ class! {
         right: "0";
         height: "50vh";
         background: var!(bg-console);
-        z-index: "10000";
+        z-index: "10001";
         display: "flex";
         flex-direction: "column";
         border-top: format!("3px solid {}", var!(border-console-accent));
         border-radius: "16px 16px 0 0";
         box-shadow: var!(shadow-console-panel);
-        animation: "euv-slide-up 0.25s ease";
+        transition: "transform 0.25s ease";
         overflow: "hidden";
+    }
+
+    pub c_vconsole_panel_closed {
+        transform: "translateY(100%)";
+    }
+
+    pub c_vconsole_fab_hidden {
+        display: "none";
     }
 
     pub c_vconsole_header {
@@ -1355,6 +1371,10 @@ class! {
         font-weight: "400";
         border-left: "3px solid transparent";
         background: "transparent";
+        hover {
+            background: "rgba(79, 70, 229, 0.04)";
+            color: "#4f46e5";
+        }
     }
 
     pub c_mobile_header {

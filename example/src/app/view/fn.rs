@@ -367,45 +367,15 @@ pub fn app() -> VirtualNode {
     let panel_open: Signal<bool> = use_signal(|| false);
     let drawer_open: Signal<bool> = use_signal(|| false);
     let mobile_signal: Signal<bool> = use_resize();
-    let theme_state: ThemeState = use_theme();
+    let theme_state: ThemeState = use_theme(mobile_signal);
     let theme_signal: Signal<String> = theme_state.get_theme();
-    let root_class_signal: Signal<String> = theme_state.get_root_class();
+    let root_class: Signal<String> = theme_state.get_root_class();
     use_hash_change(route_signal);
-    let is_mobile: bool = mobile_signal.get();
-    let current_root_class: String = if is_mobile {
-        format!(
-            "{} {}",
-            c_mobile_app_root().get_name(),
-            theme_class_name(&theme_signal.get())
-        )
-    } else {
-        root_class_signal.get()
-    };
-    let root_class: Signal<String> = use_signal(move || current_root_class);
-    watch!(mobile_signal, theme_signal, |mobile, theme| {
-        if mobile {
-            root_class.set(format!(
-                "{} {}",
-                c_mobile_app_root().get_name(),
-                theme_class_name(&theme)
-            ));
+    html! {
+        if { mobile_signal.get() } {
+            { mobile_layout(route_signal, theme_signal, root_class, panel_open, drawer_open) }
         } else {
-            root_class.set(format!(
-                "{} {}",
-                c_app_root().get_name(),
-                theme_class_name(&theme)
-            ));
+            { desktop_layout(route_signal, theme_signal, root_class, panel_open) }
         }
-    });
-    if is_mobile {
-        mobile_layout(
-            route_signal,
-            theme_signal,
-            root_class,
-            panel_open,
-            drawer_open,
-        )
-    } else {
-        desktop_layout(route_signal, theme_signal, root_class, panel_open)
     }
 }

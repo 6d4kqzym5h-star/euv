@@ -16,10 +16,10 @@ pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
 
 use {
     proc_macro::TokenStream,
-    proc_macro2::{Span, TokenStream as TokenStream2},
+    proc_macro2::Span,
     quote::{ToTokens, quote, quote_spanned},
     syn::{
-        Expr, Ident, LitStr, Result as SynResult, Token, Type as SynType, Visibility, braced,
+        Expr, Ident, LitStr, Token, Type, Visibility, braced,
         parse::{Parse, ParseStream},
         token::{Colon, Paren, Semi},
     },

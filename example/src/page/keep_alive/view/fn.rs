@@ -59,9 +59,9 @@ fn counter_tab() -> VirtualNode {
 ///
 /// - `VirtualNode` - The form tab virtual DOM tree.
 fn form_tab() -> VirtualNode {
-    let name: Signal<String> = use_signal(|| "".to_string());
-    let email: Signal<String> = use_signal(|| "".to_string());
-    let message: Signal<String> = use_signal(|| "".to_string());
+    let name: Signal<String> = use_signal(String::new);
+    let email: Signal<String> = use_signal(String::new);
+    let message: Signal<String> = use_signal(String::new);
     html! {
         div {
             class: c_keep_alive_tab_panel()

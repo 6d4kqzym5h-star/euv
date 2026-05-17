@@ -28,8 +28,8 @@ pub fn use_fetch() -> UseFetch {
 pub fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.get_loading().set(true);
-        state.get_error().set("".to_string());
-        state.get_data().set("".to_string());
+        state.get_error().set(String::new());
+        state.get_data().set(String::new());
         let data_signal: Signal<String> = state.get_data();
         let error_signal: Signal<String> = state.get_error();
         let loading_signal: Signal<bool> = state.get_loading();

@@ -43,8 +43,8 @@ pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
             let mut current: Vec<String> = state.get_items().get();
             current.push(text.trim().to_string());
             state.get_items().set(current);
-            state.get_new_item().set("".to_string());
-            state.get_add_error().set("".to_string());
+            state.get_new_item().set(String::new());
+            state.get_add_error().set(String::new());
         }
     })
 }

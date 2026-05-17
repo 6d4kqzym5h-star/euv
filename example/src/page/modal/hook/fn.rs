@@ -1,14 +1,5 @@
 use crate::*;
 
-/// Creates modal demo state signals wrapped in a `UseModal` struct.
-///
-/// # Returns
-///
-/// - `UseModal` - The modal state.
-pub fn use_modal() -> UseModal {
-    UseModal::default()
-}
-
 /// Creates a click event handler that opens the basic modal.
 ///
 /// # Arguments
@@ -36,7 +27,7 @@ pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
 pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.get_show_confirm().set(true);
-        state.get_confirm_result().set("".to_string());
+        state.get_confirm_result().set(String::new());
     })
 }
 
@@ -52,10 +43,10 @@ pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
 pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         state.get_show_form().set(true);
-        state.get_modal_name().set("".to_string());
-        state.get_modal_email().set("".to_string());
-        state.get_modal_submitted().set("".to_string());
-        state.get_modal_error().set("".to_string());
+        state.get_modal_name().set(String::new());
+        state.get_modal_email().set(String::new());
+        state.get_modal_submitted().set(String::new());
+        state.get_modal_error().set(String::new());
     })
 }
 
@@ -100,7 +91,7 @@ pub fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
             validation_errors.push("Please enter a valid email".to_string());
         }
         if validation_errors.is_empty() {
-            state.get_modal_error().set("".to_string());
+            state.get_modal_error().set(String::new());
             state
                 .get_modal_submitted()
                 .set(format!("Signed up: {} ({})", name, email));

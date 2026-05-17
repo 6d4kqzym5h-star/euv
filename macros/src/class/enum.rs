@@ -1,5 +1,3 @@
-use crate::*;
-
 /// The value side of a CSS property in a class definition.
 ///
 /// Always stored as an expression token stream. String literals like `"#fff"`
@@ -7,5 +5,5 @@ use crate::*;
 /// Rust expressions.
 pub(crate) enum ClassPropValue {
     /// A dynamic expression (Rust code token stream) that evaluates to a string.
-    Expr(TokenStream2),
+    Expr(proc_macro2::TokenStream),
 }

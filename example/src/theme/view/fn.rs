@@ -42,7 +42,7 @@ css_vars! {
         border-loading: "#c7d2fe";
         text-loading-title: "#3730a3";
         bg-progress: "#e5e7eb";
-        bg-console: "#f5f6fa";
+        bg-console: "#ffffff";
         bg-console-header: "#eef0f6";
         bg-console-filter: "#eaecf4";
         border-console: "#dde0ea";
@@ -149,22 +149,34 @@ css_vars! {
 /// Creates and returns the reactive theme state for the application.
 ///
 /// Initializes a theme signal defaulting to "light" and a derived root class
-/// signal that combines `c_app_root` with the active theme class. Uses `watch!`
-/// to reactively update the root class whenever the theme signal changes.
+/// signal that combines the appropriate app root class (`c_app_root` or
+/// `c_mobile_app_root`) with the active theme class. Uses `watch!` to
+/// reactively update the root class whenever the theme or mobile signal changes.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The reactive signal indicating whether the viewport is mobile-sized.
 ///
 /// # Returns
 ///
 /// - `ThemeState` - The reactive theme state containing the theme signal and root class signal.
-pub(crate) fn use_theme() -> ThemeState {
+pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
     let theme: Signal<String> = use_signal(|| "light".to_string());
+    let initial_mobile: bool = mobile_signal.get();
+    let initial_root: &'static str = if initial_mobile {
+        c_mobile_app_root().get_name()
+    } else {
+        c_app_root().get_name()
+    };
     let root_class: Signal<String> =
-        use_signal(|| format!("{} {}", c_app_root().get_name(), theme_class_name("light")));
-    watch!(theme, |theme_value| {
-        root_class.set(format!(
-            "{} {}",
-            c_app_root().get_name(),
-            theme_class_name(&theme_value)
-        ));
+        use_signal(|| format!("{} {}", initial_root, theme_class_name("light")));
+    watch!(mobile_signal, theme, |mobile, theme_value| {
+        let root: &'static str = if mobile {
+            c_mobile_app_root().get_name()
+        } else {
+            c_app_root().get_name()
+        };
+        root_class.set(format!("{} {}", root, theme_class_name(&theme_value)));
     });
     ThemeState { theme, root_class }
 }

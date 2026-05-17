@@ -14,7 +14,7 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream producing the CSS `var()` string.
 pub(crate) fn parse_var(input: TokenStream) -> TokenStream {
-    let tokens: TokenStream2 = input.into();
+    let tokens: proc_macro2::TokenStream = input.into();
     let var_name: String = reconstruct_kebab_from_tokens(&tokens);
     let css_name: String = format!("var(--{})", var_name);
     TokenStream::from(quote! { #css_name })

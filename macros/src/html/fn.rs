@@ -15,7 +15,7 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
-    let tokens: TokenStream2 = match syn::parse::<HtmlRoot>(input) {
+    let tokens: proc_macro2::TokenStream = match syn::parse::<HtmlRoot>(input) {
         Ok(nodes) => nodes.into_token_stream(),
         Err(error) => return error.to_compile_error().into(),
     };
@@ -56,8 +56,8 @@ pub(crate) fn camel_case_event_name(name: &str) -> String {
 ///
 /// # Returns
 ///
-/// - `SynResult<Vec<HtmlNode>>` - The parsed list of HTML child nodes, or a syntax error.
-pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNode>> {
+/// - `syn::Result<Vec<HtmlNode>>` - The parsed list of HTML child nodes, or a syntax error.
+pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlNode>> {
     let mut children: Vec<HtmlNode> = Vec::new();
     while !content.is_empty() {
         if content.peek(LitStr) {
@@ -106,19 +106,20 @@ pub(crate) fn parse_html_children(content: ParseStream) -> SynResult<Vec<HtmlNod
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The generated token stream representing a single `VirtualNode`.
-pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> TokenStream2 {
+/// - `proc_macro2::TokenStream` - The generated token stream representing a single `VirtualNode`.
+pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
     match children.len() {
         0 => quote! { euv_core::VirtualNode::Empty },
         1 => {
-            let mut ts: TokenStream2 = TokenStream2::new();
+            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
             children[0].to_tokens(&mut ts);
             ts
         }
         _ => {
-            let mut child_tokens: Vec<TokenStream2> = Vec::with_capacity(children.len());
+            let mut child_tokens: Vec<proc_macro2::TokenStream> =
+                Vec::with_capacity(children.len());
             for child in children {
-                let mut ts: TokenStream2 = TokenStream2::new();
+                let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
                 child.to_tokens(&mut ts);
                 child_tokens.push(ts);
             }
@@ -138,11 +139,11 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> TokenStream2 {
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The generated token stream representing a `Vec<VirtualNode>`.
-pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
-    let mut child_tokens: Vec<TokenStream2> = Vec::with_capacity(children.len());
+/// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
+pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
+    let mut child_tokens: Vec<proc_macro2::TokenStream> = Vec::with_capacity(children.len());
     for child in children {
-        let mut ts: TokenStream2 = TokenStream2::new();
+        let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
         child.to_tokens(&mut ts);
         child_tokens.push(ts);
     }
@@ -164,25 +165,26 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> TokenStream2 {
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The generated token stream representing a single `VirtualNode`.
-pub(crate) fn children_to_node_tokens_inline(children: &[HtmlNode]) -> TokenStream2 {
+/// - `proc_macro2::TokenStream` - The generated token stream representing a single `VirtualNode`.
+pub(crate) fn children_to_node_tokens_inline(children: &[HtmlNode]) -> proc_macro2::TokenStream {
     match children.len() {
         0 => quote! { euv_core::VirtualNode::Empty },
         1 => match &children[0] {
             HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
             child => {
-                let mut ts: TokenStream2 = TokenStream2::new();
+                let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
                 child.to_tokens(&mut ts);
                 ts
             }
         },
         _ => {
-            let mut child_tokens: Vec<TokenStream2> = Vec::with_capacity(children.len());
+            let mut child_tokens: Vec<proc_macro2::TokenStream> =
+                Vec::with_capacity(children.len());
             for child in children {
-                let ts: TokenStream2 = match child {
+                let ts: proc_macro2::TokenStream = match child {
                     HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
                     _ => {
-                        let mut ts: TokenStream2 = TokenStream2::new();
+                        let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
                         child.to_tokens(&mut ts);
                         ts
                     }
@@ -204,8 +206,8 @@ pub(crate) fn children_to_node_tokens_inline(children: &[HtmlNode]) -> TokenStre
 ///
 /// # Returns
 ///
-/// - `SynResult<HtmlAttrIf>` - The parsed attribute-level reactive conditional.
-pub(crate) fn parse_attr_if(content: ParseStream) -> SynResult<HtmlAttrIf> {
+/// - `syn::Result<HtmlAttrIf>` - The parsed attribute-level reactive conditional.
+pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
     let mut branches: Vec<(Option<Expr>, Expr)> = Vec::new();
     content.parse::<Token![if]>()?;
     let cond_content;
@@ -270,9 +272,9 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 ///
 /// # Returns
 ///
-/// - `TokenStream2` - The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
-pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> TokenStream2 {
-    let mut if_chain: TokenStream2 = TokenStream2::new();
+/// - `proc_macro2::TokenStream` - The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
+pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::TokenStream {
+    let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     for (i, (condition, body)) in html_attr_if.branches.iter().enumerate() {
         match (i, condition) {
             (0, Some(cond)) => {
@@ -314,8 +316,8 @@ pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> TokenStream2 {
 ///
 /// # Returns
 ///
-/// - `SynResult<HtmlAttrValue>` - The parsed attribute value.
-pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> SynResult<HtmlAttrValue> {
+/// - `syn::Result<HtmlAttrValue>` - The parsed attribute value.
+pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Result<HtmlAttrValue> {
     if content.peek(Token![if]) {
         let html_attr_if: HtmlAttrIf = parse_attr_if(content)?;
         return Ok(HtmlAttrValue::If(html_attr_if));

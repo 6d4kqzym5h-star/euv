@@ -39,7 +39,27 @@ pub struct AttributeEntry {
     pub(crate) value: AttributeValue,
 }
 
-/// Represents a CSS class with a name and its style declarations.
+/// Represents a CSS pseudo-class or pseudo-element rule attached to a class.
+///
+/// Each rule has a selector suffix (e.g., ":hover", "::before", ":focus")
+/// and a style declaration string. When injected into the DOM, it produces
+/// a rule like `.class-name:hover { background: red; }`.
+#[derive(Clone, Data, Debug, Default, New)]
+pub struct PseudoRule {
+    /// The CSS pseudo selector suffix appended to the class name
+    /// (e.g., ":hover", ":focus", ":active", ":disabled", "::before", "::after",
+    /// ":first-child", ":last-child", ":nth-child(2n)", etc.).
+    #[get(pub)]
+    #[set(pub)]
+    selector: String,
+    /// The CSS style declarations for this pseudo rule
+    /// (e.g., "background: rgba(79, 70, 229, 0.04); color: #4f46e5;").
+    #[get(pub)]
+    #[set(pub)]
+    style: String,
+}
+
+/// Represents a CSS class with a name, its style declarations, and optional pseudo rules.
 ///
 /// Created by the `class!` macro and used in `html!` via the `class:` attribute.
 /// When the renderer encounters a `CssClass`, it injects the styles into the
@@ -51,6 +71,33 @@ pub struct CssClass {
     #[set(pub)]
     name: String,
     /// The CSS style declarations (e.g., "max-width: 800px; margin: 0 auto;").
+    #[get(pub)]
+    #[set(pub)]
+    style: String,
+    /// The pseudo-class and pseudo-element rules for this class
+    /// (e.g., ":hover", ":focus", ":active", "::before", etc.).
+    #[get(pub)]
+    #[set(pub)]
+    pseudo_rules: Vec<PseudoRule>,
+    /// The media query rules for this class.
+    #[get(pub)]
+    #[set(pub)]
+    media_rules: Vec<MediaRule>,
+}
+
+/// Represents a CSS @media rule attached to a class.
+///
+/// Each media rule has a query string (e.g., "(max-width: 767px)")
+/// and a style declaration string. When injected into the DOM, it produces
+/// a rule like `@media (max-width: 767px) { .class-name { font-size: 14px; } }`.
+#[derive(Clone, Data, Debug, Default, New)]
+pub struct MediaRule {
+    /// The media query condition string (e.g., "(max-width: 767px)").
+    #[get(pub)]
+    #[set(pub)]
+    query: String,
+    /// The CSS style declarations inside this media rule
+    /// (e.g., "font-size: 14px; padding: 8px;").
     #[get(pub)]
     #[set(pub)]
     style: String,

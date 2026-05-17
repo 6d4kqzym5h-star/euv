@@ -7,7 +7,7 @@ use crate::*;
 /// The expressions before the closure are signal expressions.
 /// The closure parameters correspond to `.get()` values of the respective signals.
 impl Parse for WatchInput {
-    fn parse(input: ParseStream) -> SynResult<Self> {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut signals: Vec<Expr> = Vec::new();
         while !input.peek(Token![|]) {
             let expr: Expr = input.parse()?;
@@ -62,26 +62,26 @@ impl Parse for WatchInput {
 ///    only fires via the `subscribe` callbacks when a watched signal
 ///    actually changes.
 impl ToTokens for WatchInput {
-    fn to_tokens(&self, tokens: &mut TokenStream2) {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let signal_clones: Vec<Ident> = (0..self.signals.len())
             .map(|i: usize| Ident::new(&format!("__euv_watch_signal_{}", i), Span::call_site()))
             .collect();
         let signal_exprs: &Vec<Expr> = &self.signals;
         let param_names: &Vec<Ident> = &self.param_names;
         let body: &Vec<syn::Stmt> = &self.body;
-        let get_calls: Vec<TokenStream2> = signal_clones
+        let get_calls: Vec<proc_macro2::TokenStream> = signal_clones
             .iter()
             .zip(param_names.iter())
             .map(|(signal_clone, _param)| {
                 quote! { #signal_clone.get() }
             })
             .collect();
-        let all_gets: Vec<TokenStream2> = signal_clones
+        let all_gets: Vec<proc_macro2::TokenStream> = signal_clones
             .iter()
             .zip(param_names.iter())
             .map(|(sc, param)| quote! { let #param = #sc.get(); })
             .collect();
-        let subscribe_calls: Vec<TokenStream2> = signal_clones
+        let subscribe_calls: Vec<proc_macro2::TokenStream> = signal_clones
             .iter()
             .map(|signal_clone| {
                 quote! {

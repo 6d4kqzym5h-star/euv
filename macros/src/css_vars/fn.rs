@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream constructing `CssClass` functions.
 pub(crate) fn parse_css_vars(input: TokenStream) -> TokenStream {
-    let tokens: TokenStream2 = match syn::parse::<CssVarInput>(input) {
+    let tokens: proc_macro2::TokenStream = match syn::parse::<CssVarInput>(input) {
         Ok(css_var_input) => css_var_input.into_token_stream(),
         Err(error) => return error.to_compile_error().into(),
     };

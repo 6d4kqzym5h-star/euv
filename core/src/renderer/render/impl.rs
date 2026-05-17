@@ -82,7 +82,7 @@ impl Renderer {
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 self.patch_children(dom_element, old_children, new_children);
             }
-            (VirtualNode::Dynamic(_new_dynamic), VirtualNode::Dynamic(_old_dynamic)) => {}
+            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => {}
             _ => {
                 let new_dom: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {

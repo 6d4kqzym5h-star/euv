@@ -21,7 +21,7 @@ pub(crate) struct HtmlRoot {
 /// body is rendered as HTML and collected into a `VirtualNode::Fragment`.
 pub(crate) struct HtmlFor {
     /// The binding pattern for loop variables (e.g., `item` or `(index, item)`).
-    pub(crate) pattern: TokenStream2,
+    pub(crate) pattern: proc_macro2::TokenStream,
     /// The iterable expression (from the braces after `in`).
     pub(crate) iterable: Expr,
     /// The HTML nodes rendered for each iteration.
@@ -53,7 +53,7 @@ pub(crate) struct HtmlMatch {
     /// The expression to match against (from the braces after `match`).
     pub(crate) scrutinee: Expr,
     /// The match arms: each arm has a pattern as a raw token stream and a body of HTML nodes.
-    pub(crate) arms: Vec<(TokenStream2, Vec<HtmlNode>)>,
+    pub(crate) arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)>,
 }
 
 /// Represents an HTML element with a tag name, attributes, and children.

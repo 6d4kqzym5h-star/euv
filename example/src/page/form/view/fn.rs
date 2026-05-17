@@ -92,7 +92,7 @@ pub fn page_form() -> VirtualNode {
                 if username_value.trim().is_empty() {
                     username_error.set("Username is required".to_string());
                 } else {
-                    username_error.set("".to_string());
+                    username_error.set(String::new());
                 }
             }
         }
@@ -104,7 +104,7 @@ pub fn page_form() -> VirtualNode {
             } else if !email_value.contains('@') || !email_value.contains('.') {
                 email_error.set("Please enter a valid email".to_string());
             } else {
-                email_error.set("".to_string());
+                email_error.set(String::new());
             }
         }
     });
@@ -118,7 +118,7 @@ pub fn page_form() -> VirtualNode {
                 } else if password_value.len() < 6 {
                     password_error.set("Password must be at least 6 characters".to_string());
                 } else {
-                    password_error.set("".to_string());
+                    password_error.set(String::new());
                 }
             }
         }

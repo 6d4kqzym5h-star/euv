@@ -30,7 +30,7 @@ pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
             state
                 .get_selected_country()
                 .set(change_event.get_value().clone());
-            state.get_selected_city().set("".to_string());
+            state.get_selected_city().set(String::new());
         }
     })
 }
@@ -59,7 +59,7 @@ pub fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
             state
                 .get_feedback()
                 .set(format!("Thank you for your feedback: \"{}\"", content));
-            state.get_textarea_content().set("".to_string());
+            state.get_textarea_content().set(String::new());
         }
     })
 }

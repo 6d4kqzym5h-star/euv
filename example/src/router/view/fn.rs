@@ -1,7 +1,5 @@
 use crate::*;
 
-const MOBILE_BREAKPOINT: i32 = 768;
-
 /// Reads the current hash-based route from the browser URL.
 ///
 /// # Returns
@@ -103,7 +101,7 @@ pub fn use_resize() -> Signal<bool> {
         mobile_signal.set(mobile);
     }));
     let _ = window.add_event_listener_with_callback(
-        &NativeEventName::Other("resize".to_string()).to_string(),
+        &NativeEventName::Resize.to_string(),
         closure.as_ref().unchecked_ref(),
     );
     closure.forget();

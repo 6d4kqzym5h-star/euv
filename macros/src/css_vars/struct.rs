@@ -8,7 +8,7 @@ pub(crate) struct CssVarParam {
     /// The parameter name identifier.
     pub(crate) name: Ident,
     /// The explicit type annotation for this parameter (e.g., `&str`).
-    pub(crate) ty: SynType,
+    pub(crate) ty: Type,
 }
 
 /// A single CSS variables block definition parsed from the `css_vars!` macro.
