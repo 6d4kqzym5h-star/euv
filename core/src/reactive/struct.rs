@@ -16,6 +16,13 @@ where
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) listeners: Vec<Rc<RefCell<dyn FnMut()>>>,
+    /// Whether this signal is still active. Set to `false` by `clear_listeners()`
+    /// to make subsequent `set()` calls complete no-ops (no value update, no
+    /// listener invocation, no `schedule_signal_update()`), ensuring stale
+    /// closures like orphaned `setInterval` handlers become harmless.
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
+    pub(crate) alive: bool,
 }
 
 /// A reactive signal handle.
@@ -70,6 +77,13 @@ pub struct HookContextInner {
     #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
     pub(crate) hook_index: usize,
+    /// Cleanup closures registered by hooks (e.g., `use_signal`) that must
+    /// be executed when the hook context is cleared due to a `match` arm
+    /// switch. Each closure typically clears signal listeners so that
+    /// stale `setInterval` closures become no-ops.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) cleanups: Vec<Box<dyn FnOnce()>>,
 }
 
 /// Manages hook state across render cycles for a DynamicNode.

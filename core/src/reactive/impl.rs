@@ -10,6 +10,7 @@ where
         let inner: SignalInner<T> = SignalInner {
             value,
             listeners: Vec::new(),
+            alive: true,
         };
         inner
     }
@@ -94,7 +95,45 @@ where
             .push(Rc::new(RefCell::new(callback)));
     }
 
+    /// Replaces all listeners with a single new callback.
+    ///
+    /// Unlike `subscribe`, which appends a listener, this method clears any
+    /// existing listeners first and then adds the new one. This prevents
+    /// listener accumulation across re-renders: each signal is guaranteed
+    /// to have at most one active listener at any time, eliminating
+    /// cascading `set()` calls that would otherwise grow exponentially.
+    ///
+    /// # Arguments
+    ///
+    /// - `FnMut() + 'static` - The callback to invoke when the signal changes.
+    pub fn replace_subscribe<F>(&self, callback: F)
+    where
+        F: FnMut() + 'static,
+    {
+        let listeners: &mut Vec<Rc<RefCell<dyn FnMut()>>> =
+            self.get_inner_mut().get_mut_listeners();
+        listeners.clear();
+        listeners.push(Rc::new(RefCell::new(callback)));
+    }
+
+    /// Removes all subscribed listeners from this signal and marks it as
+    /// inactive. After calling this method, subsequent `set()` and
+    /// `try_set()` calls become complete no-ops: the value is not updated,
+    /// no listeners are invoked, and `schedule_signal_update()` is not
+    /// called. This is used during hook context cleanup when a `match`
+    /// arm switch discards old signals, ensuring that stale `setInterval`
+    /// closures referencing these signals become entirely harmless.
+    pub fn clear_listeners(&self) {
+        let inner: &mut SignalInner<T> = self.get_inner_mut();
+        inner.set_alive(false);
+        inner.get_mut_listeners().clear();
+    }
+
     /// Sets the value of the signal and notifies listeners.
+    ///
+    /// If the signal has been marked as inactive (via `clear_listeners()`),
+    /// this method is a complete no-op: the value is not updated, no
+    /// listeners are invoked, and no global update is scheduled.
     ///
     /// If the new value is equal to the current value, no update is performed
     /// and no listeners are notified. This prevents unnecessary re-renders and
@@ -105,6 +144,9 @@ where
     /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
+        if !inner.get_alive() {
+            return;
+        }
         if inner.get_value() == &value {
             return;
         }
@@ -137,8 +179,14 @@ where
     ///
     /// If the new value is equal to the current value, no update is performed
     /// and no listeners are notified.
+    ///
+    /// If the signal has been marked as inactive (via `clear_listeners()`),
+    /// this method is a complete no-op.
     pub fn set_silent(&self, value: T) {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
+        if !inner.get_alive() {
+            return;
+        }
         if inner.get_value() == &value {
             return;
         }
@@ -162,9 +210,12 @@ where
     ///
     /// # Returns
     ///
-    /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged.
+    /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged or inactive.
     pub fn try_set(&self, value: T) -> bool {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
+        if !inner.get_alive() {
+            return false;
+        }
         if inner.get_value() == &value {
             return false;
         }
@@ -409,6 +460,11 @@ impl HookContext {
         self.get_inner_mut().get_mut_hooks()
     }
 
+    /// Returns a mutable reference to the cleanup closures storage.
+    pub fn get_mut_cleanups(&mut self) -> &mut Vec<Box<dyn FnOnce()>> {
+        self.get_inner_mut().get_mut_cleanups()
+    }
+
     /// Resets the hook index for a new render cycle.
     pub fn reset_hook_index(&mut self) {
         self.set_hook_index(0_usize);
@@ -420,6 +476,10 @@ impl HookContext {
     pub fn set_arm_changed(&mut self, changed: bool) {
         let inner: &mut HookContextInner = self.get_inner_mut();
         if inner.get_arm_changed() != changed {
+            let cleanups: Vec<Box<dyn FnOnce()>> = std::mem::take(inner.get_mut_cleanups());
+            for cleanup in cleanups {
+                cleanup();
+            }
             inner.get_mut_hooks().clear();
             inner.set_arm_changed(changed);
         }
@@ -455,6 +515,7 @@ impl HookContextInner {
             hooks: Vec::new(),
             arm_changed: false,
             hook_index: 0_usize,
+            cleanups: Vec::new(),
         }
     }
 }

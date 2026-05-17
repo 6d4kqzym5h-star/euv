@@ -212,6 +212,9 @@ where
         let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(init()));
         Signal::from_inner(Box::leak(boxed) as *mut SignalInner<T>)
     };
+    let cleanup_signal: Signal<T> = signal;
+    ctx.get_mut_cleanups()
+        .push(Box::new(move || cleanup_signal.clear_listeners()));
     if index < ctx.get_hooks().len() {
         ctx.get_mut_hooks()[index] = Box::new(signal);
     } else {

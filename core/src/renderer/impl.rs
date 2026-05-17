@@ -459,7 +459,7 @@ impl Renderer {
                             let element_clone: Element = element.clone();
                             let signal_for_sub: Signal<String> = *signal;
                             let signal_inner: Signal<String> = signal_for_sub;
-                            signal_for_sub.subscribe(move || {
+                            signal_for_sub.replace_subscribe(move || {
                                 let new_value: String = signal_inner.get();
                                 if new_value.is_empty() && !Self::is_boolean_property(&attr_name) {
                                     Self::remove_dom_attribute_or_property(
@@ -501,7 +501,7 @@ impl Renderer {
                 if let Some(signal) = text_node.try_get_signal() {
                     let text_clone: Text = text.clone();
                     let signal_clone: Signal<String> = *signal;
-                    signal_clone.subscribe({
+                    signal_clone.replace_subscribe({
                         let signal_inner: Signal<String> = signal_clone;
                         move || {
                             let new_value: String = signal_inner.get();
