@@ -1,11 +1,31 @@
 use crate::*;
 
-/// Implementation of server hook for request middleware.
+/// Implements `ServerHook` for `RequestMiddleware` to inject cache-control headers.
 impl ServerHook for RequestMiddleware {
+    /// Creates a new `RequestMiddleware` instance.
+    ///
+    /// # Arguments
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context (unused).
+    ///
+    /// # Returns
+    /// - `RequestMiddleware` - A new instance with no internal state.
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
     }
 
+    /// Injects cache-control headers to prevent stale WASM assets during development.
+    ///
+    /// Sets `Cache-Control: no-cache, no-store, must-revalidate`,
+    /// `Pragma: no-cache`, and `Expires: 0` on the response.
+    ///
+    /// # Arguments
+    /// - `self` - The consumed middleware instance.
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context used to set response headers.
+    ///
+    /// # Returns
+    /// - `Status` - The hook processing result.
     async fn handle(self, _: &mut Stream, ctx: &mut Context) -> Status {
         ctx.get_mut_response()
             .set_status_code(200)
@@ -16,12 +36,31 @@ impl ServerHook for RequestMiddleware {
     }
 }
 
-/// Implementation of server hook for response middleware.
+/// Implements `ServerHook` for `ResponseMiddleware` to serialize and send the response.
 impl ServerHook for ResponseMiddleware {
+    /// Creates a new `ResponseMiddleware` instance.
+    ///
+    /// # Arguments
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context (unused).
+    ///
+    /// # Returns
+    /// - `ResponseMiddleware` - A new instance with no internal state.
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
     }
 
+    /// Builds the HTTP response bytes and sends them through the connection stream.
+    ///
+    /// If the send fails, marks the stream as closed and rejects the request.
+    ///
+    /// # Arguments
+    /// - `self` - The consumed middleware instance.
+    /// - `&mut Stream` - The connection stream used to send the response bytes.
+    /// - `&mut Context` - The request context used to build the response.
+    ///
+    /// # Returns
+    /// - `Status` - The hook processing result.
     async fn handle(self, stream: &mut Stream, ctx: &mut Context) -> Status {
         let response: Vec<u8> = ctx.get_mut_response().build();
         if stream.try_send(&response).await.is_err() {
@@ -32,16 +71,41 @@ impl ServerHook for ResponseMiddleware {
     }
 }
 
-/// Implementation of server hook for index route.
+/// Implements `ServerHook` for `IndexRoute` to serve the development HTML and static assets.
 ///
 /// When the request targets `index.html`, returns the in-memory HTML
 /// that has the live-reload script injected. For all other files the
-/// handler reads the content from disk.
+/// handler reads the content from disk with path-traversal protection.
 impl ServerHook for IndexRoute {
+    /// Creates a new `IndexRoute` instance.
+    ///
+    /// # Arguments
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context (unused).
+    ///
+    /// # Returns
+    /// - `IndexRoute` - A new instance with no internal state.
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
     }
 
+    /// Handles requests for the index page and static assets with path-traversal protection.
+    ///
+    /// - Empty path or `index.html` - serves the in-memory HTML with live-reload script.
+    /// - Other paths: reads the file from disk, validates the canonical path is within
+    ///   the www directory, and sets the appropriate `Content-Type` header.
+    ///
+    /// # Arguments
+    /// - `self` - The consumed route instance.
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context used to read route params and write the response.
+    ///
+    /// # Returns
+    /// - `Status` - The hook processing result.
+    ///
+    /// # Panics
+    ///
+    /// Does not panic; all error cases set an appropriate HTTP status code.
     async fn handle(self, _: &mut Stream, ctx: &mut Context) -> Status {
         let path_opt: Option<String> = ctx.try_get_route_param("path");
         let path: String = path_opt.unwrap_or_default();
@@ -105,16 +169,36 @@ impl ServerHook for IndexRoute {
     }
 }
 
-/// Implementation of server hook for reload route.
+/// Implements `ServerHook` for `ReloadRoute` to provide long-polling reload notifications.
 ///
 /// Uses long-polling: holds the connection open until a reload event
 /// is broadcast, then returns a single JSON response so the client
 /// can distinguish between a successful rebuild and an error.
 impl ServerHook for ReloadRoute {
+    /// Creates a new `ReloadRoute` instance.
+    ///
+    /// # Arguments
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context (unused).
+    ///
+    /// # Returns
+    /// - `ReloadRoute` - A new instance with no internal state.
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
     }
 
+    /// Waits for a reload event and returns it as a JSON response.
+    ///
+    /// Subscribes to the broadcast channel and blocks until a `ReloadEvent`
+    /// is received, then serializes it as the response body.
+    ///
+    /// # Arguments
+    /// - `self` - The consumed route instance.
+    /// - `&mut Stream` - The connection stream (unused).
+    /// - `&mut Context` - The request context used to write the response.
+    ///
+    /// # Returns
+    /// - `Status` - The hook processing result.
     async fn handle(self, _: &mut Stream, ctx: &mut Context) -> Status {
         let state: Arc<AppState> = match get_global_state() {
             Some(state) => state,
