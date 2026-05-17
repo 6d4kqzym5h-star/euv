@@ -1,5 +1,102 @@
 use crate::*;
 
+/// Implementation of `From` trait for converting `usize` address into `&'static SignalInner<T>`.
+impl<T> From<usize> for &'static mut SignalInner<T>
+where
+    T: Clone + 'static,
+{
+    /// Converts a memory address into a mutable reference to `SignalInner<T>`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `SignalInner<T>` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut SignalInner<T>` - A mutable reference to the `SignalInner<T>` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `SignalInner<T>` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &mut *(address as *mut SignalInner<T>) }
+    }
+}
+
+/// Implementation of `From` trait for converting `usize` address into `&'static SignalInner<T>`.
+impl<T> From<usize> for &'static SignalInner<T>
+where
+    T: Clone + 'static,
+{
+    /// Converts a memory address into a reference to `SignalInner<T>`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `SignalInner<T>` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static SignalInner<T>` - A reference to the `SignalInner<T>` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `SignalInner<T>` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &*(address as *const SignalInner<T>) }
+    }
+}
+
+/// Implementation of `From` trait for converting `Signal<T>` into `usize` address.
+impl<T> From<Signal<T>> for usize
+where
+    T: Clone + PartialEq + 'static,
+{
+    /// Converts a `Signal<T>` into its memory address.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<T>` - The signal handle.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The memory address of the signal's inner state.
+    #[inline(always)]
+    fn from(signal: Signal<T>) -> Self {
+        signal.inner as usize
+    }
+}
+
+/// Implementation of `From` trait for converting `usize` address into `Signal<T>`.
+impl<T> From<usize> for Signal<T>
+where
+    T: Clone + PartialEq + 'static,
+{
+    /// Converts a memory address into a `Signal<T>` handle.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address previously obtained from `Signal<T>` conversion.
+    ///
+    /// # Returns
+    ///
+    /// - `Signal<T>` - A signal handle wrapping the pointer at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `SignalInner<T>` instance
+    ///   that was previously converted from a signal handle and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        Signal {
+            inner: address as *mut SignalInner<T>,
+        }
+    }
+}
+
 /// Implementation of SignalInner construction.
 impl<T> SignalInner<T>
 where
@@ -27,7 +124,7 @@ where
 /// Implementation of reactive signal operations.
 impl<T> Signal<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Creates a new `Signal` with the given initial value.
     ///
@@ -49,46 +146,16 @@ where
         }
     }
 
-    /// Creates a new `Signal` from an existing raw pointer.
-    ///
-    /// # Arguments
-    ///
-    /// - `*mut SignalInner<T>` - A raw pointer to the heap-allocated signal inner state.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - A signal handle wrapping the given pointer.
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure the pointer was allocated via `Box::leak`
-    /// and remains valid for the entire program lifetime.
-    pub(crate) fn from_inner(inner: *mut SignalInner<T>) -> Self {
-        Signal { inner }
-    }
-
-    /// Returns the raw pointer to the inner signal state.
-    ///
-    /// # Returns
-    ///
-    /// - `*mut SignalInner<T>` - The raw pointer to the inner signal state.
-    pub(crate) fn get_inner(&self) -> *mut SignalInner<T> {
-        self.inner
-    }
-
-    /// Returns a mutable reference to the inner signal state.
+    /// Returns a mutable reference to the inner signal state by going through
+    /// `usize` intermediate conversion.
     ///
     /// # Returns
     ///
     /// - `&mut SignalInner<T>` - A mutable reference to the inner signal state.
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure no other references to the inner state exist.
-    /// In single-threaded WASM this is always safe.
     #[allow(clippy::mut_from_ref)]
-    fn get_inner_mut(&self) -> &mut SignalInner<T> {
-        unsafe { &mut *self.get_inner() }
+    pub(crate) fn leak_mut(&self) -> &'static mut SignalInner<T> {
+        let address: usize = (*self).into();
+        address.into()
     }
 
     /// Returns the current value of the signal.
@@ -97,7 +164,7 @@ where
     ///
     /// - `T` - The current value of the signal.
     pub fn get(&self) -> T {
-        self.get_inner_mut().get_value().clone()
+        self.leak_mut().get_value().clone()
     }
 
     /// Attempts to return the current value of the signal without panicking.
@@ -107,7 +174,7 @@ where
     /// - `Some(T)` - The current value if the borrow succeeds.
     /// - `None` - If the inner value is already mutably borrowed.
     pub fn try_get(&self) -> Option<T> {
-        Some(self.get_inner_mut().get_value().clone())
+        Some(self.leak_mut().get_value().clone())
     }
 
     /// Subscribes a callback to be invoked when the signal changes.
@@ -119,9 +186,7 @@ where
     where
         F: FnMut() + 'static,
     {
-        self.get_inner_mut()
-            .get_mut_listeners()
-            .push(Box::new(callback));
+        self.leak_mut().get_mut_listeners().push(Box::new(callback));
     }
 
     /// Replaces all listeners with a single new callback.
@@ -139,7 +204,7 @@ where
     where
         F: FnMut() + 'static,
     {
-        let listeners: &mut Vec<Box<dyn FnMut()>> = self.get_inner_mut().get_mut_listeners();
+        let listeners: &mut Vec<Box<dyn FnMut()>> = self.leak_mut().get_mut_listeners();
         listeners.clear();
         listeners.push(Box::new(callback));
     }
@@ -152,7 +217,7 @@ where
     /// arm switch discards old signals, ensuring that stale `setInterval`
     /// closures referencing these signals become entirely harmless.
     pub fn clear_listeners(&self) {
-        let inner: &mut SignalInner<T> = self.get_inner_mut();
+        let inner: &mut SignalInner<T> = self.leak_mut();
         inner.set_alive(false);
         inner.get_mut_listeners().clear();
     }
@@ -171,7 +236,7 @@ where
     ///
     /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
-        let inner: &mut SignalInner<T> = self.get_inner_mut();
+        let inner: &mut SignalInner<T> = self.leak_mut();
         if !inner.get_alive() {
             return;
         }
@@ -203,7 +268,7 @@ where
     ///
     /// - `T` - The new value to assign to the signal.
     pub fn set_silent(&self, value: T) {
-        let inner: &mut SignalInner<T> = self.get_inner_mut();
+        let inner: &mut SignalInner<T> = self.leak_mut();
         if !inner.get_alive() {
             return;
         }
@@ -228,7 +293,7 @@ where
     ///
     /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged or inactive.
     pub fn try_set(&self, value: T) -> bool {
-        let inner: &mut SignalInner<T> = self.get_inner_mut();
+        let inner: &mut SignalInner<T> = self.leak_mut();
         if !inner.get_alive() {
             return false;
         }
@@ -247,7 +312,7 @@ where
 /// Prevents direct dereference of a signal to enforce explicit API usage.
 impl<T> Deref for Signal<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     type Target = T;
 
@@ -260,7 +325,7 @@ where
 /// Prevents direct mutable dereference of a signal to enforce explicit API usage.
 impl<T> DerefMut for Signal<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Panics with a message directing the caller to use `.set()` instead.
     fn deref_mut(&mut self) -> &mut Self::Target {
@@ -271,7 +336,7 @@ where
 /// Clones the signal, sharing the same inner state.
 impl<T> Clone for Signal<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Returns a bitwise copy of this signal.
     fn clone(&self) -> Self {
@@ -282,16 +347,16 @@ where
 /// Copies the signal, sharing the same inner state.
 ///
 /// A `Signal` is just a raw pointer; copying it is a trivial bitwise copy.
-impl<T> Copy for Signal<T> where T: Clone + PartialEq {}
+impl<T> Copy for Signal<T> where T: Clone + PartialEq + 'static {}
 
 /// SAFETY: `SignalCell` is only used in single-threaded WASM contexts.
 /// Concurrent access from multiple threads would be undefined behavior.
-unsafe impl<T> Sync for SignalCell<T> where T: Clone + PartialEq {}
+unsafe impl<T> Sync for SignalCell<T> where T: Clone + PartialEq + 'static {}
 
 /// Implementation of SignalCell construction and access.
 impl<T> SignalCell<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Creates a new empty `SignalCell` with no signal stored.
     ///
@@ -355,7 +420,7 @@ where
 /// Provides a default empty `SignalCell`.
 impl<T> Default for SignalCell<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Returns a default `SignalCell` by delegating to `SignalCell::new`.
     fn default() -> Self {

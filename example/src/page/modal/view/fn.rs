@@ -6,7 +6,7 @@ use crate::*;
 ///
 /// - `VirtualNode` - The modal demo page virtual DOM tree.
 pub fn page_modal() -> VirtualNode {
-    let state: UseModal = UseModal::default();
+    let state: UseModal = use_modal();
     html! {
         div {
             class: c_page_container()
@@ -118,8 +118,16 @@ pub fn page_modal() -> VirtualNode {
                             r#type: "text"
                             placeholder: "Enter your name"
                             value: state.get_modal_name()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(state.get_modal_name())
+                            class: if { state.get_name_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
+                            oninput: modal_on_input_name(state)
+                        }
+                        if { !state.get_name_error().get().is_empty() } {
+                            p {
+                                class: c_field_error_text()
+                                state.get_name_error()
+                            }
+                        } else {
+                            ""
                         }
                     }
                     div {
@@ -132,8 +140,16 @@ pub fn page_modal() -> VirtualNode {
                             r#type: "email"
                             placeholder: "Enter your email"
                             value: state.get_modal_email()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(state.get_modal_email())
+                            class: if { state.get_email_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
+                            oninput: modal_on_input_email(state)
+                        }
+                        if { !state.get_email_error().get().is_empty() } {
+                            p {
+                                class: c_field_error_text()
+                                state.get_email_error()
+                            }
+                        } else {
+                            ""
                         }
                     }
                     if { !state.get_modal_error().get().is_empty() } {

@@ -23,4 +23,8 @@ pub struct UseSelect {
     #[get(pub, type(copy))]
     #[set(pub)]
     pub textarea_content: Signal<String>,
+    /// The textarea validation error message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
+    pub textarea_error: Signal<String>,
 }

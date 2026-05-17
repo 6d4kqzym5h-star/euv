@@ -6,14 +6,161 @@ use crate::*;
 ///
 /// - `UseForm` - The form state.
 pub fn use_form() -> UseForm {
-    UseForm::new(
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(|| true),
-        use_signal(String::new),
-        use_signal(String::new),
-    )
+    UseForm::default()
+}
+
+/// Validates the username field and updates the error signal.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+pub fn validate_form_username(state: UseForm) {
+    let username_value: String = state.get_username().get();
+    if username_value.trim().is_empty() {
+        state
+            .get_username_error()
+            .set("Username is required".to_string());
+    } else {
+        state.get_username_error().set(String::new());
+    }
+}
+
+/// Validates the email field and updates the error signal.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+pub fn validate_form_email(state: UseForm) {
+    let email_value: String = state.get_email().get();
+    if email_value.trim().is_empty() {
+        state.get_email_error().set("Email is required".to_string());
+    } else if !email_value.contains('@') || !email_value.contains('.') {
+        state
+            .get_email_error()
+            .set("Please enter a valid email".to_string());
+    } else {
+        state.get_email_error().set(String::new());
+    }
+}
+
+/// Validates the password field and updates the error signal.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+pub fn validate_form_password(state: UseForm) {
+    let password_value: String = state.get_password().get();
+    if password_value.is_empty() {
+        state
+            .get_password_error()
+            .set("Password is required".to_string());
+    } else if password_value.len() < 6 {
+        state
+            .get_password_error()
+            .set("Password must be at least 6 characters".to_string());
+    } else {
+        state.get_password_error().set(String::new());
+    }
+}
+
+/// Validates the agree checkbox and updates the error signal.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+pub fn validate_form_agree(state: UseForm) {
+    let agree_value: bool = state.get_agree().get();
+    if !agree_value {
+        state
+            .get_agree_error()
+            .set("You must agree to the terms".to_string());
+    } else {
+        state.get_agree_error().set(String::new());
+    }
+}
+
+/// Validates all form fields and updates the error signals.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+pub fn validate_form_all(state: UseForm) {
+    validate_form_username(state);
+    validate_form_email(state);
+    validate_form_password(state);
+    validate_form_agree(state);
+}
+
+/// Creates an input event handler that updates the username and validates it.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler` - An input handler.
+pub fn form_on_input_username(state: UseForm) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
+        if let NativeEvent::Input(input_event) = event {
+            state.get_username().set(input_event.get_value().clone());
+        }
+        validate_form_username(state);
+    })
+}
+
+/// Creates an input event handler that updates the email and validates it.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler` - An input handler.
+pub fn form_on_input_email(state: UseForm) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
+        if let NativeEvent::Input(input_event) = event {
+            state.get_email().set(input_event.get_value().clone());
+        }
+        validate_form_email(state);
+    })
+}
+
+/// Creates an input event handler that updates the password and validates it.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler` - An input handler.
+pub fn form_on_input_password(state: UseForm) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
+        if let NativeEvent::Input(input_event) = event {
+            state.get_password().set(input_event.get_value().clone());
+        }
+        validate_form_password(state);
+    })
+}
+
+/// Creates a change event handler that updates the agree checkbox and validates it.
+///
+/// # Arguments
+///
+/// - `UseForm` - The form state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler` - A change handler.
+pub fn form_on_change_agree(state: UseForm) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
+        if let NativeEvent::Change(change_event) = event {
+            state.get_agree().set(change_event.get_checked());
+        }
+        validate_form_agree(state);
+    })
 }
 
 /// Creates a click event handler that validates and submits the form.
@@ -27,18 +174,23 @@ pub fn use_form() -> UseForm {
 /// - `NativeEventHandler` - A click handler for form submission.
 pub fn form_on_submit(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+        validate_form_all(state);
+        let username_error_value: String = state.get_username_error().get();
+        let email_error_value: String = state.get_email_error().get();
+        let password_error_value: String = state.get_password_error().get();
+        let agree_error_value: String = state.get_agree_error().get();
         let mut validation_errors: Vec<String> = Vec::new();
-        if state.get_username().get().trim().is_empty() {
-            validation_errors.push("Username is required".to_string());
+        if !username_error_value.is_empty() {
+            validation_errors.push(username_error_value);
         }
-        if state.get_email().get().trim().is_empty() {
-            validation_errors.push("Email is required".to_string());
+        if !email_error_value.is_empty() {
+            validation_errors.push(email_error_value);
         }
-        if state.get_password().get().len() < 6 {
-            validation_errors.push("Password must be at least 6 characters".to_string());
+        if !password_error_value.is_empty() {
+            validation_errors.push(password_error_value);
         }
-        if !state.get_agree().get() {
-            validation_errors.push("You must agree to the terms".to_string());
+        if !agree_error_value.is_empty() {
+            validation_errors.push(agree_error_value);
         }
         if validation_errors.is_empty() {
             state.get_errors().set(String::new());

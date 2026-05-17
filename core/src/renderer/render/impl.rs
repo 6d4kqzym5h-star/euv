@@ -2,6 +2,22 @@ use crate::*;
 
 /// Implementation of the virtual DOM renderer.
 impl Renderer {
+    /// Creates a new `Renderer` targeting the given root DOM element.
+    ///
+    /// # Arguments
+    ///
+    /// - `Element` - The root DOM element to render into.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new renderer instance.
+    pub fn new(root: Element) -> Self {
+        Renderer {
+            root,
+            current_tree: None,
+        }
+    }
+
     /// Renders the given virtual DOM tree into the real DOM.
     ///
     /// # Arguments
@@ -354,39 +370,34 @@ impl Renderer {
     ) -> Node {
         let mut hook_context: HookContext = dynamic_node.get_hook_context();
         hook_context.reset_hook_index();
-        let initial_vnode: VirtualNode = with_hook_context(hook_context, || {
-            let mut borrowed: RefMut<dyn FnMut() -> VirtualNode> =
-                dynamic_node.get_render_fn().borrow_mut();
-            borrowed()
-        });
+        let initial_vnode: VirtualNode = with_hook_context(hook_context, || dynamic_node.render());
         let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
-        let render_fn_clone: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-            dynamic_node.get_render_fn().clone();
+        let render_fn_addr: usize = usize::from(dynamic_node);
         let placeholder_clone: Element = placeholder.clone();
         let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
-        let renderer_ref: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
-        let renderer_ref_for_sub: Rc<RefCell<Renderer>> = Rc::clone(&renderer_ref);
-        let render_fn_for_sub: Rc<RefCell<dyn FnMut() -> VirtualNode>> =
-            Rc::clone(&render_fn_clone);
+        let renderer_addr: usize = Box::leak(Box::new(renderer_for_sub)) as *mut Renderer as usize;
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
             hook_context.reset_hook_index();
-            let new_vnode: VirtualNode =
-                with_hook_context(hook_context, || render_fn_for_sub.borrow_mut()());
+            let new_vnode: VirtualNode = with_hook_context(hook_context, || {
+                let inner: &mut RenderFnInner = render_fn_addr.into();
+                (inner.render_fn)()
+            });
             if skip_equal {
-                let renderer: Ref<'_, Renderer> = renderer_ref_for_sub.borrow();
+                let renderer: &Renderer = renderer_addr.into();
                 if let Some(old_vnode) = renderer.try_get_current_tree() {
-                    let new_unwrapped: VirtualNode = renderer.unwrap_component(&new_vnode);
+                    let new_unwrapped: VirtualNode = Renderer::unwrap_component_static(&new_vnode);
                     if old_vnode == &new_unwrapped {
                         return;
                     }
                 }
             }
-            renderer_ref_for_sub.borrow_mut().render(new_vnode);
+            let renderer: &mut Renderer = renderer_addr.into();
+            renderer.render(new_vnode);
         }));
         register_dynamic_listener(dynamic_id, closure);
         initial_dom
@@ -434,6 +445,46 @@ impl Renderer {
         }
     }
 
+    /// Static version of `unwrap_component` that does not require `&self`.
+    ///
+    /// Used inside closures where only a static method is available.
+    fn unwrap_component_static(node: &VirtualNode) -> VirtualNode {
+        match node {
+            VirtualNode::Element {
+                tag: Tag::Component(_),
+                children,
+                ..
+            } => {
+                if children.len() == 1 {
+                    Self::unwrap_component_static(&children[0])
+                } else {
+                    VirtualNode::Fragment(children.clone())
+                }
+            }
+            VirtualNode::Element {
+                tag,
+                attributes,
+                children,
+                key,
+            } => {
+                let unwrapped_children: Vec<VirtualNode> =
+                    children.iter().map(Self::unwrap_component_static).collect();
+                VirtualNode::Element {
+                    tag: tag.clone(),
+                    attributes: attributes.clone(),
+                    children: unwrapped_children,
+                    key: key.clone(),
+                }
+            }
+            VirtualNode::Fragment(children) => {
+                let unwrapped_children: Vec<VirtualNode> =
+                    children.iter().map(Self::unwrap_component_static).collect();
+                VirtualNode::Fragment(unwrapped_children)
+            }
+            other => other.clone(),
+        }
+    }
+
     /// Assigns a new `data-euv-dynamic-id` to a newly created DynamicNode placeholder.
     fn assign_dynamic_id(placeholder: &Element) -> usize {
         let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
@@ -457,20 +508,21 @@ impl Renderer {
         };
         let event_name: String = handler.get_event_name().clone();
         let key: (usize, String) = (euv_id, event_name.clone());
-        let registry: &mut HashMap<(usize, String), Rc<RefCell<Option<NativeEventHandler>>>> =
-            get_handler_registry();
-        if let Some(existing_wrapper) = registry.get(&key) {
-            let mut wrapper: RefMut<Option<NativeEventHandler>> = existing_wrapper.borrow_mut();
-            *wrapper = Some(handler.clone());
+        let registry: &mut HashMap<(usize, String), HandlerEntry> = get_handler_registry();
+        if let Some(existing_ptr) = registry.get(&key) {
+            let existing: &mut HandlerSlot = (*existing_ptr as usize).into();
+            existing.handler = Some(handler.clone());
         } else {
-            let handler_wrapper: Rc<RefCell<Option<NativeEventHandler>>> =
-                Rc::new(RefCell::new(Some(handler.clone())));
-            let wrapper_for_closure: Rc<RefCell<Option<NativeEventHandler>>> =
-                Rc::clone(&handler_wrapper);
+            let handler_slot: Box<HandlerSlot> = Box::new(HandlerSlot {
+                handler: Some(handler.clone()),
+            });
+            let handler_entry: HandlerEntry = Box::leak(handler_slot) as *mut HandlerSlot;
+            let handler_addr: usize = handler_entry as usize;
             let event_name_for_closure: String = event_name.clone();
             let closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |event: Event| {
-                    if let Some(active_handler) = wrapper_for_closure.borrow_mut().as_ref() {
+                    let slot: &mut HandlerSlot = handler_addr.into();
+                    if let Some(active_handler) = slot.handler.as_ref() {
                         let euv_event: NativeEvent =
                             convert_web_event(&event, &event_name_for_closure);
                         active_handler.handle(euv_event);
@@ -481,7 +533,81 @@ impl Renderer {
                 .add_event_listener_with_callback(&event_name, closure.as_ref().unchecked_ref())
                 .unwrap();
             closure.forget();
-            registry.insert(key, handler_wrapper);
+            registry.insert(key, handler_entry);
         }
+    }
+}
+
+/// Implementation of Renderer accessor methods.
+impl Renderer {
+    /// Returns a reference to the root element.
+    ///
+    /// # Returns
+    ///
+    /// - `&Element` - The root element.
+    pub(crate) fn get_root(&self) -> &Element {
+        &self.root
+    }
+
+    /// Returns a reference to the current virtual DOM tree.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&VirtualNode>` - The current tree, if any.
+    pub(crate) fn try_get_current_tree(&self) -> Option<&VirtualNode> {
+        self.current_tree.as_ref()
+    }
+
+    /// Sets the current virtual DOM tree.
+    ///
+    /// # Arguments
+    ///
+    /// - `Option<VirtualNode>` - The new current tree.
+    pub(crate) fn set_current_tree(&mut self, tree: Option<VirtualNode>) {
+        self.current_tree = tree;
+    }
+}
+
+/// Implementation of `From` trait for converting `usize` address into `&'static mut Renderer`.
+impl From<usize> for &'static mut Renderer {
+    /// Converts a memory address into a mutable reference to `Renderer`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `Renderer` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut Renderer` - A mutable reference to the `Renderer` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `Renderer` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &mut *(address as *mut Renderer) }
+    }
+}
+
+/// Implementation of `From` trait for converting `usize` address into `&'static Renderer`.
+impl From<usize> for &'static Renderer {
+    /// Converts a memory address into a reference to `Renderer`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `Renderer` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static Renderer` - A reference to the `Renderer` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `Renderer` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &*(address as *const Renderer) }
     }
 }

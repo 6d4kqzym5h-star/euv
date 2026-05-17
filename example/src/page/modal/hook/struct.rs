@@ -36,4 +36,12 @@ pub struct UseModal {
     #[get(pub, type(copy))]
     #[set(pub)]
     pub modal_error: Signal<String>,
+    /// The modal form name validation error message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
+    pub name_error: Signal<String>,
+    /// The modal form email validation error message.
+    #[get(pub, type(copy))]
+    #[set(pub)]
+    pub email_error: Signal<String>,
 }

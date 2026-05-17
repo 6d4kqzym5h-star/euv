@@ -1,5 +1,49 @@
 use crate::*;
 
+/// Implementation of `From` trait for converting `usize` address into `&'static mut RenderFnInner`.
+impl From<usize> for &'static mut RenderFnInner {
+    /// Converts a memory address into a mutable reference to `RenderFnInner`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `RenderFnInner` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut RenderFnInner` - A mutable reference to the `RenderFnInner` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `RenderFnInner` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &mut *(address as *mut RenderFnInner) }
+    }
+}
+
+/// Implementation of `From` trait for converting `usize` address into `&'static RenderFnInner`.
+impl From<usize> for &'static RenderFnInner {
+    /// Converts a memory address into a reference to `RenderFnInner`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `RenderFnInner` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static RenderFnInner` - A reference to the `RenderFnInner` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `RenderFnInner` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &*(address as *const RenderFnInner) }
+    }
+}
+
 /// Visual equality comparison for text nodes.
 ///
 /// Only compares the text content; the backing signal is not considered
@@ -88,15 +132,20 @@ impl Default for DynamicNode {
     ///
     /// - `Self` - A default dynamic node.
     fn default() -> Self {
+        let inner: Box<RenderFnInner> = Box::new(RenderFnInner {
+            render_fn: Box::new(|| VirtualNode::Empty),
+        });
         let node: DynamicNode = DynamicNode {
-            render_fn: Rc::new(RefCell::new(|| VirtualNode::Empty)),
+            render_fn: Box::leak(inner) as *mut RenderFnInner,
             hook_context: HookContext::default(),
         };
         node
     }
 }
 
-/// Clones a `DynamicNode` by cloning its `HookContext` (Copy) and `render_fn` (Rc).
+/// Copies a `DynamicNode` by bitwise copy of its raw pointer and hook context.
+///
+/// A `DynamicNode` is just raw pointers; copying is a trivial bitwise copy.
 impl Clone for DynamicNode {
     /// Returns a clone of this dynamic node sharing the same render function.
     ///
@@ -104,10 +153,63 @@ impl Clone for DynamicNode {
     ///
     /// - `Self` - A cloned dynamic node.
     fn clone(&self) -> Self {
-        DynamicNode {
-            render_fn: Rc::clone(self.get_render_fn()),
-            hook_context: self.get_hook_context(),
-        }
+        *self
+    }
+}
+
+/// Copies a `DynamicNode` by bitwise copy of its raw pointer and hook context.
+///
+/// A `DynamicNode` is just raw pointers; copying is a trivial bitwise copy.
+impl Copy for DynamicNode {}
+
+/// Implementation of `From` trait for converting `&DynamicNode` into `usize` address.
+impl From<&DynamicNode> for usize {
+    /// Converts a reference to `DynamicNode` into its render_fn pointer address.
+    ///
+    /// # Arguments
+    ///
+    /// - `&DynamicNode` - The reference to the dynamic node.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The memory address of the render_fn pointer.
+    #[inline(always)]
+    fn from(node: &DynamicNode) -> Self {
+        node.render_fn as usize
+    }
+}
+
+/// Implementation of dynamic node accessor methods.
+impl DynamicNode {
+    /// Returns a mutable reference to the inner render closure state by going
+    /// through `usize` intermediate conversion.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut RenderFnInner` - A mutable reference to the inner render closure state.
+    #[allow(clippy::mut_from_ref)]
+    pub(crate) fn leak_mut(&self) -> &'static mut RenderFnInner {
+        let address: usize = self.into();
+        address.into()
+    }
+
+    /// Returns the hook context for this dynamic node.
+    ///
+    /// # Returns
+    ///
+    /// - `HookContext` - The hook context (Copy).
+    pub(crate) fn get_hook_context(&self) -> HookContext {
+        self.hook_context
+    }
+
+    /// Invokes the render closure and returns the produced virtual node.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode` - The virtual node produced by the render closure.
+    pub fn render(&self) -> VirtualNode {
+        let inner: &mut RenderFnInner = self.leak_mut();
+        (inner.render_fn)()
     }
 }
 

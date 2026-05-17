@@ -21,16 +21,18 @@ where
     F: FnMut() -> VirtualNode + 'static,
 {
     let hook_context: HookContext = create_hook_context();
-    let render_fn: Rc<RefCell<dyn FnMut() -> VirtualNode>> = {
-        let mut hook_context: HookContext = hook_context;
-        Rc::new(RefCell::new(move || {
-            hook_context.reset_hook_index();
+    let mut hook_context_for_closure: HookContext = hook_context;
+    let inner: Box<RenderFnInner> = Box::new(RenderFnInner {
+        render_fn: Box::new(move || {
+            hook_context_for_closure.reset_hook_index();
             render_fn()
-        }))
+        }),
+    });
+    let render_fn_addr: usize = Box::leak(inner) as *mut RenderFnInner as usize;
+    let dynamic_node: DynamicNode = DynamicNode {
+        render_fn: render_fn_addr as *mut RenderFnInner,
+        hook_context,
     };
-    let mut dynamic_node: DynamicNode = DynamicNode::default();
-    dynamic_node.set_render_fn(render_fn);
-    dynamic_node.set_hook_context(hook_context);
     VirtualNode::Dynamic(dynamic_node)
 }
 
@@ -57,15 +59,17 @@ where
     F: FnMut(&mut HookContext) -> VirtualNode + 'static,
 {
     let hook_context: HookContext = create_hook_context();
-    let render_fn: Rc<RefCell<dyn FnMut() -> VirtualNode>> = {
-        let mut hook_context: HookContext = hook_context;
-        Rc::new(RefCell::new(move || {
-            hook_context.reset_hook_index();
-            render_fn(&mut hook_context)
-        }))
+    let mut hook_context_for_closure: HookContext = hook_context;
+    let inner: Box<RenderFnInner> = Box::new(RenderFnInner {
+        render_fn: Box::new(move || {
+            hook_context_for_closure.reset_hook_index();
+            render_fn(&mut hook_context_for_closure)
+        }),
+    });
+    let render_fn_addr: usize = Box::leak(inner) as *mut RenderFnInner as usize;
+    let dynamic_node: DynamicNode = DynamicNode {
+        render_fn: render_fn_addr as *mut RenderFnInner,
+        hook_context,
     };
-    let mut dynamic_node: DynamicNode = DynamicNode::default();
-    dynamic_node.set_render_fn(render_fn);
-    dynamic_node.set_hook_context(hook_context);
     VirtualNode::Dynamic(dynamic_node)
 }

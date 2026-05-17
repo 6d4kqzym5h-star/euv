@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Provides a default empty modal state with all signals initialized to their zero values.
+/// Provides a default empty modal state with all signals initialized.
 impl Default for UseModal {
     fn default() -> Self {
         UseModal {
@@ -12,6 +12,8 @@ impl Default for UseModal {
             modal_email: use_signal(String::new),
             modal_submitted: use_signal(String::new),
             modal_error: use_signal(String::new),
+            name_error: use_signal(String::new),
+            email_error: use_signal(String::new),
         }
     }
 }

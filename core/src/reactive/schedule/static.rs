@@ -22,10 +22,9 @@ pub(crate) static SUPPRESS_SCHEDULE: AtomicBool = AtomicBool::new(false);
 pub static DEFAULT_HOOK_CONTEXT: HookContextCell =
     HookContextCell(UnsafeCell::new(HookContextInner::new()));
 
-/// Global pointer to the currently active `HookContextInner`.
+/// Global `usize` address of the currently active `HookContextInner`.
 ///
 /// Set by the renderer before invoking a `DynamicNode`'s render function,
-/// and restored to the default context afterwards. Stores a raw pointer
-/// to the inner state; callers use `get_current_hook_context` to obtain
-/// a `HookContext` handle.
-pub static mut CURRENT_HOOK_CONTEXT: &mut HookContextInner = DEFAULT_HOOK_CONTEXT.get_inner();
+/// and restored to the default context afterwards. Callers use
+/// `get_current_hook_context` to obtain a `HookContext` handle.
+pub static mut CURRENT_HOOK_CONTEXT: usize = 0;

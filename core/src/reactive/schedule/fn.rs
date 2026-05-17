@@ -153,7 +153,7 @@ where
 {
     #[cfg(target_arch = "wasm32")]
     {
-        let signal_key: usize = attr_signal.get_inner() as usize;
+        let signal_key: usize = Into::<usize>::into(attr_signal);
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             let new_value: String = compute();
             attr_signal.set(new_value);
@@ -190,4 +190,13 @@ pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> Att
         }
     });
     AttributeValue::Signal(string_signal)
+}
+
+/// Initializes `CURRENT_HOOK_CONTEXT` to point to `DEFAULT_HOOK_CONTEXT`.
+///
+/// Must be called once at program startup before any hook context operations.
+pub(crate) fn init_current_hook_context() {
+    unsafe {
+        CURRENT_HOOK_CONTEXT = DEFAULT_HOOK_CONTEXT.get_inner() as *mut HookContextInner as usize;
+    }
 }

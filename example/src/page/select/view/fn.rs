@@ -128,11 +128,19 @@ pub fn page_select() -> VirtualNode {
                         "Your feedback"
                     }
                     textarea {
-                        class: c_textarea_input()
+                        class: if { state.get_textarea_error().get().is_empty() } { c_textarea_input() } else { c_form_input_error() }
                         placeholder: "Share your thoughts..."
                         value: state.get_textarea_content()
-                        oninput: on_input_value(state.get_textarea_content())
+                        oninput: select_on_input_textarea(state)
                         rows: "4"
+                    }
+                    if { !state.get_textarea_error().get().is_empty() } {
+                        p {
+                            class: c_field_error_text()
+                            state.get_textarea_error()
+                        }
+                    } else {
+                        ""
                     }
                 }
                 div {

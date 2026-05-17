@@ -1,27 +1,102 @@
 use crate::*;
 
-/// Implementation of hook context lifecycle and hook index management.
-impl HookContext {
-    /// Creates a new `HookContext` from an existing raw pointer.
+/// Implementation of `From` trait for converting `usize` address into `&'static mut HookContextInner`.
+impl From<usize> for &'static mut HookContextInner {
+    /// Converts a memory address into a mutable reference to `HookContextInner`.
     ///
     /// # Arguments
     ///
-    /// - `*mut HookContextInner` - A raw pointer to the heap-allocated hook context inner state.
+    /// - `usize` - The memory address of the `HookContextInner` instance.
     ///
     /// # Returns
     ///
-    /// - `Self` - A hook context handle wrapping the given pointer.
-    pub fn from_inner(inner: *mut HookContextInner) -> Self {
-        HookContext { inner }
+    /// - `&'static mut HookContextInner` - A mutable reference to the `HookContextInner` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `HookContextInner` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &mut *(address as *mut HookContextInner) }
     }
+}
 
-    /// Returns a mutable reference to the inner hook context state.
+/// Implementation of `From` trait for converting `usize` address into `&'static HookContextInner`.
+impl From<usize> for &'static HookContextInner {
+    /// Converts a memory address into a reference to `HookContextInner`.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address of the `HookContextInner` instance.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static HookContextInner` - A reference to the `HookContextInner` at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `HookContextInner` instance
+    ///   that was previously converted from a reference and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        unsafe { &*(address as *const HookContextInner) }
+    }
+}
+
+/// Implementation of `From` trait for converting `HookContext` into `usize` address.
+impl From<HookContext> for usize {
+    /// Converts a `HookContext` into its memory address.
+    ///
+    /// # Arguments
+    ///
+    /// - `HookContext` - The hook context handle.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The memory address of the hook context's inner state.
+    #[inline(always)]
+    fn from(context: HookContext) -> Self {
+        context.inner as usize
+    }
+}
+
+/// Implementation of `From` trait for converting `usize` address into `HookContext`.
+impl From<usize> for HookContext {
+    /// Converts a memory address into a `HookContext` handle.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The memory address previously obtained from `HookContext` conversion.
+    ///
+    /// # Returns
+    ///
+    /// - `HookContext` - A hook context handle wrapping the pointer at the given address.
+    ///
+    /// # Safety
+    ///
+    /// - The address is guaranteed to be a valid `HookContextInner` instance
+    ///   that was previously converted from a hook context handle and is managed by the runtime.
+    #[inline(always)]
+    fn from(address: usize) -> Self {
+        HookContext {
+            inner: address as *mut HookContextInner,
+        }
+    }
+}
+
+/// Implementation of hook context lifecycle and hook index management.
+impl HookContext {
+    /// Returns a mutable reference to the inner hook context state by going
+    /// through `usize` intermediate conversion.
     ///
     /// # Returns
     ///
     /// - `&'static mut HookContextInner` - A mutable reference to the inner state.
-    pub(crate) fn get_inner(&self) -> &'static mut HookContextInner {
-        unsafe { &mut *self.inner }
+    #[allow(clippy::mut_from_ref)]
+    pub fn leak_mut(&self) -> &'static mut HookContextInner {
+        let address: usize = (*self).into();
+        address.into()
     }
 
     /// Resets the hook index for a new render cycle.
@@ -29,7 +104,7 @@ impl HookContext {
     /// Sets the hook index back to `0` so that subsequent hook calls
     /// re-associate with their stored state by call order.
     pub fn reset_hook_index(&mut self) {
-        self.get_inner().set_hook_index(0);
+        self.leak_mut().set_hook_index(0);
     }
 
     /// Notifies the hook context that a match arm is being entered.
@@ -40,7 +115,7 @@ impl HookContext {
     ///
     /// - `bool` - The new arm changed state.
     pub fn set_arm_changed(&mut self, changed: bool) {
-        let inner: &mut HookContextInner = self.get_inner();
+        let inner: &mut HookContextInner = self.leak_mut();
         if inner.get_arm_changed() != changed {
             let cleanups: Vec<Box<dyn FnOnce()>> = take(inner.get_mut_cleanups());
             for cleanup in cleanups {
@@ -71,7 +146,9 @@ impl Default for HookContext {
     /// Returns a default `HookContext` by allocating a new empty inner via `Box::leak`.
     fn default() -> Self {
         let boxed: Box<HookContextInner> = Box::default();
-        HookContext::from_inner(Box::leak(boxed) as *mut HookContextInner)
+        let ptr: *mut HookContextInner = Box::leak(boxed) as *mut HookContextInner;
+        let address: usize = ptr as usize;
+        address.into()
     }
 }
 

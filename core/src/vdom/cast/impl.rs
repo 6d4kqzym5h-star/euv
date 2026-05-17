@@ -161,8 +161,11 @@ where
     ///
     /// - `VirtualNode` - A dynamic virtual node wrapping this closure.
     fn into_node(self) -> VirtualNode {
+        let inner: Box<RenderFnInner> = Box::new(RenderFnInner {
+            render_fn: Box::new(self),
+        });
         VirtualNode::Dynamic(DynamicNode {
-            render_fn: Rc::new(RefCell::new(self)),
+            render_fn: Box::leak(inner) as *mut RenderFnInner,
             hook_context: crate::reactive::create_hook_context(),
         })
     }
@@ -261,7 +264,9 @@ where
         let initial: String = signal.get().to_string();
         let string_signal: Signal<String> = {
             let boxed: Box<SignalInner<String>> = Box::new(SignalInner::new(initial.clone()));
-            Signal::from_inner(Box::leak(boxed) as *mut SignalInner<String>)
+            let ptr: *mut SignalInner<String> = Box::leak(boxed) as *mut SignalInner<String>;
+            let address: usize = ptr as usize;
+            address.into()
         };
         let source_signal: Signal<T> = *self;
         let string_signal_clone: Signal<String> = string_signal;

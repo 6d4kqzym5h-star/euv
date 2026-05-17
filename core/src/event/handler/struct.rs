@@ -1,19 +1,30 @@
 use crate::*;
 
+/// Inner storage for a native event callback closure.
+///
+/// Boxes a `dyn FnMut(NativeEvent)` so it can be stored behind a raw pointer.
+/// Allocated via `Box::leak` and lives for the remainder of the program.
+pub(crate) struct NativeEventCallbackInner {
+    /// The boxed callback closure.
+    pub(crate) callback: Box<dyn FnMut(NativeEvent)>,
+}
+
 /// A wrapper around an event callback.
 ///
-/// Stores the event name and a reference-counted mutable closure.
-#[derive(CustomDebug, Data)]
+/// Stores the event name and a raw pointer to the heap-allocated callback closure.
+///
+/// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
+/// entire program. This is safe in single-threaded WASM contexts where no
+/// concurrent access can occur.
+#[derive(CustomDebug)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
-    #[get(pub(crate))]
-    #[set(pub(crate))]
     pub(crate) event_name: String,
-    /// The callback function to invoke when the event fires.
+    /// Raw pointer to the heap-allocated callback closure inner state.
+    ///
+    /// SAFETY: Allocated via `Box::leak`, valid for the program lifetime.
     #[debug(skip)]
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) callback: Rc<RefCell<dyn FnMut(NativeEvent)>>,
+    pub(crate) callback: *mut NativeEventCallbackInner,
 }
 
 /// Data associated with a mouse event.

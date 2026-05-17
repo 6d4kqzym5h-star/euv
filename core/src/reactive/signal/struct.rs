@@ -36,7 +36,7 @@ where
 #[derive(Debug)]
 pub struct Signal<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Raw pointer to the heap-allocated signal inner state.
     pub(crate) inner: *mut SignalInner<T>,
@@ -50,7 +50,7 @@ where
 /// undefined behavior.
 pub struct SignalCell<T>
 where
-    T: Clone + PartialEq,
+    T: Clone + PartialEq + 'static,
 {
     /// Interior-mutable storage for an optional signal handle.
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,

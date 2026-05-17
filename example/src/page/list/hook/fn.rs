@@ -19,6 +19,44 @@ pub fn use_todo_list() -> UseTodoList {
     )
 }
 
+/// Validates the new item input and updates the error signal.
+///
+/// # Arguments
+///
+/// - `UseTodoList` - The todo list state.
+pub fn validate_todo_new_item(state: UseTodoList) {
+    let new_item_value: String = state.get_new_item().get();
+    if new_item_value.trim().is_empty() {
+        state
+            .get_add_error()
+            .set("Please enter an item name.".to_string());
+    } else if new_item_value.trim().len() > 50 {
+        state
+            .get_add_error()
+            .set("Item name is too long (max 50 chars).".to_string());
+    } else {
+        state.get_add_error().set(String::new());
+    }
+}
+
+/// Creates an input event handler that updates the new item and validates it.
+///
+/// # Arguments
+///
+/// - `UseTodoList` - The todo list state.
+///
+/// # Returns
+///
+/// - `NativeEventHandler` - An input handler.
+pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
+    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
+        if let NativeEvent::Input(input_event) = event {
+            state.get_new_item().set(input_event.get_value().clone());
+        }
+        validate_todo_new_item(state);
+    })
+}
+
 /// Creates a click event handler that adds a new item to the list.
 ///
 /// # Arguments
@@ -30,21 +68,14 @@ pub fn use_todo_list() -> UseTodoList {
 /// - `NativeEventHandler` - A click handler to add a new item.
 pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let text: String = state.get_new_item().get();
-        if text.trim().is_empty() {
-            state
-                .get_add_error()
-                .set("Please enter an item name.".to_string());
-        } else if text.trim().len() > 50 {
-            state
-                .get_add_error()
-                .set("Item name is too long (max 50 chars).".to_string());
-        } else {
+        validate_todo_new_item(state);
+        let add_error_value: String = state.get_add_error().get();
+        if add_error_value.is_empty() {
+            let text: String = state.get_new_item().get();
             let mut current: Vec<String> = state.get_items().get();
             current.push(text.trim().to_string());
             state.get_items().set(current);
             state.get_new_item().set(String::new());
-            state.get_add_error().set(String::new());
         }
     })
 }

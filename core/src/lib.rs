@@ -10,19 +10,18 @@ mod vdom;
 
 pub use {event::*, reactive::*, renderer::*, vdom::*};
 
-#[cfg(test)]
-use std::cell::Cell;
 use std::{
     any::Any,
     borrow::Cow,
-    cell::{Ref, RefCell, RefMut, UnsafeCell},
+    cell::UnsafeCell,
     collections::HashMap,
     mem::take,
     ops::{Deref, DerefMut},
     ptr::null_mut,
-    rc::Rc,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
+#[cfg(test)]
+use std::{cell::Cell, rc::Rc};
 
 #[cfg(target_arch = "wasm32")]
 use {

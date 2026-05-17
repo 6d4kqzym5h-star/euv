@@ -9,7 +9,12 @@ use crate::*;
 ///
 /// - `HookContext` - The currently active hook context.
 pub fn get_current_hook_context() -> HookContext {
-    unsafe { HookContext::from_inner(CURRENT_HOOK_CONTEXT) }
+    let address: usize = unsafe { CURRENT_HOOK_CONTEXT };
+    if address == 0 {
+        init_current_hook_context();
+    }
+    let current: usize = unsafe { CURRENT_HOOK_CONTEXT };
+    current.into()
 }
 
 /// Runs a closure with the given `HookContext` set as the active context.
@@ -30,9 +35,9 @@ pub fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    let previous: &'static mut HookContextInner = unsafe { CURRENT_HOOK_CONTEXT };
+    let previous: usize = unsafe { CURRENT_HOOK_CONTEXT };
     unsafe {
-        CURRENT_HOOK_CONTEXT = context.get_inner();
+        CURRENT_HOOK_CONTEXT = Into::<usize>::into(context);
     }
     let result: R = f();
     unsafe {
@@ -52,7 +57,9 @@ where
 /// - `HookContext` - A handle to the newly allocated hook context.
 pub fn create_hook_context() -> HookContext {
     let ctx: Box<HookContextInner> = Box::default();
-    HookContext::from_inner(Box::leak(ctx) as *mut HookContextInner)
+    let ptr: *mut HookContextInner = Box::leak(ctx) as *mut HookContextInner;
+    let address: usize = ptr as usize;
+    address.into()
 }
 
 /// Creates a new reactive signal with the given initial value.
@@ -77,7 +84,7 @@ where
     F: FnOnce() -> T,
 {
     let ctx: HookContext = get_current_hook_context();
-    let ctx_inner: &mut HookContextInner = ctx.get_inner();
+    let ctx_inner: &mut HookContextInner = ctx.leak_mut();
     let index: usize = ctx_inner.get_hook_index();
     ctx_inner.set_hook_index(index + 1);
     if index < ctx_inner.get_hooks().len()
