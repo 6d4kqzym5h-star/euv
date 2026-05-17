@@ -6,6 +6,15 @@ impl Style {
     ///
     /// Property names are automatically converted from snake_case to kebab-case
     /// (e.g., `flex_direction` becomes `flex-direction`).
+    ///
+    /// # Arguments
+    ///
+    /// - `N` - The property name (snake_case will be converted to kebab-case).
+    /// - `V` - The property value.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - This style with the property added.
     pub fn property<N, V>(mut self, name: N, value: V) -> Self
     where
         N: AsRef<str>,
@@ -19,6 +28,10 @@ impl Style {
     }
 
     /// Converts the style to a CSS string.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The CSS string representation.
     pub fn to_css_string(&self) -> String {
         self.get_properties()
             .iter()
@@ -30,6 +43,11 @@ impl Style {
 
 /// Provides a default empty style.
 impl Default for Style {
+    /// Returns a default `Style` with no properties.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - An empty style.
     fn default() -> Self {
         Self::new(Vec::new())
     }

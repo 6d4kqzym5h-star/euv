@@ -6,6 +6,14 @@ where
     T: Clone,
 {
     /// Creates a new signal inner with the given initial value and no listeners.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - The initial value of the signal inner.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new signal inner with the given value and empty listeners.
     pub fn new(value: T) -> Self {
         let inner: SignalInner<T> = SignalInner {
             value,
@@ -33,7 +41,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `Signal<T>` - A handle to the newly created reactive signal.
+    /// - `Self` - A handle to the newly created reactive signal.
     pub fn new(value: T) -> Self {
         let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(value));
         Signal {
@@ -42,6 +50,14 @@ where
     }
 
     /// Creates a new `Signal` from an existing raw pointer.
+    ///
+    /// # Arguments
+    ///
+    /// - `*mut SignalInner<T>` - A raw pointer to the heap-allocated signal inner state.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A signal handle wrapping the given pointer.
     ///
     /// # Safety
     ///
@@ -52,6 +68,10 @@ where
     }
 
     /// Returns a mutable reference to the inner signal state.
+    ///
+    /// # Returns
+    ///
+    /// - `&mut SignalInner<T>` - A mutable reference to the inner signal state.
     ///
     /// # Safety
     ///
@@ -122,6 +142,10 @@ where
     /// called. This is used during hook context cleanup when a `match`
     /// arm switch discards old signals, ensuring that stale `setInterval`
     /// closures referencing these signals become entirely harmless.
+    ///
+    /// # Arguments
+    ///
+    /// No arguments beyond `&self`.
     pub fn clear_listeners(&self) {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
         inner.set_alive(false);
@@ -177,6 +201,10 @@ where
     ///
     /// If the signal has been marked as inactive (via `clear_listeners()`),
     /// this method is a complete no-op.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - The new value to assign to the signal.
     pub fn set_silent(&self, value: T) {
         let inner: &mut SignalInner<T> = self.get_inner_mut();
         if !inner.get_alive() {
@@ -226,6 +254,11 @@ where
 {
     type Target = T;
 
+    /// Panics with a message directing the caller to use `.get()` instead.
+    ///
+    /// # Returns
+    ///
+    /// Never returns; always panics.
     fn deref(&self) -> &Self::Target {
         panic!("Signal does not support direct dereference; use .get() instead");
     }
@@ -236,6 +269,11 @@ impl<T> DerefMut for Signal<T>
 where
     T: Clone + PartialEq,
 {
+    /// Panics with a message directing the caller to use `.set()` instead.
+    ///
+    /// # Returns
+    ///
+    /// Never returns; always panics.
     fn deref_mut(&mut self) -> &mut Self::Target {
         panic!("Signal does not support direct dereference; use .set() instead");
     }
@@ -246,6 +284,11 @@ impl<T> Clone for Signal<T>
 where
     T: Clone + PartialEq,
 {
+    /// Returns a bitwise copy of this signal.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A copy sharing the same inner pointer.
     fn clone(&self) -> Self {
         *self
     }
@@ -260,6 +303,14 @@ impl<T> Copy for Signal<T> where T: Clone + PartialEq {}
 impl HookContext {
     /// Creates a new `HookContext` from an existing raw pointer.
     ///
+    /// # Arguments
+    ///
+    /// - `*mut HookContextInner` - A raw pointer to the heap-allocated hook context inner state.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A hook context handle wrapping the given pointer.
+    ///
     /// # Safety
     ///
     /// The caller must ensure the pointer was allocated via `Box::leak`
@@ -269,6 +320,10 @@ impl HookContext {
     }
 
     /// Returns a mutable reference to the inner hook context state.
+    ///
+    /// # Returns
+    ///
+    /// - `&mut HookContextInner` - A mutable reference to the inner hook context state.
     ///
     /// # Safety
     ///
@@ -280,6 +335,10 @@ impl HookContext {
     }
 
     /// Returns the current hook index.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The current hook index.
     pub fn get_hook_index(&self) -> usize {
         self.get_inner_mut().get_hook_index()
     }
@@ -294,21 +353,36 @@ impl HookContext {
     }
 
     /// Returns a reference to the hooks storage.
+    ///
+    /// # Returns
+    ///
+    /// - `&Vec<Box<dyn Any>>` - A reference to the hooks storage.
     pub fn get_hooks(&self) -> &Vec<Box<dyn Any>> {
         self.get_inner_mut().get_hooks()
     }
 
     /// Returns a mutable reference to the hooks storage.
+    ///
+    /// # Returns
+    ///
+    /// - `&mut Vec<Box<dyn Any>>` - A mutable reference to the hooks storage.
     pub fn get_mut_hooks(&mut self) -> &mut Vec<Box<dyn Any>> {
         self.get_inner_mut().get_mut_hooks()
     }
 
     /// Returns a mutable reference to the cleanup closures storage.
+    ///
+    /// # Returns
+    ///
+    /// - `&mut Vec<Box<dyn FnOnce()>>` - A mutable reference to the cleanup closures storage.
     pub fn get_mut_cleanups(&mut self) -> &mut Vec<Box<dyn FnOnce()>> {
         self.get_inner_mut().get_mut_cleanups()
     }
 
     /// Resets the hook index for a new render cycle.
+    ///
+    /// Sets the hook index back to `0` so that subsequent hook calls
+    /// re-associate with their stored state by call order.
     pub fn reset_hook_index(&mut self) {
         self.set_hook_index(0_usize);
     }
@@ -316,6 +390,10 @@ impl HookContext {
     /// Notifies the hook context that a match arm is being entered.
     /// Toggles the `arm_changed` flag; if it differs from the previous value,
     /// the hooks array is cleared to prevent signal leakage between arms.
+    ///
+    /// # Arguments
+    ///
+    /// - `bool` - The new arm changed state.
     pub fn set_arm_changed(&mut self, changed: bool) {
         let inner: &mut HookContextInner = self.get_inner_mut();
         if inner.get_arm_changed() != changed {
@@ -332,6 +410,11 @@ impl HookContext {
 
 /// Clones the hook context, sharing the same inner state.
 impl Clone for HookContext {
+    /// Returns a bitwise copy of this hook context.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A copy sharing the same inner pointer.
     fn clone(&self) -> Self {
         *self
     }
@@ -344,6 +427,11 @@ impl Copy for HookContext {}
 
 /// Provides a default empty hook context.
 impl Default for HookContext {
+    /// Returns a default `HookContext` by allocating a new empty inner via `Box::leak`.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A default hook context with empty state.
     fn default() -> Self {
         let boxed: Box<HookContextInner> = Box::default();
         HookContext::from_inner(Box::leak(boxed) as *mut HookContextInner)
@@ -353,6 +441,10 @@ impl Default for HookContext {
 /// Implementation of HookContextInner construction.
 impl HookContextInner {
     /// Creates a new empty hook context inner.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new hook context inner with empty hooks and cleanups.
     pub const fn new() -> Self {
         HookContextInner {
             hooks: Vec::new(),
@@ -365,6 +457,11 @@ impl HookContextInner {
 
 /// Provides a default empty hook context inner.
 impl Default for HookContextInner {
+    /// Returns a default `HookContextInner` by delegating to `HookContextInner::new`.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A default hook context inner.
     fn default() -> Self {
         Self::new()
     }
@@ -383,7 +480,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `SignalCell<T>` - An empty cell ready to hold a signal.
+    /// - `Self` - An empty cell ready to hold a signal.
     pub const fn new() -> Self {
         SignalCell {
             inner: UnsafeCell::new(None),
@@ -438,6 +535,11 @@ impl<T> Default for SignalCell<T>
 where
     T: Clone + PartialEq,
 {
+    /// Returns a default `SignalCell` by delegating to `SignalCell::new`.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - An empty cell ready to hold a signal.
     fn default() -> Self {
         Self::new()
     }

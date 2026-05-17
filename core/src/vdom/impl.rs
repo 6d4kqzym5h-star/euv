@@ -7,6 +7,16 @@ use crate::*;
 /// are always considered equal (re-binding is handled by the handler
 /// registry), and `CssClass` values are compared by class name.
 impl PartialEq for AttributeValue {
+    /// Compares two attribute values for visual equality.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The first attribute value.
+    /// - `&Self` - The second attribute value.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the values are visually equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (AttributeValue::Text(a_val), AttributeValue::Text(b_val)) => a_val == b_val,
@@ -30,6 +40,16 @@ impl PartialEq for AttributeValue {
 /// Two attribute entries are equal when their names match and their values
 /// are visually equal as defined by `AttributeValue::eq`.
 impl PartialEq for AttributeEntry {
+    /// Compares two attribute entries for visual equality.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The first attribute entry.
+    /// - `&Self` - The second attribute entry.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if both names and values match.
     fn eq(&self, other: &Self) -> bool {
         self.get_name() == other.get_name() && self.get_value() == other.get_value()
     }
@@ -40,6 +60,16 @@ impl PartialEq for AttributeEntry {
 /// Only compares the text content; the backing signal is not considered
 /// because it does not affect visual output.
 impl PartialEq for TextNode {
+    /// Compares two text nodes by their content.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The first text node.
+    /// - `&Self` - The second text node.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the text content is equal.
     fn eq(&self, other: &Self) -> bool {
         self.get_content() == other.get_content()
     }
@@ -50,6 +80,16 @@ impl PartialEq for TextNode {
 /// Two CSS classes are considered equal when their class names match,
 /// since the name uniquely identifies the visual style rule.
 impl PartialEq for CssClass {
+    /// Compares two CSS classes by name.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The first CSS class.
+    /// - `&Self` - The second CSS class.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the class names match.
     fn eq(&self, other: &Self) -> bool {
         self.get_name() == other.get_name()
     }
@@ -65,6 +105,16 @@ impl PartialEq for CssClass {
 /// variants are always considered equal — the inner renderer handles
 /// patching when the dynamic content actually changes.
 impl PartialEq for VirtualNode {
+    /// Compares two virtual nodes for visual equality.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The first virtual node.
+    /// - `&Self` - The second virtual node.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the virtual nodes are visually equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (VirtualNode::Text(a_text), VirtualNode::Text(b_text)) => a_text == b_text,
@@ -170,6 +220,11 @@ impl Attribute {
 
 /// Provides a default empty dynamic node with a no-op render function.
 impl Default for DynamicNode {
+    /// Returns a default `DynamicNode` with a no-op render function and empty hook context.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A default dynamic node.
     fn default() -> Self {
         let node: DynamicNode = DynamicNode {
             render_fn: Rc::new(RefCell::new(|| VirtualNode::Empty)),
@@ -181,6 +236,11 @@ impl Default for DynamicNode {
 
 /// Clones a `DynamicNode` by cloning its `HookContext` (Copy) and `render_fn` (Rc).
 impl Clone for DynamicNode {
+    /// Returns a clone of this dynamic node sharing the same render function.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A cloned dynamic node.
     fn clone(&self) -> Self {
         DynamicNode {
             render_fn: Rc::clone(self.get_render_fn()),
@@ -198,6 +258,15 @@ impl VirtualNode {
     /// **different** so that the renderer always re-evaluates dynamic
     /// subtrees. This is essential for route-based `match` expressions
     /// where different pages may occupy the same DynamicNode slot.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode` - The old virtual node.
+    /// - `&VirtualNode` - The new virtual node.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the DOM needs to be patched.
     pub fn needs_patch(old: &VirtualNode, new: &VirtualNode) -> bool {
         match (old, new) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => {
@@ -258,6 +327,14 @@ impl VirtualNode {
     }
 
     /// Creates a new element node with the given tag name.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The tag name for the element.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new element virtual node.
     pub fn get_element_node(tag_name: &str) -> Self {
         VirtualNode::Element {
             tag: Tag::Element(tag_name.to_string()),
@@ -268,11 +345,28 @@ impl VirtualNode {
     }
 
     /// Creates a new text node with the given content.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The text content.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new text virtual node.
     pub fn get_text_node(content: &str) -> Self {
         VirtualNode::Text(TextNode::new(content.to_string(), None))
     }
 
     /// Adds an attribute to this node if it is an element.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The attribute name.
+    /// - `AttributeValue` - The attribute value.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - This node with the attribute added.
     pub fn with_attribute(mut self, name: &str, value: AttributeValue) -> Self {
         if let VirtualNode::Element {
             ref mut attributes, ..
@@ -284,6 +378,14 @@ impl VirtualNode {
     }
 
     /// Adds a child node to this node if it is an element.
+    ///
+    /// # Arguments
+    ///
+    /// - `VirtualNode` - The child node to add.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - This node with the child added.
     pub fn with_child(mut self, child: VirtualNode) -> Self {
         if let VirtualNode::Element {
             ref mut children, ..
@@ -295,6 +397,10 @@ impl VirtualNode {
     }
 
     /// Returns true if this node is a component node.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if this is a component node.
     pub fn is_component(&self) -> bool {
         matches!(
             self,
@@ -306,6 +412,10 @@ impl VirtualNode {
     }
 
     /// Returns the tag name if this is an element or component node.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<String>` - The tag name, or `None` if not an element node.
     pub fn tag_name(&self) -> Option<String> {
         match self {
             VirtualNode::Element { tag, .. } => match tag {
@@ -317,6 +427,14 @@ impl VirtualNode {
     }
 
     /// Extracts a string property from this node if it is an element with the named attribute.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Attribute` - The attribute to look up.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<String>` - The attribute value as a string, or `None` if not found.
     pub fn try_get_prop(&self, name: &Attribute) -> Option<String> {
         let name_str: Cow<'static, str> = name.as_str();
         if let VirtualNode::Element { attributes, .. } = self {
@@ -337,6 +455,14 @@ impl VirtualNode {
     ///
     /// Returns the raw `Signal<String>` so components can reactively read the current value
     /// and subscribe to future changes, rather than receiving a snapshot string.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Attribute` - The attribute to look up.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<Signal<String>>` - The signal if found, or `None`.
     pub fn try_get_signal_prop(&self, name: &Attribute) -> Option<Signal<String>> {
         let name_str: Cow<'static, str> = name.as_str();
         if let VirtualNode::Element { attributes, .. } = self {
@@ -352,6 +478,10 @@ impl VirtualNode {
     }
 
     /// Extracts children from this node if it is an element.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<VirtualNode>` - The children, or an empty vec if not an element.
     pub fn get_children(&self) -> Vec<VirtualNode> {
         if let VirtualNode::Element { children, .. } = self {
             children.clone()
@@ -361,6 +491,10 @@ impl VirtualNode {
     }
 
     /// Extracts text content from this node.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<String>` - The text content, or `None` if not a text node.
     pub fn try_get_text(&self) -> Option<String> {
         match self {
             VirtualNode::Text(text_node) => Some(text_node.get_content().clone()),
@@ -372,6 +506,14 @@ impl VirtualNode {
     }
 
     /// Extracts an event handler from this node if it is an element with the named event attribute.
+    ///
+    /// # Arguments
+    ///
+    /// - `&NativeEventName` - The event name to look up.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<NativeEventHandler>` - The event handler if found, or `None`.
     pub fn try_get_event(
         &self,
         name: &NativeEventName,
@@ -390,6 +532,14 @@ impl VirtualNode {
     }
 
     /// Extracts an event handler from this node by a custom attribute name.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The custom attribute name to look up.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<NativeEventHandler>` - The event handler if found, or `None`.
     pub fn try_get_callback(&self, name: &str) -> Option<crate::event::NativeEventHandler> {
         if let VirtualNode::Element { attributes, .. } = self {
             for attr in attributes {

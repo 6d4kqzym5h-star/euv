@@ -5,6 +5,15 @@ impl CssClass {
     /// Creates a new CSS class with the given name and style declarations.
     ///
     /// Automatically injects the styles into the DOM upon creation.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - The class name.
+    /// - `String` - The CSS style declarations.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new CSS class with injected styles.
     pub fn new(name: String, style: String) -> Self {
         let mut css_class: CssClass = CssClass::default();
         css_class.set_name(name);
@@ -19,6 +28,10 @@ impl CssClass {
     /// then appends the class rule. Subsequent calls for the same class name
     /// are no-ops. On first creation, also injects global CSS keyframes
     /// required by built-in animations.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `window()` or `document()` is unavailable on the current platform.
     pub fn inject_style(&self) {
         #[cfg(target_arch = "wasm32")]
         {
@@ -65,6 +78,15 @@ impl CssClass {
 /// This enables `format!("{}", css_class)` to produce the class name string,
 /// which is required for reactive `if` conditions in `class:` attributes.
 impl std::fmt::Display for CssClass {
+    /// Formats the CSS class as its name string.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter` - The formatter.
+    ///
+    /// # Returns
+    ///
+    /// - `std::fmt::Result` - The formatting result.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.get_name())
     }

@@ -2,6 +2,11 @@ use crate::*;
 
 /// Converts a static `String` into a text attribute value.
 impl IntoReactiveValue for String {
+    /// Converts this string into an `AttributeValue::Text`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A text attribute value containing this string.
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Text(self)
     }
@@ -9,6 +14,11 @@ impl IntoReactiveValue for String {
 
 /// Converts a string slice into a text attribute value.
 impl IntoReactiveValue for &str {
+    /// Converts this string slice into an `AttributeValue::Text`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A text attribute value containing the owned string.
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Text(self.to_string())
     }
@@ -16,6 +26,11 @@ impl IntoReactiveValue for &str {
 
 /// Converts a string signal into a reactive attribute value.
 impl IntoReactiveValue for Signal<String> {
+    /// Converts this string signal into an `AttributeValue::Signal`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A signal-backed attribute value.
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Signal(self)
     }
@@ -26,6 +41,11 @@ impl IntoReactiveValue for Signal<String> {
 /// The signal is mapped to a `Signal<String>` that yields `"true"` or `"false"`,
 /// enabling boolean attributes like `checked` to reactively update the DOM.
 impl IntoReactiveValue for Signal<bool> {
+    /// Converts this bool signal into an `AttributeValue` via string mapping.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A signal-backed attribute value yielding `"true"` or `"false"`.
     fn into_reactive_value(self) -> AttributeValue {
         bool_signal_to_string_attribute_value(self)
     }
@@ -33,6 +53,11 @@ impl IntoReactiveValue for Signal<bool> {
 
 /// Converts a CSS class reference into an attribute value.
 impl IntoReactiveValue for CssClass {
+    /// Converts this CSS class into an `AttributeValue::Css`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A CSS class attribute value.
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Css(self)
     }
@@ -40,6 +65,11 @@ impl IntoReactiveValue for CssClass {
 
 /// Converts a reference to a CSS class into an attribute value by cloning.
 impl IntoReactiveValue for &'static CssClass {
+    /// Converts this CSS class reference into an `AttributeValue::Css` by cloning.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A CSS class attribute value.
     fn into_reactive_value(self) -> AttributeValue {
         AttributeValue::Css(self.clone())
     }
@@ -47,6 +77,11 @@ impl IntoReactiveValue for &'static CssClass {
 
 /// Converts a `String` into its own value for reactive string storage.
 impl IntoReactiveString for String {
+    /// Returns this string as-is.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The same string.
     fn into_reactive_string(self) -> String {
         self
     }
@@ -54,6 +89,11 @@ impl IntoReactiveString for String {
 
 /// Converts a string slice into an owned string for reactive string storage.
 impl IntoReactiveString for &str {
+    /// Converts this string slice into an owned `String`.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The owned string.
     fn into_reactive_string(self) -> String {
         self.to_string()
     }
@@ -61,6 +101,11 @@ impl IntoReactiveString for &str {
 
 /// Converts a `CssClass` into its class name for reactive string storage.
 impl IntoReactiveString for CssClass {
+    /// Returns the class name as an owned string.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The class name.
     fn into_reactive_string(self) -> String {
         self.get_name().to_string()
     }
@@ -68,6 +113,11 @@ impl IntoReactiveString for CssClass {
 
 /// Converts a reference to a `CssClass` into its class name for reactive string storage.
 impl IntoReactiveString for &'static CssClass {
+    /// Returns the class name as an owned string.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The class name.
     fn into_reactive_string(self) -> String {
         self.get_name().to_string()
     }
@@ -75,6 +125,11 @@ impl IntoReactiveString for &'static CssClass {
 
 /// Converts a `bool` into `"true"` or `"false"` for reactive string storage.
 impl IntoReactiveString for bool {
+    /// Returns `"true"` or `"false"` as a string.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The boolean as a string.
     fn into_reactive_string(self) -> String {
         self.to_string()
     }
@@ -82,6 +137,11 @@ impl IntoReactiveString for bool {
 
 /// Converts an `i32` into a string for reactive string storage.
 impl IntoReactiveString for i32 {
+    /// Converts this integer into its string representation.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The integer as a string.
     fn into_reactive_string(self) -> String {
         self.to_string()
     }
@@ -89,6 +149,11 @@ impl IntoReactiveString for i32 {
 
 /// Converts a `u32` into a string for reactive string storage.
 impl IntoReactiveString for u32 {
+    /// Converts this unsigned integer into its string representation.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The unsigned integer as a string.
     fn into_reactive_string(self) -> String {
         self.to_string()
     }
@@ -96,6 +161,11 @@ impl IntoReactiveString for u32 {
 
 /// Converts a `f64` into a string for reactive string storage.
 impl IntoReactiveString for f64 {
+    /// Converts this float into its string representation.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The float as a string.
     fn into_reactive_string(self) -> String {
         self.to_string()
     }
@@ -103,6 +173,11 @@ impl IntoReactiveString for f64 {
 
 /// Converts a string signal into a reactive string by resolving its current value.
 impl IntoReactiveString for Signal<String> {
+    /// Resolves the current value of this signal.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The current value of the signal.
     fn into_reactive_string(self) -> String {
         self.get()
     }
@@ -110,6 +185,11 @@ impl IntoReactiveString for Signal<String> {
 
 /// Converts a bool signal into a reactive string by resolving its current value.
 impl IntoReactiveString for Signal<bool> {
+    /// Resolves the current value of this bool signal as a string.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The current boolean value as `"true"` or `"false"`.
     fn into_reactive_string(self) -> String {
         self.get().to_string()
     }
@@ -120,6 +200,11 @@ impl<F> IntoCallbackAttribute for F
 where
     F: FnMut(NativeEvent) + 'static,
 {
+    /// Wraps this closure into an `AttributeValue::Event` with a generic "callback" event name.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute value wrapping this closure.
     fn into_callback_attribute(self) -> AttributeValue {
         AttributeValue::Event(NativeEventHandler::new(
             NativeEventName::Other("callback".to_string()),
@@ -130,6 +215,11 @@ where
 
 /// Converts an owned event handler into a callback attribute value.
 impl IntoCallbackAttribute for NativeEventHandler {
+    /// Converts this event handler into an `AttributeValue::Event`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute value.
     fn into_callback_attribute(self) -> AttributeValue {
         AttributeValue::Event(self)
     }
@@ -137,6 +227,11 @@ impl IntoCallbackAttribute for NativeEventHandler {
 
 /// Converts an optional event handler into a callback attribute value.
 impl IntoCallbackAttribute for Option<NativeEventHandler> {
+    /// Converts this optional handler into an `AttributeValue::Event` or `AttributeValue::Text` if `None`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute value if `Some`, otherwise an empty text attribute.
     fn into_callback_attribute(self) -> AttributeValue {
         match self {
             Some(handler) => AttributeValue::Event(handler),

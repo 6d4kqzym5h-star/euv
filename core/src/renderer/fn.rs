@@ -360,9 +360,21 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, closure: Closure<
     registry.insert(signal_key, js_value);
 }
 
+/// No-op stub for `register_dynamic_listener` on non-WASM targets.
+///
+/// # Arguments
+///
+/// - `usize` - The dynamic ID (ignored).
+/// - `Closure<dyn FnMut()>` - The re-render closure (ignored).
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn register_dynamic_listener(_dynamic_id: usize, _closure: Closure<dyn FnMut()>) {}
 
+/// No-op stub for `register_attr_signal_listener` on non-WASM targets.
+///
+/// # Arguments
+///
+/// - `usize` - The signal key (ignored).
+/// - `Closure<dyn FnMut()>` - The attribute recomputation closure (ignored).
 #[cfg(not(target_arch = "wasm32"))]
 #[allow(dead_code)]
 pub(crate) fn register_attr_signal_listener(_signal_key: usize, _closure: Closure<dyn FnMut()>) {}

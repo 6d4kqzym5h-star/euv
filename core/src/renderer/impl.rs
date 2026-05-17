@@ -23,6 +23,11 @@ impl Renderer {
     }
 
     /// Patches the root DOM tree by replacing the single child of `self.root`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode` - The old virtual DOM tree.
+    /// - `&VirtualNode` - The new virtual DOM tree.
     fn patch_root(&mut self, old_node: &VirtualNode, new_node: &VirtualNode) {
         let dom_child: Option<Node> = self.get_root().first_child();
         let is_element: bool = if let Some(ref dom_child) = dom_child {
@@ -43,6 +48,12 @@ impl Renderer {
     }
 
     /// Patches an existing DOM node to match the new virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode` - The old virtual DOM node.
+    /// - `&VirtualNode` - The new virtual DOM node.
+    /// - `&Element` - The existing DOM element to patch.
     fn patch_node(
         &mut self,
         old_node: &VirtualNode,
@@ -101,6 +112,12 @@ impl Renderer {
     }
 
     /// Patches attributes of an element, adding, removing, or updating as needed.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element` - The DOM element whose attributes to patch.
+    /// - `&[AttributeEntry]` - The old attribute entries.
+    /// - `&[AttributeEntry]` - The new attribute entries.
     fn patch_attributes(
         &mut self,
         element: &Element,
@@ -159,6 +176,15 @@ impl Renderer {
     }
 
     /// Compares two tags for equality.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Tag` - The first tag to compare.
+    /// - `&Tag` - The second tag to compare.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if both tags are the same variant with the same name.
     fn tags_equal(a: &Tag, b: &Tag) -> bool {
         match (a, b) {
             (Tag::Element(a_name), Tag::Element(b_name)) => a_name == b_name,
@@ -174,6 +200,15 @@ impl Renderer {
     /// because the underlying closure may capture different signal
     /// references after a route change, even though the event name
     /// remains the same.
+    ///
+    /// # Arguments
+    ///
+    /// - `&AttributeValue` - The first attribute value to compare.
+    /// - `&AttributeValue` - The second attribute value to compare.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the attribute values are visually equal.
     fn attribute_values_equal(a: &AttributeValue, b: &AttributeValue) -> bool {
         match (a, b) {
             (AttributeValue::Text(a_val), AttributeValue::Text(b_val)) => a_val == b_val,
@@ -188,6 +223,15 @@ impl Renderer {
     }
 
     /// Gets a child node at the given index by traversing child nodes.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element` - The parent element to search within.
+    /// - `u32` - The zero-based index of the child to retrieve.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<Node>` - The child node at the given index, or `None` if out of range.
     fn get_child_node(parent: &Element, index: u32) -> Option<Node> {
         let mut current: Option<Node> = parent.first_child();
         let mut current_index: u32 = 0;
@@ -208,6 +252,12 @@ impl Renderer {
     /// being replaced, which preserves any reactive signal subscriptions
     /// already wired to the existing DOM text node.
     /// Appends any extra new children, and removes any trailing old children.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element` - The parent DOM element.
+    /// - `&[VirtualNode]` - The old virtual children.
+    /// - `&[VirtualNode]` - The new virtual children.
     fn patch_children(
         &mut self,
         parent: &Element,
@@ -252,6 +302,14 @@ impl Renderer {
     }
 
     /// Creates a real DOM node from a virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode` - The virtual node to convert.
+    ///
+    /// # Returns
+    ///
+    /// - `Node` - The created DOM node.
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
         let document: Document = window().unwrap().document().unwrap();
         self.create_dom_node_with_document(node, &document)
@@ -260,6 +318,15 @@ impl Renderer {
     /// Creates a real DOM node using a pre-acquired document reference.
     ///
     /// Avoids repeated `window().document()` calls during recursive node creation.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode` - The virtual node to convert.
+    /// - `&Document` - The pre-acquired document reference.
+    ///
+    /// # Returns
+    ///
+    /// - `Node` - The created DOM node.
     fn create_dom_node_with_document(&mut self, node: &VirtualNode, document: &Document) -> Node {
         match node {
             VirtualNode::Element {
@@ -426,6 +493,14 @@ impl Renderer {
     }
 
     /// Recursively unwraps component nodes into their rendered output.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode` - The virtual node to unwrap.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode` - The unwrapped virtual node with all component nodes resolved.
     fn unwrap_component(&self, node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -467,18 +542,6 @@ impl Renderer {
         }
     }
 
-    /// Attaches an event listener to a DOM element.
-    ///
-    /// Uses a global auto-incrementing ID stored as `data-euv-id` on the element
-    /// to uniquely identify it in the handler registry. This avoids the bug where
-    /// `element.as_ref() as *const JsValue as usize` returns the address of the
-    /// Rust-side temporary `JsValue` wrapper rather than a stable JS object identity,
-    /// causing different DOM elements to collide on the same key.
-    ///
-    /// On first attach, allocates a new ID, creates a wrapper
-    /// `Rc<RefCell<Option<NativeEventHandler>>>`, and registers a DOM
-    /// `addEventListener` closure that reads from it. On subsequent patches
-    /// for the same element+event, only updates the wrapper content.
     /// Assigns a new `data-euv-dynamic-id` to a newly created DynamicNode placeholder.
     ///
     /// # Arguments
@@ -523,6 +586,23 @@ impl Renderer {
         }
     }
 
+    /// Attaches an event listener to a DOM element.
+    ///
+    /// Uses a global auto-incrementing ID stored as `data-euv-id` on the element
+    /// to uniquely identify it in the handler registry. This avoids the bug where
+    /// `element.as_ref() as *const JsValue as usize` returns the address of the
+    /// Rust-side temporary `JsValue` wrapper rather than a stable JS object identity,
+    /// causing different DOM elements to collide on the same key.
+    ///
+    /// On first attach, allocates a new ID, creates a wrapper
+    /// `Rc<RefCell<Option<NativeEventHandler>>>`, and registers a DOM
+    /// `addEventListener` closure that reads from it. On subsequent patches
+    /// for the same element+event, only updates the wrapper content.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element` - The DOM element to attach the listener to.
+    /// - `&NativeEventHandler` - The event handler to register.
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
         let euv_id: usize = match element.get_attribute("data-euv-id") {
             Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {

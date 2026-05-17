@@ -2,6 +2,14 @@ use crate::*;
 
 /// Returns true if the given attribute name is a boolean attribute that
 /// requires DOM property-based manipulation instead of HTML attribute strings.
+///
+/// # Arguments
+///
+/// - `&str` - The attribute name to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the attribute is a boolean property, `false` otherwise.
 pub(crate) fn is_boolean_property(name: &str) -> bool {
     matches!(name, "checked" | "disabled" | "selected" | "readonly")
 }
@@ -15,6 +23,11 @@ pub(crate) fn is_boolean_property(name: &str) -> bool {
 /// sets the DOM property to `false` rather than calling `remove_attribute`,
 /// because `remove_attribute` on a previously-set attribute may not correctly
 /// reset the property in all browsers.
+///
+/// # Arguments
+///
+/// - `&Element` - The DOM element to modify.
+/// - `&str` - The name of the attribute or property to remove.
 pub(crate) fn remove_dom_attribute_or_property(element: &Element, name: &str) {
     if name == "value" {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
@@ -80,6 +93,12 @@ pub(crate) fn remove_dom_attribute_or_property(element: &Element, name: &str) {
 /// uses the DOM property so that the browser honors the value correctly
 /// (HTML attributes are present-or-absent, not true/false strings).
 /// For all other attributes, uses `set_attribute`.
+///
+/// # Arguments
+///
+/// - `&Element` - The DOM element to modify.
+/// - `&str` - The name of the attribute or property to set.
+/// - `&str` - The value to assign.
 pub(crate) fn set_dom_attribute_or_property(element: &Element, name: &str, value: &str) {
     if name == "value" {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
