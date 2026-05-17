@@ -106,7 +106,7 @@ impl Clone for DynamicNode {
     fn clone(&self) -> Self {
         DynamicNode {
             render_fn: Rc::clone(self.get_render_fn()),
-            hook_context: self.hook_context,
+            hook_context: self.get_hook_context(),
         }
     }
 }

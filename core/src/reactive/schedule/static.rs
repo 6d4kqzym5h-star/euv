@@ -28,4 +28,4 @@ pub static DEFAULT_HOOK_CONTEXT: HookContextCell =
 /// and restored to the default context afterwards. Stores a raw pointer
 /// to the inner state; callers use `get_current_hook_context` to obtain
 /// a `HookContext` handle.
-pub static mut CURRENT_HOOK_CONTEXT: *mut HookContextInner = DEFAULT_HOOK_CONTEXT.0.get();
+pub static mut CURRENT_HOOK_CONTEXT: &mut HookContextInner = DEFAULT_HOOK_CONTEXT.get_inner();

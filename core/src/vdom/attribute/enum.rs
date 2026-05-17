@@ -105,7 +105,7 @@ pub enum Attribute {
 ///
 /// Attributes can be static text, reactive signals, event handlers, dynamic expressions,
 /// or CSS class references.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum AttributeValue {
     /// A static string value.
     Text(String),

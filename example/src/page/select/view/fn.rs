@@ -21,8 +21,8 @@ pub fn page_select() -> VirtualNode {
                     }
                     select {
                         class: c_select_input()
-                        value: state.selected_fruit
-                        onchange: on_change_value(state.selected_fruit)
+                        value: state.get_selected_fruit()
+                        onchange: on_change_value(state.get_selected_fruit())
                         option {
                             value: "apple"
                             "Apple"
@@ -46,7 +46,7 @@ pub fn page_select() -> VirtualNode {
                     "Selected: "
                     span {
                         class: c_event_highlight()
-                        state.selected_fruit
+                        state.get_selected_fruit()
                     }
                 }
             }
@@ -60,7 +60,7 @@ pub fn page_select() -> VirtualNode {
                     }
                     select {
                         class: c_select_input()
-                        value: state.selected_country
+                        value: state.get_selected_country()
                         onchange: select_on_country_change(state)
                         option {
                             value: ""
@@ -80,7 +80,7 @@ pub fn page_select() -> VirtualNode {
                         }
                     }
                 }
-                if { !state.selected_country.get().is_empty() } {
+                if { !state.get_selected_country().get().is_empty() } {
                     div {
                         class: c_form_input_wrapper()
                         label {
@@ -89,13 +89,13 @@ pub fn page_select() -> VirtualNode {
                         }
                         select {
                             class: c_select_input()
-                            value: state.selected_city
-                            onchange: on_change_value(state.selected_city)
+                            value: state.get_selected_city()
+                            onchange: on_change_value(state.get_selected_city())
                             option {
                                 value: ""
                                 "-- Select City --"
                             }
-                            for (city_value, city_label) in { match state.selected_country.get().as_str() { "china" => vec![("beijing".to_string(), "Beijing".to_string()), ("shanghai".to_string(), "Shanghai".to_string()), ("guangzhou".to_string(), "Guangzhou".to_string())], "japan" => vec![("tokyo".to_string(), "Tokyo".to_string()), ("osaka".to_string(), "Osaka".to_string()), ("kyoto".to_string(), "Kyoto".to_string())], "usa" => vec![("new-york".to_string(), "New York".to_string()), ("los-angeles".to_string(), "Los Angeles".to_string()), ("chicago".to_string(), "Chicago".to_string())], _ => vec![] } } {
+                            for (city_value, city_label) in { match state.get_selected_country().get().as_str() { "china" => vec![("beijing".to_string(), "Beijing".to_string()), ("shanghai".to_string(), "Shanghai".to_string()), ("guangzhou".to_string(), "Guangzhou".to_string())], "japan" => vec![("tokyo".to_string(), "Tokyo".to_string()), ("osaka".to_string(), "Osaka".to_string()), ("kyoto".to_string(), "Kyoto".to_string())], "usa" => vec![("new-york".to_string(), "New York".to_string()), ("los-angeles".to_string(), "Los Angeles".to_string()), ("chicago".to_string(), "Chicago".to_string())], _ => vec![] } } {
                                 option {
                                     value: city_value
                                     city_label
@@ -106,13 +106,13 @@ pub fn page_select() -> VirtualNode {
                 } else {
                     ""
                 }
-                if { !state.selected_city.get().is_empty() } {
+                if { !state.get_selected_city().get().is_empty() } {
                     div {
                         class: c_success_box()
                         "You selected: "
                         span {
                             class: c_event_highlight()
-                            state.selected_city
+                            state.get_selected_city()
                         }
                     }
                 } else {
@@ -130,8 +130,8 @@ pub fn page_select() -> VirtualNode {
                     textarea {
                         class: c_textarea_input()
                         placeholder: "Share your thoughts..."
-                        value: state.textarea_content
-                        oninput: on_input_value(state.textarea_content)
+                        value: state.get_textarea_content()
+                        oninput: on_input_value(state.get_textarea_content())
                         rows: "4"
                         cols: "50"
                     }
@@ -140,7 +140,7 @@ pub fn page_select() -> VirtualNode {
                     class: c_textarea_counter()
                     span {
                         class: c_textarea_counter_text()
-                        { format!("{} / 200 characters", state.textarea_content.get().len()) }
+                        { format!("{} / 200 characters", state.get_textarea_content().get().len()) }
                     }
                 }
                 primary_button {
@@ -148,10 +148,10 @@ pub fn page_select() -> VirtualNode {
                     onclick: select_on_submit_feedback(state)
                     "Submit"
                 }
-                if { !state.feedback.get().is_empty() } {
+                if { !state.get_feedback().get().is_empty() } {
                     div {
                         class: c_success_box()
-                        state.feedback
+                        state.get_feedback()
                     }
                 } else {
                     ""

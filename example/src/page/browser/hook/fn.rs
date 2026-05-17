@@ -342,11 +342,13 @@ pub fn location_pathname() -> String {
 /// - `NativeEventHandler` - A click handler to set the localStorage item.
 pub fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let key: String = state.local_key.get();
-        let value: String = state.local_value.get();
+        let key: String = state.get_local_key().get();
+        let value: String = state.get_local_value().get();
         if !key.is_empty() {
             local_storage_set(&key, &value);
-            state.local_result.set(format!("Set: {} = {}", key, value));
+            state
+                .get_local_result()
+                .set(format!("Set: {} = {}", key, value));
         }
     })
 }
@@ -362,11 +364,15 @@ pub fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to get the localStorage item.
 pub fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let key: String = state.local_key.get();
+        let key: String = state.get_local_key().get();
         let value: Option<String> = local_storage_get(&key);
         match value {
-            Some(v) => state.local_result.set(format!("Get: {} = {}", key, v)),
-            None => state.local_result.set(format!("Key '{}' not found", key)),
+            Some(v) => state
+                .get_local_result()
+                .set(format!("Get: {} = {}", key, v)),
+            None => state
+                .get_local_result()
+                .set(format!("Key '{}' not found", key)),
         }
     })
 }
@@ -382,9 +388,11 @@ pub fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to remove the localStorage item.
 pub fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let key: String = state.local_key.get();
+        let key: String = state.get_local_key().get();
         local_storage_remove(&key);
-        state.local_result.set(format!("Removed key: {}", key));
+        state
+            .get_local_result()
+            .set(format!("Removed key: {}", key));
     })
 }
 
@@ -399,12 +407,12 @@ pub fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to set the sessionStorage item.
 pub fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let key: String = state.session_key.get();
-        let value: String = state.session_value.get();
+        let key: String = state.get_session_key().get();
+        let value: String = state.get_session_value().get();
         if !key.is_empty() {
             session_storage_set(&key, &value);
             state
-                .session_result
+                .get_session_result()
                 .set(format!("Set: {} = {}", key, value));
         }
     })
@@ -421,11 +429,15 @@ pub fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to get the sessionStorage item.
 pub fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let key: String = state.session_key.get();
+        let key: String = state.get_session_key().get();
         let value: Option<String> = session_storage_get(&key);
         match value {
-            Some(v) => state.session_result.set(format!("Get: {} = {}", key, v)),
-            None => state.session_result.set(format!("Key '{}' not found", key)),
+            Some(v) => state
+                .get_session_result()
+                .set(format!("Get: {} = {}", key, v)),
+            None => state
+                .get_session_result()
+                .set(format!("Key '{}' not found", key)),
         }
     })
 }
@@ -441,9 +453,11 @@ pub fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to remove the sessionStorage item.
 pub fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let key: String = state.session_key.get();
+        let key: String = state.get_session_key().get();
         session_storage_remove(&key);
-        state.session_result.set(format!("Removed key: {}", key));
+        state
+            .get_session_result()
+            .set(format!("Removed key: {}", key));
     })
 }
 
@@ -458,9 +472,9 @@ pub fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to copy text to clipboard.
 pub fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let text: String = state.clipboard_text.get();
+        let text: String = state.get_clipboard_text().get();
         let text_clone: String = text.clone();
-        let result: Signal<String> = state.clipboard_result;
+        let result: Signal<String> = state.get_clipboard_result();
         if text.is_empty() {
             result.set("Please enter text to copy".to_string());
         } else {
@@ -487,7 +501,7 @@ pub fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to read text from clipboard.
 pub fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let result: Signal<String> = state.clipboard_result;
+        let result: Signal<String> = state.get_clipboard_result();
         wasm_bindgen_futures::spawn_local(async move {
             let text: String = clipboard_read_text().await;
             result.set(format!("Pasted: {}", text));
@@ -507,7 +521,9 @@ pub fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
 pub fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let (width, height): (i32, i32) = window_inner_size();
-        state.window_size.set(format!("{} x {}", width, height));
+        state
+            .get_window_size()
+            .set(format!("{} x {}", width, height));
     })
 }
 

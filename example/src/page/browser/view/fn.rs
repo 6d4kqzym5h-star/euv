@@ -28,9 +28,9 @@ pub fn page_browser() -> VirtualNode {
                         input {
                             r#type: "text"
                             placeholder: "Storage key..."
-                            value: state.local_key
+                            value: state.get_local_key()
                             class: c_form_input_no_transition()
-                            oninput: on_input_value(state.local_key)
+                            oninput: on_input_value(state.get_local_key())
                         }
                     }
                     div {
@@ -42,9 +42,9 @@ pub fn page_browser() -> VirtualNode {
                         input {
                             r#type: "text"
                             placeholder: "Storage value..."
-                            value: state.local_value
+                            value: state.get_local_value()
                             class: c_form_input_no_transition()
-                            oninput: on_input_value(state.local_value)
+                            oninput: on_input_value(state.get_local_value())
                         }
                     }
                 }
@@ -74,7 +74,7 @@ pub fn page_browser() -> VirtualNode {
                     }
                     span {
                         class: c_browser_result_value()
-                        state.local_result
+                        state.get_local_result()
                     }
                 }
             }
@@ -95,9 +95,9 @@ pub fn page_browser() -> VirtualNode {
                         input {
                             r#type: "text"
                             placeholder: "Session key..."
-                            value: state.session_key
+                            value: state.get_session_key()
                             class: c_form_input_no_transition()
-                            oninput: on_input_value(state.session_key)
+                            oninput: on_input_value(state.get_session_key())
                         }
                     }
                     div {
@@ -109,9 +109,9 @@ pub fn page_browser() -> VirtualNode {
                         input {
                             r#type: "text"
                             placeholder: "Session value..."
-                            value: state.session_value
+                            value: state.get_session_value()
                             class: c_form_input_no_transition()
-                            oninput: on_input_value(state.session_value)
+                            oninput: on_input_value(state.get_session_value())
                         }
                     }
                 }
@@ -141,7 +141,7 @@ pub fn page_browser() -> VirtualNode {
                     }
                     span {
                         class: c_browser_result_value()
-                        state.session_result
+                        state.get_session_result()
                     }
                 }
             }
@@ -160,9 +160,9 @@ pub fn page_browser() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Enter text to copy..."
-                        value: state.clipboard_text
+                        value: state.get_clipboard_text()
                         class: c_form_input_no_transition()
-                        oninput: on_input_value(state.clipboard_text)
+                        oninput: on_input_value(state.get_clipboard_text())
                     }
                 }
                 div {
@@ -186,7 +186,7 @@ pub fn page_browser() -> VirtualNode {
                     }
                     span {
                         class: c_browser_result_value()
-                        state.clipboard_result
+                        state.get_clipboard_result()
                     }
                 }
             }
@@ -211,7 +211,7 @@ pub fn page_browser() -> VirtualNode {
                         }
                         span {
                             class: c_browser_info_value()
-                            state.window_size
+                            state.get_window_size()
                         }
                     }
                 }
@@ -232,7 +232,7 @@ pub fn page_browser() -> VirtualNode {
                         }
                         span {
                             class: c_browser_info_value()
-                            state.user_agent
+                            state.get_user_agent()
                         }
                     }
                     div {
@@ -243,7 +243,7 @@ pub fn page_browser() -> VirtualNode {
                         }
                         span {
                             class: c_browser_info_value()
-                            state.language
+                            state.get_language()
                         }
                     }
                 }
@@ -264,7 +264,7 @@ pub fn page_browser() -> VirtualNode {
                         }
                         span {
                             class: c_browser_info_value()
-                            state.location_url
+                            state.get_location_url()
                         }
                     }
                     div {
@@ -275,7 +275,7 @@ pub fn page_browser() -> VirtualNode {
                         }
                         span {
                             class: c_browser_info_value()
-                            state.location_origin_val
+                            state.get_location_origin_val()
                         }
                     }
                     div {
@@ -286,7 +286,7 @@ pub fn page_browser() -> VirtualNode {
                         }
                         span {
                             class: c_browser_info_value()
-                            state.location_pathname_val
+                            state.get_location_pathname_val()
                         }
                     }
                 }
@@ -306,26 +306,26 @@ pub fn page_browser() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Type a message to log..."
-                        value: state.console_input
+                        value: state.get_console_input()
                         class: c_form_input_no_transition()
-                        oninput: on_input_value(state.console_input)
+                        oninput: on_input_value(state.get_console_input())
                     }
                 }
                 div {
                     class: c_browser_api_actions()
                     primary_button {
                         label: "Log"
-                        onclick: console_on_log(state.console_input)
+                        onclick: console_on_log(state.get_console_input())
                         "console.log"
                     }
                     primary_button {
                         label: "Warn"
-                        onclick: console_on_warn(state.console_input)
+                        onclick: console_on_warn(state.get_console_input())
                         "console.warn"
                     }
                     primary_button {
                         label: "Error"
-                        onclick: console_on_error(state.console_input)
+                        onclick: console_on_error(state.get_console_input())
                         "console.error"
                     }
                 }

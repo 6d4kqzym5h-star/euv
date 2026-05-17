@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The lifecycle demo page virtual DOM tree.
 pub fn page_lifecycle() -> VirtualNode {
     let state: UseLifecycle = use_lifecycle();
-    watch!(state.render_count, |render_count_value| {
+    watch!(state.get_render_count(), |render_count_value| {
         Console::log(&format!(
             "watch! render count changed: {}",
             render_count_value
@@ -24,7 +24,7 @@ pub fn page_lifecycle() -> VirtualNode {
                     "This page has been rendered "
                     span {
                         class: c_counter_value()
-                        state.render_count
+                        state.get_render_count()
                     }
                     " times."
                 }
@@ -38,7 +38,7 @@ pub fn page_lifecycle() -> VirtualNode {
                 title: "Event Log"
                 div {
                     class: c_log_container()
-                    for (index, log) in { state.logs.get().iter().enumerate() } {
+                    for (index, log) in { state.get_logs().get().iter().enumerate() } {
                         div {
                             key: index.to_string()
                             class: c_log_item()

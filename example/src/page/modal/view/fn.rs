@@ -34,10 +34,10 @@ pub fn page_modal() -> VirtualNode {
                     onclick: modal_on_open_confirm(state)
                     "Ask Confirm"
                 }
-                if { !state.confirm_result.get().is_empty() } {
+                if { !state.get_confirm_result().get().is_empty() } {
                     div {
                         class: c_success_box()
-                        state.confirm_result
+                        state.get_confirm_result()
                     }
                 } else {
                     ""
@@ -54,19 +54,19 @@ pub fn page_modal() -> VirtualNode {
                     onclick: modal_on_open_form(state)
                     "Open Form"
                 }
-                if { !state.modal_submitted.get().is_empty() } {
+                if { !state.get_modal_submitted().get().is_empty() } {
                     div {
                         class: c_success_box()
-                        state.modal_submitted
+                        state.get_modal_submitted()
                     }
                 } else {
                     ""
                 }
             }
-            if { state.show_basic.get() } {
+            if { state.get_show_basic().get() } {
                 my_modal {
                     title: "Basic Modal"
-                    onclick: use_toggle(state.show_basic)
+                    onclick: use_toggle(state.get_show_basic())
                     p {
                         class: c_demo_text()
                         "This is a basic modal dialog. Click the close button or the overlay to dismiss."
@@ -79,10 +79,10 @@ pub fn page_modal() -> VirtualNode {
             } else {
                 ""
             }
-            if { state.show_confirm.get() } {
+            if { state.get_show_confirm().get() } {
                 my_modal {
                     title: "Confirm Action"
-                    onclick: use_toggle(state.show_confirm)
+                    onclick: use_toggle(state.get_show_confirm())
                     p {
                         class: c_demo_text()
                         "Are you sure you want to proceed with this action?"
@@ -96,7 +96,7 @@ pub fn page_modal() -> VirtualNode {
                         }
                         primary_button {
                             label: "Cancel"
-                            onclick: use_toggle(state.show_confirm)
+                            onclick: use_toggle(state.get_show_confirm())
                             "Cancel"
                         }
                     }
@@ -104,10 +104,10 @@ pub fn page_modal() -> VirtualNode {
             } else {
                 ""
             }
-            if { state.show_form.get() } {
+            if { state.get_show_form().get() } {
                 my_modal {
                     title: "Quick Sign Up"
-                    onclick: use_toggle(state.show_form)
+                    onclick: use_toggle(state.get_show_form())
                     div {
                         class: c_form_input_wrapper()
                         label {
@@ -117,9 +117,9 @@ pub fn page_modal() -> VirtualNode {
                         input {
                             r#type: "text"
                             placeholder: "Enter your name"
-                            value: state.modal_name
+                            value: state.get_modal_name()
                             class: c_form_input_no_transition()
-                            oninput: on_input_value(state.modal_name)
+                            oninput: on_input_value(state.get_modal_name())
                         }
                     }
                     div {
@@ -131,9 +131,9 @@ pub fn page_modal() -> VirtualNode {
                         input {
                             r#type: "email"
                             placeholder: "Enter your email"
-                            value: state.modal_email
+                            value: state.get_modal_email()
                             class: c_form_input_no_transition()
-                            oninput: on_input_value(state.modal_email)
+                            oninput: on_input_value(state.get_modal_email())
                         }
                     }
                     div {
@@ -145,7 +145,7 @@ pub fn page_modal() -> VirtualNode {
                         }
                         primary_button {
                             label: "Cancel"
-                            onclick: use_toggle(state.show_form)
+                            onclick: use_toggle(state.get_show_form())
                             "Cancel"
                         }
                     }

@@ -3,13 +3,14 @@ use crate::*;
 /// A wrapper around an event callback.
 ///
 /// Stores the event name and a reference-counted mutable closure.
-#[derive(Data)]
+#[derive(CustomDebug, Data)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) event_name: String,
     /// The callback function to invoke when the event fires.
+    #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) callback: Rc<RefCell<dyn FnMut(NativeEvent)>>,

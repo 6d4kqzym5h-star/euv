@@ -18,10 +18,7 @@ impl Console {
     /// Panics if `init_console` has not been called.
     pub fn log(message: &str) {
         web_sys::console::log_1(&message.into());
-        Self::append_entry(ConsoleEntry {
-            level: LogLevel::Log,
-            message: message.to_string(),
-        });
+        Self::append_entry(ConsoleEntry::new(LogLevel::Log, message.to_string()));
     }
 
     /// Logs a warning message (equivalent to console.warn).
@@ -35,10 +32,7 @@ impl Console {
     /// Panics if `init_console` has not been called.
     pub fn warn(message: &str) {
         web_sys::console::warn_1(&message.into());
-        Self::append_entry(ConsoleEntry {
-            level: LogLevel::Warn,
-            message: message.to_string(),
-        });
+        Self::append_entry(ConsoleEntry::new(LogLevel::Warn, message.to_string()));
     }
 
     /// Logs an error message (equivalent to console.error).
@@ -52,10 +46,7 @@ impl Console {
     /// Panics if `init_console` has not been called.
     pub fn error(message: &str) {
         web_sys::console::error_1(&message.into());
-        Self::append_entry(ConsoleEntry {
-            level: LogLevel::Error,
-            message: message.to_string(),
-        });
+        Self::append_entry(ConsoleEntry::new(LogLevel::Error, message.to_string()));
     }
 
     /// Clears all log entries from the vConsole panel signal.

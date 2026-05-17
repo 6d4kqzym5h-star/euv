@@ -6,28 +6,23 @@ use crate::*;
 /// The `arm_changed` flag tracks whether a `match` arm switch occurred;
 /// when toggled, the hook array is cleared to prevent signal leakage
 /// between different match arms.
-#[derive(Data)]
+#[derive(CustomDebug, Data)]
 pub struct HookContextInner {
     /// Storage for hook state values (signals, etc.).
-    #[get(pub(crate))]
-    #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
     /// Whether the match arm has changed since the last render.
     /// Toggled on each `match` arm entry; when the value differs from
     /// the previous render, hooks are cleared.
-    #[get(pub(crate), type(copy))]
-    #[set(pub(crate))]
+    #[get(type(copy))]
     pub(crate) arm_changed: bool,
     /// Current hook index, incremented on each hook call and reset per render.
-    #[get(pub(crate), type(copy))]
-    #[set(pub(crate))]
+    #[get(type(copy))]
     pub(crate) hook_index: usize,
     /// Cleanup closures registered by hooks (e.g., `use_signal`) that must
     /// be executed when the hook context is cleared due to a `match` arm
     /// switch. Each closure typically clears signal listeners so that
     /// stale `setInterval` closures become no-ops.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
+    #[debug(skip)]
     pub(crate) cleanups: Vec<Box<dyn FnOnce()>>,
 }
 
@@ -42,6 +37,7 @@ pub struct HookContextInner {
 /// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
 /// entire program. This is safe in single-threaded WASM contexts where no
 /// concurrent access can occur.
+#[derive(Debug)]
 pub struct HookContext {
     /// Raw pointer to the heap-allocated hook context inner state.
     pub(crate) inner: *mut HookContextInner,
@@ -53,6 +49,7 @@ pub struct HookContext {
 /// (e.g., WASM). It implements `Sync` to allow usage as a `static`
 /// variable, but concurrent access from multiple threads would be
 /// undefined behavior.
+#[derive(Debug)]
 pub struct HookContextCell(
     /// Interior-mutable storage for the hook context inner state.
     pub(crate) UnsafeCell<HookContextInner>,

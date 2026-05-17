@@ -18,9 +18,9 @@ pub fn page_list() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Enter new item"
-                        value: state.new_item
+                        value: state.get_new_item()
                         class: c_list_input()
-                        oninput: on_input_value(state.new_item)
+                        oninput: on_input_value(state.get_new_item())
                     }
                     primary_button {
                         label: "Add"
@@ -30,7 +30,7 @@ pub fn page_list() -> VirtualNode {
                 }
                 ul {
                     class: c_list_ul()
-                    for (index, item) in { state.items.get().iter().enumerate() } {
+                    for (index, item) in { state.get_items().get().iter().enumerate() } {
                         li {
                             key: index.to_string()
                             class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
@@ -40,7 +40,7 @@ pub fn page_list() -> VirtualNode {
                             }
                             primary_button {
                                 label: "Remove"
-                                onclick: todo_list_on_remove(state.items, index)
+                                onclick: todo_list_on_remove(state.get_items(), index)
                                 "Remove"
                             }
                         }

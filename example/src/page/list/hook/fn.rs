@@ -42,12 +42,12 @@ pub fn use_todo_list() -> UseTodoList {
 /// - `NativeEventHandler` - A click handler to add a new item.
 pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let text: String = state.new_item.get();
+        let text: String = state.get_new_item().get();
         if !text.trim().is_empty() {
-            let mut current: Vec<String> = state.items.get();
+            let mut current: Vec<String> = state.get_items().get();
             current.push(text.clone());
-            state.items.set(current);
-            state.new_item.set("".to_string());
+            state.get_items().set(current);
+            state.get_new_item().set("".to_string());
         }
     })
 }

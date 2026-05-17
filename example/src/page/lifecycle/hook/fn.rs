@@ -36,10 +36,10 @@ pub fn use_lifecycle() -> UseLifecycle {
 /// - `NativeEventHandler` - A click handler to trigger an update.
 pub fn lifecycle_on_trigger(state: UseLifecycle) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let current: i32 = state.render_count.get();
-        state.render_count.set(current + 1);
-        let mut current_logs: Vec<String> = state.logs.get();
+        let current: i32 = state.get_render_count().get();
+        state.get_render_count().set(current + 1);
+        let mut current_logs: Vec<String> = state.get_logs().get();
         current_logs.push(format!("Updated: render count = {}", current + 1));
-        state.logs.set(current_logs);
+        state.get_logs().set(current_logs);
     })
 }

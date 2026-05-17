@@ -77,7 +77,7 @@ pub fn page_animation() -> VirtualNode {
                         "Reset"
                     }
                 }
-                { build_progress_bar(progress.value) }
+                { build_progress_bar(progress.get_value()) }
             }
             my_card {
                 title: "Color Cycle"

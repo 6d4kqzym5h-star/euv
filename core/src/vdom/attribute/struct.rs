@@ -27,7 +27,7 @@ pub struct Style {
 /// Represents a single attribute on a virtual DOM node.
 ///
 /// Combines an attribute name with its corresponding value.
-#[derive(Clone, Data, New)]
+#[derive(Clone, Data, Debug, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
     #[get(pub(crate))]
@@ -44,7 +44,7 @@ pub struct AttributeEntry {
 /// Created by the `class!` macro and used in `html!` via the `class:` attribute.
 /// When the renderer encounters a `CssClass`, it injects the styles into the
 /// DOM's `<style>` element on first use and applies the class name to the element.
-#[derive(Clone, Data, Default)]
+#[derive(Clone, Data, Debug, Default)]
 pub struct CssClass {
     /// The CSS class name used in the DOM.
     #[get(pub)]

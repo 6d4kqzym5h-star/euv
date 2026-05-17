@@ -356,8 +356,8 @@ pub fn app() -> VirtualNode {
     let drawer_open: Signal<bool> = use_signal(|| false);
     let mobile_signal: Signal<bool> = use_resize();
     let theme_state: ThemeState = use_theme();
-    let theme_signal: Signal<String> = theme_state.theme;
-    let root_class_signal: Signal<String> = theme_state.root_class;
+    let theme_signal: Signal<String> = theme_state.get_theme();
+    let root_class_signal: Signal<String> = theme_state.get_root_class();
     use_hash_change(route_signal);
     let is_mobile: bool = mobile_signal.get();
     let current_root_class: String = if is_mobile {

@@ -54,9 +54,9 @@ fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
 pub fn page_form() -> VirtualNode {
     let form: UseForm = use_form();
     watch!(
-        form.username,
-        form.email,
-        form.password,
+        form.get_username(),
+        form.get_email(),
+        form.get_password(),
         |username_value, email_value, password_value| {
             let mut validation_warnings: Vec<String> = Vec::new();
             if username_value.trim().is_empty() {
@@ -93,9 +93,9 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "text"
                         placeholder: "Enter username"
-                        value: form.username
+                        value: form.get_username()
                         class: c_form_input_no_transition()
-                        oninput: on_input_value(form.username)
+                        oninput: on_input_value(form.get_username())
                     }
                 }
                 div {
@@ -107,9 +107,9 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "email"
                         placeholder: "Enter email"
-                        value: form.email
+                        value: form.get_email()
                         class: c_form_input_no_transition()
-                        oninput: on_input_value(form.email)
+                        oninput: on_input_value(form.get_email())
                     }
                 }
                 div {
@@ -121,31 +121,31 @@ pub fn page_form() -> VirtualNode {
                     input {
                         r#type: "password"
                         placeholder: "Enter password"
-                        value: form.password
+                        value: form.get_password()
                         class: c_form_input_no_transition()
-                        oninput: on_input_value(form.password)
+                        oninput: on_input_value(form.get_password())
                     }
                 }
                 div {
                     class: c_form_checkbox_row()
                     input {
                         r#type: "checkbox"
-                        checked: form.agree
+                        checked: form.get_agree()
                         class: c_form_checkbox()
-                        onchange: on_change_checked(form.agree)
+                        onchange: on_change_checked(form.get_agree())
                     }
                     label {
                         class: c_form_checkbox_label()
                         "I agree to the terms and conditions"
                     }
                 }
-                build_error_node(form.errors)
+                build_error_node(form.get_errors())
                 primary_button {
                     label: "Submit"
                     onclick: form_on_submit(form)
                     "Submit"
                 }
-                build_submitted_node(form.submitted)
+                build_submitted_node(form.get_submitted())
             }
         }
     }

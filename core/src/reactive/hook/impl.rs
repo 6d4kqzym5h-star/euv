@@ -17,58 +17,11 @@ impl HookContext {
 
     /// Returns a mutable reference to the inner hook context state.
     ///
-    /// # Safety
+    /// # Returns
     ///
-    /// The caller must ensure no other references to the inner state exist.
-    /// In single-threaded WASM this is always safe.
-    #[allow(clippy::mut_from_ref)]
-    fn get_inner_mut(&self) -> &mut HookContextInner {
+    /// - `&'static mut HookContextInner` - A mutable reference to the inner state.
+    pub(crate) fn get_inner(&self) -> &'static mut HookContextInner {
         unsafe { &mut *self.inner }
-    }
-
-    /// Returns the current hook index.
-    ///
-    /// # Returns
-    ///
-    /// - `usize` - The current hook index.
-    pub fn get_hook_index(&self) -> usize {
-        self.get_inner_mut().get_hook_index()
-    }
-
-    /// Sets the hook index.
-    ///
-    /// # Arguments
-    ///
-    /// - `usize` - The new hook index value.
-    pub fn set_hook_index(&mut self, index: usize) {
-        self.get_inner_mut().set_hook_index(index);
-    }
-
-    /// Returns a reference to the hooks storage.
-    ///
-    /// # Returns
-    ///
-    /// - `&Vec<Box<dyn Any>>` - A reference to the hooks storage.
-    pub fn get_hooks(&self) -> &Vec<Box<dyn Any>> {
-        self.get_inner_mut().get_hooks()
-    }
-
-    /// Returns a mutable reference to the hooks storage.
-    ///
-    /// # Returns
-    ///
-    /// - `&mut Vec<Box<dyn Any>>` - A mutable reference to the hooks storage.
-    pub fn get_mut_hooks(&mut self) -> &mut Vec<Box<dyn Any>> {
-        self.get_inner_mut().get_mut_hooks()
-    }
-
-    /// Returns a mutable reference to the cleanup closures storage.
-    ///
-    /// # Returns
-    ///
-    /// - `&mut Vec<Box<dyn FnOnce()>>` - A mutable reference to the cleanup closures storage.
-    pub fn get_mut_cleanups(&mut self) -> &mut Vec<Box<dyn FnOnce()>> {
-        self.get_inner_mut().get_mut_cleanups()
     }
 
     /// Resets the hook index for a new render cycle.
@@ -76,7 +29,7 @@ impl HookContext {
     /// Sets the hook index back to `0` so that subsequent hook calls
     /// re-associate with their stored state by call order.
     pub fn reset_hook_index(&mut self) {
-        self.set_hook_index(0_usize);
+        self.get_inner().set_hook_index(0);
     }
 
     /// Notifies the hook context that a match arm is being entered.
@@ -87,9 +40,9 @@ impl HookContext {
     ///
     /// - `bool` - The new arm changed state.
     pub fn set_arm_changed(&mut self, changed: bool) {
-        let inner: &mut HookContextInner = self.get_inner_mut();
+        let inner: &mut HookContextInner = self.get_inner();
         if inner.get_arm_changed() != changed {
-            let cleanups: Vec<Box<dyn FnOnce()>> = std::mem::take(inner.get_mut_cleanups());
+            let cleanups: Vec<Box<dyn FnOnce()>> = take(inner.get_mut_cleanups());
             for cleanup in cleanups {
                 cleanup();
             }
@@ -144,6 +97,18 @@ impl Default for HookContextInner {
     /// Returns a default `HookContextInner` by delegating to `HookContextInner::new`.
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Implementation of HookContextCell construction and access.
+impl HookContextCell {
+    /// Returns a mutable reference to the inner `HookContextInner`.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut HookContextInner` - A mutable reference to the inner state.
+    pub const fn get_inner(&self) -> &'static mut HookContextInner {
+        unsafe { &mut *self.0.get() }
     }
 }
 

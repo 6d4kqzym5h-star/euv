@@ -37,8 +37,8 @@ fn test_with_attribute() {
     match node {
         VirtualNode::Element { attributes, .. } => {
             assert_eq!(attributes.len(), 1);
-            assert_eq!(attributes[0].name, "class");
-            match &attributes[0].value {
+            assert_eq!(attributes[0].get_name(), "class");
+            match attributes[0].get_value() {
                 AttributeValue::Text(value) => assert_eq!(value, "app"),
                 _ => panic!("expected text attribute value"),
             }

@@ -290,6 +290,15 @@ impl<T> EventAdapter<T> {
     pub fn new(inner: T) -> Self {
         EventAdapter { inner }
     }
+
+    /// Returns the inner wrapped value, consuming the adapter.
+    ///
+    /// # Returns
+    ///
+    /// - `T` - The inner value.
+    pub(crate) fn into_inner(self) -> T {
+        self.inner
+    }
 }
 
 /// Adapts a `FnMut(NativeEvent)` closure into an `AttributeValue::Event`.
@@ -311,7 +320,7 @@ where
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
     pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
-        AttributeValue::Event(NativeEventHandler::new(event_name, self.inner))
+        AttributeValue::Event(NativeEventHandler::new(event_name, self.into_inner()))
     }
 }
 
@@ -331,7 +340,7 @@ impl EventAdapter<NativeEventHandler> {
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` containing the handler.
     pub fn into_attribute(self, _event_name: NativeEventName) -> AttributeValue {
-        AttributeValue::Event(self.inner)
+        AttributeValue::Event(self.into_inner())
     }
 }
 
@@ -352,7 +361,7 @@ impl EventAdapter<Option<NativeEventHandler>> {
     ///
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
     pub fn into_attribute(self, _event_name: NativeEventName) -> AttributeValue {
-        match self.inner {
+        match self.into_inner() {
             Some(handler) => AttributeValue::Event(handler),
             None => AttributeValue::Text(String::new()),
         }
@@ -373,6 +382,15 @@ impl<T> AttrValueAdapter<T> {
     pub fn new(inner: T) -> Self {
         AttrValueAdapter { inner }
     }
+
+    /// Returns the inner wrapped value, consuming the adapter.
+    ///
+    /// # Returns
+    ///
+    /// - `T` - The inner value.
+    pub(crate) fn into_inner(self) -> T {
+        self.inner
+    }
 }
 
 /// Adapts a `FnMut(NativeEvent)` closure into a callback `AttributeValue`.
@@ -390,7 +408,7 @@ where
     ///
     /// - `AttributeValue` - An event attribute value wrapping the adapted closure.
     pub fn into_callback_attribute_value(self) -> AttributeValue {
-        self.inner.into_callback_attribute()
+        self.into_inner().into_callback_attribute()
     }
 }
 
@@ -406,7 +424,7 @@ impl AttrValueAdapter<NativeEventHandler> {
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` containing the handler.
     pub fn into_callback_attribute_value(self) -> AttributeValue {
-        AttributeValue::Event(self.inner)
+        AttributeValue::Event(self.into_inner())
     }
 }
 
@@ -423,7 +441,7 @@ impl AttrValueAdapter<Option<NativeEventHandler>> {
     ///
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
     pub fn into_callback_attribute_value(self) -> AttributeValue {
-        match self.inner {
+        match self.into_inner() {
             Some(handler) => AttributeValue::Event(handler),
             None => AttributeValue::Text(String::new()),
         }
@@ -446,6 +464,6 @@ where
     ///
     /// - `AttributeValue` - The reactive attribute value.
     pub fn into_reactive_attribute_value(self) -> AttributeValue {
-        self.inner.into_reactive_value()
+        self.into_inner().into_reactive_value()
     }
 }

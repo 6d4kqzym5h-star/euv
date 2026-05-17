@@ -2,7 +2,7 @@
 ///
 /// Each variant corresponds to a standard browser console method
 /// and is rendered with a distinct color in the vConsole panel.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LogLevel {
     /// Informational message (console.log), rendered in white/green.
     Log,

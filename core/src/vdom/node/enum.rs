@@ -3,7 +3,7 @@ use crate::*;
 /// Represents the type of an HTML tag or a component.
 ///
 /// Distinguishes between standard HTML elements and user-defined components.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Tag {
     /// A standard HTML element identified by its tag name.
     Element(String),
@@ -14,7 +14,7 @@ pub enum Tag {
 /// Represents a node in the virtual DOM tree.
 ///
 /// The core enum representing elements, text, fragments, and empty nodes.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub enum VirtualNode {
     /// An element node with a tag, attributes, and children.
     Element {

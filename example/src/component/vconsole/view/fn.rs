@@ -216,9 +216,9 @@ fn build_vconsole_log_nodes(
                 return true;
             }
             match filter_value.as_str() {
-                "log" => entry.level == LogLevel::Log,
-                "warn" => entry.level == LogLevel::Warn,
-                "error" => entry.level == LogLevel::Error,
+                "log" => entry.get_level() == LogLevel::Log,
+                "warn" => entry.get_level() == LogLevel::Warn,
+                "error" => entry.get_level() == LogLevel::Error,
                 _ => true,
             }
         })
@@ -237,12 +237,12 @@ fn build_vconsole_log_nodes(
         for (index, entry) in { filtered.iter().rev() } {
             div {
                 key: index.to_string()
-                class: get_log_item_class(&entry.level, *index == total_count - 1)
+                class: get_log_item_class(entry.get_level(), *index == total_count - 1)
                 span {
-                    class: get_badge_class(&entry.level)
-                    get_log_level_badge(&entry.level)
+                    class: get_badge_class(entry.get_level())
+                    get_log_level_badge(entry.get_level())
                 }
-                entry.message.clone()
+                entry.get_message().clone()
             }
         }
     }
@@ -261,7 +261,7 @@ fn build_vconsole_log_nodes(
 /// # Returns
 ///
 /// - `String` - The space-separated CSS class names.
-fn get_log_item_class(level: &LogLevel, is_latest: bool) -> String {
+fn get_log_item_class(level: LogLevel, is_latest: bool) -> String {
     let base_name: &'static str = c_vconsole_log_item().get_name();
     let level_class: &'static str = match level {
         LogLevel::Log => {
@@ -298,7 +298,7 @@ fn get_log_item_class(level: &LogLevel, is_latest: bool) -> String {
 /// # Returns
 ///
 /// - `String` - The space-separated CSS class names.
-fn get_badge_class(level: &LogLevel) -> String {
+fn get_badge_class(level: LogLevel) -> String {
     let base_name: &'static str = c_vconsole_level_badge().get_name();
     let badge_class: &'static str = match level {
         LogLevel::Log => c_vconsole_badge_log().get_name(),
@@ -317,7 +317,7 @@ fn get_badge_class(level: &LogLevel) -> String {
 /// # Returns
 ///
 /// - `String` - The badge label string (e.g., "LOG", "WRN", "ERR").
-fn get_log_level_badge(level: &LogLevel) -> String {
+fn get_log_level_badge(level: LogLevel) -> String {
     match level {
         LogLevel::Log => "LOG".to_string(),
         LogLevel::Warn => "WRN".to_string(),

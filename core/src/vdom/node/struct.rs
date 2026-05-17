@@ -3,7 +3,7 @@ use crate::*;
 /// Represents a text node in the virtual DOM.
 ///
 /// Text nodes may optionally be bound to a reactive signal for automatic updates.
-#[derive(Clone, Data, New)]
+#[derive(Clone, Data, Debug, New)]
 pub struct TextNode {
     /// The text content.
     #[get(pub(crate))]
@@ -22,9 +22,10 @@ pub struct TextNode {
 /// Contains a `HookContext` that persists hook state (like `use_signal`) across
 /// re-renders, ensuring that signal values are not reset when the render function
 /// is called again.
-#[derive(Data)]
+#[derive(CustomDebug, Data)]
 pub struct DynamicNode {
     /// The closure that generates the dynamic virtual node tree.
+    #[debug(skip)]
     #[get(pub)]
     #[set(pub)]
     pub(crate) render_fn: Rc<RefCell<dyn FnMut() -> VirtualNode>>,

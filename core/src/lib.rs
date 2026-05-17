@@ -17,6 +17,7 @@ use std::{
     borrow::Cow,
     cell::{Ref, RefCell, RefMut, UnsafeCell},
     collections::HashMap,
+    mem::take,
     ops::{Deref, DerefMut},
     ptr::null_mut,
     rc::Rc,

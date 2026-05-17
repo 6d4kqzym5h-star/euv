@@ -57,27 +57,27 @@ pub fn use_form() -> UseForm {
 pub fn form_on_submit(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
         let mut validation_errors: Vec<String> = Vec::new();
-        if state.username.get().trim().is_empty() {
+        if state.get_username().get().trim().is_empty() {
             validation_errors.push("Username is required".to_string());
         }
-        if state.email.get().trim().is_empty() {
+        if state.get_email().get().trim().is_empty() {
             validation_errors.push("Email is required".to_string());
         }
-        if state.password.get().len() < 6 {
+        if state.get_password().get().len() < 6 {
             validation_errors.push("Password must be at least 6 characters".to_string());
         }
-        if !state.agree.get() {
+        if !state.get_agree().get() {
             validation_errors.push("You must agree to the terms".to_string());
         }
         if validation_errors.is_empty() {
-            state.errors.set("".to_string());
-            state.submitted.set(format!(
+            state.get_errors().set("".to_string());
+            state.get_submitted().set(format!(
                 "Submitted: username={}, email={}",
-                state.username.get(),
-                state.email.get()
+                state.get_username().get(),
+                state.get_email().get()
             ));
         } else {
-            state.errors.set(validation_errors.join("; "));
+            state.get_errors().set(validation_errors.join("; "));
         }
     })
 }

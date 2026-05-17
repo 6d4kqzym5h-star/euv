@@ -30,9 +30,9 @@ pub fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    let previous: *mut HookContextInner = unsafe { CURRENT_HOOK_CONTEXT };
+    let previous: &'static mut HookContextInner = unsafe { CURRENT_HOOK_CONTEXT };
     unsafe {
-        CURRENT_HOOK_CONTEXT = context.inner;
+        CURRENT_HOOK_CONTEXT = context.get_inner();
     }
     let result: R = f();
     unsafe {
@@ -76,22 +76,24 @@ where
     T: Clone + PartialEq + 'static,
     F: FnOnce() -> T,
 {
-    let mut ctx: HookContext = get_current_hook_context();
-    let index: usize = ctx.get_hook_index();
-    ctx.set_hook_index(index + 1_usize);
-    if index < ctx.get_hooks().len()
-        && let Some(existing) = ctx.get_hooks()[index].downcast_ref::<Signal<T>>()
+    let ctx: HookContext = get_current_hook_context();
+    let ctx_inner: &mut HookContextInner = ctx.get_inner();
+    let index: usize = ctx_inner.get_hook_index();
+    ctx_inner.set_hook_index(index + 1);
+    if index < ctx_inner.get_hooks().len()
+        && let Some(existing) = ctx_inner.get_hooks()[index].downcast_ref::<Signal<T>>()
     {
         return *existing;
     }
     let signal: Signal<T> = Signal::new(init());
     let cleanup_signal: Signal<T> = signal;
-    ctx.get_mut_cleanups()
+    ctx_inner
+        .get_mut_cleanups()
         .push(Box::new(move || cleanup_signal.clear_listeners()));
-    if index < ctx.get_hooks().len() {
-        ctx.get_mut_hooks()[index] = Box::new(signal);
+    if index < ctx_inner.get_hooks().len() {
+        ctx_inner.get_mut_hooks()[index] = Box::new(signal);
     } else {
-        ctx.get_mut_hooks().push(Box::new(signal));
+        ctx_inner.get_mut_hooks().push(Box::new(signal));
     }
     signal
 }

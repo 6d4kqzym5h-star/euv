@@ -33,6 +33,7 @@ where
 /// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
 /// entire program. This is safe in single-threaded WASM contexts where no
 /// concurrent access can occur.
+#[derive(Debug)]
 pub struct Signal<T>
 where
     T: Clone + PartialEq,

@@ -14,7 +14,7 @@ pub(crate) struct Console;
 #[derive(Clone, Data, Debug, New, PartialEq)]
 pub struct ConsoleEntry {
     /// The log level determining the entry's category and display color.
-    #[get(pub(super))]
+    #[get(pub(super), type(copy))]
     #[set(pub(super))]
     pub(super) level: LogLevel,
     /// The text content of the log message.

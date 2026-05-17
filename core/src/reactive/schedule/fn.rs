@@ -153,7 +153,7 @@ where
 {
     #[cfg(target_arch = "wasm32")]
     {
-        let signal_key: usize = attr_signal.inner as usize;
+        let signal_key: usize = attr_signal.get_inner() as usize;
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             let new_value: String = compute();
             attr_signal.set(new_value);

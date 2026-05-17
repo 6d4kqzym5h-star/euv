@@ -44,12 +44,12 @@ pub fn use_fetch() -> UseFetch {
 /// - `NativeEventHandler` - A click handler to trigger the fetch.
 pub fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        state.loading.set(true);
-        state.error.set("".to_string());
-        state.data.set("".to_string());
-        let data_signal: Signal<String> = state.data;
-        let error_signal: Signal<String> = state.error;
-        let loading_signal: Signal<bool> = state.loading;
+        state.get_loading().set(true);
+        state.get_error().set("".to_string());
+        state.get_data().set("".to_string());
+        let data_signal: Signal<String> = state.get_data();
+        let error_signal: Signal<String> = state.get_error();
+        let loading_signal: Signal<bool> = state.get_loading();
         spawn_local(async move {
             let window: Window = window().expect("no global window exists");
             let promise: Promise = window.fetch_with_str("https://httpbin.org/get");

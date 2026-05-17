@@ -67,6 +67,15 @@ where
         Signal { inner }
     }
 
+    /// Returns the raw pointer to the inner signal state.
+    ///
+    /// # Returns
+    ///
+    /// - `*mut SignalInner<T>` - The raw pointer to the inner signal state.
+    pub(crate) fn get_inner(&self) -> *mut SignalInner<T> {
+        self.inner
+    }
+
     /// Returns a mutable reference to the inner signal state.
     ///
     /// # Returns
@@ -79,7 +88,7 @@ where
     /// In single-threaded WASM this is always safe.
     #[allow(clippy::mut_from_ref)]
     fn get_inner_mut(&self) -> &mut SignalInner<T> {
-        unsafe { &mut *self.inner }
+        unsafe { &mut *self.get_inner() }
     }
 
     /// Returns the current value of the signal.
@@ -295,6 +304,15 @@ where
         }
     }
 
+    /// Returns a raw pointer to the inner `Option<Signal<T>>`.
+    ///
+    /// # Returns
+    ///
+    /// - `*mut Option<Signal<T>>` - The raw pointer to the inner option.
+    pub(crate) fn get_inner(&self) -> *mut Option<Signal<T>> {
+        self.inner.get()
+    }
+
     /// Stores a signal into the cell.
     ///
     /// # Arguments
@@ -306,7 +324,7 @@ where
     /// Panics if a signal has already been stored.
     pub fn set(&self, signal: Signal<T>) {
         unsafe {
-            let ptr: &mut Option<Signal<T>> = &mut *self.inner.get();
+            let ptr: &mut Option<Signal<T>> = &mut *self.get_inner();
             if ptr.is_some() {
                 panic!("SignalCell::set called on an already-initialized cell");
             }
@@ -325,7 +343,7 @@ where
     /// Panics if no signal has been stored via `set`.
     pub fn get(&self) -> Signal<T> {
         unsafe {
-            let ptr: &Option<Signal<T>> = &*self.inner.get();
+            let ptr: &Option<Signal<T>> = &*self.get_inner();
             match ptr {
                 Some(signal) => *signal,
                 None => panic!("SignalCell::get called on an uninitialized cell"),

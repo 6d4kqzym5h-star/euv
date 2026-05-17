@@ -52,8 +52,10 @@ pub fn use_select() -> UseSelect {
 pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
         if let NativeEvent::Change(change_event) = event {
-            state.selected_country.set(change_event.get_value().clone());
-            state.selected_city.set("".to_string());
+            state
+                .get_selected_country()
+                .set(change_event.get_value().clone());
+            state.get_selected_city().set("".to_string());
         }
     })
 }
@@ -69,20 +71,20 @@ pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to submit feedback.
 pub fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        let content: String = state.textarea_content.get();
+        let content: String = state.get_textarea_content().get();
         if content.trim().is_empty() {
             state
-                .feedback
+                .get_feedback()
                 .set("Please enter some feedback.".to_string());
         } else if content.len() > 200 {
             state
-                .feedback
+                .get_feedback()
                 .set("Feedback is too long (max 200 chars).".to_string());
         } else {
             state
-                .feedback
+                .get_feedback()
                 .set(format!("Thank you for your feedback: \"{}\"", content));
-            state.textarea_content.set("".to_string());
+            state.get_textarea_content().set("".to_string());
         }
     })
 }

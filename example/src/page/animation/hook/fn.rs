@@ -40,15 +40,15 @@ pub fn use_progress() -> UseProgress {
 /// - `NativeEventHandler` - A click handler to start the progress bar.
 pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        state.value.set(0);
-        state.running.set(true);
-        let handle_opt: Option<IntervalHandle> = state.handle.get();
+        state.get_value().set(0);
+        state.get_running().set(true);
+        let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
         }
-        let value_signal: Signal<i32> = state.value;
-        let running_signal: Signal<bool> = state.running;
-        let handle_signal: Signal<Option<IntervalHandle>> = state.handle;
+        let value_signal: Signal<i32> = state.get_value();
+        let running_signal: Signal<bool> = state.get_running();
+        let handle_signal: Signal<Option<IntervalHandle>> = state.get_handle();
         let new_handle: IntervalHandle = use_interval(30, move || {
             if running_signal.get() {
                 let current: i32 = value_signal.get();
@@ -74,13 +74,13 @@ pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
 /// - `NativeEventHandler` - A click handler to reset the progress bar.
 pub fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
-        state.running.set(false);
-        let handle_opt: Option<IntervalHandle> = state.handle.get();
+        state.get_running().set(false);
+        let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
         }
-        state.handle.set(None);
-        state.value.set(0);
+        state.get_handle().set(None);
+        state.get_value().set(0);
     })
 }
 

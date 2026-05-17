@@ -33,12 +33,12 @@ pub fn page_timer() -> VirtualNode {
                     class: c_timer_display()
                     span {
                         class: c_timer_value()
-                        { format_time(stopwatch.seconds.get()) }
+                        { format_time(stopwatch.get_seconds().get()) }
                     }
                 }
                 div {
                     class: c_timer_controls()
-                    if { !stopwatch.running.get() } {
+                    if { !stopwatch.get_running().get() } {
                         primary_button {
                             label: "Start"
                             onclick: stopwatch_on_start(stopwatch)
@@ -71,7 +71,7 @@ pub fn page_timer() -> VirtualNode {
                         min: "1"
                         max: "3600"
                         placeholder: "Enter seconds..."
-                        value: countdown.input
+                        value: countdown.get_input()
                         class: c_form_input()
                         oninput: countdown_on_input(countdown)
                     }
@@ -80,12 +80,12 @@ pub fn page_timer() -> VirtualNode {
                     class: c_timer_display()
                     span {
                         class: c_timer_value()
-                        { format_time(countdown.remaining.get()) }
+                        { format_time(countdown.get_remaining().get()) }
                     }
                 }
                 div {
                     class: c_timer_controls()
-                    if { !countdown.running.get() } {
+                    if { !countdown.get_running().get() } {
                         primary_button {
                             label: "Start"
                             onclick: countdown_on_start(countdown)
@@ -104,7 +104,7 @@ pub fn page_timer() -> VirtualNode {
                         "Reset"
                     }
                 }
-                if { countdown.remaining.get() == 0 && !countdown.running.get() } {
+                if { countdown.get_remaining().get() == 0 && !countdown.get_running().get() } {
                     div {
                         class: c_timer_done()
                         "⏰ Time's up!"
