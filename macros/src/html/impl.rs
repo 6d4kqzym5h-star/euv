@@ -165,13 +165,10 @@ impl Parse for HtmlElement {
         let tag: Ident = input.parse()?;
         let tag_str: String = tag.to_string();
         let is_component: bool = tag_str.contains('_');
-
         let content;
         braced!(content in input);
-
         let mut attributes: Vec<(Ident, HtmlAttrValue)> = Vec::new();
         let mut children: Vec<HtmlNode> = Vec::new();
-
         while !content.is_empty() {
             if content.peek(Token![if]) {
                 let html_if: HtmlIf = content.parse()?;
@@ -217,7 +214,6 @@ impl Parse for HtmlElement {
                 return Err(content.error("unexpected token in HTML element"));
             }
         }
-
         Ok(HtmlElement {
             tag,
             attributes,
@@ -244,20 +240,9 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::Dynamic(expr) => {
-                tokens.extend(quote! {{
-                    let mut __euv_hook_context: euv_core::HookContext = euv_core::create_hook_context();
-                    let __euv_render_fn: std::rc::Rc<std::cell::RefCell<dyn FnMut() -> euv_core::VirtualNode>> = {
-                        let mut __euv_hook_context: euv_core::HookContext = __euv_hook_context;
-                        std::rc::Rc::new(std::cell::RefCell::new(move || {
-                            __euv_hook_context.reset_hook_index();
-                            euv_core::IntoNode::into_node(#expr)
-                        }))
-                    };
-                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
-                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
-                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
-                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
-                }});
+                tokens.extend(quote! {
+                    euv_core::create_dynamic_node(move || euv_core::IntoNode::into_node(#expr))
+                });
             }
             HtmlNode::If(html_if) => {
                 let mut if_chain: TokenStream2 = TokenStream2::new();
@@ -292,20 +277,9 @@ impl ToTokens for HtmlNode {
                         }
                     }
                 }
-                tokens.extend(quote! {{
-                    let mut __euv_hook_context: euv_core::HookContext = euv_core::create_hook_context();
-                    let __euv_render_fn: std::rc::Rc<std::cell::RefCell<dyn FnMut() -> euv_core::VirtualNode>> = {
-                        let mut __euv_hook_context: euv_core::HookContext = __euv_hook_context;
-                        std::rc::Rc::new(std::cell::RefCell::new(move || {
-                            __euv_hook_context.reset_hook_index();
-                            #if_chain
-                        }))
-                    };
-                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
-                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
-                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
-                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
-                }});
+                tokens.extend(quote! {
+                    euv_core::create_dynamic_node(move || { #if_chain })
+                });
             }
             HtmlNode::Match(html_match) => {
                 let scrutinee: &Expr = strip_braces_from_expr(&html_match.scrutinee);
@@ -324,47 +298,29 @@ impl ToTokens for HtmlNode {
                         }
                     })
                     .collect();
-                tokens.extend(quote! {{
-                    let mut __euv_hook_context: euv_core::HookContext = euv_core::create_hook_context();
-                    let __euv_render_fn: std::rc::Rc<std::cell::RefCell<dyn FnMut() -> euv_core::VirtualNode>> = {
-                        let mut __euv_hook_context: euv_core::HookContext = __euv_hook_context;
-                        std::rc::Rc::new(std::cell::RefCell::new(move || {
-                            __euv_hook_context.reset_hook_index();
-                            match #scrutinee {
-                                #(#arm_tokens)*
-                            }
-                        }))
-                    };
-                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
-                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
-                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
-                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
-                }});
+                tokens.extend(quote! {
+                    euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut euv_core::HookContext| {
+                        match #scrutinee {
+                            #(#arm_tokens)*
+                        }
+                    })
+                });
             }
             HtmlNode::For(html_for) => {
                 let pattern: &TokenStream2 = &html_for.pattern;
                 let iterable: &Expr = &html_for.iterable;
                 let body_tokens: TokenStream2 = children_to_tokens(&html_for.body);
-                tokens.extend(quote! {{
-                    let mut __euv_hook_context: euv_core::HookContext = euv_core::create_hook_context();
-                    let __euv_render_fn: std::rc::Rc<std::cell::RefCell<dyn FnMut() -> euv_core::VirtualNode>> = {
-                        let mut __euv_hook_context: euv_core::HookContext = __euv_hook_context;
-                        std::rc::Rc::new(std::cell::RefCell::new(move || {
+                tokens.extend(quote! {
+                    euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut euv_core::HookContext| {
+                        let mut __euv_for_nodes: Vec<euv_core::VirtualNode> = Vec::new();
+                        for #pattern in #iterable {
                             __euv_hook_context.reset_hook_index();
-                            let mut __euv_for_nodes: Vec<euv_core::VirtualNode> = Vec::new();
-                            for #pattern in #iterable {
-                                __euv_hook_context.reset_hook_index();
-                                let __euv_for_body: Vec<euv_core::VirtualNode> = #body_tokens;
-                                __euv_for_nodes.extend(__euv_for_body);
-                            }
-                            euv_core::VirtualNode::Fragment(__euv_for_nodes)
-                        }))
-                    };
-                    let mut __euv_dynamic_node: euv_core::DynamicNode = euv_core::DynamicNode::default();
-                    __euv_dynamic_node.set_render_fn(__euv_render_fn);
-                    __euv_dynamic_node.set_hook_context(__euv_hook_context);
-                    euv_core::VirtualNode::Dynamic(__euv_dynamic_node)
-                }});
+                            let __euv_for_body: Vec<euv_core::VirtualNode> = #body_tokens;
+                            __euv_for_nodes.extend(__euv_for_body);
+                        }
+                        euv_core::VirtualNode::Fragment(__euv_for_nodes)
+                    })
+                });
             }
         }
     }
@@ -386,15 +342,9 @@ impl ToTokens for HtmlStylePropValue {
 
 /// Converts an `HtmlAttrValue` into its token representation.
 ///
-/// For `HtmlAttrValue::If`, generates a `Signal<String>` that reactively re-evaluates
-/// the conditional expression whenever any signal changes, mirroring the DOM-level
-/// `if {expr} { children }` mechanism that uses `DynamicNode`. The signal value is
-/// derived via `IntoReactiveString`, which converts `CssClass`, `String`, `&str`,
-/// and other common types to their string representation.
-///
-/// For `HtmlAttrValue::Style` containing `If` conditions, the same reactive signal
-/// pattern is applied to the entire style CSS string.
-///
+/// For `HtmlAttrValue::If`, generates a reactive signal via `create_reactive_attr_signal`.
+/// For `HtmlAttrValue::Style` containing `If` conditions, generates a reactive
+/// signal via `create_reactive_style_attribute`.
 /// For static values (`Expr` and `Style` without `If`), the value is emitted directly.
 impl ToTokens for HtmlAttrValue {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
@@ -402,15 +352,9 @@ impl ToTokens for HtmlAttrValue {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlAttrValue::If(html_attr_if) => {
                 let if_chain: TokenStream2 = attr_if_to_tokens(html_attr_if);
-                tokens.extend(quote! {{
-                    let __euv_attr_signal: euv_core::Signal<String> = euv_core::Signal::new(
-                        euv_core::IntoReactiveString::into_reactive_string(#if_chain)
-                    );
-                    euv_core::subscribe_attr_signal(__euv_attr_signal, move || {
-                        euv_core::IntoReactiveString::into_reactive_string(#if_chain)
-                    });
-                    euv_core::AttributeValue::Signal(__euv_attr_signal)
-                }});
+                tokens.extend(quote! {
+                    euv_core::create_reactive_attr_signal(move || euv_core::IntoReactiveString::into_reactive_string(#if_chain))
+                });
             }
             HtmlAttrValue::Style(props) => {
                 let has_if: bool = props
@@ -423,15 +367,9 @@ impl ToTokens for HtmlAttrValue {
                     })
                     .collect();
                 if has_if {
-                    tokens.extend(quote! {{
-                        let __euv_attr_signal: euv_core::Signal<String> = euv_core::Signal::new(
-                            euv_core::Style::default()#(#prop_tokens)*.to_css_string()
-                        );
-                        euv_core::subscribe_attr_signal(__euv_attr_signal, move || {
-                            euv_core::Style::default()#(#prop_tokens)*.to_css_string()
-                        });
-                        euv_core::AttributeValue::Signal(__euv_attr_signal)
-                    }});
+                    tokens.extend(quote! {
+                        euv_core::create_reactive_style_attribute(move || euv_core::Style::default()#(#prop_tokens)*.to_css_string())
+                    });
                 } else {
                     tokens.extend(quote! {
                         {
@@ -445,11 +383,18 @@ impl ToTokens for HtmlAttrValue {
 }
 
 /// Converts an `HtmlElement` into the corresponding euv virtual element tokens.
+///
+/// Only the tag name uses `quote_spanned!` so that errors related to the tag
+/// (e.g., unknown element) point to the tag identifier in the user's source code.
+/// All other generated code uses `quote!` with default spans, preventing the
+/// entire macro invocation from being highlighted when a type error occurs in
+/// generated framework code.
 impl ToTokens for HtmlElement {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let tag_name: String = self.tag.to_string();
         let is_component: bool = self.is_component;
-
+        let tag_span: Span = self.tag.span();
+        let tag_literal: TokenStream2 = quote_spanned!(tag_span=> #tag_name.to_string());
         let attr_tokens: Vec<TokenStream2> = self.attributes.iter().map(|(key, value)| {
             let key_str: String = key.to_string();
             let value_tokens: TokenStream2 = match value {
@@ -472,111 +417,28 @@ impl ToTokens for HtmlElement {
                     if let Some(event_name_str) = key_str.strip_prefix("on") {
                         let event_name_ident: Ident = syn::Ident::new(
                             &camel_case_event_name(event_name_str),
-                            proc_macro2::Span::call_site(),
+                            key.span(),
                         );
                         quote! {
-                            {
-                                let __expr = #value_expr;
-                                let __attr_value: ::euv_core::AttributeValue = {
-                                    struct __EventWrapper<F>(F);
-                                    impl<F> __EventWrapper<F>
-                                    where
-                                        F: FnMut(euv_core::NativeEvent) + 'static,
-                                    {
-                                        fn into_attr(self, name: ::euv_core::NativeEventName) -> ::euv_core::AttributeValue {
-                                            ::euv_core::AttributeValue::Event(::euv_core::NativeEventHandler::new(name, self.0))
-                                        }
-                                    }
-                                    impl __EventWrapper<::euv_core::NativeEventHandler> {
-                                        fn into_attr(self, _name: ::euv_core::NativeEventName) -> ::euv_core::AttributeValue {
-                                            ::euv_core::AttributeValue::Event(self.0)
-                                        }
-                                    }
-                                    impl __EventWrapper<Option<::euv_core::NativeEventHandler>> {
-                                        fn into_attr(self, _name: ::euv_core::NativeEventName) -> ::euv_core::AttributeValue {
-                                            match self.0 {
-                                                Some(handler) => ::euv_core::AttributeValue::Event(handler),
-                                                None => ::euv_core::AttributeValue::Text(String::new()),
-                                            }
-                                        }
-                                    }
-                                    __EventWrapper(__expr).into_attr(::euv_core::NativeEventName::#event_name_ident)
-                                };
-                                __attr_value
-                            }
+                            euv_core::EventAdapter::new(#value_expr).into_attribute(euv_core::NativeEventName::#event_name_ident)
                         }
                     } else if key_str == "children" {
                         quote! { euv_core::AttributeValue::Dynamic(Box::new(#value_expr)) }
                     } else {
                         quote! {
-                            {
-                                let __expr = #value_expr;
-                                trait __IsClosure {
-                                    fn __convert_closure(self) -> euv_core::AttributeValue;
-                                }
-                                impl __IsClosure for euv_core::NativeEventHandler {
-                                    fn __convert_closure(self) -> euv_core::AttributeValue {
-                                        euv_core::AttributeValue::Event(self)
-                                    }
-                                }
-                                impl __IsClosure for Option<euv_core::NativeEventHandler> {
-                                    fn __convert_closure(self) -> euv_core::AttributeValue {
-                                        match self {
-                                            Some(handler) => euv_core::AttributeValue::Event(handler),
-                                            None => euv_core::AttributeValue::Text(String::new()),
-                                        }
-                                    }
-                                }
-                                impl<F: FnMut(euv_core::NativeEvent) + 'static> __IsClosure for F {
-                                    fn __convert_closure(self) -> euv_core::AttributeValue {
-                                        self.into_callback_attribute()
-                                    }
-                                }
-                                struct __ClosurePicker<T>(T);
-                                impl<T: __IsClosure> __ClosurePicker<T> {
-                                    fn __pick_closure(self) -> euv_core::AttributeValue {
-                                        self.0.__convert_closure()
-                                    }
-                                }
-                                struct __ValuePicker<T>(T);
-                                impl<T: ::euv_core::IntoReactiveValue> __ValuePicker<T> {
-                                    fn __pick_value(self) -> euv_core::AttributeValue {
-                                        self.0.into_reactive_value()
-                                    }
-                                }
-                                trait __FallbackHelper<T> {
-                                    fn __pick(self) -> euv_core::AttributeValue;
-                                }
-                                impl<T: ::euv_core::IntoReactiveValue> __FallbackHelper<T> for __ValuePicker<T> {
-                                    fn __pick(self) -> euv_core::AttributeValue {
-                                        self.__pick_value()
-                                    }
-                                }
-                                impl<T: __IsClosure> __FallbackHelper<T> for __ClosurePicker<T> {
-                                    fn __pick(self) -> euv_core::AttributeValue {
-                                        self.__pick_closure()
-                                    }
-                                }
-                                fn __dispatch<T, P: __FallbackHelper<T>>(picker: P) -> euv_core::AttributeValue {
-                                    picker.__pick()
-                                }
-                                __dispatch::<_, __ValuePicker<_>>(__ValuePicker(__expr))
-                            }
+                            euv_core::AttrValueAdapter::new(#value_expr).into_reactive_attribute_value()
                         }
                     }
                 }
             };
             let raw_key: String = key_str.strip_prefix("on").unwrap_or(&key_str).replace('_', "-");
             let attr_name_str: String = raw_key.strip_prefix("r#").unwrap_or(&raw_key).to_string();
-            let attr_name_lit: LitStr = syn::LitStr::new(
-                &attr_name_str,
-                proc_macro2::Span::call_site(),
-            );
+            let key_span: Span = key.span();
+            let attr_name_token: TokenStream2 = quote_spanned!(key_span=> #attr_name_str);
             quote! {
-                euv_core::AttributeEntry::new(#attr_name_lit.to_string(), #value_tokens)
+                euv_core::AttributeEntry::new(#attr_name_token.to_string(), #value_tokens)
             }
         }).collect();
-
         let child_tokens: Vec<TokenStream2> = self
             .children
             .iter()
@@ -589,25 +451,27 @@ impl ToTokens for HtmlElement {
                 quote! { #child_stream }
             })
             .collect();
-
         if is_component {
             let component_fn: Ident = self.tag.clone();
+            let component_span: Span = self.tag.span();
+            let component_call: TokenStream2 =
+                quote_spanned!(component_span=> #component_fn(__props));
             tokens.extend(quote! {
                 {
                     let __children: Vec<euv_core::VirtualNode> = vec![#(#child_tokens),*];
                     let __props = euv_core::VirtualNode::Element {
-                        tag: euv_core::Tag::Component(#tag_name.to_string()),
+                        tag: euv_core::Tag::Component(#tag_literal),
                         attributes: vec![#(#attr_tokens),*],
                         children: __children,
                         key: None,
                     };
-                    #component_fn(__props)
+                    #component_call
                 }
             });
         } else {
             tokens.extend(quote! {
                 euv_core::VirtualNode::Element {
-                    tag: euv_core::Tag::Element(#tag_name.to_string()),
+                    tag: euv_core::Tag::Element(#tag_literal),
                     attributes: vec![#(#attr_tokens),*],
                     children: vec![#(#child_tokens),*],
                     key: None,

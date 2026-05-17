@@ -11,7 +11,9 @@ use crate::*;
 /// - `TokenStream` - The generated token stream that subscribes to signal changes
 ///   and executes the closure when any watched signal updates.
 pub fn parse_watch(input: TokenStream) -> TokenStream {
-    let watch_input: WatchInput = parse_macro_input!(input as WatchInput);
-    let tokens: TokenStream2 = watch_input.into_token_stream();
+    let tokens: TokenStream2 = match syn::parse::<WatchInput>(input) {
+        Ok(watch_input) => watch_input.into_token_stream(),
+        Err(error) => return error.to_compile_error().into(),
+    };
     TokenStream::from(tokens)
 }

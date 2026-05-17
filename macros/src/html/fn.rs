@@ -15,8 +15,10 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
-    let nodes: HtmlRoot = parse_macro_input!(input as HtmlRoot);
-    let tokens: TokenStream2 = nodes.into_token_stream();
+    let tokens: TokenStream2 = match syn::parse::<HtmlRoot>(input) {
+        Ok(nodes) => nodes.into_token_stream(),
+        Err(error) => return error.to_compile_error().into(),
+    };
     TokenStream::from(tokens)
 }
 

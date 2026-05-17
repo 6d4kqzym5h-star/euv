@@ -5,6 +5,7 @@ impl ServerHook for RequestMiddleware {
     async fn new(_: &mut Stream, _ctx: &mut Context) -> Self {
         Self
     }
+
     async fn handle(self, _: &mut Stream, ctx: &mut Context) -> Status {
         ctx.get_mut_response()
             .set_status_code(200)

@@ -102,12 +102,14 @@ impl ToTokens for CssVarDef {
                         }
                     })
                     .collect();
+                let name_span: Span = name.span();
                 let const_name: Ident = Ident::new(&class_name_str.to_uppercase(), name.span());
-                let fn_name: Ident = name.clone();
+                let const_name_token: TokenStream2 = quote_spanned!(name_span=> #const_name);
+                let fn_name_token: TokenStream2 = quote_spanned!(name_span=> #name);
                 tokens.extend(quote! {
-                    #vis fn #fn_name() -> &'static euv_core::CssClass {
-                        static #const_name: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
-                        #const_name.get_or_init(|| {
+                    #vis fn #fn_name_token() -> &'static euv_core::CssClass {
+                        static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                        #const_name_token.get_or_init(|| {
                             let __css_string: String = [#(#css_string_parts),*].concat();
                             euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
                         })

@@ -64,12 +64,7 @@ impl Parse for WatchInput {
 impl ToTokens for WatchInput {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let signal_clones: Vec<Ident> = (0..self.signals.len())
-            .map(|i: usize| {
-                Ident::new(
-                    &format!("__euv_watch_signal_{}", i),
-                    proc_macro2::Span::call_site(),
-                )
-            })
+            .map(|i: usize| Ident::new(&format!("__euv_watch_signal_{}", i), Span::call_site()))
             .collect();
         let signal_exprs: &Vec<Expr> = &self.signals;
         let param_names: &Vec<Ident> = &self.param_names;

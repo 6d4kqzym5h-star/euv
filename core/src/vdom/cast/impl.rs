@@ -275,3 +275,177 @@ where
         VirtualNode::Text(TextNode::new(initial, Some(string_signal)))
     }
 }
+
+/// Constructs an `EventAdapter` that wraps any event-compatible value.
+impl<T> EventAdapter<T> {
+    /// Creates a new `EventAdapter` wrapping the given value.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - The value to wrap for event attribute adaptation.
+    ///
+    /// # Returns
+    ///
+    /// - `EventAdapter<T>` - A new adapter wrapping the value.
+    pub fn new(inner: T) -> Self {
+        EventAdapter { inner }
+    }
+}
+
+/// Adapts a `FnMut(NativeEvent)` closure into an `AttributeValue::Event`.
+///
+/// Wraps the closure into a `NativeEventHandler` and returns it as an
+/// event attribute value. This replaces the `__EventWrapper<F>` type
+/// that was previously generated inline by the `html!` macro.
+impl<F> EventAdapter<F>
+where
+    F: FnMut(NativeEvent) + 'static,
+{
+    /// Converts the wrapped closure into an event `AttributeValue`.
+    ///
+    /// # Arguments
+    ///
+    /// - `NativeEventName` - The event name enum variant to associate with the handler.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
+    pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
+        AttributeValue::Event(NativeEventHandler::new(event_name, self.inner))
+    }
+}
+
+/// Adapts an owned `NativeEventHandler` into an `AttributeValue::Event` directly.
+///
+/// When the user already provides a `NativeEventHandler`, no wrapping is needed;
+/// the handler is returned as-is. This replaces the `impl __EventWrapper<NativeEventHandler>`
+/// that was previously generated inline.
+impl EventAdapter<NativeEventHandler> {
+    /// Converts the wrapped handler into an event `AttributeValue`.
+    ///
+    /// # Arguments
+    ///
+    /// - `NativeEventName` - The event name (unused, since the handler already carries it).
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An `AttributeValue::Event` containing the handler.
+    pub fn into_attribute(self, _event_name: NativeEventName) -> AttributeValue {
+        AttributeValue::Event(self.inner)
+    }
+}
+
+/// Adapts an `Option<NativeEventHandler>` into an `AttributeValue`.
+///
+/// `Some(handler)` becomes `AttributeValue::Event(handler)`, and `None` becomes
+/// `AttributeValue::Text(String::new())`. This replaces the
+/// `impl __EventWrapper<Option<NativeEventHandler>>` that was previously
+/// generated inline by the `html!` macro.
+impl EventAdapter<Option<NativeEventHandler>> {
+    /// Converts the wrapped optional handler into an attribute value.
+    ///
+    /// # Arguments
+    ///
+    /// - `NativeEventName` - The event name (unused when handler is `None`).
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
+    pub fn into_attribute(self, _event_name: NativeEventName) -> AttributeValue {
+        match self.inner {
+            Some(handler) => AttributeValue::Event(handler),
+            None => AttributeValue::Text(String::new()),
+        }
+    }
+}
+
+/// Constructs an `AttrValueAdapter` that wraps any attribute-compatible value.
+impl<T> AttrValueAdapter<T> {
+    /// Creates a new `AttrValueAdapter` wrapping the given value.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - The value to wrap for attribute adaptation.
+    ///
+    /// # Returns
+    ///
+    /// - `AttrValueAdapter<T>` - A new adapter wrapping the value.
+    pub fn new(inner: T) -> Self {
+        AttrValueAdapter { inner }
+    }
+}
+
+/// Adapts a `FnMut(NativeEvent)` closure into a callback `AttributeValue`.
+///
+/// This handles the case where a closure is used as a component callback prop.
+/// The closure is converted via `IntoCallbackAttribute::into_callback_attribute()`.
+/// This replaces the `__IsClosure for F` impl that was previously generated inline.
+impl<F> AttrValueAdapter<F>
+where
+    F: FnMut(NativeEvent) + 'static,
+{
+    /// Converts the wrapped closure into a callback `AttributeValue`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute value wrapping the adapted closure.
+    pub fn into_callback_attribute_value(self) -> AttributeValue {
+        self.inner.into_callback_attribute()
+    }
+}
+
+/// Adapts an owned `NativeEventHandler` into an `AttributeValue::Event` directly.
+///
+/// When the user already provides a `NativeEventHandler`, it is returned as-is.
+/// This replaces the `__IsClosure for NativeEventHandler` impl that was previously
+/// generated inline by the `html!` macro.
+impl AttrValueAdapter<NativeEventHandler> {
+    /// Converts the wrapped handler into an event `AttributeValue`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An `AttributeValue::Event` containing the handler.
+    pub fn into_callback_attribute_value(self) -> AttributeValue {
+        AttributeValue::Event(self.inner)
+    }
+}
+
+/// Adapts an `Option<NativeEventHandler>` into an `AttributeValue`.
+///
+/// `Some(handler)` becomes `AttributeValue::Event(handler)`, and `None` becomes
+/// `AttributeValue::Text(String::new())`. This replaces the
+/// `__IsClosure for Option<NativeEventHandler>` impl that was previously
+/// generated inline by the `html!` macro.
+impl AttrValueAdapter<Option<NativeEventHandler>> {
+    /// Converts the wrapped optional handler into an attribute value.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
+    pub fn into_callback_attribute_value(self) -> AttributeValue {
+        match self.inner {
+            Some(handler) => AttributeValue::Event(handler),
+            None => AttributeValue::Text(String::new()),
+        }
+    }
+}
+
+/// Adapts any `IntoReactiveValue` type into an `AttributeValue`.
+///
+/// This is the fallback path for non-closure attribute values (strings, signals,
+/// CSS classes, etc.). The value is converted via `IntoReactiveValue::into_reactive_value()`.
+/// This replaces the `__ValuePicker` / `__FallbackHelper` hierarchy that was previously
+/// generated inline by the `html!` macro.
+impl<T> AttrValueAdapter<T>
+where
+    T: IntoReactiveValue,
+{
+    /// Converts the wrapped value into an `AttributeValue` via reactive value adaptation.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - The reactive attribute value.
+    pub fn into_reactive_attribute_value(self) -> AttributeValue {
+        self.inner.into_reactive_value()
+    }
+}

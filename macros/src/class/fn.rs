@@ -10,8 +10,10 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream constructing `CssClass` functions.
 pub fn parse_class(input: TokenStream) -> TokenStream {
-    let class_input: ClassInput = parse_macro_input!(input as ClassInput);
-    let tokens: TokenStream2 = class_input.into_token_stream();
+    let tokens: TokenStream2 = match syn::parse::<ClassInput>(input) {
+        Ok(class_input) => class_input.into_token_stream(),
+        Err(error) => return error.to_compile_error().into(),
+    };
     TokenStream::from(tokens)
 }
 

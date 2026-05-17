@@ -100,10 +100,10 @@ class! {
 
     pub c_app_main {
         flex: "1";
+        width: "0";
         padding: "32px 40px";
         background: var!(bg-primary);
         overflow-y: "auto";
-        max-width: "960px";
     }
 
     pub c_page_container {

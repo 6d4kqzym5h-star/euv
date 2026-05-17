@@ -39,45 +39,6 @@ pub struct AttributeEntry {
     pub(crate) value: AttributeValue,
 }
 
-/// Represents a text node in the virtual DOM.
-///
-/// Text nodes may optionally be bound to a reactive signal for automatic updates.
-#[derive(Clone, Data, New)]
-pub struct TextNode {
-    /// The text content.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) content: String,
-    /// An optional signal that drives reactive text updates.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) signal: Option<Signal<String>>,
-}
-
-/// A closure-based dynamic node that re-renders when its dependency signals change.
-///
-/// Holds a boxed closure that produces a fresh `VirtualNode` on each evaluation.
-/// The renderer subscribes to the closure's signals and patches the DOM automatically.
-/// Contains a `HookContext` that persists hook state (like `use_signal`) across
-/// re-renders, ensuring that signal values are not reset when the render function
-/// is called again.
-#[derive(Data)]
-pub struct DynamicNode {
-    /// The closure that generates the dynamic virtual node tree.
-    #[get(pub)]
-    #[set(pub)]
-    pub(crate) render_fn: Rc<RefCell<dyn FnMut() -> VirtualNode>>,
-    /// Persistent hook context for this dynamic node, storing signal
-    /// state and other hook values across render cycles.
-    ///
-    /// Implements `Copy`; all copies share the same underlying state.
-    /// When the `arm_changed` flag inside is toggled (by `match` arm switching),
-    /// the hooks array is cleared to prevent signal leakage between arms.
-    #[get(pub, type(copy))]
-    #[set(pub)]
-    pub(crate) hook_context: HookContext,
-}
-
 /// Represents a CSS class with a name and its style declarations.
 ///
 /// Created by the `class!` macro and used in `html!` via the `class:` attribute.
@@ -93,4 +54,36 @@ pub struct CssClass {
     #[get(pub)]
     #[set(pub)]
     style: String,
+}
+
+/// Adapts various event value types into an `AttributeValue` for event attributes.
+///
+/// The `html!` macro generates `EventAdapter::new(expr).into_attribute(event_name)`
+/// instead of inline trait dispatch boilerplate. This eliminates the per-attribute-site
+/// generation of `__EventWrapper`, `__IsClosure`, `__ClosurePicker`, `__ValuePicker`,
+/// `__FallbackHelper`, and `__dispatch` types, significantly reducing macro output size.
+///
+/// The adapter pattern handles three cases:
+/// - `FnMut(NativeEvent)` closure → `AttributeValue::Event` via `NativeEventHandler`
+/// - `NativeEventHandler` directly → `AttributeValue::Event` as-is
+/// - `Option<NativeEventHandler>` → `AttributeValue::Event` or `AttributeValue::Text`
+pub struct EventAdapter<T> {
+    /// The wrapped value to be adapted into an attribute.
+    pub(crate) inner: T,
+}
+
+/// Adapts an arbitrary attribute value expression into an `AttributeValue`.
+///
+/// Handles the dispatch between event closures and reactive values without
+/// requiring the macro to generate inline trait hierarchies. The macro emits
+/// `AttrValueAdapter::new(expr).into_attribute_value()` instead of the
+/// `__IsClosure` / `__ClosurePicker` / `__ValuePicker` / `__FallbackHelper`
+/// / `__dispatch` boilerplate.
+///
+/// For event attributes (key starts with "on"), event closures are wrapped
+/// into `AttributeValue::Event`. For non-event attributes, values are
+/// converted via `IntoReactiveValue`.
+pub struct AttrValueAdapter<T> {
+    /// The wrapped value to be adapted into an attribute.
+    pub(crate) inner: T,
 }
