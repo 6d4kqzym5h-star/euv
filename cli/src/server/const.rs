@@ -1,18 +1,18 @@
 /// Default HTML template for development.
-pub(crate) const DEFAULT_INDEX_HTML: &str = r#"<!DOCTYPE html>
+pub(crate) const DEFAULT_INDEX_HTML: &str = r#"<!doctype html>
 <html>
-<head>
-    <meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
     <title>euv app</title>
-</head>
-<body>
+  </head>
+  <body>
     <div id="app"></div>
     <script type="module">
-        import init, { main } from './pkg/euv_example.js';
-        await init();
-        main();
+      import init, { main } from './pkg/euv_example.js';
+      await init();
+      main();
     </script>
-</body>
+  </body>
 </html>
 "#;
 
@@ -24,24 +24,24 @@ pub(crate) const DEFAULT_INDEX_HTML: &str = r#"<!DOCTYPE html>
 /// - `{"type":"Error","message":"..."}` — a build error occurred.
 pub(crate) const RELOAD_SCRIPT: &str = r#"
 <script>
-(function() {
+  (function () {
     async function connect() {
-        try {
-            const res = await fetch('/__euv_reload');
-            const data = await res.json();
-            if (data.type === 'Reload') {
-                location.reload();
-            } else if (data.type === 'Error') {
-                console.error('[euv] Build error:', data.message);
-                setTimeout(connect, 1000);
-            } else {
-                setTimeout(connect, 1000);
-            }
-        } catch (e) {
-            setTimeout(connect, 2000);
+      try {
+        const res = await fetch('/__euv_reload');
+        const data = await res.json();
+        if (data.type === 'Reload') {
+          location.reload();
+        } else if (data.type === 'Error') {
+          console.error('[euv] Build error:', data.message);
+          setTimeout(connect, 1000);
+        } else {
+          setTimeout(connect, 1000);
         }
+      } catch (e) {
+        setTimeout(connect, 2000);
+      }
     }
     connect();
-})();
+  })();
 </script>
 "#;

@@ -55,6 +55,13 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs, profile: Profile) -
         args.crate_path.join(&args.out_dir)
     };
     clean_pkg_dir(&pkg_dir).await;
+    let www_absolute: PathBuf = if args.www_dir.is_absolute() {
+        args.www_dir.clone()
+    } else {
+        args.crate_path.join(&args.www_dir)
+    };
+    let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
+    generate_build_html(&www_absolute).await?;
     Ok(())
 }
 
@@ -112,6 +119,31 @@ pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
             }
         }
     }
+}
+
+/// Generates a clean `index.html` for production builds without reload scripts.
+///
+/// Always overwrites `index.html` with `DEFAULT_INDEX_HTML` to ensure
+/// a consistent, minimal production entry point. No live-reload script
+/// is injected.
+///
+/// # Arguments
+///
+/// - `&Path` - The path to the www directory where `index.html` will be written.
+///
+/// # Returns
+///
+/// - `Result<()>` - Indicates success or failure of the HTML generation.
+pub(crate) async fn generate_build_html(www_dir: &Path) -> Result<()> {
+    let index_path: PathBuf = www_dir.join("index.html");
+    create_dir_all(www_dir)
+        .await
+        .map_err(|error| anyhow!("Failed to create www directory: {}", error))?;
+    write(&index_path, DEFAULT_INDEX_HTML)
+        .await
+        .map_err(|error| anyhow!("Failed to write index.html: {}", error))?;
+    log::info!("Generated index.html");
+    Ok(())
 }
 
 /// Executes a full build pipeline: format source files, run hyperlane-cli fmt,
@@ -265,7 +297,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs, profile: Profile) -> Result<()> 
     let output: Output = command
         .output()
         .await
-        .map_err(|e| anyhow!("Failed to execute wasm-pack: {}", e))?;
+        .map_err(|error| anyhow!("Failed to execute wasm-pack: {}", error))?;
     if !output.status.success() {
         let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
         bail!("wasm-pack build failed:\n{}", stderr);
@@ -310,7 +342,7 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|e| anyhow!("Failed to check hyperlane-cli availability: {}", e))?;
+        .map_err(|error| anyhow!("Failed to check hyperlane-cli availability: {}", error))?;
     if !which_output.status.success() {
         log::info!("hyperlane-cli not found, installing via cargo install...");
         let install_output: Output = Command::new("cargo")
@@ -319,7 +351,7 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
             .stderr(Stdio::piped())
             .output()
             .await
-            .map_err(|e| anyhow!("Failed to execute cargo install hyperlane-cli: {}", e))?;
+            .map_err(|error| anyhow!("Failed to execute cargo install hyperlane-cli: {}", error))?;
         if !install_output.status.success() {
             let stderr: String = String::from_utf8_lossy(&install_output.stderr).to_string();
             bail!("cargo install hyperlane-cli failed:\n{}", stderr);
@@ -332,7 +364,7 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|e| anyhow!("Failed to execute hyperlane-cli fmt: {}", e))?;
+        .map_err(|error| anyhow!("Failed to execute hyperlane-cli fmt: {}", error))?;
     if !fmt_output.status.success() {
         let stderr: String = String::from_utf8_lossy(&fmt_output.stderr).to_string();
         bail!("hyperlane-cli fmt failed:\n{}", stderr);
