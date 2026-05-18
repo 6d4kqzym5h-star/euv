@@ -24,39 +24,33 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
     APP_STATE.get().cloned()
 }
 
-/// Writes a clean `index.html` from `DEFAULT_INDEX_HTML`, then reads it back,
-/// injects the live-reload script, and writes the final result back to disk.
+/// Generates `index.html` based on the compile-time profile.
 ///
-/// Always overwrites `index.html` to ensure a consistent base before
-/// injecting the reload script.
+/// Uses the `INDEX_HTML` constant selected by `#[cfg]` at compile time:
+/// - `debug_assertions` enabled → dev template with live-reload script
+/// - `debug_assertions` disabled → release template (minimal production HTML)
+///
+/// Then writes the template with the import path placeholder replaced to disk.
 ///
 /// # Arguments
 ///
 /// - `&Path` - The path to the www directory where `index.html` will be written.
+/// - `&str` - The JS import path relative to the www directory (e.g. `./pkg/euv` or `./euv`).
 ///
 /// # Returns
 ///
-/// - `Result<String>` - The modified HTML with the reload script injected.
-pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
+/// - `Result<String>` - The generated HTML content written to disk.
+pub(crate) async fn generate_html(www_dir: &Path, import_path: &str) -> Result<String> {
+    let html: String = INDEX_HTML
+        .replace(IMPORT_PATH_PLACEHOLDER, import_path)
+        .replace(RELOAD_ROUTE_PLACEHOLDER, RELOAD_ROUTE);
     let index_path: PathBuf = www_dir.join("index.html");
     create_dir_all(www_dir)
         .await
-        .map_err(|error| anyhow!("Failed to create www directory: {}", error))?;
-    write(&index_path, DEFAULT_INDEX_HTML)
-        .await
-        .map_err(|error| anyhow!("Failed to write index.html: {}", error))?;
-    let original: String = read_to_string(&index_path)
-        .await
-        .map_err(|error| anyhow!("Failed to read index.html: {}", error))?;
-    let mut html: String = if original.contains("</html>") {
-        original.replace("</html>", &format!("{}\n</html>", RELOAD_SCRIPT))
-    } else {
-        format!("{}\n{}", original, RELOAD_SCRIPT)
-    };
-    html = html.replace("./euv_example.js", "./pkg/euv_example.js");
+        .map_err(|error| anyhow!("Failed to create static directory: {}", error))?;
     write(&index_path, &html)
         .await
-        .map_err(|error| anyhow!("Failed to write dev index.html: {}", error))?;
+        .map_err(|error| anyhow!("Failed to write index.html: {}", error))?;
     Ok(html)
 }
 
@@ -85,37 +79,16 @@ pub(crate) async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
 
 /// Resolves the pkg directory for serving WASM artifacts.
 ///
+/// Delegates to `resolve_out_dir` which respects `--out-dir`
+/// from wasm-pack args or defaults to `{www_dir}/pkg`.
+///
 /// # Arguments
 ///
-/// - `&Path` - The www directory path to search within.
+/// - `&ModeArgs` - The CLI arguments for resolving out_dir.
 ///
 /// # Returns
 ///
 /// - `PathBuf` - The resolved pkg directory containing WASM build artifacts.
-pub(crate) async fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
-    let direct_pkg: PathBuf = www_dir.join("pkg");
-    if metadata(direct_pkg.join("euv_example.js")).await.is_ok()
-        || metadata(direct_pkg.join(".gitignore")).await.is_ok()
-    {
-        return direct_pkg;
-    }
-    let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
-    if let Some(name) = parent_name {
-        let nested_pkg: PathBuf = www_dir.join(name).join("pkg");
-        if metadata(nested_pkg.join("euv_example.js")).await.is_ok()
-            || metadata(nested_pkg.join(".gitignore")).await.is_ok()
-        {
-            return nested_pkg;
-        }
-    }
-    let grandparent: Option<&Path> = www_dir.parent();
-    if let Some(parent) = grandparent {
-        let sibling_pkg: PathBuf = parent.join("pkg");
-        if metadata(sibling_pkg.join("euv_example.js")).await.is_ok()
-            || metadata(sibling_pkg.join(".gitignore")).await.is_ok()
-        {
-            return sibling_pkg;
-        }
-    }
-    direct_pkg
+pub(crate) fn resolve_pkg_dir(args: &ModeArgs) -> PathBuf {
+    resolve_out_dir(args)
 }

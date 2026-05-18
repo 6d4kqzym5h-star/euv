@@ -127,11 +127,7 @@ impl ServerHook for IndexRoute {
                 .set_header(CONTENT_TYPE, TEXT_HTML);
             return Status::Continue;
         }
-        let www_absolute: PathBuf = if state.args.www_dir.is_absolute() {
-            state.args.www_dir.clone()
-        } else {
-            state.args.crate_path.join(&state.args.www_dir)
-        };
+        let www_absolute: PathBuf = state.args.crate_path.join(&state.args.www_dir);
         let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
         let file_path: PathBuf = www_absolute.join(&path);
         let canonical_path: PathBuf = match canonicalize(&file_path).await {

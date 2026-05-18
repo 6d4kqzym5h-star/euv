@@ -1,18 +1,17 @@
 //! euv CLI
 //!
-//! The official CLI tool for the euv UI framework, providing dev/release
-//! profiles with run/build modes, hot reload, and wasm-pack integration.
+//! The official CLI tool for the euv UI framework, providing
+//! run/build modes with hot reload and wasm-pack integration.
 
 mod build;
-mod formatter;
 mod logger;
 mod server;
 
-use {build::*, formatter::*, logger::*, server::*};
+use {build::*, logger::*, server::*};
 
 use std::{
     net::SocketAddr,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     process::{Output, Stdio},
     sync::{Arc, OnceLock},
     time::Duration,
@@ -26,11 +25,9 @@ use {
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
     serde::Serialize,
     tokio::{
-        fs::{
-            ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, read_to_string,
-            remove_file, write,
-        },
+        fs::{ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, remove_file, write},
         process::Command,
+        spawn,
         sync::{
             Mutex, MutexGuard, RwLock, RwLockWriteGuard, broadcast,
             mpsc::{Receiver, Sender, channel},
@@ -42,65 +39,50 @@ use {
 /// Entry point for the euv CLI.
 ///
 /// Parses command-line arguments and dispatches to the appropriate
-/// profile (dev/release) and mode (run/build).
+/// mode (run/build).
 ///
-/// - `dev run` — debug build + file watcher + dev server
-/// - `dev build` — debug build only
-/// - `release run` — optimized build + dev server
-/// - `release build` — optimized build only
+/// - `run` — build + file watcher + dev server
+/// - `build` — build only
 #[tokio::main]
 async fn main() -> Result<()> {
     Logger::init(log::LevelFilter::Info);
     let cli: Cli = Cli::parse();
-    let (profile, action, args): (Profile, Action, ModeArgs) = match &cli.command {
-        CliCommand::Dev { mode } => {
-            let (action, mode_args): (Action, ModeArgs) = match mode {
-                Mode::Run(a) => (Action::Run, a.clone()),
-                Mode::Build(a) => (Action::Build, a.clone()),
-            };
-            (Profile::Dev, action, mode_args)
-        }
-        CliCommand::Release { mode } => {
-            let (action, mode_args): (Action, ModeArgs) = match mode {
-                Mode::Run(a) => (Action::Run, a.clone()),
-                Mode::Build(a) => (Action::Build, a.clone()),
-            };
-            (Profile::Release, action, mode_args)
-        }
+    let (action, mut args): (Action, ModeArgs) = match &cli.command {
+        Mode::Run(mode_args) => (Action::Run, mode_args.clone()),
+        Mode::Build(mode_args) => (Action::Build, mode_args.clone()),
     };
-    let www_route_prefix: String = {
-        let combined: PathBuf = if args.www_dir.is_absolute() {
-            args.www_dir.clone()
-        } else {
-            args.crate_path.join(&args.www_dir)
-        };
-        let normalized: PathBuf = combined
-            .components()
-            .filter(|component: &std::path::Component| {
-                !matches!(component, std::path::Component::CurDir)
-            })
-            .collect();
-        normalized.to_string_lossy().replace('\\', "/")
-    };
+    args.crate_path = std::fs::canonicalize(&args.crate_path).map_err(|error| {
+        anyhow!(
+            "Invalid crate-path '{}': {}",
+            args.crate_path.display(),
+            error
+        )
+    })?;
+    let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
+    if crate_path_str.starts_with(r"\\?\") {
+        args.crate_path = PathBuf::from(
+            crate_path_str
+                .strip_prefix(r"\\?\")
+                .unwrap_or(&crate_path_str),
+        );
+    }
+    let www_route_prefix: String = args.www_dir.replace('\\', "/");
     let addr: SocketAddr = SocketAddr::from(([127, 0, 0, 1], args.port));
     let server_url: String = format!("http://{}/{}/index.html", addr, www_route_prefix);
-    print_banner(profile, action, &server_url);
-    let www_absolute: PathBuf = if args.www_dir.is_absolute() {
-        args.www_dir.clone()
-    } else {
-        args.crate_path.join(&args.www_dir)
-    };
+    print_banner(action, &server_url);
+    let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
     if action == Action::Build {
-        run_build_only_pipeline(&args, profile).await?;
+        run_build_only_pipeline(&args).await?;
         log::info!("Build completed. Exiting (build-only mode).");
         return Ok(());
     }
-    let initial_html: String = match run_build_pipeline(&args, profile, None).await {
+    let initial_html: String = match run_build_pipeline(&args, None).await {
         Ok(html) => html,
         Err(error) => {
             log::error!("Initial build pipeline failed: {}", error);
-            generate_dev_html(&www_absolute).await?
+            let import_path: String = resolve_import_path(&args);
+            generate_html(&www_absolute, &import_path).await?
         }
     };
     let (reload_tx, _): (
@@ -112,7 +94,6 @@ async fn main() -> Result<()> {
         reload_tx: reload_tx.clone(),
         is_building: Mutex::new(false),
         args: args.clone(),
-        profile,
     });
     let state_for_watch: Arc<AppState> = Arc::clone(&state);
     tokio::spawn(async move {
@@ -120,7 +101,7 @@ async fn main() -> Result<()> {
             log::error!("Watch error: {}", error);
         }
     });
-    let pkg_dir: PathBuf = resolve_pkg_dir(&www_absolute).await;
+    let pkg_dir: PathBuf = resolve_pkg_dir(&args);
     log::info!("Serving pkg from: {}", pkg_dir.display());
     let mut server: Server = Server::default();
     let mut server_config: ServerConfig = ServerConfig::default();
@@ -129,7 +110,7 @@ async fn main() -> Result<()> {
     server.request_middleware::<RequestMiddleware>();
     server.response_middleware::<ResponseMiddleware>();
     server.route::<IndexRoute>(format!("{}/{{path:.*}}", www_route_prefix));
-    server.route::<ReloadRoute>("/__euv_reload");
+    server.route::<ReloadRoute>(RELOAD_ROUTE);
     if let Err(error) = set_global_state(Arc::clone(&state)) {
         log::error!("Failed to set global state: {}", error);
     }

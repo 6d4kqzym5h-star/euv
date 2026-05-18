@@ -230,7 +230,7 @@ impl CssClass {
                 break;
             };
             let selector: &str = &remaining[..sel_end];
-            let after_selector: &str = &remaining[sel_end + 3..];
+            let after_selector: &str = remaining[sel_end..].strip_prefix(" { ").unwrap_or("");
             let style_end: Option<usize> = after_selector.find('}');
             let Some(st_end) = style_end else {
                 break;
@@ -239,7 +239,7 @@ impl CssClass {
             if !selector.is_empty() && !style.is_empty() {
                 rules.push(PseudoRule::new(selector.to_string(), style.to_string()));
             }
-            remaining = &after_selector[st_end + 1..];
+            remaining = after_selector[st_end..].strip_prefix('}').unwrap_or("");
         }
         rules
     }
@@ -264,13 +264,13 @@ impl CssClass {
             if !remaining.starts_with("@media ") {
                 break;
             }
-            let after_prefix: &str = &remaining[7..];
+            let after_prefix: &str = remaining.strip_prefix("@media ").unwrap_or("");
             let query_end: Option<usize> = after_prefix.find(" { ");
             let Some(q_end) = query_end else {
                 break;
             };
             let query: &str = &after_prefix[..q_end];
-            let after_query: &str = &after_prefix[q_end + 3..];
+            let after_query: &str = after_prefix[q_end..].strip_prefix(" { ").unwrap_or("");
             let style_end: Option<usize> = after_query.find('}');
             let Some(st_end) = style_end else {
                 break;
@@ -279,7 +279,7 @@ impl CssClass {
             if !query.is_empty() && !style.is_empty() {
                 rules.push(MediaRule::new(query.to_string(), style.to_string()));
             }
-            remaining = &after_query[st_end + 1..];
+            remaining = after_query[st_end..].strip_prefix('}').unwrap_or("");
         }
         rules
     }

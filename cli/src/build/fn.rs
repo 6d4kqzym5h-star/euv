@@ -32,36 +32,165 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
     }
 }
 
+/// Extracts the value of `--out-name` from the wasm-pack arguments.
+///
+/// Returns `None` if `--out-name` is not specified.
+///
+/// # Arguments
+///
+/// - `&[String]` - The wasm-pack arguments to search.
+///
+/// # Returns
+///
+/// - `Option<String>` - The value of `--out-name` if found.
+fn extract_out_name(wasm_pack_args: &[String]) -> Option<String> {
+    let mut iter = wasm_pack_args.iter();
+    while let Some(arg) = iter.next() {
+        if arg == "--out-name" {
+            return iter.next().cloned();
+        }
+        if let Some(value) = arg.strip_prefix("--out-name=") {
+            return Some(value.to_string());
+        }
+    }
+    None
+}
+
+/// Extracts the value of `--out-dir` from the wasm-pack arguments.
+///
+/// Returns `None` if `--out-dir` is not specified.
+///
+/// # Arguments
+///
+/// - `&[String]` - The wasm-pack arguments to search.
+///
+/// # Returns
+///
+/// - `Option<String>` - The value of `--out-dir` if found.
+fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
+    let mut iter = wasm_pack_args.iter();
+    while let Some(arg) = iter.next() {
+        if arg == "--out-dir" {
+            return iter.next().cloned();
+        }
+        if let Some(value) = arg.strip_prefix("--out-dir=") {
+            return Some(value.to_string());
+        }
+    }
+    None
+}
+
+/// Resolves the output JS filename for HTML generation.
+///
+/// Uses `--out-name` from wasm-pack args if specified,
+/// otherwise falls back to the crate name derived from `Cargo.toml`.
+/// Appends `.js` extension to form the complete JS filename.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing crate_path and wasm_pack_args.
+///
+/// # Returns
+///
+/// - `String` - The resolved JS filename with `.js` extension (e.g. `euv.js`).
+pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
+    let name: String = if let Some(out_name) = extract_out_name(&args.wasm_pack_args) {
+        out_name
+    } else {
+        let cargo_toml_path: PathBuf = args.crate_path.join("Cargo.toml");
+        let crate_name: String = cargo_toml_path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        crate_name
+    };
+    format!("{name}.js")
+}
+
+/// Resolves the JS import path for HTML generation.
+///
+/// Computes the relative path from the www directory to the output directory,
+/// then appends the JS filename (from `resolve_out_name`, which includes `.js`)
+/// to form the full import path (e.g. `./pkg/euv.js` or `./euv.js`).
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing crate_path, www_dir, wasm_pack_args.
+///
+/// # Returns
+///
+/// - `String` - The resolved JS import path relative to the www directory.
+pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
+    let out_name: String = resolve_out_name(args);
+    let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
+    let out_dir_absolute: PathBuf = resolve_out_dir(args);
+    let relative: PathBuf = match out_dir_absolute.strip_prefix(&www_absolute) {
+        Ok(rel) => rel.to_path_buf(),
+        Err(_) => out_dir_absolute.clone(),
+    };
+    let mut components: Vec<String> = Vec::new();
+    for component in relative.components() {
+        match component {
+            Component::CurDir => {}
+            Component::Normal(os_str) => {
+                if let Some(s) = os_str.to_str() {
+                    components.push(s.to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+    components.push(out_name);
+    format!("./{}", components.join("/"))
+}
+
+/// Resolves the output directory for wasm-pack artifacts.
+///
+/// Uses `--out-dir` from wasm-pack args if specified,
+/// otherwise defaults to `{www_dir}/pkg` so that build artifacts
+/// are placed directly inside the www directory served
+/// by the development server.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing crate_path, www_dir, and wasm_pack_args.
+///
+/// # Returns
+///
+/// - `PathBuf` - The resolved output directory (absolute if crate_path is joined).
+pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
+    let default_out_dir: String = format!("{}/pkg", args.www_dir);
+    let out_dir: String = extract_out_dir(&args.wasm_pack_args).unwrap_or(default_out_dir);
+    let out_dir_path: PathBuf = PathBuf::from(out_dir);
+    if out_dir_path.is_absolute() {
+        out_dir_path
+    } else {
+        args.crate_path.join(&out_dir_path)
+    }
+}
+
 /// Executes a build-only pipeline: builds WASM and removes unnecessary files.
 ///
-/// Unlike `run_build_pipeline`, this skips source formatting, hyperlane-cli fmt,
-/// dev HTML generation, and reload notifications — only the essential WASM
+/// Unlike `run_build_pipeline`, this skips hyperlane-cli fmt,
+/// HTML generation, and reload notifications — only the essential WASM
 /// build artifacts are kept.
 ///
 /// # Arguments
 ///
-/// - `&ModeArgs` - The parsed CLI arguments containing build configuration.
-/// - `Profile` - The build profile (dev or release).
+/// - `&ModeArgs` - The CLI arguments.
 ///
 /// # Returns
 ///
 /// - `Result<()>` - Indicates success or failure of the build.
-pub(crate) async fn run_build_only_pipeline(args: &ModeArgs, profile: Profile) -> Result<()> {
-    build_wasm(args, profile).await?;
+pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
+    build_wasm(args).await?;
     log::info!("WASM build completed successfully");
-    let pkg_dir: PathBuf = if args.out_dir.is_absolute() {
-        args.out_dir.clone()
-    } else {
-        args.crate_path.join(&args.out_dir)
-    };
+    let pkg_dir: PathBuf = resolve_out_dir(args);
     clean_pkg_dir(&pkg_dir).await;
-    let www_absolute: PathBuf = if args.www_dir.is_absolute() {
-        args.www_dir.clone()
-    } else {
-        args.crate_path.join(&args.www_dir)
-    };
-    let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
-    generate_build_html(&www_absolute).await?;
+    let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
+    let import_path: String = resolve_import_path(args);
+    generate_html(&www_dir, &import_path).await?;
     Ok(())
 }
 
@@ -121,38 +250,12 @@ pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
     }
 }
 
-/// Generates a clean `index.html` for production builds without reload scripts.
-///
-/// Always overwrites `index.html` with `DEFAULT_INDEX_HTML` to ensure
-/// a consistent, minimal production entry point. No live-reload script
-/// is injected.
-///
-/// # Arguments
-///
-/// - `&Path` - The path to the www directory where `index.html` will be written.
-///
-/// # Returns
-///
-/// - `Result<()>` - Indicates success or failure of the HTML generation.
-pub(crate) async fn generate_build_html(www_dir: &Path) -> Result<()> {
-    let index_path: PathBuf = www_dir.join("index.html");
-    create_dir_all(www_dir)
-        .await
-        .map_err(|error| anyhow!("Failed to create www directory: {}", error))?;
-    write(&index_path, DEFAULT_INDEX_HTML)
-        .await
-        .map_err(|error| anyhow!("Failed to write index.html: {}", error))?;
-    log::info!("Generated index.html");
-    Ok(())
-}
-
-/// Executes a full build pipeline: format source files, run hyperlane-cli fmt,
+/// Executes a full build pipeline: run hyperlane-cli fmt,
 /// build WASM, notify reload channel, and generate updated HTML.
 ///
 /// # Arguments
 ///
-/// - `&ModeArgs` - The parsed CLI arguments containing build configuration.
-/// - `Profile` - The build profile (dev or release).
+/// - `&ModeArgs` - The CLI arguments.
 /// - `Option<&broadcast::Sender<ReloadEvent>>` - Optional reload channel for notifying clients.
 ///
 /// # Returns
@@ -160,17 +263,12 @@ pub(crate) async fn generate_build_html(www_dir: &Path) -> Result<()> {
 /// - `Result<String>` - The generated HTML with reload script injected on success.
 pub(crate) async fn run_build_pipeline(
     args: &ModeArgs,
-    profile: Profile,
     reload_tx: Option<&broadcast::Sender<ReloadEvent>>,
 ) -> Result<String> {
-    let src_path: PathBuf = args.crate_path.join("src");
-    if let Err(error) = format_dir(&src_path).await {
-        log::warn!("Formatter error: {}", error);
-    }
     if let Err(error) = run_hyperlane_fmt().await {
         log::warn!("hyperlane-cli fmt error: {}", error);
     }
-    match build_wasm(args, profile).await {
+    match build_wasm(args).await {
         Ok(()) => {
             log::info!("WASM build completed successfully");
             if let Some(sender) = reload_tx {
@@ -184,14 +282,24 @@ pub(crate) async fn run_build_pipeline(
             }
         }
     }
-    let www_absolute: PathBuf = if args.www_dir.is_absolute() {
-        args.www_dir.clone()
-    } else {
-        args.crate_path.join(&args.www_dir)
-    };
-    let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
-    let html: String = generate_dev_html(&www_absolute).await?;
+    let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
+    let import_path: String = resolve_import_path(args);
+    let html: String = generate_html(&www_dir, &import_path).await?;
     Ok(html)
+}
+
+/// Resolves the www directory from CLI arguments.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments.
+///
+/// # Returns
+///
+/// - `PathBuf` - The resolved www directory.
+async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
+    let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
+    resolve_www_dir(&www_absolute).await
 }
 
 /// Watches source files and triggers WASM builds.
@@ -240,11 +348,10 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
         *building = true;
         drop(building);
         let state_for_build: Arc<AppState> = Arc::clone(&state);
-        tokio::spawn(async move {
+        spawn(async move {
             let args: ModeArgs = state_for_build.args.clone();
-            let profile: Profile = state_for_build.profile;
             let reload_tx: broadcast::Sender<ReloadEvent> = state_for_build.reload_tx.clone();
-            match run_build_pipeline(&args, profile, Some(&reload_tx)).await {
+            match run_build_pipeline(&args, Some(&reload_tx)).await {
                 Ok(html) => {
                     let mut content: RwLockWriteGuard<String> =
                         state_for_build.html_content.write().await;
@@ -263,37 +370,47 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 
 /// Runs wasm-pack build for the target crate.
 ///
+/// All arguments in `args.wasm_pack_args` are transparently forwarded
+/// to `wasm-pack build`. If `--out-dir` is not specified by the user,
+/// `--out-dir {www_dir}/pkg` is automatically injected so that build artifacts
+/// are placed inside the www directory served by the development server.
+///
 /// # Arguments
 ///
-/// - `&ModeArgs` - The parsed CLI arguments containing build configuration.
-/// - `Profile` - The build profile (dev or release).
+/// - `&ModeArgs` - The CLI arguments containing crate_path, www_dir, and wasm_pack_args.
 ///
 /// # Returns
 ///
 /// - `Result<()>` - Indicates success or failure of the wasm-pack build.
-pub(crate) async fn build_wasm(args: &ModeArgs, profile: Profile) -> Result<()> {
+pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
+    let default_out_dir: String = format!("{}/pkg", args.www_dir);
     let mut command: Command = Command::new("wasm-pack");
-    command
-        .arg("build")
-        .arg("--target")
-        .arg("web")
-        .arg("--out-dir")
-        .arg(&args.out_dir)
-        .current_dir(&args.crate_path)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    if profile == Profile::Release {
-        command.arg("--release");
+    command.arg("build").args(&args.wasm_pack_args);
+    let has_out_dir: bool = extract_out_dir(&args.wasm_pack_args).is_some();
+    if !has_out_dir {
+        command.arg("--out-dir").arg(&default_out_dir);
     }
-    log::info!(
-        "Running: wasm-pack build --target web --out-dir {}{} ...",
-        args.out_dir.display(),
-        if profile == Profile::Release {
-            " --release"
+    command.current_dir(&args.crate_path);
+    command.stdout(Stdio::piped()).stderr(Stdio::piped());
+    let display_args: Vec<String> = args
+        .wasm_pack_args
+        .iter()
+        .cloned()
+        .chain(if has_out_dir {
+            Vec::new()
         } else {
-            ""
-        }
-    );
+            vec!["--out-dir".to_string(), default_out_dir]
+        })
+        .collect();
+    let out_dir_absolute: PathBuf = resolve_out_dir(args);
+    create_dir_all(&out_dir_absolute).await.map_err(|error| {
+        anyhow!(
+            "Failed to create output directory '{}': {}",
+            out_dir_absolute.display(),
+            error
+        )
+    })?;
+    log::info!("Running: wasm-pack build {} ...", display_args.join(" "));
     let output: Output = command
         .output()
         .await
@@ -309,20 +426,15 @@ pub(crate) async fn build_wasm(args: &ModeArgs, profile: Profile) -> Result<()> 
 ///
 /// # Arguments
 ///
-/// - `Profile` - The build profile (dev or release).
 /// - `Action` - The action to perform (run or build).
 /// - `&str` - The server URL (only meaningful in run mode).
-pub(crate) fn print_banner(profile: Profile, action: Action, server_url: &str) {
-    log::info!("euv-cli v{}", env!("CARGO_PKG_VERSION"));
-    let profile_name: &str = match profile {
-        Profile::Dev => "dev",
-        Profile::Release => "release",
-    };
+pub(crate) fn print_banner(action: Action, server_url: &str) {
+    log::info!("euv v{}", env!("CARGO_PKG_VERSION"));
     let action_name: &str = match action {
         Action::Run => "run",
         Action::Build => "build",
     };
-    log::info!("Profile: {} | Mode: {}", profile_name, action_name);
+    log::info!("Mode: {}", action_name);
     if action == Action::Run {
         log::info!("Server: {}", server_url);
     }

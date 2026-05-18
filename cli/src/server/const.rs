@@ -1,5 +1,29 @@
-/// Default HTML template for development.
-pub(crate) const DEFAULT_INDEX_HTML: &str = r#"<!doctype html>
+/// Placeholder token used in HTML templates for the JS import path.
+///
+/// Replaced at runtime with the resolved import path relative to the www directory.
+pub(crate) const IMPORT_PATH_PLACEHOLDER: &str = "__IMPORT_PATH__";
+
+/// Placeholder token used in HTML templates for the reload endpoint URL.
+///
+/// Replaced at runtime with the actual reload route path.
+pub(crate) const RELOAD_ROUTE_PLACEHOLDER: &str = "__RELOAD_ROUTE__";
+
+/// The URL path for the reload endpoint.
+///
+/// Used by the live-reload script in the HTML template and the server route registration.
+pub(crate) const RELOAD_ROUTE: &str = "/__euv_reload";
+
+/// The `index.html` template for the development profile.
+///
+/// Includes a live-reload `<script>` block that connects to the
+/// `/__euv_reload` endpoint and parses the JSON payload sent by the server.
+/// The JSON uses a tagged enum format:
+/// - `{"type":"Reload"}` — the client should reload the page.
+/// - `{"type":"Error","message":"..."}` — a build error occurred.
+///
+/// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
+#[cfg(debug_assertions)]
+pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -9,29 +33,20 @@ pub(crate) const DEFAULT_INDEX_HTML: &str = r#"<!doctype html>
     <div id="app"></div>
   </body>
   <script type="module">
-    import init, { main } from './pkg/euv_example.js';
+    import init, { main } from '__IMPORT_PATH__';
     await init();
     main();
   </script>
-</html>
-"#;
-
-/// Live-reload script injected into the served HTML.
-///
-/// Connects to the `/__euv_reload` endpoint and parses the JSON
-/// payload sent by the server. The JSON uses a tagged enum format:
-/// - `{"type":"Reload"}` — the client should reload the page.
-/// - `{"type":"Error","message":"..."}` — a build error occurred.
-pub(crate) const RELOAD_SCRIPT: &str = r#"  <script>
+  <script>
     (function () {
       async function connect() {
         try {
-          const res = await fetch('/__euv_reload');
+          const res = await fetch('__RELOAD_ROUTE__');
           const data = await res.json();
           if (data.type === 'Reload') {
             location.reload();
           } else if (data.type === 'Error') {
-            console.error('[euv] Build error:', data.message);
+            console.error('[euv] build error:', data.message);
             setTimeout(connect, 1000);
           } else {
             setTimeout(connect, 1000);
@@ -42,4 +57,29 @@ pub(crate) const RELOAD_SCRIPT: &str = r#"  <script>
       }
       connect();
     })();
-  </script>"#;
+  </script>
+</html>
+"#;
+
+/// The `index.html` template for the release profile.
+///
+/// A minimal `index.html` without any live-reload instrumentation.
+/// Used when building for release to produce a clean, static entry point.
+/// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
+#[cfg(not(debug_assertions))]
+pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>euv</title>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+  <script type="module">
+    import init, { main } from '__IMPORT_PATH__';
+    await init();
+    main();
+  </script>
+</html>
+"#;
