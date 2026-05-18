@@ -32,6 +32,88 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
     }
 }
 
+/// Executes a build-only pipeline: builds WASM and removes unnecessary files.
+///
+/// Unlike `run_build_pipeline`, this skips source formatting, hyperlane-cli fmt,
+/// dev HTML generation, and reload notifications — only the essential WASM
+/// build artifacts are kept.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The parsed CLI arguments containing build configuration.
+/// - `Profile` - The build profile (dev or release).
+///
+/// # Returns
+///
+/// - `Result<()>` - Indicates success or failure of the build.
+pub(crate) async fn run_build_only_pipeline(args: &ModeArgs, profile: Profile) -> Result<()> {
+    build_wasm(args, profile).await?;
+    log::info!("WASM build completed successfully");
+    let pkg_dir: PathBuf = if args.out_dir.is_absolute() {
+        args.out_dir.clone()
+    } else {
+        args.crate_path.join(&args.out_dir)
+    };
+    clean_pkg_dir(&pkg_dir).await;
+    Ok(())
+}
+
+/// Removes unnecessary files from the wasm-pack output directory.
+///
+/// Keeps only the files required for runtime: `.js` and `.wasm`.
+/// Removes TypeScript declarations (`.d.ts`), package metadata
+/// (`package.json`, `README.md`, `LICENSE`), and `.gitignore`.
+///
+/// # Arguments
+///
+/// - `&Path` - The pkg output directory to clean.
+pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
+    let unnecessary_extensions: &[&str] = &["d.ts"];
+    let unnecessary_names: &[&str] = &["package.json", "README.md", "LICENSE", ".gitignore"];
+    let mut read_dir: ReadDir = match read_dir(pkg_dir).await {
+        Ok(dir) => dir,
+        Err(_) => {
+            log::warn!("pkg directory not found: {}", pkg_dir.display());
+            return;
+        }
+    };
+    while let Ok(Some(entry)) = read_dir.next_entry().await {
+        let path: PathBuf = entry.path();
+        let file_name: String = path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let extension: String = path
+            .extension()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let full_extension: String = if path
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .ends_with(".d.ts")
+        {
+            "d.ts".to_string()
+        } else {
+            extension
+        };
+        let should_remove: bool = unnecessary_names.contains(&file_name.as_str())
+            || unnecessary_extensions.contains(&full_extension.as_str());
+        if should_remove {
+            match remove_file(&path).await {
+                Ok(()) => {
+                    log::info!("Removed unnecessary file: {}", file_name);
+                }
+                Err(error) => {
+                    log::warn!("Failed to remove {}: {}", file_name, error);
+                }
+            }
+        }
+    }
+}
+
 /// Executes a full build pipeline: format source files, run hyperlane-cli fmt,
 /// build WASM, notify reload channel, and generate updated HTML.
 ///

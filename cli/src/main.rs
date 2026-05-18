@@ -27,7 +27,8 @@ use {
     serde::Serialize,
     tokio::{
         fs::{
-            ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, read_to_string, write,
+            ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, read_to_string,
+            remove_file, write,
         },
         process::Command,
         sync::{
@@ -90,6 +91,11 @@ async fn main() -> Result<()> {
         args.crate_path.join(&args.www_dir)
     };
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
+    if action == Action::Build {
+        run_build_only_pipeline(&args, profile).await?;
+        log::info!("Build completed. Exiting (build-only mode).");
+        return Ok(());
+    }
     let initial_html: String = match run_build_pipeline(&args, profile, None).await {
         Ok(html) => html,
         Err(error) => {
@@ -97,10 +103,6 @@ async fn main() -> Result<()> {
             generate_dev_html(&www_absolute).await?
         }
     };
-    if action == Action::Build {
-        log::info!("Build completed. Exiting (build-only mode).");
-        return Ok(());
-    }
     let (reload_tx, _): (
         broadcast::Sender<ReloadEvent>,
         broadcast::Receiver<ReloadEvent>,
