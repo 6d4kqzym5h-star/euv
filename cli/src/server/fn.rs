@@ -24,35 +24,39 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
     APP_STATE.get().cloned()
 }
 
-/// Reads the original index.html and injects the live-reload script.
-/// If index.html does not exist, a default one is created automatically.
+/// Writes a clean `index.html` from `DEFAULT_INDEX_HTML`, then reads it back,
+/// injects the live-reload script, and writes the final result back to disk.
+///
+/// Always overwrites `index.html` to ensure a consistent base before
+/// injecting the reload script.
 ///
 /// # Arguments
 ///
-/// - `&Path` - The path to the www directory containing `index.html`.
+/// - `&Path` - The path to the www directory where `index.html` will be written.
 ///
 /// # Returns
 ///
 /// - `Result<String>` - The modified HTML with the reload script injected.
 pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
     let index_path: PathBuf = www_dir.join("index.html");
-    if !index_path.exists() {
-        create_dir_all(www_dir)
-            .await
-            .map_err(|e| anyhow!("Failed to create www directory: {}", e))?;
-        write(&index_path, DEFAULT_INDEX_HTML)
-            .await
-            .map_err(|e| anyhow!("Failed to write default index.html: {}", e))?;
-    }
+    create_dir_all(www_dir)
+        .await
+        .map_err(|error| anyhow!("Failed to create www directory: {}", error))?;
+    write(&index_path, DEFAULT_INDEX_HTML)
+        .await
+        .map_err(|error| anyhow!("Failed to write index.html: {}", error))?;
     let original: String = read_to_string(&index_path)
         .await
-        .map_err(|e| anyhow!("Failed to read index.html: {}", e))?;
-    let mut html: String = if original.contains("</body>") {
-        original.replace("</body>", &format!("{}\n</body>", RELOAD_SCRIPT))
+        .map_err(|error| anyhow!("Failed to read index.html: {}", error))?;
+    let mut html: String = if original.contains("</html>") {
+        original.replace("</html>", &format!("{}\n</html>", RELOAD_SCRIPT))
     } else {
         format!("{}\n{}", original, RELOAD_SCRIPT)
     };
     html = html.replace("./euv_example.js", "./pkg/euv_example.js");
+    write(&index_path, &html)
+        .await
+        .map_err(|error| anyhow!("Failed to write dev index.html: {}", error))?;
     Ok(html)
 }
 
