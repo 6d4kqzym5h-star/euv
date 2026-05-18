@@ -208,7 +208,7 @@ fn vconsole_drawer(
                 }
                 div {
                     class: c_vconsole_body()
-                    { build_vconsole_log_nodes(console_signal, filter_signal) }
+                    build_vconsole_log_nodes(console_signal, filter_signal)
                 }
             }
         }
@@ -229,9 +229,50 @@ fn build_vconsole_log_nodes(
     logs: Signal<Vec<ConsoleEntry>>,
     filter: Signal<String>,
 ) -> VirtualNode {
+    if filter_console_entries(logs, filter).is_empty() {
+        return html! {
+            div {
+                class: c_vconsole_empty()
+                "No logs yet."
+            }
+        };
+    }
+    html! {
+        for (index, entry) in { filter_console_entries(logs, filter) } {
+            div {
+                key: index.to_string()
+                class: get_log_item_class(entry.get_level(), index == logs.get().len() - 1)
+                span {
+                    class: get_badge_class(entry.get_level())
+                    get_log_level_badge(entry.get_level())
+                }
+                entry.get_message().clone()
+            }
+        }
+    }
+}
+
+/// Filters and reverses console log entries based on the current filter signal value.
+///
+/// Reads the latest signal values on each call so that the for-loop DynamicNode
+/// re-evaluates the iterable expression on every re-render instead of using stale
+/// data captured by `move` at creation time.
+///
+/// # Arguments
+///
+/// - `Signal<Vec<ConsoleEntry>>` - The reactive signal holding console log entries.
+/// - `Signal<String>` - The reactive signal holding the current filter level.
+///
+/// # Returns
+///
+/// - `Vec<(usize, ConsoleEntry)>` - The filtered and reversed log entries with their original indices.
+fn filter_console_entries(
+    logs: Signal<Vec<ConsoleEntry>>,
+    filter: Signal<String>,
+) -> Vec<(usize, ConsoleEntry)> {
     let log_list: Vec<ConsoleEntry> = logs.get();
     let filter_value: String = filter.get();
-    let filtered: Vec<(usize, ConsoleEntry)> = log_list
+    log_list
         .iter()
         .enumerate()
         .filter(|(_, entry)| {
@@ -246,29 +287,10 @@ fn build_vconsole_log_nodes(
             }
         })
         .map(|(index, entry)| (index, entry.clone()))
-        .collect();
-    let total_count: usize = log_list.len();
-    if filtered.is_empty() {
-        return html! {
-            div {
-                class: c_vconsole_empty()
-                "No logs yet."
-            }
-        };
-    }
-    html! {
-        for (index, entry) in { filtered.iter().rev() } {
-            div {
-                key: index.to_string()
-                class: get_log_item_class(entry.get_level(), *index == total_count - 1)
-                span {
-                    class: get_badge_class(entry.get_level())
-                    get_log_level_badge(entry.get_level())
-                }
-                entry.get_message().clone()
-            }
-        }
-    }
+        .collect::<Vec<(usize, ConsoleEntry)>>()
+        .into_iter()
+        .rev()
+        .collect()
 }
 
 /// Returns the combined CSS class string for a log entry based on its level and recency.

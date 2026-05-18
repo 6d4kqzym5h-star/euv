@@ -163,14 +163,12 @@ pub fn window_inner_size() -> (i32, i32) {
     let width: i32 = window
         .inner_width()
         .ok()
-        .and_then(|v| v.as_f64())
-        .map(|v| v as i32)
+        .map(|v| js_sys::Number::from(v).value_of() as i32)
         .unwrap_or(0);
     let height: i32 = window
         .inner_height()
         .ok()
-        .and_then(|v| v.as_f64())
-        .map(|v| v as i32)
+        .map(|v| js_sys::Number::from(v).value_of() as i32)
         .unwrap_or(0);
     (width, height)
 }

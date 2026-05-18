@@ -26,7 +26,10 @@ pub(crate) const RELOAD_ROUTE: &str = "/__euv_reload";
 pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
 <html>
   <head>
-    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>euv</title>
   </head>
   <body>
@@ -70,7 +73,10 @@ pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
 pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
 <html>
   <head>
-    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>euv</title>
   </head>
   <body>

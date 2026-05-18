@@ -192,23 +192,23 @@ fn desktop_layout(
             main {
                 class: c_app_main()
                 match { route_signal.get().as_str() } {
-                    "/" | "/signals" => { { page_signals() } }
-                    "/event" => { { page_event() } }
-                    "/list" => { { page_list() } }
-                    "/conditional" => { { page_conditional() } }
-                    "/modal" => { { page_modal() } }
-                    "/select" => { { page_select() } }
-                    "/async" => { { page_async_demo() } }
-                    "/form" => { { page_form() } }
-                    "/file-upload" => { { page_file_upload() } }
-                    "/timer" => { { page_timer() } }
-                    "/animation" => { { page_animation() } }
-                    "/browser" => { { page_browser() } }
-                    "/lifecycle" => { { page_lifecycle() } }
-                    "/keep-alive" => { { page_keep_alive() } }
-                    "/component-binding" => { { page_component_binding() } }
-                    "/custom-attrs" => { { page_custom_attrs() } }
-                    _ => { { page_not_found() } }
+                    "/" | "/signals" => page_signals(),
+                    "/event" => page_event(),
+                    "/list" => page_list(),
+                    "/conditional" => page_conditional(),
+                    "/modal" => page_modal(),
+                    "/select" => page_select(),
+                    "/async" => page_async_demo(),
+                    "/form" => page_form(),
+                    "/file-upload" => page_file_upload(),
+                    "/timer" => page_timer(),
+                    "/animation" => page_animation(),
+                    "/browser" => page_browser(),
+                    "/lifecycle" => page_lifecycle(),
+                    "/keep-alive" => page_keep_alive(),
+                    "/component-binding" => page_component_binding(),
+                    "/custom-attrs" => page_custom_attrs(),
+                    _ => page_not_found()
                 }
             }
             { vconsole_panel(panel_open) }
@@ -270,23 +270,23 @@ fn mobile_layout(
             main {
                 class: c_mobile_main()
                 match { route_signal.get().as_str() } {
-                    "/" | "/signals" => { { page_signals() } }
-                    "/event" => { { page_event() } }
-                    "/list" => { { page_list() } }
-                    "/conditional" => { { page_conditional() } }
-                    "/modal" => { { page_modal() } }
-                    "/select" => { { page_select() } }
-                    "/async" => { { page_async_demo() } }
-                    "/form" => { { page_form() } }
-                    "/file-upload" => { { page_file_upload() } }
-                    "/timer" => { { page_timer() } }
-                    "/animation" => { { page_animation() } }
-                    "/browser" => { { page_browser() } }
-                    "/lifecycle" => { { page_lifecycle() } }
-                    "/keep-alive" => { { page_keep_alive() } }
-                    "/component-binding" => { { page_component_binding() } }
-                    "/custom-attrs" => { { page_custom_attrs() } }
-                    _ => { { page_not_found() } }
+                    "/" | "/signals" => page_signals(),
+                    "/event" => page_event(),
+                    "/list" => page_list(),
+                    "/conditional" => page_conditional(),
+                    "/modal" => page_modal(),
+                    "/select" => page_select(),
+                    "/async" => page_async_demo(),
+                    "/form" => page_form(),
+                    "/file-upload" => page_file_upload(),
+                    "/timer" => page_timer(),
+                    "/animation" => page_animation(),
+                    "/browser" => page_browser(),
+                    "/lifecycle" => page_lifecycle(),
+                    "/keep-alive" => page_keep_alive(),
+                    "/component-binding" => page_component_binding(),
+                    "/custom-attrs" => page_custom_attrs(),
+                    _ => page_not_found()
                 }
             }
             { vconsole_panel(panel_open) }
@@ -373,9 +373,9 @@ pub fn app() -> VirtualNode {
     use_hash_change(route_signal);
     html! {
         if { mobile_signal.get() } {
-            { mobile_layout(route_signal, theme_signal, root_class, panel_open, drawer_open) }
+            mobile_layout(route_signal, theme_signal, root_class, panel_open, drawer_open)
         } else {
-            { desktop_layout(route_signal, theme_signal, root_class, panel_open) }
+            desktop_layout(route_signal, theme_signal, root_class, panel_open)
         }
     }
 }

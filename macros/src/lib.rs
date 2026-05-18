@@ -21,7 +21,7 @@ use {
     syn::{
         Expr, Ident, LitStr, Token, Type, Visibility, braced,
         parse::{Parse, ParseStream},
-        token::{Colon, Paren, Semi},
+        token::{Brace, Colon, Paren, Semi},
     },
 };
 

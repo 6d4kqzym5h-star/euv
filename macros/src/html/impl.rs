@@ -39,14 +39,14 @@ impl Parse for HtmlNode {
             let html_for: HtmlFor = input.parse()?;
             return Ok(HtmlNode::For(html_for));
         }
-        if input.peek(syn::token::Brace) {
+        if input.peek(Brace) {
             let content;
             braced!(content in input);
             let expr: Expr = content.parse()?;
             return Ok(HtmlNode::Dynamic(expr));
         }
         if input.peek(Ident) {
-            if input.peek2(syn::token::Brace) {
+            if input.peek2(Brace) {
                 let element: HtmlElement = input.parse()?;
                 return Ok(HtmlNode::Element(element));
             }
@@ -92,7 +92,11 @@ impl Parse for HtmlIf {
     }
 }
 
-/// Parses reactive `match {expr} { pattern => { children } ... }`.
+/// Parses reactive `match {expr} { pattern => body ... }`.
+///
+/// Each arm body can be any valid HTML content (elements, expressions, if, etc.)
+/// without requiring outer braces. Bodies are terminated by `,` or end of the
+/// match block.
 impl Parse for HtmlMatch {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![match]>()?;
@@ -109,9 +113,7 @@ impl Parse for HtmlMatch {
                 pattern_tokens.extend([tt]);
             }
             arms_content.parse::<Token![=>]>()?;
-            let arm_content;
-            braced!(arm_content in arms_content);
-            let body: Vec<HtmlNode> = parse_html_children(&arm_content)?;
+            let body: Vec<HtmlNode> = parse_match_arm_body(&arms_content)?;
             arms.push((pattern_tokens, body));
             if arms_content.peek(Token![,]) {
                 arms_content.parse::<Token![,]>()?;
@@ -165,14 +167,14 @@ impl Parse for HtmlElement {
             } else if content.peek(Token![for]) {
                 let html_for: HtmlFor = content.parse()?;
                 children.push(HtmlNode::For(html_for));
-            } else if content.peek(syn::token::Brace) {
+            } else if content.peek(Brace) {
                 let child_content;
                 braced!(child_content in content);
                 let expr: Expr = child_content.parse()?;
                 children.push(HtmlNode::Dynamic(expr));
             } else if content.peek(LitStr) && content.peek2(Colon) {
                 let lit_str: LitStr = content.parse()?;
-                let key: Ident = syn::Ident::new(&lit_str.value(), lit_str.span());
+                let key: Ident = Ident::new(&lit_str.value(), lit_str.span());
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
@@ -180,7 +182,7 @@ impl Parse for HtmlElement {
             } else if content.peek(Ident) && (content.peek2(Colon) || content.peek2(Token![-])) {
                 let key_string: String = parse_kebab_name(&content)?;
                 let key_clean: &str = key_string.strip_prefix("r#").unwrap_or(&key_string);
-                let key: Ident = syn::Ident::new(key_clean, content.span());
+                let key: Ident = Ident::new(key_clean, content.span());
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
@@ -189,7 +191,7 @@ impl Parse for HtmlElement {
                 let lit: LitStr = content.parse()?;
                 children.push(HtmlNode::Text(lit.value()));
             } else if content.peek(Ident) {
-                if content.peek2(syn::token::Brace) {
+                if content.peek2(Brace) {
                     let element: HtmlElement = content.parse()?;
                     children.push(HtmlNode::Element(element));
                 } else {
@@ -271,8 +273,7 @@ impl ToTokens for HtmlNode {
                     .enumerate()
                     .map(|(arm_index, (pattern, body))| {
                         let arm_changed: bool = arm_index % 2 == 0;
-                        let body_expr: proc_macro2::TokenStream =
-                            children_to_node_tokens_inline(body);
+                        let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
                         quote! {
                             #pattern => {
                                 __euv_hook_context.set_arm_changed(#arm_changed);
@@ -424,7 +425,7 @@ impl ToTokens for HtmlElement {
                                 euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
                             }
                         } else {
-                            let event_name_ident: Ident = syn::Ident::new(
+                            let event_name_ident: Ident = Ident::new(
                                 &camel_case_event_name(event_name_str),
                                 key.span(),
                             );

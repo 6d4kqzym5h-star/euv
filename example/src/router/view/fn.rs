@@ -75,19 +75,20 @@ pub fn use_hash_change(route_signal: Signal<String>) {
 /// - `bool` - `true` if the viewport width is less than the mobile breakpoint.
 pub fn is_mobile() -> bool {
     let window: Window = window().expect("no global window exists");
-    let width: i32 = window
+    let width: f64 = window
         .inner_width()
         .ok()
-        .and_then(|v| v.as_f64())
-        .map(|v| v as i32)
-        .unwrap_or(0);
-    width < MOBILE_BREAKPOINT
+        .map(|v| Number::from(v).value_of())
+        .unwrap_or(0.0);
+    width < MOBILE_BREAKPOINT as f64
 }
 
 /// Creates a reactive signal that tracks whether the viewport is in mobile mode
 /// and subscribes to browser `resize` events to keep it updated.
 ///
-/// The closure is leaked via `Closure::forget` so it persists for the
+/// The resize handler is debounced by `RESIZE_DEBOUNCE_MILLIS` (150ms) to avoid
+/// excessive recomputation during continuous resize operations.
+/// The closures are leaked via `Closure::forget` so they persist for the
 /// entire application lifetime.
 ///
 /// # Returns
@@ -95,15 +96,36 @@ pub fn is_mobile() -> bool {
 /// - `Signal<bool>` - A reactive signal that is `true` when the viewport is mobile-sized.
 pub fn use_resize() -> Signal<bool> {
     let mobile_signal: Signal<bool> = use_signal(is_mobile);
-    let window: Window = window().expect("no global window exists");
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+    let timer_signal: Signal<Option<i32>> = use_signal(|| None);
+    let event_window: Window = window().expect("no global window exists");
+    let timeout_window: Window = event_window.clone();
+    let listener_window: Window = event_window.clone();
+    let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let mobile: bool = is_mobile();
         mobile_signal.set(mobile);
     }));
-    let _ = window.add_event_listener_with_callback(
+    let debounce_callback: Function = debounce_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let old_timer: Option<i32> = timer_signal.get();
+        if let Some(timer_id) = old_timer {
+            event_window.clear_timeout_with_handle(timer_id);
+        }
+        let new_timer: i32 = timeout_window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                &debounce_callback,
+                RESIZE_DEBOUNCE_MILLIS,
+            )
+            .unwrap_or(0);
+        timer_signal.set(Some(new_timer));
+    }));
+    let _ = listener_window.add_event_listener_with_callback(
         &NativeEventName::Resize.to_string(),
         closure.as_ref().unchecked_ref(),
     );
     closure.forget();
+    debounce_closure.forget();
     mobile_signal
 }

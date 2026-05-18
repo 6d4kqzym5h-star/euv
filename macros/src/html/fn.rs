@@ -72,7 +72,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
         } else if content.peek(Token![for]) {
             let html_for: HtmlFor = content.parse()?;
             children.push(HtmlNode::For(html_for));
-        } else if content.peek(syn::token::Brace) {
+        } else if content.peek(Brace) {
             let child_content;
             braced!(child_content in content);
             let expr: Expr = child_content.parse()?;
@@ -80,7 +80,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
         } else if (content.peek(Ident) || content.peek(syn::LitStr)) && content.peek2(Colon) {
             break;
         } else if content.peek(Ident) {
-            if content.peek2(syn::token::Brace) {
+            if content.peek2(Brace) {
                 let element: HtmlElement = content.parse()?;
                 children.push(HtmlNode::Element(element));
             } else {
@@ -92,6 +92,32 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
         }
     }
     Ok(children)
+}
+
+/// Parses the body of a match arm after the `=>` token.
+///
+/// Unlike `parse_html_children` which operates on a braced scope, this function
+/// reads directly from the arms content stream and stops when it encounters a
+/// top-level comma (indicating the next arm) or the end of the stream.
+/// Supports all HTML node types: elements, text, expressions, if, match, for,
+/// and braced dynamic expressions.
+///
+/// # Arguments
+///
+/// - `ParseStream` - The parse stream positioned after `=>` in a match arm.
+///
+/// # Returns
+///
+/// - `syn::Result<Vec<HtmlNode>>` - The parsed list of HTML nodes for the arm body.
+pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<HtmlNode>> {
+    if content.peek(Brace) {
+        let child_content;
+        braced!(child_content in content);
+        parse_html_children(&child_content)
+    } else {
+        let node: HtmlNode = content.parse()?;
+        Ok(vec![node])
+    }
 }
 
 /// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream.
@@ -148,52 +174,6 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStr
         child_tokens.push(ts);
     }
     quote! { vec![#(#child_tokens),*] }
-}
-
-/// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream,
-/// treating `HtmlNode::Dynamic` the same as `HtmlNode::Expr`. This is used inside
-/// `match` arms where the parent `DynamicNode`'s `HookContext` already provides
-/// hook isolation.
-///
-/// - 0 children → `VirtualNode::Empty`
-/// - 1 child → the child's token stream directly (no Fragment wrapper)
-/// - N children → `VirtualNode::Fragment(vec![...])`
-///
-/// # Arguments
-///
-/// - `&[HtmlNode]` - The slice of HTML child nodes to convert.
-///
-/// # Returns
-///
-/// - `proc_macro2::TokenStream` - The generated token stream representing a single `VirtualNode`.
-pub(crate) fn children_to_node_tokens_inline(children: &[HtmlNode]) -> proc_macro2::TokenStream {
-    match children.len() {
-        0 => quote! { euv_core::VirtualNode::Empty },
-        1 => match &children[0] {
-            HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
-            child => {
-                let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                child.to_tokens(&mut ts);
-                ts
-            }
-        },
-        _ => {
-            let mut child_tokens: Vec<proc_macro2::TokenStream> =
-                Vec::with_capacity(children.len());
-            for child in children {
-                let ts: proc_macro2::TokenStream = match child {
-                    HtmlNode::Dynamic(expr) => quote! { euv_core::IntoNode::into_node(#expr) },
-                    _ => {
-                        let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                        child.to_tokens(&mut ts);
-                        ts
-                    }
-                };
-                child_tokens.push(ts);
-            }
-            quote! { euv_core::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
-        }
-    }
 }
 
 /// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.
@@ -322,7 +302,7 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
         let html_attr_if: HtmlAttrIf = parse_attr_if(content)?;
         return Ok(HtmlAttrValue::If(html_attr_if));
     }
-    if key_str == "style" && content.peek(syn::token::Brace) {
+    if key_str == "style" && content.peek(Brace) {
         let style_content;
         braced!(style_content in content);
         let is_style_object: bool = style_content.peek(LitStr) || style_content.peek(Ident);
@@ -337,7 +317,7 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
                 } else if style_content.peek(LitStr) {
                     let lit: LitStr = style_content.parse()?;
                     HtmlStylePropValue::Literal(lit.value())
-                } else if style_content.peek(syn::token::Brace) {
+                } else if style_content.peek(Brace) {
                     let expr_content;
                     braced!(expr_content in style_content);
                     if expr_content.peek(Token![if]) {
