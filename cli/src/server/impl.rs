@@ -132,16 +132,16 @@ impl ServerHook for IndexRoute {
         } else {
             state.args.crate_path.join(&state.args.www_dir)
         };
-        let www_absolute: PathBuf = resolve_www_dir(&www_absolute);
+        let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
         let file_path: PathBuf = www_absolute.join(&path);
-        let canonical_path: PathBuf = match fs::canonicalize(&file_path).await {
+        let canonical_path: PathBuf = match canonicalize(&file_path).await {
             Ok(p) => p,
             Err(_) => {
                 ctx.get_mut_response().set_status_code(404);
                 return Status::Continue;
             }
         };
-        let base_canonical: PathBuf = match fs::canonicalize(&www_absolute).await {
+        let base_canonical: PathBuf = match canonicalize(&www_absolute).await {
             Ok(p) => p,
             Err(_) => {
                 ctx.get_mut_response().set_status_code(500);
@@ -152,7 +152,7 @@ impl ServerHook for IndexRoute {
             ctx.get_mut_response().set_status_code(403);
             return Status::Continue;
         }
-        match fs::read(&file_path).await {
+        match read(&file_path).await {
             Ok(content) => {
                 let extension: String = FileExtension::get_extension_name(&path);
                 let content_type: &'static str =

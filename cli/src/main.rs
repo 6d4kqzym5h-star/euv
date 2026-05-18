@@ -26,7 +26,9 @@ use {
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
     serde::Serialize,
     tokio::{
-        fs,
+        fs::{
+            ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, read_to_string, write,
+        },
         process::Command,
         sync::{
             Mutex, MutexGuard, RwLock, RwLockWriteGuard, broadcast,
@@ -49,20 +51,20 @@ use {
 async fn main() -> Result<()> {
     Logger::init(log::LevelFilter::Info);
     let cli: Cli = Cli::parse();
-    let (profile, mode_name, args): (&str, &str, ModeArgs) = match &cli.command {
+    let (profile, action, args): (Profile, Action, ModeArgs) = match &cli.command {
         CliCommand::Dev { mode } => {
-            let (name, mode_args): (&str, ModeArgs) = match mode {
-                Mode::Run(a) => ("run", a.clone()),
-                Mode::Build(a) => ("build", a.clone()),
+            let (action, mode_args): (Action, ModeArgs) = match mode {
+                Mode::Run(a) => (Action::Run, a.clone()),
+                Mode::Build(a) => (Action::Build, a.clone()),
             };
-            ("dev", name, mode_args)
+            (Profile::Dev, action, mode_args)
         }
         CliCommand::Release { mode } => {
-            let (name, mode_args): (&str, ModeArgs) = match mode {
-                Mode::Run(a) => ("run", a.clone()),
-                Mode::Build(a) => ("build", a.clone()),
+            let (action, mode_args): (Action, ModeArgs) = match mode {
+                Mode::Run(a) => (Action::Run, a.clone()),
+                Mode::Build(a) => (Action::Build, a.clone()),
             };
-            ("release", name, mode_args)
+            (Profile::Release, action, mode_args)
         }
     };
     let www_route_prefix: String = {
@@ -81,34 +83,24 @@ async fn main() -> Result<()> {
     };
     let addr: SocketAddr = SocketAddr::from(([127, 0, 0, 1], args.port));
     let server_url: String = format!("http://{}/{}/index.html", addr, www_route_prefix);
-    print_banner(profile, mode_name, &server_url);
-    let release: bool = profile == "release";
+    print_banner(profile, action, &server_url);
     let www_absolute: PathBuf = if args.www_dir.is_absolute() {
         args.www_dir.clone()
     } else {
         args.crate_path.join(&args.www_dir)
     };
-    let www_absolute: PathBuf = resolve_www_dir(&www_absolute);
-    let src_path: PathBuf = args.crate_path.join("src");
-    if let Err(error) = tokio::task::spawn_blocking(move || format_dir(&src_path)).await {
-        log::warn!("Initial formatter error: {}", error);
-    }
-    if let Err(error) = run_hyperlane_fmt().await {
-        log::warn!("hyperlane-cli fmt error: {}", error);
-    }
-    match build_wasm(&args, release).await {
-        Ok(()) => {
-            log::info!("Initial WASM build completed successfully");
-        }
+    let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
+    let initial_html: String = match run_build_pipeline(&args, profile, None).await {
+        Ok(html) => html,
         Err(error) => {
-            log::error!("Initial WASM build failed: {}", error);
+            log::error!("Initial build pipeline failed: {}", error);
+            generate_dev_html(&www_absolute).await?
         }
-    }
-    if mode_name == "build" {
+    };
+    if action == Action::Build {
         log::info!("Build completed. Exiting (build-only mode).");
         return Ok(());
     }
-    let initial_html: String = generate_dev_html(&www_absolute).await?;
     let (reload_tx, _): (
         broadcast::Sender<ReloadEvent>,
         broadcast::Receiver<ReloadEvent>,
@@ -118,7 +110,7 @@ async fn main() -> Result<()> {
         reload_tx: reload_tx.clone(),
         is_building: Mutex::new(false),
         args: args.clone(),
-        release,
+        profile,
     });
     let state_for_watch: Arc<AppState> = Arc::clone(&state);
     tokio::spawn(async move {
@@ -126,7 +118,7 @@ async fn main() -> Result<()> {
             log::error!("Watch error: {}", error);
         }
     });
-    let pkg_dir: PathBuf = resolve_pkg_dir(&www_absolute);
+    let pkg_dir: PathBuf = resolve_pkg_dir(&www_absolute).await;
     log::info!("Serving pkg from: {}", pkg_dir.display());
     let mut server: Server = Server::default();
     let mut server_config: ServerConfig = ServerConfig::default();

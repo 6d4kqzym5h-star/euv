@@ -12,12 +12,14 @@ use crate::*;
 /// # Returns
 ///
 /// - `Result<()>` - Indicates success or failure of the formatting operation.
-pub(crate) fn format_file(path: &Path) -> Result<()> {
-    let source: String = std::fs::read_to_string(path)
+pub(crate) async fn format_file(path: &Path) -> Result<()> {
+    let source: String = read_to_string(path)
+        .await
         .map_err(|e| anyhow!("Failed to read file {}: {}", path.display(), e))?;
     let formatted: String = format_source(&source);
     if formatted != source {
-        std::fs::write(path, &formatted)
+        write(path, &formatted)
+            .await
             .map_err(|e| anyhow!("Failed to write file {}: {}", path.display(), e))?;
         log::info!("Formatted: {}", path.display());
     }
@@ -33,20 +35,23 @@ pub(crate) fn format_file(path: &Path) -> Result<()> {
 /// # Returns
 ///
 /// - `Result<()>` - Indicates success or failure.
-pub(crate) fn format_dir(dir: &Path) -> Result<()> {
+pub(crate) async fn format_dir(dir: &Path) -> Result<()> {
     if !dir.is_dir() {
         return Ok(());
     }
-    let entries: Vec<std::fs::DirEntry> = std::fs::read_dir(dir)
-        .map_err(|e| anyhow!("Failed to read dir {}: {}", dir.display(), e))?
-        .filter_map(|entry| entry.ok())
-        .collect();
-    for entry in &entries {
-        let path: std::path::PathBuf = entry.path();
+    let mut read_dir: ReadDir = read_dir(dir)
+        .await
+        .map_err(|e| anyhow!("Failed to read dir {}: {}", dir.display(), e))?;
+    while let Some(entry) = read_dir
+        .next_entry()
+        .await
+        .map_err(|e| anyhow!("Failed to read entry in {}: {}", dir.display(), e))?
+    {
+        let path: PathBuf = entry.path();
         if path.is_dir() {
-            format_dir(&path)?;
+            Box::pin(format_dir(&path)).await?;
         } else if path.extension().is_some_and(|ext| ext == "rs")
-            && let Err(error) = format_file(&path)
+            && let Err(error) = format_file(&path).await
         {
             log::warn!("Failed to format {}: {}", path.display(), error);
         }

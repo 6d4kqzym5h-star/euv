@@ -13,8 +13,8 @@ pub struct AppState {
     pub is_building: Mutex<bool>,
     /// CLI arguments.
     pub args: ModeArgs,
-    /// Whether to build in release mode.
-    pub release: bool,
+    /// The build profile (dev or release).
+    pub profile: Profile,
 }
 
 /// Request middleware that injects cache-control headers.

@@ -37,14 +37,14 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
 pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
     let index_path: PathBuf = www_dir.join("index.html");
     if !index_path.exists() {
-        fs::create_dir_all(www_dir)
+        create_dir_all(www_dir)
             .await
             .map_err(|e| anyhow!("Failed to create www directory: {}", e))?;
-        fs::write(&index_path, DEFAULT_INDEX_HTML)
+        write(&index_path, DEFAULT_INDEX_HTML)
             .await
             .map_err(|e| anyhow!("Failed to write default index.html: {}", e))?;
     }
-    let original: String = fs::read_to_string(&index_path)
+    let original: String = read_to_string(&index_path)
         .await
         .map_err(|e| anyhow!("Failed to read index.html: {}", e))?;
     let mut html: String = if original.contains("</body>") {
@@ -56,28 +56,6 @@ pub(crate) async fn generate_dev_html(www_dir: &Path) -> Result<String> {
     Ok(html)
 }
 
-/// Updates the served HTML after a successful build.
-///
-/// # Arguments
-///
-/// - `&AppState` - The shared application state containing the current HTML.
-///
-/// # Returns
-///
-/// - `Result<()>` - Indicates success or failure of the HTML update.
-pub(crate) async fn update_html(state: &AppState) -> Result<()> {
-    let www_absolute: PathBuf = if state.args.www_dir.is_absolute() {
-        state.args.www_dir.clone()
-    } else {
-        state.args.crate_path.join(&state.args.www_dir)
-    };
-    let www_absolute: PathBuf = resolve_www_dir(&www_absolute);
-    let new_html: String = generate_dev_html(&www_absolute).await?;
-    let mut html: RwLockWriteGuard<String> = state.html_content.write().await;
-    *html = new_html;
-    Ok(())
-}
-
 /// Resolves the effective www directory, handling wasm-pack nested output.
 ///
 /// # Arguments
@@ -87,14 +65,14 @@ pub(crate) async fn update_html(state: &AppState) -> Result<()> {
 /// # Returns
 ///
 /// - `PathBuf` - The resolved www directory containing `index.html`.
-pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
-    if www_dir.join("index.html").exists() {
+pub(crate) async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
+    if metadata(www_dir.join("index.html")).await.is_ok() {
         return www_dir.to_path_buf();
     }
     let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
     if let Some(name) = parent_name {
         let nested: PathBuf = www_dir.join(name);
-        if nested.join("index.html").exists() {
+        if metadata(nested.join("index.html")).await.is_ok() {
             return nested;
         }
     }
@@ -110,22 +88,28 @@ pub(crate) fn resolve_www_dir(www_dir: &Path) -> PathBuf {
 /// # Returns
 ///
 /// - `PathBuf` - The resolved pkg directory containing WASM build artifacts.
-pub(crate) fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
+pub(crate) async fn resolve_pkg_dir(www_dir: &Path) -> PathBuf {
     let direct_pkg: PathBuf = www_dir.join("pkg");
-    if direct_pkg.join("euv_example.js").exists() || direct_pkg.join(".gitignore").exists() {
+    if metadata(direct_pkg.join("euv_example.js")).await.is_ok()
+        || metadata(direct_pkg.join(".gitignore")).await.is_ok()
+    {
         return direct_pkg;
     }
     let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
     if let Some(name) = parent_name {
         let nested_pkg: PathBuf = www_dir.join(name).join("pkg");
-        if nested_pkg.join("euv_example.js").exists() || nested_pkg.join(".gitignore").exists() {
+        if metadata(nested_pkg.join("euv_example.js")).await.is_ok()
+            || metadata(nested_pkg.join(".gitignore")).await.is_ok()
+        {
             return nested_pkg;
         }
     }
     let grandparent: Option<&Path> = www_dir.parent();
     if let Some(parent) = grandparent {
         let sibling_pkg: PathBuf = parent.join("pkg");
-        if sibling_pkg.join("euv_example.js").exists() || sibling_pkg.join(".gitignore").exists() {
+        if metadata(sibling_pkg.join("euv_example.js")).await.is_ok()
+            || metadata(sibling_pkg.join(".gitignore")).await.is_ok()
+        {
             return sibling_pkg;
         }
     }
