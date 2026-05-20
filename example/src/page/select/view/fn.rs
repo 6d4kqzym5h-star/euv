@@ -10,7 +10,7 @@ pub fn page_select() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Select & Textarea", "Dropdown selection, cascading selects, and textarea binding.") }
+            page_header("Select & Textarea", "Dropdown selection, cascading selects, and textarea binding.")
             my_card {
                 title: "Simple Select"
                 div {

@@ -12,7 +12,7 @@ pub fn page_conditional() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Conditional Rendering", "Toggle visibility and switch between views.") }
+            page_header("Conditional Rendering", "Toggle visibility and switch between views.")
             my_card {
                 title: "Toggle Content"
                 primary_button {

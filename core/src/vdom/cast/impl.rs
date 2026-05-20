@@ -306,14 +306,14 @@ impl<T> EventAdapter<T> {
     }
 }
 
-/// Adapts a `FnMut(NativeEvent)` closure into an `AttributeValue::Event`.
+/// Adapts a `FnMut(Event)` closure into an `AttributeValue::Event`.
 ///
 /// Wraps the closure into a `NativeEventHandler` and returns it as an
 /// event attribute value. This replaces the `__EventWrapper<F>` type
 /// that was previously generated inline by the `html!` macro.
 impl<F> EventAdapter<F>
 where
-    F: FnMut(NativeEvent) + 'static,
+    F: FnMut(Event) + 'static,
 {
     /// Converts the wrapped closure into an event `AttributeValue`.
     ///
@@ -351,12 +351,9 @@ impl EventAdapter<NativeEventHandler> {
     /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
     pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
         let handler: NativeEventHandler = self.into_inner();
-        AttributeValue::Event(NativeEventHandler::new(
-            event_name,
-            move |event: NativeEvent| {
-                handler.handle(event);
-            },
-        ))
+        AttributeValue::Event(NativeEventHandler::new(event_name, move |event: Event| {
+            handler.handle(event);
+        }))
     }
 }
 
@@ -412,14 +409,14 @@ impl<T> AttrValueAdapter<T> {
     }
 }
 
-/// Adapts a `FnMut(NativeEvent)` closure into a callback `AttributeValue`.
+/// Adapts a `FnMut(Event)` closure into a callback `AttributeValue`.
 ///
 /// This handles the case where a closure is used as a component callback prop.
 /// The closure is converted via `IntoCallbackAttribute::into_callback_attribute()`.
 /// This replaces the `__IsClosure for F` impl that was previously generated inline.
 impl<F> AttrValueAdapter<F>
 where
-    F: FnMut(NativeEvent) + 'static,
+    F: FnMut(Event) + 'static,
 {
     /// Converts the wrapped closure into a callback `AttributeValue`.
     ///
@@ -469,7 +466,7 @@ impl AttrValueAdapter<NativeEventHandler> {
         let handler: NativeEventHandler = self.into_inner();
         AttributeValue::Event(NativeEventHandler::new(
             NativeEventName::Other("callback".to_string()),
-            move |event: NativeEvent| {
+            move |event: Event| {
                 handler.handle(event);
             },
         ))
@@ -489,7 +486,7 @@ impl AttrValueAdapter<NativeEventHandler> {
         let handler: NativeEventHandler = self.into_inner();
         AttributeValue::Event(NativeEventHandler::new(
             NativeEventName::Other(name),
-            move |event: NativeEvent| {
+            move |event: Event| {
                 handler.handle(event);
             },
         ))

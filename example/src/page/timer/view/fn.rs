@@ -26,7 +26,7 @@ pub fn page_timer() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Timer", "Stopwatch and countdown timer with interval-based updates.") }
+            page_header("Timer", "Stopwatch and countdown timer with interval-based updates.")
             my_card {
                 title: "Stopwatch"
                 div {

@@ -26,7 +26,7 @@ pub fn props_on_child_respond(
     response_signal: Signal<String>,
     message: String,
 ) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         response_signal.set(message.clone());
     })
 }
@@ -50,7 +50,7 @@ pub fn use_two_way_demo() -> UseTwoWayDemo {
 ///
 /// - `NativeEventHandler` - A click handler.
 pub fn two_way_on_increment(counter: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let current: i32 = counter.get();
         counter.set(current + 1);
     })
@@ -66,7 +66,7 @@ pub fn two_way_on_increment(counter: Signal<i32>) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler.
 pub fn two_way_on_decrement(counter: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let current: i32 = counter.get();
         counter.set(current - 1);
     })
@@ -120,9 +120,11 @@ pub fn use_cross_component_demo() -> UseCrossComponentDemo {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn cross_on_input_celsius(signal: Signal<f64>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
-        if let NativeEvent::Input(input_event) = event {
-            let parsed: f64 = input_event.get_value().parse().unwrap_or(0.0);
+    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            let parsed: f64 = input.value().parse().unwrap_or(0.0);
             signal.set(parsed);
         }
     })
@@ -138,9 +140,11 @@ pub fn cross_on_input_celsius(signal: Signal<f64>) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn cross_on_input_fahrenheit(signal: Signal<f64>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
-        if let NativeEvent::Input(input_event) = event {
-            let parsed: f64 = input_event.get_value().parse().unwrap_or(0.0);
+    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            let parsed: f64 = input.value().parse().unwrap_or(0.0);
             signal.set(parsed);
         }
     })
@@ -156,9 +160,11 @@ pub fn cross_on_input_fahrenheit(signal: Signal<f64>) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn cross_on_input_i32(signal: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
-        if let NativeEvent::Input(input_event) = event {
-            let parsed: i32 = input_event.get_value().parse().unwrap_or(0);
+    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            let parsed: i32 = input.value().parse().unwrap_or(0);
             signal.set(parsed.clamp(0, 255));
         }
     })
@@ -183,7 +189,7 @@ pub fn use_typed_props_demo() -> UseTypedPropsDemo {
 ///
 /// - `NativeEventHandler` - A click handler.
 pub fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let current: bool = disabled.get();
         disabled.set(!current);
     })
@@ -200,7 +206,7 @@ pub fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> NativeEventHand
 ///
 /// - `NativeEventHandler` - A click handler.
 pub fn typed_props_on_increment(count: Signal<i32>, max_count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let current: i32 = count.get();
         let max: i32 = max_count.get();
         if current < max {
@@ -219,7 +225,7 @@ pub fn typed_props_on_increment(count: Signal<i32>, max_count: Signal<i32>) -> N
 ///
 /// - `NativeEventHandler` - A click handler.
 pub fn typed_props_on_reset_count(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         count.set(0);
     })
 }
@@ -246,9 +252,11 @@ pub fn use_custom_callback_demo() -> UseCustomCallbackDemo {
 pub fn custom_on_change(text_signal: Signal<String>, event_name: String) -> NativeEventHandler {
     NativeEventHandler::new(
         NativeEventName::Other("on_change".to_string()),
-        move |event: NativeEvent| {
-            if let NativeEvent::Input(input_event) = event {
-                text_signal.set(input_event.get_value().clone());
+        move |event: Event| {
+            if let Some(target) = event.target()
+                && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+            {
+                text_signal.set(input.value());
             }
             let _event_name: String = event_name.clone();
         },
@@ -268,7 +276,7 @@ pub fn custom_on_change(text_signal: Signal<String>, event_name: String) -> Nati
 pub fn custom_on_submit(last_event: Signal<String>, event_name: String) -> NativeEventHandler {
     NativeEventHandler::new(
         NativeEventName::Other("on_submit".to_string()),
-        move |_event: NativeEvent| {
+        move |_event: Event| {
             last_event.set(event_name.clone());
         },
     )
@@ -292,7 +300,7 @@ pub fn custom_on_reset(
 ) -> NativeEventHandler {
     NativeEventHandler::new(
         NativeEventName::Other("on_reset".to_string()),
-        move |_event: NativeEvent| {
+        move |_event: Event| {
             text_signal.set(String::new());
             last_event.set(event_name.clone());
         },

@@ -1,51 +1,5 @@
 use crate::*;
 
-/// Builds the error display node if validation errors exist.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The reactive signal holding validation error messages.
-///
-/// # Returns
-///
-/// - `VirtualNode` - An error box element if errors exist, or `VirtualNode::Empty`.
-fn build_error_node(errors: Signal<String>) -> VirtualNode {
-    let error_text: String = errors.get();
-    if !error_text.is_empty() {
-        html! {
-            div {
-                class: c_error_box()
-                error_text
-            }
-        }
-    } else {
-        VirtualNode::Empty
-    }
-}
-
-/// Builds the success display node if form was submitted.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The reactive signal holding the submission result message.
-///
-/// # Returns
-///
-/// - `VirtualNode` - A success box element if submitted, or `VirtualNode::Empty`.
-fn build_submitted_node(submitted: Signal<String>) -> VirtualNode {
-    let submitted_text: String = submitted.get();
-    if !submitted_text.is_empty() {
-        html! {
-            div {
-                class: c_success_box()
-                submitted_text
-            }
-        }
-    } else {
-        VirtualNode::Empty
-    }
-}
-
 /// A form demo page with two-way binding and validation.
 ///
 /// # Returns
@@ -56,7 +10,7 @@ pub fn page_form() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Form Demo", "Two-way binding and validation example.") }
+            page_header("Form Demo", "Two-way binding and validation example.")
             my_card {
                 title: "Registration Form"
                 div {
@@ -162,13 +116,27 @@ pub fn page_form() -> VirtualNode {
                 } else {
                     ""
                 }
-                build_error_node(form.get_errors())
+                if { !form.get_errors().get().is_empty() } {
+                    div {
+                        class: c_error_box()
+                        form.get_errors()
+                    }
+                } else {
+                    ""
+                }
                 primary_button {
                     label: "Submit"
                     onclick: form_on_submit(form)
                     "Submit"
                 }
-                build_submitted_node(form.get_submitted())
+                if { !form.get_submitted().get().is_empty() } {
+                    div {
+                        class: c_success_box()
+                        form.get_submitted()
+                    }
+                } else {
+                    ""
+                }
             }
         }
     }

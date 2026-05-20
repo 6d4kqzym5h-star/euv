@@ -10,7 +10,7 @@ pub fn page_modal() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Modal Dialog", "Overlay dialogs with different content patterns.") }
+            page_header("Modal Dialog", "Overlay dialogs with different content patterns.")
             my_card {
                 title: "Basic Modal"
                 p {

@@ -12,7 +12,7 @@ use crate::*;
 /// - `NativeEventHandler` - A click handler that sets the user type.
 pub fn user_type_on_select(user_type: Signal<String>, value: &str) -> NativeEventHandler {
     let value_owned: String = value.to_string();
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         user_type.set(value_owned.clone());
     })
 }
@@ -29,7 +29,7 @@ pub fn user_type_on_select(user_type: Signal<String>, value: &str) -> NativeEven
 /// - `NativeEventHandler` - A click handler that sets the active tab.
 pub fn tab_on_select(tab: Signal<String>, value: &str) -> NativeEventHandler {
     let value_owned: String = value.to_string();
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         tab.set(value_owned.clone());
     })
 }

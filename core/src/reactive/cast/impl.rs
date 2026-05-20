@@ -243,7 +243,7 @@ impl IntoReactiveString for Signal<bool> {
 /// Converts a closure into a callback attribute value.
 impl<F> IntoCallbackAttribute for F
 where
-    F: FnMut(NativeEvent) + 'static,
+    F: FnMut(Event) + 'static,
 {
     /// Wraps this closure into an `AttributeValue::Event` with a generic "callback" event name.
     ///

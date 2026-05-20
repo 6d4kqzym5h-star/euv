@@ -16,7 +16,7 @@ pub fn page_lifecycle() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Lifecycle", "Track component updates and lifecycle events.") }
+            page_header("Lifecycle", "Track component updates and lifecycle events.")
             my_card {
                 title: "Render Counter"
                 p {

@@ -1,4 +1,4 @@
-mod event_type;
 mod handler;
+mod name;
 
-pub use {event_type::*, handler::*};
+pub use {handler::*, name::*};

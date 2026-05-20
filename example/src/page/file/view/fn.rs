@@ -81,7 +81,7 @@ pub fn page_file_upload() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("File Upload", "File selection, drag-and-drop zone, and file list display.") }
+            page_header("File Upload", "File selection, drag-and-drop zone, and file list display.")
             my_card {
                 title: "File Input"
                 div {

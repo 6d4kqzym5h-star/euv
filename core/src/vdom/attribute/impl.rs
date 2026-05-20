@@ -19,17 +19,23 @@ impl PartialEq for AttributeValue {
     /// - `bool` - `true` if the values are visually equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (AttributeValue::Text(a_val), AttributeValue::Text(b_val)) => a_val == b_val,
-            (AttributeValue::Signal(a_sig), AttributeValue::Signal(b_sig)) => {
-                a_sig.get() == b_sig.get()
+            (AttributeValue::Text(old_val), AttributeValue::Text(new_val)) => old_val == new_val,
+            (AttributeValue::Signal(old_sig), AttributeValue::Signal(new_sig)) => {
+                old_sig.get() == new_sig.get()
             }
-            (AttributeValue::Signal(a_sig), AttributeValue::Text(b_val)) => a_sig.get() == *b_val,
-            (AttributeValue::Text(a_val), AttributeValue::Signal(b_sig)) => *a_val == b_sig.get(),
+            (AttributeValue::Signal(old_sig), AttributeValue::Text(new_val)) => {
+                old_sig.get() == *new_val
+            }
+            (AttributeValue::Text(old_val), AttributeValue::Signal(new_sig)) => {
+                *old_val == new_sig.get()
+            }
             (AttributeValue::Event(_), AttributeValue::Event(_)) => true,
-            (AttributeValue::Css(a_css), AttributeValue::Css(b_css)) => {
-                a_css.get_name() == b_css.get_name()
+            (AttributeValue::Css(old_css), AttributeValue::Css(new_css)) => {
+                old_css.get_name() == new_css.get_name()
             }
-            (AttributeValue::Dynamic(a_dyn), AttributeValue::Dynamic(b_dyn)) => a_dyn == b_dyn,
+            (AttributeValue::Dynamic(old_dyn), AttributeValue::Dynamic(new_dyn)) => {
+                old_dyn == new_dyn
+            }
             _ => false,
         }
     }

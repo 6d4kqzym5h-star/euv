@@ -167,24 +167,40 @@ impl Renderer {
     }
 
     /// Compares two tags for equality.
-    fn tags_equal(a: &Tag, b: &Tag) -> bool {
-        match (a, b) {
-            (Tag::Element(a_name), Tag::Element(b_name)) => a_name == b_name,
-            (Tag::Component(a_name), Tag::Component(b_name)) => a_name == b_name,
+    fn tags_equal(old_tag: &Tag, new_tag: &Tag) -> bool {
+        match (old_tag, new_tag) {
+            (Tag::Element(old_name), Tag::Element(new_name)) => old_name == new_name,
+            (Tag::Component(old_name), Tag::Component(new_name)) => old_name == new_name,
             _ => false,
         }
     }
 
     /// Compares two attribute values for equality.
-    fn attribute_values_equal(a: &AttributeValue, b: &AttributeValue) -> bool {
-        match (a, b) {
-            (AttributeValue::Text(a_val), AttributeValue::Text(b_val)) => a_val == b_val,
-            (AttributeValue::Signal(_a_sig), AttributeValue::Signal(_b_sig)) => false,
-            (AttributeValue::Event(_a_ev), AttributeValue::Event(_b_ev)) => false,
-            (AttributeValue::Dynamic(a_dyn), AttributeValue::Dynamic(b_dyn)) => a_dyn == b_dyn,
-            (AttributeValue::Css(a_css), AttributeValue::Css(b_css)) => {
-                a_css.get_name() == b_css.get_name()
+    ///
+    /// Signal values are compared by their current resolved string so that
+    /// patching is skipped when the visual output has not changed. This
+    /// prevents unnecessary DOM mutations (e.g. `input.set_value()`) that
+    /// can reset cursor position or cause visual flicker.
+    ///
+    /// Event attributes are always considered unequal to ensure that
+    /// event listeners are re-bound on every patch. This is critical
+    /// because the underlying closure may capture different signal
+    /// references after a re-render, even though the event name remains
+    /// the same. The cost is minimal — `attach_event_listener` only
+    /// updates a handler wrapper without re-registering the DOM listener.
+    fn attribute_values_equal(old_val: &AttributeValue, new_val: &AttributeValue) -> bool {
+        match (old_val, new_val) {
+            (AttributeValue::Text(old_text), AttributeValue::Text(new_text)) => {
+                old_text == new_text
             }
+            (AttributeValue::Signal(old_signal), AttributeValue::Signal(new_signal)) => {
+                old_signal.get() == new_signal.get()
+            }
+            (AttributeValue::Event(_), AttributeValue::Event(_)) => false,
+            (AttributeValue::Dynamic(old_dyn), AttributeValue::Dynamic(new_dyn)) => {
+                old_dyn == new_dyn
+            }
+            (AttributeValue::Css(old_css), AttributeValue::Css(new_css)) => old_css == new_css,
             _ => false,
         }
     }
@@ -494,15 +510,15 @@ impl Renderer {
 
     /// Attaches an event listener to a DOM element.
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
-        let euv_id: usize = match element.get_attribute("data-euv-id") {
+        let euv_id: usize = match element.get_attribute(DATA_EUV_ID) {
             Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {
                 let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
-                let _ = element.set_attribute("data-euv-id", &new_id.to_string());
+                let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());
                 new_id
             }),
             None => {
                 let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
-                let _ = element.set_attribute("data-euv-id", &new_id.to_string());
+                let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());
                 new_id
             }
         };
@@ -518,14 +534,11 @@ impl Renderer {
             });
             let handler_entry: HandlerEntry = Box::leak(handler_slot) as *mut HandlerSlot;
             let handler_addr: usize = handler_entry as usize;
-            let event_name_for_closure: String = event_name.clone();
             let closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |event: Event| {
                     let slot: &mut HandlerSlot = handler_addr.into();
                     let active_handler: NativeEventHandler = slot.get_handler();
-                    let euv_event: NativeEvent = convert_web_event(&event, &event_name_for_closure);
-                    active_handler.handle(euv_event);
-                    event.stop_propagation();
+                    active_handler.handle(event);
                 }));
             element
                 .add_event_listener_with_callback(&event_name, closure.as_ref().unchecked_ref())

@@ -10,7 +10,7 @@ pub fn page_signals() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Reactive Signals", "Counters and badges driven by reactive state.") }
+            page_header("Reactive Signals", "Counters and badges driven by reactive state.")
             my_card {
                 title: "Counter"
                 div {

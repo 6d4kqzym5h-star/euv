@@ -19,7 +19,7 @@ pub fn my_modal(props: VirtualNode) -> VirtualNode {
             onclick: on_close.clone()
             div {
                 class: c_modal_content()
-                onclick: move |_event: NativeEvent| { }
+                onclick: move |_event: Event| { }
                 div {
                     class: c_modal_header()
                     h3 {

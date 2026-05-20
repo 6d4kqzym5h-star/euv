@@ -1,5 +1,3 @@
-use crate::*;
-
 /// Represents the name of a DOM event.
 ///
 /// Covers mouse, keyboard, focus, form, drag, touch, wheel, clipboard, and media events.
@@ -125,35 +123,4 @@ pub enum NativeEventName {
     EuvSignalUpdate,
     /// A custom event with an arbitrary name.
     Other(String),
-}
-
-/// Represents different kinds of UI events.
-///
-/// Each variant wraps the specific data associated with that event type.
-#[derive(Clone, Debug, PartialEq)]
-pub enum NativeEvent {
-    /// A mouse-related event.
-    Mouse(NativeMouseEvent),
-    /// An input change event.
-    Input(NativeInputEvent),
-    /// A keyboard event.
-    Keyboard(NativeKeyboardEvent),
-    /// A focus event.
-    Focus(NativeFocusEvent),
-    /// A form submit event.
-    Submit(NativeSubmitEvent),
-    /// A change event for select/checkbox/radio.
-    Change(NativeChangeEvent),
-    /// A drag and drop event.
-    Drag(NativeDragEvent),
-    /// A touch event.
-    Touch(NativeTouchEvent),
-    /// A wheel/scroll event.
-    Wheel(NativeWheelEvent),
-    /// A clipboard event.
-    Clipboard(NativeClipboardEvent),
-    /// A media event.
-    Media(NativeMediaEvent),
-    /// A generic event with no specific data.
-    Generic,
 }

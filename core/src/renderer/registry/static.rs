@@ -2,7 +2,7 @@ use crate::*;
 
 /// Global auto-incrementing ID counter for DOM elements.
 ///
-/// Used to assign a unique `data-euv-id` attribute to each element
+/// Used to assign a unique `DATA_EUV_ID` attribute to each element
 /// that receives an event listener, providing a stable identity across
 /// re-renders.
 pub(crate) static NEXT_EUV_ID: AtomicUsize = AtomicUsize::new(0);

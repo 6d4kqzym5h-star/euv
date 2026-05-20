@@ -244,7 +244,7 @@ fn format_time(total_seconds: i32) -> String {
 ///
 /// - `NativeEventHandler` - A click handler that increments the counter.
 pub fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let current: i32 = count.get();
         count.set(current + 1);
     })
@@ -260,7 +260,7 @@ pub fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEventHandler
 ///
 /// - `NativeEventHandler` - A click handler that decrements the counter.
 pub fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let current: i32 = count.get();
         count.set(current - 1);
     })
@@ -276,7 +276,7 @@ pub fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEventHandler
 ///
 /// - `NativeEventHandler` - A click handler that resets the counter.
 pub fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         count.set(0);
     })
 }
@@ -291,7 +291,7 @@ pub fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler that starts the timer.
 pub fn keep_alive_timer_on_start(running: Signal<bool>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         running.set(true);
     })
 }
@@ -310,7 +310,7 @@ pub fn keep_alive_timer_on_pause(
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
 ) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         running.set(false);
     })
 }
@@ -331,7 +331,7 @@ pub fn keep_alive_timer_on_reset(
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
 ) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         running.set(false);
         elapsed.set(0);
     })
@@ -351,7 +351,7 @@ pub fn page_keep_alive() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Keep-Alive", "Preserve component state across tab switches using CSS display toggling.") }
+            page_header("Keep-Alive", "Preserve component state across tab switches using CSS display toggling.")
             my_card {
                 title: "Tab Switching with State Preservation"
                 div {

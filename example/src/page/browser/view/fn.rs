@@ -10,7 +10,7 @@ pub fn page_browser() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Browser APIs", "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location.") }
+            page_header("Browser APIs", "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location.")
             my_card {
                 title: "localStorage"
                 p {

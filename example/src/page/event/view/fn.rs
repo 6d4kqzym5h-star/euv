@@ -44,7 +44,7 @@ pub fn page_event() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Event Handling", "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, and media events.") }
+            page_header("Event Handling", "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, and media events.")
             my_card {
                 title: "Keyboard Events"
                 input {
@@ -54,25 +54,25 @@ pub fn page_event() -> VirtualNode {
                     autocomplete: "off"
                     placeholder: "Type here to capture key events..."
                     class: c_form_input()
-                    onkey_down: move |event: NativeEvent| {
-                        if let NativeEvent::Keyboard(keyboard_event) = event {
-                            let key_name: String = keyboard_event.get_key().clone();
+                    onkey_down: move |event: Event| {
+                        if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
+                            let key_name: String = keyboard_event.key();
                             last_key.set(key_name);
-                            let code_name: String = keyboard_event.get_code().clone();
+                            let code_name: String = keyboard_event.code();
                             last_key_code.set(code_name);
-                            let is_repeat: bool = keyboard_event.get_repeat();
+                            let is_repeat: bool = keyboard_event.repeat();
                             key_repeat.set(is_repeat);
                             let mut modifier: String = String::new();
-                            if keyboard_event.get_ctrl_key() {
+                            if keyboard_event.ctrl_key() {
                                 modifier.push_str("Ctrl+");
                             }
-                            if keyboard_event.get_shift_key() {
+                            if keyboard_event.shift_key() {
                                 modifier.push_str("Shift+");
                             }
-                            if keyboard_event.get_alt_key() {
+                            if keyboard_event.alt_key() {
                                 modifier.push_str("Alt+");
                             }
-                            if keyboard_event.get_meta_key() {
+                            if keyboard_event.meta_key() {
                                 modifier.push_str("Meta+");
                             }
                             if modifier.is_empty() {
@@ -82,9 +82,9 @@ pub fn page_event() -> VirtualNode {
                             Console::log(&format!("KeyDown: {} (code: {})", last_key.get(), last_key_code.get()));
                         }
                     }
-                    onkey_up: move |event: NativeEvent| {
-                        if let NativeEvent::Keyboard(keyboard_event) = event {
-                            let key_name: String = keyboard_event.get_key().clone();
+                    onkey_up: move |event: Event| {
+                        if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
+                            let key_name: String = keyboard_event.key();
                             last_key_up.set(key_name.clone());
                             Console::log(&format!("KeyUp: {}", key_name));
                         }
@@ -144,57 +144,57 @@ pub fn page_event() -> VirtualNode {
                 title: "Mouse Events"
                 div {
                     class: c_event_mouse_area()
-                    onclick: move |event: NativeEvent| {
-                        if let NativeEvent::Mouse(mouse_event) = event {
-                            let pos: String = format!("({}, {})", mouse_event.get_client_x(), mouse_event.get_client_y());
+                    onclick: move |event: Event| {
+                        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
+                            let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
                             mouse_pos.set(pos);
-                            let screen: String = format!("({}, {})", mouse_event.get_screen_x(), mouse_event.get_screen_y());
+                            let screen: String = format!("({}, {})", mouse_event.screen_x(), mouse_event.screen_y());
                             mouse_screen_pos.set(screen);
                             let current: i32 = click_count.get();
                             click_count.set(current + 1);
-                            Console::log(&format!("Click: {} at ({}, {})", current + 1, mouse_event.get_client_x(), mouse_event.get_client_y()));
+                            Console::log(&format!("Click: {} at ({}, {})", current + 1, mouse_event.client_x(), mouse_event.client_y()));
                         }
                     }
-                    ondbl_click: move |_event: NativeEvent| {
+                    ondbl_click: move |_event: Event| {
                         let current: i32 = double_click_count.get();
                         double_click_count.set(current + 1);
                         Console::log(&format!("DblClick: #{}", current + 1));
                     }
-                    onmouse_down: move |event: NativeEvent| {
-                        if let NativeEvent::Mouse(mouse_event) = event {
-                            let button_name: String = match mouse_event.get_button() {
+                    onmouse_down: move |event: Event| {
+                        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
+                            let button_name: String = match mouse_event.button() {
                                 0 => "Left".to_string(),
                                 1 => "Middle".to_string(),
                                 2 => "Right".to_string(),
-                                _ => format!("Button {}", mouse_event.get_button()),
+                                _ => format!("Button {}", mouse_event.button()),
                             };
                             mouse_button.set(button_name);
                             let current: i32 = mouse_down_count.get();
                             mouse_down_count.set(current + 1);
                         }
                     }
-                    onmouse_up: move |_event: NativeEvent| {
+                    onmouse_up: move |_event: Event| {
                         let current: i32 = mouse_up_count.get();
                         mouse_up_count.set(current + 1);
                     }
-                    onmouse_move: move |event: NativeEvent| {
-                        if let NativeEvent::Mouse(mouse_event) = event {
-                            let pos: String = format!("({}, {})", mouse_event.get_client_x(), mouse_event.get_client_y());
+                    onmouse_move: move |event: Event| {
+                        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
+                            let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
                             mouse_pos.set(pos);
-                            let buttons_mask: String = format!("{}", mouse_event.get_buttons());
+                            let buttons_mask: String = format!("{}", mouse_event.buttons());
                             mouse_buttons.set(buttons_mask);
                         }
                     }
-                    onmouse_enter: move |_event: NativeEvent| {
+                    onmouse_enter: move |_event: Event| {
                         let current: i32 = mouse_enter_count.get();
                         mouse_enter_count.set(current + 1);
                     }
-                    onmouse_leave: move |_event: NativeEvent| {
+                    onmouse_leave: move |_event: Event| {
                         let current: i32 = mouse_leave_count.get();
                         mouse_leave_count.set(current + 1);
                     }
-                    oncontext_menu: move |event: NativeEvent| {
-                        if let NativeEvent::Mouse(_) = event {
+                    oncontext_menu: move |event: Event| {
+                        if event.dyn_ref::<MouseEvent>().is_some() {
                             Console::log("ContextMenu: right-click detected");
                         }
                     }
@@ -322,7 +322,7 @@ pub fn page_event() -> VirtualNode {
                     style: { display: "flex"; gap: "16px"; flex-wrap: "wrap"; }
                     div {
                         class: c_event_drag_zone()
-                        onmouse_over: move |_event: NativeEvent| {
+                        onmouse_over: move |_event: Event| {
                             let current: i32 = mouse_over_count.get();
                             mouse_over_count.set(current + 1);
                         }
@@ -337,7 +337,7 @@ pub fn page_event() -> VirtualNode {
                     }
                     div {
                         class: c_event_drag_zone_active()
-                        onmouse_out: move |_event: NativeEvent| {
+                        onmouse_out: move |_event: Event| {
                             let current: i32 = mouse_out_count.get();
                             mouse_out_count.set(current + 1);
                         }
@@ -361,22 +361,22 @@ pub fn page_event() -> VirtualNode {
                     autocomplete: "off"
                     placeholder: "Click to focus, click outside to blur..."
                     class: c_form_input()
-                    onfocus: move |_event: NativeEvent| {
+                    onfocus: move |_event: Event| {
                         focus_status.set("Focused".to_string());
                         let current: i32 = focus_in_count.get();
                         focus_in_count.set(current + 1);
                         Console::log("Focus: input gained focus");
                     }
-                    onblur: move |_event: NativeEvent| {
+                    onblur: move |_event: Event| {
                         focus_status.set("Not focused".to_string());
                         let current: i32 = focus_out_count.get();
                         focus_out_count.set(current + 1);
                         Console::log("Blur: input lost focus");
                     }
-                    onfocus_in: move |_event: NativeEvent| {
+                    onfocus_in: move |_event: Event| {
                         Console::log("FocusIn: focus entered");
                     }
-                    onfocus_out: move |_event: NativeEvent| {
+                    onfocus_out: move |_event: Event| {
                         Console::log("FocusOut: focus left");
                     }
                 }
@@ -412,31 +412,40 @@ pub fn page_event() -> VirtualNode {
                 title: "Drag Events"
                 div {
                     class: c_event_drag_zone()
-                    ondrag_start: move |_event: NativeEvent| {
+                    ondrag_start: move |_event: Event| {
                         drag_status.set("Dragging".to_string());
                         Console::log("DragStart: drag started");
                     }
-                    ondrag: move |event: NativeEvent| {
-                        if let NativeEvent::Drag(drag_event) = event {
-                            let pos: String = format!("({}, {})", drag_event.get_client_x(), drag_event.get_client_y());
+                    ondrag: move |event: Event| {
+                        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
+                            let pos: String = format!("({}, {})", drag_event.client_x(), drag_event.client_y());
                             drag_pos.set(pos);
                         }
                     }
-                    ondrag_end: move |_event: NativeEvent| {
+                    ondrag_end: move |_event: Event| {
                         drag_status.set("Ended".to_string());
                         Console::log("DragEnd: drag ended");
                     }
-                    ondrag_over: move |_event: NativeEvent| {
+                    ondrag_over: move |_event: Event| {
                     }
-                    ondrag_enter: move |_event: NativeEvent| {
+                    ondrag_enter: move |_event: Event| {
                         Console::log("DragEnter: entered drop zone");
                     }
-                    ondrag_leave: move |_event: NativeEvent| {
+                    ondrag_leave: move |_event: Event| {
                         Console::log("DragLeave: left drop zone");
                     }
-                    ondrop: move |event: NativeEvent| {
-                        if let NativeEvent::Drag(drag_event) = event {
-                            let types_str: String = drag_event.get_types().join(", ");
+                    ondrop: move |event: Event| {
+                        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
+                            let types_str: String = drag_event
+                                .data_transfer()
+                                .map(|dt: DataTransfer| {
+                                    let len: u32 = dt.types().length();
+                                    (0..len)
+                                        .filter_map(|i: u32| dt.types().get(i).as_string())
+                                        .collect::<Vec<String>>()
+                                        .join(", ")
+                                })
+                                .unwrap_or_default();
                             if types_str.is_empty() {
                                 drag_types.set("None".to_string());
                             } else {
@@ -488,19 +497,19 @@ pub fn page_event() -> VirtualNode {
                 title: "Wheel Event"
                 div {
                     class: c_event_wheel_zone()
-                    onwheel: move |event: NativeEvent| {
-                        if let NativeEvent::Wheel(wheel_event) = event {
-                            let delta: String = format!("({:.1}, {:.1})", wheel_event.get_delta_x(), wheel_event.get_delta_y());
+                    onwheel: move |event: Event| {
+                        if let Some(wheel_event) = event.dyn_ref::<WheelEvent>() {
+                            let delta: String = format!("({:.1}, {:.1})", wheel_event.delta_x(), wheel_event.delta_y());
                             wheel_delta.set(delta);
                             let current: f64 = wheel_total.get();
-                            wheel_total.set(current + wheel_event.get_delta_y());
-                            let mode_name: String = match wheel_event.get_delta_mode() {
+                            wheel_total.set(current + wheel_event.delta_y());
+                            let mode_name: String = match wheel_event.delta_mode() {
                                 0 => "pixel".to_string(),
                                 1 => "line".to_string(),
                                 2 => "page".to_string(),
                                 _ => "unknown".to_string(),
                             };
-                            Console::log(&format!("Wheel: dx={:.1}, dy={:.1}, mode={}", wheel_event.get_delta_x(), wheel_event.get_delta_y(), mode_name));
+                            Console::log(&format!("Wheel: dx={:.1}, dy={:.1}, mode={}", wheel_event.delta_x(), wheel_event.delta_y(), mode_name));
                         }
                     }
                     p {
@@ -544,27 +553,33 @@ pub fn page_event() -> VirtualNode {
                             placeholder: "Try copy, cut, or paste here..."
                         class: c_form_input()
                         value: "Sample text for clipboard"
-                        oncopy: move |event: NativeEvent| {
+                        oncopy: move |event: Event| {
                             clipboard_event_type.set("Copy".to_string());
-                            if let NativeEvent::Clipboard(clipboard_event) = event {
-                                let data: String = clipboard_event.try_get_data().as_ref().cloned().unwrap_or_else(|| "No data".to_string());
-                                clipboard_data.set(data);
+                            if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
+                                let data: Option<String> = clipboard_event
+                                    .clipboard_data()
+                                    .and_then(|cd| cd.get_data("text").ok());
+                                clipboard_data.set(data.unwrap_or_else(|| "No data".to_string()));
                             }
                             Console::log("Copy: text copied");
                         }
-                        oncut: move |event: NativeEvent| {
+                        oncut: move |event: Event| {
                             clipboard_event_type.set("Cut".to_string());
-                            if let NativeEvent::Clipboard(clipboard_event) = event {
-                                let data: String = clipboard_event.try_get_data().as_ref().cloned().unwrap_or_else(|| "No data".to_string());
-                                clipboard_data.set(data);
+                            if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
+                                let data: Option<String> = clipboard_event
+                                    .clipboard_data()
+                                    .and_then(|cd| cd.get_data("text").ok());
+                                clipboard_data.set(data.unwrap_or_else(|| "No data".to_string()));
                             }
                             Console::log("Cut: text cut");
                         }
-                        onpaste: move |event: NativeEvent| {
+                        onpaste: move |event: Event| {
                             clipboard_event_type.set("Paste".to_string());
-                            if let NativeEvent::Clipboard(clipboard_event) = event {
-                                let data: String = clipboard_event.try_get_data().as_ref().cloned().unwrap_or_else(|| "No data".to_string());
-                                clipboard_data.set(data);
+                            if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
+                                let data: Option<String> = clipboard_event
+                                    .clipboard_data()
+                                    .and_then(|cd| cd.get_data("text").ok());
+                                clipboard_data.set(data.unwrap_or_else(|| "No data".to_string()));
                             }
                             Console::log("Paste: text pasted");
                         }
@@ -594,27 +609,32 @@ pub fn page_event() -> VirtualNode {
                 title: "Touch Events"
                 div {
                     class: c_event_touch_zone()
-                    ontouch_start: move |event: NativeEvent| {
-                        if let NativeEvent::Touch(touch_event) = event {
-                            let info: String = format!("Start: {} touches at ({}, {})", touch_event.get_touches_count(), touch_event.get_client_x(), touch_event.get_client_y());
+                    ontouch_start: move |event: Event| {
+                        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
+                            let touches: TouchList = touch_event.touches();
+                            let first: Option<Touch> = touches.get(0);
+                            let info: String = format!("Start: {} touches at ({}, {})", touches.length(), first.as_ref().map(|t: &Touch| t.client_x()).unwrap_or(0), first.as_ref().map(|t: &Touch| t.client_y()).unwrap_or(0));
                             touch_info.set(info);
-                            Console::log(&format!("TouchStart: {} touches", touch_event.get_touches_count()));
+                            Console::log(&format!("TouchStart: {} touches", touches.length()));
                         }
                     }
-                    ontouch_move: move |event: NativeEvent| {
-                        if let NativeEvent::Touch(touch_event) = event {
-                            let info: String = format!("Move: {} touches at ({}, {})", touch_event.get_touches_count(), touch_event.get_client_x(), touch_event.get_client_y());
+                    ontouch_move: move |event: Event| {
+                        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
+                            let touches: TouchList = touch_event.touches();
+                            let first: Option<Touch> = touches.get(0);
+                            let info: String = format!("Move: {} touches at ({}, {})", touches.length(), first.as_ref().map(|t: &Touch| t.client_x()).unwrap_or(0), first.as_ref().map(|t: &Touch| t.client_y()).unwrap_or(0));
                             touch_info.set(info);
                         }
                     }
-                    ontouch_end: move |event: NativeEvent| {
-                        if let NativeEvent::Touch(touch_event) = event {
-                            let info: String = format!("End: {} touches remaining", touch_event.get_touches_count());
+                    ontouch_end: move |event: Event| {
+                        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
+                            let touches: TouchList = touch_event.touches();
+                            let info: String = format!("End: {} touches remaining", touches.length());
                             touch_info.set(info);
                             Console::log("TouchEnd: touch ended");
                         }
                     }
-                    ontouch_cancel: move |_event: NativeEvent| {
+                    ontouch_cancel: move |_event: Event| {
                         touch_info.set("Cancelled".to_string());
                         Console::log("TouchCancel: touch cancelled");
                     }
@@ -641,7 +661,8 @@ pub fn page_event() -> VirtualNode {
                 div {
                     class: c_event_form_area()
                     form {
-                        onsubmit: move |event: NativeEvent| {
+                        onsubmit: move |event: Event| {
+                            event.prevent_default();
                             let current: i32 = submit_count.get();
                             submit_count.set(current + 1);
                             Console::log(&format!("Event: {:?}", event));
@@ -661,15 +682,17 @@ pub fn page_event() -> VirtualNode {
                             autocomplete: "off"
                             placeholder: "Type to trigger input/change events..."
                                 class: c_form_input()
-                                oninput: move |event: NativeEvent| {
-                                    if let NativeEvent::Input(input_event) = event {
-                                        form_input_value.set(input_event.get_value().clone());
-                                    }
+                                oninput: move |event: Event| {
+                                    if let Some(target) = event.target()
+                                        && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
+                                            form_input_value.set(input.value());
+                                        }
                                 }
-                                onchange: move |event: NativeEvent| {
-                                    if let NativeEvent::Change(change_event) = event {
-                                        form_change_value.set(change_event.get_value().clone());
-                                    }
+                                onchange: move |event: Event| {
+                                    if let Some(target) = event.target()
+                                        && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
+                                            form_change_value.set(input.value());
+                                        }
                                 }
                             }
                         }
@@ -681,10 +704,11 @@ pub fn page_event() -> VirtualNode {
                                 r#type: "checkbox"
                                 autocomplete: "off"
                                 class: c_form_checkbox()
-                                onchange: move |event: NativeEvent| {
-                                    if let NativeEvent::Change(change_event) = event {
-                                        form_checkbox.set(change_event.get_checked());
-                                    }
+                                onchange: move |event: Event| {
+                                    if let Some(target) = event.target()
+                                        && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
+                                            form_checkbox.set(input.checked());
+                                        }
                                 }
                             }
                             label {
@@ -705,10 +729,11 @@ pub fn page_event() -> VirtualNode {
                                 name: "form_select"
                                 autocomplete: "off"
                                 class: c_select_input()
-                                onchange: move |event: NativeEvent| {
-                                    if let NativeEvent::Change(change_event) = event {
-                                        form_select_value.set(change_event.get_value().clone());
-                                    }
+                                onchange: move |event: Event| {
+                                    if let Some(target) = event.target()
+                                        && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>() {
+                                            form_select_value.set(select.value());
+                                        }
                                 }
                                 option {
                                     value: ""
@@ -785,33 +810,33 @@ pub fn page_event() -> VirtualNode {
                     audio {
                         controls: "true"
                         src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-                        onplay: move |_event: NativeEvent| {
+                        onplay: move |_event: Event| {
                             media_status.set("Playing".to_string());
                             media_event_log.set("Play".to_string());
                             Console::log("Play: audio started");
                         }
-                        onpause: move |_event: NativeEvent| {
+                        onpause: move |_event: Event| {
                             media_status.set("Paused".to_string());
                             media_event_log.set("Pause".to_string());
                             Console::log("Pause: audio paused");
                         }
-                        onended: move |_event: NativeEvent| {
+                        onended: move |_event: Event| {
                             media_status.set("Ended".to_string());
                             media_event_log.set("Ended".to_string());
                             Console::log("Ended: audio ended");
                         }
-                        onloaded_data: move |_event: NativeEvent| {
+                        onloaded_data: move |_event: Event| {
                             media_status.set("Loaded".to_string());
                             media_event_log.set("LoadedData".to_string());
                         }
-                        oncan_play: move |_event: NativeEvent| {
+                        oncan_play: move |_event: Event| {
                             media_event_log.set("CanPlay".to_string());
                         }
-                        onvolume_change: move |_event: NativeEvent| {
+                        onvolume_change: move |_event: Event| {
                             media_event_log.set("VolumeChange".to_string());
                             Console::log("VolumeChange: volume changed");
                         }
-                        ontime_update: move |_event: NativeEvent| {
+                        ontime_update: move |_event: Event| {
                             media_event_log.set("TimeUpdate".to_string());
                         }
                         p {

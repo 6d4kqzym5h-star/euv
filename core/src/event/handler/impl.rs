@@ -68,14 +68,14 @@ impl NativeEventHandler {
     /// # Arguments
     ///
     /// - `NativeEventName` - The event name enum variant.
-    /// - `FnMut(NativeEvent) + 'static` - The callback to invoke when the event fires.
+    /// - `FnMut(Event) + 'static` - The callback to invoke when the event fires.
     ///
     /// # Returns
     ///
     /// - `Self` - A new event handler.
     pub fn new<F>(event_name: NativeEventName, callback: F) -> Self
     where
-        F: FnMut(NativeEvent) + 'static,
+        F: FnMut(Event) + 'static,
     {
         let inner: Box<NativeEventCallbackInner> = Box::new(NativeEventCallbackInner {
             callback: Box::new(callback),
@@ -92,7 +92,6 @@ impl NativeEventHandler {
     /// # Returns
     ///
     /// - `&'static mut NativeEventCallbackInner` - A mutable reference to the inner callback state.
-    #[allow(clippy::mut_from_ref)]
     pub(crate) fn leak_mut(&self) -> &'static mut NativeEventCallbackInner {
         let address: usize = self.into();
         address.into()
@@ -102,20 +101,9 @@ impl NativeEventHandler {
     ///
     /// # Arguments
     ///
-    /// - `NativeEvent` - The event to pass to the callback.
-    pub fn handle(&self, event: NativeEvent) {
+    /// - `Event` - The event to pass to the callback.
+    pub fn handle(&self, event: Event) {
         let inner: &mut NativeEventCallbackInner = self.leak_mut();
         (inner.callback)(event);
-    }
-}
-
-/// Clones the event handler, sharing the underlying callback pointer.
-impl Clone for NativeEventHandler {
-    /// Returns a clone of this handler sharing the same callback pointer.
-    fn clone(&self) -> Self {
-        NativeEventHandler {
-            event_name: self.event_name.clone(),
-            callback: self.callback,
-        }
     }
 }

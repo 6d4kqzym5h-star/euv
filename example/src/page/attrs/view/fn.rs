@@ -9,7 +9,7 @@ pub fn page_custom_attrs() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Custom Attributes", "Using data-* and aria-* attributes on elements.") }
+            page_header("Custom Attributes", "Using data-* and aria-* attributes on elements.")
             my_card {
                 title: "Data & ARIA Attributes"
                 div {

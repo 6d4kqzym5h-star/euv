@@ -27,9 +27,11 @@ pub fn use_file_upload() -> UseFileUpload {
 ///
 /// - `NativeEventHandler` - A change handler for the file input.
 pub fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
-        if let NativeEvent::Change(change_event) = event {
-            let value: String = change_event.get_value().clone();
+    NativeEventHandler::new(NativeEventName::Change, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            let value: String = input.value();
             let names: Vec<String> = if value.is_empty() {
                 Vec::new()
             } else {
@@ -74,7 +76,7 @@ pub fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to clear files.
 pub fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         state.get_file_names().set(Vec::new());
         state.get_file_sizes().set(Vec::new());
         state.get_file_types().set(Vec::new());
@@ -93,7 +95,7 @@ pub fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A dragenter handler.
 pub fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::DragEnter, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::DragEnter, move |_event: Event| {
         state.get_drag_over().set(true);
     })
 }
@@ -108,7 +110,7 @@ pub fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A dragleave handler.
 pub fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::DragLeave, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::DragLeave, move |_event: Event| {
         state.get_drag_over().set(false);
     })
 }
@@ -123,7 +125,7 @@ pub fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A dragover handler.
 pub fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::DragOver, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::DragOver, move |_event: Event| {
         state.get_drag_over().set(true);
     })
 }
@@ -138,11 +140,17 @@ pub fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A drop handler.
 pub fn file_upload_on_drop(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Drop, move |event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Drop, move |event: Event| {
         state.get_drag_over().set(false);
-        if let NativeEvent::Drag(drag_event) = event {
-            let types: Vec<String> = drag_event.get_types().clone();
-            let has_files: bool = types.iter().any(|t| t == "Files");
+        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
+            let has_files: bool = drag_event
+                .data_transfer()
+                .map(|dt: DataTransfer| {
+                    let len: u32 = dt.types().length();
+                    (0..len)
+                        .any(|i: u32| dt.types().get(i).as_string() == Some("Files".to_string()))
+                })
+                .unwrap_or(false);
             if has_files {
                 state
                     .get_status()

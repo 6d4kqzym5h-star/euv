@@ -93,7 +93,6 @@ impl HookContext {
     /// # Returns
     ///
     /// - `&'static mut HookContextInner` - A mutable reference to the inner state.
-    #[allow(clippy::mut_from_ref)]
     pub fn leak_mut(&self) -> &'static mut HookContextInner {
         let address: usize = (*self).into();
         address.into()

@@ -150,7 +150,6 @@ where
     /// # Returns
     ///
     /// - `&mut SignalInner<T>` - A mutable reference to the inner signal state.
-    #[allow(clippy::mut_from_ref)]
     pub(crate) fn leak_mut(&self) -> &'static mut SignalInner<T> {
         let address: usize = (*self).into();
         address.into()

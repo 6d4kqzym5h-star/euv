@@ -46,11 +46,11 @@ pub fn validate_select_textarea(state: UseSelect) {
 ///
 /// - `NativeEventHandler` - A change handler for the country select.
 pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Change, move |event: NativeEvent| {
-        if let NativeEvent::Change(change_event) = event {
-            state
-                .get_selected_country()
-                .set(change_event.get_value().clone());
+    NativeEventHandler::new(NativeEventName::Change, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>()
+        {
+            state.get_selected_country().set(select.value());
             state.get_selected_city().set(String::new());
         }
     })
@@ -66,11 +66,11 @@ pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
-        if let NativeEvent::Input(input_event) = event {
-            state
-                .get_textarea_content()
-                .set(input_event.get_value().clone());
+    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(textarea) = target.clone().dyn_into::<HtmlTextAreaElement>()
+        {
+            state.get_textarea_content().set(textarea.value());
         }
         validate_select_textarea(state);
     })
@@ -86,7 +86,7 @@ pub fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to submit feedback.
 pub fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         validate_select_textarea(state);
         let textarea_error_value: String = state.get_textarea_error().get();
         if textarea_error_value.is_empty() {

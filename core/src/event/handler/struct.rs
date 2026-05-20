@@ -2,7 +2,7 @@ use crate::*;
 
 /// Inner storage for a native event callback closure.
 ///
-/// Boxes a `dyn FnMut(NativeEvent)` so it can be stored behind a raw pointer.
+/// Boxes a `dyn FnMut(Event)` so it can be stored behind a raw pointer.
 /// Allocated via `Box::leak` and lives for the remainder of the program.
 #[derive(CustomDebug, Data)]
 pub(crate) struct NativeEventCallbackInner {
@@ -10,7 +10,7 @@ pub(crate) struct NativeEventCallbackInner {
     #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) callback: Box<dyn FnMut(NativeEvent)>,
+    pub(crate) callback: Box<dyn FnMut(Event)>,
 }
 
 /// A wrapper around an event callback.
@@ -20,7 +20,7 @@ pub(crate) struct NativeEventCallbackInner {
 /// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
 /// entire program. This is safe in single-threaded WASM contexts where no
 /// concurrent access can occur.
-#[derive(CustomDebug, Data)]
+#[derive(Clone, CustomDebug, Data)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
     #[get(pub(crate))]

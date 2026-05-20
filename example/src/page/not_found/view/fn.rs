@@ -23,7 +23,7 @@ pub fn page_not_found() -> VirtualNode {
             }
             primary_button {
                 label: "Go Back"
-                onclick: move |_event: NativeEvent| {
+                onclick: move |_event: Event| {
                     navigate("/");
                 }
                 "Go Back"

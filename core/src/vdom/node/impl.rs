@@ -86,36 +86,39 @@ impl PartialEq for VirtualNode {
     /// - `bool` - `true` if the virtual nodes are visually equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (VirtualNode::Text(a_text), VirtualNode::Text(b_text)) => a_text == b_text,
+            (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,
             (
                 VirtualNode::Element {
-                    tag: a_tag,
-                    attributes: a_attrs,
-                    children: a_children,
+                    tag: old_tag,
+                    attributes: old_attrs,
+                    children: old_children,
                     ..
                 },
                 VirtualNode::Element {
-                    tag: b_tag,
-                    attributes: b_attrs,
-                    children: b_children,
+                    tag: new_tag,
+                    attributes: new_attrs,
+                    children: new_children,
                     ..
                 },
             ) => {
-                a_tag == b_tag
-                    && a_attrs.len() == b_attrs.len()
-                    && a_attrs.iter().zip(b_attrs.iter()).all(|(a, b)| a == b)
-                    && a_children.len() == b_children.len()
-                    && a_children
+                old_tag == new_tag
+                    && old_attrs.len() == new_attrs.len()
+                    && old_attrs
                         .iter()
-                        .zip(b_children.iter())
-                        .all(|(a, b)| a == b)
+                        .zip(new_attrs.iter())
+                        .all(|(old_attr, new_attr)| old_attr == new_attr)
+                    && old_children.len() == new_children.len()
+                    && old_children
+                        .iter()
+                        .zip(new_children.iter())
+                        .all(|(old_child, new_child)| old_child == new_child)
             }
-            (VirtualNode::Fragment(a_children), VirtualNode::Fragment(b_children)) => {
-                a_children.len() == b_children.len()
-                    && a_children
+            (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
+                old_children.len() == new_children.len()
+                    && old_children
                         .iter()
-                        .zip(b_children.iter())
-                        .all(|(a, b)| a == b)
+                        .zip(new_children.iter())
+                        .all(|(old_child, new_child)| old_child == new_child)
             }
             (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => false,
             (VirtualNode::Empty, VirtualNode::Empty) => true,
@@ -187,7 +190,6 @@ impl DynamicNode {
     /// # Returns
     ///
     /// - `&'static mut RenderFnInner` - A mutable reference to the inner render closure state.
-    #[allow(clippy::mut_from_ref)]
     pub(crate) fn leak_mut(&self) -> &'static mut RenderFnInner {
         let address: usize = self.into();
         address.into()

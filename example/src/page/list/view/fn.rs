@@ -10,7 +10,7 @@ pub fn page_list() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("List Rendering", "Dynamic list with add and remove operations.") }
+            page_header("List Rendering", "Dynamic list with add and remove operations.")
             my_card {
                 title: "Todo List"
                 div {

@@ -75,7 +75,7 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
         html! {
             button {
                 class: fab_class
-                onclick: move |_event: NativeEvent| {
+                onclick: move |_event: Event| {
                     panel_open.set(true);
                 }
                 "E"
@@ -89,7 +89,7 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
         html! {
             button {
                 class: fab_class
-                onclick: move |_event: NativeEvent| {
+                onclick: move |_event: Event| {
                     panel_open.set(true);
                 }
                 "E"
@@ -138,7 +138,7 @@ fn vconsole_drawer(
         div {
             div {
                 class: overlay_class
-                onclick: move |_event: NativeEvent| {
+                onclick: move |_event: Event| {
                     panel_open.set(false);
                 }
             }
@@ -161,14 +161,14 @@ fn vconsole_drawer(
                         class: c_vconsole_header_actions()
                         button {
                             class: c_vconsole_clear_button()
-                            onclick: move |_event: NativeEvent| {
+                            onclick: move |_event: Event| {
                                 Console::clear();
                             }
                             "Clear"
                         }
                         button {
                             class: c_vconsole_close_button()
-                            onclick: move |_event: NativeEvent| {
+                            onclick: move |_event: Event| {
                                 panel_open.set(false);
                             }
                             "\u{00d7}"
@@ -179,28 +179,28 @@ fn vconsole_drawer(
                     class: c_vconsole_filter_bar()
                     button {
                         class: if { filter_signal.get() == "all" } { c_vconsole_filter_active() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: NativeEvent| {
+                        onclick: move |_event: Event| {
                             filter_signal.set("all".to_string());
                         }
                         "All"
                     }
                     button {
                         class: if { filter_signal.get() == "log" } { c_vconsole_filter_active_log() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: NativeEvent| {
+                        onclick: move |_event: Event| {
                             filter_signal.set("log".to_string());
                         }
                         "Log"
                     }
                     button {
                         class: if { filter_signal.get() == "warn" } { c_vconsole_filter_active_warn() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: NativeEvent| {
+                        onclick: move |_event: Event| {
                             filter_signal.set("warn".to_string());
                         }
                         "Warn"
                     }
                     button {
                         class: if { filter_signal.get() == "error" } { c_vconsole_filter_active_error() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: NativeEvent| {
+                        onclick: move |_event: Event| {
                             filter_signal.set("error".to_string());
                         }
                         "Error"

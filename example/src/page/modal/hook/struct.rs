@@ -2,7 +2,6 @@ use crate::*;
 
 /// Reactive state for the modal demo feature.
 #[derive(Clone, Copy, Data)]
-#[allow(clippy::too_many_arguments)]
 pub struct UseModal {
     /// Whether the basic modal is visible.
     #[get(pub, type(copy))]

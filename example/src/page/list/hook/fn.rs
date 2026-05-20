@@ -49,9 +49,11 @@ pub fn validate_todo_new_item(state: UseTodoList) {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: NativeEvent| {
-        if let NativeEvent::Input(input_event) = event {
-            state.get_new_item().set(input_event.get_value().clone());
+    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            state.get_new_item().set(input.value());
         }
         validate_todo_new_item(state);
     })
@@ -67,7 +69,7 @@ pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to add a new item.
 pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         validate_todo_new_item(state);
         let add_error_value: String = state.get_add_error().get();
         if add_error_value.is_empty() {
@@ -91,7 +93,7 @@ pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to remove the item.
 pub fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: NativeEvent| {
+    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
         let mut current: Vec<String> = items.get();
         if index < current.len() {
             current.remove(index);

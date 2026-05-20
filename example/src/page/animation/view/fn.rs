@@ -15,7 +15,7 @@ pub fn page_animation() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Animation", "CSS transitions, keyframe animations, and reactive style changes.") }
+            page_header("Animation", "CSS transitions, keyframe animations, and reactive style changes.")
             my_card {
                 title: "Fade In / Out"
                 primary_button {

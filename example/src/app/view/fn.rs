@@ -51,7 +51,7 @@ fn mobile_nav_item(
         a {
             href: format!("#{}", target_string)
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
-            onclick: move |_event: NativeEvent| {
+            onclick: move |_event: Event| {
                 navigate(&nav_target);
                 drawer_open.set(false);
             }
@@ -293,7 +293,7 @@ fn mobile_layout(
             if { drawer_open.get() } {
                 div {
                     class: c_mobile_overlay()
-                    onclick: move |_event: NativeEvent| {
+                    onclick: move |_event: Event| {
                         drawer_open.set(false);
                     }
                 }
@@ -316,7 +316,7 @@ fn mobile_layout(
                         }
                         button {
                             class: c_mobile_nav_drawer_close()
-                            onclick: move |_event: NativeEvent| {
+                            onclick: move |_event: Event| {
                                 drawer_open.set(false);
                             }
                             "✕"

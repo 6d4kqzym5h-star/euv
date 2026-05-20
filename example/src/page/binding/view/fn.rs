@@ -417,7 +417,7 @@ pub fn page_component_binding() -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            { page_header("Component Binding", "Parent-child data passing, two-way binding, and cross-component reactive binding.") }
+            page_header("Component Binding", "Parent-child data passing, two-way binding, and cross-component reactive binding.")
             my_card {
                 title: "Props Down, Callback Up"
                 p {
