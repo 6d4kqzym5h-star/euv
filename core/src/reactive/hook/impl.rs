@@ -108,13 +108,13 @@ impl HookContext {
     }
 
     /// Notifies the hook context that a match arm is being entered.
-    /// Toggles the `arm_changed` flag; if it differs from the previous value,
+    /// Sets the `arm_changed` to the arm index; if it differs from the previous value,
     /// the hooks array is cleared to prevent signal leakage between arms.
     ///
     /// # Arguments
     ///
-    /// - `bool` - The new arm changed state.
-    pub fn set_arm_changed(&mut self, changed: bool) {
+    /// - `usize` - The match arm index.
+    pub fn set_arm_changed(&mut self, changed: usize) {
         let inner: &mut HookContextInner = self.leak_mut();
         if inner.get_arm_changed() != changed {
             let cleanups: Vec<Box<dyn FnOnce()>> = take(inner.get_mut_cleanups());
@@ -162,8 +162,8 @@ impl HookContextInner {
     pub const fn new() -> Self {
         HookContextInner {
             hooks: Vec::new(),
-            arm_changed: false,
-            hook_index: 0_usize,
+            arm_changed: 0,
+            hook_index: 0,
             cleanups: Vec::new(),
         }
     }

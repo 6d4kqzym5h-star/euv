@@ -13,12 +13,12 @@ pub struct HookContextInner {
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
-    /// Whether the match arm has changed since the last render.
-    /// Toggled on each `match` arm entry; when the value differs from
+    /// The match arm index from the last render.
+    /// Set on each `match` arm entry; when the value differs from
     /// the previous render, hooks are cleared.
     #[get(type(copy))]
     #[set(pub(crate))]
-    pub(crate) arm_changed: bool,
+    pub(crate) arm_changed: usize,
     /// Current hook index, incremented on each hook call and reset per render.
     #[get(pub(crate), type(copy))]
     #[set(pub(crate))]

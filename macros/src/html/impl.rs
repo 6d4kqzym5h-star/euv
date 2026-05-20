@@ -272,11 +272,10 @@ impl ToTokens for HtmlNode {
                     .iter()
                     .enumerate()
                     .map(|(arm_index, (pattern, body))| {
-                        let arm_changed: bool = arm_index % 2 == 0;
                         let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
                         quote! {
                             #pattern => {
-                                __euv_hook_context.set_arm_changed(#arm_changed);
+                                __euv_hook_context.set_arm_changed(#arm_index);
                                 #body_expr
                             }
                         }
