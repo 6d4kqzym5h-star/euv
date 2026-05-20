@@ -16,10 +16,14 @@ pub fn page_select() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "select-fruit"
                         class: c_form_label()
                         "Choose a fruit"
                     }
                     select {
+                        id: "select-fruit"
+                        name: "fruit"
+                        autocomplete: "off"
                         class: c_select_input()
                         value: state.get_selected_fruit()
                         onchange: on_change_value(state.get_selected_fruit())
@@ -55,10 +59,14 @@ pub fn page_select() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "select-country"
                         class: c_form_label()
                         "Country"
                     }
                     select {
+                        id: "select-country"
+                        name: "country"
+                        autocomplete: "country"
                         class: c_select_input()
                         value: state.get_selected_country()
                         onchange: select_on_country_change(state)
@@ -84,10 +92,14 @@ pub fn page_select() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "select-city"
                             class: c_form_label()
                             "City"
                         }
                         select {
+                            id: "select-city"
+                            name: "city"
+                            autocomplete: "off"
                             class: c_select_input()
                             value: state.get_selected_city()
                             onchange: on_change_value(state.get_selected_city())
@@ -124,10 +136,14 @@ pub fn page_select() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "select-feedback"
                         class: c_form_label()
                         "Your feedback"
                     }
                     textarea {
+                        id: "select-feedback"
+                        name: "feedback"
+                        autocomplete: "off"
                         class: if { state.get_textarea_error().get().is_empty() } { c_textarea_input() } else { c_form_input_error() }
                         placeholder: "Share your thoughts..."
                         value: state.get_textarea_content()

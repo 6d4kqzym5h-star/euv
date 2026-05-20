@@ -13,9 +13,11 @@ impl From<VirtualNode> for FormInputProps {
     /// - `Self` - The strongly-typed `FormInputProps`.
     fn from(node: VirtualNode) -> Self {
         FormInputProps {
+            id: node.try_get_prop("id").unwrap_or_default(),
             label: node.try_get_prop("label").unwrap_or_default(),
             placeholder: node.try_get_prop("placeholder").unwrap_or_default(),
             value: node.try_get_prop("value").unwrap_or_default(),
+            autocomplete: node.try_get_prop("autocomplete").unwrap_or_default(),
         }
     }
 }

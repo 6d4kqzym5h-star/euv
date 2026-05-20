@@ -66,7 +66,7 @@ where
     /// - `usize` - The memory address of the signal's inner state.
     #[inline(always)]
     fn from(signal: Signal<T>) -> Self {
-        signal.inner as usize
+        *signal.get_inner() as usize
     }
 }
 
@@ -96,8 +96,6 @@ where
         }
     }
 }
-
-/// Implementation of SignalInner construction.
 impl<T> SignalInner<T>
 where
     T: Clone,

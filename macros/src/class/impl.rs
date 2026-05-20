@@ -218,9 +218,9 @@ fn pseudo_blocks_to_tokens(pseudo_blocks: &[PseudoBlock]) -> Option<proc_macro2:
     let parts: Vec<proc_macro2::TokenStream> = pseudo_blocks
         .iter()
         .map(|block| {
-            let selector: &str = &block.selector;
+            let selector: &str = block.get_selector();
             let style_parts: Vec<proc_macro2::TokenStream> = block
-                .properties
+                .get_properties()
                 .iter()
                 .map(|(key, value)| match value {
                     ClassPropValue::Expr(expr) => {
@@ -247,9 +247,9 @@ fn media_blocks_to_tokens(media_blocks: &[MediaBlock]) -> Option<proc_macro2::To
     let parts: Vec<proc_macro2::TokenStream> = media_blocks
         .iter()
         .map(|block| {
-            let query: &str = &block.query;
+            let query: &str = block.get_query();
             let style_parts: Vec<proc_macro2::TokenStream> = block
-                .properties
+                .get_properties()
                 .iter()
                 .map(|(key, value)| match value {
                     ClassPropValue::Expr(expr) => {
@@ -272,9 +272,9 @@ fn media_blocks_to_tokens(media_blocks: &[MediaBlock]) -> Option<proc_macro2::To
 fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> String {
     let mut result: String = String::new();
     for block in pseudo_blocks {
-        result.push_str(&block.selector);
+        result.push_str(block.get_selector());
         result.push_str(" { ");
-        for (key, value) in &block.properties {
+        for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
             result.push_str(key);
             result.push_str(": ");
@@ -291,9 +291,9 @@ fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> String {
     let mut result: String = String::new();
     for block in media_blocks {
         result.push_str("@media ");
-        result.push_str(&block.query);
+        result.push_str(block.get_query());
         result.push_str(" { ");
-        for (key, value) in &block.properties {
+        for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
             result.push_str(key);
             result.push_str(": ");
@@ -308,23 +308,25 @@ fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> String {
 /// Converts a `ClassDef` into token stream generating a `euv_core::CssClass` function.
 impl ToTokens for ClassDef {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let vis: &syn::Visibility = &self.visibility;
-        let name: &Ident = &self.name;
+        let vis: &syn::Visibility = self.get_visibility();
+        let name: &Ident = self.get_name();
         let class_name_str: String = name.to_string();
-        let has_extra: bool = !self.pseudo_blocks.is_empty() || !self.media_blocks.is_empty();
-        match &self.params {
+        let has_extra: bool =
+            !self.get_pseudo_blocks().is_empty() || !self.get_media_blocks().is_empty();
+        match self.try_get_params() {
             Some(params) => {
                 let param_defs: Vec<proc_macro2::TokenStream> = params
                     .iter()
                     .map(|param| {
-                        let param_name: &Ident = &param.name;
-                        let ty: &syn::Type = &param.ty;
+                        let param_name: &Ident = param.get_name();
+                        let ty: &syn::Type = param.get_ty();
                         quote! { #param_name: #ty }
                     })
                     .collect();
-                let param_names: Vec<&Ident> = params.iter().map(|p| &p.name).collect();
+                let param_names: Vec<&Ident> =
+                    params.iter().map(|p: &ClassParam| p.get_name()).collect();
                 let css_string_parts: Vec<proc_macro2::TokenStream> = self
-                    .properties
+                    .get_properties()
                     .iter()
                     .map(|(key, value)| match value {
                         ClassPropValue::Expr(expr) => {
@@ -334,10 +336,10 @@ impl ToTokens for ClassDef {
                     .collect();
                 if has_extra {
                     let pseudo_expr: proc_macro2::TokenStream =
-                        pseudo_blocks_to_tokens(&self.pseudo_blocks)
+                        pseudo_blocks_to_tokens(self.get_pseudo_blocks())
                             .unwrap_or_else(|| quote! { vec![] });
                     let media_expr: proc_macro2::TokenStream =
-                        media_blocks_to_tokens(&self.media_blocks)
+                        media_blocks_to_tokens(self.get_media_blocks())
                             .unwrap_or_else(|| quote! { vec![] });
                     tokens.extend(quote! {
                         #vis fn #name(#(#param_defs),*) -> euv_core::CssClass {
@@ -362,23 +364,23 @@ impl ToTokens for ClassDef {
                 let const_name_token: proc_macro2::TokenStream =
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
-                let all_static: bool = self.properties.iter().all(|(_, value)| {
+                let all_static: bool = self.get_properties().iter().all(|(_, value)| {
                     let ClassPropValue::Expr(expr) = value;
                     is_static_string_expr(expr)
-                }) && self.pseudo_blocks.iter().all(|block| {
-                    block.properties.iter().all(|(_, value)| {
+                }) && self.get_pseudo_blocks().iter().all(|block| {
+                    block.get_properties().iter().all(|(_, value)| {
                         let ClassPropValue::Expr(expr) = value;
                         is_static_string_expr(expr)
                     })
-                }) && self.media_blocks.iter().all(|block| {
-                    block.properties.iter().all(|(_, value)| {
+                }) && self.get_media_blocks().iter().all(|block| {
+                    block.get_properties().iter().all(|(_, value)| {
                         let ClassPropValue::Expr(expr) = value;
                         is_static_string_expr(expr)
                     })
                 });
                 if all_static {
                     let mut css_string: String = String::new();
-                    for (key, value) in &self.properties {
+                    for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
                         css_string.push_str(key);
                         css_string.push_str(": ");
@@ -387,9 +389,9 @@ impl ToTokens for ClassDef {
                     }
                     if has_extra {
                         let pseudo_static: String =
-                            pseudo_blocks_to_static_string(&self.pseudo_blocks);
+                            pseudo_blocks_to_static_string(self.get_pseudo_blocks());
                         let media_static: String =
-                            media_blocks_to_static_string(&self.media_blocks);
+                            media_blocks_to_static_string(self.get_media_blocks());
                         tokens.extend(quote! {
                             #vis fn #fn_name_token() -> &'static euv_core::CssClass {
                                 static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
@@ -415,7 +417,7 @@ impl ToTokens for ClassDef {
                     }
                 } else {
                     let css_string_parts: Vec<proc_macro2::TokenStream> = self
-                        .properties
+                        .get_properties()
                         .iter()
                         .map(|(key, value)| match value {
                             ClassPropValue::Expr(expr) => {
@@ -425,10 +427,10 @@ impl ToTokens for ClassDef {
                         .collect();
                     if has_extra {
                         let pseudo_expr: proc_macro2::TokenStream =
-                            pseudo_blocks_to_tokens(&self.pseudo_blocks)
+                            pseudo_blocks_to_tokens(self.get_pseudo_blocks())
                                 .unwrap_or_else(|| quote! { vec![] });
                         let media_expr: proc_macro2::TokenStream =
-                            media_blocks_to_tokens(&self.media_blocks)
+                            media_blocks_to_tokens(self.get_media_blocks())
                                 .unwrap_or_else(|| quote! { vec![] });
                         tokens.extend(quote! {
                             #vis fn #fn_name_token() -> &'static euv_core::CssClass {
@@ -459,7 +461,7 @@ impl ToTokens for ClassDef {
 /// Converts a `ClassInput` into a token stream of `CssClass` function definitions.
 impl ToTokens for ClassInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        for class_def in &self.classes {
+        for class_def in self.get_classes() {
             class_def.to_tokens(tokens);
         }
     }

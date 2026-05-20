@@ -132,9 +132,11 @@ pub fn page_conditional() -> VirtualNode {
                                 "This is the settings tab."
                             }
                             form_input {
+                                id: "settings-display-name"
                                 label: "Display Name"
                                 placeholder: "Enter your name"
                                 value: ""
+                                autocomplete: "name"
                             }
                         }
                     }

@@ -4,10 +4,15 @@ use crate::*;
 ///
 /// Each parameter has a name (identifier), an explicit type annotation,
 /// and is used as a placeholder in CSS property values.
+#[derive(Clone, Data, Debug)]
 pub(crate) struct ClassParam {
     /// The parameter name identifier.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) name: Ident,
     /// The explicit type annotation for this parameter (e.g., `&str`).
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) ty: Type,
 }
 
@@ -15,20 +20,30 @@ pub(crate) struct ClassParam {
 ///
 /// Represents a block like `hover { background: "red"; }` or
 /// `focus { outline: "2px solid blue"; }`.
+#[derive(Clone, Data, Debug)]
 pub(crate) struct PseudoBlock {
     /// The pseudo selector string (e.g., ":hover", ":focus", "::before").
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) selector: String,
     /// The style properties inside this pseudo block.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) properties: Vec<(String, ClassPropValue)>,
 }
 
 /// A media query block parsed from the `class!` macro.
 ///
 /// Represents a block like `media "(max-width: 767px)" { font-size: "14px"; }`.
+#[derive(Clone, Data, Debug)]
 pub(crate) struct MediaBlock {
     /// The media query condition string (e.g., "(max-width: 767px)").
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) query: String,
     /// The style properties inside this media block.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) properties: Vec<(String, ClassPropValue)>,
 }
 
@@ -36,23 +51,39 @@ pub(crate) struct MediaBlock {
 ///
 /// Contains visibility, name, optional parameters, style properties,
 /// optional pseudo-class/pseudo-element blocks, and optional media query blocks.
+#[derive(Clone, Data, Debug)]
 pub(crate) struct ClassDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) visibility: Visibility,
     /// The class name identifier.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) name: Ident,
     /// Optional parameter list for a parameterized class.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) params: Option<Vec<ClassParam>>,
     /// The style properties for this class.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) properties: Vec<(String, ClassPropValue)>,
     /// The pseudo-class and pseudo-element blocks for this class.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) pseudo_blocks: Vec<PseudoBlock>,
     /// The media query blocks for this class.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) media_blocks: Vec<MediaBlock>,
 }
 
 /// The entire `class!` macro input, containing multiple class definitions.
+#[derive(Clone, Data, Debug)]
 pub(crate) struct ClassInput {
     /// The list of class definitions.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) classes: Vec<ClassDef>,
 }

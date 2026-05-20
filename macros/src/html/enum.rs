@@ -3,6 +3,7 @@ use crate::*;
 /// Represents a single HTML node, which may be an element or text.
 ///
 /// Parsed from the `html!` macro input before code generation.
+#[derive(Clone, Debug)]
 pub(crate) enum HtmlNode {
     /// An HTML element.
     Element(HtmlElement),
@@ -38,6 +39,7 @@ pub(crate) enum HtmlNode {
 /// Represents the value side of an attribute.
 ///
 /// Supports plain expressions, style objects, and reactive conditionals.
+#[derive(Clone, Debug)]
 pub(crate) enum HtmlAttrValue {
     /// A normal Rust expression.
     Expr(Expr),
@@ -51,6 +53,7 @@ pub(crate) enum HtmlAttrValue {
 /// Represents a single value in a style property.
 ///
 /// May be a static string literal, a dynamic expression, or a reactive conditional.
+#[derive(Clone, Debug)]
 pub(crate) enum HtmlStylePropValue {
     /// A static string literal.
     Literal(String),

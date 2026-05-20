@@ -175,7 +175,7 @@ impl From<&DynamicNode> for usize {
     /// - `usize` - The memory address of the render_fn pointer.
     #[inline(always)]
     fn from(node: &DynamicNode) -> Self {
-        node.render_fn as usize
+        *node.get_render_fn() as usize
     }
 }
 
@@ -198,8 +198,8 @@ impl DynamicNode {
     /// # Returns
     ///
     /// - `HookContext` - The hook context (Copy).
-    pub(crate) fn get_hook_context(&self) -> HookContext {
-        self.hook_context
+    pub(crate) fn get_hook_context_value(&self) -> HookContext {
+        *self.get_hook_context()
     }
 
     /// Invokes the render closure and returns the produced virtual node.
@@ -209,7 +209,7 @@ impl DynamicNode {
     /// - `VirtualNode` - The virtual node produced by the render closure.
     pub fn render(&self) -> VirtualNode {
         let inner: &mut RenderFnInner = self.leak_mut();
-        (inner.render_fn)()
+        (inner.get_mut_render_fn())()
     }
 }
 

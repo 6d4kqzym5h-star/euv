@@ -62,11 +62,15 @@ pub fn page_form() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "form-username"
                         class: c_form_label()
                         "Username"
                     }
                     input {
+                        id: "form-username"
+                        name: "username"
                         r#type: "text"
+                        autocomplete: "username"
                         placeholder: "Enter username"
                         value: form.get_username()
                         class: if { form.get_username_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
@@ -84,11 +88,15 @@ pub fn page_form() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "form-email"
                         class: c_form_label()
                         "Email"
                     }
                     input {
+                        id: "form-email"
+                        name: "email"
                         r#type: "email"
+                        autocomplete: "email"
                         placeholder: "Enter email"
                         value: form.get_email()
                         class: if { form.get_email_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
@@ -106,11 +114,15 @@ pub fn page_form() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "form-password"
                         class: c_form_label()
                         "Password"
                     }
                     input {
+                        id: "form-password"
+                        name: "password"
                         r#type: "password"
+                        autocomplete: "new-password"
                         placeholder: "Enter password"
                         value: form.get_password()
                         class: if { form.get_password_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
@@ -128,12 +140,16 @@ pub fn page_form() -> VirtualNode {
                 div {
                     class: c_form_checkbox_row()
                     input {
+                        id: "form-agree"
+                        name: "agree"
                         r#type: "checkbox"
+                        autocomplete: "off"
                         checked: form.get_agree()
                         class: c_form_checkbox()
                         onchange: form_on_change_agree(form)
                     }
                     label {
+                        r#for: "form-agree"
                         class: c_form_checkbox_label()
                         "I agree to the terms and conditions"
                     }

@@ -4,8 +4,12 @@ use crate::*;
 ///
 /// Boxes a `dyn FnMut(NativeEvent)` so it can be stored behind a raw pointer.
 /// Allocated via `Box::leak` and lives for the remainder of the program.
+#[derive(CustomDebug, Data)]
 pub(crate) struct NativeEventCallbackInner {
     /// The boxed callback closure.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) callback: Box<dyn FnMut(NativeEvent)>,
 }
 
@@ -16,21 +20,24 @@ pub(crate) struct NativeEventCallbackInner {
 /// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
 /// entire program. This is safe in single-threaded WASM contexts where no
 /// concurrent access can occur.
-#[derive(CustomDebug)]
+#[derive(CustomDebug, Data)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
+    #[get(pub(crate))]
     pub(crate) event_name: String,
     /// Raw pointer to the heap-allocated callback closure inner state.
     ///
     /// SAFETY: Allocated via `Box::leak`, valid for the program lifetime.
     #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) callback: *mut NativeEventCallbackInner,
 }
 
 /// Data associated with a mouse event.
 ///
 /// Captures coordinates, buttons, and modifier key states.
-#[derive(Clone, Data, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, PartialEq)]
 pub struct NativeMouseEvent {
     /// The X coordinate relative to the viewport.
     #[get(pub, type(copy))]

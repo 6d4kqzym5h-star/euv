@@ -48,7 +48,10 @@ pub fn page_event() -> VirtualNode {
             my_card {
                 title: "Keyboard Events"
                 input {
+                    id: "event-keyboard"
+                    name: "keyboard"
                     r#type: "text"
+                    autocomplete: "off"
                     placeholder: "Type here to capture key events..."
                     class: c_form_input()
                     onkey_down: move |event: NativeEvent| {
@@ -352,7 +355,10 @@ pub fn page_event() -> VirtualNode {
             my_card {
                 title: "Focus Events"
                 input {
+                    id: "event-focus"
+                    name: "focus"
                     r#type: "text"
+                    autocomplete: "off"
                     placeholder: "Click to focus, click outside to blur..."
                     class: c_form_input()
                     onfocus: move |_event: NativeEvent| {
@@ -530,9 +536,12 @@ pub fn page_event() -> VirtualNode {
                 title: "Clipboard Events"
                 div {
                     class: c_event_clipboard_area()
-                    input {
-                        r#type: "text"
-                        placeholder: "Try copy, cut, or paste here..."
+                        input {
+                            id: "event-clipboard"
+                            name: "clipboard"
+                            r#type: "text"
+                            autocomplete: "off"
+                            placeholder: "Try copy, cut, or paste here..."
                         class: c_form_input()
                         value: "Sample text for clipboard"
                         oncopy: move |event: NativeEvent| {
@@ -641,12 +650,16 @@ pub fn page_event() -> VirtualNode {
                         div {
                             class: c_form_input_wrapper()
                             label {
+                                r#for: "event-form-input"
                                 class: c_form_label()
                                 "Input (oninput & onchange)"
                             }
                             input {
-                                r#type: "text"
-                                placeholder: "Type to trigger input/change events..."
+                            r#type: "text"
+                            id: "event-form-input"
+                            name: "form_input"
+                            autocomplete: "off"
+                            placeholder: "Type to trigger input/change events..."
                                 class: c_form_input()
                                 oninput: move |event: NativeEvent| {
                                     if let NativeEvent::Input(input_event) = event {
@@ -663,7 +676,10 @@ pub fn page_event() -> VirtualNode {
                         div {
                             class: c_form_checkbox_row()
                             input {
+                                id: "event-form-checkbox"
+                                name: "form_checkbox"
                                 r#type: "checkbox"
+                                autocomplete: "off"
                                 class: c_form_checkbox()
                                 onchange: move |event: NativeEvent| {
                                     if let NativeEvent::Change(change_event) = event {
@@ -672,6 +688,7 @@ pub fn page_event() -> VirtualNode {
                                 }
                             }
                             label {
+                                r#for: "event-form-checkbox"
                                 class: c_form_checkbox_label()
                                 "Checkbox (onchange)"
                             }
@@ -679,10 +696,14 @@ pub fn page_event() -> VirtualNode {
                         div {
                             class: c_form_input_wrapper()
                             label {
+                                r#for: "event-form-select"
                                 class: c_form_label()
                                 "Select (onchange)"
                             }
                             select {
+                                id: "event-form-select"
+                                name: "form_select"
+                                autocomplete: "off"
                                 class: c_select_input()
                                 onchange: move |event: NativeEvent| {
                                     if let NativeEvent::Change(change_event) = event {

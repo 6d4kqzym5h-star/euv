@@ -15,6 +15,7 @@ mod watch;
 pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
 
 use {
+    lombok_macros::*,
     proc_macro::TokenStream,
     proc_macro2::Span,
     quote::{ToTokens, quote, quote_spanned},

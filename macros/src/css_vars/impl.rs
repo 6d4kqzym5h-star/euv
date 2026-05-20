@@ -61,22 +61,23 @@ impl Parse for CssVarInput {
 /// The CSS key names are prefixed with `--`.
 impl ToTokens for CssVarDef {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let vis: &Visibility = &self.visibility;
-        let name: &Ident = &self.name;
+        let vis: &Visibility = self.get_visibility();
+        let name: &Ident = self.get_name();
         let class_name_str: String = name.to_string();
-        match &self.params {
+        match self.try_get_params() {
             Some(params) => {
                 let param_defs: Vec<proc_macro2::TokenStream> = params
                     .iter()
                     .map(|param| {
-                        let param_name: &Ident = &param.name;
-                        let ty: &Type = &param.ty;
+                        let param_name: &Ident = param.get_name();
+                        let ty: &Type = param.get_ty();
                         quote! { #param_name: #ty }
                     })
                     .collect();
-                let param_names: Vec<&Ident> = params.iter().map(|p| &p.name).collect();
+                let param_names: Vec<&Ident> =
+                    params.iter().map(|p: &CssVarParam| p.get_name()).collect();
                 let css_string_parts: Vec<proc_macro2::TokenStream> = self
-                    .vars
+                    .get_vars()
                     .iter()
                     .map(|(key, value)| match value {
                         CssVarValue::Expr(expr) => {
@@ -98,13 +99,13 @@ impl ToTokens for CssVarDef {
                 let const_name_token: proc_macro2::TokenStream =
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
-                let all_static: bool = self.vars.iter().all(|(_, value)| {
+                let all_static: bool = self.get_vars().iter().all(|(_, value)| {
                     let CssVarValue::Expr(expr) = value;
                     is_static_string_expr(expr)
                 });
                 if all_static {
                     let mut css_string: String = String::new();
-                    for (key, value) in &self.vars {
+                    for (key, value) in self.get_vars() {
                         let CssVarValue::Expr(expr) = value;
                         css_string.push_str(key);
                         css_string.push_str(": ");
@@ -121,7 +122,7 @@ impl ToTokens for CssVarDef {
                     });
                 } else {
                     let css_string_parts: Vec<proc_macro2::TokenStream> = self
-                        .vars
+                        .get_vars()
                         .iter()
                         .map(|(key, value)| match value {
                             CssVarValue::Expr(expr) => {
@@ -147,7 +148,7 @@ impl ToTokens for CssVarDef {
 /// Converts a `CssVarInput` into a token stream of `CssClass` function definitions.
 impl ToTokens for CssVarInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        for css_var_def in &self.defs {
+        for css_var_def in self.get_defs() {
             css_var_def.to_tokens(tokens);
         }
     }

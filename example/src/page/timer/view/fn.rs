@@ -63,11 +63,15 @@ pub fn page_timer() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "countdown-seconds"
                         class: c_form_label()
                         "Set seconds"
                     }
                     input {
+                        id: "countdown-seconds"
+                        name: "seconds"
                         r#type: "number"
+                        autocomplete: "off"
                         min: "1"
                         max: "3600"
                         placeholder: "Enter seconds..."

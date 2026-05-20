@@ -22,11 +22,15 @@ pub fn page_browser() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "local-storage-key"
                             class: c_form_label()
                             "Key"
                         }
                         input {
+                            id: "local-storage-key"
+                            name: "local_key"
                             r#type: "text"
+                            autocomplete: "off"
                             placeholder: "Storage key..."
                             value: state.get_local_key()
                             class: c_form_input_no_transition()
@@ -36,11 +40,15 @@ pub fn page_browser() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "local-storage-value"
                             class: c_form_label()
                             "Value"
                         }
                         input {
+                            id: "local-storage-value"
+                            name: "local_value"
                             r#type: "text"
+                            autocomplete: "off"
                             placeholder: "Storage value..."
                             value: state.get_local_value()
                             class: c_form_input_no_transition()
@@ -89,11 +97,15 @@ pub fn page_browser() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "session-storage-key"
                             class: c_form_label()
                             "Key"
                         }
                         input {
+                            id: "session-storage-key"
+                            name: "session_key"
                             r#type: "text"
+                            autocomplete: "off"
                             placeholder: "Session key..."
                             value: state.get_session_key()
                             class: c_form_input_no_transition()
@@ -103,11 +115,15 @@ pub fn page_browser() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "session-storage-value"
                             class: c_form_label()
                             "Value"
                         }
                         input {
+                            id: "session-storage-value"
+                            name: "session_value"
                             r#type: "text"
+                            autocomplete: "off"
                             placeholder: "Session value..."
                             value: state.get_session_value()
                             class: c_form_input_no_transition()
@@ -154,11 +170,15 @@ pub fn page_browser() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "clipboard-text"
                         class: c_form_label()
                         "Text to copy"
                     }
                     input {
+                        id: "clipboard-text"
+                        name: "clipboard_text"
                         r#type: "text"
+                        autocomplete: "off"
                         placeholder: "Enter text to copy..."
                         value: state.get_clipboard_text()
                         class: c_form_input_no_transition()
@@ -300,11 +320,15 @@ pub fn page_browser() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "console-message"
                         class: c_form_label()
                         "Console message"
                     }
                     input {
+                        id: "console-message"
+                        name: "console_message"
                         r#type: "text"
+                        autocomplete: "off"
                         placeholder: "Type a message to log..."
                         value: state.get_console_input()
                         class: c_form_input_no_transition()

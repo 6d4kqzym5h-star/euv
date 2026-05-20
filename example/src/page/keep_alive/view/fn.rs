@@ -76,11 +76,15 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
+                    r#for: "keep-alive-name"
                     class: c_form_label()
                     "Name"
                 }
                 input {
+                    id: "keep-alive-name"
+                    name: "name"
                     r#type: "text"
+                    autocomplete: "name"
                     placeholder: "Enter your name..."
                     value: name.get()
                     class: c_form_input()
@@ -90,11 +94,15 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
+                    r#for: "keep-alive-email"
                     class: c_form_label()
                     "Email"
                 }
                 input {
+                    id: "keep-alive-email"
+                    name: "email"
                     r#type: "email"
+                    autocomplete: "email"
                     placeholder: "Enter your email..."
                     value: email.get()
                     class: c_form_input()
@@ -104,10 +112,14 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
+                    r#for: "keep-alive-message"
                     class: c_form_label()
                     "Message"
                 }
                 textarea {
+                    id: "keep-alive-message"
+                    name: "message"
+                    autocomplete: "off"
                     placeholder: "Write a message..."
                     value: message.get()
                     class: c_textarea_input()

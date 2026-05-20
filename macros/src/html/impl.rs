@@ -15,7 +15,7 @@ impl Parse for HtmlRoot {
 /// - N children → `VirtualNode::Fragment(vec![...])`
 impl ToTokens for HtmlRoot {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let node_tokens: proc_macro2::TokenStream = children_to_node_tokens(&self.children);
+        let node_tokens: proc_macro2::TokenStream = children_to_node_tokens(self.get_children());
         tokens.extend(node_tokens);
     }
 }
@@ -233,7 +233,7 @@ impl ToTokens for HtmlNode {
             }
             HtmlNode::If(html_if) => {
                 let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                for (i, (condition, body)) in html_if.branches.iter().enumerate() {
+                for (i, (condition, body)) in html_if.get_branches().iter().enumerate() {
                     let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
                     match (i, condition) {
                         (0, Some(cond)) => {
@@ -266,9 +266,9 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::Match(html_match) => {
-                let scrutinee: &Expr = strip_braces_from_expr(&html_match.scrutinee);
+                let scrutinee: &Expr = strip_braces_from_expr(html_match.get_scrutinee());
                 let arm_tokens: Vec<proc_macro2::TokenStream> = html_match
-                    .arms
+                    .get_arms()
                     .iter()
                     .enumerate()
                     .map(|(arm_index, (pattern, body))| {
@@ -291,9 +291,9 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::For(html_for) => {
-                let pattern: &proc_macro2::TokenStream = &html_for.pattern;
-                let iterable: &Expr = &html_for.iterable;
-                let body_tokens: proc_macro2::TokenStream = children_to_tokens(&html_for.body);
+                let pattern: &proc_macro2::TokenStream = html_for.get_pattern();
+                let iterable: &Expr = html_for.get_iterable();
+                let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
                 tokens.extend(quote! {
                     euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut euv_core::HookContext| {
                         let mut __euv_for_nodes: Vec<euv_core::VirtualNode> = Vec::new();
@@ -398,12 +398,12 @@ impl ToTokens for HtmlAttrValue {
 /// generated framework code.
 impl ToTokens for HtmlElement {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let tag_name: String = self.tag.to_string();
-        let is_component: bool = self.is_component;
-        let tag_span: Span = self.tag.span();
+        let tag_name: String = self.get_tag().to_string();
+        let is_component: bool = self.get_is_component();
+        let tag_span: Span = self.get_tag().span();
         let tag_literal: proc_macro2::TokenStream =
             quote_spanned!(tag_span=> #tag_name.to_string());
-        let attr_tokens: Vec<proc_macro2::TokenStream> = self.attributes.iter().map(|(key, value)| {
+        let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().map(|(key, value)| {
             let key_str: String = key.to_string();
             let value_tokens: proc_macro2::TokenStream = match value {
                 HtmlAttrValue::Style(props) => {
@@ -453,7 +453,7 @@ impl ToTokens for HtmlElement {
             }
         }).collect();
         let child_tokens: Vec<proc_macro2::TokenStream> = self
-            .children
+            .get_children()
             .iter()
             .map(|child| {
                 let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
@@ -462,8 +462,8 @@ impl ToTokens for HtmlElement {
             })
             .collect();
         if is_component {
-            let component_fn: Ident = self.tag.clone();
-            let component_span: Span = self.tag.span();
+            let component_fn: Ident = self.get_tag().clone();
+            let component_span: Span = self.get_tag().span();
             let component_call: proc_macro2::TokenStream =
                 quote_spanned!(component_span=> #component_fn(__props));
             tokens.extend(quote! {

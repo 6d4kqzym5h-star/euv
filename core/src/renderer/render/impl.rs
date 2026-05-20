@@ -368,7 +368,7 @@ impl Renderer {
         placeholder: &Element,
         skip_equal: bool,
     ) -> Node {
-        let mut hook_context: HookContext = dynamic_node.get_hook_context();
+        let mut hook_context: HookContext = dynamic_node.get_hook_context_value();
         hook_context.reset_hook_index();
         let initial_vnode: VirtualNode = with_hook_context(hook_context, || dynamic_node.render());
         let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
@@ -511,7 +511,7 @@ impl Renderer {
         let registry: &mut HashMap<(usize, String), HandlerEntry> = get_handler_registry();
         if let Some(existing_ptr) = registry.get(&key) {
             let existing: &mut HandlerSlot = (*existing_ptr as usize).into();
-            existing.handler = Some(handler.clone());
+            existing.set_handler(Some(handler.clone()));
         } else {
             let handler_slot: Box<HandlerSlot> = Box::new(HandlerSlot {
                 handler: Some(handler.clone()),
@@ -522,11 +522,9 @@ impl Renderer {
             let closure: Closure<dyn FnMut(Event)> =
                 Closure::wrap(Box::new(move |event: Event| {
                     let slot: &mut HandlerSlot = handler_addr.into();
-                    if let Some(active_handler) = slot.handler.as_ref() {
-                        let euv_event: NativeEvent =
-                            convert_web_event(&event, &event_name_for_closure);
-                        active_handler.handle(euv_event);
-                    }
+                    let active_handler: NativeEventHandler = slot.get_handler();
+                    let euv_event: NativeEvent = convert_web_event(&event, &event_name_for_closure);
+                    active_handler.handle(euv_event);
                     event.stop_propagation();
                 }));
             element
@@ -535,36 +533,6 @@ impl Renderer {
             closure.forget();
             registry.insert(key, handler_entry);
         }
-    }
-}
-
-/// Implementation of Renderer accessor methods.
-impl Renderer {
-    /// Returns a reference to the root element.
-    ///
-    /// # Returns
-    ///
-    /// - `&Element` - The root element.
-    pub(crate) fn get_root(&self) -> &Element {
-        &self.root
-    }
-
-    /// Returns a reference to the current virtual DOM tree.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<&VirtualNode>` - The current tree, if any.
-    pub(crate) fn try_get_current_tree(&self) -> Option<&VirtualNode> {
-        self.current_tree.as_ref()
-    }
-
-    /// Sets the current virtual DOM tree.
-    ///
-    /// # Arguments
-    ///
-    /// - `Option<VirtualNode>` - The new current tree.
-    pub(crate) fn set_current_tree(&mut self, tree: Option<VirtualNode>) {
-        self.current_tree = tree;
     }
 }
 

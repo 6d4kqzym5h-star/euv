@@ -111,11 +111,15 @@ pub fn page_modal() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "modal-name"
                             class: c_form_label()
                             "Name"
                         }
                         input {
+                            id: "modal-name"
+                            name: "name"
                             r#type: "text"
+                            autocomplete: "name"
                             placeholder: "Enter your name"
                             value: state.get_modal_name()
                             class: if { state.get_name_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
@@ -133,11 +137,15 @@ pub fn page_modal() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "modal-email"
                             class: c_form_label()
                             "Email"
                         }
                         input {
+                            id: "modal-email"
+                            name: "email"
                             r#type: "email"
+                            autocomplete: "email"
                             placeholder: "Enter your email"
                             value: state.get_modal_email()
                             class: if { state.get_email_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }

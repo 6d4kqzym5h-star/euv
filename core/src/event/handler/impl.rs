@@ -107,15 +107,6 @@ impl NativeEventHandler {
         let inner: &mut NativeEventCallbackInner = self.leak_mut();
         (inner.callback)(event);
     }
-
-    /// Returns the event name string.
-    ///
-    /// # Returns
-    ///
-    /// - `&String` - A reference to the event name string.
-    pub(crate) fn get_event_name(&self) -> &String {
-        &self.event_name
-    }
 }
 
 /// Clones the event handler, sharing the underlying callback pointer.

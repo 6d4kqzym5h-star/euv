@@ -4,10 +4,16 @@ use crate::*;
 ///
 /// Maintains a mapping between virtual nodes and real DOM elements,
 /// and handles creation, diffing, and patching of the DOM tree.
-#[derive(Debug)]
+#[derive(CustomDebug, Data)]
 pub struct Renderer {
     /// The root DOM element.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) root: Element,
     /// The current virtual DOM tree.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) current_tree: Option<VirtualNode>,
 }

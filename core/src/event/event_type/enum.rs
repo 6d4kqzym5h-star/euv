@@ -3,6 +3,7 @@ use crate::*;
 /// Represents the name of a DOM event.
 ///
 /// Covers mouse, keyboard, focus, form, drag, touch, wheel, clipboard, and media events.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum NativeEventName {
     /// Mouse click event.
     Click,

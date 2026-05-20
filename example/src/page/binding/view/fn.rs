@@ -134,7 +134,10 @@ pub fn callback_input(props: VirtualNode) -> VirtualNode {
             div {
                 class: c_binding_callback_form()
                 input {
+                    id: "callback-input"
+                    name: "callback_input"
                     r#type: "text"
+                    autocomplete: "off"
                     placeholder: "Type something..."
                     class: c_form_input_no_transition()
                     oninput: on_change
@@ -183,11 +186,15 @@ pub fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>) -> Vi
             div {
                 class: c_form_input_wrapper()
                 label {
+                    r#for: "child-input-text"
                     class: c_form_label()
                     "Edit shared text:"
                 }
                 input {
+                    id: "child-input-text"
+                    name: "shared_text"
                     r#type: "text"
+                    autocomplete: "off"
                     value: text_value
                     class: c_form_input_no_transition()
                     oninput: on_input_value(text_signal)
@@ -238,11 +245,15 @@ pub fn temperature_converter(
             div {
                 class: c_binding_temp_field()
                 label {
+                    r#for: "temperature-celsius"
                     class: c_form_label()
                     "Celsius"
                 }
                 input {
+                    id: "temperature-celsius"
+                    name: "celsius"
                     r#type: "number"
+                    autocomplete: "off"
                     value: format!("{:.1}", celsius_value)
                     class: c_form_input_no_transition()
                     oninput: cross_on_input_celsius(celsius_signal)
@@ -255,11 +266,15 @@ pub fn temperature_converter(
             div {
                 class: c_binding_temp_field()
                 label {
+                    r#for: "temperature-fahrenheit"
                     class: c_form_label()
                     "Fahrenheit"
                 }
                 input {
+                    id: "temperature-fahrenheit"
+                    name: "fahrenheit"
                     r#type: "number"
+                    autocomplete: "off"
                     value: format!("{:.1}", fahrenheit_value)
                     class: c_form_input_no_transition()
                     oninput: cross_on_input_fahrenheit(fahrenheit_signal)
@@ -308,12 +323,16 @@ pub fn color_mixer(
             div {
                 class: c_binding_slider_row()
                 label {
+                    r#for: "color-mixer-red"
                     class: c_binding_slider_label()
                     style: { color: "#ef4444"; }
                     "R"
                 }
                 input {
+                    id: "color-mixer-red"
+                    name: "red"
                     r#type: "range"
+                    autocomplete: "off"
                     min: "0"
                     max: "255"
                     value: red_value.to_string()
@@ -328,12 +347,16 @@ pub fn color_mixer(
             div {
                 class: c_binding_slider_row()
                 label {
+                    r#for: "color-mixer-green"
                     class: c_binding_slider_label()
                     style: { color: "#22c55e"; }
                     "G"
                 }
                 input {
+                    id: "color-mixer-green"
+                    name: "green"
                     r#type: "range"
+                    autocomplete: "off"
                     min: "0"
                     max: "255"
                     value: green_value.to_string()
@@ -348,12 +371,16 @@ pub fn color_mixer(
             div {
                 class: c_binding_slider_row()
                 label {
+                    r#for: "color-mixer-blue"
                     class: c_binding_slider_label()
                     style: { color: "#3b82f6"; }
                     "B"
                 }
                 input {
+                    id: "color-mixer-blue"
+                    name: "blue"
                     r#type: "range"
+                    autocomplete: "off"
                     min: "0"
                     max: "255"
                     value: blue_value.to_string()
@@ -400,11 +427,15 @@ pub fn page_component_binding() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "binding-parent-message"
                         class: c_form_label()
                         "Parent message:"
                     }
                     input {
+                        id: "binding-parent-message"
+                        name: "parent_message"
                         r#type: "text"
+                        autocomplete: "off"
                         value: props_state.get_parent_message()
                         class: c_form_input_no_transition()
                         oninput: on_input_value(props_state.get_parent_message())

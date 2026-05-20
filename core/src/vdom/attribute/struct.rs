@@ -3,7 +3,7 @@ use crate::*;
 /// Represents a CSS style property.
 ///
 /// A single key-value pair representing a CSS declaration.
-#[derive(Data, Default, New)]
+#[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct StyleProperty {
     /// The CSS property name (e.g., "margin", "padding").
     #[get(pub)]
@@ -16,7 +16,7 @@ pub struct StyleProperty {
 }
 
 /// A collection of CSS style properties that can be converted to a style string.
-#[derive(Data, New)]
+#[derive(Clone, Data, Debug, Eq, New, PartialEq)]
 pub struct Style {
     /// The list of style properties.
     #[get(pub)]
@@ -27,13 +27,14 @@ pub struct Style {
 /// Represents a single attribute on a virtual DOM node.
 ///
 /// Combines an attribute name with its corresponding value.
-#[derive(Clone, Data, Debug, New)]
+#[derive(Clone, CustomDebug, Data, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: String,
     /// The value of the attribute.
+    #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) value: AttributeValue,
@@ -44,7 +45,7 @@ pub struct AttributeEntry {
 /// Each rule has a selector suffix (e.g., ":hover", "::before", ":focus")
 /// and a style declaration string. When injected into the DOM, it produces
 /// a rule like `.class-name:hover { background: red; }`.
-#[derive(Clone, Data, Debug, Default, New)]
+#[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct PseudoRule {
     /// The CSS pseudo selector suffix appended to the class name
     /// (e.g., ":hover", ":focus", ":active", ":disabled", "::before", "::after",
@@ -90,7 +91,7 @@ pub struct CssClass {
 /// Each media rule has a query string (e.g., "(max-width: 767px)")
 /// and a style declaration string. When injected into the DOM, it produces
 /// a rule like `@media (max-width: 767px) { .class-name { font-size: 14px; } }`.
-#[derive(Clone, Data, Debug, Default, New)]
+#[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct MediaRule {
     /// The media query condition string (e.g., "(max-width: 767px)").
     #[get(pub)]
@@ -114,8 +115,11 @@ pub struct MediaRule {
 /// - `FnMut(NativeEvent)` closure → `AttributeValue::Event` via `NativeEventHandler`
 /// - `NativeEventHandler` directly → `AttributeValue::Event` as-is
 /// - `Option<NativeEventHandler>` → `AttributeValue::Event` or `AttributeValue::Text`
+#[derive(Data)]
 pub struct EventAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) inner: T,
 }
 
@@ -130,7 +134,10 @@ pub struct EventAdapter<T> {
 /// For event attributes (key starts with "on"), event closures are wrapped
 /// into `AttributeValue::Event`. For non-event attributes, values are
 /// converted via `IntoReactiveValue`.
+#[derive(Data)]
 pub struct AttrValueAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) inner: T,
 }

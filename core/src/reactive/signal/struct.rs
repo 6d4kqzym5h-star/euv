@@ -3,16 +3,18 @@ use crate::*;
 /// Inner state of a signal, holding the value and subscribed listeners.
 ///
 /// This struct is not exposed directly; use `Signal` instead.
-#[derive(Data)]
+#[derive(CustomDebug, Data)]
 pub(crate) struct SignalInner<T>
 where
     T: Clone,
 {
     /// The current value of the signal.
+    #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) value: T,
     /// Callbacks to invoke when the value changes.
+    #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) listeners: Vec<Box<dyn FnMut()>>,
@@ -33,12 +35,15 @@ where
 /// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
 /// entire program. This is safe in single-threaded WASM contexts where no
 /// concurrent access can occur.
-#[derive(Debug)]
+#[derive(CustomDebug, Data)]
 pub struct Signal<T>
 where
     T: Clone + PartialEq + 'static,
 {
     /// Raw pointer to the heap-allocated signal inner state.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) inner: *mut SignalInner<T>,
 }
 
@@ -48,10 +53,12 @@ where
 /// (e.g., WASM). It implements `Sync` to allow usage as a `static`
 /// variable, but concurrent access from multiple threads would be
 /// undefined behavior.
+#[derive(CustomDebug)]
 pub struct SignalCell<T>
 where
     T: Clone + PartialEq + 'static,
 {
     /// Interior-mutable storage for an optional signal handle.
+    #[debug(skip)]
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }

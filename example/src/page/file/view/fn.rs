@@ -87,11 +87,15 @@ pub fn page_file_upload() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
+                        r#for: "file-upload"
                         class: c_form_label()
                         "Select file(s)"
                     }
                     input {
+                        id: "file-upload"
+                        name: "file_upload"
                         r#type: "file"
+                        autocomplete: "off"
                         class: c_file_upload_input()
                         accept: state.get_accept()
                         multiple: state.get_multiple()
@@ -103,12 +107,16 @@ pub fn page_file_upload() -> VirtualNode {
                     div {
                         class: c_form_checkbox_row()
                         input {
+                            id: "file-multiple"
+                            name: "multiple"
                             r#type: "checkbox"
+                            autocomplete: "off"
                             class: c_form_checkbox()
                             checked: state.get_multiple()
                             onchange: on_change_checked(state.get_multiple())
                         }
                         label {
+                            r#for: "file-multiple"
                             class: c_form_checkbox_label()
                             "Allow multiple files"
                         }
@@ -116,12 +124,16 @@ pub fn page_file_upload() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
+                            r#for: "file-accept"
                             class: c_form_label()
                             "Accept filter (e.g. .png,.jpg,image/*)"
                         }
-                        input {
-                            r#type: "text"
-                            class: c_form_input_no_transition()
+                    input {
+                        id: "file-accept"
+                        name: "accept"
+                        r#type: "text"
+                        autocomplete: "off"
+                        class: c_form_input_no_transition()
                             placeholder: ".png,.jpg,image/*"
                             value: state.get_accept()
                             oninput: on_input_value(state.get_accept())

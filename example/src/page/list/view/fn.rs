@@ -16,7 +16,10 @@ pub fn page_list() -> VirtualNode {
                 div {
                     class: c_list_input_row()
                     input {
+                        id: "list-new-item"
+                        name: "new_item"
                         r#type: "text"
+                        autocomplete: "off"
                         placeholder: "Enter new item"
                         value: state.get_new_item()
                         class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_form_input_error() }
