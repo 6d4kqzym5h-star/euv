@@ -1,3 +1,4 @@
+mod hook;
 mod view;
 
-pub(crate) use view::*;
+pub(crate) use {hook::*, view::*};

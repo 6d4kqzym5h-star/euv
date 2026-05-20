@@ -6,4 +6,6 @@ mod modal;
 mod page_header;
 mod vconsole;
 
-pub use {badge::*, button::*, card::*, form_input::*, modal::*, page_header::*, vconsole::*};
+pub(crate) use {
+    badge::*, button::*, card::*, form_input::*, modal::*, page_header::*, vconsole::*,
+};

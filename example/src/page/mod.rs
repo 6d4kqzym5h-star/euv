@@ -16,10 +16,8 @@ mod select;
 mod signals;
 mod timer;
 
-pub use {
+pub(crate) use {
     animation::*, r#async::*, attrs::*, binding::*, browser::*, conditional::*, event::*, file::*,
     form::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, select::*, signals::*,
     timer::*,
 };
-
-pub(crate) use timer::use_interval;
