@@ -50,3 +50,128 @@ where
     });
     AttributeValue::Signal(attr_signal)
 }
+
+/// Merges multiple class attribute values into a single `AttributeValue`.
+///
+/// Each input value is adapted into an `AttributeValue` via `IntoReactiveValue`.
+/// `CssClass` values are injected into the DOM and their names are collected.
+/// All non-empty class names are joined with spaces into a final `Text` attribute.
+/// If any value is signal-backed, the result becomes a reactive `Signal` attribute
+/// that re-evaluates when any constituent signal changes.
+///
+/// # Arguments
+///
+/// - `&[AttributeValue]` - The class attribute values to merge.
+///
+/// # Returns
+///
+/// - `AttributeValue` - A merged attribute value containing space-separated class names.
+pub fn merge_class_values(values: &[AttributeValue]) -> AttributeValue {
+    let has_signal: bool = values
+        .iter()
+        .any(|value: &AttributeValue| matches!(value, AttributeValue::Signal(_)));
+    if has_signal {
+        let owned_values: Vec<AttributeValue> = values.to_vec();
+        let compute = move || {
+            let mut result: String = String::new();
+            for value in &owned_values {
+                let s: String = match value {
+                    AttributeValue::Css(css_class) => {
+                        css_class.inject_style();
+                        css_class.get_name().to_string()
+                    }
+                    AttributeValue::Text(s) => s.clone(),
+                    AttributeValue::Signal(signal) => signal.get(),
+                    _ => String::new(),
+                };
+                if !s.is_empty() {
+                    if !result.is_empty() {
+                        result.push(' ');
+                    }
+                    result.push_str(&s);
+                }
+            }
+            result
+        };
+        let attr_signal: Signal<String> = Signal::new(compute());
+        subscribe_attr_signal(attr_signal, compute);
+        AttributeValue::Signal(attr_signal)
+    } else {
+        let mut result: String = String::new();
+        for value in values {
+            let s: String = match value {
+                AttributeValue::Css(css_class) => {
+                    css_class.inject_style();
+                    css_class.get_name().to_string()
+                }
+                AttributeValue::Text(s) => s.clone(),
+                _ => String::new(),
+            };
+            if !s.is_empty() {
+                if !result.is_empty() {
+                    result.push(' ');
+                }
+                result.push_str(&s);
+            }
+        }
+        AttributeValue::Text(result)
+    }
+}
+
+/// Merges multiple style attribute values into a single `AttributeValue`.
+///
+/// Each input value is expected to be a style string (`Text`) or a reactive
+/// `Signal<String>` producing a style string. All non-empty style strings are
+/// joined with spaces into a final combined style attribute.
+/// If any value is signal-backed, the result becomes a reactive `Signal` attribute.
+///
+/// # Arguments
+///
+/// - `&[AttributeValue]` - The style attribute values to merge.
+///
+/// # Returns
+///
+/// - `AttributeValue` - A merged attribute value containing the combined CSS style string.
+pub fn merge_style_values(values: &[AttributeValue]) -> AttributeValue {
+    let has_signal: bool = values
+        .iter()
+        .any(|value: &AttributeValue| matches!(value, AttributeValue::Signal(_)));
+    if has_signal {
+        let owned_values: Vec<AttributeValue> = values.to_vec();
+        let compute = move || {
+            let mut result: String = String::new();
+            for value in &owned_values {
+                let s: String = match value {
+                    AttributeValue::Text(s) => s.clone(),
+                    AttributeValue::Signal(signal) => signal.get(),
+                    _ => String::new(),
+                };
+                if !s.is_empty() {
+                    if !result.is_empty() {
+                        result.push(' ');
+                    }
+                    result.push_str(&s);
+                }
+            }
+            result
+        };
+        let attr_signal: Signal<String> = Signal::new(compute());
+        subscribe_attr_signal(attr_signal, compute);
+        AttributeValue::Signal(attr_signal)
+    } else {
+        let mut result: String = String::new();
+        for value in values {
+            let s: String = match value {
+                AttributeValue::Text(s) => s.clone(),
+                _ => String::new(),
+            };
+            if !s.is_empty() {
+                if !result.is_empty() {
+                    result.push(' ');
+                }
+                result.push_str(&s);
+            }
+        }
+        AttributeValue::Text(result)
+    }
+}

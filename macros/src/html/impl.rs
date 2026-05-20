@@ -202,9 +202,10 @@ impl Parse for HtmlElement {
                 return Err(content.error("unexpected token in HTML element"));
             }
         }
+        let merged_attributes: Vec<(Ident, HtmlAttrValue)> = merge_same_key_attributes(attributes);
         Ok(HtmlElement {
             tag,
-            attributes,
+            attributes: merged_attributes,
             children,
             is_component,
         })
@@ -218,17 +219,17 @@ impl ToTokens for HtmlNode {
             HtmlNode::Element(element) => element.to_tokens(tokens),
             HtmlNode::Text(text) => {
                 tokens.extend(quote! {
-                    euv_core::VirtualNode::Text(euv_core::TextNode::new(#text.to_string(), None))
+                    ::euv_core::VirtualNode::Text(::euv_core::TextNode::new(#text.to_string(), None))
                 });
             }
             HtmlNode::Expr(expr) => {
                 tokens.extend(quote! {
-                    euv_core::IntoNode::into_node(#expr)
+                    ::euv_core::IntoNode::into_node(#expr)
                 });
             }
             HtmlNode::Dynamic(expr) => {
                 tokens.extend(quote! {
-                    euv_core::create_dynamic_node(move || euv_core::IntoNode::into_node(#expr))
+                    ::euv_core::create_dynamic_node(move || ::euv_core::IntoNode::into_node(#expr))
                 });
             }
             HtmlNode::If(html_if) => {
@@ -262,7 +263,7 @@ impl ToTokens for HtmlNode {
                     }
                 }
                 tokens.extend(quote! {
-                    euv_core::create_dynamic_node(move || { #if_chain })
+                    ::euv_core::create_dynamic_node(move || { #if_chain })
                 });
             }
             HtmlNode::Match(html_match) => {
@@ -282,7 +283,7 @@ impl ToTokens for HtmlNode {
                     })
                     .collect();
                 tokens.extend(quote! {
-                    euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut euv_core::HookContext| {
+                    ::euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut ::euv_core::HookContext| {
                         match #scrutinee {
                             #(#arm_tokens)*
                         }
@@ -294,14 +295,14 @@ impl ToTokens for HtmlNode {
                 let iterable: &Expr = html_for.get_iterable();
                 let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
                 tokens.extend(quote! {
-                    euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut euv_core::HookContext| {
-                        let mut __euv_for_nodes: Vec<euv_core::VirtualNode> = Vec::new();
+                    ::euv_core::create_dynamic_node_with_context(move |__euv_hook_context: &mut ::euv_core::HookContext| {
+                        let mut __euv_for_nodes: Vec<::euv_core::VirtualNode> = Vec::new();
                         for #pattern in #iterable {
                             __euv_hook_context.reset_hook_index();
-                            let __euv_for_body: Vec<euv_core::VirtualNode> = #body_tokens;
+                            let __euv_for_body: Vec<::euv_core::VirtualNode> = #body_tokens;
                             __euv_for_nodes.extend(__euv_for_body);
                         }
-                        euv_core::VirtualNode::Fragment(__euv_for_nodes)
+                        ::euv_core::VirtualNode::Fragment(__euv_for_nodes)
                     })
                 });
             }
@@ -336,7 +337,7 @@ impl ToTokens for HtmlAttrValue {
             HtmlAttrValue::If(html_attr_if) => {
                 let if_chain: proc_macro2::TokenStream = attr_if_to_tokens(html_attr_if);
                 tokens.extend(quote! {
-                    euv_core::create_reactive_attr_signal(move || euv_core::IntoReactiveString::into_reactive_string(#if_chain))
+                    ::euv_core::create_reactive_attr_signal(move || ::euv_core::IntoReactiveString::into_reactive_string(#if_chain))
                 });
             }
             HtmlAttrValue::Style(props) => {
@@ -354,7 +355,7 @@ impl ToTokens for HtmlAttrValue {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        euv_core::create_reactive_style_attribute(move || euv_core::Style::default()#(#prop_tokens)*.to_css_string())
+                        ::euv_core::create_reactive_style_attribute(move || ::euv_core::Style::default()#(#prop_tokens)*.to_css_string())
                     });
                 } else if all_literal {
                     let mut css_string: String = String::new();
@@ -380,9 +381,27 @@ impl ToTokens for HtmlAttrValue {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        euv_core::Style::create_style_string(&[#(#kv_tokens),*])
+                        ::euv_core::Style::create_style_string(&[#(#kv_tokens),*])
                     });
                 }
+            }
+            HtmlAttrValue::Classes(values) => {
+                let value_tokens: Vec<proc_macro2::TokenStream> = values
+                    .iter()
+                    .map(|v| attr_value_to_attribute_value_tokens(v, "class", false))
+                    .collect();
+                tokens.extend(quote! {
+                    ::euv_core::merge_class_values(&[#(#value_tokens),*])
+                });
+            }
+            HtmlAttrValue::Styles(values) => {
+                let value_tokens: Vec<proc_macro2::TokenStream> = values
+                    .iter()
+                    .map(style_value_to_attribute_value_tokens)
+                    .collect();
+                tokens.extend(quote! {
+                    ::euv_core::merge_style_values(&[#(#value_tokens),*])
+                });
             }
         }
     }
@@ -410,10 +429,16 @@ impl ToTokens for HtmlElement {
                     if has_if {
                         quote! { #value }
                     } else {
-                        quote! { euv_core::AttributeValue::Text(#value) }
+                        quote! { ::euv_core::AttributeValue::Text(#value) }
                     }
                 }
                 HtmlAttrValue::If(_) => {
+                    quote! { #value }
+                }
+                HtmlAttrValue::Classes(_) => {
+                    quote! { #value }
+                }
+                HtmlAttrValue::Styles(_) => {
                     quote! { #value }
                 }
                 HtmlAttrValue::Expr(expr) => {
@@ -421,7 +446,7 @@ impl ToTokens for HtmlElement {
                         if is_component {
                             let callback_name: String = key_str.replace('_', "-");
                             quote! {
-                                euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+                                ::euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
                             }
                         } else {
                             let event_name_ident: Ident = Ident::new(
@@ -429,14 +454,14 @@ impl ToTokens for HtmlElement {
                                 key.span(),
                             );
                             quote! {
-                                euv_core::EventAdapter::new(#expr).into_attribute(euv_core::NativeEventName::#event_name_ident)
+                                ::euv_core::EventAdapter::new(#expr).into_attribute(::euv_core::NativeEventName::#event_name_ident)
                             }
                         }
                     } else if key_str == "children" {
-                        quote! { euv_core::AttributeValue::Dynamic(Box::new(#expr)) }
+                        quote! { ::euv_core::AttributeValue::Dynamic(Box::new(#expr)) }
                     } else {
                         quote! {
-                            euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                            ::euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
                         }
                     }
                 }
@@ -448,7 +473,7 @@ impl ToTokens for HtmlElement {
             };
             let attr_name_str: String = raw_key.strip_prefix("r#").unwrap_or(&raw_key).to_string();
             quote! {
-                euv_core::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
+                ::euv_core::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
             }
         }).collect();
         let child_tokens: Vec<proc_macro2::TokenStream> = self
@@ -467,9 +492,9 @@ impl ToTokens for HtmlElement {
                 quote_spanned!(component_span=> #component_fn(__props));
             tokens.extend(quote! {
                 {
-                    let __children: Vec<euv_core::VirtualNode> = vec![#(#child_tokens),*];
-                    let __props = euv_core::VirtualNode::Element {
-                        tag: euv_core::Tag::Component(#tag_literal),
+                    let __children: Vec<::euv_core::VirtualNode> = vec![#(#child_tokens),*];
+                    let __props = ::euv_core::VirtualNode::Element {
+                        tag: ::euv_core::Tag::Component(#tag_literal),
                         attributes: vec![#(#attr_tokens),*],
                         children: __children,
                         key: None,
@@ -479,8 +504,8 @@ impl ToTokens for HtmlElement {
             });
         } else {
             tokens.extend(quote! {
-                euv_core::VirtualNode::Element {
-                    tag: euv_core::Tag::Element(#tag_literal),
+                ::euv_core::VirtualNode::Element {
+                    tag: ::euv_core::Tag::Element(#tag_literal),
                     attributes: vec![#(#attr_tokens),*],
                     children: vec![#(#child_tokens),*],
                     key: None,

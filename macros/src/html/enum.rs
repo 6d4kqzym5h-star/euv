@@ -38,7 +38,8 @@ pub(crate) enum HtmlNode {
 
 /// Represents the value side of an attribute.
 ///
-/// Supports plain expressions, style objects, and reactive conditionals.
+/// Supports plain expressions, style objects, reactive conditionals,
+/// and merged multi-class/multi-style attribute values.
 #[derive(Clone, Debug)]
 pub(crate) enum HtmlAttrValue {
     /// A normal Rust expression.
@@ -48,6 +49,12 @@ pub(crate) enum HtmlAttrValue {
     /// A style object: {key: value; key2: value2;}
     /// The value can be either a string literal or an expression.
     Style(Vec<(String, HtmlStylePropValue)>),
+    /// Multiple class attribute values merged from repeated `class:` declarations.
+    /// Each entry is an independent expression (e.g., `c_foo()`, `c_bar()`).
+    Classes(Vec<HtmlAttrValue>),
+    /// Multiple style attribute values merged from repeated `style:` declarations.
+    /// Each entry is an independent `Style` value.
+    Styles(Vec<HtmlAttrValue>),
 }
 
 /// Represents a single value in a style property.

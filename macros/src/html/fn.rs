@@ -135,7 +135,7 @@ pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<Html
 /// - `proc_macro2::TokenStream` - The generated token stream representing a single `VirtualNode`.
 pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
     match children.len() {
-        0 => quote! { euv_core::VirtualNode::Empty },
+        0 => quote! { ::euv_core::VirtualNode::Empty },
         1 => {
             let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
             children[0].to_tokens(&mut ts);
@@ -149,7 +149,7 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
                 child.to_tokens(&mut ts);
                 child_tokens.push(ts);
             }
-            quote! { euv_core::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
+            quote! { ::euv_core::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
         }
     }
 }
@@ -342,5 +342,156 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
         }
     } else {
         Ok(HtmlAttrValue::Expr(content.parse()?))
+    }
+}
+
+/// Merges attributes with the same key name for `class` and `style`.
+///
+/// When multiple `class:` or `style:` attributes are declared on the same
+/// element, they are combined into a single `HtmlAttrValue::Classes` or
+/// `HtmlAttrValue::Styles` entry so that the renderer can merge their
+/// values at runtime rather than overwriting.
+///
+/// Non-mergeable attribute keys keep only the last occurrence.
+///
+/// # Arguments
+///
+/// - `Vec<(Ident, HtmlAttrValue)>` - The raw parsed attributes (may contain duplicate keys).
+///
+/// # Returns
+///
+/// - `Vec<(Ident, HtmlAttrValue)>` - The merged attributes with at most one `class` and one `style` entry.
+pub(crate) fn merge_same_key_attributes(
+    attributes: Vec<(Ident, HtmlAttrValue)>,
+) -> Vec<(Ident, HtmlAttrValue)> {
+    let mut class_values: Vec<HtmlAttrValue> = Vec::new();
+    let mut style_values: Vec<HtmlAttrValue> = Vec::new();
+    let mut result: Vec<(Ident, HtmlAttrValue)> = Vec::new();
+    for (key, value) in attributes {
+        let key_str: String = key.to_string();
+        if key_str == "class" {
+            class_values.push(value);
+        } else if key_str == "style" {
+            match value {
+                HtmlAttrValue::Style(props) => style_values.push(HtmlAttrValue::Style(props)),
+                other => style_values.push(other),
+            }
+        } else {
+            result.push((key, value));
+        }
+    }
+    if class_values.len() == 1 {
+        let class_key: Ident = Ident::new("class", proc_macro2::Span::call_site());
+        result.push((class_key, class_values.into_iter().next().unwrap()));
+    } else if class_values.len() > 1 {
+        let class_key: Ident = Ident::new("class", proc_macro2::Span::call_site());
+        result.push((class_key, HtmlAttrValue::Classes(class_values)));
+    }
+    if style_values.len() == 1 {
+        let style_key: Ident = Ident::new("style", proc_macro2::Span::call_site());
+        result.push((style_key, style_values.into_iter().next().unwrap()));
+    } else if style_values.len() > 1 {
+        let style_key: Ident = Ident::new("style", proc_macro2::Span::call_site());
+        result.push((style_key, HtmlAttrValue::Styles(style_values)));
+    }
+    result
+}
+
+/// Converts an `HtmlAttrValue` into a token stream that produces an `AttributeValue`.
+///
+/// This function mirrors the logic in `HtmlElement::ToTokens` for converting
+/// attribute values, but always wraps the result as an `AttributeValue` variant
+/// suitable for passing to `merge_class_values`.
+///
+/// # Arguments
+///
+/// - `&HtmlAttrValue` - The attribute value to convert.
+/// - `&str` - The attribute key name (used for event detection).
+/// - `bool` - Whether this is a component attribute.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - Token stream that evaluates to an `AttributeValue`.
+pub(crate) fn attr_value_to_attribute_value_tokens(
+    value: &HtmlAttrValue,
+    key_str: &str,
+    is_component: bool,
+) -> proc_macro2::TokenStream {
+    match value {
+        HtmlAttrValue::Expr(expr) => {
+            if let Some(_event_name_str) = key_str.strip_prefix("on") {
+                if is_component {
+                    let callback_name: String = key_str.replace('_', "-");
+                    quote! {
+                        ::euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+                    }
+                } else {
+                    quote! {
+                        ::euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                    }
+                }
+            } else if key_str == "children" {
+                quote! { ::euv_core::AttributeValue::Dynamic(Box::new(#expr)) }
+            } else {
+                quote! {
+                    ::euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                }
+            }
+        }
+        HtmlAttrValue::If(_) => {
+            quote! { #value }
+        }
+        HtmlAttrValue::Style(props) => {
+            let has_if: bool = props
+                .iter()
+                .any(|(_, v)| matches!(v, HtmlStylePropValue::If(_)));
+            if has_if {
+                quote! { #value }
+            } else {
+                quote! { ::euv_core::AttributeValue::Text(#value) }
+            }
+        }
+        HtmlAttrValue::Classes(_) | HtmlAttrValue::Styles(_) => {
+            quote! { #value }
+        }
+    }
+}
+
+/// Converts a style-related `HtmlAttrValue` into a token stream that produces
+/// an `AttributeValue`.
+///
+/// Style values are wrapped in `AttributeValue::Text(...)` for static strings,
+/// or kept as `AttributeValue::Signal(...)` for reactive style attributes.
+///
+/// # Arguments
+///
+/// - `&HtmlAttrValue` - The style attribute value to convert.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - Token stream that evaluates to an `AttributeValue`.
+pub(crate) fn style_value_to_attribute_value_tokens(
+    value: &HtmlAttrValue,
+) -> proc_macro2::TokenStream {
+    match value {
+        HtmlAttrValue::Style(props) => {
+            let has_if: bool = props
+                .iter()
+                .any(|(_, v)| matches!(v, HtmlStylePropValue::If(_)));
+            if has_if {
+                quote! { #value }
+            } else {
+                quote! { ::euv_core::AttributeValue::Text(#value) }
+            }
+        }
+        HtmlAttrValue::If(_) => {
+            quote! { #value }
+        }
+        HtmlAttrValue::Expr(expr) => {
+            quote! { ::euv_core::AttributeValue::Text(#expr.to_string()) }
+        }
+        HtmlAttrValue::Classes(_) | HtmlAttrValue::Styles(_) => {
+            quote! { #value }
+        }
     }
 }
