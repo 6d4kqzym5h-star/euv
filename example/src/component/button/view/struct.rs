@@ -9,4 +9,6 @@ pub struct PrimaryButtonProps {
     pub label: String,
     /// Optional click event handler.
     pub onclick: Option<NativeEventHandler>,
+    /// Whether the button is disabled.
+    pub disabled: bool,
 }

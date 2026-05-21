@@ -96,8 +96,7 @@ pub(crate) fn parse_kebab_name(input: ParseStream) -> syn::Result<String> {
 ///
 /// - `String` - The reconstructed kebab-case name.
 pub(crate) fn reconstruct_kebab_from_tokens(tokens: &proc_macro2::TokenStream) -> String {
-    let iter: std::iter::Peekable<proc_macro2::token_stream::IntoIter> =
-        tokens.clone().into_iter().peekable();
+    let iter: Peekable<proc_macro2::token_stream::IntoIter> = tokens.clone().into_iter().peekable();
     let mut result: String = String::new();
     for token in iter {
         match token {

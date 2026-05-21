@@ -38,7 +38,7 @@ impl From<VirtualNode> for LimitedCounterProps {
     fn from(node: VirtualNode) -> Self {
         LimitedCounterProps {
             disabled: node.try_get_typed_prop("disabled").unwrap_or(false),
-            max_count: node.try_get_typed_prop("max_count").unwrap_or(10),
+            max_count: node.try_get_typed_prop("max-count").unwrap_or(10),
             on_increment: node.try_get_callback("on-increment"),
             on_reset: node.try_get_callback("on-reset"),
         }

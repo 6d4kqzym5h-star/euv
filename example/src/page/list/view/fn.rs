@@ -22,7 +22,7 @@ pub fn page_list() -> VirtualNode {
                         autocomplete: "off"
                         placeholder: "Enter new item"
                         value: state.get_new_item()
-                        class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_form_input_error() }
+                        class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_list_input_error() }
                         oninput: todo_list_on_input_new_item(state)
                     }
                     primary_button {

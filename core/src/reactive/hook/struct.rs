@@ -16,7 +16,7 @@ pub struct HookContextInner {
     /// The match arm index from the last render.
     /// Set on each `match` arm entry; when the value differs from
     /// the previous render, hooks are cleared.
-    #[get(type(copy))]
+    #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
     pub(crate) arm_changed: usize,
     /// Current hook index, incremented on each hook call and reset per render.

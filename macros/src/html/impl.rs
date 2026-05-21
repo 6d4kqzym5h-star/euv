@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Parses zero or more HTML nodes from the macro input stream.
+/// Implementation of `Parse` for `HtmlRoot`, parsing zero or more HTML nodes.
 impl Parse for HtmlRoot {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let children: Vec<HtmlNode> = parse_html_children(input)?;
@@ -8,7 +8,7 @@ impl Parse for HtmlRoot {
     }
 }
 
-/// Converts an `HtmlRoot` into token stream based on the number of children.
+/// Implementation of `ToTokens` for `HtmlRoot`, converting root HTML nodes into virtual node tokens.
 ///
 /// - 0 children → `VirtualNode::Empty`
 /// - 1 child → the child's token stream (no Fragment wrapper)
@@ -20,7 +20,7 @@ impl ToTokens for HtmlRoot {
     }
 }
 
-/// Parses HTML input into an `HtmlNode` from a token stream.
+/// Implementation of `Parse` for `HtmlNode`, parsing HTML input into a node.
 impl Parse for HtmlNode {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if input.peek(LitStr) {
@@ -57,7 +57,7 @@ impl Parse for HtmlNode {
     }
 }
 
-/// Parses reactive `if {expr} { children } [else if {expr} { children }]* [else { children }]`.
+/// Implementation of `Parse` for `HtmlIf`, parsing reactive `if` conditionals.
 impl Parse for HtmlIf {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut branches: Vec<(Option<Expr>, Vec<HtmlNode>)> = Vec::new();
@@ -92,7 +92,7 @@ impl Parse for HtmlIf {
     }
 }
 
-/// Parses reactive `match {expr} { pattern => body ... }`.
+/// Implementation of `Parse` for `HtmlMatch`, parsing reactive match expressions.
 ///
 /// Each arm body can be any valid HTML content (elements, expressions, if, etc.)
 /// without requiring outer braces. Bodies are terminated by `,` or end of the
@@ -123,7 +123,7 @@ impl Parse for HtmlMatch {
     }
 }
 
-/// Parses reactive `for pattern in {expr} { children }`.
+/// Implementation of `Parse` for `HtmlFor`, parsing reactive for loops.
 impl Parse for HtmlFor {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![for]>()?;
@@ -147,7 +147,7 @@ impl Parse for HtmlFor {
     }
 }
 
-/// Parses HTML element syntax including tag, attributes, and children.
+/// Implementation of `Parse` for `HtmlElement`, parsing HTML element syntax.
 impl Parse for HtmlElement {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let tag: Ident = input.parse()?;
@@ -212,7 +212,7 @@ impl Parse for HtmlElement {
     }
 }
 
-/// Converts an `HtmlNode` into the corresponding euv virtual node tokens.
+/// Implementation of `ToTokens` for `HtmlNode`, converting HTML nodes into virtual node tokens.
 impl ToTokens for HtmlNode {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
@@ -310,7 +310,7 @@ impl ToTokens for HtmlNode {
     }
 }
 
-/// Converts a `HtmlStylePropValue` into its token representation.
+/// Implementation of `ToTokens` for `HtmlStylePropValue`, converting style property values into tokens.
 impl ToTokens for HtmlStylePropValue {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
@@ -324,7 +324,7 @@ impl ToTokens for HtmlStylePropValue {
     }
 }
 
-/// Converts an `HtmlAttrValue` into its token representation.
+/// Implementation of `ToTokens` for `HtmlAttrValue`, converting attribute values into tokens.
 ///
 /// For `HtmlAttrValue::If`, generates a reactive signal via `create_reactive_attr_signal`.
 /// For `HtmlAttrValue::Style` containing `If` conditions, generates a reactive
@@ -407,7 +407,7 @@ impl ToTokens for HtmlAttrValue {
     }
 }
 
-/// Converts an `HtmlElement` into the corresponding euv virtual element tokens.
+/// Implementation of `ToTokens` for `HtmlElement`, converting HTML elements into virtual element tokens.
 ///
 /// Only the tag name uses `quote_spanned!` so that errors related to the tag
 /// (e.g., unknown element) point to the tag identifier in the user's source code.

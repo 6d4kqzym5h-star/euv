@@ -47,6 +47,21 @@ pub(crate) struct MediaBlock {
     pub(crate) properties: Vec<(String, ClassPropValue)>,
 }
 
+/// A parent class reference in an extends clause.
+///
+/// Represents a class inheritance call like `c_primary_button(1)` or `c_base()`.
+#[derive(Clone, Data, Debug)]
+pub(crate) struct ClassExtend {
+    /// The parent class name identifier.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) name: Ident,
+    /// The arguments passed to the parent class function (as raw token streams).
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) args: Vec<proc_macro2::TokenStream>,
+}
+
 /// A single class definition parsed from the `class!` macro.
 ///
 /// Contains visibility, name, optional parameters, style properties,
@@ -65,6 +80,10 @@ pub(crate) struct ClassDef {
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) params: Option<Vec<ClassParam>>,
+    /// Parent classes to inherit properties from (e.g., `c_primary_button(1)`).
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) extends: Vec<ClassExtend>,
     /// The style properties for this class.
     #[get(pub(crate))]
     #[set(pub(crate))]

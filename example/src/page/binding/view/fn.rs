@@ -87,6 +87,7 @@ pub fn limited_counter(props: VirtualNode) -> VirtualNode {
                 primary_button {
                     label: "Reset"
                     onclick: on_reset
+                    disabled: disabled
                     "Reset"
                 }
             }
@@ -409,9 +410,6 @@ pub fn page_component_binding() -> VirtualNode {
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();
     let typed_state: UseTypedPropsDemo = use_typed_props_demo();
     let callback_state: UseCustomCallbackDemo = use_custom_callback_demo();
-    let is_disabled: bool = typed_state.get_disabled().get();
-    let current_count: i32 = typed_state.get_current_count().get();
-    let max_count: i32 = typed_state.get_max_count().get();
     let callback_text: String = callback_state.get_text_value().get();
     let last_event: String = callback_state.get_last_event().get();
     html! {
@@ -474,7 +472,7 @@ pub fn page_component_binding() -> VirtualNode {
                         primary_button {
                             label: "Toggle Disabled"
                             onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
-                            { if is_disabled { "Enable" } else { "Disable" } }
+                            { if typed_state.get_disabled().get() { "Enable" } else { "Disable" } }
                         }
                         div {
                             class: c_binding_typed_prop_group()
@@ -483,7 +481,7 @@ pub fn page_component_binding() -> VirtualNode {
                                 "Max: "
                                 span {
                                     class: c_binding_typed_prop_value()
-                                    { max_count.to_string() }
+                                    typed_state.get_max_count()
                                 }
                             }
                         }
@@ -493,20 +491,20 @@ pub fn page_component_binding() -> VirtualNode {
                         "Count: "
                         span {
                             class: c_counter_value()
-                            { current_count.to_string() }
+                            typed_state.get_current_count()
                         }
                         " / "
                         span {
                             class: c_binding_typed_prop_value()
-                            { max_count.to_string() }
+                            typed_state.get_max_count()
                         }
                     }
                 }
                 limited_counter {
-                    disabled: is_disabled
-                    max_count: max_count
-                    on_increment: typed_props_on_increment(typed_state.get_current_count(), typed_state.get_max_count())
-                    on_reset: typed_props_on_reset_count(typed_state.get_current_count())
+                    disabled: typed_state.get_disabled().get()
+                    max_count: typed_state.get_max_count().get()
+                    on_increment: typed_props_on_increment(typed_state.get_current_count(), typed_state.get_max_count(), typed_state.get_disabled())
+                    on_reset: typed_props_on_reset_count(typed_state.get_current_count(), typed_state.get_disabled())
                 }
             }
             my_card {

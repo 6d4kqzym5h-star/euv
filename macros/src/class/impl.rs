@@ -1,58 +1,6 @@
 use crate::*;
 
-/// The set of known CSS pseudo-class and pseudo-element keywords
-/// that the `class!` macro can parse as ident+brace blocks.
-const PSEUDO_KEYWORDS: &[(&str, &str)] = &[
-    ("hover", ":hover"),
-    ("focus", ":focus"),
-    ("focus_within", ":focus-within"),
-    ("focus_visible", ":focus-visible"),
-    ("active", ":active"),
-    ("visited", ":visited"),
-    ("disabled", ":disabled"),
-    ("enabled", ":enabled"),
-    ("checked", ":checked"),
-    ("readonly", ":read-only"),
-    ("readwrite", ":read-write"),
-    ("required", ":required"),
-    ("optional", ":optional"),
-    ("valid", ":valid"),
-    ("invalid", ":invalid"),
-    ("in_range", ":in-range"),
-    ("out_of_range", ":out-of-range"),
-    ("placeholder_shown", ":placeholder-shown"),
-    ("first_child", ":first-child"),
-    ("last_child", ":last-child"),
-    ("only_child", ":only-child"),
-    ("first_of_type", ":first-of-type"),
-    ("last_of_type", ":last-of-type"),
-    ("only_of_type", ":only-of-type"),
-    ("root", ":root"),
-    ("empty", ":empty"),
-    ("target", ":target"),
-    ("link", ":link"),
-    ("any_link", ":any-link"),
-    ("before", "::before"),
-    ("after", "::after"),
-    ("first_line", "::first-line"),
-    ("first_letter", "::first-letter"),
-    ("selection", "::selection"),
-    ("placeholder", "::placeholder"),
-    ("backdrop", "::backdrop"),
-    ("marker", "::marker"),
-    ("spelling_error", "::spelling-error"),
-    ("grammar_error", "::grammar-error"),
-];
-
-/// Looks up a keyword and returns the corresponding CSS pseudo selector.
-fn lookup_pseudo_selector(keyword: &str) -> Option<&'static str> {
-    PSEUDO_KEYWORDS
-        .iter()
-        .find(|(kw, _)| *kw == keyword)
-        .map(|(_, selector)| *selector)
-}
-
-/// Parses the `class!` macro input.
+/// Implementation of `Parse` for `ClassInput`, parsing the `class!` macro input.
 impl Parse for ClassInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut classes: Vec<ClassDef> = Vec::new();
@@ -75,12 +23,17 @@ impl Parse for ClassInput {
                         param_content.parse::<Token![,]>()?;
                     }
                 }
-                Some(param_list)
+                if param_list.is_empty() {
+                    None
+                } else {
+                    Some(param_list)
+                }
             } else {
                 None
             };
             let content;
             braced!(content in input);
+            let mut extends: Vec<ClassExtend> = Vec::new();
             let mut properties: Vec<(String, ClassPropValue)> = Vec::new();
             let mut pseudo_blocks: Vec<PseudoBlock> = Vec::new();
             let mut media_blocks: Vec<MediaBlock> = Vec::new();
@@ -89,6 +42,41 @@ impl Parse for ClassInput {
                     let forked = content.fork();
                     let keyword: Ident = forked.parse()?;
                     let keyword_str: String = keyword.to_string();
+                    let is_extends: bool =
+                        forked.peek(syn::token::Paren) && !keyword_str.starts_with("media") && {
+                            let forked_extends = content.fork();
+                            let _ = forked_extends.parse::<Ident>();
+                            if forked_extends.peek(syn::token::Paren) {
+                                let _paren_content;
+                                syn::parenthesized!(_paren_content in forked_extends);
+                                forked_extends.peek(Semi) || forked_extends.is_empty()
+                            } else {
+                                false
+                            }
+                        };
+                    if is_extends {
+                        content.parse::<Ident>()?;
+                        let paren_content;
+                        syn::parenthesized!(paren_content in content);
+                        let mut args: Vec<proc_macro2::TokenStream> = Vec::new();
+                        while !paren_content.is_empty() {
+                            let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
+                            args.push(arg_tokens);
+                            if paren_content.peek(Token![,]) {
+                                paren_content.parse::<Token![,]>()?;
+                            } else {
+                                break;
+                            }
+                        }
+                        extends.push(ClassExtend {
+                            name: keyword,
+                            args,
+                        });
+                        if content.peek(Semi) {
+                            content.parse::<Semi>()?;
+                        }
+                        continue;
+                    }
                     if lookup_pseudo_selector(&keyword_str).is_some()
                         && forked.peek(syn::token::Brace)
                     {
@@ -201,6 +189,7 @@ impl Parse for ClassInput {
                 visibility,
                 name,
                 params,
+                extends,
                 properties,
                 pseudo_blocks,
                 media_blocks,
@@ -211,6 +200,14 @@ impl Parse for ClassInput {
 }
 
 /// Generates a `Vec<euv_core::PseudoRule>` expression from a list of pseudo blocks.
+///
+/// # Arguments
+///
+/// - `&[PseudoBlock]` - The pseudo blocks to convert.
+///
+/// # Returns
+///
+/// - `Option<proc_macro2::TokenStream>` - The generated token stream, or `None` if empty.
 fn pseudo_blocks_to_tokens(pseudo_blocks: &[PseudoBlock]) -> Option<proc_macro2::TokenStream> {
     if pseudo_blocks.is_empty() {
         return None;
@@ -229,7 +226,7 @@ fn pseudo_blocks_to_tokens(pseudo_blocks: &[PseudoBlock]) -> Option<proc_macro2:
                 })
                 .collect();
             quote! {
-                euv_core::PseudoRule::new(
+                ::euv_core::PseudoRule::new(
                     #selector.to_string(),
                     [#(#style_parts),*].concat()
                 )
@@ -240,6 +237,14 @@ fn pseudo_blocks_to_tokens(pseudo_blocks: &[PseudoBlock]) -> Option<proc_macro2:
 }
 
 /// Generates a `Vec<euv_core::MediaRule>` expression from a list of media blocks.
+///
+/// # Arguments
+///
+/// - `&[MediaBlock]` - The media blocks to convert.
+///
+/// # Returns
+///
+/// - `Option<proc_macro2::TokenStream>` - The generated token stream, or `None` if empty.
 fn media_blocks_to_tokens(media_blocks: &[MediaBlock]) -> Option<proc_macro2::TokenStream> {
     if media_blocks.is_empty() {
         return None;
@@ -258,7 +263,7 @@ fn media_blocks_to_tokens(media_blocks: &[MediaBlock]) -> Option<proc_macro2::To
                 })
                 .collect();
             quote! {
-                euv_core::MediaRule::new(
+                ::euv_core::MediaRule::new(
                     #query.to_string(),
                     [#(#style_parts),*].concat()
                 )
@@ -269,6 +274,14 @@ fn media_blocks_to_tokens(media_blocks: &[MediaBlock]) -> Option<proc_macro2::To
 }
 
 /// Generates static pseudo block string for compile-time evaluation.
+///
+/// # Arguments
+///
+/// - `&[PseudoBlock]` - The pseudo blocks to serialize.
+///
+/// # Returns
+///
+/// - `String` - The serialized pseudo rules string.
 fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> String {
     let mut result: String = String::new();
     for block in pseudo_blocks {
@@ -287,6 +300,14 @@ fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> String {
 }
 
 /// Generates static media block string for compile-time evaluation.
+///
+/// # Arguments
+///
+/// - `&[MediaBlock]` - The media blocks to serialize.
+///
+/// # Returns
+///
+/// - `String` - The serialized media rules string.
 fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> String {
     let mut result: String = String::new();
     for block in media_blocks {
@@ -305,7 +326,7 @@ fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> String {
     result
 }
 
-/// Converts a `ClassDef` into token stream generating a `euv_core::CssClass` function.
+/// Implementation of `ToTokens` for `ClassDef`, converting a class definition into `CssClass` function tokens.
 impl ToTokens for ClassDef {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let vis: &syn::Visibility = self.get_visibility();
@@ -313,6 +334,7 @@ impl ToTokens for ClassDef {
         let class_name_str: String = name.to_string();
         let has_extra: bool =
             !self.get_pseudo_blocks().is_empty() || !self.get_media_blocks().is_empty();
+        let has_extends: bool = !self.get_extends().is_empty();
         match self.try_get_params() {
             Some(params) => {
                 let param_defs: Vec<proc_macro2::TokenStream> = params
@@ -325,15 +347,28 @@ impl ToTokens for ClassDef {
                     .collect();
                 let param_names: Vec<&Ident> =
                     params.iter().map(|p: &ClassParam| p.get_name()).collect();
-                let css_string_parts: Vec<proc_macro2::TokenStream> = self
-                    .get_properties()
+                let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
+                    .get_extends()
                     .iter()
-                    .map(|(key, value)| match value {
-                        ClassPropValue::Expr(expr) => {
-                            quote! { #key.to_string() + ": " + &(#expr) + "; " }
+                    .map(|parent| {
+                        let parent_name: &Ident = parent.get_name();
+                        let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
+                        if parent_args.is_empty() {
+                            quote! { #parent_name().get_style().to_string() + " " }
+                        } else {
+                            quote! { #parent_name(#(#parent_args),*).get_style().to_string() + " " }
                         }
                     })
                     .collect();
+                for (key, value) in self.get_properties() {
+                    let ClassPropValue::Expr(expr) = value;
+                    all_css_parts.push(quote! { #key.to_string() + ": " + &(#expr) + "; " });
+                }
+                let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
+                    quote! { #class_name_str.to_string() }
+                } else {
+                    quote! { format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")) }
+                };
                 if has_extra {
                     let pseudo_expr: proc_macro2::TokenStream =
                         pseudo_blocks_to_tokens(self.get_pseudo_blocks())
@@ -342,18 +377,18 @@ impl ToTokens for ClassDef {
                         media_blocks_to_tokens(self.get_media_blocks())
                             .unwrap_or_else(|| quote! { vec![] });
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs),*) -> euv_core::CssClass {
-                            let __css_string: String = [#(#css_string_parts),*].concat();
-                            let __unique_name: String = format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-"));
-                            euv_core::CssClass::new_with_rules(__unique_name, __css_string, #pseudo_expr, #media_expr)
+                        #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
+                            let __css_string: String = [#(#all_css_parts),*].concat();
+                            let __unique_name: String = #unique_name_expr;
+                            ::euv_core::CssClass::new_with_rules(__unique_name, __css_string, #pseudo_expr, #media_expr)
                         }
                     });
                 } else {
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs),*) -> euv_core::CssClass {
-                            let __css_string: String = [#(#css_string_parts),*].concat();
-                            let __unique_name: String = format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-"));
-                            euv_core::CssClass::new(__unique_name, __css_string)
+                        #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
+                            let __css_string: String = [#(#all_css_parts),*].concat();
+                            let __unique_name: String = #unique_name_expr;
+                            ::euv_core::CssClass::new(__unique_name, __css_string)
                         }
                     });
                 }
@@ -364,20 +399,23 @@ impl ToTokens for ClassDef {
                 let const_name_token: proc_macro2::TokenStream =
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
-                let all_static: bool = self.get_properties().iter().all(|(_, value)| {
-                    let ClassPropValue::Expr(expr) = value;
-                    is_static_string_expr(expr)
-                }) && self.get_pseudo_blocks().iter().all(|block| {
-                    block.get_properties().iter().all(|(_, value)| {
+                let all_static: bool = !has_extends
+                    && self.get_properties().iter().all(|(_, value)| {
                         let ClassPropValue::Expr(expr) = value;
                         is_static_string_expr(expr)
                     })
-                }) && self.get_media_blocks().iter().all(|block| {
-                    block.get_properties().iter().all(|(_, value)| {
-                        let ClassPropValue::Expr(expr) = value;
-                        is_static_string_expr(expr)
+                    && self.get_pseudo_blocks().iter().all(|block| {
+                        block.get_properties().iter().all(|(_, value)| {
+                            let ClassPropValue::Expr(expr) = value;
+                            is_static_string_expr(expr)
+                        })
                     })
-                });
+                    && self.get_media_blocks().iter().all(|block| {
+                        block.get_properties().iter().all(|(_, value)| {
+                            let ClassPropValue::Expr(expr) = value;
+                            is_static_string_expr(expr)
+                        })
+                    });
                 if all_static {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_properties() {
@@ -393,38 +431,47 @@ impl ToTokens for ClassDef {
                         let media_static: String =
                             media_blocks_to_static_string(self.get_media_blocks());
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static euv_core::CssClass {
-                                static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    euv_core::CssClass::new_with_rules(
+                                    ::euv_core::CssClass::new_with_rules(
                                         #class_name_str.to_string(),
                                         #css_string.to_string(),
-                                        euv_core::CssClass::parse_pseudo_rules(#pseudo_static),
-                                        euv_core::CssClass::parse_media_rules(#media_static),
+                                        ::euv_core::CssClass::parse_pseudo_rules(#pseudo_static),
+                                        ::euv_core::CssClass::parse_media_rules(#media_static),
                                     )
                                 })
                             }
                         });
                     } else {
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static euv_core::CssClass {
-                                static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    euv_core::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
+                                    ::euv_core::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
                                 })
                             }
                         });
                     }
                 } else {
-                    let css_string_parts: Vec<proc_macro2::TokenStream> = self
-                        .get_properties()
+                    let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
+                        .get_extends()
                         .iter()
-                        .map(|(key, value)| match value {
-                            ClassPropValue::Expr(expr) => {
-                                quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
+                        .map(|parent| {
+                            let parent_name: &Ident = parent.get_name();
+                            let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
+                            if parent_args.is_empty() {
+                                quote! { #parent_name().get_style().to_string() + " " }
+                            } else {
+                                quote! { #parent_name(#(#parent_args),*).get_style().to_string() + " " }
                             }
                         })
                         .collect();
+                    for (key, value) in self.get_properties() {
+                        let ClassPropValue::Expr(expr) = value;
+                        all_css_parts
+                            .push(quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " });
+                    }
                     if has_extra {
                         let pseudo_expr: proc_macro2::TokenStream =
                             pseudo_blocks_to_tokens(self.get_pseudo_blocks())
@@ -433,21 +480,21 @@ impl ToTokens for ClassDef {
                             media_blocks_to_tokens(self.get_media_blocks())
                                 .unwrap_or_else(|| quote! { vec![] });
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static euv_core::CssClass {
-                                static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    let __css_string: String = [#(#css_string_parts),*].concat();
-                                    euv_core::CssClass::new_with_rules(#class_name_str.to_string(), __css_string, #pseudo_expr, #media_expr)
+                                    let __css_string: String = [#(#all_css_parts),*].concat();
+                                    ::euv_core::CssClass::new_with_rules(#class_name_str.to_string(), __css_string, #pseudo_expr, #media_expr)
                                 })
                             }
                         });
                     } else {
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static euv_core::CssClass {
-                                static #const_name_token: std::sync::OnceLock<euv_core::CssClass> = std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    let __css_string: String = [#(#css_string_parts),*].concat();
-                                    euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
+                                    let __css_string: String = [#(#all_css_parts),*].concat();
+                                    ::euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
                                 })
                             }
                         });
@@ -458,7 +505,7 @@ impl ToTokens for ClassDef {
     }
 }
 
-/// Converts a `ClassInput` into a token stream of `CssClass` function definitions.
+/// Implementation of `ToTokens` for `ClassInput`, converting class definitions into token streams.
 impl ToTokens for ClassInput {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         for class_def in self.get_classes() {

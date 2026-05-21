@@ -14,6 +14,8 @@ mod watch;
 
 pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
 
+use std::iter::Peekable;
+
 use {
     lombok_macros::*,
     proc_macro::TokenStream,
@@ -142,6 +144,19 @@ pub fn var(input: TokenStream) -> TokenStream {
 }
 
 /// The `component` attribute macro for marking component functions.
+///
+/// This is a pass-through attribute macro that does not modify the item.
+/// It serves as a marker to indicate that the annotated function is a
+/// UI component that returns a `VirtualNode`.
+///
+/// # Arguments
+///
+/// - `TokenStream` - The attribute arguments (unused).
+/// - `TokenStream` - The item being annotated (passed through unchanged).
+///
+/// # Returns
+///
+/// - `TokenStream` - The original item unchanged.
 #[proc_macro_attribute]
 pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item

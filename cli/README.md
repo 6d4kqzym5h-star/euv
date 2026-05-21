@@ -14,7 +14,7 @@
 
 [Api Docs](https://docs.rs/euv-cli/latest/)
 
-> The official CLI tool for the euv UI framework, providing run/build modes with hot reload and wasm-pack integration.
+> The official CLI tool for the euv UI framework, providing run/build/fmt modes with hot reload and wasm-pack integration.
 
 ## Installation
 
@@ -26,7 +26,7 @@ cargo install euv-cli
 
 The CLI uses the pattern `euv <action>` where:
 
-- **Action**: `run` (build + start server) or `build` (build only)
+- **Action**: `run` (build + start server), `build` (build only), or `fmt` (format euv macros)
 
 All `wasm-pack build` arguments are transparently forwarded after `--`.
 
@@ -46,6 +46,42 @@ euv run --crate-path ./example -- --release --target web --out-name euv
 euv run --www-dir public -- --target web --out-name euv
 ```
 
+### Fmt (format euv macros)
+
+Format euv macro invocations (`html!`, `class!`, `css_vars!`, `watch!`) in Rust source files:
+
+```shell
+# Format all .rs files in the current directory (recursive)
+euv fmt
+
+# Format all .rs files in a specific directory
+euv fmt --path ./src
+
+# Format a single file
+euv fmt --path src/main.rs
+
+# Check if formatting is needed without modifying files
+euv fmt --check
+
+# Check a specific path
+euv fmt --path ./src --check
+```
+
+#### Formatting Rules
+
+- Tag name and `{` separated by exactly one space
+- Attribute name immediately followed by `:`, then one space before the value
+- `if { expr }` / `match { expr }` / `for pattern in { expr }` with proper spacing
+- `=>` in `watch!` macros with proper spacing
+- Content inside expression braces `{ expr }` is preserved verbatim; only template-level whitespace is normalized
+
+#### Fmt Options
+
+| Option    | Short | Default | Description                                           |
+| --------- | ----- | ------- | ----------------------------------------------------- |
+| `--path`  | `-p`  | `.`     | Path to the directory or file to format               |
+| `--check` |       | `false` | Check if formatting is needed without modifying files |
+
 ### Build (build only)
 
 ```shell
@@ -56,20 +92,41 @@ euv build -- --target web --out-name euv
 euv build -- --release --target web --out-name euv
 
 # Build with custom crate path and static directory
-euv build --crate-path ./example --www-dir public -- --target web --out-name euv
+euv build -- --release --crate-path ./example --www-dir public -- --target web --out-name euv
 ```
 
 ### Via Cargo
 
+#### Run (build + dev server)
+
 ```shell
 cargo run -p euv-cli -- run --crate-path ./example --port 3000 -- --target web --out-dir www/pkg --out-name euv
-cargo run -p euv-cli -- build --crate-path ./example -- --release --target web --out-dir www/pkg --out-name euv
+```
 
+```shell
 # Custom static directory
 cargo run -p euv-cli -- run --crate-path ./example --www-dir public -- --target web --out-name euv
 ```
 
-### euv Options
+#### Build (build only)
+
+```shell
+cargo run -p euv-cli -- build --crate-path ./example -- --release --target web --out-dir www/pkg --out-name euv
+```
+
+#### Fmt (format euv macros)
+
+```shell
+# Format euv macros
+cargo run -p euv-cli -- fmt --path ./example
+```
+
+```shell
+# Check formatting
+cargo run -p euv-cli -- fmt --check --path ./example
+```
+
+### Options
 
 | Option         | Short | Default | Description                                                                  |
 | -------------- | ----- | ------- | ---------------------------------------------------------------------------- |

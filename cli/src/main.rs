@@ -1,7 +1,8 @@
 //! euv CLI
 //!
-//! The official CLI tool for the euv UI framework, providing
-//! run/build/fmt modes with hot reload and wasm-pack integration.
+//! The official CLI tool for the euv UI framework,
+//! providing run/build/fmt modes with hot reload and
+//! wasm-pack integration.
 
 mod build;
 mod fmt;

@@ -153,6 +153,24 @@ fn find_macro_name_end(chars: &[char], pos: usize, _len: usize) -> usize {
 /// # Returns
 ///
 /// - `bool` - Whether the character is an identifier character.
+///   Checks whether the keyword at the given position is preceded by `r#`,
+///   indicating a Rust raw identifier rather than a keyword.
+///
+/// # Arguments
+///
+/// - `&[char]` - The source character slice.
+/// - `usize` - The position of the keyword.
+///
+/// # Returns
+///
+/// - `bool` - Whether the keyword is preceded by `r#`.
+fn is_raw_prefix(chars: &[char], pos: usize) -> bool {
+    if pos < 2 {
+        return false;
+    }
+    chars[pos - 2] == 'r' && chars[pos - 1] == '#'
+}
+
 fn is_ident_char(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
 }
@@ -529,6 +547,11 @@ fn format_macro_body(body: &str) -> String {
                 continue;
             }
             let colon_prefix: String = find_ident_before(&result);
+            if is_raw_ident_before(&result, &colon_prefix) {
+                result.push(':');
+                i += 1;
+                continue;
+            }
             if !colon_prefix.is_empty() {
                 let before_colon: String = remove_trailing_spaces(&result, colon_prefix.len());
                 result = before_colon;
@@ -603,6 +626,7 @@ fn is_if_keyword(chars: &[char], pos: usize, len: usize) -> bool {
         && chars[pos + 1] == 'f'
         && (pos + 2 >= len || !is_ident_char(chars[pos + 2]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
+        && !is_raw_prefix(chars, pos)
 }
 
 /// Checks if the current position is the start of the `else` keyword.
@@ -626,6 +650,7 @@ fn is_else_keyword(chars: &[char], pos: usize, len: usize) -> bool {
         && chars[pos + 3] == 'e'
         && (pos + 4 >= len || !is_ident_char(chars[pos + 4]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
+        && !is_raw_prefix(chars, pos)
 }
 
 /// Checks if the current position is the start of the `match` keyword.
@@ -650,6 +675,7 @@ fn is_match_keyword(chars: &[char], pos: usize, len: usize) -> bool {
         && chars[pos + 4] == 'h'
         && (pos + 5 >= len || !is_ident_char(chars[pos + 5]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
+        && !is_raw_prefix(chars, pos)
 }
 
 /// Checks if the current position is the start of the `for` keyword.
@@ -672,6 +698,7 @@ fn is_for_keyword(chars: &[char], pos: usize, len: usize) -> bool {
         && chars[pos + 2] == 'r'
         && (pos + 3 >= len || !is_ident_char(chars[pos + 3]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
+        && !is_raw_prefix(chars, pos)
 }
 
 /// Checks if the current position is the start of the `in` keyword.
@@ -693,6 +720,7 @@ fn is_in_keyword(chars: &[char], pos: usize, len: usize) -> bool {
         && chars[pos + 1] == 'n'
         && (pos + 2 >= len || !is_ident_char(chars[pos + 2]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
+        && !is_raw_prefix(chars, pos)
 }
 
 /// Skips spaces (but not newlines) on the same line.
@@ -711,6 +739,25 @@ fn skip_spaces_on_same_line(chars: &[char], mut pos: usize, len: usize) -> usize
         pos += 1;
     }
     pos
+}
+
+/// Checks whether the identifier found before the colon is a Rust raw identifier (r#prefix).
+///
+/// Raw identifiers use the `r#` prefix (e.g., `r#for`), and their colons
+/// should not be formatted as attribute separators.
+///
+/// # Arguments
+///
+/// - `&str` - The result string built so far.
+/// - `&str` - The identifier found before the colon.
+///
+/// # Returns
+///
+/// - `bool` - Whether the identifier is preceded by `r#`.
+fn is_raw_ident_before(result: &str, ident: &str) -> bool {
+    let trimmed: &str = result.trim_end();
+    let search_target: String = format!("r#{}", ident);
+    trimmed.ends_with(&search_target)
 }
 
 /// Finds the identifier immediately before the current position in the result string.

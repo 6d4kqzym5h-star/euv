@@ -17,6 +17,7 @@ impl From<VirtualNode> for PrimaryButtonProps {
                 .try_get_prop("label")
                 .unwrap_or_else(|| "Button".to_string()),
             onclick: node.try_get_event("onclick"),
+            disabled: node.try_get_typed_prop("disabled").unwrap_or(false),
         }
     }
 }

@@ -67,7 +67,7 @@ pub(crate) fn expand_var_macros_in_tokens(
     tokens: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let mut result: Vec<proc_macro2::TokenTree> = Vec::new();
-    let mut iter: std::iter::Peekable<proc_macro2::token_stream::IntoIter> =
+    let mut iter: Peekable<proc_macro2::token_stream::IntoIter> =
         tokens.clone().into_iter().peekable();
     while let Some(token) = iter.next() {
         match &token {
@@ -153,4 +153,61 @@ pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
         }
     }
     result
+}
+
+/// Looks up a CSS pseudo selector by keyword.
+///
+/// Returns the corresponding CSS pseudo selector string for known keywords,
+/// or `None` if the keyword is not recognized.
+///
+/// # Arguments
+///
+/// - `&str` - The keyword to look up (e.g., "hover", "focus", "before").
+///
+/// # Returns
+///
+/// - `Option<&'static str>` - The CSS pseudo selector string if found, or `None`.
+pub(crate) fn lookup_pseudo_selector(keyword: &str) -> Option<&'static str> {
+    match keyword {
+        "hover" => Some(":hover"),
+        "focus" => Some(":focus"),
+        "focus_within" => Some(":focus-within"),
+        "focus_visible" => Some(":focus-visible"),
+        "active" => Some(":active"),
+        "visited" => Some(":visited"),
+        "disabled" => Some(":disabled"),
+        "enabled" => Some(":enabled"),
+        "checked" => Some(":checked"),
+        "readonly" => Some(":read-only"),
+        "readwrite" => Some(":read-write"),
+        "required" => Some(":required"),
+        "optional" => Some(":optional"),
+        "valid" => Some(":valid"),
+        "invalid" => Some(":invalid"),
+        "in_range" => Some(":in-range"),
+        "out_of_range" => Some(":out-of-range"),
+        "placeholder_shown" => Some(":placeholder-shown"),
+        "first_child" => Some(":first-child"),
+        "last_child" => Some(":last-child"),
+        "only_child" => Some(":only-child"),
+        "first_of_type" => Some(":first-of-type"),
+        "last_of_type" => Some(":last-of-type"),
+        "only_of_type" => Some(":only-of-type"),
+        "root" => Some(":root"),
+        "empty" => Some(":empty"),
+        "target" => Some(":target"),
+        "link" => Some(":link"),
+        "any_link" => Some(":any-link"),
+        "before" => Some("::before"),
+        "after" => Some("::after"),
+        "first_line" => Some("::first-line"),
+        "first_letter" => Some("::first-letter"),
+        "selection" => Some("::selection"),
+        "placeholder" => Some("::placeholder"),
+        "backdrop" => Some("::backdrop"),
+        "marker" => Some("::marker"),
+        "spelling_error" => Some("::spelling-error"),
+        "grammar_error" => Some("::grammar-error"),
+        _ => None,
+    }
 }

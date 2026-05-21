@@ -197,16 +197,26 @@ pub fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> NativeEventHand
 
 /// Creates a click event handler that increments the count within the max limit.
 ///
+/// When the disabled signal is true, the handler executes but skips the count update.
+///
 /// # Arguments
 ///
 /// - `Signal<i32>` - The current count signal.
 /// - `Signal<i32>` - The max count signal.
+/// - `Signal<bool>` - The disabled signal.
 ///
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn typed_props_on_increment(count: Signal<i32>, max_count: Signal<i32>) -> NativeEventHandler {
+pub fn typed_props_on_increment(
+    count: Signal<i32>,
+    max_count: Signal<i32>,
+    disabled: Signal<bool>,
+) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+        if disabled.get() {
+            return;
+        }
         let current: i32 = count.get();
         let max: i32 = max_count.get();
         if current < max {
@@ -217,15 +227,24 @@ pub fn typed_props_on_increment(count: Signal<i32>, max_count: Signal<i32>) -> N
 
 /// Creates a click event handler that resets the count to zero.
 ///
+/// When the disabled signal is true, the handler executes but skips the reset.
+///
 /// # Arguments
 ///
 /// - `Signal<i32>` - The current count signal.
+/// - `Signal<bool>` - The disabled signal.
 ///
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn typed_props_on_reset_count(count: Signal<i32>) -> NativeEventHandler {
+pub fn typed_props_on_reset_count(
+    count: Signal<i32>,
+    disabled: Signal<bool>,
+) -> NativeEventHandler {
     NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+        if disabled.get() {
+            return;
+        }
         count.set(0);
     })
 }

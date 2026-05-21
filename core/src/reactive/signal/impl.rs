@@ -96,6 +96,8 @@ where
         }
     }
 }
+
+/// Implementation of signal inner construction.
 impl<T> SignalInner<T>
 where
     T: Clone,

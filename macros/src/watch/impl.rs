@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Parses the `watch!` macro input.
+/// Implementation of `Parse` for `WatchInput`, parsing the `watch!` macro input.
 ///
 /// Syntax: `watch!(signal1, signal2, ..., |param1, param2, ...| { body })`
 ///
@@ -46,7 +46,7 @@ impl Parse for WatchInput {
     }
 }
 
-/// Converts a `WatchInput` into reactive subscription code.
+/// Implementation of `ToTokens` for `WatchInput`, converting watch input into reactive subscription code.
 ///
 /// Generated code:
 /// 1. Uses a `use_signal(|| false)` guard to ensure subscriptions and
@@ -87,7 +87,7 @@ impl ToTokens for WatchInput {
                 quote! {
                     {
                         let #signal_clone: _ = #signal_clone;
-                        let __euv_watch_fire_clone: std::rc::Rc<std::cell::RefCell<dyn std::ops::FnMut()>> = std::rc::Rc::clone(&__euv_watch_fire);
+                        let __euv_watch_fire_clone: ::std::rc::Rc<std::cell::RefCell<dyn ::std::ops::FnMut()>> = ::std::rc::Rc::clone(&__euv_watch_fire);
                         #signal_clone.subscribe(move || {
                             (__euv_watch_fire_clone.borrow_mut())();
                         });
@@ -97,13 +97,13 @@ impl ToTokens for WatchInput {
             .collect();
         tokens.extend(quote! {{
             #(let #signal_clones = #signal_exprs;)*
-            let __euv_watch_subscribed: euv_core::Signal<bool> = euv_core::use_signal(|| false);
+            let __euv_watch_subscribed: ::euv_core::Signal<bool> = ::euv_core::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
-                let __euv_watch_fire: std::rc::Rc<std::cell::RefCell<dyn std::ops::FnMut()>> = std::rc::Rc::new(std::cell::RefCell::new(move || {
+                let __euv_watch_fire: ::std::rc::Rc<std::cell::RefCell<dyn ::std::ops::FnMut()>> = ::std::rc::Rc::new(std::cell::RefCell::new(move || {
                     #(#all_gets)*
                     { #(#body)* }
                 }));
-                euv_core::with_suppressed_updates(|| {
+                ::euv_core::with_suppressed_updates(|| {
                     #(#subscribe_calls)*
                     {
                         #(let #param_names = #get_calls;)*

@@ -20,5 +20,6 @@ use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures
 #[wasm_bindgen]
 pub fn main() {
     console_error_panic_hook::set_once();
+    inject_app_global_css();
     mount("#app", app);
 }

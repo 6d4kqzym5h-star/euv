@@ -170,11 +170,10 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
     }
 }
 
-/// Executes a build-only pipeline: builds WASM and removes unnecessary files.
+/// Executes a build-only pipeline: formats euv macros, builds WASM and removes unnecessary files.
 ///
-/// Unlike `run_build_pipeline`, this skips hyperlane-cli fmt,
-/// HTML generation, and reload notifications — only the essential WASM
-/// build artifacts are kept.
+/// Unlike `run_build_pipeline`, this skips reload notifications
+/// — only the essential WASM build artifacts are kept.
 ///
 /// # Arguments
 ///
@@ -184,6 +183,10 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 ///
 /// - `Result<()>` - Indicates success or failure of the build.
 pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
+    let src_path: PathBuf = args.crate_path.join("src");
+    if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
+        log::warn!("euv fmt error: {}", error);
+    }
     build_wasm(args).await?;
     log::info!("WASM build completed successfully");
     let pkg_dir: PathBuf = resolve_out_dir(args);
@@ -250,7 +253,7 @@ pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
     }
 }
 
-/// Executes a full build pipeline: run hyperlane-cli fmt,
+/// Executes a full build pipeline: euv fmt,
 /// build WASM, notify reload channel, and generate updated HTML.
 ///
 /// # Arguments
@@ -265,6 +268,10 @@ pub(crate) async fn run_build_pipeline(
     args: &ModeArgs,
     reload_tx: Option<&broadcast::Sender<ReloadEvent>>,
 ) -> Result<String> {
+    let src_path: PathBuf = args.crate_path.join("src");
+    if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
+        log::warn!("euv fmt error: {}", error);
+    }
     if let Err(error) = run_hyperlane_fmt().await {
         log::warn!("hyperlane-cli fmt error: {}", error);
     }
