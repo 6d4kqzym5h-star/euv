@@ -13,6 +13,9 @@ pub(crate) const RELOAD_ROUTE_PLACEHOLDER: &str = "__RELOAD_ROUTE__";
 /// Used by the live-reload script in the HTML template and the server route registration.
 pub(crate) const RELOAD_ROUTE: &str = "/__euv_reload";
 
+/// The wasm-pack flag indicating a release build.
+pub(crate) const RELEASE_FLAG: &str = "--release";
+
 /// The `index.html` template for the development profile.
 ///
 /// Includes a live-reload `<script>` block that connects to the
@@ -22,8 +25,7 @@ pub(crate) const RELOAD_ROUTE: &str = "/__euv_reload";
 /// - `{"type":"Error","message":"..."}` — a build error occurred.
 ///
 /// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
-#[cfg(debug_assertions)]
-pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
+pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
 <html>
   <head>
     <meta
@@ -69,8 +71,7 @@ pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
 /// A minimal `index.html` without any live-reload instrumentation.
 /// Used when building for release to produce a clean, static entry point.
 /// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
-#[cfg(not(debug_assertions))]
-pub(crate) const INDEX_HTML: &str = r#"<!doctype html>
+pub(crate) const INDEX_HTML_RELEASE: &str = r#"<!doctype html>
 <html>
   <head>
     <meta

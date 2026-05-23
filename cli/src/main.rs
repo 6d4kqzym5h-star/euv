@@ -156,7 +156,8 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
         Err(error) => {
             log::error!("Initial build pipeline failed: {}", error);
             let import_path: String = resolve_import_path(&args);
-            generate_html(&www_absolute, &import_path).await?
+            let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+            generate_html(&www_absolute, &import_path, is_release).await?
         }
     };
     let (reload_tx, _): (

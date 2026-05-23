@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.3.25"
+version = "0.3.26"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -116,7 +116,7 @@ lto = true
 panic = "unwind"
 debug = false
 codegen-units = 1
-strip = "debuginfo"
+strip = true
 
 [profile.release.package.euv-cli]
 opt-level = 3

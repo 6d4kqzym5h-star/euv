@@ -24,11 +24,10 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
     APP_STATE.get().cloned()
 }
 
-/// Generates `index.html` based on the compile-time profile.
+/// Generates `index.html` based on the build profile.
 ///
-/// Uses the `INDEX_HTML` constant selected by `#[cfg]` at compile time:
-/// - `debug_assertions` enabled → dev template with live-reload script
-/// - `debug_assertions` disabled → release template (minimal production HTML)
+/// Uses `INDEX_HTML_RELEASE` when `is_release` is `true` (no live-reload script),
+/// otherwise uses `INDEX_HTML_DEV` (includes live-reload instrumentation).
 ///
 /// Then writes the template with the import path placeholder replaced to disk.
 ///
@@ -36,12 +35,22 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
 ///
 /// - `&Path` - The path to the www directory where `index.html` will be written.
 /// - `&str` - The JS import path relative to the www directory (e.g. `./pkg/euv` or `./euv`).
+/// - `bool` - Whether to use the release template (no live-reload).
 ///
 /// # Returns
 ///
 /// - `Result<String>` - The generated HTML content written to disk.
-pub(crate) async fn generate_html(www_dir: &Path, import_path: &str) -> Result<String> {
-    let html: String = INDEX_HTML
+pub(crate) async fn generate_html(
+    www_dir: &Path,
+    import_path: &str,
+    is_release: bool,
+) -> Result<String> {
+    let template: &str = if is_release {
+        INDEX_HTML_RELEASE
+    } else {
+        INDEX_HTML_DEV
+    };
+    let html: String = template
         .replace(IMPORT_PATH_PLACEHOLDER, import_path)
         .replace(RELOAD_ROUTE_PLACEHOLDER, RELOAD_ROUTE);
     let index_path: PathBuf = www_dir.join("index.html");

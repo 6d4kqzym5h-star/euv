@@ -193,7 +193,8 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     clean_pkg_dir(&pkg_dir).await;
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
-    generate_html(&www_dir, &import_path).await?;
+    let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+    generate_html(&www_dir, &import_path, is_release).await?;
     Ok(())
 }
 
@@ -291,7 +292,8 @@ pub(crate) async fn run_build_pipeline(
     }
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
-    let html: String = generate_html(&www_dir, &import_path).await?;
+    let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+    let html: String = generate_html(&www_dir, &import_path, is_release).await?;
     Ok(html)
 }
 
