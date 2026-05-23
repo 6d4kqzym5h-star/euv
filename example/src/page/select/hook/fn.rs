@@ -46,7 +46,7 @@ pub fn validate_select_textarea(state: UseSelect) {
 ///
 /// - `NativeEventHandler` - A change handler for the country select.
 pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Change, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>()
         {
@@ -66,7 +66,7 @@ pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(textarea) = target.clone().dyn_into::<HtmlTextAreaElement>()
         {
@@ -86,7 +86,7 @@ pub fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to submit feedback.
 pub fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_select_textarea(state);
         let textarea_error_value: String = state.get_textarea_error().get();
         if textarea_error_value.is_empty() {

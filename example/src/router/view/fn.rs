@@ -38,7 +38,7 @@ pub fn navigate(route: &str) {
 ///
 /// - `NativeEventHandler` - An event handler for click events.
 pub fn link_handler(route: String) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         navigate(&route);
     })
 }

@@ -101,7 +101,7 @@ pub fn validate_form_all(state: UseForm) {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn form_on_input_username(state: UseForm) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -121,7 +121,7 @@ pub fn form_on_input_username(state: UseForm) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn form_on_input_email(state: UseForm) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -141,7 +141,7 @@ pub fn form_on_input_email(state: UseForm) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn form_on_input_password(state: UseForm) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -161,7 +161,7 @@ pub fn form_on_input_password(state: UseForm) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A change handler.
 pub fn form_on_change_agree(state: UseForm) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Change, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -181,7 +181,7 @@ pub fn form_on_change_agree(state: UseForm) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler for form submission.
 pub fn form_on_submit(state: UseForm) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_form_all(state);
         let username_error_value: String = state.get_username_error().get();
         let email_error_value: String = state.get_email_error().get();

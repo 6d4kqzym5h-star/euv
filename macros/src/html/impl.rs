@@ -2,6 +2,15 @@ use crate::*;
 
 /// Implementation of `Parse` for `HtmlRoot`, parsing zero or more HTML nodes.
 impl Parse for HtmlRoot {
+    /// Parses the root of an `html!` macro invocation.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `HtmlRoot`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let children: Vec<HtmlNode> = parse_html_children(input)?;
         Ok(HtmlRoot { children })
@@ -14,6 +23,11 @@ impl Parse for HtmlRoot {
 /// - 1 child → the child's token stream (no Fragment wrapper)
 /// - N children → `VirtualNode::Fragment(vec![...])`
 impl ToTokens for HtmlRoot {
+    /// Converts the root HTML nodes into a single virtual node token stream.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let node_tokens: proc_macro2::TokenStream = children_to_node_tokens(self.get_children());
         tokens.extend(node_tokens);
@@ -22,6 +36,15 @@ impl ToTokens for HtmlRoot {
 
 /// Implementation of `Parse` for `HtmlNode`, parsing HTML input into a node.
 impl Parse for HtmlNode {
+    /// Parses a single HTML node from the token stream.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `HtmlNode`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         if input.peek(LitStr) {
             let lit: LitStr = input.parse()?;
@@ -59,6 +82,15 @@ impl Parse for HtmlNode {
 
 /// Implementation of `Parse` for `HtmlIf`, parsing reactive `if` conditionals.
 impl Parse for HtmlIf {
+    /// Parses a reactive `if` conditional into an `HtmlIf` AST.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `HtmlIf`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut branches: Vec<(Option<Expr>, Vec<HtmlNode>)> = Vec::new();
         input.parse::<Token![if]>()?;
@@ -98,6 +130,15 @@ impl Parse for HtmlIf {
 /// without requiring outer braces. Bodies are terminated by `,` or end of the
 /// match block.
 impl Parse for HtmlMatch {
+    /// Parses a reactive `match` expression into an `HtmlMatch` AST.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `HtmlMatch`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![match]>()?;
         let scrutinee_content;
@@ -125,6 +166,15 @@ impl Parse for HtmlMatch {
 
 /// Implementation of `Parse` for `HtmlFor`, parsing reactive for loops.
 impl Parse for HtmlFor {
+    /// Parses a reactive `for` loop into an `HtmlFor` AST.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `HtmlFor`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![for]>()?;
         let mut pattern_tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
@@ -149,6 +199,15 @@ impl Parse for HtmlFor {
 
 /// Implementation of `Parse` for `HtmlElement`, parsing HTML element syntax.
 impl Parse for HtmlElement {
+    /// Parses an HTML element with its attributes and children.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `HtmlElement`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let tag: Ident = input.parse()?;
         let tag_str: String = tag.to_string();
@@ -214,6 +273,11 @@ impl Parse for HtmlElement {
 
 /// Implementation of `ToTokens` for `HtmlNode`, converting HTML nodes into virtual node tokens.
 impl ToTokens for HtmlNode {
+    /// Converts this HTML node into its corresponding virtual node token stream.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             HtmlNode::Element(element) => element.to_tokens(tokens),
@@ -312,6 +376,11 @@ impl ToTokens for HtmlNode {
 
 /// Implementation of `ToTokens` for `HtmlStylePropValue`, converting style property values into tokens.
 impl ToTokens for HtmlStylePropValue {
+    /// Converts this style property value into its token stream representation.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             HtmlStylePropValue::Literal(s) => s.to_tokens(tokens),
@@ -331,6 +400,11 @@ impl ToTokens for HtmlStylePropValue {
 /// signal via `create_reactive_style_attribute`.
 /// For static values (`Expr` and `Style` without `If`), the value is emitted directly.
 impl ToTokens for HtmlAttrValue {
+    /// Converts this attribute value into its token stream representation.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
@@ -415,6 +489,11 @@ impl ToTokens for HtmlAttrValue {
 /// entire macro invocation from being highlighted when a type error occurs in
 /// generated framework code.
 impl ToTokens for HtmlElement {
+    /// Converts this HTML element into its virtual element token stream.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let tag_name: String = self.get_tag().to_string();
         let is_component: bool = self.get_is_component();

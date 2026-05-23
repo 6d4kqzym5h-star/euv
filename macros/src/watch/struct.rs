@@ -3,7 +3,7 @@ use crate::*;
 /// The parsed input of the `watch!` macro.
 ///
 /// Contains a list of signal expressions and a closure body with parameter names.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct WatchInput {
     /// The signal expressions to watch.
     #[get(pub(crate))]

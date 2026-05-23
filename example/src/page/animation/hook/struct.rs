@@ -5,14 +5,11 @@ use crate::*;
 pub struct UseProgress {
     /// The progress value (0-100).
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub value: Signal<i32>,
     /// Whether the progress is currently running.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub running: Signal<bool>,
     /// The active interval handle, if any.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub handle: Signal<Option<IntervalHandle>>,
 }

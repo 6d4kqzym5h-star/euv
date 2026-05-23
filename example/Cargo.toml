@@ -31,5 +31,11 @@ lombok-macros = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
 console_error_panic_hook = { workspace = true }
 
+[package.metadata.wasm-pack.profile.dev]
+wasm-opt = false
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [lib]
 crate-type = ["cdylib"]

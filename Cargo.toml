@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.3.24"
+version = "0.3.25"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -87,6 +87,7 @@ web-sys = { version = "0.3", features = [
     "DataTransfer",
     "SubmitEvent",
     "HtmlCollection",
+    "NodeList",
 ] }
 
 [dependencies]

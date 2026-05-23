@@ -51,7 +51,7 @@ pub fn validate_modal_email(state: UseModal) {
 ///
 /// - `NativeEventHandler` - A click handler to open the basic modal.
 pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_show_basic().set(true);
     })
 }
@@ -66,7 +66,7 @@ pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to open the confirm modal.
 pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_show_confirm().set(true);
         state.get_confirm_result().set(String::new());
     })
@@ -82,7 +82,7 @@ pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to open the form modal.
 pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_show_form().set(true);
         state.get_modal_name().set(String::new());
         state.get_modal_email().set(String::new());
@@ -103,7 +103,7 @@ pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to confirm the action.
 pub fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state
             .get_confirm_result()
             .set("Action confirmed!".to_string());
@@ -121,7 +121,7 @@ pub fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -141,7 +141,7 @@ pub fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -161,7 +161,7 @@ pub fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to submit the form modal.
 pub fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_modal_name(state);
         validate_modal_email(state);
         let name_error_value: String = state.get_name_error().get();

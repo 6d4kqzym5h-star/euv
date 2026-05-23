@@ -2,6 +2,61 @@ use crate::*;
 
 /// Maps each `NativeEventName` variant to its corresponding DOM event string.
 impl NativeEventName {
+    /// All DOM event names that should be delegated at the window level.
+    ///
+    /// Excludes `EuvSignalUpdate` (internal framework dispatch) and `Other`
+    /// (user-defined events which are registered on-demand). These are
+    /// registered once at mount time so that no per-element
+    /// `addEventListener` calls are ever needed.
+    pub(crate) const DELEGATABLE_EVENT_NAMES: [&str; 46] = [
+        "click",
+        "dblclick",
+        "mousedown",
+        "mouseup",
+        "mousemove",
+        "mouseenter",
+        "mouseleave",
+        "mouseover",
+        "mouseout",
+        "contextmenu",
+        "input",
+        "keydown",
+        "keyup",
+        "keypress",
+        "focus",
+        "blur",
+        "focusin",
+        "focusout",
+        "submit",
+        "change",
+        "drag",
+        "dragstart",
+        "dragend",
+        "dragover",
+        "dragenter",
+        "dragleave",
+        "drop",
+        "touchstart",
+        "touchend",
+        "touchmove",
+        "touchcancel",
+        "wheel",
+        "copy",
+        "cut",
+        "paste",
+        "play",
+        "pause",
+        "ended",
+        "loadeddata",
+        "canplay",
+        "volumechange",
+        "timeupdate",
+        "scroll",
+        "animationstart",
+        "animationend",
+        "transitionend",
+    ];
+
     /// Returns the string representation of this event name for DOM binding.
     ///
     /// Static variants return `Cow::Borrowed` (zero allocation), while
@@ -79,6 +134,14 @@ impl NativeEventName {
 /// Implements `Display` for `NativeEventName` by delegating to `as_str`.
 impl std::fmt::Display for NativeEventName {
     /// Formats this event name as a string.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>`: The formatter.
+    ///
+    /// # Returns
+    ///
+    /// - `std::fmt::Result`: The formatting result.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
     }

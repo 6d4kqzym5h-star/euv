@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Each parameter has a name (identifier), an explicit type annotation,
 /// and is used as a placeholder in CSS variable values.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct CssVarParam {
     /// The parameter name identifier.
     #[get(pub(crate))]
@@ -19,7 +19,7 @@ pub(crate) struct CssVarParam {
 /// A single CSS variables block definition parsed from the `css_vars!` macro.
 ///
 /// Contains visibility, name, optional parameters, and variable definitions.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct CssVarDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
     #[get(pub(crate))]
@@ -40,7 +40,7 @@ pub(crate) struct CssVarDef {
 }
 
 /// The entire `css_vars!` macro input, containing multiple CSS variable block definitions.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct CssVarInput {
     /// The list of CSS variable block definitions.
     #[get(pub(crate))]

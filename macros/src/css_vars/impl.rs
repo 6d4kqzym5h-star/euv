@@ -2,6 +2,15 @@ use crate::*;
 
 /// Implementation of `Parse` for `CssVarInput`, parsing the `css_vars!` macro input.
 impl Parse for CssVarInput {
+    /// Parses the `css_vars!` macro input into a `CssVarInput` AST.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `CssVarInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut defs: Vec<CssVarDef> = Vec::new();
         while !input.is_empty() {
@@ -64,6 +73,11 @@ impl Parse for CssVarInput {
 /// the CSS custom properties into the DOM and returns a reference to the class.
 /// The CSS key names are prefixed with `--`.
 impl ToTokens for CssVarDef {
+    /// Converts this CSS variable definition into token stream constructing a `CssClass`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let vis: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
@@ -151,6 +165,11 @@ impl ToTokens for CssVarDef {
 
 /// Implementation of `ToTokens` for `CssVarInput`, converting CSS variable definitions into token streams.
 impl ToTokens for CssVarInput {
+    /// Converts all CSS variable definitions into token streams.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         for css_var_def in self.get_defs() {
             css_var_def.to_tokens(tokens);

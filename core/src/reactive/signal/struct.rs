@@ -3,7 +3,7 @@ use crate::*;
 /// Inner state of a signal, holding the value and subscribed listeners.
 ///
 /// This struct is not exposed directly; use `Signal` instead.
-#[derive(CustomDebug, Data)]
+#[derive(CustomDebug, Data, New)]
 pub(crate) struct SignalInner<T>
 where
     T: Clone,
@@ -30,21 +30,27 @@ where
 /// A reactive signal handle.
 ///
 /// Allows reading, writing, and subscribing to changes.
-/// Implements `Copy` for ergonomic use; all copies share the same underlying state.
-///
-/// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
-/// entire program. This is safe in single-threaded WASM contexts where no
-/// concurrent access can occur.
-#[derive(CustomDebug, Data)]
+/// Implements `Clone` and `Copy` for ergonomic use; all copies share the same
+/// underlying state. The inner state is heap-allocated via `Rc<RefCell<>>` and
+/// tracked in a global registry to prevent premature deallocation. The `Copy`
+/// semantics are safe because only the pointer address is copied — the actual
+/// `Rc` reference is held by the registry for the lifetime of the program.
+#[derive(CustomDebug, Data, Default, Eq, New, PartialEq)]
 pub struct Signal<T>
 where
     T: Clone + PartialEq + 'static,
 {
-    /// Raw pointer to the heap-allocated signal inner state.
+    /// Address of the heap-allocated inner state.
     #[debug(skip)]
-    #[get(pub(crate))]
+    #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
-    pub(crate) inner: *mut SignalInner<T>,
+    pub(crate) inner: usize,
+    /// Marker for the generic type parameter (uses fn pointer to be `Copy`
+    /// regardless of `T`).
+    #[debug(skip)]
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
+    pub(crate) _marker: std::marker::PhantomData<fn() -> T>,
 }
 
 /// A `Sync` wrapper for single-threaded global `Signal` access.
@@ -53,12 +59,28 @@ where
 /// (e.g., WASM). It implements `Sync` to allow usage as a `static`
 /// variable, but concurrent access from multiple threads would be
 /// undefined behavior.
-#[derive(CustomDebug)]
+#[derive(CustomDebug, Data, New)]
 pub struct SignalCell<T>
 where
     T: Clone + PartialEq + 'static,
 {
     /// Interior-mutable storage for an optional signal handle.
     #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }
+
+/// A `Sync` wrapper for single-threaded global `HashMap` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct SignalInnerRegistryCell(
+    /// Interior-mutable storage for the signal inner registry.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<Option<HashMap<usize, Rc<dyn Any>>>>,
+);

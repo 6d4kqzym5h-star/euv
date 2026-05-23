@@ -5,10 +5,8 @@ use crate::*;
 pub struct UseLifecycle {
     /// The render count.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub render_count: Signal<i32>,
     /// The event log entries.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub logs: Signal<Vec<String>>,
 }

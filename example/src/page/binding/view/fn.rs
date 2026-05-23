@@ -410,8 +410,8 @@ pub fn page_component_binding() -> VirtualNode {
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();
     let typed_state: UseTypedPropsDemo = use_typed_props_demo();
     let callback_state: UseCustomCallbackDemo = use_custom_callback_demo();
-    let callback_text: String = callback_state.get_text_value().get();
-    let last_event: String = callback_state.get_last_event().get();
+    let callback_text: Signal<String> = callback_state.get_text_value();
+    let last_event: Signal<String> = callback_state.get_last_event();
     html! {
         div {
             class: c_page_container()
@@ -524,7 +524,11 @@ pub fn page_component_binding() -> VirtualNode {
                         "Text: "
                         span {
                             class: c_event_highlight()
-                            { if callback_text.is_empty() { "(empty)".to_string() } else { callback_text.clone() } }
+                            if { callback_text.get().is_empty() } {
+                                "(empty)"
+                            } else {
+                                callback_text
+                            }
                         }
                     }
                     p {
@@ -532,12 +536,12 @@ pub fn page_component_binding() -> VirtualNode {
                         "Last event: "
                         span {
                             class: c_binding_typed_prop_value()
-                            last_event
+                            { last_event.get() }
                         }
                     }
                 }
                 callback_input {
-                    on_change: custom_on_change(callback_state.get_text_value(), "on_change".to_string())
+                    on_change: custom_on_change(callback_state.get_text_value(), callback_state.get_last_event(), "on_change".to_string())
                     on_submit: custom_on_submit(callback_state.get_last_event(), "on_submit".to_string())
                     on_reset: custom_on_reset(callback_state.get_text_value(), callback_state.get_last_event(), "on_reset".to_string())
                 }

@@ -7,6 +7,15 @@ use crate::*;
 /// The expressions before the closure are signal expressions.
 /// The closure parameters correspond to `.get()` values of the respective signals.
 impl Parse for WatchInput {
+    /// Parses the `watch!` macro input into a `WatchInput` AST.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `WatchInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut signals: Vec<Expr> = Vec::new();
         while !input.peek(Token![|]) {
@@ -61,7 +70,20 @@ impl Parse for WatchInput {
 /// 4. Subsequent render_fn invocations skip the block entirely — the body
 ///    only fires via the `subscribe` callbacks when a watched signal
 ///    actually changes.
+///
+/// Uses `Box::leak` raw pointer pattern instead of `Rc<RefCell<>>` to
+/// avoid interior mutability. The fire closure is double-boxed
+/// (`Box<Box<dyn FnMut()>>`) so that the outer `Box` is sized and has a
+/// thin pointer that can be safely cast to `usize`. The address is captured
+/// in each subscribe callback and cast back for invocation. This is safe in
+/// single-threaded WASM contexts and eliminates `RefCell` borrow conflicts
+/// that occur when watch callbacks trigger cascading signal updates.
 impl ToTokens for WatchInput {
+    /// Converts this watch input into reactive subscription token stream.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let signal_clones: Vec<Ident> = (0..self.get_signals().len())
             .map(|i: usize| Ident::new(&format!("__euv_watch_signal_{}", i), Span::call_site()))
@@ -86,10 +108,10 @@ impl ToTokens for WatchInput {
             .map(|signal_clone| {
                 quote! {
                     {
-                        let #signal_clone: _ = #signal_clone;
-                        let __euv_watch_fire_clone: ::std::rc::Rc<std::cell::RefCell<dyn ::std::ops::FnMut()>> = ::std::rc::Rc::clone(&__euv_watch_fire);
+                        let __euv_watch_fire_addr: usize = __euv_watch_fire_addr;
                         #signal_clone.subscribe(move || {
-                            (__euv_watch_fire_clone.borrow_mut())();
+                            let __euv_fire_ref: &mut Box<dyn ::std::ops::FnMut()> = unsafe { &mut *(__euv_watch_fire_addr as *mut Box<dyn ::std::ops::FnMut()>) };
+                            __euv_fire_ref();
                         });
                     }
                 }
@@ -99,10 +121,11 @@ impl ToTokens for WatchInput {
             #(let #signal_clones = #signal_exprs;)*
             let __euv_watch_subscribed: ::euv_core::Signal<bool> = ::euv_core::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
-                let __euv_watch_fire: ::std::rc::Rc<std::cell::RefCell<dyn ::std::ops::FnMut()>> = ::std::rc::Rc::new(std::cell::RefCell::new(move || {
+                let __euv_watch_fire: &mut Box<dyn ::std::ops::FnMut()> = Box::leak(Box::new(Box::new(move || {
                     #(#all_gets)*
                     { #(#body)* }
-                }));
+                }) as Box<dyn ::std::ops::FnMut()>));
+                let __euv_watch_fire_addr: usize = __euv_watch_fire as *mut Box<dyn ::std::ops::FnMut()> as usize;
                 ::euv_core::with_suppressed_updates(|| {
                     #(#subscribe_calls)*
                     {

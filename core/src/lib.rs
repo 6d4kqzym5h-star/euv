@@ -13,19 +13,15 @@ pub use {event::*, reactive::*, renderer::*, vdom::*};
 use std::{
     any::Any,
     borrow::Cow,
-    cell::UnsafeCell,
-    collections::HashMap,
+    cell::{RefCell, RefMut, UnsafeCell},
+    collections::{HashMap, HashSet},
     mem::take,
     ops::{Deref, DerefMut},
-    ptr::null_mut,
+    rc::Rc,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
-#[cfg(test)]
-use std::{cell::Cell, rc::Rc};
 
-#[cfg(target_arch = "wasm32")]
-use {
-    js_sys::{Function, Reflect},
-    wasm_bindgen::closure,
-};
-use {lombok_macros::*, wasm_bindgen::JsCast, wasm_bindgen::prelude::*, web_sys::*};
+use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen::*, web_sys::*};
+
+#[cfg(test)]
+use std::cell::Cell;

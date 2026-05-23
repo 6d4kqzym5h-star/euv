@@ -5,7 +5,7 @@ use crate::*;
 /// Each RenderEffect tracks which signals it depends on, and when any of those
 /// signals change, the effect is re-executed automatically. Before each
 /// re-execution, old dependencies are cleaned up to prevent listener accumulation.
-#[derive(CustomDebug, Data)]
+#[derive(CustomDebug, Data, New)]
 pub(crate) struct RenderEffectInner {
     /// The effect closure to re-execute when dependencies change.
     #[debug(skip)]
@@ -45,13 +45,53 @@ pub(crate) struct RenderEffectInner {
 /// Unlike the global `__euv_signal_update__` mechanism which broadcasts to
 /// all DynamicNodes, a RenderEffect only re-runs when signals it actually
 /// reads have changed, enabling fine-grained reactive updates.
-///
-/// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
-/// entire program. This is safe in single-threaded WASM contexts.
-#[derive(Clone, Copy, Data, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, CustomDebug, Data, New)]
 pub struct RenderEffect {
-    /// Address of the heap-allocated inner state.
-    #[get(pub(crate), type(copy))]
+    /// Shared reference to the heap-allocated inner state.
+    #[debug(skip)]
+    #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) inner: usize,
+    pub(crate) inner: Rc<RefCell<RenderEffectInner>>,
 }
+
+/// A `Sync` wrapper for single-threaded global `HashMap` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct EffectSubscribersCell(
+    /// Interior-mutable storage for the effect subscribers registry.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<Option<HashMap<usize, Vec<usize>>>>,
+);
+
+/// A `Sync` wrapper for single-threaded global `Option<usize>` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct CurrentEffectCell(
+    /// Interior-mutable storage for the current effect address.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<Option<usize>>,
+);
+
+/// A `Sync` wrapper for single-threaded global `HashMap` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct RenderEffectRegistryCell(
+    /// Interior-mutable storage for the render effect registry.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<Option<HashMap<usize, Rc<RefCell<RenderEffectInner>>>>>,
+);

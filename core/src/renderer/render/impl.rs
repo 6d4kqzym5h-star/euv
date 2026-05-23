@@ -2,27 +2,14 @@ use crate::*;
 
 /// Implementation of the virtual DOM renderer.
 impl Renderer {
-    /// Creates a new `Renderer` targeting the given root DOM element.
-    ///
-    /// # Arguments
-    ///
-    /// - `Element` - The root DOM element to render into.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - A new renderer instance.
-    pub fn new(root: Element) -> Self {
-        Renderer {
-            root,
-            current_tree: None,
-        }
-    }
-
     /// Renders the given virtual DOM tree into the real DOM.
     ///
+    /// If a previous tree exists, patches the existing DOM to match the new tree.
+    /// Otherwise, creates new DOM nodes from scratch and appends them to the root.
+    ///
     /// # Arguments
     ///
-    /// - `VirtualNode` - The virtual DOM tree to render.
+    /// - `VirtualNode`: The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         if let Some(old_vnode) = self.try_get_current_tree() {
@@ -39,6 +26,11 @@ impl Renderer {
     }
 
     /// Patches the root DOM tree by replacing the single child of `self.root`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The old virtual node to patch from.
+    /// - `&VirtualNode`: The new virtual node to patch to.
     fn patch_root(&mut self, old_node: &VirtualNode, new_node: &VirtualNode) {
         let dom_child: Option<Node> = self.get_root().first_child();
         let is_element: bool = if let Some(ref dom_child) = dom_child {
@@ -59,6 +51,12 @@ impl Renderer {
     }
 
     /// Patches an existing DOM node to match the new virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The old virtual node.
+    /// - `&VirtualNode`: The new virtual node.
+    /// - `&Element`: The real DOM element to patch.
     fn patch_node(
         &mut self,
         old_node: &VirtualNode,
@@ -67,7 +65,7 @@ impl Renderer {
     ) {
         match (old_node, new_node) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => {
-                if old_text.get_content() != new_text.get_content() {
+                if old_text != new_text {
                     dom_element.set_text_content(Some(new_text.get_content()));
                 }
             }
@@ -85,9 +83,10 @@ impl Renderer {
                     key: _new_key,
                 },
             ) => {
-                if !Self::tags_equal(old_tag, new_tag) {
+                if old_tag != new_tag {
                     let new_dom: Node = self.create_dom_node(new_node);
                     if let Some(parent) = dom_element.parent_node() {
+                        self.cleanup_dom_subtree(dom_element);
                         parent.replace_child(&new_dom, dom_element).unwrap();
                     }
                     return;
@@ -102,6 +101,7 @@ impl Renderer {
             _ => {
                 let new_dom: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
+                    self.cleanup_dom_subtree(dom_element);
                     parent.replace_child(&new_dom, dom_element).unwrap();
                 }
             }
@@ -109,27 +109,42 @@ impl Renderer {
     }
 
     /// Patches attributes of an element, adding, removing, or updating as needed.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The DOM element whose attributes to patch.
+    /// - `&[AttributeEntry]`: The old attribute list.
+    /// - `&[AttributeEntry]`: The new attribute list.
     fn patch_attributes(
         &mut self,
         element: &Element,
         old_attrs: &[AttributeEntry],
         new_attrs: &[AttributeEntry],
     ) {
+        let old_map: HashMap<&str, &AttributeValue> = old_attrs
+            .iter()
+            .map(|attr: &AttributeEntry| (attr.get_name().as_str(), attr.get_value()))
+            .collect();
+        let new_map: HashMap<&str, ()> = new_attrs
+            .iter()
+            .map(|attr: &AttributeEntry| (attr.get_name().as_str(), ()))
+            .collect();
         for old_attr in old_attrs {
-            let removed: bool = !new_attrs
-                .iter()
-                .any(|new_attr| new_attr.get_name() == old_attr.get_name());
-            if removed {
+            if !new_map.contains_key(old_attr.get_name().as_str()) {
+                if let AttributeValue::Event(_) = old_attr.get_value()
+                    && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
+                    && let Ok(euv_id) = euv_id_str.parse::<usize>()
+                {
+                    cleanup_event_handler(euv_id, old_attr.get_name());
+                }
                 remove_dom_attribute_or_property(element, old_attr.get_name());
             }
         }
         for new_attr in new_attrs {
-            let old_value: Option<&AttributeValue> = old_attrs
-                .iter()
-                .find(|old_attr| old_attr.get_name() == new_attr.get_name())
-                .map(AttributeEntry::get_value);
+            let old_value: Option<&AttributeValue> =
+                old_map.get(new_attr.get_name().as_str()).copied();
             let should_set: bool = match old_value {
-                Some(old_val) => !Self::attribute_values_equal(old_val, new_attr.get_value()),
+                Some(old_val) => old_val != new_attr.get_value(),
                 None => true,
             };
             if should_set {
@@ -166,60 +181,27 @@ impl Renderer {
         }
     }
 
-    /// Compares two tags for equality.
-    fn tags_equal(old_tag: &Tag, new_tag: &Tag) -> bool {
-        match (old_tag, new_tag) {
-            (Tag::Element(old_name), Tag::Element(new_name)) => old_name == new_name,
-            (Tag::Component(old_name), Tag::Component(new_name)) => old_name == new_name,
-            _ => false,
-        }
-    }
-
-    /// Compares two attribute values for equality.
+    /// Gets a child node at the given index.
     ///
-    /// Signal values are compared by their current resolved string so that
-    /// patching is skipped when the visual output has not changed. This
-    /// prevents unnecessary DOM mutations (e.g. `input.set_value()`) that
-    /// can reset cursor position or cause visual flicker.
+    /// # Arguments
     ///
-    /// Event attributes are always considered unequal to ensure that
-    /// event listeners are re-bound on every patch. This is critical
-    /// because the underlying closure may capture different signal
-    /// references after a re-render, even though the event name remains
-    /// the same. The cost is minimal — `attach_event_listener` only
-    /// updates a handler wrapper without re-registering the DOM listener.
-    fn attribute_values_equal(old_val: &AttributeValue, new_val: &AttributeValue) -> bool {
-        match (old_val, new_val) {
-            (AttributeValue::Text(old_text), AttributeValue::Text(new_text)) => {
-                old_text == new_text
-            }
-            (AttributeValue::Signal(old_signal), AttributeValue::Signal(new_signal)) => {
-                old_signal.get() == new_signal.get()
-            }
-            (AttributeValue::Event(_), AttributeValue::Event(_)) => false,
-            (AttributeValue::Dynamic(old_dyn), AttributeValue::Dynamic(new_dyn)) => {
-                old_dyn == new_dyn
-            }
-            (AttributeValue::Css(old_css), AttributeValue::Css(new_css)) => old_css == new_css,
-            _ => false,
-        }
-    }
-
-    /// Gets a child node at the given index by traversing child nodes.
+    /// - `&Element`: The parent element.
+    /// - `u32`: The child index.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<Node>`: The child node at the given index, if it exists.
     fn get_child_node(parent: &Element, index: u32) -> Option<Node> {
-        let mut current: Option<Node> = parent.first_child();
-        let mut current_index: u32 = 0;
-        while let Some(node) = current {
-            if current_index == index {
-                return Some(node);
-            }
-            current = node.next_sibling();
-            current_index += 1;
-        }
-        None
+        parent.child_nodes().get(index)
     }
 
     /// Patches children of an element using a positional diff algorithm.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The parent DOM element.
+    /// - `&[VirtualNode]`: The old children list.
+    /// - `&[VirtualNode]`: The new children list.
     fn patch_children(
         &mut self,
         parent: &Element,
@@ -238,12 +220,15 @@ impl Renderer {
                 } else if let (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) =
                     (old_child, new_child)
                 {
-                    if old_text.get_content() != new_text.get_content() {
+                    if old_text != new_text {
                         dom_child.set_text_content(Some(new_text.get_content()));
                     }
                 } else {
                     let new_dom: Node = self.create_dom_node(new_child);
                     if let Some(parent_node) = dom_child.parent_node() {
+                        if let Some(child_element) = dom_child.dyn_ref::<Element>() {
+                            self.cleanup_dom_subtree(child_element);
+                        }
                         let _ = parent_node.replace_child(&new_dom, &dom_child);
                     }
                 }
@@ -256,6 +241,11 @@ impl Renderer {
             }
         } else if old_len > new_len {
             for _ in common_len..old_len {
+                if let Some(last_child) = parent.last_child()
+                    && let Some(element) = last_child.dyn_ref::<Element>()
+                {
+                    self.cleanup_dom_subtree(element);
+                }
                 if let Some(last_child) = parent.last_child() {
                     parent.remove_child(&last_child).unwrap();
                 }
@@ -264,12 +254,33 @@ impl Renderer {
     }
 
     /// Creates a real DOM node from a virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The virtual node to materialize.
+    ///
+    /// # Returns
+    ///
+    /// - `Node`: The created DOM node.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `window()` or `document()` is unavailable.
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
         let document: Document = window().unwrap().document().unwrap();
         self.create_dom_node_with_document(node, &document)
     }
 
     /// Creates a real DOM node using a pre-acquired document reference.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The virtual node to materialize.
+    /// - `&Document`: The document reference for creating DOM elements.
+    ///
+    /// # Returns
+    ///
+    /// - `Node`: The created DOM node.
     fn create_dom_node_with_document(&mut self, node: &VirtualNode, document: &Document) -> Node {
         match node {
             VirtualNode::Element {
@@ -301,12 +312,26 @@ impl Renderer {
                                     &initial_value,
                                 );
                             }
+                            let signal_addr: usize = signal.get_inner_addr();
+                            let existing_addrs: String = element
+                                .get_attribute("data-euv-signal-addrs")
+                                .unwrap_or_default();
+                            let updated_addrs: String = if existing_addrs.is_empty() {
+                                signal_addr.to_string()
+                            } else {
+                                format!("{},{}", existing_addrs, signal_addr)
+                            };
+                            let _ = element.set_attribute("data-euv-signal-addrs", &updated_addrs);
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
                             let signal_for_sub: Signal<String> = *signal;
-                            let signal_inner: Signal<String> = signal_for_sub;
+                            let sub_signal: Signal<String> = signal_for_sub;
                             signal_for_sub.replace_subscribe(move || {
-                                let new_value: String = signal_inner.get();
+                                if !is_node_connected(&element_clone) {
+                                    sub_signal.clear_listeners();
+                                    return;
+                                }
+                                let new_value: String = sub_signal.get();
                                 if new_value.is_empty() && !is_boolean_property(&attr_name) {
                                     remove_dom_attribute_or_property(&element_clone, &attr_name);
                                 } else {
@@ -343,10 +368,14 @@ impl Renderer {
                 if let Some(signal) = text_node.try_get_signal() {
                     let text_clone: Text = text.clone();
                     let signal_clone: Signal<String> = *signal;
+                    let sub_signal: Signal<String> = signal_clone;
                     signal_clone.replace_subscribe({
-                        let signal_inner: Signal<String> = signal_clone;
                         move || {
-                            let new_value: String = signal_inner.get();
+                            if !is_node_connected(&text_clone) {
+                                sub_signal.clear_listeners();
+                                return;
+                            }
+                            let new_value: String = sub_signal.get();
                             text_clone.set_text_content(Some(&new_value));
                         }
                     });
@@ -354,7 +383,8 @@ impl Renderer {
                 text.into()
             }
             VirtualNode::Fragment(children) => {
-                let fragment: Element = document.create_element("div").unwrap();
+                let fragment: Element = document.create_element("slot").unwrap();
+                let _ = fragment.set_attribute("style", "display:contents");
                 for child in children {
                     let child_node: Node = self.create_dom_node_with_document(child, document);
                     fragment.append_child(&child_node).unwrap();
@@ -376,7 +406,18 @@ impl Renderer {
     }
 
     /// Initializes a DynamicNode: runs the initial render, creates a sub-renderer,
-    /// and registers the re-render closure as a `__euv_signal_update__` listener.
+    /// and registers the re-render callback in the signal update registry.
+    ///
+    /// # Arguments
+    ///
+    /// - `&DynamicNode`: The dynamic node to set up.
+    /// - `usize`: The unique dynamic ID assigned to the placeholder.
+    /// - `&Element`: The placeholder DOM element.
+    /// - `bool`: Whether to skip rendering if the output is unchanged.
+    ///
+    /// # Returns
+    ///
+    /// - `Node`: The initial rendered DOM node.
     fn setup_dynamic_node(
         &mut self,
         dynamic_node: &DynamicNode,
@@ -386,40 +427,49 @@ impl Renderer {
     ) -> Node {
         let mut hook_context: HookContext = dynamic_node.get_hook_context_value();
         hook_context.reset_hook_index();
-        let initial_vnode: VirtualNode = with_hook_context(hook_context, || dynamic_node.render());
+        let initial_vnode: VirtualNode =
+            with_hook_context(hook_context.clone(), || dynamic_node.render());
         let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
-        let render_fn_addr: usize = usize::from(dynamic_node);
+        let render_fn: Rc<RefCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
         let placeholder_clone: Element = placeholder.clone();
         let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
-        let renderer_addr: usize = Box::leak(Box::new(renderer_for_sub)) as *mut Renderer as usize;
-        let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let renderer_rc: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
+        let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
             hook_context.reset_hook_index();
-            let new_vnode: VirtualNode = with_hook_context(hook_context, || {
-                let inner: &mut RenderFnInner = render_fn_addr.into();
-                (inner.render_fn)()
+            let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
+                let mut inner: std::cell::RefMut<RenderFnInner> = render_fn.borrow_mut();
+                (inner.get_mut_render_fn())()
             });
             if skip_equal {
-                let renderer: &Renderer = renderer_addr.into();
-                if let Some(old_vnode) = renderer.try_get_current_tree() {
+                let renderer_ref: std::cell::Ref<Renderer> = renderer_rc.borrow();
+                if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
                     let new_unwrapped: VirtualNode = Renderer::unwrap_component_static(&new_vnode);
                     if old_vnode == &new_unwrapped {
                         return;
                     }
                 }
             }
-            let renderer: &mut Renderer = renderer_addr.into();
-            renderer.render(new_vnode);
-        }));
-        register_dynamic_listener(dynamic_id, closure);
+            let mut renderer_mut: std::cell::RefMut<Renderer> = renderer_rc.borrow_mut();
+            renderer_mut.render(new_vnode);
+        });
+        register_dynamic_listener(dynamic_id, callback);
         initial_dom
     }
 
     /// Recursively unwraps component nodes into their rendered output.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The virtual node to unwrap.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode`: The unwrapped virtual node with all components expanded.
     fn unwrap_component(&self, node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -439,6 +489,9 @@ impl Renderer {
                 children,
                 key,
             } => {
+                if !children.iter().any(Self::subtree_has_component) {
+                    return node.clone();
+                }
                 let unwrapped_children: Vec<VirtualNode> = children
                     .iter()
                     .map(|child| self.unwrap_component(child))
@@ -451,6 +504,9 @@ impl Renderer {
                 }
             }
             VirtualNode::Fragment(children) => {
+                if !children.iter().any(Self::subtree_has_component) {
+                    return node.clone();
+                }
                 let unwrapped_children: Vec<VirtualNode> = children
                     .iter()
                     .map(|child| self.unwrap_component(child))
@@ -461,9 +517,15 @@ impl Renderer {
         }
     }
 
-    /// Static version of `unwrap_component` that does not require `&self`.
+    /// Static version of `unwrap_component`.
     ///
-    /// Used inside closures where only a static method is available.
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The virtual node to unwrap.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode`: The unwrapped virtual node with all components expanded.
     fn unwrap_component_static(node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -483,6 +545,9 @@ impl Renderer {
                 children,
                 key,
             } => {
+                if !children.iter().any(Self::subtree_has_component) {
+                    return node.clone();
+                }
                 let unwrapped_children: Vec<VirtualNode> =
                     children.iter().map(Self::unwrap_component_static).collect();
                 VirtualNode::Element {
@@ -493,6 +558,9 @@ impl Renderer {
                 }
             }
             VirtualNode::Fragment(children) => {
+                if !children.iter().any(Self::subtree_has_component) {
+                    return node.clone();
+                }
                 let unwrapped_children: Vec<VirtualNode> =
                     children.iter().map(Self::unwrap_component_static).collect();
                 VirtualNode::Fragment(unwrapped_children)
@@ -501,14 +569,89 @@ impl Renderer {
         }
     }
 
+    /// Returns `true` if the given subtree contains any `Tag::Component` nodes.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The virtual node to check.
+    ///
+    /// # Returns
+    ///
+    /// - `bool`: `true` if the subtree contains a component node.
+    fn subtree_has_component(node: &VirtualNode) -> bool {
+        match node {
+            VirtualNode::Element {
+                tag: Tag::Component(_),
+                ..
+            } => true,
+            VirtualNode::Element { children, .. } => {
+                children.iter().any(Self::subtree_has_component)
+            }
+            VirtualNode::Fragment(children) => children.iter().any(Self::subtree_has_component),
+            _ => false,
+        }
+    }
+
     /// Assigns a new `data-euv-dynamic-id` to a newly created DynamicNode placeholder.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The placeholder DOM element.
+    ///
+    /// # Returns
+    ///
+    /// - `usize`: The assigned dynamic ID.
     fn assign_dynamic_id(placeholder: &Element) -> usize {
         let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
         let _ = placeholder.set_attribute("data-euv-dynamic-id", &dynamic_id.to_string());
         dynamic_id
     }
 
-    /// Attaches an event listener to a DOM element.
+    /// Recursively cleans up framework resources associated with a DOM subtree.
+    ///
+    /// Removes event handlers, dynamic node listeners, and signal listeners
+    /// for the given element and all of its descendants.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The DOM element to clean up.
+    fn cleanup_dom_subtree(&self, element: &Element) {
+        if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
+            && let Ok(euv_id) = euv_id_str.parse::<usize>()
+        {
+            cleanup_element_handlers(euv_id);
+        }
+        if let Some(dynamic_id_str) = element.get_attribute("data-euv-dynamic-id")
+            && let Ok(dynamic_id) = dynamic_id_str.parse::<usize>()
+        {
+            cleanup_dynamic_node(dynamic_id);
+        }
+        if let Some(signal_addrs_str) = element.get_attribute("data-euv-signal-addrs") {
+            for addr_str in signal_addrs_str.split(',') {
+                if let Ok(addr) = addr_str.parse::<usize>() {
+                    clear_signal_listeners_by_addr(addr);
+                }
+            }
+        }
+        let child_nodes: NodeList = element.child_nodes();
+        let length: u32 = child_nodes.length();
+        for i in 0..length {
+            if let Some(child) = child_nodes.get(i) {
+                if let Some(child_element) = child.dyn_ref::<Element>() {
+                    self.cleanup_dom_subtree(child_element);
+                } else if let Some(text) = child.dyn_ref::<Text>() {
+                    cleanup_text_signal_listeners(text);
+                }
+            }
+        }
+    }
+
+    /// Registers an event handler for a DOM element using global event delegation.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The DOM element to attach the handler to.
+    /// - `&NativeEventHandler`: The event handler to register.
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
         let euv_id: usize = match element.get_attribute(DATA_EUV_ID) {
             Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {
@@ -522,73 +665,20 @@ impl Renderer {
                 new_id
             }
         };
-        let event_name: String = handler.get_event_name().clone();
-        let key: (usize, String) = (euv_id, event_name.clone());
-        let registry: &mut HashMap<(usize, String), HandlerEntry> = get_handler_registry();
-        if let Some(existing_ptr) = registry.get(&key) {
-            let existing: &mut HandlerSlot = (*existing_ptr as usize).into();
-            existing.set_handler(Some(handler.clone()));
-        } else {
-            let handler_slot: Box<HandlerSlot> = Box::new(HandlerSlot {
-                handler: Some(handler.clone()),
-            });
-            let handler_entry: HandlerEntry = Box::leak(handler_slot) as *mut HandlerSlot;
-            let handler_addr: usize = handler_entry as usize;
-            let closure: Closure<dyn FnMut(Event)> =
-                Closure::wrap(Box::new(move |event: Event| {
-                    let slot: &mut HandlerSlot = handler_addr.into();
-                    let active_handler: NativeEventHandler = slot.get_handler();
-                    active_handler.handle(event);
-                }));
-            element
-                .add_event_listener_with_callback(&event_name, closure.as_ref().unchecked_ref())
-                .unwrap();
-            closure.forget();
-            registry.insert(key, handler_entry);
+        let event_name: Cow<'static, str> = handler.get_event_name().clone();
+        if !NativeEventName::DELEGATABLE_EVENT_NAMES.contains(&&*event_name) {
+            ensure_delegated_listener(event_name.clone());
         }
-    }
-}
-
-/// Implementation of `From` trait for converting `usize` address into `&'static mut Renderer`.
-impl From<usize> for &'static mut Renderer {
-    /// Converts a memory address into a mutable reference to `Renderer`.
-    ///
-    /// # Arguments
-    ///
-    /// - `usize` - The memory address of the `Renderer` instance.
-    ///
-    /// # Returns
-    ///
-    /// - `&'static mut Renderer` - A mutable reference to the `Renderer` at the given address.
-    ///
-    /// # Safety
-    ///
-    /// - The address is guaranteed to be a valid `Renderer` instance
-    ///   that was previously converted from a reference and is managed by the runtime.
-    #[inline(always)]
-    fn from(address: usize) -> Self {
-        unsafe { &mut *(address as *mut Renderer) }
-    }
-}
-
-/// Implementation of `From` trait for converting `usize` address into `&'static Renderer`.
-impl From<usize> for &'static Renderer {
-    /// Converts a memory address into a reference to `Renderer`.
-    ///
-    /// # Arguments
-    ///
-    /// - `usize` - The memory address of the `Renderer` instance.
-    ///
-    /// # Returns
-    ///
-    /// - `&'static Renderer` - A reference to the `Renderer` at the given address.
-    ///
-    /// # Safety
-    ///
-    /// - The address is guaranteed to be a valid `Renderer` instance
-    ///   that was previously converted from a reference and is managed by the runtime.
-    #[inline(always)]
-    fn from(address: usize) -> Self {
-        unsafe { &*(address as *const Renderer) }
+        let key: (usize, Cow<'static, str>) = (euv_id, event_name);
+        let registry_ref: &mut HashMap<(usize, Cow<'static, str>), HandlerEntry> =
+            ensure_handler_registry_mut();
+        if let Some(existing_entry) = registry_ref.get(&key) {
+            let mut slot: std::cell::RefMut<HandlerSlot> = existing_entry.borrow_mut();
+            slot.set_handler(Some(handler.clone()));
+        } else {
+            let handler_slot: HandlerEntry =
+                Rc::new(RefCell::new(HandlerSlot::new(Some(handler.clone()))));
+            registry_ref.insert(key, handler_slot);
+        }
     }
 }

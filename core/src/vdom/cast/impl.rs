@@ -161,13 +161,12 @@ where
     ///
     /// - `VirtualNode` - A dynamic virtual node wrapping this closure.
     fn into_node(self) -> VirtualNode {
-        let inner: Box<RenderFnInner> = Box::new(RenderFnInner {
-            render_fn: Box::new(self),
-        });
-        VirtualNode::Dynamic(DynamicNode {
-            render_fn: Box::leak(inner) as *mut RenderFnInner,
-            hook_context: crate::reactive::create_hook_context(),
-        })
+        let render_inner: Rc<RefCell<RenderFnInner>> =
+            Rc::new(RefCell::new(RenderFnInner::new(Box::new(self))));
+        VirtualNode::Dynamic(DynamicNode::new(
+            render_inner,
+            crate::reactive::create_hook_context(),
+        ))
     }
 }
 
@@ -260,20 +259,14 @@ where
     ///
     /// - `VirtualNode` - A text virtual node with reactive signal binding.
     fn as_reactive_text(&self) -> VirtualNode {
-        let signal: Signal<T> = *self;
-        let initial: String = signal.get().to_string();
-        let string_signal: Signal<String> = {
-            let boxed: Box<SignalInner<String>> = Box::new(SignalInner::new(initial.clone()));
-            let ptr: *mut SignalInner<String> = Box::leak(boxed) as *mut SignalInner<String>;
-            let address: usize = ptr as usize;
-            address.into()
-        };
+        let initial: String = self.get().to_string();
+        let string_signal: Signal<String> = Signal::create(initial.clone());
         let source_signal: Signal<T> = *self;
         let string_signal_clone: Signal<String> = string_signal;
-        source_signal.subscribe({
-            let source_signal: Signal<T> = source_signal;
+        source_signal.replace_subscribe({
+            let source_inner: Signal<T> = source_signal;
             move || {
-                let new_value: String = source_signal.get().to_string();
+                let new_value: String = source_inner.get().to_string();
                 string_signal_clone.set(new_value);
             }
         });
@@ -283,19 +276,6 @@ where
 
 /// Constructs an `EventAdapter` that wraps any event-compatible value.
 impl<T> EventAdapter<T> {
-    /// Creates a new `EventAdapter` wrapping the given value.
-    ///
-    /// # Arguments
-    ///
-    /// - `T` - The value to wrap for event attribute adaptation.
-    ///
-    /// # Returns
-    ///
-    /// - `EventAdapter<T>` - A new adapter wrapping the value.
-    pub fn new(inner: T) -> Self {
-        EventAdapter { inner }
-    }
-
     /// Returns the inner wrapped value, consuming the adapter.
     ///
     /// # Returns
@@ -325,7 +305,7 @@ where
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
     pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
-        AttributeValue::Event(NativeEventHandler::new(event_name, self.into_inner()))
+        AttributeValue::Event(NativeEventHandler::create(event_name, self.into_inner()))
     }
 }
 
@@ -350,10 +330,9 @@ impl EventAdapter<NativeEventHandler> {
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
     pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
-        let handler: NativeEventHandler = self.into_inner();
-        AttributeValue::Event(NativeEventHandler::new(event_name, move |event: Event| {
-            handler.handle(event);
-        }))
+        let mut handler: NativeEventHandler = self.into_inner();
+        handler.set_event_name(event_name.as_str());
+        AttributeValue::Event(handler)
     }
 }
 
@@ -386,19 +365,6 @@ impl EventAdapter<Option<NativeEventHandler>> {
 
 /// Constructs an `AttrValueAdapter` that wraps any attribute-compatible value.
 impl<T> AttrValueAdapter<T> {
-    /// Creates a new `AttrValueAdapter` wrapping the given value.
-    ///
-    /// # Arguments
-    ///
-    /// - `T` - The value to wrap for attribute adaptation.
-    ///
-    /// # Returns
-    ///
-    /// - `AttrValueAdapter<T>` - A new adapter wrapping the value.
-    pub fn new(inner: T) -> Self {
-        AttrValueAdapter { inner }
-    }
-
     /// Returns the inner wrapped value, consuming the adapter.
     ///
     /// # Returns
@@ -438,7 +404,7 @@ where
     ///
     /// - `AttributeValue` - An event attribute value with the custom name.
     pub fn into_callback_attribute_value_with_name(self, name: String) -> AttributeValue {
-        AttributeValue::Event(NativeEventHandler::new(
+        AttributeValue::Event(NativeEventHandler::create(
             NativeEventName::Other(name),
             self.into_inner(),
         ))
@@ -463,17 +429,14 @@ impl AttrValueAdapter<NativeEventHandler> {
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
     pub fn into_callback_attribute_value(self) -> AttributeValue {
-        let handler: NativeEventHandler = self.into_inner();
-        AttributeValue::Event(NativeEventHandler::new(
-            NativeEventName::Other("callback".to_string()),
-            move |event: Event| {
-                handler.handle(event);
-            },
-        ))
+        AttributeValue::Event(self.into_inner())
     }
 
     /// Converts the wrapped handler into a callback `AttributeValue` with a
     /// custom event name for component props.
+    ///
+    /// Re-wraps the handler with the provided custom event name so that
+    /// `try_get_callback` can find it by the matching attribute name.
     ///
     /// # Arguments
     ///
@@ -483,13 +446,9 @@ impl AttrValueAdapter<NativeEventHandler> {
     ///
     /// - `AttributeValue` - An event attribute value with the custom name.
     pub fn into_callback_attribute_value_with_name(self, name: String) -> AttributeValue {
-        let handler: NativeEventHandler = self.into_inner();
-        AttributeValue::Event(NativeEventHandler::new(
-            NativeEventName::Other(name),
-            move |event: Event| {
-                handler.handle(event);
-            },
-        ))
+        let mut handler: NativeEventHandler = self.into_inner();
+        handler.set_event_name(Cow::Owned(name));
+        AttributeValue::Event(handler)
     }
 }
 

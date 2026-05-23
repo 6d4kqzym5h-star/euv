@@ -20,15 +20,12 @@ pub struct IntervalHandle {
 pub struct UseStopwatch {
     /// The elapsed seconds counter.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub seconds: Signal<i32>,
     /// Whether the stopwatch is currently running.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub running: Signal<bool>,
     /// The active interval handle, if any.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub handle: Signal<Option<IntervalHandle>>,
 }
 
@@ -40,22 +37,17 @@ pub struct UseStopwatch {
 pub struct UseCountdown {
     /// The total countdown seconds.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub total: Signal<i32>,
     /// The remaining countdown seconds.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub remaining: Signal<i32>,
     /// Whether the countdown is currently running.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub running: Signal<bool>,
     /// The active interval handle, if any.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub handle: Signal<Option<IntervalHandle>>,
     /// The user input string for setting countdown seconds.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub input: Signal<String>,
 }

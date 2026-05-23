@@ -5,7 +5,7 @@ use crate::*;
 /// Must be called once during application startup before any `Console::log`,
 /// `Console::warn`, or `Console::error` calls.
 pub fn init_console() {
-    let signal: Signal<Vec<ConsoleEntry>> = Signal::new(Vec::new());
+    let signal: Signal<Vec<ConsoleEntry>> = Signal::create(Vec::new());
     CONSOLE_LOG_SIGNAL.set(signal);
 }
 

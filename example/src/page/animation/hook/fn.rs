@@ -22,7 +22,7 @@ pub fn use_progress() -> UseProgress {
 ///
 /// - `NativeEventHandler` - A click handler to start the progress bar.
 pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_value().set(0);
         state.get_running().set(true);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
@@ -56,7 +56,7 @@ pub fn progress_on_start(state: UseProgress) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to reset the progress bar.
 pub fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -77,7 +77,7 @@ pub fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to advance the color index.
 pub fn color_cycle_on_next(color_index: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = color_index.get();
         color_index.set((current + 1) % 5);
     })

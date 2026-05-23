@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Each parameter has a name (identifier), an explicit type annotation,
 /// and is used as a placeholder in CSS property values.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct ClassParam {
     /// The parameter name identifier.
     #[get(pub(crate))]
@@ -20,7 +20,7 @@ pub(crate) struct ClassParam {
 ///
 /// Represents a block like `hover { background: "red"; }` or
 /// `focus { outline: "2px solid blue"; }`.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct PseudoBlock {
     /// The pseudo selector string (e.g., ":hover", ":focus", "::before").
     #[get(pub(crate))]
@@ -35,7 +35,7 @@ pub(crate) struct PseudoBlock {
 /// A media query block parsed from the `class!` macro.
 ///
 /// Represents a block like `media "(max-width: 767px)" { font-size: "14px"; }`.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct MediaBlock {
     /// The media query condition string (e.g., "(max-width: 767px)").
     #[get(pub(crate))]
@@ -50,7 +50,7 @@ pub(crate) struct MediaBlock {
 /// A parent class reference in an extends clause.
 ///
 /// Represents a class inheritance call like `c_primary_button(1)` or `c_base()`.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct ClassExtend {
     /// The parent class name identifier.
     #[get(pub(crate))]
@@ -66,7 +66,7 @@ pub(crate) struct ClassExtend {
 ///
 /// Contains visibility, name, optional parameters, style properties,
 /// optional pseudo-class/pseudo-element blocks, and optional media query blocks.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct ClassDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
     #[get(pub(crate))]
@@ -99,7 +99,7 @@ pub(crate) struct ClassDef {
 }
 
 /// The entire `class!` macro input, containing multiple class definitions.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct ClassInput {
     /// The list of class definitions.
     #[get(pub(crate))]

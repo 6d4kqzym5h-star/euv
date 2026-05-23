@@ -2,6 +2,15 @@ use crate::*;
 
 /// Implementation of `Parse` for `ClassInput`, parsing the `class!` macro input.
 impl Parse for ClassInput {
+    /// Parses the `class!` macro input into a `ClassInput` AST.
+    ///
+    /// # Arguments
+    ///
+    /// - `ParseStream`: The syn parse stream to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `syn::Result<Self>`: The parsed `ClassInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut classes: Vec<ClassDef> = Vec::new();
         while !input.is_empty() {
@@ -199,135 +208,13 @@ impl Parse for ClassInput {
     }
 }
 
-/// Generates a `Vec<euv_core::PseudoRule>` expression from a list of pseudo blocks.
-///
-/// # Arguments
-///
-/// - `&[PseudoBlock]` - The pseudo blocks to convert.
-///
-/// # Returns
-///
-/// - `Option<proc_macro2::TokenStream>` - The generated token stream, or `None` if empty.
-fn pseudo_blocks_to_tokens(pseudo_blocks: &[PseudoBlock]) -> Option<proc_macro2::TokenStream> {
-    if pseudo_blocks.is_empty() {
-        return None;
-    }
-    let parts: Vec<proc_macro2::TokenStream> = pseudo_blocks
-        .iter()
-        .map(|block| {
-            let selector: &str = block.get_selector();
-            let style_parts: Vec<proc_macro2::TokenStream> = block
-                .get_properties()
-                .iter()
-                .map(|(key, value)| match value {
-                    ClassPropValue::Expr(expr) => {
-                        quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
-                    }
-                })
-                .collect();
-            quote! {
-                ::euv_core::PseudoRule::new(
-                    #selector.to_string(),
-                    [#(#style_parts),*].concat()
-                )
-            }
-        })
-        .collect();
-    Some(quote! { vec![#(#parts),*] })
-}
-
-/// Generates a `Vec<euv_core::MediaRule>` expression from a list of media blocks.
-///
-/// # Arguments
-///
-/// - `&[MediaBlock]` - The media blocks to convert.
-///
-/// # Returns
-///
-/// - `Option<proc_macro2::TokenStream>` - The generated token stream, or `None` if empty.
-fn media_blocks_to_tokens(media_blocks: &[MediaBlock]) -> Option<proc_macro2::TokenStream> {
-    if media_blocks.is_empty() {
-        return None;
-    }
-    let parts: Vec<proc_macro2::TokenStream> = media_blocks
-        .iter()
-        .map(|block| {
-            let query: &str = block.get_query();
-            let style_parts: Vec<proc_macro2::TokenStream> = block
-                .get_properties()
-                .iter()
-                .map(|(key, value)| match value {
-                    ClassPropValue::Expr(expr) => {
-                        quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
-                    }
-                })
-                .collect();
-            quote! {
-                ::euv_core::MediaRule::new(
-                    #query.to_string(),
-                    [#(#style_parts),*].concat()
-                )
-            }
-        })
-        .collect();
-    Some(quote! { vec![#(#parts),*] })
-}
-
-/// Generates static pseudo block string for compile-time evaluation.
-///
-/// # Arguments
-///
-/// - `&[PseudoBlock]` - The pseudo blocks to serialize.
-///
-/// # Returns
-///
-/// - `String` - The serialized pseudo rules string.
-fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> String {
-    let mut result: String = String::new();
-    for block in pseudo_blocks {
-        result.push_str(block.get_selector());
-        result.push_str(" { ");
-        for (key, value) in block.get_properties() {
-            let ClassPropValue::Expr(expr) = value;
-            result.push_str(key);
-            result.push_str(": ");
-            result.push_str(&expr_to_string(expr));
-            result.push_str("; ");
-        }
-        result.push('}');
-    }
-    result
-}
-
-/// Generates static media block string for compile-time evaluation.
-///
-/// # Arguments
-///
-/// - `&[MediaBlock]` - The media blocks to serialize.
-///
-/// # Returns
-///
-/// - `String` - The serialized media rules string.
-fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> String {
-    let mut result: String = String::new();
-    for block in media_blocks {
-        result.push_str("@media ");
-        result.push_str(block.get_query());
-        result.push_str(" { ");
-        for (key, value) in block.get_properties() {
-            let ClassPropValue::Expr(expr) = value;
-            result.push_str(key);
-            result.push_str(": ");
-            result.push_str(&expr_to_string(expr));
-            result.push_str("; ");
-        }
-        result.push('}');
-    }
-    result
-}
-
 /// Implementation of `ToTokens` for `ClassDef`, converting a class definition into `CssClass` function tokens.
 impl ToTokens for ClassDef {
+    /// Converts this class definition into token stream constructing a `CssClass`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let vis: &syn::Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
@@ -507,6 +394,11 @@ impl ToTokens for ClassDef {
 
 /// Implementation of `ToTokens` for `ClassInput`, converting class definitions into token streams.
 impl ToTokens for ClassInput {
+    /// Converts all class definitions into token streams.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         for class_def in self.get_classes() {
             class_def.to_tokens(tokens);

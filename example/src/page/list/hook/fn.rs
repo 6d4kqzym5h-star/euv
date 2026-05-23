@@ -8,11 +8,11 @@ use crate::*;
 pub fn use_todo_list() -> UseTodoList {
     UseTodoList::new(
         use_signal(|| {
-            vec![
-                "Learn Rust".to_string(),
-                "Build a UI framework".to_string(),
-                "Write documentation".to_string(),
-            ]
+            let mut items: Vec<String> = Vec::with_capacity(1000);
+            for index in 1..=1000 {
+                items.push(format!("Item {}", index));
+            }
+            items
         }),
         use_signal(String::new),
         use_signal(String::new),
@@ -49,7 +49,7 @@ pub fn validate_todo_new_item(state: UseTodoList) {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -69,7 +69,7 @@ pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to add a new item.
 pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_todo_new_item(state);
         let add_error_value: String = state.get_add_error().get();
         if add_error_value.is_empty() {
@@ -93,7 +93,7 @@ pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to remove the item.
 pub fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let mut current: Vec<String> = items.get();
         if index < current.len() {
             current.remove(index);

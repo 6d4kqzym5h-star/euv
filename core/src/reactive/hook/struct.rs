@@ -6,7 +6,7 @@ use crate::*;
 /// The `arm_changed` flag tracks whether a `match` arm switch occurred;
 /// when toggled, the hook array is cleared to prevent signal leakage
 /// between different match arms.
-#[derive(CustomDebug, Data)]
+#[derive(CustomDebug, Data, Default, New)]
 pub struct HookContextInner {
     /// Storage for hook state values (signals, etc.).
     #[debug(skip)]
@@ -14,8 +14,6 @@ pub struct HookContextInner {
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
     /// The match arm index from the last render.
-    /// Set on each `match` arm entry; when the value differs from
-    /// the previous render, hooks are cleared.
     #[get(pub(crate), type(copy))]
     #[set(pub(crate))]
     pub(crate) arm_changed: usize,
@@ -25,8 +23,7 @@ pub struct HookContextInner {
     pub(crate) hook_index: usize,
     /// Cleanup closures registered by hooks (e.g., `use_signal`) that must
     /// be executed when the hook context is cleared due to a `match` arm
-    /// switch. Each closure typically clears signal listeners so that
-    /// stale `setInterval` closures become no-ops.
+    /// switch.
     #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
@@ -39,18 +36,14 @@ pub struct HookContextInner {
 /// and similar hooks to persist state between re-renders of the same
 /// dynamic node.
 ///
-/// Implements `Copy` for ergonomic use; all copies share the same underlying state.
-///
-/// SAFETY: The inner pointer is allocated via `Box::leak` and lives for the
-/// entire program. This is safe in single-threaded WASM contexts where no
-/// concurrent access can occur.
-#[derive(CustomDebug, Data, Eq, PartialEq)]
+/// Implements `Clone` for ergonomic use; all clones share the same underlying state.
+#[derive(CustomDebug, Data, New)]
 pub struct HookContext {
-    /// Raw pointer to the heap-allocated hook context inner state.
+    /// Shared reference to the heap-allocated hook context inner state.
     #[debug(skip)]
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) inner: *mut HookContextInner,
+    pub(crate) inner: Rc<RefCell<HookContextInner>>,
 }
 
 /// A `Sync` wrapper for single-threaded global `HookContextInner` access.
@@ -59,9 +52,11 @@ pub struct HookContext {
 /// (e.g., WASM). It implements `Sync` to allow usage as a `static`
 /// variable, but concurrent access from multiple threads would be
 /// undefined behavior.
-#[derive(CustomDebug)]
+#[derive(CustomDebug, Data, New)]
 pub struct HookContextCell(
     /// Interior-mutable storage for the hook context inner state.
     #[debug(skip)]
+    #[get(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) UnsafeCell<HookContextInner>,
 );

@@ -6,12 +6,8 @@ use crate::*;
 #[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct StyleProperty {
     /// The CSS property name (e.g., "margin", "padding").
-    #[get(pub)]
-    #[set(pub)]
     name: String,
     /// The CSS property value.
-    #[get(pub)]
-    #[set(pub)]
     value: String,
 }
 
@@ -19,8 +15,6 @@ pub struct StyleProperty {
 #[derive(Clone, Data, Debug, Eq, New, PartialEq)]
 pub struct Style {
     /// The list of style properties.
-    #[get(pub)]
-    #[set(pub)]
     properties: Vec<StyleProperty>,
 }
 
@@ -50,13 +44,9 @@ pub struct PseudoRule {
     /// The CSS pseudo selector suffix appended to the class name
     /// (e.g., ":hover", ":focus", ":active", ":disabled", "::before", "::after",
     /// ":first-child", ":last-child", ":nth-child(2n)", etc.).
-    #[get(pub)]
-    #[set(pub)]
     selector: String,
     /// The CSS style declarations for this pseudo rule
     /// (e.g., "background: rgba(79, 70, 229, 0.04); color: #4f46e5;").
-    #[get(pub)]
-    #[set(pub)]
     style: String,
 }
 
@@ -68,21 +58,13 @@ pub struct PseudoRule {
 #[derive(Clone, Data, Debug, Default)]
 pub struct CssClass {
     /// The CSS class name used in the DOM.
-    #[get(pub)]
-    #[set(pub)]
     name: String,
     /// The CSS style declarations (e.g., "max-width: 800px; margin: 0 auto;").
-    #[get(pub)]
-    #[set(pub)]
     style: String,
     /// The pseudo-class and pseudo-element rules for this class
     /// (e.g., ":hover", ":focus", ":active", "::before", etc.).
-    #[get(pub)]
-    #[set(pub)]
     pseudo_rules: Vec<PseudoRule>,
     /// The media query rules for this class.
-    #[get(pub)]
-    #[set(pub)]
     media_rules: Vec<MediaRule>,
 }
 
@@ -94,13 +76,9 @@ pub struct CssClass {
 #[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct MediaRule {
     /// The media query condition string (e.g., "(max-width: 767px)").
-    #[get(pub)]
-    #[set(pub)]
     query: String,
     /// The CSS style declarations inside this media rule
     /// (e.g., "font-size: 14px; padding: 8px;").
-    #[get(pub)]
-    #[set(pub)]
     style: String,
 }
 
@@ -115,7 +93,7 @@ pub struct MediaRule {
 /// - `FnMut(NativeEvent)` closure → `AttributeValue::Event` via `NativeEventHandler`
 /// - `NativeEventHandler` directly → `AttributeValue::Event` as-is
 /// - `Option<NativeEventHandler>` → `AttributeValue::Event` or `AttributeValue::Text`
-#[derive(Data)]
+#[derive(Data, New)]
 pub struct EventAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
     #[get(pub(crate))]
@@ -134,10 +112,24 @@ pub struct EventAdapter<T> {
 /// For event attributes (key starts with "on"), event closures are wrapped
 /// into `AttributeValue::Event`. For non-event attributes, values are
 /// converted via `IntoReactiveValue`.
-#[derive(Data)]
+#[derive(Data, Debug, New)]
 pub struct AttrValueAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: T,
 }
+
+/// A `Sync` wrapper for single-threaded global `HashSet` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct InjectedClassesCell(
+    /// Interior-mutable storage for the injected classes set.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<Option<HashSet<String>>>,
+);

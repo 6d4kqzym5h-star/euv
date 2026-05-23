@@ -1,11 +1,17 @@
 use crate::*;
 
+/// SAFETY: `InjectedClassesCell` is only used in single-threaded WASM contexts.
+unsafe impl Sync for InjectedClassesCell {}
+
 /// Visual equality comparison for attribute values.
 ///
 /// Compares values by their visual output rather than identity. `Signal`
-/// values are compared by their current resolved string, `Event` values
-/// are always considered equal (re-binding is handled by the handler
-/// registry), and `CssClass` values are compared by class name.
+/// values are compared by their current resolved string; when both signals
+/// share the same inner pointer, they are always considered **unequal**
+/// because the signal may have mutated between VDOM snapshots and `.get()`
+/// would return the same current value for both, masking the change.
+/// `Event` values are always considered equal (re-binding is handled by the
+/// handler registry), and `CssClass` values are compared by class name.
 impl PartialEq for AttributeValue {
     /// Compares two attribute values for visual equality.
     ///
@@ -21,6 +27,9 @@ impl PartialEq for AttributeValue {
         match (self, other) {
             (AttributeValue::Text(old_val), AttributeValue::Text(new_val)) => old_val == new_val,
             (AttributeValue::Signal(old_sig), AttributeValue::Signal(new_sig)) => {
+                if old_sig.get_inner_addr() == new_sig.get_inner_addr() {
+                    return false;
+                }
                 old_sig.get() == new_sig.get()
             }
             (AttributeValue::Signal(old_sig), AttributeValue::Text(new_val)) => {
@@ -29,7 +38,7 @@ impl PartialEq for AttributeValue {
             (AttributeValue::Text(old_val), AttributeValue::Signal(new_sig)) => {
                 *old_val == new_sig.get()
             }
-            (AttributeValue::Event(_), AttributeValue::Event(_)) => true,
+            (AttributeValue::Event(_), AttributeValue::Event(_)) => false,
             (AttributeValue::Css(old_css), AttributeValue::Css(new_css)) => {
                 old_css.get_name() == new_css.get_name()
             }
@@ -292,14 +301,20 @@ impl CssClass {
 
     /// Injects this class's styles into the DOM if not already present.
     ///
+    /// Uses a global `HashSet` to track injected class names, avoiding the
+    /// expensive `existing_css.contains(css)` full-text search on every call.
     /// Builds the class rule, pseudo-class rules, and media rules as CSS text,
-    /// then delegates to [`CssClass::inject_css`] for DOM injection. Subsequent
-    /// calls for the same class name are no-ops.
+    /// then appends them directly to the `<style>` element via
+    /// `append_child` with a new text node — no read-modify-write of the
+    /// entire stylesheet content.
     ///
     /// # Panics
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
     pub fn inject_style(&self) {
+        if !Self::mark_injected(self.get_name().clone()) {
+            return;
+        }
         let class_rule: String = format!(".{} {{ {} }}", self.get_name(), self.get_style());
         let mut css: String = class_rule;
         for pseudo_rule in self.get_pseudo_rules() {
@@ -324,16 +339,68 @@ impl CssClass {
                 css = format!("{}\n{}", css, media_rule_str);
             }
         }
-        Self::inject_css(&css);
+        Self::append_css(&css);
+    }
+
+    /// Marks a class name as injected in the global `HashSet`.
+    ///
+    /// Returns `false` if the class was already injected (no-op), `true`
+    /// if this is the first injection.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - The class name to mark as injected.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if newly injected, `false` if already present.
+    fn mark_injected(class_name: String) -> bool {
+        mark_injected_class(class_name)
+    }
+
+    /// Appends CSS text directly to the shared `<style>` element.
+    ///
+    /// Creates a new text node and appends it as a child of the `<style>`
+    /// element, avoiding the read-modify-write pattern of reading the entire
+    /// `innerText`, concatenating, and setting it back.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The CSS text to append.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `window()` or `document()` is unavailable on the current platform.
+    fn append_css(css: &str) {
+        let style_id: &str = "euv-css-injected";
+        let document: Document = window()
+            .expect("no global window exists")
+            .document()
+            .expect("no document exists");
+        let style_element: HtmlStyleElement = match document.get_element_by_id(style_id) {
+            Some(el) => el.dyn_into::<HtmlStyleElement>().unwrap(),
+            None => {
+                let el: HtmlStyleElement = document
+                    .create_element("style")
+                    .unwrap()
+                    .dyn_into::<HtmlStyleElement>()
+                    .unwrap();
+                el.set_id(style_id);
+                document.head().unwrap().append_child(&el).unwrap();
+                el
+            }
+        };
+        if !css.is_empty() {
+            let text_node: Text = document.create_text_node(css);
+            style_element.append_child(&text_node).unwrap();
+        }
     }
 
     /// Injects CSS text into the shared `<style>` element in the DOM.
     ///
-    /// Creates a `<style>` element with id `euv-css-injected` on first call,
-    /// then appends the provided `css` string if it is not already present.
-    /// Subsequent calls with identical CSS text are no-ops. Call this during
-    /// application initialisation to register global reset styles, keyframes,
-    /// media queries, or any other CSS rules.
+    /// Delegates to [`CssClass::append_css`] for the actual DOM append.
+    /// Unlike the previous implementation, this does not read the existing
+    /// stylesheet content or perform a full-text `contains` search.
     ///
     /// # Arguments
     ///
@@ -343,37 +410,7 @@ impl CssClass {
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
     pub fn inject_css(css: &str) {
-        let _ = css;
-        #[cfg(target_arch = "wasm32")]
-        {
-            let style_id: &str = "euv-css-injected";
-            let document: Document = window()
-                .expect("no global window exists")
-                .document()
-                .expect("no document exists");
-            let style_element: HtmlStyleElement = match document.get_element_by_id(style_id) {
-                Some(el) => el.dyn_into::<HtmlStyleElement>().unwrap(),
-                None => {
-                    let el: HtmlStyleElement = document
-                        .create_element("style")
-                        .unwrap()
-                        .dyn_into::<HtmlStyleElement>()
-                        .unwrap();
-                    el.set_id(style_id);
-                    document.head().unwrap().append_child(&el).unwrap();
-                    el
-                }
-            };
-            let existing_css: String = style_element.inner_text();
-            if !css.is_empty() && !existing_css.contains(css) {
-                let new_css: String = if existing_css.is_empty() {
-                    css.to_string()
-                } else {
-                    format!("{}\n{}", existing_css, css)
-                };
-                style_element.set_inner_text(&new_css);
-            }
-        }
+        Self::append_css(css);
     }
 }
 

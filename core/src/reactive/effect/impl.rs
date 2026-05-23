@@ -1,15 +1,5 @@
 use crate::*;
 
-/// Clones the RenderEffect, sharing the same inner state.
-impl Clone for RenderEffect {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-/// Copies the RenderEffect, sharing the same inner state.
-impl Copy for RenderEffect {}
-
 /// Implementation of RenderEffect reactive operations.
 impl RenderEffect {
     /// Creates a new RenderEffect that wraps the given closure.
@@ -25,22 +15,27 @@ impl RenderEffect {
     /// # Returns
     ///
     /// - `Self` - A new RenderEffect handle.
-    pub fn new<F>(effect_fn: F) -> Self
+    pub fn create<F>(effect_fn: F) -> Self
     where
         F: FnMut() + 'static,
     {
-        let inner: Box<RenderEffectInner> = Box::new(RenderEffectInner {
-            effect_fn: Box::new(effect_fn),
-            dependencies: Vec::new(),
-            running: false,
-            disposed: false,
-        });
-        let leaked: &mut RenderEffectInner = Box::leak(inner);
-        let effect: RenderEffect = RenderEffect {
-            inner: leaked as *mut RenderEffectInner as usize,
-        };
+        let effect_inner: Rc<RefCell<RenderEffectInner>> = Rc::new(RefCell::new(
+            RenderEffectInner::new(Box::new(effect_fn), Vec::new(), false, false),
+        ));
+        let effect: RenderEffect = RenderEffect::new(effect_inner.clone());
+        let addr: usize = effect.get_inner_addr();
+        render_effect_registry_mut().insert(addr, effect_inner);
         effect.run_once();
         effect
+    }
+
+    /// Returns the memory address of the inner `Rc` for identity comparison.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The memory address of the inner `Rc`.
+    pub(crate) fn get_inner_addr(&self) -> usize {
+        Rc::as_ptr(self.get_inner()) as usize
     }
 
     /// Executes the effect closure once with dependency tracking.
@@ -53,22 +48,28 @@ impl RenderEffect {
     /// those signals via `track_signal`. After execution, the previous
     /// tracking target is restored.
     pub(crate) fn run_once(&self) {
-        let effect_addr: usize = self.inner;
-        let inner: &mut RenderEffectInner = self.leak_mut();
-        if inner.get_disposed() {
-            return;
+        let effect_addr: usize = self.get_inner_addr();
+        {
+            let mut inner: RefMut<RenderEffectInner> = self.get_inner().borrow_mut();
+            if inner.get_disposed() {
+                return;
+            }
+            if inner.get_running() {
+                return;
+            }
+            inner.set_running(true);
+            cleanup_effect_dependencies(effect_addr, inner.get_mut_dependencies());
         }
-        if inner.get_running() {
-            return;
-        }
-        inner.set_running(true);
-        cleanup_effect_dependencies(effect_addr, inner.get_mut_dependencies());
         let prev: Option<usize> = swap_current_effect(Some(effect_addr));
-        let inner: &mut RenderEffectInner = self.leak_mut();
-        (inner.get_mut_effect_fn())();
+        {
+            let mut inner: RefMut<RenderEffectInner> = self.get_inner().borrow_mut();
+            (inner.get_mut_effect_fn())();
+        }
         set_current_effect(prev);
-        let inner: &mut RenderEffectInner = self.leak_mut();
-        inner.set_running(false);
+        {
+            let mut inner: RefMut<RenderEffectInner> = self.get_inner().borrow_mut();
+            inner.set_running(false);
+        }
     }
 
     /// Marks this effect as disposed and cleans up all its dependencies.
@@ -80,21 +81,21 @@ impl RenderEffect {
     /// (e.g., during a match arm switch in routing) to prevent stale effects
     /// from causing infinite loops.
     pub fn dispose(&self) {
-        let effect_addr: usize = self.inner;
-        let inner: &mut RenderEffectInner = self.leak_mut();
+        let effect_addr: usize = self.get_inner_addr();
+        let mut inner: RefMut<RenderEffectInner> = self.get_inner().borrow_mut();
         if inner.get_disposed() {
             return;
         }
         inner.set_disposed(true);
         cleanup_effect_dependencies(effect_addr, inner.get_mut_dependencies());
     }
-
-    /// Returns a mutable reference to the inner state.
-    ///
-    /// # Returns
-    ///
-    /// - `&'static mut RenderEffectInner` - A mutable reference to the inner state.
-    pub(crate) fn leak_mut(&self) -> &'static mut RenderEffectInner {
-        unsafe { &mut *(self.inner as *mut RenderEffectInner) }
-    }
 }
+
+/// SAFETY: `EffectSubscribersCell` is only used in single-threaded WASM contexts.
+unsafe impl Sync for EffectSubscribersCell {}
+
+/// SAFETY: `CurrentEffectCell` is only used in single-threaded WASM contexts.
+unsafe impl Sync for CurrentEffectCell {}
+
+/// SAFETY: `RenderEffectRegistryCell` is only used in single-threaded WASM contexts.
+unsafe impl Sync for RenderEffectRegistryCell {}

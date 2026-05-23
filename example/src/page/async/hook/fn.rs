@@ -26,7 +26,7 @@ pub fn use_fetch() -> UseFetch {
 ///
 /// - `NativeEventHandler` - A click handler to trigger the fetch.
 pub fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_loading().set(true);
         state.get_error().set(String::new());
         state.get_data().set(String::new());

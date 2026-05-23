@@ -144,17 +144,8 @@ fn find_macro_name_end(chars: &[char], pos: usize, _len: usize) -> usize {
     end
 }
 
-/// Checks if a character can be part of a Rust identifier.
-///
-/// # Arguments
-///
-/// - `char` - The character to check.
-///
-/// # Returns
-///
-/// - `bool` - Whether the character is an identifier character.
-///   Checks whether the keyword at the given position is preceded by `r#`,
-///   indicating a Rust raw identifier rather than a keyword.
+/// Checks whether the keyword at the given position is preceded by `r#`,
+/// indicating a Rust raw identifier rather than a keyword.
 ///
 /// # Arguments
 ///
@@ -171,6 +162,15 @@ fn is_raw_prefix(chars: &[char], pos: usize) -> bool {
     chars[pos - 2] == 'r' && chars[pos - 1] == '#'
 }
 
+/// Checks if a character can be part of a Rust identifier.
+///
+/// # Arguments
+///
+/// - `char`: The character to check.
+///
+/// # Returns
+///
+/// - `bool`: `true` if the character is alphanumeric or underscore.
 fn is_ident_char(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
 }

@@ -27,7 +27,7 @@ pub enum VirtualNode {
         /// An optional key for diffing.
         key: Option<String>,
     },
-    /// A text node.
+    /// A text node containing string content and an optional reactive signal.
     Text(TextNode),
     /// A fragment of multiple nodes without a wrapper element.
     Fragment(Vec<VirtualNode>),

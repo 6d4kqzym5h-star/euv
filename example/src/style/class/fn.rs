@@ -1662,6 +1662,11 @@ class! {
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
+        resize: "vertical";
+        overflow-x: "hidden";
+        word-wrap: "break-word";
+        font-family: "inherit";
+        line-height: "1.5";
         color: var!(text-primary);
     }
 

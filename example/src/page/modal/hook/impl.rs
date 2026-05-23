@@ -2,6 +2,11 @@ use crate::*;
 
 /// Provides a default empty modal state with all signals initialized.
 impl Default for UseModal {
+    /// Creates a default `UseModal` with all modal signals initialized.
+    ///
+    /// # Returns
+    ///
+    /// - `Self`: A new `UseModal` with visibility set to `false` and empty string signals.
     fn default() -> Self {
         UseModal {
             show_basic: use_signal(|| false),

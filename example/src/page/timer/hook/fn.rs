@@ -77,7 +77,7 @@ pub fn use_countdown() -> UseCountdown {
 ///
 /// - `NativeEventHandler` - A click handler to start the stopwatch.
 pub fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let was_running: bool = state.get_running().get();
         if !was_running {
             state.get_running().set(true);
@@ -109,7 +109,7 @@ pub fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to pause the stopwatch.
 pub fn stopwatch_on_pause(state: UseStopwatch) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -129,7 +129,7 @@ pub fn stopwatch_on_pause(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to reset the stopwatch.
 pub fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -150,7 +150,7 @@ pub fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to start the countdown.
 pub fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let input_text: String = state.get_input().get();
         let parsed: i32 = input_text.parse::<i32>().unwrap_or(60);
         let safe_total: i32 = if parsed > 0 { parsed } else { 60 };
@@ -188,7 +188,7 @@ pub fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to pause the countdown.
 pub fn countdown_on_pause(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -208,7 +208,7 @@ pub fn countdown_on_pause(state: UseCountdown) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - A click handler to reset the countdown.
 pub fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -230,7 +230,7 @@ pub fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
 ///
 /// - `NativeEventHandler` - An input handler for the countdown input field.
 pub fn countdown_on_input(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::new(NativeEventName::Input, move |event: Event| {
+    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {

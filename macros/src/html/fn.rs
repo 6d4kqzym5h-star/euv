@@ -419,15 +419,19 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
 ) -> proc_macro2::TokenStream {
     match value {
         HtmlAttrValue::Expr(expr) => {
-            if let Some(_event_name_str) = key_str.strip_prefix("on") {
+            if let Some(event_name_str) = key_str.strip_prefix("on") {
                 if is_component {
                     let callback_name: String = key_str.replace('_', "-");
                     quote! {
                         ::euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
                     }
                 } else {
+                    let event_name_ident: Ident = Ident::new(
+                        &camel_case_event_name(event_name_str),
+                        proc_macro2::Span::call_site(),
+                    );
                     quote! {
-                        ::euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                        ::euv_core::EventAdapter::new(#expr).into_attribute(::euv_core::NativeEventName::#event_name_ident)
                     }
                 }
             } else if key_str == "children" {

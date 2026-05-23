@@ -18,6 +18,16 @@ impl IntervalHandle {
 
 /// Compares interval handles by their interval ID.
 impl PartialEq for IntervalHandle {
+    /// Compares two interval handles for equality by their interval IDs.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self`: The first interval handle.
+    /// - `&Self`: The second interval handle.
+    ///
+    /// # Returns
+    ///
+    /// - `bool`: `true` if both handles have the same interval ID.
     fn eq(&self, other: &Self) -> bool {
         self.get_interval_id() == other.get_interval_id()
     }

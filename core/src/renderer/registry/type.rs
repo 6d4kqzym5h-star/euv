@@ -1,7 +1,10 @@
 use crate::*;
 
 /// Type alias for the handler registry value.
-///
-/// Uses a raw pointer instead of `Rc<RefCell<...>>` for page-lifetime data.
-/// Allocated via `Box::leak`, valid for the program lifetime.
-pub(crate) type HandlerEntry = *mut HandlerSlot;
+pub(crate) type HandlerEntry = Rc<RefCell<HandlerSlot>>;
+
+/// Type alias for the signal update registry value.
+pub(crate) type SignalUpdateEntry = Rc<RefCell<SignalUpdateSlot>>;
+
+/// Type alias for the handler registry map.
+pub(crate) type HandlerRegistryMap = HashMap<(usize, Cow<'static, str>), HandlerEntry>;

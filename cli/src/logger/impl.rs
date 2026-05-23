@@ -2,10 +2,24 @@ use crate::*;
 
 /// Implementation of the `log::Log` trait for colored console output.
 impl log::Log for Logger {
+    /// Determines whether a log record with the specified metadata would be logged.
+    ///
+    /// # Arguments
+    ///
+    /// - `&log::Metadata`: The metadata of the log record.
+    ///
+    /// # Returns
+    ///
+    /// - `bool`: Whether the record's level is within the maximum log level.
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         metadata.level() <= log::max_level()
     }
 
+    /// Logs a record with colored console output.
+    ///
+    /// # Arguments
+    ///
+    /// - `&log::Record`: The log record to output.
     fn log(&self, record: &log::Record) {
         if !self.enabled(record.metadata()) {
             return;
@@ -64,6 +78,7 @@ impl log::Log for Logger {
             .run();
     }
 
+    /// Flushes any buffered log output.
     fn flush(&self) {}
 }
 

@@ -5,11 +5,9 @@ use crate::*;
 pub struct UsePropsDemo {
     /// The parent message to pass down to child.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub parent_message: Signal<String>,
     /// The message received from child via callback.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub child_response: Signal<String>,
 }
 
@@ -18,11 +16,9 @@ pub struct UsePropsDemo {
 pub struct UseTwoWayDemo {
     /// The shared text value bound between parent and child.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub shared_text: Signal<String>,
     /// The shared counter value bound between parent and child.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub shared_count: Signal<i32>,
 }
 
@@ -31,27 +27,21 @@ pub struct UseTwoWayDemo {
 pub struct UseCrossComponentDemo {
     /// The temperature in Celsius.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub celsius: Signal<f64>,
     /// The temperature in Fahrenheit (derived).
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub fahrenheit: Signal<f64>,
     /// The RGB red channel value.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub red: Signal<i32>,
     /// The RGB green channel value.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub green: Signal<i32>,
     /// The RGB blue channel value.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub blue: Signal<i32>,
     /// The hex color string (derived).
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub hex_color: Signal<String>,
 }
 
@@ -62,15 +52,12 @@ pub struct UseCrossComponentDemo {
 pub struct UseTypedPropsDemo {
     /// Whether the child input is disabled.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub disabled: Signal<bool>,
     /// The maximum count allowed.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub max_count: Signal<i32>,
     /// The current count value.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub current_count: Signal<i32>,
 }
 
@@ -81,10 +68,8 @@ pub struct UseTypedPropsDemo {
 pub struct UseCustomCallbackDemo {
     /// The text input value.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub text_value: Signal<String>,
     /// The last callback event name received.
     #[get(pub, type(copy))]
-    #[set(pub)]
     pub last_event: Signal<String>,
 }

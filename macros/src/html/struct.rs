@@ -7,7 +7,7 @@ use crate::*;
 /// - 0 nodes → `VirtualNode::Empty`
 /// - 1 node → the node's token stream directly
 /// - N nodes → `VirtualNode::Fragment(vec![...])`
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlRoot {
     /// The top-level nodes parsed from the macro input.
     #[get(pub(crate))]
@@ -22,7 +22,7 @@ pub(crate) struct HtmlRoot {
 /// The pattern is a Rust binding pattern (e.g., `item` or `(index, item)`).
 /// The expression in braces must evaluate to an iterable. Each iteration's
 /// body is rendered as HTML and collected into a `VirtualNode::Fragment`.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlFor {
     /// The binding pattern for loop variables (e.g., `item` or `(index, item)`).
     #[get(pub(crate))]
@@ -41,7 +41,7 @@ pub(crate) struct HtmlFor {
 /// Represents a reactive `if` conditional in HTML.
 ///
 /// Syntax: `if {expr} { children } [else if {expr} { children }]* [else { children }]`
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlIf {
     /// The list of condition-branch pairs. Each condition is a braced expression.
     /// The last entry may have `None` as condition (representing `else`).
@@ -53,7 +53,7 @@ pub(crate) struct HtmlIf {
 /// Represents a reactive `if` conditional in attribute value position.
 ///
 /// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlAttrIf {
     /// The list of condition-branch pairs. Each condition is a braced expression.
     /// The last entry may have `None` as condition (representing `else`).
@@ -65,7 +65,7 @@ pub(crate) struct HtmlAttrIf {
 /// Represents a reactive `match` expression in HTML.
 ///
 /// Syntax: `match {expr} { pattern => { children } ... }`
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlMatch {
     /// The expression to match against (from the braces after `match`).
     #[get(pub(crate))]
@@ -80,7 +80,7 @@ pub(crate) struct HtmlMatch {
 /// Represents an HTML element with a tag name, attributes, and children.
 ///
 /// Stores the parsed structure of an HTML element for token generation.
-#[derive(Clone, Data, Debug)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlElement {
     /// The tag name or component name.
     #[get(pub(crate))]
