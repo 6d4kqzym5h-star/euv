@@ -42,20 +42,22 @@ pub fn page_signals() -> VirtualNode {
                     my_badge {
                         color: "#059669"
                         text: "Success"
-                        on_click: badge_on_click("Success")
+                        on_click: badge_on_click("Success", LogLevel::Log)
                     }
                     my_badge {
                         color: "#dc2626"
                         text: "Error"
-                        on_click: badge_on_click("Error")
+                        on_click: badge_on_click("Error", LogLevel::Error)
                     }
                     my_badge {
                         color: "#d97706"
                         text: "Warning"
+                        on_click: badge_on_click("Warning", LogLevel::Warn)
                     }
                     my_badge {
                         color: "#6b7280"
                         text: "Info"
+                        on_click: badge_on_click("Info", LogLevel::Log)
                     }
                 }
             }

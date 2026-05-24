@@ -236,7 +236,13 @@ impl Renderer {
         parent.child_nodes().get(index)
     }
 
-    /// Patches children of an element using a positional diff algorithm.
+    /// Patches children of an element using a keyed diff algorithm when keys
+    /// are available, falling back to positional diff when no keys exist.
+    ///
+    /// When all children in both old and new lists have keys, this method
+    /// builds a key-to-index map and applies a minimal set of DOM moves,
+    /// insertions, and removals. This avoids the O(N) per-child re-patch
+    /// that the naive positional algorithm incurs when items are reordered.
     ///
     /// # Arguments
     ///
@@ -244,6 +250,151 @@ impl Renderer {
     /// - `&[VirtualNode]`: The old children list.
     /// - `&[VirtualNode]`: The new children list.
     fn patch_children(
+        &mut self,
+        parent: &Element,
+        old_children: &[VirtualNode],
+        new_children: &[VirtualNode],
+    ) {
+        let old_has_keys: bool =
+            !old_children.is_empty() && old_children.iter().all(Self::node_has_key);
+        let new_has_keys: bool =
+            !new_children.is_empty() && new_children.iter().all(Self::node_has_key);
+        if old_has_keys && new_has_keys {
+            self.patch_children_keyed(parent, old_children, new_children);
+        } else {
+            self.patch_children_positional(parent, old_children, new_children);
+        }
+    }
+
+    /// Returns `true` if the virtual node has a non-empty key.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The node to check.
+    ///
+    /// # Returns
+    ///
+    /// - `bool`: Whether the node has a key.
+    fn node_has_key(node: &VirtualNode) -> bool {
+        match node {
+            VirtualNode::Element { key, .. } => key.is_some(),
+            _ => false,
+        }
+    }
+
+    /// Extracts the key from a virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The node to extract the key from.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&str>`: The key string, if present.
+    fn get_node_key(node: &VirtualNode) -> Option<&str> {
+        match node {
+            VirtualNode::Element { key, .. } => key.as_deref(),
+            _ => None,
+        }
+    }
+
+    /// Keyed diffing algorithm that minimizes DOM operations.
+    ///
+    /// Builds a mapping from old keys to their DOM indices, then walks the
+    /// new children list. For each new child:
+    ///
+    /// - If its key existed in the old list, patches the existing DOM node.
+    /// - Otherwise, creates a new DOM node.
+    ///
+    /// After processing all new children, removes any old DOM nodes whose
+    /// keys are no longer present in the new list.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The parent DOM element.
+    /// - `&[VirtualNode]`: The old children list.
+    /// - `&[VirtualNode]`: The new children list.
+    fn patch_children_keyed(
+        &mut self,
+        parent: &Element,
+        old_children: &[VirtualNode],
+        new_children: &[VirtualNode],
+    ) {
+        let mut old_key_map: HashMap<&str, usize> = HashMap::with_capacity(old_children.len());
+        for (index, old_child) in old_children.iter().enumerate() {
+            if let Some(key) = Self::get_node_key(old_child) {
+                old_key_map.insert(key, index);
+            }
+        }
+        let mut reused_indices: HashSet<usize> = HashSet::with_capacity(new_children.len());
+        let child_nodes: NodeList = parent.child_nodes();
+        let dom_child_count: u32 = child_nodes.length();
+        for (new_index, new_child) in new_children.iter().enumerate() {
+            let new_key: &str = Self::get_node_key(new_child).unwrap_or("");
+            if let Some(&old_index) = old_key_map.get(new_key) {
+                reused_indices.insert(old_index);
+                let old_child: &VirtualNode = &old_children[old_index];
+                let mapped_dom_index: u32 = old_index as u32;
+                if mapped_dom_index < dom_child_count
+                    && let Some(dom_node) = child_nodes.get(mapped_dom_index)
+                    && let Some(element) = dom_node.dyn_ref::<Element>()
+                {
+                    self.patch_node(old_child, new_child, element);
+                }
+                let current_dom_index: u32 = new_index as u32;
+                if mapped_dom_index != current_dom_index
+                    && current_dom_index < dom_child_count
+                    && let Some(dom_node) = child_nodes.get(mapped_dom_index)
+                {
+                    if let Some(reference_node) = child_nodes.get(current_dom_index) {
+                        let _ = parent.insert_before(&dom_node, Some(&reference_node));
+                    } else {
+                        let _ = parent.append_child(&dom_node);
+                    }
+                }
+            } else {
+                let new_dom: Node = self.create_dom_node(new_child);
+                if (new_index as u32) < dom_child_count
+                    && let Some(reference_node) = child_nodes.get(new_index as u32)
+                {
+                    let _ = parent.insert_before(&new_dom, Some(&reference_node));
+                } else {
+                    let _ = parent.append_child(&new_dom);
+                }
+            }
+        }
+        let mut indices_to_remove: Vec<usize> = Vec::new();
+        for (index, old_child) in old_children.iter().enumerate() {
+            if !reused_indices.contains(&index) {
+                indices_to_remove.push(index);
+            }
+            let _ = old_child;
+        }
+        indices_to_remove.sort_unstable_by(|a: &usize, b: &usize| b.cmp(a));
+        for old_index in indices_to_remove {
+            let mapped_dom_index: u32 = old_index as u32;
+            if mapped_dom_index < parent.child_nodes().length()
+                && let Some(dom_node) = parent.child_nodes().get(mapped_dom_index)
+            {
+                if let Some(element) = dom_node.dyn_ref::<Element>() {
+                    self.cleanup_dom_subtree(element);
+                }
+                let _ = parent.remove_child(&dom_node);
+            }
+        }
+    }
+
+    /// Positional diffing algorithm (original behavior).
+    ///
+    /// Patches children by index position. Used as a fallback when keys
+    /// are not available on all children.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Element`: The parent DOM element.
+    /// - `&[VirtualNode]`: The old children list.
+    /// - `&[VirtualNode]`: The new children list.
+    fn patch_children_positional(
         &mut self,
         parent: &Element,
         old_children: &[VirtualNode],

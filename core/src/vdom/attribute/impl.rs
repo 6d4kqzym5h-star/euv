@@ -38,7 +38,7 @@ impl PartialEq for AttributeValue {
             (AttributeValue::Text(old_val), AttributeValue::Signal(new_sig)) => {
                 *old_val == new_sig.get()
             }
-            (AttributeValue::Event(_), AttributeValue::Event(_)) => false,
+            (AttributeValue::Event(_), AttributeValue::Event(_)) => true,
             (AttributeValue::Css(old_css), AttributeValue::Css(new_css)) => {
                 old_css.get_name() == new_css.get_name()
             }

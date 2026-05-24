@@ -16,18 +16,29 @@ pub fn counter_on_increment(counter: Signal<i32>) -> NativeEventHandler {
     })
 }
 
-/// Creates a click event handler that logs a badge click message.
+/// Creates a click event handler that logs a badge click message at the appropriate level.
+///
+/// The log level is determined by the `LogLevel` enum parameter:
+/// - `LogLevel::Log` → `Console::log`
+/// - `LogLevel::Warn` → `Console::warn`
+/// - `LogLevel::Error` → `Console::error`
 ///
 /// # Arguments
 ///
 /// - `&str` - The badge name for the log message.
+/// - `LogLevel` - The log level determining which console method to use.
 ///
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that logs the badge click.
-pub fn badge_on_click(badge_name: &str) -> NativeEventHandler {
+pub fn badge_on_click(badge_name: &str, level: LogLevel) -> NativeEventHandler {
     let name: String = badge_name.to_string();
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
-        Console::log(&format!("{} badge clicked!", name));
+        let message: String = format!("{} badge clicked!", name);
+        match level {
+            LogLevel::Log => Console::log(&message),
+            LogLevel::Warn => Console::warn(&message),
+            LogLevel::Error => Console::error(&message),
+        }
     })
 }

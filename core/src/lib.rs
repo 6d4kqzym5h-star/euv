@@ -15,7 +15,7 @@ use std::{
     borrow::Cow,
     cell::{Ref, RefCell, RefMut, UnsafeCell},
     collections::{HashMap, HashSet},
-    mem::take,
+    mem::{swap, take},
     ops::{Deref, DerefMut},
     rc::Rc,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},

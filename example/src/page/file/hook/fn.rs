@@ -19,6 +19,9 @@ pub fn use_file_upload() -> UseFileUpload {
 
 /// Creates a change event handler that reads file information from a file input.
 ///
+/// Uses `input.files()` to access the `FileList` API, which correctly returns
+/// all selected files when the "Allow multiple files" option is enabled.
+///
 /// # Arguments
 ///
 /// - `UseFileUpload` - The file upload state.
@@ -31,29 +34,33 @@ pub fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
-            let value: String = input.value();
-            let names: Vec<String> = if value.is_empty() {
-                Vec::new()
-            } else {
-                value
-                    .split(',')
-                    .map(|s| {
-                        s.trim()
-                            .split('\\')
-                            .next_back()
-                            .unwrap_or("")
-                            .split('/')
-                            .next_back()
-                            .unwrap_or("")
-                            .to_string()
-                    })
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            };
+            let file_list: Option<FileList> = input.files();
+            let names: Vec<String>;
+            let sizes: Vec<f64>;
+            let types: Vec<String>;
+            match file_list {
+                Some(files) => {
+                    let count: u32 = files.length();
+                    names = (0..count)
+                        .filter_map(|index: u32| files.get(index).map(|file: File| file.name()))
+                        .collect();
+                    sizes = (0..count)
+                        .filter_map(|index: u32| files.get(index).map(|file: File| file.size()))
+                        .collect();
+                    types = (0..count)
+                        .filter_map(|index: u32| files.get(index).map(|file: File| file.type_()))
+                        .collect();
+                }
+                None => {
+                    names = Vec::new();
+                    sizes = Vec::new();
+                    types = Vec::new();
+                }
+            }
             state.get_file_names().set(names.clone());
+            state.get_file_sizes().set(sizes);
+            state.get_file_types().set(types);
             if names.is_empty() {
-                state.get_file_sizes().set(Vec::new());
-                state.get_file_types().set(Vec::new());
                 state.get_status().set("No files selected".to_string());
             } else {
                 let count: usize = names.len();

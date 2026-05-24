@@ -102,7 +102,7 @@ where
     /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
         let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        let mut listeners: Vec<Box<dyn FnMut()>>;
+        let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         {
             let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
             if !inner.get_alive() {
@@ -112,14 +112,14 @@ where
                 return;
             }
             inner.set_value(value);
-            listeners = take(inner.get_mut_listeners());
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
         for listener in listeners.iter_mut() {
             listener();
         }
         {
             let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
-            inner.get_mut_listeners().extend(listeners);
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
         schedule_signal_update();
     }
@@ -132,7 +132,7 @@ where
     /// - `T` - The new value to assign to the signal.
     pub fn set_silent(&self, value: T) {
         let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        let mut listeners: Vec<Box<dyn FnMut()>>;
+        let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         {
             let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
             if !inner.get_alive() {
@@ -142,14 +142,14 @@ where
                 return;
             }
             inner.set_value(value);
-            listeners = take(inner.get_mut_listeners());
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
         for listener in listeners.iter_mut() {
             listener();
         }
         {
             let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
-            inner.get_mut_listeners().extend(listeners);
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
     }
 
@@ -164,7 +164,7 @@ where
     /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged or inactive.
     pub fn try_set(&self, value: T) -> bool {
         let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        let mut listeners: Vec<Box<dyn FnMut()>>;
+        let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         {
             let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
             if !inner.get_alive() {
@@ -174,14 +174,14 @@ where
                 return false;
             }
             inner.set_value(value);
-            listeners = take(inner.get_mut_listeners());
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
         for listener in listeners.iter_mut() {
             listener();
         }
         {
             let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
-            inner.get_mut_listeners().extend(listeners);
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
         schedule_signal_update();
         true

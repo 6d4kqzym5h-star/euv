@@ -115,7 +115,7 @@ where
     let signal_key: usize = attr_signal.get_inner_addr();
     let callback: Box<dyn FnMut()> = Box::new(move || {
         let new_value: String = compute();
-        attr_signal.set(new_value);
+        attr_signal.set_silent(new_value);
     });
     register_attr_signal_listener(signal_key, callback);
 }
@@ -141,7 +141,7 @@ pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> Att
         let source_inner: Signal<bool> = source;
         move || {
             let new_value: String = source_inner.get().to_string();
-            string_signal_clone.set(new_value);
+            string_signal_clone.set_silent(new_value);
         }
     });
     AttributeValue::Signal(string_signal)

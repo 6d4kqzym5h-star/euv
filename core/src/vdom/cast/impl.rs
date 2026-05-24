@@ -267,7 +267,7 @@ where
             let source_inner: Signal<T> = source_signal;
             move || {
                 let new_value: String = source_inner.get().to_string();
-                string_signal_clone.set(new_value);
+                string_signal_clone.set_silent(new_value);
             }
         });
         VirtualNode::Text(TextNode::new(initial, Some(string_signal)))
