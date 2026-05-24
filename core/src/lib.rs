@@ -22,6 +22,3 @@ use std::{
 };
 
 use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen::*, web_sys::*};
-
-#[cfg(test)]
-use std::cell::Cell;

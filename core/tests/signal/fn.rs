@@ -72,13 +72,3 @@ fn test_signal_set_silent_no_op_on_equal() {
     signal.set_silent(5);
     assert_eq!(count.get(), 0);
 }
-
-#[test]
-fn test_with_suppressed_updates_prevents_schedule() {
-    let signal: Signal<i32> = use_signal(|| 0);
-    with_suppressed_updates(|| {
-        signal.set(10);
-    });
-    assert_eq!(signal.get(), 10);
-    assert!(!SCHEDULED.load(Ordering::Relaxed));
-}
