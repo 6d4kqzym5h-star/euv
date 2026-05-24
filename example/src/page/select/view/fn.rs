@@ -50,7 +50,7 @@ pub fn page_select() -> VirtualNode {
                     "Selected: "
                     span {
                         class: c_event_highlight()
-                        state.get_selected_fruit()
+                        { state.get_selected_fruit().get() }
                     }
                 }
             }
@@ -68,7 +68,6 @@ pub fn page_select() -> VirtualNode {
                         name: "country"
                         autocomplete: "country"
                         class: c_select_input()
-                        value: state.get_selected_country()
                         onchange: select_on_country_change(state)
                         option {
                             value: ""
@@ -88,7 +87,7 @@ pub fn page_select() -> VirtualNode {
                         }
                     }
                 }
-                if { !state.get_selected_country().get().is_empty() } {
+                if { state.get_selected_country().get() == "china" } {
                     div {
                         class: c_form_input_wrapper()
                         label {
@@ -101,18 +100,51 @@ pub fn page_select() -> VirtualNode {
                             name: "city"
                             autocomplete: "off"
                             class: c_select_input()
-                            value: state.get_selected_city()
                             onchange: on_change_value(state.get_selected_city())
-                            option {
-                                value: ""
-                                "-- Select City --"
-                            }
-                            for (city_value, city_label) in { match state.get_selected_country().get().as_str() { "china" => vec![("beijing".to_string(), "Beijing".to_string()), ("shanghai".to_string(), "Shanghai".to_string()), ("guangzhou".to_string(), "Guangzhou".to_string())], "japan" => vec![("tokyo".to_string(), "Tokyo".to_string()), ("osaka".to_string(), "Osaka".to_string()), ("kyoto".to_string(), "Kyoto".to_string())], "usa" => vec![("new-york".to_string(), "New York".to_string()), ("los-angeles".to_string(), "Los Angeles".to_string()), ("chicago".to_string(), "Chicago".to_string())], _ => vec![] } } {
-                                option {
-                                    value: city_value
-                                    city_label
-                                }
-                            }
+                            option { value: "none" "-- Select City --" }
+                            option { value: "beijing" "Beijing" }
+                            option { value: "shanghai" "Shanghai" }
+                            option { value: "guangzhou" "Guangzhou" }
+                        }
+                    }
+                } else if { state.get_selected_country().get() == "japan" } {
+                    div {
+                        class: c_form_input_wrapper()
+                        label {
+                            r#for: "select-city"
+                            class: c_form_label()
+                            "City"
+                        }
+                        select {
+                            id: "select-city"
+                            name: "city"
+                            autocomplete: "off"
+                            class: c_select_input()
+                            onchange: on_change_value(state.get_selected_city())
+                            option { value: "none" "-- Select City --" }
+                            option { value: "tokyo" "Tokyo" }
+                            option { value: "osaka" "Osaka" }
+                            option { value: "kyoto" "Kyoto" }
+                        }
+                    }
+                } else if { state.get_selected_country().get() == "usa" } {
+                    div {
+                        class: c_form_input_wrapper()
+                        label {
+                            r#for: "select-city"
+                            class: c_form_label()
+                            "City"
+                        }
+                        select {
+                            id: "select-city"
+                            name: "city"
+                            autocomplete: "off"
+                            class: c_select_input()
+                            onchange: on_change_value(state.get_selected_city())
+                            option { value: "none" "-- Select City --" }
+                            option { value: "new-york" "New York" }
+                            option { value: "los-angeles" "Los Angeles" }
+                            option { value: "chicago" "Chicago" }
                         }
                     }
                 } else {
@@ -124,7 +156,7 @@ pub fn page_select() -> VirtualNode {
                         "You selected: "
                         span {
                             class: c_event_highlight()
-                            state.get_selected_city()
+                            { state.get_selected_city().get() }
                         }
                     }
                 } else {

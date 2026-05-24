@@ -85,7 +85,7 @@ where
     F: FnOnce() -> T,
 {
     let ctx: HookContext = get_current_hook_context();
-    let mut inner: std::cell::RefMut<HookContextInner> = ctx.get_inner().borrow_mut();
+    let mut inner: RefMut<HookContextInner> = ctx.get_inner().borrow_mut();
     let index: usize = inner.get_hook_index();
     inner.set_hook_index(index + 1);
     if index < inner.get_hooks().len()

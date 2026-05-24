@@ -12,17 +12,41 @@ impl Renderer {
     /// - `VirtualNode`: The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
-        if let Some(old_vnode) = self.try_get_current_tree() {
-            let old_unwrapped: VirtualNode = self.unwrap_component(old_vnode);
-            self.patch_root(&old_unwrapped, &new_unwrapped);
+        let old_tree: Option<VirtualNode> = self.try_get_current_tree().clone();
+        if let Some(old_vnode) = old_tree {
+            self.patch_root(&old_vnode, &new_unwrapped);
         } else {
-            let dom_node: Node = self.create_dom_node(&new_unwrapped);
             while let Some(child) = self.get_root().first_child() {
+                if let Some(element) = child.dyn_ref::<Element>() {
+                    self.cleanup_dom_subtree(element);
+                }
                 self.get_root().remove_child(&child).unwrap();
             }
+            let dom_node: Node = self.create_dom_node(&new_unwrapped);
             self.get_root().append_child(&dom_node).unwrap();
         }
-        self.set_current_tree(Some(vnode));
+        self.set_current_tree(Some(new_unwrapped));
+    }
+
+    /// Renders the given virtual DOM tree into the real DOM by fully replacing
+    /// all existing content. Used when a match arm switch occurs (e.g. route
+    /// change) where incremental patching would incorrectly align unrelated
+    /// child nodes from the previous arm.
+    ///
+    /// # Arguments
+    ///
+    /// - `VirtualNode`: The new virtual DOM tree to render.
+    pub fn render_full_replace(&mut self, vnode: VirtualNode) {
+        let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
+        while let Some(child) = self.get_root().first_child() {
+            if let Some(element) = child.dyn_ref::<Element>() {
+                self.cleanup_dom_subtree(element);
+            }
+            self.get_root().remove_child(&child).unwrap();
+        }
+        let dom_node: Node = self.create_dom_node(&new_unwrapped);
+        self.get_root().append_child(&dom_node).unwrap();
+        self.set_current_tree(Some(new_unwrapped));
     }
 
     /// Patches the root DOM tree by replacing the single child of `self.root`.
@@ -42,6 +66,9 @@ impl Renderer {
             let element: Element = dom_child.unwrap().dyn_into::<Element>().unwrap();
             self.patch_node(old_node, new_node, &element);
         } else if let Some(dom_child) = dom_child {
+            if let Some(element) = dom_child.dyn_ref::<Element>() {
+                self.cleanup_dom_subtree(element);
+            }
             let new_dom: Node = self.create_dom_node(new_node);
             self.get_root().replace_child(&new_dom, &dom_child).unwrap();
         } else {
@@ -98,6 +125,20 @@ impl Renderer {
                 self.patch_children(dom_element, old_children, new_children);
             }
             (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => {}
+            (VirtualNode::Dynamic(_), _) => {
+                let new_dom: Node = self.create_dom_node(new_node);
+                if let Some(parent) = dom_element.parent_node() {
+                    self.cleanup_dom_subtree(dom_element);
+                    parent.replace_child(&new_dom, dom_element).unwrap();
+                }
+            }
+            (_, VirtualNode::Dynamic(_)) => {
+                let new_dom: Node = self.create_dom_node(new_node);
+                if let Some(parent) = dom_element.parent_node() {
+                    self.cleanup_dom_subtree(dom_element);
+                    parent.replace_child(&new_dom, dom_element).unwrap();
+                }
+            }
             _ => {
                 let new_dom: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
@@ -436,26 +477,36 @@ impl Renderer {
         let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
         let renderer_rc: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
+        let initial_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
+        let last_arm: Rc<RefCell<usize>> = Rc::new(RefCell::new(initial_arm));
         let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
             hook_context.reset_hook_index();
+            let prev_arm: usize = *last_arm.borrow();
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
-                let mut inner: std::cell::RefMut<RenderFnInner> = render_fn.borrow_mut();
+                let mut inner: RefMut<RenderFnInner> = render_fn.borrow_mut();
                 (inner.get_mut_render_fn())()
             });
-            if skip_equal {
-                let renderer_ref: std::cell::Ref<Renderer> = renderer_rc.borrow();
+            let current_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
+            let arm_switched: bool = prev_arm != current_arm;
+            *last_arm.borrow_mut() = current_arm;
+            if skip_equal && !arm_switched {
+                let renderer_ref: Ref<Renderer> = renderer_rc.borrow();
                 if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
                     let new_unwrapped: VirtualNode = Renderer::unwrap_component_static(&new_vnode);
-                    if old_vnode == &new_unwrapped {
+                    if Renderer::visual_eq(old_vnode, &new_unwrapped) {
                         return;
                     }
                 }
             }
-            let mut renderer_mut: std::cell::RefMut<Renderer> = renderer_rc.borrow_mut();
-            renderer_mut.render(new_vnode);
+            let mut renderer_mut: RefMut<Renderer> = renderer_rc.borrow_mut();
+            if arm_switched {
+                renderer_mut.render_full_replace(new_vnode);
+            } else {
+                renderer_mut.render(new_vnode);
+            }
         });
         register_dynamic_listener(dynamic_id, callback);
         initial_dom
@@ -569,7 +620,8 @@ impl Renderer {
         }
     }
 
-    /// Returns `true` if the given subtree contains any `Tag::Component` nodes.
+    /// Returns `true` if the given subtree contains any `Tag::Component` nodes
+    /// that need unwrapping.
     ///
     /// # Arguments
     ///
@@ -588,6 +640,63 @@ impl Renderer {
                 children.iter().any(Self::subtree_has_component)
             }
             VirtualNode::Fragment(children) => children.iter().any(Self::subtree_has_component),
+            _ => false,
+        }
+    }
+
+    /// Performs a visual equality comparison between two virtual node trees.
+    ///
+    /// Unlike `PartialEq`, this method recursively unwraps `VirtualNode::Dynamic`
+    /// nodes by rendering their inner content and comparing the visual output.
+    /// This is used by the `skip_equal` optimization in `setup_dynamic_node`
+    /// to avoid unnecessary DOM patches when the rendered output is unchanged.
+    ///
+    /// # Arguments
+    ///
+    /// - `&VirtualNode`: The old virtual node.
+    /// - `&VirtualNode`: The new virtual node.
+    ///
+    /// # Returns
+    ///
+    /// - `bool`: `true` if the two nodes produce the same visual output.
+    fn visual_eq(old_node: &VirtualNode, new_node: &VirtualNode) -> bool {
+        match (old_node, new_node) {
+            (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,
+            (
+                VirtualNode::Element {
+                    tag: old_tag,
+                    attributes: old_attrs,
+                    children: old_children,
+                    ..
+                },
+                VirtualNode::Element {
+                    tag: new_tag,
+                    attributes: new_attrs,
+                    children: new_children,
+                    ..
+                },
+            ) => {
+                old_tag == new_tag
+                    && old_attrs.len() == new_attrs.len()
+                    && old_attrs
+                        .iter()
+                        .zip(new_attrs.iter())
+                        .all(|(old_attr, new_attr)| old_attr == new_attr)
+                    && old_children.len() == new_children.len()
+                    && old_children
+                        .iter()
+                        .zip(new_children.iter())
+                        .all(|(old_child, new_child)| Self::visual_eq(old_child, new_child))
+            }
+            (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
+                old_children.len() == new_children.len()
+                    && old_children
+                        .iter()
+                        .zip(new_children.iter())
+                        .all(|(old_child, new_child)| Self::visual_eq(old_child, new_child))
+            }
+            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => true,
+            (VirtualNode::Empty, VirtualNode::Empty) => true,
             _ => false,
         }
     }
@@ -673,7 +782,7 @@ impl Renderer {
         let registry_ref: &mut HashMap<(usize, Cow<'static, str>), HandlerEntry> =
             ensure_handler_registry_mut();
         if let Some(existing_entry) = registry_ref.get(&key) {
-            let mut slot: std::cell::RefMut<HandlerSlot> = existing_entry.borrow_mut();
+            let mut slot: RefMut<HandlerSlot> = existing_entry.borrow_mut();
             slot.set_handler(Some(handler.clone()));
         } else {
             let handler_slot: HandlerEntry =

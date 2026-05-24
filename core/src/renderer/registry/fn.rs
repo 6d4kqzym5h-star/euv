@@ -35,7 +35,7 @@ fn dispatch_delegated_event(event: &Event, event_name: &str) {
                 let registry: &HashMap<(usize, Cow<'static, str>), HandlerEntry> =
                     ensure_handler_registry();
                 registry.get(&key).and_then(|entry| {
-                    let slot: std::cell::Ref<HandlerSlot> = entry.borrow();
+                    let slot: Ref<HandlerSlot> = entry.borrow();
                     slot.try_get_handler().as_ref().cloned()
                 })
             };
