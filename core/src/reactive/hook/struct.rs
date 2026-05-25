@@ -7,7 +7,7 @@ use crate::*;
 /// when toggled, the hook array is cleared to prevent signal leakage
 /// between different match arms.
 #[derive(CustomDebug, Data, Default, New)]
-pub struct HookContextInner {
+pub(crate) struct HookContextInner {
     /// Storage for hook state values (signals, etc.).
     #[debug(skip)]
     #[get(pub(crate))]
@@ -45,18 +45,3 @@ pub struct HookContext {
     #[set(pub(crate))]
     pub(crate) inner: Rc<RefCell<HookContextInner>>,
 }
-
-/// A `Sync` wrapper for single-threaded global `HookContextInner` access.
-///
-/// SAFETY: This type is only safe to use in single-threaded contexts
-/// (e.g., WASM). It implements `Sync` to allow usage as a `static`
-/// variable, but concurrent access from multiple threads would be
-/// undefined behavior.
-#[derive(CustomDebug, Data, New)]
-pub struct HookContextCell(
-    /// Interior-mutable storage for the hook context inner state.
-    #[debug(skip)]
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) UnsafeCell<HookContextInner>,
-);

@@ -863,7 +863,7 @@ impl Renderer {
     /// - `usize`: The assigned dynamic ID.
     fn assign_dynamic_id(placeholder: &Element) -> usize {
         let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
-        let _ = placeholder.set_attribute("data-euv-dynamic-id", &dynamic_id.to_string());
+        let _ = placeholder.set_attribute(DATA_EUV_DYNAMIC_ID, &dynamic_id.to_string());
         dynamic_id
     }
 
@@ -881,7 +881,7 @@ impl Renderer {
         {
             cleanup_element_handlers(euv_id);
         }
-        if let Some(dynamic_id_str) = element.get_attribute("data-euv-dynamic-id")
+        if let Some(dynamic_id_str) = element.get_attribute(DATA_EUV_DYNAMIC_ID)
             && let Ok(dynamic_id) = dynamic_id_str.parse::<usize>()
         {
             cleanup_dynamic_node(dynamic_id);

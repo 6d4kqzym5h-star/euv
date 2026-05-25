@@ -197,31 +197,3 @@ pub(crate) fn mark_injected_class(class_name: String) -> bool {
             .insert(class_name)
     }
 }
-
-/// Clears all injected classes.
-#[allow(static_mut_refs)]
-pub(crate) fn clear_injected_classes() {
-    unsafe {
-        if let Some(set) = (*INJECTED_CLASSES.get_0().get()).as_mut() {
-            set.clear();
-        }
-    }
-}
-
-/// Resets the injected CSS class tracking set.
-///
-/// Frees the `INJECTED_CLASSES` `HashSet` and sets the pointer back to null
-/// so that CSS classes will be re-injected on the next mount after a browser
-/// refresh. Also removes the shared `<style>` element from the DOM.
-///
-/// # Panics
-///
-/// Panics if `window()` or `document()` is unavailable on WASM targets.
-pub(crate) fn reset_injected_classes() {
-    clear_injected_classes();
-    let window: Window = window().expect("no global window exists");
-    let document: Document = window.document().expect("should have a document");
-    if let Some(style_element) = document.get_element_by_id("euv-css-injected") {
-        style_element.remove();
-    }
-}

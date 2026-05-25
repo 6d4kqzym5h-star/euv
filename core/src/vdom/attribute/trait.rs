@@ -26,7 +26,7 @@ pub trait IntoReactiveString {
 /// Trait for types that can be converted into a callback attribute value.
 ///
 /// This allows closures to be passed as custom component props.
-pub trait IntoCallbackAttribute {
+pub(crate) trait IntoCallbackAttribute {
     /// Converts this value into an `AttributeValue`, wrapping the callback
     /// for use as a component prop.
     fn into_callback_attribute(self) -> AttributeValue;

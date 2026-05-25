@@ -5,7 +5,7 @@ use crate::*;
 /// Maintains a mapping between virtual nodes and real DOM elements,
 /// and handles creation, diffing, and patching of the DOM tree.
 #[derive(CustomDebug, Data, New)]
-pub struct Renderer {
+pub(crate) struct Renderer {
     /// The root DOM element.
     #[debug(skip)]
     #[get(pub(crate))]

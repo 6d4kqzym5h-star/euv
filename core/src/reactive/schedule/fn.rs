@@ -108,7 +108,7 @@ where
 ///
 /// - `Signal<String>`: The attribute signal to subscribe.
 /// - `F`: A closure that computes the current attribute value string.
-pub fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
+pub(crate) fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
 where
     F: Fn() -> String + 'static,
 {
@@ -145,19 +145,6 @@ pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> Att
         }
     });
     AttributeValue::Signal(string_signal)
-}
-
-/// Resets all scheduling and hook context state to their initial values.
-///
-/// Sets `SCHEDULED`, `SUPPRESS_SCHEDULE`, and `SIGNAL_UPDATE_DISPATCHING`
-/// to `false`, and clears the `CURRENT_HOOK_CONTEXT` cell.
-/// Used during application teardown to ensure a clean slate when
-/// the WASM module is re-instantiated after a browser refresh.
-pub fn reset_schedule_state() {
-    SCHEDULED.store(false, Ordering::Relaxed);
-    SUPPRESS_SCHEDULE.store(false, Ordering::Relaxed);
-    SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
-    *current_hook_context_mut() = None;
 }
 
 /// Returns a mutable reference to the current hook context.

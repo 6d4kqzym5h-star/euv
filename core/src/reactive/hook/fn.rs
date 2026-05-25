@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `HookContext`: The currently active hook context.
-pub fn get_current_hook_context() -> HookContext {
+pub(crate) fn get_current_hook_context() -> HookContext {
     let opt: Option<HookContextRc> = current_hook_context().clone();
     match opt {
         Some(rc) => {
@@ -42,7 +42,7 @@ pub fn get_current_hook_context() -> HookContext {
 /// # Returns
 ///
 /// - `R`: The result of the closure execution.
-pub fn with_hook_context<F, R>(context: HookContext, f: F) -> R
+pub(crate) fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
 {
@@ -61,7 +61,7 @@ where
 /// # Returns
 ///
 /// - `HookContext`: A newly created hook context with default state.
-pub fn create_hook_context() -> HookContext {
+pub(crate) fn create_hook_context() -> HookContext {
     HookContext::default()
 }
 

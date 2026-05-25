@@ -52,6 +52,3 @@ impl Default for HookContext {
         HookContext::new(Rc::new(RefCell::new(HookContextInner::default())))
     }
 }
-
-/// SAFETY: `HookContextCell` is only used in single-threaded WASM contexts.
-unsafe impl Sync for HookContextCell {}

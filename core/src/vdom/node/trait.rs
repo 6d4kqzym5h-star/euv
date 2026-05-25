@@ -1,18 +1,9 @@
 use crate::*;
 
-/// Trait for types that can be converted into a `VirtualNode` for use in HTML expressions.
-///
-/// Implemented by primitive types, strings, and signals to allow seamless
-/// embedding in HTML markup.
-pub trait AsNode {
-    /// Converts this value into a `VirtualNode`, if possible.
-    fn as_node(&self) -> Option<VirtualNode>;
-}
-
 /// Trait for types that can be converted into a reactive text `VirtualNode`.
 ///
 /// Signals implement this to produce a text node that auto-updates.
-pub trait AsReactiveText {
+pub(crate) trait AsReactiveText {
     /// Converts this value into a `VirtualNode::Text` with reactive signal binding.
     fn as_reactive_text(&self) -> VirtualNode;
 }

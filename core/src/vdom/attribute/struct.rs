@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// A single key-value pair representing a CSS declaration.
 #[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
-pub struct StyleProperty {
+pub(crate) struct StyleProperty {
     /// The CSS property name (e.g., "margin", "padding").
     name: String,
     /// The CSS property value.

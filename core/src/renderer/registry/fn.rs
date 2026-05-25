@@ -260,21 +260,6 @@ pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
     }
 }
 
-/// Releases all framework-global state to ensure a clean slate
-/// when the WASM module is re-instantiated after a browser refresh.
-///
-/// Clears `HANDLER_REGISTRY`, `SIGNAL_UPDATE_REGISTRY`, `DELEGATED_EVENTS`,
-/// resets `SIGNAL_UPDATE_LISTENER_REGISTERED`, and resets `NEXT_EUV_ID`
-/// and `NEXT_EUV_DYNAMIC_ID` counters to zero.
-pub fn cleanup_all() {
-    ensure_handler_registry_mut().clear();
-    ensure_signal_update_registry_mut().clear();
-    clear_delegated_events();
-    set_signal_update_listener_registered(false);
-    NEXT_EUV_ID.store(0, Ordering::Relaxed);
-    NEXT_EUV_DYNAMIC_ID.store(0, Ordering::Relaxed);
-}
-
 /// No-op for text node signal cleanup.
 ///
 /// Text node signal listeners are cleaned up lazily via the `is_node_connected`
@@ -356,16 +341,6 @@ pub(crate) fn insert_delegated_event(event_name: Cow<'static, str>) {
             .as_mut()
             .unwrap_unchecked()
             .insert(event_name);
-    }
-}
-
-/// Clears all delegated events.
-#[allow(static_mut_refs)]
-pub(crate) fn clear_delegated_events() {
-    unsafe {
-        if let Some(set) = (*DELEGATED_EVENTS.get_0().get()).as_mut() {
-            set.clear();
-        }
     }
 }
 
