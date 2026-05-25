@@ -16,11 +16,11 @@ use crate::*;
 ///
 /// - `syn::Result<String>` - The clean identifier name (without `r#`).
 pub(crate) fn parse_ident_segment(input: ParseStream) -> syn::Result<String> {
-    let tt: proc_macro2::TokenTree = input.parse()?;
-    match tt {
+    let token_tree: proc_macro2::TokenTree = input.parse()?;
+    match token_tree {
         proc_macro2::TokenTree::Ident(ident) => {
-            let raw: String = ident.to_string();
-            Ok(raw.strip_prefix("r#").unwrap_or(&raw).to_string())
+            let raw_name: String = ident.to_string();
+            Ok(raw_name.strip_prefix("r#").unwrap_or(&raw_name).to_string())
         }
         _ => Err(input.error("expected identifier")),
     }
@@ -60,14 +60,14 @@ pub(crate) fn parse_kebab_name(input: ParseStream) -> syn::Result<String> {
         name.push('-');
     }
     if !input.is_empty() && !input.peek(Token![:]) {
-        let first: String = parse_ident_segment(input)?;
-        name.push_str(&first);
+        let first_segment: String = parse_ident_segment(input)?;
+        name.push_str(&first_segment);
     }
     while input.peek(Token![-]) {
         input.parse::<Token![-]>()?;
         name.push('-');
-        let next: String = parse_ident_segment(input)?;
-        name.push_str(&next);
+        let next_segment: String = parse_ident_segment(input)?;
+        name.push_str(&next_segment);
     }
     Ok(name)
 }
@@ -101,9 +101,10 @@ pub(crate) fn reconstruct_kebab_from_tokens(tokens: &proc_macro2::TokenStream) -
     for token in iter {
         match token {
             proc_macro2::TokenTree::Ident(ident) => {
-                let raw: String = ident.to_string();
-                let clean: String = raw.strip_prefix("r#").unwrap_or(&raw).to_string();
-                result.push_str(&clean);
+                let raw_name: String = ident.to_string();
+                let clean_name: String =
+                    raw_name.strip_prefix("r#").unwrap_or(&raw_name).to_string();
+                result.push_str(&clean_name);
             }
             proc_macro2::TokenTree::Punct(punct) if punct.as_char() == '-' => {
                 result.push('-');
@@ -112,10 +113,11 @@ pub(crate) fn reconstruct_kebab_from_tokens(tokens: &proc_macro2::TokenStream) -
                 let inner: String = reconstruct_kebab_from_tokens(&group.stream());
                 result.push_str(&inner);
             }
-            proc_macro2::TokenTree::Literal(lit) => {
-                let lit_ts: proc_macro2::TokenStream = proc_macro2::TokenTree::Literal(lit).into();
-                if let Ok(lit_str) = syn::parse2::<LitStr>(lit_ts) {
-                    result.push_str(&lit_str.value());
+            proc_macro2::TokenTree::Literal(literal) => {
+                let literal_token_stream: proc_macro2::TokenStream =
+                    proc_macro2::TokenTree::Literal(literal).into();
+                if let Ok(literal_string) = syn::parse2::<LitStr>(literal_token_stream) {
+                    result.push_str(&literal_string.value());
                 }
             }
             _ => {}

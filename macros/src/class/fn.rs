@@ -146,9 +146,10 @@ pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
     let mut result: String = String::new();
     for token in tokens.clone() {
         if let proc_macro2::TokenTree::Literal(lit) = token {
-            let lit_ts: proc_macro2::TokenStream = proc_macro2::TokenTree::Literal(lit).into();
-            if let Ok(lit_str) = parse2::<LitStr>(lit_ts) {
-                result.push_str(&lit_str.value());
+            let literal_token_stream: proc_macro2::TokenStream =
+                proc_macro2::TokenTree::Literal(lit).into();
+            if let Ok(literal_string) = parse2::<LitStr>(literal_token_stream) {
+                result.push_str(&literal_string.value());
             }
         }
     }
@@ -172,7 +173,7 @@ pub(crate) fn pseudo_blocks_to_tokens(
     }
     let parts: Vec<proc_macro2::TokenStream> = pseudo_blocks
         .iter()
-        .map(|block| {
+        .map(|block: &PseudoBlock| {
             let selector: &str = block.get_selector();
             let style_parts: Vec<proc_macro2::TokenStream> = block
                 .get_properties()

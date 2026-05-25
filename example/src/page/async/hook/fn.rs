@@ -39,8 +39,8 @@ pub(crate) fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
             let future: JsFuture = JsFuture::from(promise);
             match future.await {
                 Ok(response) => {
-                    let resp: Response = response.dyn_into().unwrap();
-                    let json_promise: Promise = resp.json().unwrap();
+                    let response_value: Response = response.dyn_into().unwrap();
+                    let json_promise: Promise = response_value.json().unwrap();
                     let json_future: JsFuture = JsFuture::from(json_promise);
                     match json_future.await {
                         Ok(json) => {

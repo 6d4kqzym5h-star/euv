@@ -12,7 +12,7 @@ use crate::*;
 pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
     APP_STATE
         .set(state)
-        .map_err(|_| anyhow!("Global state already initialized"))
+        .map_err(|_: Arc<AppState>| anyhow!("Global state already initialized"))
 }
 
 /// Retrieves the global application state.
@@ -56,10 +56,10 @@ pub(crate) async fn generate_html(
     let index_path: PathBuf = www_dir.join("index.html");
     create_dir_all(www_dir)
         .await
-        .map_err(|error| anyhow!("Failed to create static directory: {}", error))?;
+        .map_err(|error: io::Error| anyhow!("Failed to create static directory: {}", error))?;
     write(&index_path, &html)
         .await
-        .map_err(|error| anyhow!("Failed to write index.html: {}", error))?;
+        .map_err(|error: io::Error| anyhow!("Failed to write index.html: {}", error))?;
     Ok(html)
 }
 
@@ -76,7 +76,7 @@ pub(crate) async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
     if metadata(www_dir.join("index.html")).await.is_ok() {
         return www_dir.to_path_buf();
     }
-    let parent_name: Option<&str> = www_dir.file_name().and_then(|n| n.to_str());
+    let parent_name: Option<&str> = www_dir.file_name().and_then(|n: &ffi::OsStr| n.to_str());
     if let Some(name) = parent_name {
         let nested: PathBuf = www_dir.join(name);
         if metadata(nested.join("index.html")).await.is_ok() {

@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The list demo page virtual DOM tree.
 pub(crate) fn page_list() -> VirtualNode {
     let state: UseTodoList = use_todo_list();
-    use_intersection_observer("[data-list-item]");
+    use_intersection_observer("[data-list-container]");
     html! {
         div {
             class: c_page_container()
@@ -43,11 +43,11 @@ pub(crate) fn page_list() -> VirtualNode {
                 }
                 ul {
                     class: c_list_ul()
+                    data_list_container: "true"
                     for (index, item) in { state.get_items().get().iter().enumerate() } {
                         li {
                             key: index.to_string()
                             class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
-                            data_list_item: "true"
                             data_index: index.to_string()
                             span {
                                 class: c_list_item_text()

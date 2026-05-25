@@ -55,7 +55,7 @@ pub(crate) fn is_mobile() -> bool {
     let width: f64 = window
         .inner_width()
         .ok()
-        .map(|v| Number::from(v).value_of())
+        .map(|value: JsValue| Number::from(value).value_of())
         .unwrap_or(0.0);
     width < MOBILE_BREAKPOINT as f64
 }

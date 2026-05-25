@@ -916,14 +916,15 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
     let mut result: Vec<PathBuf> = Vec::new();
     let mut stack: Vec<PathBuf> = vec![path.to_path_buf()];
     while let Some(dir) = stack.pop() {
-        let mut entries: tokio::fs::ReadDir = tokio::fs::read_dir(&dir)
-            .await
-            .map_err(|error| anyhow!("Failed to read directory '{}': {}", dir.display(), error))?;
-        while let Some(entry) = entries
-            .next_entry()
-            .await
-            .map_err(|error| anyhow!("Failed to read entry in '{}': {}", dir.display(), error))?
-        {
+        let mut entries: tokio::fs::ReadDir =
+            tokio::fs::read_dir(&dir)
+                .await
+                .map_err(|error: io::Error| {
+                    anyhow!("Failed to read directory '{}': {}", dir.display(), error)
+                })?;
+        while let Some(entry) = entries.next_entry().await.map_err(|error: io::Error| {
+            anyhow!("Failed to read entry in '{}': {}", dir.display(), error)
+        })? {
             let entry_path: PathBuf = entry.path();
             if entry_path.is_dir() {
                 let file_name: String = entry_path
@@ -934,7 +935,10 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
                 if file_name != "target" && file_name != "node_modules" {
                     stack.push(entry_path);
                 }
-            } else if entry_path.extension().is_some_and(|ext| ext == "rs") {
+            } else if entry_path
+                .extension()
+                .is_some_and(|ext: &std::ffi::OsStr| ext == "rs")
+            {
                 result.push(entry_path);
             }
         }
@@ -955,14 +959,16 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
 async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
     let content: String = tokio::fs::read_to_string(path)
         .await
-        .map_err(|error| anyhow!("Failed to read '{}': {}", path.display(), error))?;
+        .map_err(|error: io::Error| anyhow!("Failed to read '{}': {}", path.display(), error))?;
     let fmt_result: FmtResult = format_source(&content);
     if fmt_result.changed {
         match mode {
             FmtMode::Write => {
                 tokio::fs::write(path, &fmt_result.output)
                     .await
-                    .map_err(|error| anyhow!("Failed to write '{}': {}", path.display(), error))?;
+                    .map_err(|error: io::Error| {
+                        anyhow!("Failed to write '{}': {}", path.display(), error)
+                    })?;
                 log::info!("Formatted: {}", path.display());
             }
             FmtMode::Check => {

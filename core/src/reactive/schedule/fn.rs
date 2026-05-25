@@ -5,9 +5,9 @@ use crate::*;
 /// Used by the scheduler to trigger a DOM update cycle after signal changes.
 /// Does nothing if the window object is unavailable.
 pub(crate) fn dispatch_signal_update() {
-    if let Some(win) = window() {
+    if let Some(window_value) = window() {
         let event: Event = Event::new(&NativeEventName::EuvSignalUpdate.to_string()).unwrap();
-        let _ = win.dispatch_event(&event);
+        let _ = window_value.dispatch_event(&event);
     }
 }
 
@@ -21,9 +21,9 @@ pub(crate) fn dispatch_signal_update() {
 ///
 /// Panics if `window()` returns `None`.
 fn ensure_dispatch_callback() {
-    let win: Window = window().unwrap();
+    let window_value: Window = window().unwrap();
     let key: JsValue = JsValue::from_str(EUV_DISPATCH);
-    if Reflect::get(&win, &key)
+    if Reflect::get(&window_value, &key)
         .unwrap_or(JsValue::UNDEFINED)
         .is_undefined()
     {
@@ -31,7 +31,7 @@ fn ensure_dispatch_callback() {
             SCHEDULED.store(false, Ordering::Relaxed);
             dispatch_signal_update();
         }));
-        let _ = Reflect::set(&win, &key, closure.as_ref());
+        let _ = Reflect::set(&window_value, &key, closure.as_ref());
         closure.forget();
     }
 }
@@ -49,21 +49,22 @@ pub(crate) fn schedule_signal_update() {
         return;
     }
     SCHEDULED.store(true, Ordering::Relaxed);
-    let win: Option<Window> = window();
-    if win.is_none() {
+    let window_option: Option<Window> = window();
+    if window_option.is_none() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
     ensure_dispatch_callback();
-    let win: Window = win.unwrap();
+    let window_value: Window = window_option.unwrap();
     let dispatch_fn: JsValue =
-        Reflect::get(&win, &JsValue::from_str(EUV_DISPATCH)).unwrap_or(JsValue::UNDEFINED);
+        Reflect::get(&window_value, &JsValue::from_str(EUV_DISPATCH)).unwrap_or(JsValue::UNDEFINED);
     if dispatch_fn.is_undefined() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
     let queue_microtask_val: JsValue =
-        Reflect::get(&win, &JsValue::from_str(QUEUE_MICROTASK)).unwrap_or(JsValue::UNDEFINED);
+        Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
+            .unwrap_or(JsValue::UNDEFINED);
     if queue_microtask_val.is_undefined() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;

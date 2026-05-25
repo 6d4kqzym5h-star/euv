@@ -15,6 +15,7 @@ use std::{
     cell::{Ref, RefCell, RefMut, UnsafeCell},
     collections::{HashMap, HashSet},
     mem::{swap, take},
+    num::ParseIntError,
     ops::{Deref, DerefMut},
     rc::Rc,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},

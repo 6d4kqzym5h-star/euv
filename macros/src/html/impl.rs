@@ -150,8 +150,8 @@ impl Parse for HtmlMatch {
         while !arms_content.is_empty() {
             let mut pattern_tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
             while !arms_content.peek(Token![=>]) {
-                let tt: proc_macro2::TokenTree = arms_content.parse()?;
-                pattern_tokens.extend([tt]);
+                let token_tree: proc_macro2::TokenTree = arms_content.parse()?;
+                pattern_tokens.extend([token_tree]);
             }
             arms_content.parse::<Token![=>]>()?;
             let body: Vec<HtmlNode> = parse_match_arm_body(&arms_content)?;
@@ -179,8 +179,8 @@ impl Parse for HtmlFor {
         input.parse::<Token![for]>()?;
         let mut pattern_tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
         while !input.peek(Token![in]) {
-            let tt: proc_macro2::TokenTree = input.parse()?;
-            pattern_tokens.extend([tt]);
+            let token_tree: proc_macro2::TokenTree = input.parse()?;
+            pattern_tokens.extend([token_tree]);
         }
         input.parse::<Token![in]>()?;
         let iter_content;
@@ -232,8 +232,8 @@ impl Parse for HtmlElement {
                 let expr: Expr = child_content.parse()?;
                 children.push(HtmlNode::Dynamic(expr));
             } else if content.peek(LitStr) && content.peek2(Colon) {
-                let lit_str: LitStr = content.parse()?;
-                let key: Ident = Ident::new(&lit_str.value(), lit_str.span());
+                let literal_string: LitStr = content.parse()?;
+                let key: Ident = Ident::new(&literal_string.value(), literal_string.span());
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
@@ -363,8 +363,7 @@ impl ToTokens for HtmlNode {
                         let mut __euv_for_nodes: Vec<::euv_core::VirtualNode> = Vec::new();
                         for #pattern in #iterable {
                             __euv_hook_context.reset_hook_index();
-                            let __euv_for_body: Vec<::euv_core::VirtualNode> = #body_tokens;
-                            __euv_for_nodes.extend(__euv_for_body);
+                            __euv_for_nodes.extend(#body_tokens);
                         }
                         ::euv_core::VirtualNode::Fragment(__euv_for_nodes)
                     })
@@ -383,7 +382,7 @@ impl ToTokens for HtmlStylePropValue {
     /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self {
-            HtmlStylePropValue::Literal(s) => s.to_tokens(tokens),
+            HtmlStylePropValue::Literal(literal_value) => literal_value.to_tokens(tokens),
             HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlStylePropValue::If(html_attr_if) => {
                 let if_chain: proc_macro2::TokenStream = attr_if_to_tokens(html_attr_if);
@@ -439,8 +438,8 @@ impl ToTokens for HtmlAttrValue {
                         }
                         css_string.push_str(&key.replace('_', "-"));
                         css_string.push_str(": ");
-                        if let HtmlStylePropValue::Literal(lit) = value {
-                            css_string.push_str(lit);
+                        if let HtmlStylePropValue::Literal(literal_value) = value {
+                            css_string.push_str(literal_value);
                         }
                         css_string.push(';');
                     }
@@ -462,7 +461,9 @@ impl ToTokens for HtmlAttrValue {
             HtmlAttrValue::Classes(values) => {
                 let value_tokens: Vec<proc_macro2::TokenStream> = values
                     .iter()
-                    .map(|v| attr_value_to_attribute_value_tokens(v, "class", false))
+                    .map(|value: &HtmlAttrValue| {
+                        attr_value_to_attribute_value_tokens(value, "class", false)
+                    })
                     .collect();
                 tokens.extend(quote! {
                     ::euv_core::merge_class_values(&[#(#value_tokens),*])
@@ -558,27 +559,22 @@ impl ToTokens for HtmlElement {
         let child_tokens: Vec<proc_macro2::TokenStream> = self
             .get_children()
             .iter()
-            .map(|child| {
-                let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                child.to_tokens(&mut ts);
-                ts
+            .map(|child: &HtmlNode| {
+                let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+                child.to_tokens(&mut token_stream);
+                token_stream
             })
             .collect();
         if is_component {
             let component_fn: Ident = self.get_tag().clone();
-            let component_span: Span = self.get_tag().span();
-            let component_call: proc_macro2::TokenStream =
-                quote_spanned!(component_span=> #component_fn(__props));
             tokens.extend(quote! {
                 {
-                    let __children: Vec<::euv_core::VirtualNode> = vec![#(#child_tokens),*];
-                    let __props = ::euv_core::VirtualNode::Element {
+                    #component_fn(::euv_core::VirtualNode::Element {
                         tag: ::euv_core::Tag::Component(#tag_literal),
                         attributes: vec![#(#attr_tokens),*],
-                        children: __children,
+                        children: vec![#(#child_tokens),*],
                         key: None,
-                    };
-                    #component_call
+                    })
                 }
             });
         } else {

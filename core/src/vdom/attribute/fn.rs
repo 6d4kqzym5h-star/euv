@@ -75,20 +75,20 @@ pub fn merge_class_values(values: &[AttributeValue]) -> AttributeValue {
         let compute = move || {
             let mut result: String = String::new();
             for value in &owned_values {
-                let s: String = match value {
+                let class_segment: String = match value {
                     AttributeValue::Css(css_class) => {
                         css_class.inject_style();
                         css_class.get_name().to_string()
                     }
-                    AttributeValue::Text(s) => s.clone(),
+                    AttributeValue::Text(text_value) => text_value.clone(),
                     AttributeValue::Signal(signal) => signal.get(),
                     _ => String::new(),
                 };
-                if !s.is_empty() {
+                if !class_segment.is_empty() {
                     if !result.is_empty() {
                         result.push(' ');
                     }
-                    result.push_str(&s);
+                    result.push_str(&class_segment);
                 }
             }
             result
@@ -99,19 +99,19 @@ pub fn merge_class_values(values: &[AttributeValue]) -> AttributeValue {
     } else {
         let mut result: String = String::new();
         for value in values {
-            let s: String = match value {
+            let class_segment: String = match value {
                 AttributeValue::Css(css_class) => {
                     css_class.inject_style();
                     css_class.get_name().to_string()
                 }
-                AttributeValue::Text(s) => s.clone(),
+                AttributeValue::Text(text_value) => text_value.clone(),
                 _ => String::new(),
             };
-            if !s.is_empty() {
+            if !class_segment.is_empty() {
                 if !result.is_empty() {
                     result.push(' ');
                 }
-                result.push_str(&s);
+                result.push_str(&class_segment);
             }
         }
         AttributeValue::Text(result)
@@ -141,16 +141,16 @@ pub fn merge_style_values(values: &[AttributeValue]) -> AttributeValue {
         let compute = move || {
             let mut result: String = String::new();
             for value in &owned_values {
-                let s: String = match value {
-                    AttributeValue::Text(s) => s.clone(),
+                let style_segment: String = match value {
+                    AttributeValue::Text(text_value) => text_value.clone(),
                     AttributeValue::Signal(signal) => signal.get(),
                     _ => String::new(),
                 };
-                if !s.is_empty() {
+                if !style_segment.is_empty() {
                     if !result.is_empty() {
                         result.push(' ');
                     }
-                    result.push_str(&s);
+                    result.push_str(&style_segment);
                 }
             }
             result
@@ -161,15 +161,15 @@ pub fn merge_style_values(values: &[AttributeValue]) -> AttributeValue {
     } else {
         let mut result: String = String::new();
         for value in values {
-            let s: String = match value {
-                AttributeValue::Text(s) => s.clone(),
+            let style_segment: String = match value {
+                AttributeValue::Text(text_value) => text_value.clone(),
                 _ => String::new(),
             };
-            if !s.is_empty() {
+            if !style_segment.is_empty() {
                 if !result.is_empty() {
                     result.push(' ');
                 }
-                result.push_str(&s);
+                result.push_str(&style_segment);
             }
         }
         AttributeValue::Text(result)

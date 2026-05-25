@@ -137,9 +137,9 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
     match children.len() {
         0 => quote! { ::euv_core::VirtualNode::Empty },
         1 => {
-            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-            children[0].to_tokens(&mut ts);
-            ts
+            let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+            children[0].to_tokens(&mut token_stream);
+            token_stream
         }
         _ => {
             let mut child_tokens: Vec<proc_macro2::TokenStream> =
@@ -169,9 +169,9 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
     let mut child_tokens: Vec<proc_macro2::TokenStream> = Vec::with_capacity(children.len());
     for child in children {
-        let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-        child.to_tokens(&mut ts);
-        child_tokens.push(ts);
+        let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+        child.to_tokens(&mut token_stream);
+        child_tokens.push(token_stream);
     }
     quote! { vec![#(#child_tokens),*] }
 }

@@ -69,11 +69,13 @@ impl Renderer {
             if let Some(element) = dom_child.dyn_ref::<Element>() {
                 self.cleanup_dom_subtree(element);
             }
-            let new_dom: Node = self.create_dom_node(new_node);
-            self.get_root().replace_child(&new_dom, &dom_child).unwrap();
+            let new_dom_node: Node = self.create_dom_node(new_node);
+            self.get_root()
+                .replace_child(&new_dom_node, &dom_child)
+                .unwrap();
         } else {
-            let new_dom: Node = self.create_dom_node(new_node);
-            self.get_root().append_child(&new_dom).unwrap();
+            let new_dom_node: Node = self.create_dom_node(new_node);
+            self.get_root().append_child(&new_dom_node).unwrap();
         }
     }
 
@@ -111,10 +113,10 @@ impl Renderer {
                 },
             ) => {
                 if old_tag != new_tag {
-                    let new_dom: Node = self.create_dom_node(new_node);
+                    let new_dom_node: Node = self.create_dom_node(new_node);
                     if let Some(parent) = dom_element.parent_node() {
                         self.cleanup_dom_subtree(dom_element);
-                        parent.replace_child(&new_dom, dom_element).unwrap();
+                        parent.replace_child(&new_dom_node, dom_element).unwrap();
                     }
                     return;
                 }
@@ -126,24 +128,24 @@ impl Renderer {
             }
             (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => {}
             (VirtualNode::Dynamic(_), _) => {
-                let new_dom: Node = self.create_dom_node(new_node);
+                let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     self.cleanup_dom_subtree(dom_element);
-                    parent.replace_child(&new_dom, dom_element).unwrap();
+                    parent.replace_child(&new_dom_node, dom_element).unwrap();
                 }
             }
             (_, VirtualNode::Dynamic(_)) => {
-                let new_dom: Node = self.create_dom_node(new_node);
+                let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     self.cleanup_dom_subtree(dom_element);
-                    parent.replace_child(&new_dom, dom_element).unwrap();
+                    parent.replace_child(&new_dom_node, dom_element).unwrap();
                 }
             }
             _ => {
-                let new_dom: Node = self.create_dom_node(new_node);
+                let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     self.cleanup_dom_subtree(dom_element);
-                    parent.replace_child(&new_dom, dom_element).unwrap();
+                    parent.replace_child(&new_dom_node, dom_element).unwrap();
                 }
             }
         }
@@ -353,13 +355,13 @@ impl Renderer {
                     }
                 }
             } else {
-                let new_dom: Node = self.create_dom_node(new_child);
+                let new_dom_node: Node = self.create_dom_node(new_child);
                 if (new_index as u32) < dom_child_count
                     && let Some(reference_node) = child_nodes.get(new_index as u32)
                 {
-                    let _ = parent.insert_before(&new_dom, Some(&reference_node));
+                    let _ = parent.insert_before(&new_dom_node, Some(&reference_node));
                 } else {
-                    let _ = parent.append_child(&new_dom);
+                    let _ = parent.append_child(&new_dom_node);
                 }
             }
         }
@@ -416,20 +418,20 @@ impl Renderer {
                         dom_child.set_text_content(Some(new_text.get_content()));
                     }
                 } else {
-                    let new_dom: Node = self.create_dom_node(new_child);
+                    let new_dom_node: Node = self.create_dom_node(new_child);
                     if let Some(parent_node) = dom_child.parent_node() {
                         if let Some(child_element) = dom_child.dyn_ref::<Element>() {
                             self.cleanup_dom_subtree(child_element);
                         }
-                        let _ = parent_node.replace_child(&new_dom, &dom_child);
+                        let _ = parent_node.replace_child(&new_dom_node, &dom_child);
                     }
                 }
             }
         }
         if new_len > old_len {
             for new_child in new_children.iter().skip(common_len) {
-                let new_dom: Node = self.create_dom_node(new_child);
-                parent.append_child(&new_dom).unwrap();
+                let new_dom_node: Node = self.create_dom_node(new_child);
+                parent.append_child(&new_dom_node).unwrap();
             }
         } else if old_len > new_len {
             for _ in common_len..old_len {
@@ -696,7 +698,7 @@ impl Renderer {
                 }
                 let unwrapped_children: Vec<VirtualNode> = children
                     .iter()
-                    .map(|child| self.unwrap_component(child))
+                    .map(|child: &VirtualNode| self.unwrap_component(child))
                     .collect();
                 VirtualNode::Element {
                     tag: tag.clone(),
@@ -711,7 +713,7 @@ impl Renderer {
                 }
                 let unwrapped_children: Vec<VirtualNode> = children
                     .iter()
-                    .map(|child| self.unwrap_component(child))
+                    .map(|child: &VirtualNode| self.unwrap_component(child))
                     .collect();
                 VirtualNode::Fragment(unwrapped_children)
             }
@@ -914,11 +916,13 @@ impl Renderer {
     /// - `&NativeEventHandler`: The event handler to register.
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
         let euv_id: usize = match element.get_attribute(DATA_EUV_ID) {
-            Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {
-                let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
-                let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());
-                new_id
-            }),
+            Some(id_str) => id_str
+                .parse::<usize>()
+                .unwrap_or_else(|_error: ParseIntError| {
+                    let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
+                    let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());
+                    new_id
+                }),
             None => {
                 let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
                 let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());

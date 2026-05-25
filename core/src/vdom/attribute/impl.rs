@@ -25,25 +25,27 @@ impl PartialEq for AttributeValue {
     /// - `bool` - `true` if the values are visually equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (AttributeValue::Text(old_val), AttributeValue::Text(new_val)) => old_val == new_val,
-            (AttributeValue::Signal(old_sig), AttributeValue::Signal(new_sig)) => {
-                if old_sig.get_inner_addr() == new_sig.get_inner_addr() {
+            (AttributeValue::Text(old_value), AttributeValue::Text(new_value)) => {
+                old_value == new_value
+            }
+            (AttributeValue::Signal(old_signal), AttributeValue::Signal(new_signal)) => {
+                if old_signal.get_inner_addr() == new_signal.get_inner_addr() {
                     return false;
                 }
-                old_sig.get() == new_sig.get()
+                old_signal.get() == new_signal.get()
             }
-            (AttributeValue::Signal(old_sig), AttributeValue::Text(new_val)) => {
-                old_sig.get() == *new_val
+            (AttributeValue::Signal(old_signal), AttributeValue::Text(new_value)) => {
+                old_signal.get() == *new_value
             }
-            (AttributeValue::Text(old_val), AttributeValue::Signal(new_sig)) => {
-                *old_val == new_sig.get()
+            (AttributeValue::Text(old_value), AttributeValue::Signal(new_signal)) => {
+                *old_value == new_signal.get()
             }
             (AttributeValue::Event(_), AttributeValue::Event(_)) => true,
-            (AttributeValue::Css(old_css), AttributeValue::Css(new_css)) => {
-                old_css.get_name() == new_css.get_name()
+            (AttributeValue::Css(old_class), AttributeValue::Css(new_class)) => {
+                old_class.get_name() == new_class.get_name()
             }
-            (AttributeValue::Dynamic(old_dyn), AttributeValue::Dynamic(new_dyn)) => {
-                old_dyn == new_dyn
+            (AttributeValue::Dynamic(old_dynamic), AttributeValue::Dynamic(new_dynamic)) => {
+                old_dynamic == new_dynamic
             }
             _ => false,
         }
@@ -241,20 +243,24 @@ impl CssClass {
         let mut remaining: &str = input;
         while !remaining.is_empty() {
             let selector_end: Option<usize> = remaining.find(" { ");
-            let Some(sel_end) = selector_end else {
+            let Some(selector_end_index) = selector_end else {
                 break;
             };
-            let selector: &str = &remaining[..sel_end];
-            let after_selector: &str = remaining[sel_end..].strip_prefix(" { ").unwrap_or("");
+            let selector: &str = &remaining[..selector_end_index];
+            let after_selector: &str = remaining[selector_end_index..]
+                .strip_prefix(" { ")
+                .unwrap_or("");
             let style_end: Option<usize> = after_selector.find('}');
-            let Some(st_end) = style_end else {
+            let Some(style_end_index) = style_end else {
                 break;
             };
-            let style: &str = &after_selector[..st_end];
+            let style: &str = &after_selector[..style_end_index];
             if !selector.is_empty() && !style.is_empty() {
                 rules.push(PseudoRule::new(selector.to_string(), style.to_string()));
             }
-            remaining = after_selector[st_end..].strip_prefix('}').unwrap_or("");
+            remaining = after_selector[style_end_index..]
+                .strip_prefix('}')
+                .unwrap_or("");
         }
         rules
     }
@@ -281,20 +287,24 @@ impl CssClass {
             }
             let after_prefix: &str = remaining.strip_prefix("@media ").unwrap_or("");
             let query_end: Option<usize> = after_prefix.find(" { ");
-            let Some(q_end) = query_end else {
+            let Some(query_end_index) = query_end else {
                 break;
             };
-            let query: &str = &after_prefix[..q_end];
-            let after_query: &str = after_prefix[q_end..].strip_prefix(" { ").unwrap_or("");
+            let query: &str = &after_prefix[..query_end_index];
+            let after_query: &str = after_prefix[query_end_index..]
+                .strip_prefix(" { ")
+                .unwrap_or("");
             let style_end: Option<usize> = after_query.find('}');
-            let Some(st_end) = style_end else {
+            let Some(style_end_index) = style_end else {
                 break;
             };
-            let style: &str = &after_query[..st_end];
+            let style: &str = &after_query[..style_end_index];
             if !query.is_empty() && !style.is_empty() {
                 rules.push(MediaRule::new(query.to_string(), style.to_string()));
             }
-            remaining = after_query[st_end..].strip_prefix('}').unwrap_or("");
+            remaining = after_query[style_end_index..]
+                .strip_prefix('}')
+                .unwrap_or("");
         }
         rules
     }
@@ -316,7 +326,7 @@ impl CssClass {
             return;
         }
         let class_rule: String = format!(".{} {{ {} }}", self.get_name(), self.get_style());
-        let mut css: String = class_rule;
+        let mut css_text: String = class_rule;
         for pseudo_rule in self.get_pseudo_rules() {
             if !pseudo_rule.get_style().is_empty() {
                 let pseudo_rule_str: String = format!(
@@ -325,7 +335,7 @@ impl CssClass {
                     pseudo_rule.get_selector(),
                     pseudo_rule.get_style()
                 );
-                css = format!("{}\n{}", css, pseudo_rule_str);
+                css_text = format!("{}\n{}", css_text, pseudo_rule_str);
             }
         }
         for media_rule in self.get_media_rules() {
@@ -336,10 +346,10 @@ impl CssClass {
                     self.get_name(),
                     media_rule.get_style()
                 );
-                css = format!("{}\n{}", css, media_rule_str);
+                css_text = format!("{}\n{}", css_text, media_rule_str);
             }
         }
-        Self::append_css(&css);
+        Self::append_css(&css_text);
     }
 
     /// Marks a class name as injected in the global `HashSet`.
@@ -371,27 +381,31 @@ impl CssClass {
     /// # Panics
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
-    fn append_css(css: &str) {
+    fn append_css(css_text: &str) {
         let style_id: &str = "euv-css-injected";
         let document: Document = window()
             .expect("no global window exists")
             .document()
             .expect("no document exists");
         let style_element: HtmlStyleElement = match document.get_element_by_id(style_id) {
-            Some(el) => el.dyn_into::<HtmlStyleElement>().unwrap(),
+            Some(existing_element) => existing_element.dyn_into::<HtmlStyleElement>().unwrap(),
             None => {
-                let el: HtmlStyleElement = document
+                let style_element_from_id: HtmlStyleElement = document
                     .create_element("style")
                     .unwrap()
                     .dyn_into::<HtmlStyleElement>()
                     .unwrap();
-                el.set_id(style_id);
-                document.head().unwrap().append_child(&el).unwrap();
-                el
+                style_element_from_id.set_id(style_id);
+                document
+                    .head()
+                    .unwrap()
+                    .append_child(&style_element_from_id)
+                    .unwrap();
+                style_element_from_id
             }
         };
-        if !css.is_empty() {
-            let text_node: Text = document.create_text_node(css);
+        if !css_text.is_empty() {
+            let text_node: Text = document.create_text_node(css_text);
             style_element.append_child(&text_node).unwrap();
         }
     }
@@ -409,8 +423,8 @@ impl CssClass {
     /// # Panics
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
-    pub fn inject_css(css: &str) {
-        Self::append_css(css);
+    pub fn inject_css(css_text: &str) {
+        Self::append_css(css_text);
     }
 }
 

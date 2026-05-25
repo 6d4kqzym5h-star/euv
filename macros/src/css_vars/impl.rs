@@ -86,7 +86,7 @@ impl ToTokens for CssVarDef {
             Some(params) => {
                 let param_defs: Vec<proc_macro2::TokenStream> = params
                     .iter()
-                    .map(|param| {
+                    .map(|param: &CssVarParam| {
                         let param_name: &Ident = param.get_name();
                         let ty: &Type = param.get_ty();
                         quote! { #param_name: #ty }
@@ -105,9 +105,7 @@ impl ToTokens for CssVarDef {
                     .collect();
                 tokens.extend(quote! {
                     #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
-                        let __css_string: String = [#(#css_string_parts),*].concat();
-                        let __unique_name: String = format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-"));
-                        ::euv_core::CssClass::new(__unique_name, __css_string)
+                        ::euv_core::CssClass::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")), [#(#css_string_parts),*].concat())
                     }
                 });
             }
@@ -152,8 +150,7 @@ impl ToTokens for CssVarDef {
                         #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
                             static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                let __css_string: String = [#(#css_string_parts),*].concat();
-                                ::euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
+                                ::euv_core::CssClass::new(#class_name_str.to_string(), [#(#css_string_parts),*].concat())
                             })
                         }
                     });

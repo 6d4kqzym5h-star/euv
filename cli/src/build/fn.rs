@@ -27,7 +27,7 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
             log::warn!("Failed to build gitignore matcher: {}", error);
             GitignoreBuilder::new(root)
                 .build()
-                .unwrap_or_else(|_| Gitignore::empty())
+                .unwrap_or_else(|_error: ignore::Error| Gitignore::empty())
         }
     }
 }
@@ -412,18 +412,20 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
         })
         .collect();
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
-    create_dir_all(&out_dir_absolute).await.map_err(|error| {
-        anyhow!(
-            "Failed to create output directory '{}': {}",
-            out_dir_absolute.display(),
-            error
-        )
-    })?;
+    create_dir_all(&out_dir_absolute)
+        .await
+        .map_err(|error: std::io::Error| {
+            anyhow!(
+                "Failed to create output directory '{}': {}",
+                out_dir_absolute.display(),
+                error
+            )
+        })?;
     log::info!("Running: wasm-pack build {} ...", display_args.join(" "));
     let output: Output = command
         .output()
         .await
-        .map_err(|error| anyhow!("Failed to execute wasm-pack: {}", error))?;
+        .map_err(|error: std::io::Error| anyhow!("Failed to execute wasm-pack: {}", error))?;
     if !output.status.success() {
         let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
         bail!("wasm-pack build failed:\n{}", stderr);
@@ -463,7 +465,9 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|error| anyhow!("Failed to check hyperlane-cli availability: {}", error))?;
+        .map_err(|error: std::io::Error| {
+            anyhow!("Failed to check hyperlane-cli availability: {}", error)
+        })?;
     if !which_output.status.success() {
         log::info!("hyperlane-cli not found, installing via cargo install...");
         let install_output: Output = Command::new("cargo")
@@ -472,7 +476,9 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
             .stderr(Stdio::piped())
             .output()
             .await
-            .map_err(|error| anyhow!("Failed to execute cargo install hyperlane-cli: {}", error))?;
+            .map_err(|error: std::io::Error| {
+                anyhow!("Failed to execute cargo install hyperlane-cli: {}", error)
+            })?;
         if !install_output.status.success() {
             let stderr: String = String::from_utf8_lossy(&install_output.stderr).to_string();
             bail!("cargo install hyperlane-cli failed:\n{}", stderr);
@@ -485,7 +491,9 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|error| anyhow!("Failed to execute hyperlane-cli fmt: {}", error))?;
+        .map_err(|error: std::io::Error| {
+            anyhow!("Failed to execute hyperlane-cli fmt: {}", error)
+        })?;
     if !fmt_output.status.success() {
         let stderr: String = String::from_utf8_lossy(&fmt_output.stderr).to_string();
         bail!("hyperlane-cli fmt failed:\n{}", stderr);

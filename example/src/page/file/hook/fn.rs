@@ -152,10 +152,11 @@ pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> NativeEventHandler {
         if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
             let has_files: bool = drag_event
                 .data_transfer()
-                .map(|dt: DataTransfer| {
-                    let len: u32 = dt.types().length();
-                    (0..len)
-                        .any(|i: u32| dt.types().get(i).as_string() == Some("Files".to_string()))
+                .map(|data_transfer: DataTransfer| {
+                    let type_count: u32 = data_transfer.types().length();
+                    (0..type_count).any(|index: u32| {
+                        data_transfer.types().get(index).as_string() == Some("Files".to_string())
+                    })
                 })
                 .unwrap_or(false);
             if has_files {

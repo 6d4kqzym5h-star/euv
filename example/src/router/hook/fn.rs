@@ -37,9 +37,9 @@ pub(crate) fn use_hash_change(route_signal: Signal<String>) {
 pub(crate) fn use_resize() -> Signal<bool> {
     let mobile_signal: Signal<bool> = use_signal(is_mobile);
     let timer_signal: Signal<Option<i32>> = use_signal(|| None);
-    let event_window: Window = window().expect("no global window exists");
-    let timeout_window: Window = event_window.clone();
-    let listener_window: Window = event_window.clone();
+    let debounce_window: Window = window().expect("no global window exists");
+    let timeout_window: Window = debounce_window.clone();
+    let resize_window: Window = debounce_window.clone();
     let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let mobile: bool = is_mobile();
         mobile_signal.set(mobile);
@@ -51,7 +51,7 @@ pub(crate) fn use_resize() -> Signal<bool> {
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let old_timer: Option<i32> = timer_signal.get();
         if let Some(timer_id) = old_timer {
-            event_window.clear_timeout_with_handle(timer_id);
+            debounce_window.clear_timeout_with_handle(timer_id);
         }
         let new_timer: i32 = timeout_window
             .set_timeout_with_callback_and_timeout_and_arguments_0(
@@ -61,7 +61,7 @@ pub(crate) fn use_resize() -> Signal<bool> {
             .unwrap_or(0);
         timer_signal.set(Some(new_timer));
     }));
-    let _ = listener_window.add_event_listener_with_callback(
+    let _ = resize_window.add_event_listener_with_callback(
         &NativeEventName::Resize.to_string(),
         closure.as_ref().unchecked_ref(),
     );

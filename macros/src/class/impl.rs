@@ -53,12 +53,12 @@ impl Parse for ClassInput {
                     let keyword_str: String = keyword.to_string();
                     let is_extends: bool =
                         forked.peek(Paren) && !keyword_str.starts_with("media") && {
-                            let forked_extends = content.fork();
-                            let _ = forked_extends.parse::<Ident>();
-                            if forked_extends.peek(Paren) {
+                            let forked_extends_buffer = content.fork();
+                            let _ = forked_extends_buffer.parse::<Ident>();
+                            if forked_extends_buffer.peek(Paren) {
                                 let _paren_content;
-                                parenthesized!(_paren_content in forked_extends);
-                                forked_extends.peek(Semi) || forked_extends.is_empty()
+                                parenthesized!(_paren_content in forked_extends_buffer);
+                                forked_extends_buffer.peek(Semi) || forked_extends_buffer.is_empty()
                             } else {
                                 false
                             }
@@ -112,10 +112,10 @@ impl Parse for ClassInput {
                     } else if (keyword_str == "nth_child" || keyword_str == "nth_last_child")
                         && forked.peek(Paren)
                     {
-                        let forked2 = forked;
+                        let forked_nth_check = forked;
                         let _paren_content;
-                        parenthesized!(_paren_content in forked2);
-                        if forked2.peek(Brace) {
+                        parenthesized!(_paren_content in forked_nth_check);
+                        if forked_nth_check.peek(Brace) {
                             content.parse::<Ident>()?;
                             let paren_content;
                             parenthesized!(paren_content in content);
@@ -144,19 +144,19 @@ impl Parse for ClassInput {
                             continue;
                         }
                     } else if keyword_str == "media" && forked.peek(Paren) {
-                        let forked2 = forked;
+                        let forked_media_check = forked;
                         let paren_content2;
-                        parenthesized!(paren_content2 in forked2);
-                        if forked2.peek(Brace) {
+                        parenthesized!(paren_content2 in forked_media_check);
+                        if forked_media_check.peek(Brace) {
                             content.parse::<Ident>()?;
                             let query_content;
                             parenthesized!(query_content in content);
                             let query_expr: Expr = query_content.parse()?;
                             let query_str: String = match &query_expr {
                                 Expr::Lit(ExprLit {
-                                    lit: Lit::Str(lit_str),
+                                    lit: Lit::Str(literal_string),
                                     ..
-                                }) => lit_str.value(),
+                                }) => literal_string.value(),
                                 _ => query_expr.to_token_stream().to_string().replace(' ', ""),
                             };
                             let block_content;
@@ -223,7 +223,7 @@ impl ToTokens for ClassDef {
             Some(params) => {
                 let param_defs: Vec<proc_macro2::TokenStream> = params
                     .iter()
-                    .map(|param| {
+                    .map(|param: &ClassParam| {
                         let param_name: &Ident = param.get_name();
                         let ty: &Type = param.get_ty();
                         quote! { #param_name: #ty }
@@ -234,7 +234,7 @@ impl ToTokens for ClassDef {
                 let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
                     .get_extends()
                     .iter()
-                    .map(|parent| {
+                    .map(|parent: &ClassExtend| {
                         let parent_name: &Ident = parent.get_name();
                         let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
                         if parent_args.is_empty() {
@@ -262,17 +262,13 @@ impl ToTokens for ClassDef {
                             .unwrap_or_else(|| quote! { vec![] });
                     tokens.extend(quote! {
                         #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
-                            let __css_string: String = [#(#all_css_parts),*].concat();
-                            let __unique_name: String = #unique_name_expr;
-                            ::euv_core::CssClass::new_with_rules(__unique_name, __css_string, #pseudo_expr, #media_expr)
+                            ::euv_core::CssClass::new_with_rules(#unique_name_expr, [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
                         }
                     });
                 } else {
                     tokens.extend(quote! {
                         #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
-                            let __css_string: String = [#(#all_css_parts),*].concat();
-                            let __unique_name: String = #unique_name_expr;
-                            ::euv_core::CssClass::new(__unique_name, __css_string)
+                            ::euv_core::CssClass::new(#unique_name_expr, [#(#all_css_parts),*].concat())
                         }
                     });
                 }
@@ -288,13 +284,13 @@ impl ToTokens for ClassDef {
                         let ClassPropValue::Expr(expr) = value;
                         is_static_string_expr(expr)
                     })
-                    && self.get_pseudo_blocks().iter().all(|block| {
+                    && self.get_pseudo_blocks().iter().all(|block: &PseudoBlock| {
                         block.get_properties().iter().all(|(_, value)| {
                             let ClassPropValue::Expr(expr) = value;
                             is_static_string_expr(expr)
                         })
                     })
-                    && self.get_media_blocks().iter().all(|block| {
+                    && self.get_media_blocks().iter().all(|block: &MediaBlock| {
                         block.get_properties().iter().all(|(_, value)| {
                             let ClassPropValue::Expr(expr) = value;
                             is_static_string_expr(expr)
@@ -341,7 +337,7 @@ impl ToTokens for ClassDef {
                     let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
                         .get_extends()
                         .iter()
-                        .map(|parent| {
+                        .map(|parent: &ClassExtend| {
                             let parent_name: &Ident = parent.get_name();
                             let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
                             if parent_args.is_empty() {
@@ -367,8 +363,7 @@ impl ToTokens for ClassDef {
                             #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
                                 static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    let __css_string: String = [#(#all_css_parts),*].concat();
-                                    ::euv_core::CssClass::new_with_rules(#class_name_str.to_string(), __css_string, #pseudo_expr, #media_expr)
+                                    ::euv_core::CssClass::new_with_rules(#class_name_str.to_string(), [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
                                 })
                             }
                         });
@@ -377,8 +372,7 @@ impl ToTokens for ClassDef {
                             #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
                                 static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    let __css_string: String = [#(#all_css_parts),*].concat();
-                                    ::euv_core::CssClass::new(#class_name_str.to_string(), __css_string)
+                                    ::euv_core::CssClass::new(#class_name_str.to_string(), [#(#all_css_parts),*].concat())
                                 })
                             }
                         });

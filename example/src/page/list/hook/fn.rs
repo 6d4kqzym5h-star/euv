@@ -112,81 +112,75 @@ pub(crate) fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> N
 ///
 /// - `&str` - A CSS selector string to identify the elements to observe.
 fn bind_observer(selector: &str) {
-    let win: Window = window().expect("no global window exists");
-    let doc: Document = win.document().expect("should have a document");
-    let obs_key: JsValue = JsValue::from_str("__euv_list_observer");
-    if let Some(old_observer) = Reflect::get(&win, &obs_key)
+    let window_value: Window = window().expect("no global window exists");
+    let document_value: Document = window_value.document().expect("should have a document");
+    let observer_key: JsValue = JsValue::from_str("__euv_list_observer");
+    if let Some(existing_observer) = Reflect::get(&window_value, &observer_key)
         .ok()
-        .and_then(|v| v.dyn_into::<IntersectionObserver>().ok())
+        .and_then(|value: JsValue| value.dyn_into::<IntersectionObserver>().ok())
     {
-        old_observer.disconnect();
+        if let Some(container_element) = document_value.query_selector(selector).ok().flatten() {
+            existing_observer.observe(&container_element);
+            let children: NodeList = container_element
+                .query_selector_all("[data-index]")
+                .unwrap();
+            for child_index in 0..children.length() {
+                if let Some(child_node) = children.item(child_index)
+                    && let Ok(child_element) = child_node.dyn_into::<Element>()
+                {
+                    existing_observer.observe(&child_element);
+                }
+            }
+        }
+        return;
     }
     let callback: Closure<dyn FnMut(Array)> = Closure::wrap(Box::new(move |entries: Array| {
-        let w: Window = window().expect("no global window exists");
-        let p_key: JsValue = JsValue::from_str("__euv_list_observer_pending_entries");
-        let t_key: JsValue = JsValue::from_str("__euv_list_observer_throttle");
-        let existing: Array = Reflect::get(&w, &p_key)
-            .unwrap_or(JsValue::UNDEFINED)
-            .dyn_into::<Array>()
-            .unwrap_or_else(|_| Array::new());
         for index in 0..entries.length() {
-            existing.push(&entries.get(index));
-        }
-        let _ = Reflect::set(&w, &p_key, &existing);
-        if !Reflect::get(&w, &t_key)
-            .unwrap_or(JsValue::UNDEFINED)
-            .is_undefined()
-        {
-            return;
-        }
-        let throttle_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let w2: Window = window().expect("no global window exists");
-            let p_key2: JsValue = JsValue::from_str("__euv_list_observer_pending_entries");
-            let t_key2: JsValue = JsValue::from_str("__euv_list_observer_throttle");
-            let _ = Reflect::set(&w2, &t_key2, &JsValue::UNDEFINED);
-            let pending: Array = Reflect::get(&w2, &p_key2)
-                .unwrap_or(JsValue::UNDEFINED)
-                .dyn_into::<Array>()
-                .unwrap_or_else(|_| Array::new());
-            let _ = Reflect::set(&w2, &p_key2, &Array::new());
-            for index in 0..pending.length() {
-                let entry: JsValue = pending.get(index);
-                let intersection_entry: IntersectionObserverEntry =
-                    entry.dyn_into::<IntersectionObserverEntry>().unwrap();
-                if !intersection_entry.is_intersecting() {
-                    continue;
-                }
-                let target: Element = intersection_entry.target();
-                let tag_name: String = target.tag_name();
-                let data_index: Option<String> = target.get_attribute("data-index");
-                let intersection_ratio: f64 = intersection_entry.intersection_ratio();
-                let index_info: String = match data_index {
-                    Some(idx) => format!("index={}, ", idx),
-                    None => String::new(),
-                };
-                Console::log(&format!(
-                    "[IntersectionObserver] <{}> {}intersection_ratio={:.2}",
-                    tag_name, index_info, intersection_ratio
-                ));
+            let entry: JsValue = entries.get(index);
+            let intersection_entry: IntersectionObserverEntry =
+                entry.dyn_into::<IntersectionObserverEntry>().unwrap();
+            if !intersection_entry.is_intersecting() {
+                continue;
             }
-        }));
-        let _ = Reflect::set(&w, &t_key, &JsValue::TRUE);
-        let _ = w.set_timeout_with_callback_and_timeout_and_arguments_0(
-            throttle_closure.as_ref().unchecked_ref(),
-            100,
-        );
-        throttle_closure.forget();
+            let target: Element = intersection_entry.target();
+            let tag_name: String = target.tag_name();
+            let intersection_ratio: f64 = intersection_entry.intersection_ratio();
+            let data_index: Option<String> = target.get_attribute("data-index");
+            match data_index {
+                Some(index_value) => {
+                    Console::log(&format!(
+                        "[IntersectionObserver] <{}> index={}, intersection_ratio={:.2}",
+                        tag_name, index_value, intersection_ratio
+                    ));
+                }
+                None => {
+                    let children: NodeList = target.query_selector_all("[data-index]").unwrap();
+                    let total_count: u32 = children.length();
+                    let estimated_visible: u32 =
+                        (intersection_ratio * total_count as f64).ceil() as u32;
+                    Console::log(&format!(
+                        "[IntersectionObserver] <{}> intersection_ratio={:.2}, total_items={}, estimated_visible_items={}",
+                        tag_name, intersection_ratio, total_count, estimated_visible
+                    ));
+                }
+            }
+        }
     }));
     let observer: IntersectionObserver =
         IntersectionObserver::new(callback.as_ref().unchecked_ref()).unwrap();
-    let _ = Reflect::set(&win, &obs_key, observer.as_ref());
+    let _ = Reflect::set(&window_value, &observer_key, observer.as_ref());
     callback.forget();
-    let elements: NodeList = doc.query_selector_all(selector).unwrap();
-    for index in 0..elements.length() {
-        if let Some(node) = elements.item(index)
-            && let Ok(element) = node.dyn_into::<Element>()
-        {
-            observer.observe(&element);
+    if let Some(container_element) = document_value.query_selector(selector).ok().flatten() {
+        observer.observe(&container_element);
+        let children: NodeList = container_element
+            .query_selector_all("[data-index]")
+            .unwrap();
+        for child_index in 0..children.length() {
+            if let Some(child_node) = children.item(child_index)
+                && let Ok(child_element) = child_node.dyn_into::<Element>()
+            {
+                observer.observe(&child_element);
+            }
         }
     }
 }
@@ -203,22 +197,24 @@ fn bind_observer(selector: &str) {
 /// - `String` - A CSS selector string to identify the elements to observe.
 fn schedule_bind_observer(selector: String) {
     let pending_key: JsValue = JsValue::from_str("__euv_list_observer_pending");
-    let win: Window = window().expect("no global window exists");
-    if !Reflect::get(&win, &pending_key)
+    let window_value: Window = window().expect("no global window exists");
+    if !Reflect::get(&window_value, &pending_key)
         .unwrap_or(JsValue::UNDEFINED)
         .is_undefined()
     {
         return;
     }
-    let _ = Reflect::set(&win, &pending_key, &JsValue::TRUE);
-    let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let win: Window = window().expect("no global window exists");
-        let key: JsValue = JsValue::from_str("__euv_list_observer_pending");
-        let _ = Reflect::set(&win, &key, &JsValue::UNDEFINED);
-        bind_observer(&selector);
-    }));
-    let _ = win.request_animation_frame(raf_closure.as_ref().unchecked_ref());
-    raf_closure.forget();
+    let _ = Reflect::set(&window_value, &pending_key, &JsValue::TRUE);
+    let request_animation_frame_closure: Closure<dyn FnMut()> =
+        Closure::wrap(Box::new(move || {
+            let window_value: Window = window().expect("no global window exists");
+            let key: JsValue = JsValue::from_str("__euv_list_observer_pending");
+            let _ = Reflect::set(&window_value, &key, &JsValue::UNDEFINED);
+            bind_observer(&selector);
+        }));
+    let _ = window_value
+        .request_animation_frame(request_animation_frame_closure.as_ref().unchecked_ref());
+    request_animation_frame_closure.forget();
 }
 
 /// Observes elements matching the given CSS selector for viewport intersection changes.
@@ -241,17 +237,17 @@ pub(crate) fn use_intersection_observer(selector: &str) {
     let selector_owned: String = selector.to_string();
     let rebind_selector: String = selector_owned.clone();
     let init_selector: String = selector_owned.clone();
-    let win: Window = window().expect("no global window exists");
+    let window_value: Window = window().expect("no global window exists");
     let listener_key: JsValue = JsValue::from_str("__euv_list_observer_listener");
-    if Reflect::get(&win, &listener_key)
+    if Reflect::get(&window_value, &listener_key)
         .unwrap_or(JsValue::UNDEFINED)
         .is_undefined()
     {
-        let _ = Reflect::set(&win, &listener_key, &JsValue::TRUE);
+        let _ = Reflect::set(&window_value, &listener_key, &JsValue::TRUE);
         let rebind_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            schedule_bind_observer(rebind_selector.clone())
+            schedule_bind_observer(rebind_selector.clone());
         }));
-        let _ = win.add_event_listener_with_callback(
+        let _ = window_value.add_event_listener_with_callback(
             "__euv_signal_update__",
             rebind_closure.as_ref().unchecked_ref(),
         );

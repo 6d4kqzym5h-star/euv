@@ -105,13 +105,11 @@ impl ToTokens for WatchInput {
             .collect();
         let subscribe_calls: Vec<proc_macro2::TokenStream> = signal_clones
             .iter()
-            .map(|signal_clone| {
+            .map(|signal_clone: &Ident| {
                 quote! {
                     {
-                        let __euv_watch_fire_addr: usize = __euv_watch_fire_addr;
                         #signal_clone.subscribe(move || {
-                            let __euv_fire_ref: &mut Box<dyn ::std::ops::FnMut()> = unsafe { &mut *(__euv_watch_fire_addr as *mut Box<dyn ::std::ops::FnMut()>) };
-                            __euv_fire_ref();
+                            unsafe { (&mut *(__euv_watch_fire_addr as *mut Box<dyn ::std::ops::FnMut()>))() }
                         });
                     }
                 }
@@ -121,11 +119,10 @@ impl ToTokens for WatchInput {
             #(let #signal_clones = #signal_exprs;)*
             let __euv_watch_subscribed: ::euv_core::Signal<bool> = ::euv_core::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
-                let __euv_watch_fire: &mut Box<dyn ::std::ops::FnMut()> = Box::leak(Box::new(Box::new(move || {
+                let __euv_watch_fire_addr: usize = Box::leak(Box::new(Box::new(move || {
                     #(#all_gets)*
                     { #(#body)* }
-                }) as Box<dyn ::std::ops::FnMut()>));
-                let __euv_watch_fire_addr: usize = __euv_watch_fire as *mut Box<dyn ::std::ops::FnMut()> as usize;
+                }) as Box<dyn ::std::ops::FnMut()>)) as *mut Box<dyn ::std::ops::FnMut()> as usize;
                 ::euv_core::with_suppressed_updates(|| {
                     #(#subscribe_calls)*
                     {

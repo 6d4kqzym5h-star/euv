@@ -33,7 +33,7 @@ fn dispatch_delegated_event(event: &Event, event_name: &str) {
             let key: (usize, String) = (euv_id, event_name.to_string());
             let found: Option<NativeEventHandler> = {
                 let registry: &HashMap<(usize, String), HandlerEntry> = ensure_handler_registry();
-                registry.get(&key).and_then(|entry| {
+                registry.get(&key).and_then(|entry: &HandlerEntry| {
                     let slot: Ref<HandlerSlot> = entry.borrow();
                     slot.try_get_handler().as_ref().cloned()
                 })

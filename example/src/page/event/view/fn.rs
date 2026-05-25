@@ -438,10 +438,10 @@ pub(crate) fn page_event() -> VirtualNode {
                         if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
                             let types_str: String = drag_event
                                 .data_transfer()
-                                .map(|dt: DataTransfer| {
-                                    let len: u32 = dt.types().length();
-                                    (0..len)
-                                        .filter_map(|i: u32| dt.types().get(i).as_string())
+                                .map(|data_transfer: DataTransfer| {
+                                    let type_count: u32 = data_transfer.types().length();
+                                    (0..type_count)
+                                        .filter_map(|index: u32| data_transfer.types().get(index).as_string())
                                         .collect::<Vec<String>>()
                                         .join(", ")
                                 })
@@ -558,7 +558,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
                                 let data: Option<String> = clipboard_event
                                     .clipboard_data()
-                                    .and_then(|cd| cd.get_data("text").ok());
+                                    .and_then(|cd: DataTransfer| cd.get_data("text").ok());
                                 clipboard_data.set(data.unwrap_or_else(|| "No data".to_string()));
                             }
                             Console::log("Copy: text copied");
@@ -568,7 +568,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
                                 let data: Option<String> = clipboard_event
                                     .clipboard_data()
-                                    .and_then(|cd| cd.get_data("text").ok());
+                                    .and_then(|cd: DataTransfer| cd.get_data("text").ok());
                                 clipboard_data.set(data.unwrap_or_else(|| "No data".to_string()));
                             }
                             Console::log("Cut: text cut");
@@ -578,7 +578,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
                                 let data: Option<String> = clipboard_event
                                     .clipboard_data()
-                                    .and_then(|cd| cd.get_data("text").ok());
+                                    .and_then(|cd: DataTransfer| cd.get_data("text").ok());
                                 clipboard_data.set(data.unwrap_or_else(|| "No data".to_string()));
                             }
                             Console::log("Paste: text pasted");

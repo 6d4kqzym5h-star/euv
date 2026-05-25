@@ -10,21 +10,22 @@ use crate::*;
 ///
 /// - `HookContext`: The currently active hook context.
 pub(crate) fn get_current_hook_context() -> HookContext {
-    let opt: Option<HookContextRc> = current_hook_context().clone();
-    match opt {
-        Some(rc) => {
-            let mut ctx: HookContext =
+    let hook_context_option: Option<HookContextRc> = current_hook_context().clone();
+    match hook_context_option {
+        Some(hook_context_rc) => {
+            let mut hook_context: HookContext =
                 HookContext::new(Rc::new(RefCell::new(HookContextInner::default())));
-            ctx.set_inner(rc);
-            ctx
+            hook_context.set_inner(hook_context_rc);
+            hook_context
         }
         None => {
-            let default_rc: HookContextRc = Rc::new(RefCell::new(HookContextInner::default()));
-            *current_hook_context_mut() = Some(default_rc.clone());
-            let mut ctx: HookContext =
+            let default_hook_context_rc: HookContextRc =
+                Rc::new(RefCell::new(HookContextInner::default()));
+            *current_hook_context_mut() = Some(default_hook_context_rc.clone());
+            let mut hook_context: HookContext =
                 HookContext::new(Rc::new(RefCell::new(HookContextInner::default())));
-            ctx.set_inner(default_rc);
-            ctx
+            hook_context.set_inner(default_hook_context_rc);
+            hook_context
         }
     }
 }
@@ -84,8 +85,8 @@ where
     T: Clone + PartialEq + 'static,
     F: FnOnce() -> T,
 {
-    let ctx: HookContext = get_current_hook_context();
-    let mut inner: RefMut<HookContextInner> = ctx.get_inner().borrow_mut();
+    let hook_context: HookContext = get_current_hook_context();
+    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
     let index: usize = inner.get_hook_index();
     inner.set_hook_index(index + 1);
     if index < inner.get_hooks().len()

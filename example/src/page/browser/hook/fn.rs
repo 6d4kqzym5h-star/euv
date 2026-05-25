@@ -52,7 +52,7 @@ pub(crate) fn local_storage_get(key: &str) -> Option<String> {
 pub(crate) fn local_storage_set(key: &str, value: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.local_storage() {
-        Ok(Some(s)) => s,
+        Ok(Some(local_storage)) => local_storage,
         _ => return,
     };
     let _ = storage.set_item(key, value);
@@ -66,7 +66,7 @@ pub(crate) fn local_storage_set(key: &str, value: &str) {
 pub(crate) fn local_storage_remove(key: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.local_storage() {
-        Ok(Some(s)) => s,
+        Ok(Some(local_storage)) => local_storage,
         _ => return,
     };
     let _ = storage.remove_item(key);
@@ -96,7 +96,7 @@ pub(crate) fn session_storage_get(key: &str) -> Option<String> {
 pub(crate) fn session_storage_set(key: &str, value: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.session_storage() {
-        Ok(Some(s)) => s,
+        Ok(Some(session_storage)) => session_storage,
         _ => return,
     };
     let _ = storage.set_item(key, value);
@@ -110,7 +110,7 @@ pub(crate) fn session_storage_set(key: &str, value: &str) {
 pub(crate) fn session_storage_remove(key: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.session_storage() {
-        Ok(Some(s)) => s,
+        Ok(Some(session_storage)) => session_storage,
         _ => return,
     };
     let _ = storage.remove_item(key);
@@ -125,8 +125,8 @@ pub(crate) async fn clipboard_read_text() -> String {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
     let clipboard: Clipboard = navigator.clipboard();
-    let promise: js_sys::Promise = clipboard.read_text();
-    let future: wasm_bindgen_futures::JsFuture = wasm_bindgen_futures::JsFuture::from(promise);
+    let promise: Promise = clipboard.read_text();
+    let future: JsFuture = JsFuture::from(promise);
     match future.await {
         Ok(value) => value
             .as_string()
@@ -148,8 +148,8 @@ pub(crate) async fn clipboard_write_text(text: &str) -> bool {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
     let clipboard: Clipboard = navigator.clipboard();
-    let promise: js_sys::Promise = clipboard.write_text(text);
-    let future: wasm_bindgen_futures::JsFuture = wasm_bindgen_futures::JsFuture::from(promise);
+    let promise: Promise = clipboard.write_text(text);
+    let future: JsFuture = JsFuture::from(promise);
     future.await.is_ok()
 }
 
@@ -163,12 +163,12 @@ pub(crate) fn window_inner_size() -> (i32, i32) {
     let width: i32 = window
         .inner_width()
         .ok()
-        .map(|v| js_sys::Number::from(v).value_of() as i32)
+        .map(|value: JsValue| Number::from(value).value_of() as i32)
         .unwrap_or(0);
     let height: i32 = window
         .inner_height()
         .ok()
-        .map(|v| js_sys::Number::from(v).value_of() as i32)
+        .map(|value: JsValue| Number::from(value).value_of() as i32)
         .unwrap_or(0);
     (width, height)
 }
@@ -183,7 +183,7 @@ pub(crate) fn navigator_user_agent() -> String {
     window
         .navigator()
         .user_agent()
-        .unwrap_or_else(|_| "Unknown".to_string())
+        .unwrap_or_else(|_: JsValue| "Unknown".to_string())
 }
 
 /// Reads the browser navigator language.
@@ -209,7 +209,7 @@ pub(crate) fn location_href() -> String {
     window
         .location()
         .href()
-        .unwrap_or_else(|_| "Unknown".to_string())
+        .unwrap_or_else(|_error: JsValue| "Unknown".to_string())
 }
 
 /// Reads the current browser location origin.
@@ -222,7 +222,7 @@ pub(crate) fn location_origin() -> String {
     window
         .location()
         .origin()
-        .unwrap_or_else(|_| "Unknown".to_string())
+        .unwrap_or_else(|_error: JsValue| "Unknown".to_string())
 }
 
 /// Reads the current browser location pathname.
@@ -235,7 +235,7 @@ pub(crate) fn location_pathname() -> String {
     window
         .location()
         .pathname()
-        .unwrap_or_else(|_| "Unknown".to_string())
+        .unwrap_or_else(|_error: JsValue| "Unknown".to_string())
 }
 
 /// Creates a click event handler that sets a localStorage item.
@@ -385,7 +385,7 @@ pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
         if text.is_empty() {
             result.set("Please enter text to copy".to_string());
         } else {
-            wasm_bindgen_futures::spawn_local(async move {
+            spawn_local(async move {
                 let success: bool = clipboard_write_text(&text_clone).await;
                 if success {
                     result.set("Copied to clipboard!".to_string());
@@ -409,7 +409,7 @@ pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
 pub(crate) fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let result: Signal<String> = state.get_clipboard_result();
-        wasm_bindgen_futures::spawn_local(async move {
+        spawn_local(async move {
             let text: String = clipboard_read_text().await;
             result.set(format!("Pasted: {}", text));
         });
