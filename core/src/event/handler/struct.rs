@@ -20,7 +20,7 @@ pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) event_name: Cow<'static, str>,
+    pub(crate) event_name: String,
     /// Shared reference to the heap-allocated callback closure inner state.
     #[debug(skip)]
     #[get(pub(crate))]

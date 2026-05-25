@@ -1,12 +1,12 @@
 use crate::*;
 
-/// Dispatches a custom `__euv_signal_update__` event on the global window.
+/// Dispatches a custom `NativeEventName::EuvSignalUpdate.to_string()` event on the global window.
 ///
 /// Used by the scheduler to trigger a DOM update cycle after signal changes.
 /// Does nothing if the window object is unavailable.
 pub(crate) fn dispatch_signal_update() {
     if let Some(win) = window() {
-        let event: Event = Event::new("__euv_signal_update__").unwrap();
+        let event: Event = Event::new(&NativeEventName::EuvSignalUpdate.to_string()).unwrap();
         let _ = win.dispatch_event(&event);
     }
 }
@@ -22,7 +22,7 @@ pub(crate) fn dispatch_signal_update() {
 /// Panics if `window()` returns `None`.
 fn ensure_dispatch_callback() {
     let win: Window = window().unwrap();
-    let key: JsValue = JsValue::from_str("__euv_dispatch");
+    let key: JsValue = JsValue::from_str(EUV_DISPATCH);
     if Reflect::get(&win, &key)
         .unwrap_or(JsValue::UNDEFINED)
         .is_undefined()
@@ -36,7 +36,7 @@ fn ensure_dispatch_callback() {
     }
 }
 
-/// Schedules a deferred `__euv_signal_update__` event via a microtask.
+/// Schedules a deferred `NativeEventName::EuvSignalUpdate.to_string()` event via a microtask.
 ///
 /// If a schedule is already pending (`SCHEDULED` is true) or updates
 /// are suppressed (`SUPPRESS_SCHEDULE` is true), this is a no-op.
@@ -57,13 +57,13 @@ pub(crate) fn schedule_signal_update() {
     ensure_dispatch_callback();
     let win: Window = win.unwrap();
     let dispatch_fn: JsValue =
-        Reflect::get(&win, &JsValue::from_str("__euv_dispatch")).unwrap_or(JsValue::UNDEFINED);
+        Reflect::get(&win, &JsValue::from_str(EUV_DISPATCH)).unwrap_or(JsValue::UNDEFINED);
     if dispatch_fn.is_undefined() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
     let queue_microtask_val: JsValue =
-        Reflect::get(&win, &JsValue::from_str("queueMicrotask")).unwrap_or(JsValue::UNDEFINED);
+        Reflect::get(&win, &JsValue::from_str(QUEUE_MICROTASK)).unwrap_or(JsValue::UNDEFINED);
     if queue_microtask_val.is_undefined() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
@@ -97,7 +97,7 @@ where
     result
 }
 
-/// Subscribes an attribute signal to the global `__euv_signal_update__` event.
+/// Subscribes an attribute signal to the global `NativeEventName::EuvSignalUpdate.to_string()` event.
 ///
 /// Creates a callback that re-computes the attribute value and sets
 /// it on the signal whenever a signal update cycle runs. The callback

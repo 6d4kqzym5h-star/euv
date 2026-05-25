@@ -12,7 +12,6 @@ pub use {event::*, reactive::*, renderer::*, vdom::*};
 
 use std::{
     any::Any,
-    borrow::Cow,
     cell::{Ref, RefCell, RefMut, UnsafeCell},
     collections::{HashMap, HashSet},
     mem::{swap, take},

@@ -13,7 +13,7 @@ pub(crate) struct HandlerSlot {
 /// Stores a signal update callback and its cleanup flag.
 #[derive(CustomDebug, Data, New)]
 pub(crate) struct SignalUpdateSlot {
-    /// The callback to invoke when `__euv_signal_update__` fires.
+    /// The callback to invoke when `NativeEventName::EuvSignalUpdate.to_string()` fires.
     #[debug(skip)]
     #[get(skip)]
     #[set(pub(crate))]
@@ -49,7 +49,7 @@ pub(crate) struct DelegatedEventsCell(
     /// Interior-mutable storage for the delegated events set.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashSet<Cow<'static, str>>>>,
+    pub(crate) UnsafeCell<Option<HashSet<String>>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashMap` access.

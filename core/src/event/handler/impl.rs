@@ -19,7 +19,7 @@ impl NativeEventHandler {
         let callback_inner: Rc<RefCell<NativeEventCallbackInner>> = Rc::new(RefCell::new(
             NativeEventCallbackInner::new(Box::new(callback)),
         ));
-        NativeEventHandler::new(event_name.as_str(), callback_inner)
+        NativeEventHandler::new(event_name.to_string(), callback_inner)
     }
 
     /// Invokes the underlying callback with the given event.

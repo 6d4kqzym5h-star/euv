@@ -196,7 +196,7 @@ impl EventAdapter<NativeEventHandler> {
     /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
     pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
         let mut handler: NativeEventHandler = self.into_inner();
-        handler.set_event_name(event_name.as_str());
+        handler.set_event_name(event_name.to_string());
         AttributeValue::Event(handler)
     }
 }
@@ -312,7 +312,7 @@ impl AttrValueAdapter<NativeEventHandler> {
     /// - `AttributeValue` - An event attribute value with the custom name.
     pub fn into_callback_attribute_value_with_name(self, name: String) -> AttributeValue {
         let mut handler: NativeEventHandler = self.into_inner();
-        handler.set_event_name(Cow::Owned(name));
+        handler.set_event_name(name);
         AttributeValue::Event(handler)
     }
 }

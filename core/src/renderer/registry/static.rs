@@ -21,6 +21,6 @@ pub(crate) static mut DELEGATED_EVENTS: DelegatedEventsCell =
 pub(crate) static mut SIGNAL_UPDATE_REGISTRY: SignalUpdateRegistryCell =
     SignalUpdateRegistryCell(UnsafeCell::new(None));
 
-/// Whether the global `__euv_signal_update__` listener has been registered.
+/// Whether the global `NativeEventName::EuvSignalUpdate.to_string()` listener has been registered.
 pub(crate) static mut SIGNAL_UPDATE_LISTENER_REGISTERED: SignalUpdateListenerRegisteredCell =
     SignalUpdateListenerRegisteredCell(UnsafeCell::new(false));

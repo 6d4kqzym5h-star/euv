@@ -30,10 +30,9 @@ fn dispatch_delegated_event(event: &Event, event_name: &str) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
         {
-            let key: (usize, Cow<'static, str>) = (euv_id, Cow::Owned(event_name.to_string()));
+            let key: (usize, String) = (euv_id, event_name.to_string());
             let found: Option<NativeEventHandler> = {
-                let registry: &HashMap<(usize, Cow<'static, str>), HandlerEntry> =
-                    ensure_handler_registry();
+                let registry: &HashMap<(usize, String), HandlerEntry> = ensure_handler_registry();
                 registry.get(&key).and_then(|entry| {
                     let slot: Ref<HandlerSlot> = entry.borrow();
                     slot.try_get_handler().as_ref().cloned()
@@ -58,17 +57,17 @@ fn dispatch_delegated_event(event: &Event, event_name: &str) {
 ///
 /// # Arguments
 ///
-/// - `Cow<'static, str>`: The event type name to listen for (e.g. `"click"`).
+/// - `String`: The event type name to listen for (e.g. `"click"`).
 ///
 /// # Panics
 ///
 /// Panics if `window()` returns `None` or if `add_event_listener_with_callback_and_bool` fails.
-pub(crate) fn ensure_delegated_listener(event_name: Cow<'static, str>) {
+pub(crate) fn ensure_delegated_listener(event_name: String) {
     let already_delegated: bool = is_delegated_event(&event_name);
     if already_delegated {
         return;
     }
-    let event_name_clone: Cow<'static, str> = event_name.clone();
+    let event_name_clone: String = event_name.clone();
     let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         dispatch_delegated_event(&event, &event_name_clone);
     }));
@@ -86,22 +85,22 @@ pub(crate) fn ensure_delegated_listener(event_name: Cow<'static, str>) {
 
 /// One-time initialization of global event delegation.
 ///
-/// Iterates over all `DELEGATABLE_EVENT_NAMES` defined in `NativeEventName`
+/// Iterates over all `DELEGATABLE_EVENT_NAMES`
 /// and calls `ensure_delegated_listener` for each one, registering
 /// capturing-phase listeners on `window`.
 pub(crate) fn init_event_delegation() {
-    for event_name_str in NativeEventName::DELEGATABLE_EVENT_NAMES {
-        let event_name: Cow<'static, str> = Cow::Borrowed(event_name_str);
+    for event_name_str in DELEGATABLE_EVENT_NAMES {
+        let event_name: String = event_name_str.to_string();
         ensure_delegated_listener(event_name);
     }
 }
 
-/// Ensures the global `__euv_signal_update__` listener is registered on window.
+/// Ensures the global `NativeEventName::EuvSignalUpdate.to_string()` listener is registered on window.
 ///
 /// If already registered (`SIGNAL_UPDATE_LISTENER_REGISTERED` is true),
 /// this is a no-op. Otherwise, creates a `Closure` that calls
 /// `dispatch_signal_update_callbacks`, registers it as a listener for
-/// the `__euv_signal_update__` event on `window`, and sets the flag.
+/// the `NativeEventName::EuvSignalUpdate.to_string()` event on `window`, and sets the flag.
 ///
 /// # Panics
 ///
@@ -114,7 +113,7 @@ pub(crate) fn ensure_signal_update_listener() {
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(|| {
         dispatch_signal_update_callbacks();
     }));
-    let event_name: Cow<'static, str> = NativeEventName::EuvSignalUpdate.as_str();
+    let event_name: String = NativeEventName::EuvSignalUpdate.to_string();
     let window: Window = window().unwrap();
     window
         .add_event_listener_with_callback(&event_name, closure.as_ref().unchecked_ref())
@@ -215,9 +214,8 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
 /// - `usize`: The euv ID of the DOM element.
 /// - `&str`: The event name of the handler to remove.
 pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &str) {
-    let registry_ref: &mut HashMap<(usize, Cow<'static, str>), HandlerEntry> =
-        ensure_handler_registry_mut();
-    let key: (usize, Cow<'static, str>) = (_euv_id, Cow::Owned(event_name.to_string()));
+    let registry_ref: &mut HashMap<(usize, String), HandlerEntry> = ensure_handler_registry_mut();
+    let key: (usize, String) = (_euv_id, event_name.to_string());
     registry_ref.remove(&key);
 }
 
@@ -230,9 +228,8 @@ pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &str) {
 ///
 /// - `usize`: The euv ID of the DOM element being removed.
 pub(crate) fn cleanup_element_handlers(euv_id: usize) {
-    let registry_ref: &mut HashMap<(usize, Cow<'static, str>), HandlerEntry> =
-        ensure_handler_registry_mut();
-    let keys_to_remove: Vec<(usize, Cow<'static, str>)> = registry_ref
+    let registry_ref: &mut HashMap<(usize, String), HandlerEntry> = ensure_handler_registry_mut();
+    let keys_to_remove: Vec<(usize, String)> = registry_ref
         .keys()
         .filter(|(id, _)| *id == euv_id)
         .cloned()
@@ -330,9 +327,9 @@ pub(crate) fn is_delegated_event(event_name: &str) -> bool {
 ///
 /// # Arguments
 ///
-/// - `Cow<'static, str>`: The event name to insert.
+/// - `String`: The event name to insert.
 #[allow(static_mut_refs)]
-pub(crate) fn insert_delegated_event(event_name: Cow<'static, str>) {
+pub(crate) fn insert_delegated_event(event_name: String) {
     unsafe {
         if (*DELEGATED_EVENTS.get_0().get()).is_none() {
             (*DELEGATED_EVENTS.get_0().get()) = Some(HashSet::new());

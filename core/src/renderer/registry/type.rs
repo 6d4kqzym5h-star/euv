@@ -7,4 +7,4 @@ pub(crate) type HandlerEntry = Rc<RefCell<HandlerSlot>>;
 pub(crate) type SignalUpdateEntry = Rc<RefCell<SignalUpdateSlot>>;
 
 /// Type alias for the handler registry map.
-pub(crate) type HandlerRegistryMap = HashMap<(usize, Cow<'static, str>), HandlerEntry>;
+pub(crate) type HandlerRegistryMap = HashMap<(usize, String), HandlerEntry>;

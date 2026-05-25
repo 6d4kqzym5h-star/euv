@@ -212,9 +212,9 @@ fn schedule_bind_observer(selector: String) {
     }
     let _ = Reflect::set(&win, &pending_key, &JsValue::TRUE);
     let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let w: Window = window().expect("no global window exists");
+        let win: Window = window().expect("no global window exists");
         let key: JsValue = JsValue::from_str("__euv_list_observer_pending");
-        let _ = Reflect::set(&w, &key, &JsValue::UNDEFINED);
+        let _ = Reflect::set(&win, &key, &JsValue::UNDEFINED);
         bind_observer(&selector);
     }));
     let _ = win.request_animation_frame(raf_closure.as_ref().unchecked_ref());

@@ -925,12 +925,12 @@ impl Renderer {
                 new_id
             }
         };
-        let event_name: Cow<'static, str> = handler.get_event_name().clone();
-        if !NativeEventName::DELEGATABLE_EVENT_NAMES.contains(&&*event_name) {
+        let event_name: String = handler.get_event_name().clone();
+        if !DELEGATABLE_EVENT_NAMES.contains(&event_name.as_str()) {
             ensure_delegated_listener(event_name.clone());
         }
-        let key: (usize, Cow<'static, str>) = (euv_id, event_name);
-        let registry_ref: &mut HashMap<(usize, Cow<'static, str>), HandlerEntry> =
+        let key: (usize, String) = (euv_id, event_name);
+        let registry_ref: &mut HashMap<(usize, String), HandlerEntry> =
             ensure_handler_registry_mut();
         if let Some(existing_entry) = registry_ref.get(&key) {
             let mut slot: RefMut<HandlerSlot> = existing_entry.borrow_mut();
