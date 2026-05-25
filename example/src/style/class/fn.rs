@@ -951,6 +951,13 @@ class! {
         border-radius: "8px";
         border: format!("1px solid {}", var!(border-success));
         color: var!(text-success);
+        max-width: "100%";
+        overflow: "hidden";
+    }
+
+    pub(crate) c_event_audio {
+        width: "100%";
+        max-width: "100%";
     }
 
     pub(crate) c_event_section_row {

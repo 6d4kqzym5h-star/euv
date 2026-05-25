@@ -2,7 +2,7 @@ use crate::*;
 
 /// Reactive state for an async data fetch feature.
 #[derive(Clone, Copy, Data, New)]
-pub struct UseFetch {
+pub(crate) struct UseFetch {
     /// Whether data is currently being fetched.
     #[get(pub, type(copy))]
     pub(crate) loading: Signal<bool>,

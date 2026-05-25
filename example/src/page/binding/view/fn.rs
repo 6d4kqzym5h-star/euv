@@ -12,7 +12,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A styled child display element.
-pub fn child_display(props: VirtualNode) -> VirtualNode {
+pub(crate) fn child_display(props: VirtualNode) -> VirtualNode {
     let ChildDisplayProps {
         message,
         on_respond,
@@ -49,7 +49,7 @@ pub fn child_display(props: VirtualNode) -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - A styled limited counter element.
-pub fn limited_counter(props: VirtualNode) -> VirtualNode {
+pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
     let LimitedCounterProps {
         disabled,
         max_count,
@@ -115,7 +115,7 @@ pub fn limited_counter(props: VirtualNode) -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - A styled input with callback element.
-pub fn callback_input(props: VirtualNode) -> VirtualNode {
+pub(crate) fn callback_input(props: VirtualNode) -> VirtualNode {
     let CallbackInputProps {
         on_change,
         on_submit,
@@ -174,7 +174,7 @@ pub fn callback_input(props: VirtualNode) -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - A styled child input element.
-pub fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>) -> VirtualNode {
+pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>) -> VirtualNode {
     let text_value: String = text_signal.get();
     let count_value: i32 = count_signal.get();
     html! {
@@ -234,7 +234,7 @@ pub fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>) -> Vi
 /// # Returns
 ///
 /// - `VirtualNode` - A temperature converter element.
-pub fn temperature_converter(
+pub(crate) fn temperature_converter(
     celsius_signal: Signal<f64>,
     fahrenheit_signal: Signal<f64>,
 ) -> VirtualNode {
@@ -300,7 +300,7 @@ pub fn temperature_converter(
 /// # Returns
 ///
 /// - `VirtualNode` - A color mixer element.
-pub fn color_mixer(
+pub(crate) fn color_mixer(
     red_signal: Signal<i32>,
     green_signal: Signal<i32>,
     blue_signal: Signal<i32>,
@@ -404,7 +404,7 @@ pub fn color_mixer(
 /// # Returns
 ///
 /// - `VirtualNode` - The component binding demo page virtual DOM tree.
-pub fn page_component_binding() -> VirtualNode {
+pub(crate) fn page_component_binding() -> VirtualNode {
     let props_state: UsePropsDemo = use_props_demo();
     let two_way_state: UseTwoWayDemo = use_two_way_demo();
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();

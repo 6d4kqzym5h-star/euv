@@ -7,4 +7,4 @@ mod r#struct;
 
 pub(crate) use {r#const::*, r#static::*, r#struct::*};
 
-pub use {r#enum::*, r#fn::*};
+pub(crate) use {r#enum::*, r#fn::*};

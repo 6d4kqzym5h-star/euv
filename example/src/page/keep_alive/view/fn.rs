@@ -243,7 +243,7 @@ fn format_time(total_seconds: i32) -> String {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that increments the counter.
-pub fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = count.get();
         count.set(current + 1);
@@ -259,7 +259,7 @@ pub fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEventHandler
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that decrements the counter.
-pub fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = count.get();
         count.set(current - 1);
@@ -275,7 +275,7 @@ pub fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEventHandler
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that resets the counter.
-pub fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         count.set(0);
     })
@@ -290,7 +290,7 @@ pub fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that starts the timer.
-pub fn keep_alive_timer_on_start(running: Signal<bool>) -> NativeEventHandler {
+pub(crate) fn keep_alive_timer_on_start(running: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         running.set(true);
     })
@@ -306,7 +306,7 @@ pub fn keep_alive_timer_on_start(running: Signal<bool>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that pauses the timer.
-pub fn keep_alive_timer_on_pause(
+pub(crate) fn keep_alive_timer_on_pause(
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
 ) -> NativeEventHandler {
@@ -326,7 +326,7 @@ pub fn keep_alive_timer_on_pause(
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that resets the timer.
-pub fn keep_alive_timer_on_reset(
+pub(crate) fn keep_alive_timer_on_reset(
     elapsed: Signal<i32>,
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
@@ -346,7 +346,7 @@ pub fn keep_alive_timer_on_reset(
 /// # Returns
 ///
 /// - `VirtualNode` - The keep-alive demo page virtual DOM tree.
-pub fn page_keep_alive() -> VirtualNode {
+pub(crate) fn page_keep_alive() -> VirtualNode {
     let tab: Signal<String> = use_signal(|| "counter".to_string());
     html! {
         div {

@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseFileUpload` - The file upload state.
-pub fn use_file_upload() -> UseFileUpload {
+pub(crate) fn use_file_upload() -> UseFileUpload {
     UseFileUpload::new(
         use_signal(Vec::new),
         use_signal(Vec::new),
@@ -29,7 +29,7 @@ pub fn use_file_upload() -> UseFileUpload {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A change handler for the file input.
-pub fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
+pub(crate) fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -82,7 +82,7 @@ pub fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to clear files.
-pub fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
+pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_file_names().set(Vec::new());
         state.get_file_sizes().set(Vec::new());
@@ -101,7 +101,7 @@ pub fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A dragenter handler.
-pub fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHandler {
+pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::DragEnter, move |_event: Event| {
         state.get_drag_over().set(true);
     })
@@ -116,7 +116,7 @@ pub fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A dragleave handler.
-pub fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHandler {
+pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::DragLeave, move |_event: Event| {
         state.get_drag_over().set(false);
     })
@@ -131,7 +131,7 @@ pub fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A dragover handler.
-pub fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandler {
+pub(crate) fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::DragOver, move |_event: Event| {
         state.get_drag_over().set(true);
     })
@@ -146,7 +146,7 @@ pub fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A drop handler.
-pub fn file_upload_on_drop(state: UseFileUpload) -> NativeEventHandler {
+pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Drop, move |event: Event| {
         state.get_drag_over().set(false);
         if let Some(drag_event) = event.dyn_ref::<DragEvent>() {

@@ -4,15 +4,15 @@ use crate::*;
 ///
 /// Defines the strongly-typed interface for the labeled input field.
 #[derive(Data, Debug, Default)]
-pub struct FormInputProps {
+pub(crate) struct FormInputProps {
     /// The unique identifier for the input element.
-    pub id: String,
+    pub(crate) id: String,
     /// The label text displayed above the input.
-    pub label: String,
+    pub(crate) label: String,
     /// The placeholder text shown when the input is empty.
-    pub placeholder: String,
+    pub(crate) placeholder: String,
     /// The current input value.
-    pub value: String,
+    pub(crate) value: String,
     /// The autocomplete hint for the browser.
-    pub autocomplete: String,
+    pub(crate) autocomplete: String,
 }

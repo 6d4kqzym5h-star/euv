@@ -16,7 +16,7 @@ impl Console {
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn log(message: &str) {
+    pub(crate) fn log(message: &str) {
         web_sys::console::log_1(&message.into());
         Self::append_entry(ConsoleEntry::new(LogLevel::Log, message.to_string()));
     }
@@ -30,7 +30,7 @@ impl Console {
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn warn(message: &str) {
+    pub(crate) fn warn(message: &str) {
         web_sys::console::warn_1(&message.into());
         Self::append_entry(ConsoleEntry::new(LogLevel::Warn, message.to_string()));
     }
@@ -44,7 +44,7 @@ impl Console {
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn error(message: &str) {
+    pub(crate) fn error(message: &str) {
         web_sys::console::error_1(&message.into());
         Self::append_entry(ConsoleEntry::new(LogLevel::Error, message.to_string()));
     }
@@ -54,7 +54,7 @@ impl Console {
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn clear() {
+    pub(crate) fn clear() {
         let log: Signal<Vec<ConsoleEntry>> = Self::get_signal();
         log.set(Vec::new());
     }

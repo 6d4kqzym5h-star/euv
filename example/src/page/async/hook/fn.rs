@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseFetch` - The fetch state containing loading, data, and error signals.
-pub fn use_fetch() -> UseFetch {
+pub(crate) fn use_fetch() -> UseFetch {
     UseFetch::new(
         use_signal(|| false),
         use_signal(|| "Click fetch to load data".to_string()),
@@ -25,7 +25,7 @@ pub fn use_fetch() -> UseFetch {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to trigger the fetch.
-pub fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
+pub(crate) fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_loading().set(true);
         state.get_error().set(String::new());

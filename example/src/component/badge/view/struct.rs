@@ -3,13 +3,13 @@ use crate::*;
 /// Props for the `my_badge` component.
 ///
 /// Defines the strongly-typed interface for the badge status indicator.
-pub struct MyBadgeProps {
+pub(crate) struct MyBadgeProps {
     /// The badge background/border color.
-    pub color: String,
+    pub(crate) color: String,
     /// The badge text content.
-    pub text: String,
+    pub(crate) text: String,
     /// Whether to render in outline style instead of solid fill.
-    pub outline: bool,
+    pub(crate) outline: bool,
     /// Optional click event handler.
-    pub on_click: Option<NativeEventHandler>,
+    pub(crate) on_click: Option<NativeEventHandler>,
 }

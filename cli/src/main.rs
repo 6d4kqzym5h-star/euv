@@ -180,7 +180,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     log::info!("Serving pkg from: {}", pkg_dir.display());
     let mut server: Server = Server::default();
     let mut server_config: ServerConfig = ServerConfig::default();
-    server_config.set_address(Server::format_bind_address("127.0.0.1", args.port));
+    server_config.set_address(Server::format_bind_address(DEFAULT_HOST, args.port));
     server.server_config(server_config);
     server.request_middleware::<RequestMiddleware>();
     server.response_middleware::<ResponseMiddleware>();

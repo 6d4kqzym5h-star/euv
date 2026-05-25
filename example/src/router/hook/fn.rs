@@ -10,7 +10,7 @@ use crate::*;
 /// # Arguments
 ///
 /// - `Signal<String>` - The reactive signal that holds the current route and will be updated on each hash change.
-pub fn use_hash_change(route_signal: Signal<String>) {
+pub(crate) fn use_hash_change(route_signal: Signal<String>) {
     let window: Window = window().expect("no global window exists");
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let new_route: String = current_route();
@@ -34,7 +34,7 @@ pub fn use_hash_change(route_signal: Signal<String>) {
 /// # Returns
 ///
 /// - `Signal<bool>` - A reactive signal that is `true` when the viewport is mobile-sized.
-pub fn use_resize() -> Signal<bool> {
+pub(crate) fn use_resize() -> Signal<bool> {
     let mobile_signal: Signal<bool> = use_signal(is_mobile);
     let timer_signal: Signal<Option<i32>> = use_signal(|| None);
     let event_window: Window = window().expect("no global window exists");

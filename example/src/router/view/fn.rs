@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `String` - The hash fragment without the leading `#`, or `"/"` if empty.
-pub fn current_route() -> String {
+pub(crate) fn current_route() -> String {
     let window: Window = window().expect("no global window exists");
     let hash: String = window.location().hash().unwrap_or_default();
     let route: String = hash.strip_prefix('#').unwrap_or(&hash).to_string();
@@ -21,7 +21,7 @@ pub fn current_route() -> String {
 /// # Arguments
 ///
 /// - `&str` - The target route path.
-pub fn navigate(route: &str) {
+pub(crate) fn navigate(route: &str) {
     let window: Window = window().expect("no global window exists");
     let location: Location = window.location();
     let new_hash: String = format!("#{}", route);
@@ -37,7 +37,7 @@ pub fn navigate(route: &str) {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An event handler for click events.
-pub fn link_handler(route: String) -> NativeEventHandler {
+pub(crate) fn link_handler(route: String) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         navigate(&route);
     })
@@ -50,7 +50,7 @@ pub fn link_handler(route: String) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `bool` - `true` if the viewport width is less than the mobile breakpoint.
-pub fn is_mobile() -> bool {
+pub(crate) fn is_mobile() -> bool {
     let window: Window = window().expect("no global window exists");
     let width: f64 = window
         .inner_width()

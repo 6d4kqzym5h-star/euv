@@ -13,7 +13,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The page header virtual DOM tree.
-pub fn page_header(title: &str, subtitle: &str) -> VirtualNode {
+pub(crate) fn page_header(title: &str, subtitle: &str) -> VirtualNode {
     html! {
         div {
             class: c_page_header()

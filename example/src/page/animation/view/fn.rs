@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The animation demo page virtual DOM tree.
-pub fn page_animation() -> VirtualNode {
+pub(crate) fn page_animation() -> VirtualNode {
     let box_visible: Signal<bool> = use_signal(|| false);
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);

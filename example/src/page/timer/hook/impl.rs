@@ -10,7 +10,7 @@ impl IntervalHandle {
     /// # Panics
     ///
     /// Panics if `window()` is unavailable on the current platform.
-    pub fn clear(&self) {
+    pub(crate) fn clear(&self) {
         let window: Window = window().expect("no global window exists");
         window.clear_interval_with_handle(self.get_interval_id());
     }

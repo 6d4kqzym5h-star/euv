@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseModal` - The modal state.
-pub fn use_modal() -> UseModal {
+pub(crate) fn use_modal() -> UseModal {
     UseModal::default()
 }
 
@@ -14,7 +14,7 @@ pub fn use_modal() -> UseModal {
 /// # Arguments
 ///
 /// - `UseModal` - The modal state.
-pub fn validate_modal_name(state: UseModal) {
+pub(crate) fn validate_modal_name(state: UseModal) {
     let name_value: String = state.get_modal_name().get();
     if name_value.trim().is_empty() {
         state.get_name_error().set("Name is required".to_string());
@@ -28,7 +28,7 @@ pub fn validate_modal_name(state: UseModal) {
 /// # Arguments
 ///
 /// - `UseModal` - The modal state.
-pub fn validate_modal_email(state: UseModal) {
+pub(crate) fn validate_modal_email(state: UseModal) {
     let email_value: String = state.get_modal_email().get();
     if email_value.trim().is_empty() {
         state.get_email_error().set("Email is required".to_string());
@@ -50,7 +50,7 @@ pub fn validate_modal_email(state: UseModal) {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to open the basic modal.
-pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_show_basic().set(true);
     })
@@ -65,7 +65,7 @@ pub fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to open the confirm modal.
-pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_show_confirm().set(true);
         state.get_confirm_result().set(String::new());
@@ -81,7 +81,7 @@ pub fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to open the form modal.
-pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state.get_show_form().set(true);
         state.get_modal_name().set(String::new());
@@ -102,7 +102,7 @@ pub fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to confirm the action.
-pub fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         state
             .get_confirm_result()
@@ -120,7 +120,7 @@ pub fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -140,7 +140,7 @@ pub fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -160,7 +160,7 @@ pub fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to submit the form modal.
-pub fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
+pub(crate) fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_modal_name(state);
         validate_modal_email(state);

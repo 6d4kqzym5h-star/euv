@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UsePropsDemo` - The props demo state.
-pub fn use_props_demo() -> UsePropsDemo {
+pub(crate) fn use_props_demo() -> UsePropsDemo {
     UsePropsDemo::new(
         use_signal(|| "Hello from Parent!".to_string()),
         use_signal(String::new),
@@ -22,7 +22,7 @@ pub fn use_props_demo() -> UsePropsDemo {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn props_on_child_respond(
+pub(crate) fn props_on_child_respond(
     response_signal: Signal<String>,
     message: String,
 ) -> NativeEventHandler {
@@ -36,7 +36,7 @@ pub fn props_on_child_respond(
 /// # Returns
 ///
 /// - `UseTwoWayDemo` - The two-way binding demo state.
-pub fn use_two_way_demo() -> UseTwoWayDemo {
+pub(crate) fn use_two_way_demo() -> UseTwoWayDemo {
     UseTwoWayDemo::new(use_signal(|| "Type here...".to_string()), use_signal(|| 0))
 }
 
@@ -49,7 +49,7 @@ pub fn use_two_way_demo() -> UseTwoWayDemo {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn two_way_on_increment(counter: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn two_way_on_increment(counter: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = counter.get();
         counter.set(current + 1);
@@ -65,7 +65,7 @@ pub fn two_way_on_increment(counter: Signal<i32>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn two_way_on_decrement(counter: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn two_way_on_decrement(counter: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = counter.get();
         counter.set(current - 1);
@@ -77,7 +77,7 @@ pub fn two_way_on_decrement(counter: Signal<i32>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `UseCrossComponentDemo` - The cross-component demo state.
-pub fn use_cross_component_demo() -> UseCrossComponentDemo {
+pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
     let state: UseCrossComponentDemo = UseCrossComponentDemo::new(
         use_signal(|| 0.0),
         use_signal(|| 32.0),
@@ -119,7 +119,7 @@ pub fn use_cross_component_demo() -> UseCrossComponentDemo {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn cross_on_input_celsius(signal: Signal<f64>) -> NativeEventHandler {
+pub(crate) fn cross_on_input_celsius(signal: Signal<f64>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -139,7 +139,7 @@ pub fn cross_on_input_celsius(signal: Signal<f64>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn cross_on_input_fahrenheit(signal: Signal<f64>) -> NativeEventHandler {
+pub(crate) fn cross_on_input_fahrenheit(signal: Signal<f64>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -159,7 +159,7 @@ pub fn cross_on_input_fahrenheit(signal: Signal<f64>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn cross_on_input_i32(signal: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -175,7 +175,7 @@ pub fn cross_on_input_i32(signal: Signal<i32>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `UseTypedPropsDemo` - The typed props demo state.
-pub fn use_typed_props_demo() -> UseTypedPropsDemo {
+pub(crate) fn use_typed_props_demo() -> UseTypedPropsDemo {
     UseTypedPropsDemo::new(use_signal(|| false), use_signal(|| 5), use_signal(|| 0))
 }
 
@@ -188,7 +188,7 @@ pub fn use_typed_props_demo() -> UseTypedPropsDemo {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> NativeEventHandler {
+pub(crate) fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: bool = disabled.get();
         disabled.set(!current);
@@ -208,7 +208,7 @@ pub fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> NativeEventHand
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn typed_props_on_increment(
+pub(crate) fn typed_props_on_increment(
     count: Signal<i32>,
     max_count: Signal<i32>,
     disabled: Signal<bool>,
@@ -237,7 +237,7 @@ pub fn typed_props_on_increment(
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler.
-pub fn typed_props_on_reset_count(
+pub(crate) fn typed_props_on_reset_count(
     count: Signal<i32>,
     disabled: Signal<bool>,
 ) -> NativeEventHandler {
@@ -254,7 +254,7 @@ pub fn typed_props_on_reset_count(
 /// # Returns
 ///
 /// - `UseCustomCallbackDemo` - The custom callback demo state.
-pub fn use_custom_callback_demo() -> UseCustomCallbackDemo {
+pub(crate) fn use_custom_callback_demo() -> UseCustomCallbackDemo {
     UseCustomCallbackDemo::new(use_signal(String::new), use_signal(|| "none".to_string()))
 }
 
@@ -269,7 +269,7 @@ pub fn use_custom_callback_demo() -> UseCustomCallbackDemo {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A callback handler.
-pub fn custom_on_change(
+pub(crate) fn custom_on_change(
     text_signal: Signal<String>,
     last_event: Signal<String>,
     event_name: String,
@@ -294,7 +294,10 @@ pub fn custom_on_change(
 /// # Returns
 ///
 /// - `NativeEventHandler` - A callback handler.
-pub fn custom_on_submit(last_event: Signal<String>, event_name: String) -> NativeEventHandler {
+pub(crate) fn custom_on_submit(
+    last_event: Signal<String>,
+    event_name: String,
+) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         last_event.set(event_name.clone());
     })
@@ -311,7 +314,7 @@ pub fn custom_on_submit(last_event: Signal<String>, event_name: String) -> Nativ
 /// # Returns
 ///
 /// - `NativeEventHandler` - A callback handler.
-pub fn custom_on_reset(
+pub(crate) fn custom_on_reset(
     text_signal: Signal<String>,
     last_event: Signal<String>,
     event_name: String,

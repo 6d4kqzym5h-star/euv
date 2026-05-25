@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Must be called once during application startup before any `Console::log`,
 /// `Console::warn`, or `Console::error` calls.
-pub fn init_console() {
+pub(crate) fn init_console() {
     let signal: Signal<Vec<ConsoleEntry>> = Signal::create(Vec::new());
     CONSOLE_LOG_SIGNAL.set(signal);
 }
@@ -36,7 +36,7 @@ pub(crate) fn get_console_signal() -> Signal<Vec<ConsoleEntry>> {
 /// # Returns
 ///
 /// - `VirtualNode` - The vConsole panel virtual DOM tree.
-pub fn vconsole_panel(panel_open: Signal<bool>) -> VirtualNode {
+pub(crate) fn vconsole_panel(panel_open: Signal<bool>) -> VirtualNode {
     let console_signal: Signal<Vec<ConsoleEntry>> = get_console_signal();
     let log_count: usize = console_signal.get().len();
     html! {

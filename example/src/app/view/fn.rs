@@ -11,7 +11,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The navigation item virtual DOM tree.
-pub fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> VirtualNode {
+pub(crate) fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> VirtualNode {
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -361,7 +361,7 @@ fn mobile_layout(
 /// # Returns
 ///
 /// - `VirtualNode` - The root application virtual DOM tree.
-pub fn app() -> VirtualNode {
+pub(crate) fn app() -> VirtualNode {
     init_console();
     let route_signal: Signal<String> = use_signal(current_route);
     let panel_open: Signal<bool> = use_signal(|| false);

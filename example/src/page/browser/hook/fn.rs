@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseBrowserApi` - The browser API demo state.
-pub fn use_browser_api() -> UseBrowserApi {
+pub(crate) fn use_browser_api() -> UseBrowserApi {
     let mut state: UseBrowserApi = UseBrowserApi::default();
     state.set_local_key(use_signal(|| "euv-demo-key".to_string()));
     state.set_local_value(use_signal(String::new));
@@ -37,7 +37,7 @@ pub fn use_browser_api() -> UseBrowserApi {
 /// # Returns
 ///
 /// - `Option<String>` - The stored value if found, or None.
-pub fn local_storage_get(key: &str) -> Option<String> {
+pub(crate) fn local_storage_get(key: &str) -> Option<String> {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = window.local_storage().ok()??;
     storage.get_item(key).ok()?
@@ -49,7 +49,7 @@ pub fn local_storage_get(key: &str) -> Option<String> {
 ///
 /// - `&str` - The key to store.
 /// - `&str` - The value to store.
-pub fn local_storage_set(key: &str, value: &str) {
+pub(crate) fn local_storage_set(key: &str, value: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.local_storage() {
         Ok(Some(s)) => s,
@@ -63,7 +63,7 @@ pub fn local_storage_set(key: &str, value: &str) {
 /// # Arguments
 ///
 /// - `&str` - The key to remove.
-pub fn local_storage_remove(key: &str) {
+pub(crate) fn local_storage_remove(key: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.local_storage() {
         Ok(Some(s)) => s,
@@ -81,7 +81,7 @@ pub fn local_storage_remove(key: &str) {
 /// # Returns
 ///
 /// - `Option<String>` - The stored value if found, or None.
-pub fn session_storage_get(key: &str) -> Option<String> {
+pub(crate) fn session_storage_get(key: &str) -> Option<String> {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = window.session_storage().ok()??;
     storage.get_item(key).ok()?
@@ -93,7 +93,7 @@ pub fn session_storage_get(key: &str) -> Option<String> {
 ///
 /// - `&str` - The key to store.
 /// - `&str` - The value to store.
-pub fn session_storage_set(key: &str, value: &str) {
+pub(crate) fn session_storage_set(key: &str, value: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.session_storage() {
         Ok(Some(s)) => s,
@@ -107,7 +107,7 @@ pub fn session_storage_set(key: &str, value: &str) {
 /// # Arguments
 ///
 /// - `&str` - The key to remove.
-pub fn session_storage_remove(key: &str) {
+pub(crate) fn session_storage_remove(key: &str) {
     let window: Window = window().expect("no global window exists");
     let storage: Storage = match window.session_storage() {
         Ok(Some(s)) => s,
@@ -121,7 +121,7 @@ pub fn session_storage_remove(key: &str) {
 /// # Returns
 ///
 /// - `String` - The clipboard text content, or an error message.
-pub async fn clipboard_read_text() -> String {
+pub(crate) async fn clipboard_read_text() -> String {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
     let clipboard: Clipboard = navigator.clipboard();
@@ -144,7 +144,7 @@ pub async fn clipboard_read_text() -> String {
 /// # Returns
 ///
 /// - `bool` - Whether the write succeeded.
-pub async fn clipboard_write_text(text: &str) -> bool {
+pub(crate) async fn clipboard_write_text(text: &str) -> bool {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
     let clipboard: Clipboard = navigator.clipboard();
@@ -158,7 +158,7 @@ pub async fn clipboard_write_text(text: &str) -> bool {
 /// # Returns
 ///
 /// - `(i32, i32)` - A tuple of (inner_width, inner_height).
-pub fn window_inner_size() -> (i32, i32) {
+pub(crate) fn window_inner_size() -> (i32, i32) {
     let window: Window = window().expect("no global window exists");
     let width: i32 = window
         .inner_width()
@@ -178,7 +178,7 @@ pub fn window_inner_size() -> (i32, i32) {
 /// # Returns
 ///
 /// - `String` - The user agent string.
-pub fn navigator_user_agent() -> String {
+pub(crate) fn navigator_user_agent() -> String {
     let window: Window = window().expect("no global window exists");
     window
         .navigator()
@@ -191,7 +191,7 @@ pub fn navigator_user_agent() -> String {
 /// # Returns
 ///
 /// - `String` - The preferred language string.
-pub fn navigator_language() -> String {
+pub(crate) fn navigator_language() -> String {
     let window: Window = window().expect("no global window exists");
     window
         .navigator()
@@ -204,7 +204,7 @@ pub fn navigator_language() -> String {
 /// # Returns
 ///
 /// - `String` - The current full URL.
-pub fn location_href() -> String {
+pub(crate) fn location_href() -> String {
     let window: Window = window().expect("no global window exists");
     window
         .location()
@@ -217,7 +217,7 @@ pub fn location_href() -> String {
 /// # Returns
 ///
 /// - `String` - The origin portion of the URL.
-pub fn location_origin() -> String {
+pub(crate) fn location_origin() -> String {
     let window: Window = window().expect("no global window exists");
     window
         .location()
@@ -230,7 +230,7 @@ pub fn location_origin() -> String {
 /// # Returns
 ///
 /// - `String` - The pathname portion of the URL.
-pub fn location_pathname() -> String {
+pub(crate) fn location_pathname() -> String {
     let window: Window = window().expect("no global window exists");
     window
         .location()
@@ -247,7 +247,7 @@ pub fn location_pathname() -> String {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to set the localStorage item.
-pub fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let key: String = state.get_local_key().get();
         let value: String = state.get_local_value().get();
@@ -269,7 +269,7 @@ pub fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to get the localStorage item.
-pub fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let key: String = state.get_local_key().get();
         let value: Option<String> = local_storage_get(&key);
@@ -293,7 +293,7 @@ pub fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to remove the localStorage item.
-pub fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let key: String = state.get_local_key().get();
         local_storage_remove(&key);
@@ -312,7 +312,7 @@ pub fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to set the sessionStorage item.
-pub fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let key: String = state.get_session_key().get();
         let value: String = state.get_session_value().get();
@@ -334,7 +334,7 @@ pub fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to get the sessionStorage item.
-pub fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let key: String = state.get_session_key().get();
         let value: Option<String> = session_storage_get(&key);
@@ -358,7 +358,7 @@ pub fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to remove the sessionStorage item.
-pub fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let key: String = state.get_session_key().get();
         session_storage_remove(&key);
@@ -377,7 +377,7 @@ pub fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to copy text to clipboard.
-pub fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let text: String = state.get_clipboard_text().get();
         let text_clone: String = text.clone();
@@ -406,7 +406,7 @@ pub fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to read text from clipboard.
-pub fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let result: Signal<String> = state.get_clipboard_result();
         wasm_bindgen_futures::spawn_local(async move {
@@ -425,7 +425,7 @@ pub fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to refresh the window size.
-pub fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
+pub(crate) fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let (width, height): (i32, i32) = window_inner_size();
         state
@@ -443,7 +443,7 @@ pub fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler for console.log.
-pub fn console_on_log(console_input: Signal<String>) -> NativeEventHandler {
+pub(crate) fn console_on_log(console_input: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let message: String = console_input.get();
         Console::log(&message);
@@ -459,7 +459,7 @@ pub fn console_on_log(console_input: Signal<String>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler for console.warn.
-pub fn console_on_warn(console_input: Signal<String>) -> NativeEventHandler {
+pub(crate) fn console_on_warn(console_input: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let message: String = console_input.get();
         Console::warn(&message);
@@ -475,7 +475,7 @@ pub fn console_on_warn(console_input: Signal<String>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler for console.error.
-pub fn console_on_error(console_input: Signal<String>) -> NativeEventHandler {
+pub(crate) fn console_on_error(console_input: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let message: String = console_input.get();
         Console::error(&message);

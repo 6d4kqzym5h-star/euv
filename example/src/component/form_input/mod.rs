@@ -1,3 +1,3 @@
 mod view;
 
-pub use view::*;
+pub(crate) use view::*;

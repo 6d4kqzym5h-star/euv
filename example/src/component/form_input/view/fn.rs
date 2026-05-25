@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A labeled input element.
-pub fn form_input(props: VirtualNode) -> VirtualNode {
+pub(crate) fn form_input(props: VirtualNode) -> VirtualNode {
     let FormInputProps {
         id,
         label,

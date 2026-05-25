@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseSelect` - The select state.
-pub fn use_select() -> UseSelect {
+pub(crate) fn use_select() -> UseSelect {
     UseSelect::new(
         use_signal(|| "apple".to_string()),
         use_signal(String::new),
@@ -21,7 +21,7 @@ pub fn use_select() -> UseSelect {
 /// # Arguments
 ///
 /// - `UseSelect` - The select state.
-pub fn validate_select_textarea(state: UseSelect) {
+pub(crate) fn validate_select_textarea(state: UseSelect) {
     let textarea_value: String = state.get_textarea_content().get();
     if textarea_value.trim().is_empty() {
         state
@@ -45,7 +45,7 @@ pub fn validate_select_textarea(state: UseSelect) {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A change handler for the country select.
-pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
+pub(crate) fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>()
@@ -65,7 +65,7 @@ pub fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
+pub(crate) fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(textarea) = target.clone().dyn_into::<HtmlTextAreaElement>()
@@ -85,7 +85,7 @@ pub fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to submit feedback.
-pub fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
+pub(crate) fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_select_textarea(state);
         let textarea_error_value: String = state.get_textarea_error().get();

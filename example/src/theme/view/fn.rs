@@ -1,7 +1,7 @@
 use crate::*;
 
 css_vars! {
-    pub c_theme_light {
+    pub(crate) c_theme_light {
         bg-primary: "#f8f9fb";
         bg-nav: "#ffffff";
         border-nav: "#e5e7eb";
@@ -73,7 +73,7 @@ css_vars! {
         text-console-close-hover: "#ef4444";
     }
 
-    pub c_theme_dark {
+    pub(crate) c_theme_dark {
         bg-primary: "#0f0f1a";
         bg-nav: "#16162a";
         border-nav: "#2d2d4a";

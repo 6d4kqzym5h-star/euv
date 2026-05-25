@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The conditional demo page virtual DOM tree.
-pub fn page_conditional() -> VirtualNode {
+pub(crate) fn page_conditional() -> VirtualNode {
     let show_details: Signal<bool> = use_signal(|| false);
     let user_type: Signal<String> = use_signal(|| "guest".to_string());
     let tab: Signal<String> = use_signal(|| "info".to_string());

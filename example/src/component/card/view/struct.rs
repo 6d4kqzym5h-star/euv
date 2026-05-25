@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Defines the strongly-typed interface for the card wrapper.
 #[derive(Data, Debug, Default)]
-pub struct MyCardProps {
+pub(crate) struct MyCardProps {
     /// The card title displayed in the header.
-    pub title: String,
+    pub(crate) title: String,
 }

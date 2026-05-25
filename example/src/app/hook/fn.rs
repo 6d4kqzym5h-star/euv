@@ -13,7 +13,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click event handler that toggles the signal.
-pub fn use_toggle(signal: Signal<bool>) -> NativeEventHandler {
+pub(crate) fn use_toggle(signal: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: bool = signal.get();
         signal.set(!current);
@@ -29,7 +29,7 @@ pub fn use_toggle(signal: Signal<bool>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn on_input_value(signal: Signal<String>) -> NativeEventHandler {
+pub(crate) fn on_input_value(signal: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         let value: Option<String> = event.target().and_then(|target: EventTarget| {
             if let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
@@ -58,7 +58,7 @@ pub fn on_input_value(signal: Signal<String>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A change handler.
-pub fn on_change_value(signal: Signal<String>) -> NativeEventHandler {
+pub(crate) fn on_change_value(signal: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         let value: Option<String> = event.target().and_then(|target: EventTarget| {
             if let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
@@ -87,7 +87,7 @@ pub fn on_change_value(signal: Signal<String>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A change handler.
-pub fn on_change_checked(signal: Signal<bool>) -> NativeEventHandler {
+pub(crate) fn on_change_checked(signal: Signal<bool>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()

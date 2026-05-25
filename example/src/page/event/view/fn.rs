@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The event demo page virtual DOM tree.
-pub fn page_event() -> VirtualNode {
+pub(crate) fn page_event() -> VirtualNode {
     let last_key: Signal<String> = use_signal(|| "None".to_string());
     let last_key_code: Signal<String> = use_signal(|| "None".to_string());
     let last_key_up: Signal<String> = use_signal(|| "None".to_string());
@@ -808,6 +808,7 @@ pub fn page_event() -> VirtualNode {
                 div {
                     class: c_event_media_area()
                     audio {
+                        class: c_event_audio()
                         controls: "true"
                         src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
                         onplay: move |_event: Event| {

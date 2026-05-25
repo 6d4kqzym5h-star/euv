@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseLifecycle` - The lifecycle state.
-pub fn use_lifecycle() -> UseLifecycle {
+pub(crate) fn use_lifecycle() -> UseLifecycle {
     UseLifecycle::new(
         use_signal(|| 1),
         use_signal(|| vec!["Component mounted".to_string()]),
@@ -21,7 +21,7 @@ pub fn use_lifecycle() -> UseLifecycle {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to trigger an update.
-pub fn lifecycle_on_trigger(state: UseLifecycle) -> NativeEventHandler {
+pub(crate) fn lifecycle_on_trigger(state: UseLifecycle) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = state.get_render_count().get();
         state.get_render_count().set(current + 1);

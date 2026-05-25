@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A modal overlay element.
-pub fn my_modal(props: VirtualNode) -> VirtualNode {
+pub(crate) fn my_modal(props: VirtualNode) -> VirtualNode {
     let children: Vec<VirtualNode> = props.get_children();
     let MyModalProps { title, on_close }: MyModalProps = props.into();
     let children_node: VirtualNode = VirtualNode::Fragment(children);

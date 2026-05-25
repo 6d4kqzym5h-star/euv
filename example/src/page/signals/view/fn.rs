@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The signals demo page virtual DOM tree.
-pub fn page_signals() -> VirtualNode {
+pub(crate) fn page_signals() -> VirtualNode {
     let count: Signal<i32> = use_signal(|| 0);
     html! {
         div {

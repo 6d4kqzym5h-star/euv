@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The form demo page virtual DOM tree.
-pub fn page_form() -> VirtualNode {
+pub(crate) fn page_form() -> VirtualNode {
     let form: UseForm = use_form();
     html! {
         div {

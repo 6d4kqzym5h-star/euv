@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseForm` - The form state.
-pub fn use_form() -> UseForm {
+pub(crate) fn use_form() -> UseForm {
     UseForm::default()
 }
 
@@ -14,7 +14,7 @@ pub fn use_form() -> UseForm {
 /// # Arguments
 ///
 /// - `UseForm` - The form state.
-pub fn validate_form_username(state: UseForm) {
+pub(crate) fn validate_form_username(state: UseForm) {
     let username_value: String = state.get_username().get();
     if username_value.trim().is_empty() {
         state
@@ -30,7 +30,7 @@ pub fn validate_form_username(state: UseForm) {
 /// # Arguments
 ///
 /// - `UseForm` - The form state.
-pub fn validate_form_email(state: UseForm) {
+pub(crate) fn validate_form_email(state: UseForm) {
     let email_value: String = state.get_email().get();
     if email_value.trim().is_empty() {
         state.get_email_error().set("Email is required".to_string());
@@ -48,7 +48,7 @@ pub fn validate_form_email(state: UseForm) {
 /// # Arguments
 ///
 /// - `UseForm` - The form state.
-pub fn validate_form_password(state: UseForm) {
+pub(crate) fn validate_form_password(state: UseForm) {
     let password_value: String = state.get_password().get();
     if password_value.is_empty() {
         state
@@ -68,7 +68,7 @@ pub fn validate_form_password(state: UseForm) {
 /// # Arguments
 ///
 /// - `UseForm` - The form state.
-pub fn validate_form_agree(state: UseForm) {
+pub(crate) fn validate_form_agree(state: UseForm) {
     let agree_value: bool = state.get_agree().get();
     if !agree_value {
         state
@@ -84,7 +84,7 @@ pub fn validate_form_agree(state: UseForm) {
 /// # Arguments
 ///
 /// - `UseForm` - The form state.
-pub fn validate_form_all(state: UseForm) {
+pub(crate) fn validate_form_all(state: UseForm) {
     validate_form_username(state);
     validate_form_email(state);
     validate_form_password(state);
@@ -100,7 +100,7 @@ pub fn validate_form_all(state: UseForm) {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn form_on_input_username(state: UseForm) -> NativeEventHandler {
+pub(crate) fn form_on_input_username(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -120,7 +120,7 @@ pub fn form_on_input_username(state: UseForm) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn form_on_input_email(state: UseForm) -> NativeEventHandler {
+pub(crate) fn form_on_input_email(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -140,7 +140,7 @@ pub fn form_on_input_email(state: UseForm) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn form_on_input_password(state: UseForm) -> NativeEventHandler {
+pub(crate) fn form_on_input_password(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -160,7 +160,7 @@ pub fn form_on_input_password(state: UseForm) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A change handler.
-pub fn form_on_change_agree(state: UseForm) -> NativeEventHandler {
+pub(crate) fn form_on_change_agree(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -180,7 +180,7 @@ pub fn form_on_change_agree(state: UseForm) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler for form submission.
-pub fn form_on_submit(state: UseForm) -> NativeEventHandler {
+pub(crate) fn form_on_submit(state: UseForm) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_form_all(state);
         let username_error_value: String = state.get_username_error().get();

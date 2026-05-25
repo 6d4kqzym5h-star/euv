@@ -20,7 +20,7 @@ fn format_time(total_seconds: i32) -> String {
 /// # Returns
 ///
 /// - `VirtualNode` - The timer demo page virtual DOM tree.
-pub fn page_timer() -> VirtualNode {
+pub(crate) fn page_timer() -> VirtualNode {
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
     html! {

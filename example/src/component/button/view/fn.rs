@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A styled button element.
-pub fn primary_button(props: VirtualNode) -> VirtualNode {
+pub(crate) fn primary_button(props: VirtualNode) -> VirtualNode {
     let children: Vec<VirtualNode> = props.get_children();
     let PrimaryButtonProps {
         label,

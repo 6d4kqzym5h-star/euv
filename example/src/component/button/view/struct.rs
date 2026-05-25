@@ -4,11 +4,11 @@ use crate::*;
 ///
 /// Defines the strongly-typed interface for the primary button.
 #[derive(Data, Debug, Default)]
-pub struct PrimaryButtonProps {
+pub(crate) struct PrimaryButtonProps {
     /// The button label text, used as fallback when no children are provided.
-    pub label: String,
+    pub(crate) label: String,
     /// Optional click event handler.
-    pub onclick: Option<NativeEventHandler>,
+    pub(crate) onclick: Option<NativeEventHandler>,
     /// Whether the button is disabled.
-    pub disabled: bool,
+    pub(crate) disabled: bool,
 }

@@ -5,7 +5,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `UseTodoList` - The todo list state.
-pub fn use_todo_list() -> UseTodoList {
+pub(crate) fn use_todo_list() -> UseTodoList {
     UseTodoList::new(
         use_signal(|| {
             let mut items: Vec<String> = Vec::with_capacity(1000);
@@ -24,7 +24,7 @@ pub fn use_todo_list() -> UseTodoList {
 /// # Arguments
 ///
 /// - `UseTodoList` - The todo list state.
-pub fn validate_todo_new_item(state: UseTodoList) {
+pub(crate) fn validate_todo_new_item(state: UseTodoList) {
     let new_item_value: String = state.get_new_item().get();
     if new_item_value.trim().is_empty() {
         state
@@ -48,7 +48,7 @@ pub fn validate_todo_new_item(state: UseTodoList) {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
+pub(crate) fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
@@ -68,7 +68,7 @@ pub fn todo_list_on_input_new_item(state: UseTodoList) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to add a new item.
-pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
+pub(crate) fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         validate_todo_new_item(state);
         let add_error_value: String = state.get_add_error().get();
@@ -92,7 +92,7 @@ pub fn todo_list_on_add(state: UseTodoList) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to remove the item.
-pub fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> NativeEventHandler {
+pub(crate) fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let mut current: Vec<String> = items.get();
         if index < current.len() {

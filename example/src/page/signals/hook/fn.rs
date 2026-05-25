@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that increments the counter.
-pub fn counter_on_increment(counter: Signal<i32>) -> NativeEventHandler {
+pub(crate) fn counter_on_increment(counter: Signal<i32>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: i32 = counter.get();
         counter.set(current + 1);
@@ -31,7 +31,7 @@ pub fn counter_on_increment(counter: Signal<i32>) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler that logs the badge click.
-pub fn badge_on_click(badge_name: &str, level: LogLevel) -> NativeEventHandler {
+pub(crate) fn badge_on_click(badge_name: &str, level: LogLevel) -> NativeEventHandler {
     let name: String = badge_name.to_string();
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let message: String = format!("{} badge clicked!", name);
