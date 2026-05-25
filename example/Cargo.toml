@@ -21,15 +21,7 @@ exclude = [
 ]
 
 [dependencies]
-euv-core = { workspace = true }
-euv-macros = { workspace = true }
-
-js-sys = { workspace = true }
-web-sys = { workspace = true }
-wasm-bindgen = { workspace = true }
-lombok-macros = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
-console_error_panic_hook = { workspace = true }
+euv = { workspace = true }
 
 [package.metadata.wasm-pack.profile.dev]
 wasm-opt = false

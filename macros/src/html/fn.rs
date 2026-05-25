@@ -135,7 +135,7 @@ pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<Html
 /// - `proc_macro2::TokenStream` - The generated token stream representing a single `VirtualNode`.
 pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
     match children.len() {
-        0 => quote! { ::euv_core::VirtualNode::Empty },
+        0 => quote! { ::euv::VirtualNode::Empty },
         1 => {
             let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
             children[0].to_tokens(&mut token_stream);
@@ -149,7 +149,7 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
                 child.to_tokens(&mut ts);
                 child_tokens.push(ts);
             }
-            quote! { ::euv_core::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
+            quote! { ::euv::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
         }
     }
 }
@@ -423,7 +423,7 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
                 if is_component {
                     let callback_name: String = key_str.replace('_', "-");
                     quote! {
-                        ::euv_core::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
                     }
                 } else {
                     let event_name_ident: Ident = Ident::new(
@@ -431,14 +431,14 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
                         proc_macro2::Span::call_site(),
                     );
                     quote! {
-                        ::euv_core::EventAdapter::new(#expr).into_attribute(::euv_core::NativeEventName::#event_name_ident)
+                        ::euv::EventAdapter::new(#expr).into_attribute(::euv::NativeEventName::#event_name_ident)
                     }
                 }
             } else if key_str == "children" {
-                quote! { ::euv_core::AttributeValue::Dynamic(Box::new(#expr)) }
+                quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
             } else {
                 quote! {
-                    ::euv_core::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                    ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
                 }
             }
         }
@@ -452,7 +452,7 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
             if has_if {
                 quote! { #value }
             } else {
-                quote! { ::euv_core::AttributeValue::Text(#value) }
+                quote! { ::euv::AttributeValue::Text(#value) }
             }
         }
         HtmlAttrValue::Classes(_) | HtmlAttrValue::Styles(_) => {
@@ -485,14 +485,14 @@ pub(crate) fn style_value_to_attribute_value_tokens(
             if has_if {
                 quote! { #value }
             } else {
-                quote! { ::euv_core::AttributeValue::Text(#value) }
+                quote! { ::euv::AttributeValue::Text(#value) }
             }
         }
         HtmlAttrValue::If(_) => {
             quote! { #value }
         }
         HtmlAttrValue::Expr(expr) => {
-            quote! { ::euv_core::AttributeValue::Text(#expr.to_string()) }
+            quote! { ::euv::AttributeValue::Text(#expr.to_string()) }
         }
         HtmlAttrValue::Classes(_) | HtmlAttrValue::Styles(_) => {
             quote! { #value }

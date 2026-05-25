@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.3.36"
+version = "0.3.37"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -16,6 +16,7 @@ members = ["core", "macros", "example", "cli"]
 resolver = "3"
 
 [workspace.dependencies]
+euv = { path = "./", version = "0.3.36" }
 euv-cli = { path = "cli", version = "0.3.36" }
 euv-core = { path = "core", version = "0.3.36" }
 euv-macros = { path = "macros", version = "0.3.36" }
@@ -105,6 +106,13 @@ web-sys = { version = "0.3.99", features = [
 [dependencies]
 euv-core = { workspace = true }
 euv-macros = { workspace = true }
+
+js-sys = { workspace = true }
+web-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+lombok-macros = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+console_error_panic_hook = { workspace = true }
 
 [patch.crates-io]
 euv-cli = { path = "cli" }

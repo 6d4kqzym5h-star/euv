@@ -156,7 +156,7 @@ pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
     result
 }
 
-/// Generates a `Vec<euv_core::PseudoRule>` expression from a list of pseudo blocks.
+/// Generates a `Vec<::euv::PseudoRule>` expression from a list of pseudo blocks.
 ///
 /// # Arguments
 ///
@@ -185,7 +185,7 @@ pub(crate) fn pseudo_blocks_to_tokens(
                 })
                 .collect();
             quote! {
-                ::euv_core::PseudoRule::new(
+                ::euv::PseudoRule::new(
                     #selector.to_string(),
                     [#(#style_parts),*].concat()
                 )
@@ -195,7 +195,7 @@ pub(crate) fn pseudo_blocks_to_tokens(
     Some(quote! { vec![#(#parts),*] })
 }
 
-/// Generates a `Vec<euv_core::MediaRule>` expression from a list of media blocks.
+/// Generates a `Vec<::euv::MediaRule>` expression from a list of media blocks.
 ///
 /// # Arguments
 ///
@@ -224,7 +224,7 @@ pub(crate) fn media_blocks_to_tokens(
                 })
                 .collect();
             quote! {
-                ::euv_core::MediaRule::new(
+                ::euv::MediaRule::new(
                     #query.to_string(),
                     [#(#style_parts),*].concat()
                 )

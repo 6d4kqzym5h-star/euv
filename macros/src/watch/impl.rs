@@ -117,13 +117,13 @@ impl ToTokens for WatchInput {
             .collect();
         tokens.extend(quote! {{
             #(let #signal_clones = #signal_exprs;)*
-            let __euv_watch_subscribed: ::euv_core::Signal<bool> = ::euv_core::use_signal(|| false);
+            let __euv_watch_subscribed: ::euv::Signal<bool> = ::euv::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
                 let __euv_watch_fire_addr: usize = Box::leak(Box::new(Box::new(move || {
                     #(#all_gets)*
                     { #(#body)* }
                 }) as Box<dyn ::std::ops::FnMut()>)) as *mut Box<dyn ::std::ops::FnMut()> as usize;
-                ::euv_core::with_suppressed_updates(|| {
+                ::euv::with_suppressed_updates(|| {
                     #(#subscribe_calls)*
                     {
                         #(let #param_names = #get_calls;)*

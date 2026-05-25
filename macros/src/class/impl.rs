@@ -261,14 +261,14 @@ impl ToTokens for ClassDef {
                         media_blocks_to_tokens(self.get_media_blocks())
                             .unwrap_or_else(|| quote! { vec![] });
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
-                            ::euv_core::CssClass::new_with_rules(#unique_name_expr, [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
+                        #vis fn #name(#(#param_defs),*) -> ::euv::CssClass {
+                            ::euv::CssClass::new_with_rules(#unique_name_expr, [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
                         }
                     });
                 } else {
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
-                            ::euv_core::CssClass::new(#unique_name_expr, [#(#all_css_parts),*].concat())
+                        #vis fn #name(#(#param_defs),*) -> ::euv::CssClass {
+                            ::euv::CssClass::new(#unique_name_expr, [#(#all_css_parts),*].concat())
                         }
                     });
                 }
@@ -311,24 +311,24 @@ impl ToTokens for ClassDef {
                         let media_static: String =
                             media_blocks_to_static_string(self.get_media_blocks());
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
-                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv_core::CssClass::new_with_rules(
+                                    ::euv::CssClass::new_with_rules(
                                         #class_name_str.to_string(),
                                         #css_string.to_string(),
-                                        ::euv_core::CssClass::parse_pseudo_rules(#pseudo_static),
-                                        ::euv_core::CssClass::parse_media_rules(#media_static),
+                                        ::euv::CssClass::parse_pseudo_rules(#pseudo_static),
+                                        ::euv::CssClass::parse_media_rules(#media_static),
                                     )
                                 })
                             }
                         });
                     } else {
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
-                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv_core::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
+                                    ::euv::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
                                 })
                             }
                         });
@@ -360,19 +360,19 @@ impl ToTokens for ClassDef {
                             media_blocks_to_tokens(self.get_media_blocks())
                                 .unwrap_or_else(|| quote! { vec![] });
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
-                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv_core::CssClass::new_with_rules(#class_name_str.to_string(), [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
+                                    ::euv::CssClass::new_with_rules(#class_name_str.to_string(), [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
                                 })
                             }
                         });
                     } else {
                         tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
-                                static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
+                            #vis fn #fn_name_token() -> &'static ::euv::CssClass {
+                                static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv_core::CssClass::new(#class_name_str.to_string(), [#(#all_css_parts),*].concat())
+                                    ::euv::CssClass::new(#class_name_str.to_string(), [#(#all_css_parts),*].concat())
                                 })
                             }
                         });

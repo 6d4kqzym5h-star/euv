@@ -12,9 +12,7 @@ mod theme;
 
 use {app::*, component::*, page::*, router::*, style::*, theme::*};
 
-use {euv_core::*, euv_macros::*};
-
-use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*};
+use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *};
 
 /// Entry point for the euv example application.
 #[wasm_bindgen]

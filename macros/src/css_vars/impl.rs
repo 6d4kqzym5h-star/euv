@@ -104,8 +104,8 @@ impl ToTokens for CssVarDef {
                     })
                     .collect();
                 tokens.extend(quote! {
-                    #vis fn #name(#(#param_defs),*) -> ::euv_core::CssClass {
-                        ::euv_core::CssClass::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")), [#(#css_string_parts),*].concat())
+                    #vis fn #name(#(#param_defs),*) -> ::euv::CssClass {
+                        ::euv::CssClass::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")), [#(#css_string_parts),*].concat())
                     }
                 });
             }
@@ -129,10 +129,10 @@ impl ToTokens for CssVarDef {
                         css_string.push_str("; ");
                     }
                     tokens.extend(quote! {
-                        #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
-                            static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
+                        #vis fn #fn_name_token() -> &'static ::euv::CssClass {
+                            static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                ::euv_core::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
+                                ::euv::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
                             })
                         }
                     });
@@ -147,10 +147,10 @@ impl ToTokens for CssVarDef {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        #vis fn #fn_name_token() -> &'static ::euv_core::CssClass {
-                            static #const_name_token: ::std::sync::OnceLock<euv_core::CssClass> = ::std::sync::OnceLock::new();
+                        #vis fn #fn_name_token() -> &'static ::euv::CssClass {
+                            static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                ::euv_core::CssClass::new(#class_name_str.to_string(), [#(#css_string_parts),*].concat())
+                                ::euv::CssClass::new(#class_name_str.to_string(), [#(#css_string_parts),*].concat())
                             })
                         }
                     });
