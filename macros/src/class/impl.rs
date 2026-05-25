@@ -14,16 +14,16 @@ impl Parse for ClassInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut classes: Vec<ClassDef> = Vec::new();
         while !input.is_empty() {
-            let visibility: syn::Visibility = input.parse()?;
+            let visibility: Visibility = input.parse()?;
             let name: Ident = input.parse()?;
-            let params: Option<Vec<ClassParam>> = if input.peek(syn::token::Paren) {
+            let params: Option<Vec<ClassParam>> = if input.peek(Paren) {
                 let param_content;
-                syn::parenthesized!(param_content in input);
+                parenthesized!(param_content in input);
                 let mut param_list: Vec<ClassParam> = Vec::new();
                 while !param_content.is_empty() {
                     let param_name: Ident = param_content.parse()?;
                     param_content.parse::<Token![:]>()?;
-                    let ty: syn::Type = param_content.parse()?;
+                    let ty: Type = param_content.parse()?;
                     param_list.push(ClassParam {
                         name: param_name,
                         ty,
@@ -47,17 +47,17 @@ impl Parse for ClassInput {
             let mut pseudo_blocks: Vec<PseudoBlock> = Vec::new();
             let mut media_blocks: Vec<MediaBlock> = Vec::new();
             while !content.is_empty() {
-                if content.peek(syn::Ident) {
-                    let forked = content.fork();
+                if content.peek(Ident) {
+                    let forked: ParseBuffer<'_> = content.fork();
                     let keyword: Ident = forked.parse()?;
                     let keyword_str: String = keyword.to_string();
                     let is_extends: bool =
-                        forked.peek(syn::token::Paren) && !keyword_str.starts_with("media") && {
+                        forked.peek(Paren) && !keyword_str.starts_with("media") && {
                             let forked_extends = content.fork();
                             let _ = forked_extends.parse::<Ident>();
-                            if forked_extends.peek(syn::token::Paren) {
+                            if forked_extends.peek(Paren) {
                                 let _paren_content;
-                                syn::parenthesized!(_paren_content in forked_extends);
+                                parenthesized!(_paren_content in forked_extends);
                                 forked_extends.peek(Semi) || forked_extends.is_empty()
                             } else {
                                 false
@@ -66,7 +66,7 @@ impl Parse for ClassInput {
                     if is_extends {
                         content.parse::<Ident>()?;
                         let paren_content;
-                        syn::parenthesized!(paren_content in content);
+                        parenthesized!(paren_content in content);
                         let mut args: Vec<proc_macro2::TokenStream> = Vec::new();
                         while !paren_content.is_empty() {
                             let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
@@ -86,9 +86,7 @@ impl Parse for ClassInput {
                         }
                         continue;
                     }
-                    if lookup_pseudo_selector(&keyword_str).is_some()
-                        && forked.peek(syn::token::Brace)
-                    {
+                    if lookup_pseudo_selector(&keyword_str).is_some() && forked.peek(Brace) {
                         content.parse::<Ident>()?;
                         let selector: &'static str = lookup_pseudo_selector(&keyword_str)
                             .expect("pseudo selector lookup should succeed after check");
@@ -112,15 +110,15 @@ impl Parse for ClassInput {
                         });
                         continue;
                     } else if (keyword_str == "nth_child" || keyword_str == "nth_last_child")
-                        && forked.peek(syn::token::Paren)
+                        && forked.peek(Paren)
                     {
                         let forked2 = forked;
                         let _paren_content;
-                        syn::parenthesized!(_paren_content in forked2);
-                        if forked2.peek(syn::token::Brace) {
+                        parenthesized!(_paren_content in forked2);
+                        if forked2.peek(Brace) {
                             content.parse::<Ident>()?;
                             let paren_content;
-                            syn::parenthesized!(paren_content in content);
+                            parenthesized!(paren_content in content);
                             let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
                             let arg_str: String = arg_tokens.to_string().replace(' ', "");
                             let selector: String =
@@ -145,19 +143,18 @@ impl Parse for ClassInput {
                             });
                             continue;
                         }
-                    } else if keyword_str == "media" && forked.peek2(syn::token::Paren) {
+                    } else if keyword_str == "media" && forked.peek(Paren) {
                         let forked2 = forked;
-                        forked2.parse::<Ident>()?;
                         let paren_content2;
-                        syn::parenthesized!(paren_content2 in forked2);
-                        if forked2.peek(syn::token::Brace) {
+                        parenthesized!(paren_content2 in forked2);
+                        if forked2.peek(Brace) {
                             content.parse::<Ident>()?;
                             let query_content;
-                            syn::parenthesized!(query_content in content);
+                            parenthesized!(query_content in content);
                             let query_expr: Expr = query_content.parse()?;
                             let query_str: String = match &query_expr {
-                                Expr::Lit(syn::ExprLit {
-                                    lit: syn::Lit::Str(lit_str),
+                                Expr::Lit(ExprLit {
+                                    lit: Lit::Str(lit_str),
                                     ..
                                 }) => lit_str.value(),
                                 _ => query_expr.to_token_stream().to_string().replace(' ', ""),
@@ -216,7 +213,7 @@ impl ToTokens for ClassDef {
     ///
     /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let vis: &syn::Visibility = self.get_visibility();
+        let vis: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
         let class_name_str: String = name.to_string();
         let has_extra: bool =
@@ -228,7 +225,7 @@ impl ToTokens for ClassDef {
                     .iter()
                     .map(|param| {
                         let param_name: &Ident = param.get_name();
-                        let ty: &syn::Type = param.get_ty();
+                        let ty: &Type = param.get_ty();
                         quote! { #param_name: #ty }
                     })
                     .collect();

@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `TokenStream` - The generated token stream constructing `CssClass` functions.
 pub fn parse_class(input: TokenStream) -> TokenStream {
-    let tokens: proc_macro2::TokenStream = match syn::parse::<ClassInput>(input) {
+    let tokens: proc_macro2::TokenStream = match parse::<ClassInput>(input) {
         Ok(class_input) => class_input.into_token_stream(),
         Err(error) => return error.to_compile_error().into(),
     };
@@ -39,7 +39,7 @@ pub(crate) fn expand_var_macros(expr: &Expr) -> proc_macro2::TokenStream {
             } else if expr_macro.mac.path.is_ident("format") {
                 let mac_tokens: &proc_macro2::TokenStream = &expr_macro.mac.tokens;
                 let expanded: proc_macro2::TokenStream = expand_var_macros_in_tokens(mac_tokens);
-                let path: &syn::Path = &expr_macro.mac.path;
+                let path: &Path = &expr_macro.mac.path;
                 quote! { #path!(#expanded) }
             } else {
                 expr.into_token_stream()
@@ -74,13 +74,13 @@ pub(crate) fn expand_var_macros_in_tokens(
             proc_macro2::TokenTree::Ident(ident)
                 if *ident == "var"
                     && iter.peek().is_some_and(
-                        |t| matches!(t, proc_macro2::TokenTree::Punct(p) if p.as_char() == '!'),
+                        |t: &proc_macro2::TokenTree| matches!(t, proc_macro2::TokenTree::Punct(p) if p.as_char() == '!'),
                     ) =>
             {
                 iter.next();
                 if iter
                     .peek()
-                    .is_some_and(|t| matches!(t, proc_macro2::TokenTree::Group(_)))
+                    .is_some_and(|t: &proc_macro2::TokenTree| matches!(t, proc_macro2::TokenTree::Group(_)))
                 {
                     if let Some(proc_macro2::TokenTree::Group(group)) = iter.next() {
                         let inner: proc_macro2::TokenStream = group.stream();
@@ -147,7 +147,7 @@ pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
     for token in tokens.clone() {
         if let proc_macro2::TokenTree::Literal(lit) = token {
             let lit_ts: proc_macro2::TokenStream = proc_macro2::TokenTree::Literal(lit).into();
-            if let Ok(lit_str) = syn::parse2::<LitStr>(lit_ts) {
+            if let Ok(lit_str) = parse2::<LitStr>(lit_ts) {
                 result.push_str(&lit_str.value());
             }
         }
@@ -211,7 +211,7 @@ pub(crate) fn media_blocks_to_tokens(
     }
     let parts: Vec<proc_macro2::TokenStream> = media_blocks
         .iter()
-        .map(|block| {
+        .map(|block: &MediaBlock| {
             let query: &str = block.get_query();
             let style_parts: Vec<proc_macro2::TokenStream> = block
                 .get_properties()

@@ -22,8 +22,10 @@ use {
     proc_macro2::Span,
     quote::{ToTokens, quote, quote_spanned},
     syn::{
-        Expr, Ident, LitStr, Token, Type, Visibility, braced,
-        parse::{Parse, ParseStream},
+        Expr, ExprLit, Ident, Lit, LitStr, Path, Token, Type, Visibility, braced, parenthesized,
+        parse,
+        parse::{Parse, ParseBuffer, ParseStream},
+        parse2,
         token::{Brace, Colon, Paren, Semi},
     },
 };

@@ -17,7 +17,7 @@ impl Console {
     ///
     /// Panics if `init_console` has not been called.
     pub(crate) fn log(message: &str) {
-        web_sys::console::log_1(&message.into());
+        console::log_1(&message.into());
         Self::append_entry(ConsoleEntry::new(LogLevel::Log, message.to_string()));
     }
 
@@ -31,7 +31,7 @@ impl Console {
     ///
     /// Panics if `init_console` has not been called.
     pub(crate) fn warn(message: &str) {
-        web_sys::console::warn_1(&message.into());
+        console::warn_1(&message.into());
         Self::append_entry(ConsoleEntry::new(LogLevel::Warn, message.to_string()));
     }
 
@@ -45,7 +45,7 @@ impl Console {
     ///
     /// Panics if `init_console` has not been called.
     pub(crate) fn error(message: &str) {
-        web_sys::console::error_1(&message.into());
+        console::error_1(&message.into());
         Self::append_entry(ConsoleEntry::new(LogLevel::Error, message.to_string()));
     }
 

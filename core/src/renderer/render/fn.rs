@@ -20,7 +20,7 @@ where
     F: FnOnce() -> VirtualNode,
 {
     init_event_delegation();
-    let window: Window = web_sys::window().expect("no global window exists");
+    let window: Window = window().expect("no global window exists");
     let document: Document = window.document().expect("should have a document");
     let target: Element = if selector == "body" {
         document.body().expect("document should have a body").into()

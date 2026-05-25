@@ -7,6 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The list demo page virtual DOM tree.
 pub(crate) fn page_list() -> VirtualNode {
     let state: UseTodoList = use_todo_list();
+    use_intersection_observer("[data-list-item]");
     html! {
         div {
             class: c_page_container()
@@ -25,8 +26,9 @@ pub(crate) fn page_list() -> VirtualNode {
                         class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_list_input_error() }
                         oninput: todo_list_on_input_new_item(state)
                     }
-                    primary_button {
-                        label: "Add"
+                    button {
+                        class: c_primary_button()
+                        class: c_list_item_button()
                         onclick: todo_list_on_add(state)
                         "Add Item"
                     }
@@ -45,12 +47,15 @@ pub(crate) fn page_list() -> VirtualNode {
                         li {
                             key: index.to_string()
                             class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
+                            data_list_item: "true"
+                            data_index: index.to_string()
                             span {
                                 class: c_list_item_text()
                                 item.clone()
                             }
-                            primary_button {
-                                label: "Remove"
+                            button {
+                                class: c_primary_button()
+                                class: c_list_item_button()
                                 onclick: todo_list_on_remove(state.get_items(), index)
                                 "Remove"
                             }

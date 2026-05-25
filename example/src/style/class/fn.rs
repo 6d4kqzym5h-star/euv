@@ -21,6 +21,9 @@ class! {
         flex-direction: "column";
         height: "100vh";
         flex-shrink: "0";
+        media("(max-width: 767px)") {
+            display: "none";
+        }
     }
 
     pub(crate) c_nav_header {
@@ -37,6 +40,9 @@ class! {
         flex-shrink: "0";
         text-decoration: "none";
         cursor: "pointer";
+        media("(max-width: 767px)") {
+            border-bottom: "none";
+        }
     }
 
     pub(crate) c_nav_logo {
@@ -106,6 +112,10 @@ class! {
         padding: "32px 40px";
         background: var!(bg-primary);
         overflow-y: "auto";
+        media("(max-width: 767px)") {
+            padding: "20px 16px";
+            max-width: "100%";
+        }
     }
 
     pub(crate) c_page_container {
@@ -123,6 +133,9 @@ class! {
         color: "inherit";
         margin-bottom: "8px";
         letter-spacing: "-0.02em";
+        media("(max-width: 767px)") {
+            font-size: "22px";
+        }
     }
 
     pub(crate) c_page_subtitle {
@@ -130,6 +143,9 @@ class! {
         color: "inherit";
         opacity: "0.6";
         line-height: "1.6";
+        media("(max-width: 767px)") {
+            font-size: "14px";
+        }
     }
 
     pub(crate) c_card {
@@ -141,6 +157,11 @@ class! {
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
         transition: "box-shadow 0.2s ease, background 0.4s ease, border-color 0.4s ease, color 0.4s ease";
+        media("(max-width: 767px)") {
+            padding: "16px";
+            margin: "12px 0";
+            border-radius: "10px";
+        }
     }
 
     pub(crate) c_card_title {
@@ -153,29 +174,54 @@ class! {
         border-bottom: format!("2px solid {}", var!(border-card-title));
         letter-spacing: "0.01em";
         transition: "border-color 0.4s ease";
+        media("(max-width: 767px)") {
+            font-size: "16px";
+        }
     }
 
     pub(crate) c_primary_button {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        gap: "8px";
         background: "#4f46e5";
         color: "white";
         border: "none";
-        padding: "10px 22px";
+        padding: "10px 24px";
         border-radius: "8px";
         cursor: "pointer";
         font-size: "14px";
         font-weight: "500";
-        letter-spacing: "0.01em";
-        transition: "all 0.15s ease";
+        letter-spacing: "0.02em";
+        text-align: "center";
+        line-height: "1.4";
+        transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease";
         outline: "none";
-        align-items: "center";
-        gap: "8px";
+        box-shadow: "0 1px 2px rgba(79, 70, 229, 0.2)";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        media("(max-width: 767px)") {
+            width: "100%";
+            padding: "12px 20px";
+            font-size: "15px";
+            border-radius: "10px";
+            box-shadow: "none";
+        }
     }
 
     pub(crate) c_primary_button_disabled {
         c_primary_button();
-        background: "#8b8bc7";
+        background: "#9b9bd4";
         cursor: "not-allowed";
-        opacity: "0.6";
+        opacity: "0.55";
+        box-shadow: "none";
+        media("(max-width: 767px)") {
+            width: "100%";
+            padding: "12px 20px";
+            font-size: "15px";
+            border-radius: "10px";
+        }
     }
 
     pub(crate) c_badge {
@@ -188,6 +234,10 @@ class! {
         cursor: "pointer";
         letter-spacing: "0.03em";
         text-transform: "uppercase";
+        media("(max-width: 767px)") {
+            padding: "4px 10px";
+            font-size: "11px";
+        }
     }
 
     pub(crate) c_badge_outline {
@@ -201,6 +251,10 @@ class! {
         text-transform: "uppercase";
         background: "transparent";
         border: "1.5px solid";
+        media("(max-width: 767px)") {
+            padding: "4px 10px";
+            font-size: "11px";
+        }
     }
 
     pub(crate) c_form_input_wrapper {
@@ -295,6 +349,9 @@ class! {
         font-weight: "700";
         color: "#4f46e5";
         font-size: "24px";
+        media("(max-width: 767px)") {
+            font-size: "20px";
+        }
     }
 
     pub(crate) c_badge_row {
@@ -315,6 +372,9 @@ class! {
         display: "grid";
         grid-template-columns: "1fr 1fr";
         gap: "0 20px";
+        media("(max-width: 767px)") {
+            grid-template-columns: "1fr";
+        }
     }
 
     pub(crate) c_custom_attrs_demo {
@@ -445,6 +505,9 @@ class! {
         display: "flex";
         gap: "10px";
         margin-bottom: "16px";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_role_guest {
@@ -485,6 +548,9 @@ class! {
         border-bottom: format!("1px solid {}", var!(border-input));
         margin-bottom: "16px";
         gap: "4px";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_tab_content {
@@ -511,16 +577,28 @@ class! {
 
     pub(crate) c_list_input_row {
         display: "flex";
-        gap: "12px";
-        margin-bottom: "10px";
+        justify-content: "space-between";
+        align-items: "center";
+        padding: "12px 16px";
+        border-bottom: format!("1px solid {}", var!(border-subtle));
+        border-radius: "6px";
+        margin-bottom: "8px";
+        gap: "16px";
+        background: var!(bg-list-even);
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_list_input {
         flex: "1";
-        padding: "10px 14px";
+        min-width: "0";
+        padding: "8px 12px";
         border: format!("1px solid {}", var!(border-input));
-        border-radius: "8px";
+        border-radius: "6px";
         font-size: "14px";
+        line-height: "1.4";
+        box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
@@ -558,8 +636,18 @@ class! {
 
     pub(crate) c_list_item_text {
         flex: "1";
+        min-width: "0";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
         font-size: "14px";
         color: "inherit";
+    }
+
+    pub(crate) c_list_item_button {
+        width: "auto";
+        padding: "8px 16px";
+        flex-shrink: "0";
     }
 
     pub(crate) c_log_container {
@@ -587,6 +675,9 @@ class! {
         padding: "80px 20px";
         max-width: "480px";
         margin: "0 auto";
+        media("(max-width: 767px)") {
+            padding: "40px 20px";
+        }
     }
 
     pub(crate) c_not_found_code {
@@ -596,6 +687,9 @@ class! {
         line-height: "1";
         margin-bottom: "16px";
         letter-spacing: "-0.04em";
+        media("(max-width: 767px)") {
+            font-size: "56px";
+        }
     }
 
     pub(crate) c_not_found_title {
@@ -638,6 +732,10 @@ class! {
         display: "flex";
         gap: "24px";
         margin-top: "12px";
+        media("(max-width: 767px)") {
+            gap: "12px";
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_event_mouse_area {
@@ -673,12 +771,18 @@ class! {
         color: "#4f46e5";
         letter-spacing: "0.04em";
         font-family: "ui-monospace, monospace";
+        media("(max-width: 767px)") {
+            font-size: "36px";
+        }
     }
 
     pub(crate) c_timer_controls {
         display: "flex";
         gap: "12px";
         justify-content: "center";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_timer_done {
@@ -705,6 +809,10 @@ class! {
         justify-content: "center";
         z-index: "1000";
         animation: "euv-fade-in 0.2s ease";
+        media("(max-width: 767px)") {
+            align-items: "center";
+            justify-content: "center";
+        }
     }
 
     pub(crate) c_modal_content {
@@ -717,6 +825,13 @@ class! {
         animation: "euv-scale-in 0.2s ease";
         overflow: "hidden";
         color: var!(text-card);
+        media("(max-width: 767px)") {
+            max-width: "100%";
+            width: "calc(100% - 32px)";
+            border-radius: "16px";
+            max-height: "85vh";
+            overflow-y: "auto";
+        }
     }
 
     pub(crate) c_modal_header {
@@ -744,6 +859,10 @@ class! {
         gap: "12px";
         justify-content: "flex-end";
         margin-top: "20px";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+            justify-content: "stretch";
+        }
     }
 
     pub(crate) c_select_input {
@@ -814,12 +933,18 @@ class! {
         font-size: "48px";
         animation: "euv-spin 1.5s linear infinite";
         display: "inline-block";
+        media("(max-width: 767px)") {
+            font-size: "36px";
+        }
     }
 
     pub(crate) c_anim_spin_stopped {
         font-size: "48px";
         display: "inline-block";
         opacity: "0.4";
+        media("(max-width: 767px)") {
+            font-size: "36px";
+        }
     }
 
     pub(crate) c_anim_pulse_container {
@@ -835,6 +960,9 @@ class! {
         animation: "euv-pulse 1.5s ease-in-out infinite";
         display: "inline-block";
         color: "#dc2626";
+        media("(max-width: 767px)") {
+            font-size: "36px";
+        }
     }
 
     pub(crate) c_anim_pulse_stopped {
@@ -842,6 +970,9 @@ class! {
         display: "inline-block";
         opacity: "0.4";
         color: "#dc2626";
+        media("(max-width: 767px)") {
+            font-size: "36px";
+        }
     }
 
     pub(crate) c_progress_container {
@@ -965,11 +1096,18 @@ class! {
         gap: "24px";
         flex-wrap: "wrap";
         margin-top: "12px";
+        media("(max-width: 767px)") {
+            gap: "12px";
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_event_section_col {
         flex: "1";
         min-width: "200px";
+        media("(max-width: 767px)") {
+            min-width: "100%";
+        }
     }
 
     pub(crate) c_event_section_label {
@@ -990,6 +1128,9 @@ class! {
         grid-template-columns: "1fr 1fr";
         gap: "0 20px";
         margin-bottom: "12px";
+        media("(max-width: 767px)") {
+            grid-template-columns: "1fr";
+        }
     }
 
     pub(crate) c_browser_api_actions {
@@ -1022,6 +1163,9 @@ class! {
         display: "grid";
         gap: "12px";
         margin-top: "12px";
+        media("(max-width: 767px)") {
+            grid-template-columns: "1fr";
+        }
     }
 
     pub(crate) c_browser_info_item {
@@ -1072,6 +1216,13 @@ class! {
         padding: "0";
         line-height: "1";
         letter-spacing: "-0.02em";
+        media("(max-width: 767px)") {
+            bottom: "16px";
+            right: "16px";
+            width: "44px";
+            height: "44px";
+            border-radius: "12px";
+        }
     }
 
     pub(crate) c_vconsole_button_hover {
@@ -1121,7 +1272,7 @@ class! {
         bottom: "0";
         left: "0";
         right: "0";
-        height: "50vh";
+        height: "60vh";
         background: var!(bg-console);
         z-index: "10001";
         display: "flex";
@@ -1400,7 +1551,6 @@ class! {
         padding: "0 16px";
         height: "56px";
         background: var!(bg-nav);
-        border-bottom: format!("1px solid {}", var!(border-nav));
         flex-shrink: "0";
         position: "sticky";
         top: "0";
@@ -1556,6 +1706,9 @@ class! {
         display: "flex";
         gap: "10px";
         justify-content: "center";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
     }
 
     pub(crate) c_keep_alive_form_group {
