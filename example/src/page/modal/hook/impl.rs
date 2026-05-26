@@ -6,9 +6,9 @@ impl Default for UseModal {
     ///
     /// # Returns
     ///
-    /// - `Self`: A new `UseModal` with visibility set to `false` and empty string signals.
+    /// - `Self`- A new `UseModal` with visibility set to `false` and empty string signals.
     fn default() -> Self {
-        UseModal {
+        Self {
             show_basic: use_signal(|| false),
             show_confirm: use_signal(|| false),
             show_form: use_signal(|| false),

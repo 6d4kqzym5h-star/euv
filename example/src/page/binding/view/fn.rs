@@ -12,6 +12,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A styled child display element.
+#[component]
 pub(crate) fn child_display(props: VirtualNode) -> VirtualNode {
     let ChildDisplayProps {
         message,
@@ -49,6 +50,7 @@ pub(crate) fn child_display(props: VirtualNode) -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - A styled limited counter element.
+#[component]
 pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
     let LimitedCounterProps {
         disabled,
@@ -115,6 +117,7 @@ pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - A styled input with callback element.
+#[component]
 pub(crate) fn callback_input(props: VirtualNode) -> VirtualNode {
     let CallbackInputProps {
         on_change,

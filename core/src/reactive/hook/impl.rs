@@ -18,7 +18,7 @@ impl HookContext {
     ///
     /// # Arguments
     ///
-    /// - `usize`: The index of the new match arm.
+    /// - `usize`- The index of the new match arm.
     pub fn set_arm_changed(&mut self, changed: usize) {
         let cleanups: Vec<Box<dyn FnOnce()>>;
         {
@@ -42,13 +42,13 @@ impl HookContext {
 /// Clones the hook context, sharing the same inner state.
 impl Clone for HookContext {
     fn clone(&self) -> Self {
-        HookContext::new(self.get_inner().clone())
+        Self::new(self.get_inner().clone())
     }
 }
 
 /// Provides a default empty hook context.
 impl Default for HookContext {
     fn default() -> Self {
-        HookContext::new(Rc::new(RefCell::new(HookContextInner::default())))
+        Self::new(Rc::new(RefCell::new(HookContextInner::default())))
     }
 }

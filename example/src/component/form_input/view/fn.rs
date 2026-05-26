@@ -9,10 +9,11 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A labeled input element.
+#[component]
 pub(crate) fn form_input(props: VirtualNode) -> VirtualNode {
     let FormInputProps {
         id,
-        label,
+        label: label_string,
         placeholder,
         value,
         autocomplete,
@@ -23,7 +24,7 @@ pub(crate) fn form_input(props: VirtualNode) -> VirtualNode {
             label {
                 r#for: id.clone()
                 class: c_form_label()
-                label
+                label: label_string
             }
             input {
                 id: id.clone()

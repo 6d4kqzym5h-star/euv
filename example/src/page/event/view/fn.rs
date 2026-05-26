@@ -54,7 +54,7 @@ pub(crate) fn page_event() -> VirtualNode {
                     autocomplete: "off"
                     placeholder: "Type here to capture key events..."
                     class: c_form_input()
-                    onkey_down: move |event: Event| {
+                    onkeydown: move |event: Event| {
                         if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
                             let key_name: String = keyboard_event.key();
                             last_key.set(key_name);
@@ -82,7 +82,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             Console::log(&format!("KeyDown: {} (code: {})", last_key.get(), last_key_code.get()));
                         }
                     }
-                    onkey_up: move |event: Event| {
+                    onkeyup: move |event: Event| {
                         if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
                             let key_name: String = keyboard_event.key();
                             last_key_up.set(key_name.clone());
@@ -155,12 +155,12 @@ pub(crate) fn page_event() -> VirtualNode {
                             Console::log(&format!("Click: {} at ({}, {})", current + 1, mouse_event.client_x(), mouse_event.client_y()));
                         }
                     }
-                    ondbl_click: move |_event: Event| {
+                    ondblclick: move |_event: Event| {
                         let current: i32 = double_click_count.get();
                         double_click_count.set(current + 1);
                         Console::log(&format!("DblClick: #{}", current + 1));
                     }
-                    onmouse_down: move |event: Event| {
+                    onmousedown: move |event: Event| {
                         if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
                             let button_name: String = match mouse_event.button() {
                                 0 => "Left".to_string(),
@@ -173,11 +173,11 @@ pub(crate) fn page_event() -> VirtualNode {
                             mouse_down_count.set(current + 1);
                         }
                     }
-                    onmouse_up: move |_event: Event| {
+                    onmouseup: move |_event: Event| {
                         let current: i32 = mouse_up_count.get();
                         mouse_up_count.set(current + 1);
                     }
-                    onmouse_move: move |event: Event| {
+                    onmousemove: move |event: Event| {
                         if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
                             let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
                             mouse_pos.set(pos);
@@ -185,15 +185,15 @@ pub(crate) fn page_event() -> VirtualNode {
                             mouse_buttons.set(buttons_mask);
                         }
                     }
-                    onmouse_enter: move |_event: Event| {
+                    onmouseenter: move |_event: Event| {
                         let current: i32 = mouse_enter_count.get();
                         mouse_enter_count.set(current + 1);
                     }
-                    onmouse_leave: move |_event: Event| {
+                    onmouseleave: move |_event: Event| {
                         let current: i32 = mouse_leave_count.get();
                         mouse_leave_count.set(current + 1);
                     }
-                    oncontext_menu: move |event: Event| {
+                    oncontextmenu: move |event: Event| {
                         if event.dyn_ref::<MouseEvent>().is_some() {
                             Console::log("ContextMenu: right-click detected");
                         }
@@ -322,7 +322,7 @@ pub(crate) fn page_event() -> VirtualNode {
                     style: { display: "flex"; gap: "16px"; flex-wrap: "wrap"; }
                     div {
                         class: c_event_drag_zone()
-                        onmouse_over: move |_event: Event| {
+                        onmouseover: move |_event: Event| {
                             let current: i32 = mouse_over_count.get();
                             mouse_over_count.set(current + 1);
                         }
@@ -337,7 +337,7 @@ pub(crate) fn page_event() -> VirtualNode {
                     }
                     div {
                         class: c_event_drag_zone_active()
-                        onmouse_out: move |_event: Event| {
+                        onmouseout: move |_event: Event| {
                             let current: i32 = mouse_out_count.get();
                             mouse_out_count.set(current + 1);
                         }
@@ -373,10 +373,10 @@ pub(crate) fn page_event() -> VirtualNode {
                         focus_out_count.set(current + 1);
                         Console::log("Blur: input lost focus");
                     }
-                    onfocus_in: move |_event: Event| {
+                    onfocusin: move |_event: Event| {
                         Console::log("FocusIn: focus entered");
                     }
-                    onfocus_out: move |_event: Event| {
+                    onfocusout: move |_event: Event| {
                         Console::log("FocusOut: focus left");
                     }
                 }
@@ -412,7 +412,7 @@ pub(crate) fn page_event() -> VirtualNode {
                 title: "Drag Events"
                 div {
                     class: c_event_drag_zone()
-                    ondrag_start: move |_event: Event| {
+                    ondragstart: move |_event: Event| {
                         drag_status.set("Dragging".to_string());
                         Console::log("DragStart: drag started");
                     }
@@ -422,16 +422,16 @@ pub(crate) fn page_event() -> VirtualNode {
                             drag_pos.set(pos);
                         }
                     }
-                    ondrag_end: move |_event: Event| {
+                    ondragend: move |_event: Event| {
                         drag_status.set("Ended".to_string());
                         Console::log("DragEnd: drag ended");
                     }
-                    ondrag_over: move |_event: Event| {
+                    ondragover: move |_event: Event| {
                     }
-                    ondrag_enter: move |_event: Event| {
+                    ondragenter: move |_event: Event| {
                         Console::log("DragEnter: entered drop zone");
                     }
-                    ondrag_leave: move |_event: Event| {
+                    ondragleave: move |_event: Event| {
                         Console::log("DragLeave: left drop zone");
                     }
                     ondrop: move |event: Event| {
@@ -609,7 +609,7 @@ pub(crate) fn page_event() -> VirtualNode {
                 title: "Touch Events"
                 div {
                     class: c_event_touch_zone()
-                    ontouch_start: move |event: Event| {
+                    ontouchstart: move |event: Event| {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let first: Option<Touch> = touches.get(0);
@@ -618,7 +618,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             Console::log(&format!("TouchStart: {} touches", touches.length()));
                         }
                     }
-                    ontouch_move: move |event: Event| {
+                    ontouchmove: move |event: Event| {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let first: Option<Touch> = touches.get(0);
@@ -626,7 +626,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             touch_info.set(info);
                         }
                     }
-                    ontouch_end: move |event: Event| {
+                    ontouchend: move |event: Event| {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let info: String = format!("End: {} touches remaining", touches.length());
@@ -634,7 +634,7 @@ pub(crate) fn page_event() -> VirtualNode {
                             Console::log("TouchEnd: touch ended");
                         }
                     }
-                    ontouch_cancel: move |_event: Event| {
+                    ontouchcancel: move |_event: Event| {
                         touch_info.set("Cancelled".to_string());
                         Console::log("TouchCancel: touch cancelled");
                     }
@@ -676,11 +676,11 @@ pub(crate) fn page_event() -> VirtualNode {
                                 "Input (oninput & onchange)"
                             }
                             input {
-                            r#type: "text"
-                            id: "event-form-input"
-                            name: "form_input"
-                            autocomplete: "off"
-                            placeholder: "Type to trigger input/change events..."
+                                r#type: "text"
+                                id: "event-form-input"
+                                name: "form_input"
+                                autocomplete: "off"
+                                placeholder: "Type to trigger input/change events..."
                                 class: c_form_input()
                                 oninput: move |event: Event| {
                                     if let Some(target) = event.target()
@@ -826,18 +826,18 @@ pub(crate) fn page_event() -> VirtualNode {
                             media_event_log.set("Ended".to_string());
                             Console::log("Ended: audio ended");
                         }
-                        onloaded_data: move |_event: Event| {
+                        onloadeddata: move |_event: Event| {
                             media_status.set("Loaded".to_string());
                             media_event_log.set("LoadedData".to_string());
                         }
-                        oncan_play: move |_event: Event| {
+                        oncanplay: move |_event: Event| {
                             media_event_log.set("CanPlay".to_string());
                         }
-                        onvolume_change: move |_event: Event| {
+                        onvolumechange: move |_event: Event| {
                             media_event_log.set("VolumeChange".to_string());
                             Console::log("VolumeChange: volume changed");
                         }
-                        ontime_update: move |_event: Event| {
+                        ontimeupdate: move |_event: Event| {
                             media_event_log.set("TimeUpdate".to_string());
                         }
                         p {

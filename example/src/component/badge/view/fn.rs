@@ -12,6 +12,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A styled span badge element.
+#[component]
 pub(crate) fn my_badge(props: VirtualNode) -> VirtualNode {
     let MyBadgeProps {
         color,

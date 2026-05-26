@@ -12,7 +12,7 @@ impl From<VirtualNode> for MyModalProps {
     ///
     /// - `Self` - The strongly-typed `MyModalProps`.
     fn from(node: VirtualNode) -> Self {
-        MyModalProps {
+        Self {
             title: node.try_get_prop("title").unwrap_or_default(),
             on_close: node.try_get_event("onclick"),
         }

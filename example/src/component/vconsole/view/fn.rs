@@ -76,6 +76,7 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
             button {
                 class: fab_class
                 onclick: move |_event: Event| {
+                    push_state_on_open();
                     panel_open.set(true);
                 }
                 "E"
@@ -90,6 +91,7 @@ fn vconsole_fab(panel_open: Signal<bool>, log_count: usize) -> VirtualNode {
             button {
                 class: fab_class
                 onclick: move |_event: Event| {
+                    push_state_on_open();
                     panel_open.set(true);
                 }
                 "E"
@@ -139,6 +141,7 @@ fn vconsole_drawer(
             div {
                 class: overlay_class
                 onclick: move |_event: Event| {
+                    back_on_close();
                     panel_open.set(false);
                 }
             }
@@ -169,6 +172,7 @@ fn vconsole_drawer(
                         button {
                             class: c_vconsole_close_button()
                             onclick: move |_event: Event| {
+                                back_on_close();
                                 panel_open.set(false);
                             }
                             "\u{00d7}"

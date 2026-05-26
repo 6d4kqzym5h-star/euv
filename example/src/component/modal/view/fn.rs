@@ -9,6 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A modal overlay element.
+#[component]
 pub(crate) fn my_modal(props: VirtualNode) -> VirtualNode {
     let children: Vec<VirtualNode> = props.get_children();
     let MyModalProps { title, on_close }: MyModalProps = props.into();
@@ -26,7 +27,7 @@ pub(crate) fn my_modal(props: VirtualNode) -> VirtualNode {
                         class: c_modal_title()
                         title
                     }
-                    primary_button {
+                    modal_primary_button {
                         label: "Close"
                         onclick: on_close
                         "×"

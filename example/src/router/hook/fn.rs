@@ -23,6 +23,58 @@ pub(crate) fn use_hash_change(route_signal: Signal<String>) {
     closure.forget();
 }
 
+/// Pushes a new entry onto the browser history stack.
+///
+/// Used when the vconsole panel opens to ensure there is a history entry
+/// that can be intercepted on browser back navigation, preventing the
+/// page from navigating away.
+pub(crate) fn push_state_on_open() {
+    let window: Window = window().expect("no global window exists");
+    let history: History = window.history().expect("no history object exists");
+    let _ = history.push_state(&JsValue::NULL, "");
+}
+
+/// Navigates back one step in the browser history.
+///
+/// Used when the vconsole panel closes to remove the extra history entry
+/// that was pushed on open, so the user does not need an extra back press
+/// to leave the page.
+pub(crate) fn back_on_close() {
+    let window: Window = window().expect("no global window exists");
+    let history: History = window.history().expect("no history object exists");
+    let _ = history.back();
+}
+
+/// Subscribes to browser `popstate` events and closes the vconsole panel
+/// instead of navigating back when the panel is open.
+///
+/// Requires `push_state_on_open` to be called when the panel opens so that
+/// a history entry exists for the browser back button to consume. When the
+/// `popstate` event fires while the panel is open, the handler simply closes
+/// the panel (the consumed history entry is already gone). If the panel is
+/// closed, the event propagates normally.
+///
+/// The closure is leaked via `Closure::forget` so it persists for the
+/// entire application lifetime.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
+pub(crate) fn use_pop_state(panel_open: Signal<bool>) {
+    let window: Window = window().expect("no global window exists");
+    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let is_open: bool = panel_open.get();
+        if is_open {
+            panel_open.set(false);
+        }
+    }));
+    let _ = window.add_event_listener_with_callback(
+        &NativeEventName::PopState.to_string(),
+        closure.as_ref().unchecked_ref(),
+    );
+    closure.forget();
+}
+
 /// Creates a reactive signal that tracks whether the viewport is in mobile mode
 /// and subscribes to browser `resize` events to keep it updated.
 ///

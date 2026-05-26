@@ -224,6 +224,38 @@ class! {
         }
     }
 
+    pub(crate) c_modal_primary_button {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        gap: "8px";
+        background: "#4f46e5";
+        color: "white";
+        border: "none";
+        padding: "10px 24px";
+        border-radius: "8px";
+        cursor: "pointer";
+        font-size: "14px";
+        font-weight: "500";
+        letter-spacing: "0.02em";
+        text-align: "center";
+        line-height: "1.4";
+        transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease";
+        outline: "none";
+        box-shadow: "0 1px 2px rgba(79, 70, 229, 0.2)";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+    }
+
+    pub(crate) c_modal_primary_button_disabled {
+        c_modal_primary_button();
+        background: "#9b9bd4";
+        cursor: "not-allowed";
+        opacity: "0.55";
+        box-shadow: "none";
+    }
+
     pub(crate) c_badge {
         display: "inline-block";
         color: "white";

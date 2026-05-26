@@ -6,9 +6,9 @@ impl Default for UseBrowserApi {
     ///
     /// # Returns
     ///
-    /// - `Self`: A new `UseBrowserApi` with all signals initialized to empty strings.
+    /// - `Self`- A new `UseBrowserApi` with all signals initialized to empty strings.
     fn default() -> Self {
-        UseBrowserApi {
+        Self {
             local_key: Signal::create(String::new()),
             local_value: Signal::create(String::new()),
             local_result: Signal::create(String::new()),

@@ -12,7 +12,7 @@ impl From<VirtualNode> for MyCardProps {
     ///
     /// - `Self` - The strongly-typed `MyCardProps`.
     fn from(node: VirtualNode) -> Self {
-        MyCardProps {
+        Self {
             title: node.try_get_prop("title").unwrap_or_default(),
         }
     }

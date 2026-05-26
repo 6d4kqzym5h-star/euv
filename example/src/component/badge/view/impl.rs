@@ -12,7 +12,7 @@ impl From<VirtualNode> for MyBadgeProps {
     ///
     /// - `Self` - The strongly-typed `MyBadgeProps`.
     fn from(node: VirtualNode) -> Self {
-        MyBadgeProps {
+        Self {
             color: node
                 .try_get_prop("color")
                 .unwrap_or_else(|| "#4f46e5".to_string()),

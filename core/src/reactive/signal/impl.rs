@@ -19,7 +19,7 @@ where
             Rc::new(RefCell::new(SignalInner::new(value, Vec::new(), true)));
         let addr: usize = Rc::as_ptr(&signal_inner) as usize;
         signal_inner_registry_mut().insert(addr, signal_inner as Rc<dyn Any>);
-        let mut signal: Signal<T> = Signal::new(0, std::marker::PhantomData);
+        let mut signal: Self = Self::new(0, std::marker::PhantomData);
         signal.set_inner(addr);
         signal
     }

@@ -70,14 +70,14 @@ impl Default for DynamicNode {
             Rc::new(RefCell::new(RenderFnInner::new(Box::new(|| {
                 VirtualNode::Empty
             }))));
-        DynamicNode::new(render_fn_inner, HookContext::default())
+        Self::new(render_fn_inner, HookContext::default())
     }
 }
 
 /// Clones a `DynamicNode` by cloning the shared references.
 impl Clone for DynamicNode {
     fn clone(&self) -> Self {
-        let cloned: DynamicNode = DynamicNode::new(
+        let cloned: Self = Self::new(
             self.get_render_fn().clone(),
             self.get_hook_context().clone(),
         );
@@ -100,7 +100,7 @@ impl DynamicNode {
     ///
     /// # Returns
     ///
-    /// - `VirtualNode` - The virtual node produced by the render closure.
+    /// - `Self` - The virtual node produced by the render closure.
     pub fn render(&self) -> VirtualNode {
         let mut inner: RefMut<RenderFnInner> = self.get_render_fn().borrow_mut();
         (inner.get_mut_render_fn())()
@@ -109,17 +109,71 @@ impl DynamicNode {
 
 /// Implementation of virtual node construction and property extraction.
 impl VirtualNode {
+    /// Constructs a `Self::Dynamic` from a render closure with hook context management.
+    ///
+    /// # Arguments
+    ///
+    /// - `FnMut() -> Self + 'static` - The render closure that produces
+    ///   a virtual node tree. Called on initial render and on every signal update.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A `Self::Dynamic` wrapping the render closure
+    ///   with a fresh `HookContext`.
+    pub fn create_dynamic<F>(mut render_fn: F) -> Self
+    where
+        F: FnMut() -> Self + 'static,
+    {
+        let hook_context: HookContext = create_hook_context();
+        let mut hook_context_for_closure: HookContext = hook_context.clone();
+        let inner: Rc<RefCell<RenderFnInner>> =
+            Rc::new(RefCell::new(RenderFnInner::new(Box::new(move || {
+                hook_context_for_closure.reset_hook_index();
+                render_fn()
+            }))));
+        let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
+        Self::Dynamic(dynamic_node)
+    }
+
+    /// Constructs a `Self::Dynamic` for match expressions where arm hook
+    /// isolation is required. The render closure receives a `&mut HookContext`
+    /// so it can call `set_arm_changed` before each arm body.
+    ///
+    /// # Arguments
+    ///
+    /// - `FnMut(&mut HookContext) -> Self + 'static` - The render closure
+    ///   that receives a mutable reference to the hook context.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A `Self::Dynamic` wrapping the render closure
+    ///   with a fresh `HookContext`.
+    pub fn create_dynamic_with_context<F>(mut render_fn: F) -> Self
+    where
+        F: FnMut(&mut HookContext) -> Self + 'static,
+    {
+        let hook_context: HookContext = create_hook_context();
+        let mut hook_context_for_closure: HookContext = hook_context.clone();
+        let inner: Rc<RefCell<RenderFnInner>> =
+            Rc::new(RefCell::new(RenderFnInner::new(Box::new(move || {
+                hook_context_for_closure.reset_hook_index();
+                render_fn(&mut hook_context_for_closure)
+            }))));
+        let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
+        Self::Dynamic(dynamic_node)
+    }
+
     /// Creates a new element node with the given tag name.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The HTML tag name.
+    /// - `&str`- The HTML tag name.
     ///
     /// # Returns
     ///
-    /// - `VirtualNode`: A new element virtual node.
+    /// - `Self`- A new element virtual node.
     pub fn get_element_node(tag_name: &str) -> Self {
-        VirtualNode::Element {
+        Self::Element {
             tag: Tag::Element(tag_name.to_string()),
             attributes: Vec::new(),
             children: Vec::new(),
@@ -131,27 +185,27 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The text content.
+    /// - `&str`- The text content.
     ///
     /// # Returns
     ///
-    /// - `VirtualNode`: A new text virtual node.
+    /// - `Self`- A new text virtual node.
     pub fn get_text_node(content: &str) -> Self {
-        VirtualNode::Text(TextNode::new(content.to_string(), None))
+        Self::Text(TextNode::new(content.to_string(), None))
     }
 
     /// Adds an attribute to this node if it is an element.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The attribute name.
-    /// - `AttributeValue`: The attribute value.
+    /// - `&str`- The attribute name.
+    /// - `AttributeValue`- The attribute value.
     ///
     /// # Returns
     ///
-    /// - `Self`: This node with the attribute added.
+    /// - `Self`- This node with the attribute added.
     pub fn with_attribute(mut self, name: &str, value: AttributeValue) -> Self {
-        if let VirtualNode::Element {
+        if let Self::Element {
             ref mut attributes, ..
         } = self
         {
@@ -164,13 +218,13 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `VirtualNode`: The child node to add.
+    /// - `VirtualNode`- The child node to add.
     ///
     /// # Returns
     ///
-    /// - `Self`: This node with the child added.
+    /// - `Self`- This node with the child added.
     pub fn with_child(mut self, child: VirtualNode) -> Self {
-        if let VirtualNode::Element {
+        if let Self::Element {
             ref mut children, ..
         } = self
         {
@@ -183,11 +237,11 @@ impl VirtualNode {
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if this is a component element.
+    /// - `bool`- `true` if this is a component element.
     pub fn is_component(&self) -> bool {
         matches!(
             self,
-            VirtualNode::Element {
+            Self::Element {
                 tag: Tag::Component(_),
                 ..
             }
@@ -198,10 +252,10 @@ impl VirtualNode {
     ///
     /// # Returns
     ///
-    /// - `Option<String>`: The tag name, or `None` if not an element.
+    /// - `Option<String>`- The tag name, or `None` if not an element.
     pub fn tag_name(&self) -> Option<String> {
         match self {
-            VirtualNode::Element { tag, .. } => match tag {
+            Self::Element { tag, .. } => match tag {
                 Tag::Element(name) => Some(name.clone()),
                 Tag::Component(name) => Some(name.clone()),
             },
@@ -213,13 +267,13 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The attribute name to look for.
+    /// - `&str`- The attribute name to look for.
     ///
     /// # Returns
     ///
-    /// - `Option<String>`: The attribute value as a string, or `None`.
+    /// - `Option<String>`- The attribute value as a string, or `None`.
     pub fn try_get_prop(&self, name: &str) -> Option<String> {
-        if let VirtualNode::Element { attributes, .. } = self {
+        if let Self::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name {
                     match attr.get_value() {
@@ -238,16 +292,16 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The attribute name to look for.
+    /// - `&str`- The attribute name to look for.
     ///
     /// # Returns
     ///
-    /// - `Option<T>`: The parsed value, or `None` if not found or parsing fails.
+    /// - `Option<T>`- The parsed value, or `None` if not found or parsing fails.
     pub fn try_get_typed_prop<T>(&self, name: &str) -> Option<T>
     where
         T: std::str::FromStr,
     {
-        if let VirtualNode::Element { attributes, .. } = self {
+        if let Self::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name {
                     let raw: String = match attr.get_value() {
@@ -267,13 +321,13 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The attribute name to look for.
+    /// - `&str`- The attribute name to look for.
     ///
     /// # Returns
     ///
-    /// - `Option<Signal<String>>`: The signal, or `None` if not found.
+    /// - `Option<Signal<String>>`- The signal, or `None` if not found.
     pub fn try_get_signal_prop(&self, name: &str) -> Option<Signal<String>> {
-        if let VirtualNode::Element { attributes, .. } = self {
+        if let Self::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name
                     && let AttributeValue::Signal(signal) = attr.get_value()
@@ -289,9 +343,9 @@ impl VirtualNode {
     ///
     /// # Returns
     ///
-    /// - `Vec<VirtualNode>`: The children, or an empty vec if not an element.
-    pub fn get_children(&self) -> Vec<VirtualNode> {
-        if let VirtualNode::Element { children, .. } = self {
+    /// - `Vec<Self>`- The children, or an empty vec if not an element.
+    pub fn get_children(&self) -> Vec<Self> {
+        if let Self::Element { children, .. } = self {
             children.clone()
         } else {
             Vec::new()
@@ -302,13 +356,11 @@ impl VirtualNode {
     ///
     /// # Returns
     ///
-    /// - `Option<String>`: The text content, or `None` if unavailable.
+    /// - `Option<String>`- The text content, or `None` if unavailable.
     pub fn try_get_text(&self) -> Option<String> {
         match self {
-            VirtualNode::Text(text_node) => Some(text_node.get_content().clone()),
-            VirtualNode::Element { children, .. } => {
-                children.first().and_then(VirtualNode::try_get_text)
-            }
+            Self::Text(text_node) => Some(text_node.get_content().clone()),
+            Self::Element { children, .. } => children.first().and_then(Self::try_get_text),
             _ => None,
         }
     }
@@ -317,13 +369,13 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The event attribute name to look for.
+    /// - `&str`- The event attribute name to look for.
     ///
     /// # Returns
     ///
-    /// - `Option<NativeEventHandler>`: The handler, or `None` if not found.
+    /// - `Option<NativeEventHandler>`- The handler, or `None` if not found.
     pub fn try_get_event(&self, name: &str) -> Option<NativeEventHandler> {
-        if let VirtualNode::Element { attributes, .. } = self {
+        if let Self::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name
                     && let AttributeValue::Event(handler) = attr.get_value()
@@ -339,13 +391,13 @@ impl VirtualNode {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The custom callback attribute name to look for.
+    /// - `&str`- The custom callback attribute name to look for.
     ///
     /// # Returns
     ///
-    /// - `Option<NativeEventHandler>`: The handler, or `None` if not found.
+    /// - `Option<NativeEventHandler>`- The handler, or `None` if not found.
     pub fn try_get_callback(&self, name: &str) -> Option<NativeEventHandler> {
-        if let VirtualNode::Element { attributes, .. } = self {
+        if let Self::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name
                     && let AttributeValue::Event(handler) = attr.get_value()

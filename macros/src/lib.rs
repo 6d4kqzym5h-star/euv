@@ -14,7 +14,15 @@ mod watch;
 
 pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
 
-use std::iter::Peekable;
+use std::{
+    collections::HashSet,
+    env,
+    ffi::OsStr,
+    fs::{ReadDir, read_dir, read_to_string},
+    iter::Peekable,
+    mem::MaybeUninit,
+    path::PathBuf,
+};
 
 use {
     lombok_macros::*,
@@ -22,10 +30,10 @@ use {
     proc_macro2::Span,
     quote::{ToTokens, quote, quote_spanned},
     syn::{
-        Expr, ExprLit, Ident, Lit, LitStr, Path, Token, Type, Visibility, braced, parenthesized,
-        parse,
+        Attribute, Expr, ExprLit, File, Ident, Item, Lit, LitStr, Path, Stmt, Token, Type,
+        Visibility, braced, parenthesized, parse,
         parse::{Parse, ParseBuffer, ParseStream},
-        parse2,
+        parse_file, parse2,
         token::{Brace, Colon, Paren, Semi},
     },
 };
@@ -53,7 +61,7 @@ pub fn html(input: TokenStream) -> TokenStream {
 
 /// The `class!` macro for defining CSS classes with style properties.
 ///
-/// Each class definition creates a `CssClass` function that can be used
+/// Each class definition creates a `Css` function that can be used
 /// in `html!` via the `class:` attribute. Styles are automatically injected
 /// into the DOM on first use.
 ///
@@ -102,7 +110,7 @@ pub fn watch(input: TokenStream) -> TokenStream {
 
 /// The `css_vars!` macro for defining CSS custom properties.
 ///
-/// Each variable block creates a `CssClass` function that, when called,
+/// Each variable block creates a `Css` function that, when called,
 /// injects the CSS custom properties into the DOM. Variable names are
 /// automatically prefixed with `--`.
 ///
@@ -147,9 +155,13 @@ pub fn var(input: TokenStream) -> TokenStream {
 
 /// The `component` attribute macro for marking component functions.
 ///
-/// This is a pass-through attribute macro that does not modify the item.
-/// It serves as a marker to indicate that the annotated function is a
-/// UI component that returns a `VirtualNode`.
+/// Only functions annotated with `#[component]` are treated as components
+/// in the `html!` macro. All other identifier tags are treated as native
+/// HTML elements (with `Tag::Element`).
+///
+/// The `html!` macro scans the project source to find `#[component]`-annotated
+/// functions at compile time, so this attribute must be present for the
+/// `html!` macro to generate a component function call.
 ///
 /// # Arguments
 ///

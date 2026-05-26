@@ -6,11 +6,11 @@ impl log::Log for Logger {
     ///
     /// # Arguments
     ///
-    /// - `&log::Metadata`: The metadata of the log record.
+    /// - `&log::Metadata`- The metadata of the log record.
     ///
     /// # Returns
     ///
-    /// - `bool`: Whether the record's level is within the maximum log level.
+    /// - `bool`- Whether the record's level is within the maximum log level.
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         metadata.level() <= log::max_level()
     }
@@ -19,7 +19,7 @@ impl log::Log for Logger {
     ///
     /// # Arguments
     ///
-    /// - `&log::Record`: The log record to output.
+    /// - `&log::Record`- The log record to output.
     fn log(&self, record: &log::Record) {
         if !self.enabled(record.metadata()) {
             return;

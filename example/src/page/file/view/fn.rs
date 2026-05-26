@@ -51,9 +51,9 @@ fn build_drop_zone(state: UseFileUpload) -> VirtualNode {
     html! {
         div {
             class: if { is_drag_over } { c_file_upload_drop_zone_active() } else { c_file_upload_drop_zone() }
-            ondrag_enter: file_upload_on_drag_enter(state)
-            ondrag_leave: file_upload_on_drag_leave(state)
-            ondrag_over: file_upload_on_drag_over(state)
+            ondragenter: file_upload_on_drag_enter(state)
+            ondragleave: file_upload_on_drag_leave(state)
+            ondragover: file_upload_on_drag_over(state)
             ondrop: file_upload_on_drop(state)
             span {
                 class: c_file_upload_drop_icon()

@@ -8,7 +8,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `HookContext`: The currently active hook context.
+/// - `HookContext`- The currently active hook context.
 pub(crate) fn get_current_hook_context() -> HookContext {
     let hook_context_option: Option<HookContextRc> = current_hook_context().clone();
     match hook_context_option {
@@ -37,12 +37,12 @@ pub(crate) fn get_current_hook_context() -> HookContext {
 ///
 /// # Arguments
 ///
-/// - `HookContext`: The hook context to set as active during closure execution.
-/// - `F`: The closure to execute with the given context.
+/// - `HookContext`- The hook context to set as active during closure execution.
+/// - `F`- The closure to execute with the given context.
 ///
 /// # Returns
 ///
-/// - `R`: The result of the closure execution.
+/// - `R`- The result of the closure execution.
 pub(crate) fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
@@ -61,7 +61,7 @@ where
 ///
 /// # Returns
 ///
-/// - `HookContext`: A newly created hook context with default state.
+/// - `HookContext`- A newly created hook context with default state.
 pub(crate) fn create_hook_context() -> HookContext {
     HookContext::default()
 }
@@ -75,11 +75,11 @@ pub(crate) fn create_hook_context() -> HookContext {
 ///
 /// # Arguments
 ///
-/// - `F`: A closure that computes the initial value of the signal.
+/// - `F`- A closure that computes the initial value of the signal.
 ///
 /// # Returns
 ///
-/// - `Signal<T>`: A reactive signal containing the initialized or existing value.
+/// - `Signal<T>`- A reactive signal containing the initialized or existing value.
 pub fn use_signal<T, F>(init: F) -> Signal<T>
 where
     T: Clone + PartialEq + 'static,

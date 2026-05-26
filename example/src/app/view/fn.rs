@@ -371,6 +371,7 @@ pub(crate) fn app() -> VirtualNode {
     let theme_signal: Signal<String> = theme_state.get_theme();
     let root_class: Signal<String> = theme_state.get_root_class();
     use_hash_change(route_signal);
+    use_pop_state(panel_open);
     html! {
         if { mobile_signal.get() } {
             mobile_layout(route_signal, theme_signal, root_class, panel_open, drawer_open)

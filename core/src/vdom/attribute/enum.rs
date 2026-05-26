@@ -17,5 +17,5 @@ pub enum AttributeValue {
     /// A dynamic expression value of any type (for component props).
     Dynamic(String),
     /// A CSS class reference created by the `class!` macro.
-    Css(CssClass),
+    Css(Css),
 }

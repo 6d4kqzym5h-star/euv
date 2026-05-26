@@ -14,7 +14,7 @@ impl From<VirtualNode> for ChildDisplayProps {
     ///
     /// - `Self` - The strongly-typed `ChildDisplayProps`.
     fn from(node: VirtualNode) -> Self {
-        ChildDisplayProps {
+        Self {
             message: node.try_get_prop("message").unwrap_or_default(),
             on_respond: node.try_get_event("onclick"),
         }
@@ -36,7 +36,7 @@ impl From<VirtualNode> for LimitedCounterProps {
     ///
     /// - `Self` - The strongly-typed `LimitedCounterProps`.
     fn from(node: VirtualNode) -> Self {
-        LimitedCounterProps {
+        Self {
             disabled: node.try_get_typed_prop("disabled").unwrap_or(false),
             max_count: node.try_get_typed_prop("max-count").unwrap_or(10),
             on_increment: node.try_get_callback("on-increment"),
@@ -59,7 +59,7 @@ impl From<VirtualNode> for CallbackInputProps {
     ///
     /// - `Self` - The strongly-typed `CallbackInputProps`.
     fn from(node: VirtualNode) -> Self {
-        CallbackInputProps {
+        Self {
             on_change: node.try_get_callback("on-change"),
             on_submit: node.try_get_callback("on-submit"),
             on_reset: node.try_get_callback("on-reset"),

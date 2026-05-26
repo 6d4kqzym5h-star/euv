@@ -97,7 +97,7 @@ impl IntoReactiveValue for f64 {
 }
 
 /// Converts a CSS class reference into an attribute value.
-impl IntoReactiveValue for CssClass {
+impl IntoReactiveValue for Css {
     /// Converts this CSS class into an `AttributeValue::Css`.
     ///
     /// # Returns
@@ -109,7 +109,7 @@ impl IntoReactiveValue for CssClass {
 }
 
 /// Converts a reference to a CSS class into an attribute value by cloning.
-impl IntoReactiveValue for &'static CssClass {
+impl IntoReactiveValue for &'static Css {
     /// Converts this CSS class reference into an `AttributeValue::Css` by cloning.
     ///
     /// # Returns
@@ -144,8 +144,8 @@ impl IntoReactiveString for &str {
     }
 }
 
-/// Converts a `CssClass` into its class name for reactive string storage.
-impl IntoReactiveString for CssClass {
+/// Converts a `Css` into its class name for reactive string storage.
+impl IntoReactiveString for Css {
     /// Returns the class name as an owned string.
     ///
     /// # Returns
@@ -156,8 +156,8 @@ impl IntoReactiveString for CssClass {
     }
 }
 
-/// Converts a reference to a `CssClass` into its class name for reactive string storage.
-impl IntoReactiveString for &'static CssClass {
+/// Converts a reference to a `Css` into its class name for reactive string storage.
+impl IntoReactiveString for &'static Css {
     /// Returns the class name as an owned string.
     ///
     /// # Returns

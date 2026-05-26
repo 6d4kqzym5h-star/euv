@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.4.3"
+version = "0.4.4"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -70,6 +70,7 @@ web-sys = { version = "0.3.99", features = [
     "FileReader",
     "FocusEvent",
     "HashChangeEvent",
+    "History",
     "HtmlButtonElement",
     "HtmlCollection",
     "HtmlElement",

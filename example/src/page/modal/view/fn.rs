@@ -89,12 +89,12 @@ pub(crate) fn page_modal() -> VirtualNode {
                     }
                     div {
                         class: c_modal_actions()
-                        primary_button {
+                        modal_primary_button {
                             label: "Confirm"
                             onclick: modal_on_confirm(state)
                             "Confirm"
                         }
-                        primary_button {
+                        modal_primary_button {
                             label: "Cancel"
                             onclick: use_toggle(state.get_show_confirm())
                             "Cancel"
@@ -170,12 +170,12 @@ pub(crate) fn page_modal() -> VirtualNode {
                     }
                     div {
                         class: c_modal_actions()
-                        primary_button {
+                        modal_primary_button {
                             label: "Submit"
                             onclick: modal_on_form_submit(state)
                             "Submit"
                         }
-                        primary_button {
+                        modal_primary_button {
                             label: "Cancel"
                             onclick: use_toggle(state.get_show_form())
                             "Cancel"

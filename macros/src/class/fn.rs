@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Parses the `class!` macro input and generates `CssClass` function definitions.
+/// Parses the `class!` macro input and generates `Css` function definitions.
 ///
 /// # Arguments
 ///
@@ -8,7 +8,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `TokenStream` - The generated token stream constructing `CssClass` functions.
+/// - `TokenStream` - The generated token stream constructing `Css` functions.
 pub fn parse_class(input: TokenStream) -> TokenStream {
     let tokens: proc_macro2::TokenStream = match parse::<ClassInput>(input) {
         Ok(class_input) => class_input.into_token_stream(),

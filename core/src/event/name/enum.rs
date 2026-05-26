@@ -89,6 +89,8 @@ pub enum NativeEventName {
     TimeUpdate,
     /// Hash change event.
     HashChange,
+    /// Pop state event.
+    PopState,
     /// Window resize event.
     Resize,
     /// Scroll event.

@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Parses the `css_vars!` macro input and generates `CssClass` function definitions.
+/// Parses the `css_vars!` macro input and generates `Css` function definitions.
 ///
 /// # Arguments
 ///
@@ -8,7 +8,7 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `TokenStream` - The generated token stream constructing `CssClass` functions.
+/// - `TokenStream` - The generated token stream constructing `Css` functions.
 pub(crate) fn parse_css_vars(input: TokenStream) -> TokenStream {
     let tokens: proc_macro2::TokenStream = match syn::parse::<CssVarInput>(input) {
         Ok(css_var_input) => css_var_input.into_token_stream(),

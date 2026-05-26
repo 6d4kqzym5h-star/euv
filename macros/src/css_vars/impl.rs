@@ -6,11 +6,11 @@ impl Parse for CssVarInput {
     ///
     /// # Arguments
     ///
-    /// - `ParseStream`: The syn parse stream to read from.
+    /// - `ParseStream`- The syn parse stream to read from.
     ///
     /// # Returns
     ///
-    /// - `syn::Result<Self>`: The parsed `CssVarInput`, or a syntax error.
+    /// - `syn::Result<Self>`- The parsed `CssVarInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut defs: Vec<CssVarDef> = Vec::new();
         while !input.is_empty() {
@@ -63,21 +63,21 @@ impl Parse for CssVarInput {
                 vars,
             });
         }
-        Ok(CssVarInput { defs })
+        Ok(Self { defs })
     }
 }
 
-/// Implementation of `ToTokens` for `CssVarDef`, converting a CSS variable block into `CssClass` function tokens.
+/// Implementation of `ToTokens` for `CssVarDef`, converting a CSS variable block into `Css` function tokens.
 ///
-/// Each CSS variable block becomes a `CssClass` function that, when called, injects
+/// Each CSS variable block becomes a `Css` function that, when called, injects
 /// the CSS custom properties into the DOM and returns a reference to the class.
 /// The CSS key names are prefixed with `--`.
 impl ToTokens for CssVarDef {
-    /// Converts this CSS variable definition into token stream constructing a `CssClass`.
+    /// Converts this CSS variable definition into token stream constructing a `Css`.
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let vis: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
@@ -104,8 +104,8 @@ impl ToTokens for CssVarDef {
                     })
                     .collect();
                 tokens.extend(quote! {
-                    #vis fn #name(#(#param_defs),*) -> ::euv::CssClass {
-                        ::euv::CssClass::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")), [#(#css_string_parts),*].concat())
+                    #vis fn #name(#(#param_defs),*) -> ::euv::Css {
+                        ::euv::Css::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")), [#(#css_string_parts),*].concat())
                     }
                 });
             }
@@ -129,10 +129,10 @@ impl ToTokens for CssVarDef {
                         css_string.push_str("; ");
                     }
                     tokens.extend(quote! {
-                        #vis fn #fn_name_token() -> &'static ::euv::CssClass {
-                            static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
+                        #vis fn #fn_name_token() -> &'static ::euv::Css {
+                            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                ::euv::CssClass::new(#class_name_str.to_string(), #css_string.to_string())
+                                ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string())
                             })
                         }
                     });
@@ -147,10 +147,10 @@ impl ToTokens for CssVarDef {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        #vis fn #fn_name_token() -> &'static ::euv::CssClass {
-                            static #const_name_token: ::std::sync::OnceLock<::euv::CssClass> = ::std::sync::OnceLock::new();
+                        #vis fn #fn_name_token() -> &'static ::euv::Css {
+                            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                ::euv::CssClass::new(#class_name_str.to_string(), [#(#css_string_parts),*].concat())
+                                ::euv::Css::new(#class_name_str.to_string(), [#(#css_string_parts),*].concat())
                             })
                         }
                     });
@@ -166,7 +166,7 @@ impl ToTokens for CssVarInput {
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`: The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         for css_var_def in self.get_defs() {
             css_var_def.to_tokens(tokens);

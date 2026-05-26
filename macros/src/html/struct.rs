@@ -82,10 +82,21 @@ pub(crate) struct HtmlMatch {
 /// Stores the parsed structure of an HTML element for token generation.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlElement {
-    /// The tag name or component name.
+    /// The tag identifier (used for function calls on Ident tags).
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) tag: Ident,
+    /// The actual tag name string, which may differ from the identifier
+    /// when using string literal tags for custom HTML5 elements.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) tag_name: String,
+    /// Whether the tag was parsed from an identifier (not a string literal).
+    /// Ident tags are treated as function calls; string literal tags produce
+    /// native HTML elements directly.
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
+    pub(crate) is_ident_tag: bool,
     /// The attributes of this element.
     #[get(pub(crate))]
     #[set(pub(crate))]
@@ -94,8 +105,4 @@ pub(crate) struct HtmlElement {
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) children: Vec<HtmlNode>,
-    /// Whether this is a component (contains underscore in tag name).
-    #[get(pub(crate), type(copy))]
-    #[set(pub(crate))]
-    pub(crate) is_component: bool,
 }

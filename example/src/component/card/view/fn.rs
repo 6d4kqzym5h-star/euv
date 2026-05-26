@@ -9,6 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - A styled card element.
+#[component]
 pub(crate) fn my_card(props: VirtualNode) -> VirtualNode {
     let children: Vec<VirtualNode> = props.get_children();
     let MyCardProps { title, .. }: MyCardProps = props.into();

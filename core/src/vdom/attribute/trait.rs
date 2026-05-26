@@ -16,7 +16,7 @@ pub trait IntoReactiveValue {
 /// The result is stored in a `Signal<String>` that re-evaluates whenever any
 /// signal changes — mirroring the DOM-level `DynamicNode` mechanism.
 ///
-/// Implementations are provided for `String`, `&str`, `CssClass`, `bool`,
+/// Implementations are provided for `String`, `&str`, `Css`, `bool`,
 /// numeric types, and `Signal<T>` (which resolves the signal first).
 pub trait IntoReactiveString {
     /// Converts this value into its string representation for attribute storage.

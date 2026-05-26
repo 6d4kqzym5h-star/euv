@@ -7,11 +7,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&T`: A reference to any type that can be converted to `&Node`.
+/// - `&T`- A reference to any type that can be converted to `&Node`.
 ///
 /// # Returns
 ///
-/// - `bool`: `true` if the node is connected to the document, `false` otherwise.
+/// - `bool`- `true` if the node is connected to the document, `false` otherwise.
 pub(crate) fn is_node_connected<T>(node: &T) -> bool
 where
     T: AsRef<Node>,

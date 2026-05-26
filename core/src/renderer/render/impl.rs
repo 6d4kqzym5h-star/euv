@@ -9,7 +9,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `VirtualNode`: The new virtual DOM tree to render.
+    /// - `VirtualNode`- The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         let old_tree: Option<VirtualNode> = self.try_get_current_tree().clone();
@@ -35,7 +35,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `VirtualNode`: The new virtual DOM tree to render.
+    /// - `VirtualNode`- The new virtual DOM tree to render.
     pub fn render_full_replace(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         while let Some(child) = self.get_root().first_child() {
@@ -53,8 +53,8 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The old virtual node to patch from.
-    /// - `&VirtualNode`: The new virtual node to patch to.
+    /// - `&VirtualNode`- The old virtual node to patch from.
+    /// - `&VirtualNode`- The new virtual node to patch to.
     fn patch_root(&mut self, old_node: &VirtualNode, new_node: &VirtualNode) {
         let dom_child: Option<Node> = self.get_root().first_child();
         let is_element: bool = if let Some(ref dom_child) = dom_child {
@@ -83,9 +83,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The old virtual node.
-    /// - `&VirtualNode`: The new virtual node.
-    /// - `&Element`: The real DOM element to patch.
+    /// - `&VirtualNode`- The old virtual node.
+    /// - `&VirtualNode`- The new virtual node.
+    /// - `&Element`- The real DOM element to patch.
     fn patch_node(
         &mut self,
         old_node: &VirtualNode,
@@ -155,9 +155,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The DOM element whose attributes to patch.
-    /// - `&[AttributeEntry]`: The old attribute list.
-    /// - `&[AttributeEntry]`: The new attribute list.
+    /// - `&Element`- The DOM element whose attributes to patch.
+    /// - `&[AttributeEntry]`- The old attribute list.
+    /// - `&[AttributeEntry]`- The new attribute list.
     fn patch_attributes(
         &mut self,
         element: &Element,
@@ -211,13 +211,9 @@ impl Renderer {
                         self.attach_event_listener(element, handler);
                     }
                     AttributeValue::Dynamic(_) => {}
-                    AttributeValue::Css(css_class) => {
-                        css_class.inject_style();
-                        set_dom_attribute_or_property(
-                            element,
-                            new_attr.get_name(),
-                            css_class.get_name(),
-                        );
+                    AttributeValue::Css(css) => {
+                        css.inject_style();
+                        set_dom_attribute_or_property(element, new_attr.get_name(), css.get_name());
                     }
                 }
             }
@@ -228,12 +224,12 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The parent element.
-    /// - `u32`: The child index.
+    /// - `&Element`- The parent element.
+    /// - `u32`- The child index.
     ///
     /// # Returns
     ///
-    /// - `Option<Node>`: The child node at the given index, if it exists.
+    /// - `Option<Node>`- The child node at the given index, if it exists.
     fn get_child_node(parent: &Element, index: u32) -> Option<Node> {
         parent.child_nodes().get(index)
     }
@@ -248,9 +244,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The parent DOM element.
-    /// - `&[VirtualNode]`: The old children list.
-    /// - `&[VirtualNode]`: The new children list.
+    /// - `&Element`- The parent DOM element.
+    /// - `&[VirtualNode]`- The old children list.
+    /// - `&[VirtualNode]`- The new children list.
     fn patch_children(
         &mut self,
         parent: &Element,
@@ -272,11 +268,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The node to check.
+    /// - `&VirtualNode`- The node to check.
     ///
     /// # Returns
     ///
-    /// - `bool`: Whether the node has a key.
+    /// - `bool`- Whether the node has a key.
     fn node_has_key(node: &VirtualNode) -> bool {
         match node {
             VirtualNode::Element { key, .. } => key.is_some(),
@@ -288,11 +284,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The node to extract the key from.
+    /// - `&VirtualNode`- The node to extract the key from.
     ///
     /// # Returns
     ///
-    /// - `Option<&str>`: The key string, if present.
+    /// - `Option<&str>`- The key string, if present.
     fn get_node_key(node: &VirtualNode) -> Option<&str> {
         match node {
             VirtualNode::Element { key, .. } => key.as_deref(),
@@ -313,9 +309,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The parent DOM element.
-    /// - `&[VirtualNode]`: The old children list.
-    /// - `&[VirtualNode]`: The new children list.
+    /// - `&Element`- The parent DOM element.
+    /// - `&[VirtualNode]`- The old children list.
+    /// - `&[VirtualNode]`- The new children list.
     fn patch_children_keyed(
         &mut self,
         parent: &Element,
@@ -393,9 +389,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The parent DOM element.
-    /// - `&[VirtualNode]`: The old children list.
-    /// - `&[VirtualNode]`: The new children list.
+    /// - `&Element`- The parent DOM element.
+    /// - `&[VirtualNode]`- The old children list.
+    /// - `&[VirtualNode]`- The new children list.
     fn patch_children_positional(
         &mut self,
         parent: &Element,
@@ -451,11 +447,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The virtual node to materialize.
+    /// - `&VirtualNode`- The virtual node to materialize.
     ///
     /// # Returns
     ///
-    /// - `Node`: The created DOM node.
+    /// - `Node`- The created DOM node.
     ///
     /// # Panics
     ///
@@ -469,12 +465,12 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The virtual node to materialize.
-    /// - `&Document`: The document reference for creating DOM elements.
+    /// - `&VirtualNode`- The virtual node to materialize.
+    /// - `&Document`- The document reference for creating DOM elements.
     ///
     /// # Returns
     ///
-    /// - `Node`: The created DOM node.
+    /// - `Node`- The created DOM node.
     fn create_dom_node_with_document(&mut self, node: &VirtualNode, document: &Document) -> Node {
         match node {
             VirtualNode::Element {
@@ -541,12 +537,12 @@ impl Renderer {
                             self.attach_event_listener(&element, handler);
                         }
                         AttributeValue::Dynamic(_) => {}
-                        AttributeValue::Css(css_class) => {
-                            css_class.inject_style();
+                        AttributeValue::Css(css) => {
+                            css.inject_style();
                             set_dom_attribute_or_property(
                                 &element,
                                 attr.get_name(),
-                                css_class.get_name(),
+                                css.get_name(),
                             );
                         }
                     }
@@ -604,14 +600,14 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&DynamicNode`: The dynamic node to set up.
-    /// - `usize`: The unique dynamic ID assigned to the placeholder.
-    /// - `&Element`: The placeholder DOM element.
-    /// - `bool`: Whether to skip rendering if the output is unchanged.
+    /// - `&DynamicNode`- The dynamic node to set up.
+    /// - `usize`- The unique dynamic ID assigned to the placeholder.
+    /// - `&Element`- The placeholder DOM element.
+    /// - `bool`- Whether to skip rendering if the output is unchanged.
     ///
     /// # Returns
     ///
-    /// - `Node`: The initial rendered DOM node.
+    /// - `Node`- The initial rendered DOM node.
     fn setup_dynamic_node(
         &mut self,
         dynamic_node: &DynamicNode,
@@ -627,7 +623,7 @@ impl Renderer {
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
         let render_fn: Rc<RefCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
         let placeholder_clone: Element = placeholder.clone();
-        let mut renderer_for_sub: Renderer = Renderer::new(placeholder_clone.clone());
+        let mut renderer_for_sub: Self = Self::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
         let renderer_rc: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
         let initial_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
@@ -648,8 +644,8 @@ impl Renderer {
             if skip_equal && !arm_switched {
                 let renderer_ref: Ref<Renderer> = renderer_rc.borrow();
                 if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
-                    let new_unwrapped: VirtualNode = Renderer::unwrap_component_static(&new_vnode);
-                    if Renderer::visual_eq(old_vnode, &new_unwrapped) {
+                    let new_unwrapped: VirtualNode = Self::unwrap_component_static(&new_vnode);
+                    if Self::visual_eq(old_vnode, &new_unwrapped) {
                         return;
                     }
                 }
@@ -669,11 +665,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The virtual node to unwrap.
+    /// - `&VirtualNode`- The virtual node to unwrap.
     ///
     /// # Returns
     ///
-    /// - `VirtualNode`: The unwrapped virtual node with all components expanded.
+    /// - `VirtualNode`- The unwrapped virtual node with all components expanded.
     fn unwrap_component(&self, node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -725,11 +721,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The virtual node to unwrap.
+    /// - `&VirtualNode`- The virtual node to unwrap.
     ///
     /// # Returns
     ///
-    /// - `VirtualNode`: The unwrapped virtual node with all components expanded.
+    /// - `VirtualNode`- The unwrapped virtual node with all components expanded.
     fn unwrap_component_static(node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -778,11 +774,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The virtual node to check.
+    /// - `&VirtualNode`- The virtual node to check.
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the subtree contains a component node.
+    /// - `bool`- `true` if the subtree contains a component node.
     fn subtree_has_component(node: &VirtualNode) -> bool {
         match node {
             VirtualNode::Element {
@@ -806,12 +802,12 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`: The old virtual node.
-    /// - `&VirtualNode`: The new virtual node.
+    /// - `&VirtualNode`- The old virtual node.
+    /// - `&VirtualNode`- The new virtual node.
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the two nodes produce the same visual output.
+    /// - `bool`- `true` if the two nodes produce the same visual output.
     fn visual_eq(old_node: &VirtualNode, new_node: &VirtualNode) -> bool {
         match (old_node, new_node) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,
@@ -858,11 +854,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The placeholder DOM element.
+    /// - `&Element`- The placeholder DOM element.
     ///
     /// # Returns
     ///
-    /// - `usize`: The assigned dynamic ID.
+    /// - `usize`- The assigned dynamic ID.
     fn assign_dynamic_id(placeholder: &Element) -> usize {
         let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
         let _ = placeholder.set_attribute(DATA_EUV_DYNAMIC_ID, &dynamic_id.to_string());
@@ -876,7 +872,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The DOM element to clean up.
+    /// - `&Element`- The DOM element to clean up.
     fn cleanup_dom_subtree(&self, element: &Element) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
@@ -912,8 +908,8 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`: The DOM element to attach the handler to.
-    /// - `&NativeEventHandler`: The event handler to register.
+    /// - `&Element`- The DOM element to attach the handler to.
+    /// - `&NativeEventHandler`- The event handler to register.
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
         let euv_id: usize = match element.get_attribute(DATA_EUV_ID) {
             Some(id_str) => id_str

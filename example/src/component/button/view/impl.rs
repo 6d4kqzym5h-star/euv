@@ -12,7 +12,7 @@ impl From<VirtualNode> for PrimaryButtonProps {
     ///
     /// - `Self` - The strongly-typed `PrimaryButtonProps`.
     fn from(node: VirtualNode) -> Self {
-        PrimaryButtonProps {
+        Self {
             label: node
                 .try_get_prop("label")
                 .unwrap_or_else(|| "Button".to_string()),

@@ -82,11 +82,11 @@ pub(crate) fn schedule_signal_update() {
 ///
 /// # Arguments
 ///
-/// - `F`: The closure to execute with suppressed scheduling.
+/// - `F`- The closure to execute with suppressed scheduling.
 ///
 /// # Returns
 ///
-/// - `R`: The result of the closure execution.
+/// - `R`- The result of the closure execution.
 pub fn with_suppressed_updates<F, R>(f: F) -> R
 where
     F: FnOnce() -> R,
@@ -107,8 +107,8 @@ where
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`: The attribute signal to subscribe.
-/// - `F`: A closure that computes the current attribute value string.
+/// - `Signal<String>`- The attribute signal to subscribe.
+/// - `F`- A closure that computes the current attribute value string.
 pub(crate) fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
 where
     F: Fn() -> String + 'static,
@@ -129,11 +129,11 @@ where
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`: The source boolean signal.
+/// - `Signal<bool>`- The source boolean signal.
 ///
 /// # Returns
 ///
-/// - `AttributeValue`: An `AttributeValue::Signal` wrapping the derived string signal.
+/// - `AttributeValue`- An `AttributeValue::Signal` wrapping the derived string signal.
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let initial: String = source.get().to_string();
     let string_signal: Signal<String> = Signal::create(initial);
