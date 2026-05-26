@@ -73,7 +73,8 @@ jobs:
       - name: Sync workspace version
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
-          toml set Cargo.toml workspace.dependencies.euv.version "$VERSION" | sponge Cargo.toml
+          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
+          printf '%s\n' "$CONTENT" > Cargo.toml
           echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
