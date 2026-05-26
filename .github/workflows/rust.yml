@@ -64,6 +64,10 @@ jobs:
           CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
           printf '%s\n' "$CONTENT" > Cargo.toml
           echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
+          git config user.name "eastspire"
+          git config user.email "root@ltpp.vip"
+          git add Cargo.toml
+          git diff --cached --quiet || git commit -m "chore: sync workspace.dependencies.euv version to $VERSION"
 
   check:
     needs: setup
@@ -155,6 +159,15 @@ jobs:
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
+      - name: Sync and push workspace version
+        if: steps.check_branch.outputs.skip == 'false'
+        run: |
+          VERSION="${{ needs.setup.outputs.version }}"
+          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
+          printf '%s\n' "$CONTENT" > Cargo.toml
+          git add Cargo.toml
+          git diff --cached --quiet || git commit -m "chore: sync workspace.dependencies.euv version to $VERSION"
+          git push
       - name: Publish to crates.io
         id: publish
         if: steps.check_branch.outputs.skip == 'false'
