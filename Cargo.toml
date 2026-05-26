@@ -17,10 +17,10 @@ resolver = "3"
 
 [workspace.dependencies]
 euv = { path = "./", version = "0.4.4" }
-euv-cli = { path = "cli", version = "0.4.3" }
-euv-core = { path = "core", version = "0.4.3" }
-euv-macros = { path = "macros", version = "0.4.3" }
-euv-example = { path = "example", version = "0.4.3" }
+euv-cli = { path = "cli", version = "0.4.4" }
+euv-core = { path = "core", version = "0.4.4" }
+euv-macros = { path = "macros", version = "0.4.4" }
+euv-example = { path = "example", version = "0.4.4" }
 
 log = "0.4.30"
 quote = "1.0.45"
