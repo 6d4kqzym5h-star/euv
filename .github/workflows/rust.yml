@@ -58,6 +58,12 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+      - name: Sync workspace version
+        run: |
+          VERSION="${{ steps.read.outputs.version }}"
+          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
+          printf '%s\n' "$CONTENT" > Cargo.toml
+          echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
 
   check:
     needs: setup
@@ -65,17 +71,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Restore toml-cli
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/toml
-          key: toml-cli-${{ runner.os }}
-      - name: Sync workspace version
-        run: |
-          VERSION="${{ needs.setup.outputs.version }}"
-          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          printf '%s\n' "$CONTENT" > Cargo.toml
-          echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
