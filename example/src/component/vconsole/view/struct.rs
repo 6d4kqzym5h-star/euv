@@ -5,6 +5,7 @@ use crate::*;
 /// Methods are associated functions (not instance methods) that internally
 /// access the global Console signal, so callers use `Console::log(msg)`
 /// without needing to obtain or hold a Console instance.
+#[derive(Data, New)]
 pub(crate) struct Console;
 
 /// A single console entry containing a message and its log level.

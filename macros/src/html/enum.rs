@@ -46,13 +46,16 @@ pub(crate) enum HtmlAttrValue {
     Expr(Expr),
     /// A reactive conditional: `if {expr} { value } else if {expr} { value } else { value }`.
     If(HtmlAttrIf),
-    /// A style object: {key: value; key2: value2;}
+    /// A style object: `{key: value; key2: value2;}`.
+    ///
     /// The value can be either a string literal or an expression.
     Style(Vec<(String, HtmlStylePropValue)>),
     /// Multiple class attribute values merged from repeated `class:` declarations.
+    ///
     /// Each entry is an independent expression (e.g., `c_foo()`, `c_bar()`).
     Classes(Vec<HtmlAttrValue>),
     /// Multiple style attribute values merged from repeated `style:` declarations.
+    ///
     /// Each entry is an independent `Style` value.
     Styles(Vec<HtmlAttrValue>),
 }

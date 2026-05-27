@@ -40,6 +40,13 @@ impl HookContext {
 }
 
 /// Clones the hook context, sharing the same inner state.
+///
+/// All clones share the same underlying `Rc<RefCell<HookContextInner>>`,
+/// so modifications through one clone are visible through all others.
+///
+/// # Returns
+///
+/// - `Self`: A new `HookContext` sharing the same inner state.
 impl Clone for HookContext {
     fn clone(&self) -> Self {
         Self::new(self.get_inner().clone())
@@ -47,6 +54,13 @@ impl Clone for HookContext {
 }
 
 /// Provides a default empty hook context.
+///
+/// Creates a fresh `Rc<RefCell<HookContextInner>>` with default values
+/// (empty hook list, zero hook index, empty cleanup list).
+///
+/// # Returns
+///
+/// - `Self`: A new `HookContext` with default inner state.
 impl Default for HookContext {
     fn default() -> Self {
         Self::new(Rc::new(RefCell::new(HookContextInner::default())))

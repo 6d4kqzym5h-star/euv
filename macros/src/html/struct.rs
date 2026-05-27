@@ -17,7 +17,7 @@ pub(crate) struct HtmlRoot {
 
 /// Represents a reactive `for` loop in HTML.
 ///
-/// Syntax: `for pattern in {expr} { children }`
+/// Syntax: `for pattern in {expr} { children }`.
 ///
 /// The pattern is a Rust binding pattern (e.g., `item` or `(index, item)`).
 /// The expression in braces must evaluate to an iterable. Each iteration's
@@ -40,10 +40,11 @@ pub(crate) struct HtmlFor {
 
 /// Represents a reactive `if` conditional in HTML.
 ///
-/// Syntax: `if {expr} { children } [else if {expr} { children }]* [else { children }]`
+/// Syntax: `if {expr} { children } [else if {expr} { children }]* [else { children }]`.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlIf {
     /// The list of condition-branch pairs. Each condition is a braced expression.
+    ///
     /// The last entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
     #[set(pub(crate))]
@@ -52,10 +53,11 @@ pub(crate) struct HtmlIf {
 
 /// Represents a reactive `if` conditional in attribute value position.
 ///
-/// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
+/// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlAttrIf {
     /// The list of condition-branch pairs. Each condition is a braced expression.
+    ///
     /// The last entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
     #[set(pub(crate))]
@@ -64,7 +66,7 @@ pub(crate) struct HtmlAttrIf {
 
 /// Represents a reactive `match` expression in HTML.
 ///
-/// Syntax: `match {expr} { pattern => { children } ... }`
+/// Syntax: `match {expr} { pattern => { children } ... }`.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlMatch {
     /// The expression to match against (from the braces after `match`).
@@ -72,6 +74,7 @@ pub(crate) struct HtmlMatch {
     #[set(pub(crate))]
     pub(crate) scrutinee: Expr,
     /// The match arms: each arm has a pattern as a raw token stream and a body of HTML nodes.
+    ///
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)>,

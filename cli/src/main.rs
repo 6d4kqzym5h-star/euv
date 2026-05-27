@@ -25,6 +25,7 @@ use {
     clap::Parser,
     hyperlane::*,
     ignore::gitignore::{Gitignore, GitignoreBuilder},
+    lombok_macros::*,
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
     serde::Serialize,
     tokio::{

@@ -4,10 +4,10 @@ use crate::*;
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UsePropsDemo {
     /// The parent message to pass down to child.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) parent_message: Signal<String>,
     /// The message received from child via callback.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) child_response: Signal<String>,
 }
 
@@ -15,10 +15,10 @@ pub(crate) struct UsePropsDemo {
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseTwoWayDemo {
     /// The shared text value bound between parent and child.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) shared_text: Signal<String>,
     /// The shared counter value bound between parent and child.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) shared_count: Signal<i32>,
 }
 
@@ -26,22 +26,22 @@ pub(crate) struct UseTwoWayDemo {
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseCrossComponentDemo {
     /// The temperature in Celsius.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) celsius: Signal<f64>,
     /// The temperature in Fahrenheit (derived).
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) fahrenheit: Signal<f64>,
     /// The RGB red channel value.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) red: Signal<i32>,
     /// The RGB green channel value.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) green: Signal<i32>,
     /// The RGB blue channel value.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) blue: Signal<i32>,
     /// The hex color string (derived).
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) hex_color: Signal<String>,
 }
 
@@ -51,13 +51,13 @@ pub(crate) struct UseCrossComponentDemo {
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseTypedPropsDemo {
     /// Whether the child input is disabled.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) disabled: Signal<bool>,
     /// The maximum count allowed.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) max_count: Signal<i32>,
     /// The current count value.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) current_count: Signal<i32>,
 }
 
@@ -67,9 +67,9 @@ pub(crate) struct UseTypedPropsDemo {
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseCustomCallbackDemo {
     /// The text input value.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) text_value: Signal<String>,
     /// The last callback event name received.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) last_event: Signal<String>,
 }

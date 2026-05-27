@@ -4,12 +4,12 @@ use crate::*;
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseFetch {
     /// Whether data is currently being fetched.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) loading: Signal<bool>,
     /// The fetched data content.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) data: Signal<String>,
     /// The error message, empty if no error.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) error: Signal<String>,
 }

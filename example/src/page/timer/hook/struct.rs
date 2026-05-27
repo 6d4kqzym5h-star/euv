@@ -19,13 +19,13 @@ pub(crate) struct IntervalHandle {
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseStopwatch {
     /// The elapsed seconds counter.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) seconds: Signal<i32>,
     /// Whether the stopwatch is currently running.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) running: Signal<bool>,
     /// The active interval handle, if any.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) handle: Signal<Option<IntervalHandle>>,
 }
 
@@ -36,18 +36,18 @@ pub(crate) struct UseStopwatch {
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseCountdown {
     /// The total countdown seconds.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) total: Signal<i32>,
     /// The remaining countdown seconds.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) remaining: Signal<i32>,
     /// Whether the countdown is currently running.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) running: Signal<bool>,
     /// The active interval handle, if any.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) handle: Signal<Option<IntervalHandle>>,
     /// The user input string for setting countdown seconds.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     pub(crate) input: Signal<String>,
 }

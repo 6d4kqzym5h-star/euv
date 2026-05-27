@@ -59,6 +59,10 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
 /// Ensures the signal inner registry is initialized and returns a shared reference.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+///
+/// # Returns
+///
+/// - `&'static HashMap<usize, Rc<dyn Any>>`: A shared reference to the signal inner registry.
 #[allow(static_mut_refs)]
 fn ensure_signal_inner_registry() -> &'static HashMap<usize, Rc<dyn Any>> {
     unsafe {
@@ -74,6 +78,10 @@ fn ensure_signal_inner_registry() -> &'static HashMap<usize, Rc<dyn Any>> {
 /// Ensures the signal inner registry is initialized and returns a mutable reference.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+///
+/// # Returns
+///
+/// - `&'static mut HashMap<usize, Rc<dyn Any>>`: A mutable reference to the signal inner registry.
 #[allow(static_mut_refs)]
 fn ensure_signal_inner_registry_mut() -> &'static mut HashMap<usize, Rc<dyn Any>> {
     unsafe {
@@ -89,6 +97,10 @@ fn ensure_signal_inner_registry_mut() -> &'static mut HashMap<usize, Rc<dyn Any>
 /// Returns a shared reference to the signal inner registry.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+///
+/// # Returns
+///
+/// - `&'static HashMap<usize, Rc<dyn Any>>`: A shared reference to the signal inner registry.
 pub(crate) fn signal_inner_registry() -> &'static HashMap<usize, Rc<dyn Any>> {
     ensure_signal_inner_registry()
 }
@@ -96,6 +108,10 @@ pub(crate) fn signal_inner_registry() -> &'static HashMap<usize, Rc<dyn Any>> {
 /// Returns a mutable reference to the signal inner registry.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+///
+/// # Returns
+///
+/// - `&'static mut HashMap<usize, Rc<dyn Any>>`: A mutable reference to the signal inner registry.
 pub(crate) fn signal_inner_registry_mut() -> &'static mut HashMap<usize, Rc<dyn Any>> {
     ensure_signal_inner_registry_mut()
 }

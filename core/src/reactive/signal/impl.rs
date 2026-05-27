@@ -189,6 +189,8 @@ where
 }
 
 /// Prevents direct dereference of a signal to enforce explicit API usage.
+///
+/// Panics at runtime to guide users towards `.get()` instead.
 impl<T> Deref for Signal<T>
 where
     T: Clone + PartialEq + 'static,
@@ -201,6 +203,8 @@ where
 }
 
 /// Prevents direct mutable dereference of a signal to enforce explicit API usage.
+///
+/// Panics at runtime to guide users towards `.set()` instead.
 impl<T> DerefMut for Signal<T>
 where
     T: Clone + PartialEq + 'static,
@@ -211,6 +215,12 @@ where
 }
 
 /// Clones the signal, sharing the same inner state.
+///
+/// Since `Signal` is `Copy`, this simply returns `*self`.
+///
+/// # Returns
+///
+/// - `Self`: A copy of the signal handle sharing the same inner state.
 impl<T> Clone for Signal<T>
 where
     T: Clone + PartialEq + 'static,
@@ -221,8 +231,13 @@ where
 }
 
 /// Copies the signal, sharing the same inner state.
+///
+/// Safe because only the inner address (a `usize`) is copied;
+/// the actual `Rc` reference is held by the global signal registry.
 impl<T> Copy for Signal<T> where T: Clone + PartialEq + 'static {}
 
+/// Marks `SignalCell` as `Sync` for single-threaded WASM contexts.
+///
 /// SAFETY: `SignalCell` is only used in single-threaded WASM contexts.
 /// Concurrent access from multiple threads would be undefined behavior.
 unsafe impl<T> Sync for SignalCell<T> where T: Clone + PartialEq + 'static {}
@@ -283,6 +298,12 @@ where
 }
 
 /// Provides a default empty `SignalCell`.
+///
+/// Creates a `SignalCell` with `None` stored in the inner `UnsafeCell`.
+///
+/// # Returns
+///
+/// - `Self`: An empty `SignalCell` with no signal stored.
 impl<T> Default for SignalCell<T>
 where
     T: Clone + PartialEq + 'static,
@@ -294,5 +315,8 @@ where
     }
 }
 
+/// Marks `SignalInnerRegistryCell` as `Sync` for single-threaded WASM contexts.
+///
 /// SAFETY: `SignalInnerRegistryCell` is only used in single-threaded WASM contexts.
+/// Concurrent access from multiple threads would be undefined behavior.
 unsafe impl Sync for SignalInnerRegistryCell {}

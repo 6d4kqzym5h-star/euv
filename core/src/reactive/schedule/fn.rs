@@ -4,6 +4,10 @@ use crate::*;
 ///
 /// Used by the scheduler to trigger a DOM update cycle after signal changes.
 /// Does nothing if the window object is unavailable.
+///
+/// # Panics
+///
+/// Panics if `Event::new` fails to create the event object.
 pub(crate) fn dispatch_signal_update() {
     if let Some(window_value) = window() {
         let event: Event = Event::new(&NativeEventName::EuvSignalUpdate.to_string()).unwrap();
@@ -151,6 +155,10 @@ pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> Att
 /// Returns a mutable reference to the current hook context.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+///
+/// # Returns
+///
+/// - `&'static mut Option<HookContextRc>`: A mutable reference to the global hook context.
 #[allow(static_mut_refs)]
 pub(crate) fn current_hook_context_mut() -> &'static mut Option<HookContextRc> {
     unsafe { &mut *CURRENT_HOOK_CONTEXT.get_0().get() }
@@ -159,6 +167,10 @@ pub(crate) fn current_hook_context_mut() -> &'static mut Option<HookContextRc> {
 /// Returns a shared reference to the current hook context.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+///
+/// # Returns
+///
+/// - `&'static Option<HookContextRc>`: A shared reference to the global hook context.
 #[allow(static_mut_refs)]
 pub(crate) fn current_hook_context() -> &'static Option<HookContextRc> {
     unsafe { &*CURRENT_HOOK_CONTEXT.get_0().get() }
