@@ -16,6 +16,6 @@ use crate::*;
 pub(crate) fn parse_var(input: TokenStream) -> TokenStream {
     let tokens: proc_macro2::TokenStream = input.into();
     let var_name: String = reconstruct_kebab_from_tokens(&tokens);
-    let css_name: String = format!("var(--{})", var_name);
+    let css_name: String = format!("{CSS_VAR_PREFIX}{var_name}{CSS_VAR_SUFFIX}");
     TokenStream::from(quote! { #css_name })
 }

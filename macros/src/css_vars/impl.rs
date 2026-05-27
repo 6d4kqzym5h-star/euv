@@ -45,7 +45,7 @@ impl Parse for CssVarInput {
             let mut vars: Vec<(String, CssVarValue)> = Vec::new();
             while !content.is_empty() {
                 let var_name: String = parse_kebab_name(&content)?;
-                let css_key: String = format!("--{}", var_name);
+                let css_key: String = format!("{CSS_CUSTOM_PROPERTY_PREFIX}{var_name}");
                 content.parse::<Token![:]>()?;
                 let var_value: CssVarValue = {
                     let expr: Expr = content.parse()?;
@@ -92,20 +92,24 @@ impl ToTokens for CssVarDef {
                         quote! { #param_name: #ty }
                     })
                     .collect();
-                let param_names: Vec<&Ident> =
-                    params.iter().map(|p: &CssVarParam| p.get_name()).collect();
+                let param_names: Vec<&Ident> = params
+                    .iter()
+                    .map(|param: &CssVarParam| param.get_name())
+                    .collect();
                 let css_string_parts: Vec<proc_macro2::TokenStream> = self
                     .get_vars()
                     .iter()
                     .map(|(key, value)| match value {
                         CssVarValue::Expr(expr) => {
-                            quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
+                            quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                         }
                     })
                     .collect();
+                let str_hyphen: &str = STR_HYPHEN;
+                let name_format: String = format!("{{}}{str_hyphen}{{}}");
                 tokens.extend(quote! {
                     #vis fn #name(#(#param_defs), *) -> ::euv::Css {
-                        let css = ::euv::Css::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)), *].join("-")), [#(#css_string_parts), *].concat(), vec![], vec![]);
+                        let css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#str_hyphen)), [#(#css_string_parts), *].concat(), vec![], vec![]);
                         css.inject_style();
                         css
                     }
@@ -126,9 +130,9 @@ impl ToTokens for CssVarDef {
                     for (key, value) in self.get_vars() {
                         let CssVarValue::Expr(expr) = value;
                         css_string.push_str(key);
-                        css_string.push_str(": ");
+                        css_string.push_str(CSS_PROP_SEPARATOR);
                         css_string.push_str(&expr_to_string(expr));
-                        css_string.push_str("; ");
+                        css_string.push_str(CSS_DECL_TERMINATOR);
                     }
                     tokens.extend(quote! {
                         #vis fn #fn_name_token() -> &'static ::euv::Css {
@@ -146,7 +150,7 @@ impl ToTokens for CssVarDef {
                         .iter()
                         .map(|(key, value)| match value {
                             CssVarValue::Expr(expr) => {
-                                quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
+                                quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                             }
                         })
                         .collect();

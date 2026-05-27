@@ -31,12 +31,12 @@ pub fn parse_class(input: TokenStream) -> TokenStream {
 pub(crate) fn expand_var_macros(expr: &Expr) -> proc_macro2::TokenStream {
     match expr {
         Expr::Macro(expr_macro) => {
-            if expr_macro.mac.path.is_ident("var") {
+            if expr_macro.mac.path.is_ident(VAR) {
                 let body_tokens: &proc_macro2::TokenStream = &expr_macro.mac.tokens;
                 let body_str: String = reconstruct_kebab_from_tokens(body_tokens);
-                let css_name: String = format!("var(--{})", body_str);
+                let css_name: String = format!("{CSS_VAR_PREFIX}{body_str}{CSS_VAR_SUFFIX}");
                 quote! { #css_name }
-            } else if expr_macro.mac.path.is_ident("format") {
+            } else if expr_macro.mac.path.is_ident(FORMAT_MACRO) {
                 let mac_tokens: &proc_macro2::TokenStream = &expr_macro.mac.tokens;
                 let expanded: proc_macro2::TokenStream = expand_var_macros_in_tokens(mac_tokens);
                 let path: &Path = &expr_macro.mac.path;
@@ -72,20 +72,20 @@ pub(crate) fn expand_var_macros_in_tokens(
     while let Some(token) = iter.next() {
         match &token {
             proc_macro2::TokenTree::Ident(ident)
-                if *ident == "var"
+                if *ident == VAR
                     && iter.peek().is_some_and(
-                        |t: &proc_macro2::TokenTree| matches!(t, proc_macro2::TokenTree::Punct(p) if p.as_char() == '!'),
+                        |token: &proc_macro2::TokenTree| matches!(token, proc_macro2::TokenTree::Punct(punct) if punct.as_char() == '!'),
                     ) =>
             {
                 iter.next();
                 if iter
                     .peek()
-                    .is_some_and(|t: &proc_macro2::TokenTree| matches!(t, proc_macro2::TokenTree::Group(_)))
+                    .is_some_and(|token: &proc_macro2::TokenTree| matches!(token, proc_macro2::TokenTree::Group(_)))
                 {
                     if let Some(proc_macro2::TokenTree::Group(group)) = iter.next() {
                         let inner: proc_macro2::TokenStream = group.stream();
                         let var_name: String = reconstruct_kebab_from_tokens(&inner);
-                        let css_name: String = format!("var(--{})", var_name);
+                        let css_name: String = format!("{CSS_VAR_PREFIX}{var_name}{CSS_VAR_SUFFIX}");
                         let expanded: proc_macro2::TokenStream = quote! { #css_name };
                         result.extend(expanded);
                     }
@@ -180,7 +180,7 @@ pub(crate) fn pseudo_blocks_to_tokens(
                 .iter()
                 .map(|(key, value)| match value {
                     ClassPropValue::Expr(expr) => {
-                        quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
+                        quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
                 })
                 .collect();
@@ -219,7 +219,7 @@ pub(crate) fn media_blocks_to_tokens(
                 .iter()
                 .map(|(key, value)| match value {
                     ClassPropValue::Expr(expr) => {
-                        quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " }
+                        quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
                 })
                 .collect();
@@ -247,13 +247,13 @@ pub(crate) fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> S
     let mut result: String = String::new();
     for block in pseudo_blocks {
         result.push_str(block.get_selector());
-        result.push_str(" { ");
+        result.push_str(CSS_RULE_OPEN);
         for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
             result.push_str(key);
-            result.push_str(": ");
+            result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(&expr_to_string(expr));
-            result.push_str("; ");
+            result.push_str(CSS_DECL_TERMINATOR);
         }
         result.push('}');
     }
@@ -272,15 +272,15 @@ pub(crate) fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> S
 pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> String {
     let mut result: String = String::new();
     for block in media_blocks {
-        result.push_str("@media ");
+        result.push_str(CSS_MEDIA_PREFIX);
         result.push_str(block.get_query());
-        result.push_str(" { ");
+        result.push_str(CSS_RULE_OPEN);
         for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
             result.push_str(key);
-            result.push_str(": ");
+            result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(&expr_to_string(expr));
-            result.push_str("; ");
+            result.push_str(CSS_DECL_TERMINATOR);
         }
         result.push('}');
     }
@@ -301,45 +301,45 @@ pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> Stri
 /// - `Option<&'static str>` - The CSS pseudo selector string if found, or `None`.
 pub(crate) fn lookup_pseudo_selector(keyword: &str) -> Option<&'static str> {
     match keyword {
-        "hover" => Some(":hover"),
-        "focus" => Some(":focus"),
-        "focus_within" => Some(":focus-within"),
-        "focus_visible" => Some(":focus-visible"),
-        "active" => Some(":active"),
-        "visited" => Some(":visited"),
-        "disabled" => Some(":disabled"),
-        "enabled" => Some(":enabled"),
-        "checked" => Some(":checked"),
-        "readonly" => Some(":read-only"),
-        "readwrite" => Some(":read-write"),
-        "required" => Some(":required"),
-        "optional" => Some(":optional"),
-        "valid" => Some(":valid"),
-        "invalid" => Some(":invalid"),
-        "in_range" => Some(":in-range"),
-        "out_of_range" => Some(":out-of-range"),
-        "placeholder_shown" => Some(":placeholder-shown"),
-        "first_child" => Some(":first-child"),
-        "last_child" => Some(":last-child"),
-        "only_child" => Some(":only-child"),
-        "first_of_type" => Some(":first-of-type"),
-        "last_of_type" => Some(":last-of-type"),
-        "only_of_type" => Some(":only-of-type"),
-        "root" => Some(":root"),
-        "empty" => Some(":empty"),
-        "target" => Some(":target"),
-        "link" => Some(":link"),
-        "any_link" => Some(":any-link"),
-        "before" => Some("::before"),
-        "after" => Some("::after"),
-        "first_line" => Some("::first-line"),
-        "first_letter" => Some("::first-letter"),
-        "selection" => Some("::selection"),
-        "placeholder" => Some("::placeholder"),
-        "backdrop" => Some("::backdrop"),
-        "marker" => Some("::marker"),
-        "spelling_error" => Some("::spelling-error"),
-        "grammar_error" => Some("::grammar-error"),
+        KEYWORD_HOVER => Some(PSEUDO_HOVER),
+        KEYWORD_FOCUS => Some(PSEUDO_FOCUS),
+        KEYWORD_FOCUS_WITHIN => Some(PSEUDO_FOCUS_WITHIN),
+        KEYWORD_FOCUS_VISIBLE => Some(PSEUDO_FOCUS_VISIBLE),
+        KEYWORD_ACTIVE => Some(PSEUDO_ACTIVE),
+        KEYWORD_VISITED => Some(PSEUDO_VISITED),
+        KEYWORD_DISABLED => Some(PSEUDO_DISABLED),
+        KEYWORD_ENABLED => Some(PSEUDO_ENABLED),
+        KEYWORD_CHECKED => Some(PSEUDO_CHECKED),
+        KEYWORD_READONLY => Some(PSEUDO_READONLY),
+        KEYWORD_READWRITE => Some(PSEUDO_READWRITE),
+        KEYWORD_REQUIRED => Some(PSEUDO_REQUIRED),
+        KEYWORD_OPTIONAL => Some(PSEUDO_OPTIONAL),
+        KEYWORD_VALID => Some(PSEUDO_VALID),
+        KEYWORD_INVALID => Some(PSEUDO_INVALID),
+        KEYWORD_IN_RANGE => Some(PSEUDO_IN_RANGE),
+        KEYWORD_OUT_OF_RANGE => Some(PSEUDO_OUT_OF_RANGE),
+        KEYWORD_PLACEHOLDER_SHOWN => Some(PSEUDO_PLACEHOLDER_SHOWN),
+        KEYWORD_FIRST_CHILD => Some(PSEUDO_FIRST_CHILD),
+        KEYWORD_LAST_CHILD => Some(PSEUDO_LAST_CHILD),
+        KEYWORD_ONLY_CHILD => Some(PSEUDO_ONLY_CHILD),
+        KEYWORD_FIRST_OF_TYPE => Some(PSEUDO_FIRST_OF_TYPE),
+        KEYWORD_LAST_OF_TYPE => Some(PSEUDO_LAST_OF_TYPE),
+        KEYWORD_ONLY_OF_TYPE => Some(PSEUDO_ONLY_OF_TYPE),
+        KEYWORD_ROOT => Some(PSEUDO_ROOT),
+        KEYWORD_EMPTY => Some(PSEUDO_EMPTY),
+        KEYWORD_TARGET => Some(PSEUDO_TARGET),
+        KEYWORD_LINK => Some(PSEUDO_LINK),
+        KEYWORD_ANY_LINK => Some(PSEUDO_ANY_LINK),
+        KEYWORD_BEFORE => Some(PSEUDO_BEFORE),
+        KEYWORD_AFTER => Some(PSEUDO_AFTER),
+        KEYWORD_FIRST_LINE => Some(PSEUDO_FIRST_LINE),
+        KEYWORD_FIRST_LETTER => Some(PSEUDO_FIRST_LETTER),
+        KEYWORD_SELECTION => Some(PSEUDO_SELECTION),
+        KEYWORD_PLACEHOLDER => Some(PSEUDO_PLACEHOLDER),
+        KEYWORD_BACKDROP => Some(PSEUDO_BACKDROP),
+        KEYWORD_MARKER => Some(PSEUDO_MARKER),
+        KEYWORD_SPELLING_ERROR => Some(PSEUDO_SPELLING_ERROR),
+        KEYWORD_GRAMMAR_ERROR => Some(PSEUDO_GRAMMAR_ERROR),
         _ => None,
     }
 }

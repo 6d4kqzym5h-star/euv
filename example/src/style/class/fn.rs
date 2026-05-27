@@ -2018,7 +2018,7 @@ class! {
         font-weight: "500";
         color: "#dc2626";
         margin-top: "8px";
-        padding: "6px 10px";
+        padding: "10px 10px 0px 10px";
         border-radius: "6px";
         background: "rgba(220, 38, 38, 0.08)";
         border: "1px solid rgba(220, 38, 38, 0.2)";

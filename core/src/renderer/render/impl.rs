@@ -328,7 +328,7 @@ impl Renderer {
         let child_nodes: NodeList = parent.child_nodes();
         let dom_child_count: u32 = child_nodes.length();
         for (new_index, new_child) in new_children.iter().enumerate() {
-            let new_key: &str = Self::get_node_key(new_child).unwrap_or("");
+            let new_key: &str = Self::get_node_key(new_child).unwrap_or_default();
             if let Some(&old_index) = old_key_map.get(new_key) {
                 reused_indices.insert(old_index);
                 let old_child: &VirtualNode = &old_children[old_index];
@@ -368,7 +368,9 @@ impl Renderer {
             }
             let _ = old_child;
         }
-        indices_to_remove.sort_unstable_by(|a: &usize, b: &usize| b.cmp(a));
+        indices_to_remove.sort_unstable_by(|left_index: &usize, right_index: &usize| {
+            right_index.cmp(left_index)
+        });
         for old_index in indices_to_remove {
             let mapped_dom_index: u32 = old_index as u32;
             if mapped_dom_index < parent.child_nodes().length()
@@ -504,14 +506,14 @@ impl Renderer {
                             }
                             let signal_addr: usize = signal.get_inner_addr();
                             let existing_addrs: String = element
-                                .get_attribute("data-euv-signal-addrs")
+                                .get_attribute(DATA_EUV_SIGNAL_ADDRS)
                                 .unwrap_or_default();
                             let updated_addrs: String = if existing_addrs.is_empty() {
                                 signal_addr.to_string()
                             } else {
-                                format!("{},{}", existing_addrs, signal_addr)
+                                format!("{existing_addrs}{SIGNAL_ADDRS_SEPARATOR}{signal_addr}")
                             };
-                            let _ = element.set_attribute("data-euv-signal-addrs", &updated_addrs);
+                            let _ = element.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated_addrs);
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
                             let signal_for_sub: Signal<String> = *signal;
@@ -573,8 +575,8 @@ impl Renderer {
                 text.into()
             }
             VirtualNode::Fragment(children) => {
-                let fragment: Element = document.create_element("slot").unwrap();
-                let _ = fragment.set_attribute("style", "display:contents");
+                let fragment: Element = document.create_element(FRAGMENT_TAG).unwrap();
+                let _ = fragment.set_attribute(ATTR_STYLE, FRAGMENT_STYLE);
                 for child in children {
                     let child_node: Node = self.create_dom_node_with_document(child, document);
                     fragment.append_child(&child_node).unwrap();
@@ -582,16 +584,16 @@ impl Renderer {
                 fragment.into()
             }
             VirtualNode::Dynamic(dynamic_node) => {
-                let placeholder: Element = document.create_element("div").unwrap();
-                let style: &str = "display: contents;";
-                let _ = placeholder.set_attribute("style", style);
+                let placeholder: Element =
+                    document.create_element(DYNAMIC_PLACEHOLDER_TAG).unwrap();
+                let _ = placeholder.set_attribute(ATTR_STYLE, DISPLAY_CONTENTS_STYLE);
                 let dynamic_id: usize = Self::assign_dynamic_id(&placeholder);
                 let initial_dom: Node =
                     self.setup_dynamic_node(dynamic_node, dynamic_id, &placeholder, true);
                 placeholder.append_child(&initial_dom).unwrap();
                 placeholder.into()
             }
-            VirtualNode::Empty => document.create_text_node("").into(),
+            VirtualNode::Empty => document.create_text_node(EMPTY_STRING).into(),
         }
     }
 
@@ -884,8 +886,8 @@ impl Renderer {
         {
             cleanup_dynamic_node(dynamic_id);
         }
-        if let Some(signal_addrs_str) = element.get_attribute("data-euv-signal-addrs") {
-            for addr_str in signal_addrs_str.split(',') {
+        if let Some(signal_addrs_str) = element.get_attribute(DATA_EUV_SIGNAL_ADDRS) {
+            for addr_str in signal_addrs_str.split(CHAR_SIGNAL_ADDRS_SEPARATOR) {
                 if let Ok(addr) = addr_str.parse::<usize>() {
                     clear_signal_listeners_by_addr(addr);
                 }
@@ -893,8 +895,8 @@ impl Renderer {
         }
         let child_nodes: NodeList = element.child_nodes();
         let length: u32 = child_nodes.length();
-        for i in 0..length {
-            if let Some(child) = child_nodes.get(i) {
+        for child_index in 0..length {
+            if let Some(child) = child_nodes.get(child_index) {
                 if let Some(child_element) = child.dyn_ref::<Element>() {
                     self.cleanup_dom_subtree(child_element);
                 } else if let Some(text) = child.dyn_ref::<Text>() {

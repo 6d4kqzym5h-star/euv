@@ -299,7 +299,7 @@ impl VirtualNode {
     /// - `Option<T>`- The parsed value, or `None` if not found or parsing fails.
     pub fn try_get_typed_prop<T>(&self, name: &str) -> Option<T>
     where
-        T: std::str::FromStr,
+        T: FromStr,
     {
         if let Self::Element { attributes, .. } = self {
             for attr in attributes {

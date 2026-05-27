@@ -171,7 +171,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
                 children.push(HtmlNode::Expr(expr));
             }
         } else {
-            return Err(content.error("unexpected token in HTML"));
+            return Err(content.error(ERR_UNEXPECTED_TOKEN_IN_HTML));
         }
     }
     Ok(children)
@@ -338,8 +338,8 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 /// - `proc_macro2::TokenStream` - The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
 pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-    for (i, (condition, body)) in html_attr_if.branches.iter().enumerate() {
-        match (i, condition) {
+    for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
+        match (branch_index, condition) {
             (0, Some(cond)) => {
                 let stripped_cond: &Expr = strip_braces_from_expr(cond);
                 let stripped_body: &Expr = strip_braces_from_expr(body);
@@ -504,7 +504,7 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
         HtmlAttrValue::Expr(expr) => {
             if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                 if is_component {
-                    let callback_name: String = key_str.replace('_', "-");
+                    let callback_name: String = key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN);
                     quote! {
                         ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
                     }
@@ -527,7 +527,7 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
         HtmlAttrValue::Style(props) => {
             let has_if: bool = props
                 .iter()
-                .any(|(_, v)| matches!(v, HtmlStylePropValue::If(_)));
+                .any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
             if has_if {
                 quote! { #value }
             } else {
@@ -560,7 +560,7 @@ pub(crate) fn style_value_to_attribute_value_tokens(
         HtmlAttrValue::Style(props) => {
             let has_if: bool = props
                 .iter()
-                .any(|(_, v)| matches!(v, HtmlStylePropValue::If(_)));
+                .any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
             if has_if {
                 quote! { #value }
             } else {

@@ -40,9 +40,13 @@ pub(crate) struct LimitedCounterProps {
 
 /// Props for the `callback_input` component.
 ///
-/// Demonstrates strongly-typed custom callback props.
+/// Demonstrates strongly-typed custom callback props with reactive value binding.
 #[derive(Data, New)]
 pub(crate) struct CallbackInputProps {
+    /// The reactive value signal bound to the input element.
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
+    pub(crate) value: Signal<String>,
     /// Optional callback when the input value changes.
     #[get(pub(crate))]
     #[set(pub(crate))]

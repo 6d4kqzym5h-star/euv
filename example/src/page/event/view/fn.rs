@@ -613,7 +613,7 @@ pub(crate) fn page_event() -> VirtualNode {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let first: Option<Touch> = touches.get(0);
-                            let info: String = format!("Start: {} touches at ({}, {})", touches.length(), first.as_ref().map(|t: &Touch| t.client_x()).unwrap_or(0), first.as_ref().map(|t: &Touch| t.client_y()).unwrap_or(0));
+                            let info: String = format!("Start: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or(0), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or(0));
                             touch_info.set(info);
                             Console::log(&format!("TouchStart: {} touches", touches.length()));
                         }
@@ -622,7 +622,7 @@ pub(crate) fn page_event() -> VirtualNode {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let first: Option<Touch> = touches.get(0);
-                            let info: String = format!("Move: {} touches at ({}, {})", touches.length(), first.as_ref().map(|t: &Touch| t.client_x()).unwrap_or(0), first.as_ref().map(|t: &Touch| t.client_y()).unwrap_or(0));
+                            let info: String = format!("Move: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or(0), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or(0));
                             touch_info.set(info);
                         }
                     }

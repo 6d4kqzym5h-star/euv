@@ -47,7 +47,8 @@ impl From<VirtualNode> for LimitedCounterProps {
 
 /// Implementation of strongly-typed props extraction for `CallbackInputProps`.
 ///
-/// Demonstrates extracting custom callbacks via `try_get_callback`.
+/// Demonstrates extracting custom callbacks via `try_get_callback`
+/// and reactive signal values via `try_get_signal_prop`.
 impl From<VirtualNode> for CallbackInputProps {
     /// Extracts typed props from a `VirtualNode`.
     ///
@@ -60,6 +61,9 @@ impl From<VirtualNode> for CallbackInputProps {
     /// - `Self` - The strongly-typed `CallbackInputProps`.
     fn from(node: VirtualNode) -> Self {
         Self {
+            value: node
+                .try_get_signal_prop("value")
+                .unwrap_or_else(|| Signal::create(node.try_get_prop("value").unwrap_or_default())),
             on_change: node.try_get_callback("on-change"),
             on_submit: node.try_get_callback("on-submit"),
             on_reset: node.try_get_callback("on-reset"),

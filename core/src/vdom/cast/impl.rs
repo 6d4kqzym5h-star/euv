@@ -151,7 +151,7 @@ impl IntoNode for bool {
 /// Converts a signal into a reactive text virtual node via `IntoNode`.
 impl<T> IntoNode for Signal<T>
 where
-    T: Clone + PartialEq + std::fmt::Display + 'static,
+    T: Clone + PartialEq + Display + 'static,
 {
     /// Converts this signal into a reactive text virtual node.
     ///
@@ -166,7 +166,7 @@ where
 /// Converts a signal into a reactive text node with listener wiring.
 impl<T> AsReactiveText for Signal<T>
 where
-    T: Clone + PartialEq + std::fmt::Display + 'static,
+    T: Clone + PartialEq + Display + 'static,
 {
     /// Creates a reactive text node that auto-updates when the signal changes.
     ///

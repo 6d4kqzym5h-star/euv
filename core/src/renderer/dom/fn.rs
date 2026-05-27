@@ -18,7 +18,7 @@ where
 {
     let node_ref: &Node = node.as_ref();
     let result: Result<JsValue, JsValue> =
-        Reflect::get(node_ref.as_ref(), &JsValue::from_str("isConnected"));
+        Reflect::get(node_ref.as_ref(), &JsValue::from_str(IS_CONNECTED));
     match result {
         Ok(value) => value.is_truthy(),
         Err(_) => false,
@@ -36,7 +36,10 @@ where
 ///
 /// - `bool` - `true` if the attribute is a boolean property, `false` otherwise.
 pub(crate) fn is_boolean_property(name: &str) -> bool {
-    matches!(name, "checked" | "disabled" | "selected" | "readonly")
+    matches!(
+        name,
+        ATTR_CHECKED | ATTR_DISABLED | ATTR_SELECTED | ATTR_READONLY
+    )
 }
 
 /// Removes or clears a DOM attribute/property, depending on the attribute name.
@@ -54,27 +57,27 @@ pub(crate) fn is_boolean_property(name: &str) -> bool {
 /// - `&Element` - The DOM element to modify.
 /// - `&str` - The name of the attribute or property to remove.
 pub(crate) fn remove_dom_attribute_or_property(element: &Element, name: &str) {
-    if name == "value" {
+    if name == ATTR_VALUE {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-            input.set_value("");
+            input.set_value(EMPTY_STRING);
             return;
         }
         if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-            textarea.set_value("");
+            textarea.set_value(EMPTY_STRING);
             return;
         }
         if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
-            select.set_value("");
+            select.set_value(EMPTY_STRING);
             return;
         }
     }
-    if name == "checked"
+    if name == ATTR_CHECKED
         && let Some(input) = element.dyn_ref::<HtmlInputElement>()
     {
         input.set_checked(false);
         return;
     }
-    if name == "disabled" {
+    if name == ATTR_DISABLED {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
             input.set_disabled(false);
             return;
@@ -92,13 +95,13 @@ pub(crate) fn remove_dom_attribute_or_property(element: &Element, name: &str) {
             return;
         }
     }
-    if name == "selected"
+    if name == ATTR_SELECTED
         && let Some(option) = element.dyn_ref::<HtmlOptionElement>()
     {
         option.set_selected(false);
         return;
     }
-    if name == "readonly" {
+    if name == ATTR_READONLY {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
             input.set_read_only(false);
             return;
@@ -125,7 +128,7 @@ pub(crate) fn remove_dom_attribute_or_property(element: &Element, name: &str) {
 /// - `&str` - The name of the attribute or property to set.
 /// - `&str` - The value to assign.
 pub(crate) fn set_dom_attribute_or_property(element: &Element, name: &str, value: &str) {
-    if name == "value" {
+    if name == ATTR_VALUE {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
             input.set_value(value);
             return;
@@ -139,43 +142,43 @@ pub(crate) fn set_dom_attribute_or_property(element: &Element, name: &str, value
             return;
         }
     }
-    if name == "checked"
+    if name == ATTR_CHECKED
         && let Some(input) = element.dyn_ref::<HtmlInputElement>()
     {
-        input.set_checked(value == "true");
+        input.set_checked(value == BOOL_TRUE);
         return;
     }
-    if name == "disabled" {
+    if name == ATTR_DISABLED {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-            input.set_disabled(value == "true");
+            input.set_disabled(value == BOOL_TRUE);
             return;
         }
         if let Some(button) = element.dyn_ref::<HtmlButtonElement>() {
-            button.set_disabled(value == "true");
+            button.set_disabled(value == BOOL_TRUE);
             return;
         }
         if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
-            select.set_disabled(value == "true");
+            select.set_disabled(value == BOOL_TRUE);
             return;
         }
         if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-            textarea.set_disabled(value == "true");
+            textarea.set_disabled(value == BOOL_TRUE);
             return;
         }
     }
-    if name == "selected"
+    if name == ATTR_SELECTED
         && let Some(option) = element.dyn_ref::<HtmlOptionElement>()
     {
-        option.set_selected(value == "true");
+        option.set_selected(value == BOOL_TRUE);
         return;
     }
-    if name == "readonly" {
+    if name == ATTR_READONLY {
         if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
-            input.set_read_only(value == "true");
+            input.set_read_only(value == BOOL_TRUE);
             return;
         }
         if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
-            textarea.set_read_only(value == "true");
+            textarea.set_read_only(value == BOOL_TRUE);
             return;
         }
     }

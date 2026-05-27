@@ -252,7 +252,7 @@ where
     /// - `AttributeValue` - An event attribute value wrapping this closure.
     fn into_callback_attribute(self) -> AttributeValue {
         AttributeValue::Event(NativeEventHandler::create(
-            NativeEventName::Other("callback".to_string()),
+            NativeEventName::Other(CALLBACK_EVENT_NAME.to_string()),
             self,
         ))
     }

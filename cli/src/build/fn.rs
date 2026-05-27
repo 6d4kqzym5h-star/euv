@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `Gitignore` - The compiled gitignore matcher.
 async fn build_gitignore(root: &PathBuf) -> Gitignore {
-    let gitignore_path: PathBuf = root.join(".gitignore");
+    let gitignore_path: PathBuf = root.join(GITIGNORE_FILE_NAME);
     let mut builder: GitignoreBuilder = GitignoreBuilder::new(root);
     let gitignore_exists: bool = metadata(&gitignore_path).await.is_ok();
     if gitignore_exists && let Some(error) = builder.add(&gitignore_path) {
@@ -46,10 +46,10 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
 fn extract_out_name(wasm_pack_args: &[String]) -> Option<String> {
     let mut iter = wasm_pack_args.iter();
     while let Some(arg) = iter.next() {
-        if arg == "--out-name" {
+        if arg == OUT_NAME_ARG {
             return iter.next().cloned();
         }
-        if let Some(value) = arg.strip_prefix("--out-name=") {
+        if let Some(value) = arg.strip_prefix(&format!("{OUT_NAME_ARG}=")) {
             return Some(value.to_string());
         }
     }
@@ -70,10 +70,10 @@ fn extract_out_name(wasm_pack_args: &[String]) -> Option<String> {
 fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
     let mut iter = wasm_pack_args.iter();
     while let Some(arg) = iter.next() {
-        if arg == "--out-dir" {
+        if arg == OUT_DIR_ARG {
             return iter.next().cloned();
         }
-        if let Some(value) = arg.strip_prefix("--out-dir=") {
+        if let Some(value) = arg.strip_prefix(&format!("{OUT_DIR_ARG}=")) {
             return Some(value.to_string());
         }
     }
@@ -97,7 +97,7 @@ pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
     let name: String = if let Some(out_name) = extract_out_name(&args.wasm_pack_args) {
         out_name
     } else {
-        let cargo_toml_path: PathBuf = args.crate_path.join("Cargo.toml");
+        let cargo_toml_path: PathBuf = args.crate_path.join(CARGO_TOML_FILE_NAME);
         let crate_name: String = cargo_toml_path
             .file_stem()
             .unwrap_or_default()
@@ -105,7 +105,7 @@ pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
             .to_string();
         crate_name
     };
-    format!("{name}.js")
+    format!("{name}{JS_EXTENSION}")
 }
 
 /// Resolves the JS import path for HTML generation.
@@ -142,7 +142,7 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
         }
     }
     components.push(out_name);
-    format!("./{}", components.join("/"))
+    format!("{RELATIVE_PATH_PREFIX}{}", components.join(PATH_SEPARATOR))
 }
 
 /// Resolves the output directory for wasm-pack artifacts.
@@ -160,7 +160,7 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
 ///
 /// - `PathBuf` - The resolved output directory (absolute if crate_path is joined).
 pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
-    let default_out_dir: String = format!("{}/pkg", args.www_dir);
+    let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
     let out_dir: String = extract_out_dir(&args.wasm_pack_args).unwrap_or(default_out_dir);
     let out_dir_path: PathBuf = PathBuf::from(out_dir);
     if out_dir_path.is_absolute() {
@@ -183,7 +183,7 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 ///
 /// - `Result<()>` - Indicates success or failure of the build.
 pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
-    let src_path: PathBuf = args.crate_path.join("src");
+    let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {}", error);
     }
@@ -208,8 +208,13 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
 ///
 /// - `&Path` - The pkg output directory to clean.
 pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
-    let unnecessary_extensions: &[&str] = &["d.ts"];
-    let unnecessary_names: &[&str] = &["package.json", "README.md", "LICENSE", ".gitignore"];
+    let unnecessary_extensions: &[&str] = &[D_TS_EXTENSION];
+    let unnecessary_names: &[&str] = &[
+        PACKAGE_JSON_FILE_NAME,
+        README_FILE_NAME,
+        LICENSE_FILE_NAME,
+        GITIGNORE_FILE_NAME,
+    ];
     let mut read_dir: ReadDir = match read_dir(pkg_dir).await {
         Ok(dir) => dir,
         Err(_) => {
@@ -233,9 +238,9 @@ pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
             .file_name()
             .unwrap_or_default()
             .to_string_lossy()
-            .ends_with(".d.ts")
+            .ends_with(D_TS_EXTENSION)
         {
-            "d.ts".to_string()
+            D_TS_EXTENSION.to_string()
         } else {
             extension
         };
@@ -269,7 +274,7 @@ pub(crate) async fn run_build_pipeline(
     args: &ModeArgs,
     reload_tx: Option<&broadcast::Sender<ReloadEvent>>,
 ) -> Result<String> {
-    let src_path: PathBuf = args.crate_path.join("src");
+    let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {}", error);
     }
@@ -322,7 +327,7 @@ async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
 /// - `Result<()>` - Indicates success or failure of the file watcher.
 pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
     let crate_path: PathBuf = state.args.crate_path.clone();
-    let src_path: PathBuf = crate_path.join("src");
+    let src_path: PathBuf = crate_path.join(SRC_DIR_NAME);
     let gitignore: Gitignore = build_gitignore(&crate_path).await;
     let (tx, mut rx): (Sender<Event>, Receiver<Event>) = channel(32);
     let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
@@ -392,12 +397,14 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 ///
 /// - `Result<()>` - Indicates success or failure of the wasm-pack build.
 pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
-    let default_out_dir: String = format!("{}/pkg", args.www_dir);
-    let mut command: Command = Command::new("wasm-pack");
-    command.arg("build").args(&args.wasm_pack_args);
+    let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
+    let mut command: Command = Command::new(WASM_PACK_COMMAND);
+    command
+        .arg(WASM_PACK_BUILD_SUBCOMMAND)
+        .args(&args.wasm_pack_args);
     let has_out_dir: bool = extract_out_dir(&args.wasm_pack_args).is_some();
     if !has_out_dir {
-        command.arg("--out-dir").arg(&default_out_dir);
+        command.arg(OUT_DIR_ARG).arg(&default_out_dir);
     }
     command.current_dir(&args.crate_path);
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -408,7 +415,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
         .chain(if has_out_dir {
             Vec::new()
         } else {
-            vec!["--out-dir".to_string(), default_out_dir]
+            vec![OUT_DIR_ARG.to_string(), default_out_dir]
         })
         .collect();
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
@@ -421,7 +428,12 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
                 error
             )
         })?;
-    log::info!("Running: wasm-pack build {} ...", display_args.join(" "));
+    log::info!(
+        "Running: {} {} {} ...",
+        WASM_PACK_COMMAND,
+        WASM_PACK_BUILD_SUBCOMMAND,
+        display_args.join(" ")
+    );
     let output: Output = command
         .output()
         .await
@@ -442,8 +454,8 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
 pub(crate) fn print_banner(action: Action, server_url: &str) {
     log::info!("euv v{}", env!("CARGO_PKG_VERSION"));
     let action_name: &str = match action {
-        Action::Run => "run",
-        Action::Build => "build",
+        Action::Run => ACTION_RUN,
+        Action::Build => ACTION_BUILD,
     };
     log::info!("Mode: {}", action_name);
     if action == Action::Run {
@@ -459,8 +471,8 @@ pub(crate) fn print_banner(action: Action, server_url: &str) {
 ///
 /// - `Result<()>` - Indicates success or failure of the formatting operation.
 pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
-    let which_output: Output = Command::new("hyperlane-cli")
-        .arg("--version")
+    let which_output: Output = Command::new(HYPERLANE_CLI_COMMAND)
+        .arg(VERSION_ARG)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
@@ -470,8 +482,8 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         })?;
     if !which_output.status.success() {
         log::info!("hyperlane-cli not found, installing via cargo install...");
-        let install_output: Output = Command::new("cargo")
-            .args(["install", "hyperlane-cli"])
+        let install_output: Output = Command::new(CARGO_COMMAND)
+            .args([CARGO_INSTALL_SUBCOMMAND, HYPERLANE_CLI_COMMAND])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()
@@ -485,8 +497,8 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         }
         log::info!("hyperlane-cli installed successfully");
     }
-    let fmt_output: Output = Command::new("hyperlane-cli")
-        .arg("fmt")
+    let fmt_output: Output = Command::new(HYPERLANE_CLI_COMMAND)
+        .arg(FMT_SUBCOMMAND)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()

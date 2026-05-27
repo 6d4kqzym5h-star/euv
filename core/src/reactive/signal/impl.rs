@@ -258,12 +258,12 @@ impl<T> SignalCell<T>
 where
     T: Clone + PartialEq + 'static,
 {
-    /// Creates a new empty `SignalCell` suitable for use in static contexts.
+    /// Creates a new `SignalCell` with no signal stored.
     ///
     /// # Returns
     ///
-    /// - `Self` - An empty `SignalCell` with no signal stored.
-    pub const fn empty() -> Self {
+    /// - `Self`: An empty `SignalCell` with `None` stored in the inner `UnsafeCell`.
+    pub const fn none() -> Self {
         Self {
             inner: UnsafeCell::new(None),
         }

@@ -80,7 +80,7 @@ impl Parse for HtmlNode {
             let expr: Expr = input.parse()?;
             return Ok(HtmlNode::Expr(expr));
         }
-        Err(input.error("expected an element, string literal, if, match, for, or expression"))
+        Err(input.error(ERR_EXPECTED_ELEMENT))
     }
 }
 
@@ -216,7 +216,10 @@ impl Parse for HtmlElement {
         let (tag, tag_name, is_ident_tag): (Ident, String, bool) = if input.peek(LitStr) {
             let literal: LitStr = input.parse()?;
             let tag_name: String = literal.value();
-            let tag: Ident = Ident::new(&tag_name.replace('-', "_"), literal.span());
+            let tag: Ident = Ident::new(
+                &tag_name.replace(CHAR_HYPHEN, STR_UNDERSCORE),
+                literal.span(),
+            );
             (tag, tag_name, false)
         } else {
             let tag: Ident = input.parse()?;
@@ -254,7 +257,9 @@ impl Parse for HtmlElement {
                 attributes.push((key, value));
             } else if content.peek(Ident) && (content.peek2(Colon) || content.peek2(Token![-])) {
                 let key_string: String = parse_kebab_name(&content)?;
-                let key_clean: &str = key_string.strip_prefix("r#").unwrap_or(&key_string);
+                let key_clean: &str = key_string
+                    .strip_prefix(RAW_IDENT_PREFIX)
+                    .unwrap_or(&key_string);
                 let key: Ident = Ident::new(key_clean, content.span());
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
@@ -272,7 +277,7 @@ impl Parse for HtmlElement {
                     children.push(HtmlNode::Expr(expr));
                 }
             } else {
-                return Err(content.error("unexpected token in HTML element"));
+                return Err(content.error(ERR_UNEXPECTED_TOKEN_IN_ELEMENT));
             }
         }
         let merged_attributes: Vec<(Ident, HtmlAttrValue)> = merge_same_key_attributes(attributes);
@@ -313,9 +318,9 @@ impl ToTokens for HtmlNode {
             }
             HtmlNode::If(html_if) => {
                 let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                for (i, (condition, body)) in html_if.get_branches().iter().enumerate() {
+                for (branch_index, (condition, body)) in html_if.get_branches().iter().enumerate() {
                     let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
-                    match (i, condition) {
+                    match (branch_index, condition) {
                         (0, Some(cond)) => {
                             let stripped_cond: &Expr = strip_braces_from_expr(cond);
                             if_chain.extend(quote! {
@@ -449,14 +454,14 @@ impl ToTokens for HtmlAttrValue {
                     let mut css_string: String = String::new();
                     for (key, value) in props {
                         if !css_string.is_empty() {
-                            css_string.push(' ');
+                            css_string.push(CHAR_SPACE);
                         }
-                        css_string.push_str(&key.replace('_', "-"));
-                        css_string.push_str(": ");
+                        css_string.push_str(&key.replace(CHAR_UNDERSCORE, STR_HYPHEN));
+                        css_string.push_str(CSS_PROP_SEPARATOR);
                         if let HtmlStylePropValue::Literal(literal_value) = value {
                             css_string.push_str(literal_value);
                         }
-                        css_string.push(';');
+                        css_string.push(CHAR_CSS_DECL_TERMINATOR);
                     }
                     tokens.extend(quote! {
                         #css_string.to_string()
@@ -523,7 +528,7 @@ impl ToTokens for HtmlElement {
             let key_str: String = key.to_string();
             let value_tokens: proc_macro2::TokenStream = match value {
                 HtmlAttrValue::Style(props) => {
-                    let has_if: bool = props.iter().any(|(_, v)| matches!(v, HtmlStylePropValue::If(_)));
+                    let has_if: bool = props.iter().any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
                     if has_if {
                         quote! { #value }
                     } else {
@@ -542,7 +547,7 @@ impl ToTokens for HtmlElement {
                 HtmlAttrValue::Expr(expr) => {
                     if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                         if is_component {
-                            let callback_name: String = key_str.replace('_', "-");
+                            let callback_name: String = key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN);
                             quote! {
                                 ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
                             }
@@ -562,13 +567,13 @@ impl ToTokens for HtmlElement {
             };
             let is_event: bool = key_str.starts_with(EVENT_ATTR_PREFIX);
             let raw_key: String = if is_component {
-                key_str.replace('_', "-")
+                key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
             } else if is_event {
                 key_str.clone()
             } else {
-                key_str.replace('_', "-")
+                key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
             };
-            let attr_name_str: String = raw_key.strip_prefix("r#").unwrap_or(&raw_key).to_string();
+            let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
             quote! {
                 ::euv::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
             }

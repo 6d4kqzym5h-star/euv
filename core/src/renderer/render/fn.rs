@@ -22,13 +22,13 @@ where
     init_event_delegation();
     let window: Window = window().expect("no global window exists");
     let document: Document = window.document().expect("should have a document");
-    let target: Element = if selector == "body" {
+    let target: Element = if selector == BODY_TAG {
         document.body().expect("document should have a body").into()
-    } else if let Some(id) = selector.strip_prefix('#') {
+    } else if let Some(id) = selector.strip_prefix(ID_SELECTOR_PREFIX) {
         document
             .get_element_by_id(id)
             .unwrap_or_else(|| panic!("no element found with id '{}'", id))
-    } else if let Some(class) = selector.strip_prefix('.') {
+    } else if let Some(class) = selector.strip_prefix(CLASS_SELECTOR_PREFIX) {
         document
             .get_elements_by_class_name(class)
             .item(0)

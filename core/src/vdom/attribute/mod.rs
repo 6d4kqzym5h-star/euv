@@ -1,3 +1,4 @@
+mod r#const;
 mod r#enum;
 mod r#fn;
 mod r#impl;
@@ -7,4 +8,4 @@ mod r#trait;
 
 pub use {r#enum::*, r#struct::*, r#trait::*};
 
-pub(crate) use {r#fn::*, r#static::*};
+pub(crate) use {r#const::*, r#fn::*, r#static::*};

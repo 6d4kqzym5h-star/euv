@@ -109,7 +109,7 @@ impl ServerHook for IndexRoute {
     async fn handle(self, _: &mut Stream, ctx: &mut Context) -> Status {
         let path_opt: Option<String> = ctx.try_get_route_param("path");
         let path: String = path_opt.unwrap_or_default();
-        if path.contains("..") || path.starts_with("/") || path.starts_with("\\") {
+        if path.contains("..") || path.starts_with('/') || path.starts_with('\\') {
             ctx.get_mut_response().set_status_code(403);
             return Status::Continue;
         }
@@ -120,7 +120,7 @@ impl ServerHook for IndexRoute {
                 return Status::Continue;
             }
         };
-        if path.is_empty() || path == "index.html" {
+        if path.is_empty() || path == INDEX_HTML_FILE_NAME {
             let html: String = state.html_content.read().await.clone();
             ctx.get_mut_response()
                 .set_body(&html)

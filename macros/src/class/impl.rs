@@ -52,7 +52,7 @@ impl Parse for ClassInput {
                     let keyword: Ident = forked.parse()?;
                     let keyword_str: String = keyword.to_string();
                     let is_extends: bool =
-                        forked.peek(Paren) && !keyword_str.starts_with("media") && {
+                        forked.peek(Paren) && !keyword_str.starts_with(KEYWORD_MEDIA) && {
                             let forked_extends_buffer = content.fork();
                             let _ = forked_extends_buffer.parse::<Ident>();
                             if forked_extends_buffer.peek(Paren) {
@@ -109,7 +109,8 @@ impl Parse for ClassInput {
                             properties: block_properties,
                         });
                         continue;
-                    } else if (keyword_str == "nth_child" || keyword_str == "nth_last_child")
+                    } else if (keyword_str == KEYWORD_NTH_CHILD
+                        || keyword_str == KEYWORD_NTH_LAST_CHILD)
                         && forked.peek(Paren)
                     {
                         let forked_nth_check = forked;
@@ -120,9 +121,11 @@ impl Parse for ClassInput {
                             let paren_content;
                             parenthesized!(paren_content in content);
                             let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
-                            let arg_str: String = arg_tokens.to_string().replace(' ', "");
-                            let selector: String =
-                                format!(":{}({})", keyword_str.replace('_', "-"), arg_str);
+                            let arg_str: String = arg_tokens.to_string().replace(CHAR_SPACE, "");
+                            let selector: String = format!(
+                                ":{keyword_kebab}({arg_str})",
+                                keyword_kebab = keyword_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
+                            );
                             let block_content;
                             braced!(block_content in content);
                             let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
@@ -143,7 +146,7 @@ impl Parse for ClassInput {
                             });
                             continue;
                         }
-                    } else if keyword_str == "media" && forked.peek(Paren) {
+                    } else if keyword_str == KEYWORD_MEDIA && forked.peek(Paren) {
                         let forked_media_check = forked;
                         let paren_content2;
                         parenthesized!(paren_content2 in forked_media_check);
@@ -157,7 +160,10 @@ impl Parse for ClassInput {
                                     lit: Lit::Str(literal_string),
                                     ..
                                 }) => literal_string.value(),
-                                _ => query_expr.to_token_stream().to_string().replace(' ', ""),
+                                _ => query_expr
+                                    .to_token_stream()
+                                    .to_string()
+                                    .replace(CHAR_SPACE, ""),
                             };
                             let block_content;
                             braced!(block_content in content);
@@ -229,8 +235,10 @@ impl ToTokens for ClassDef {
                         quote! { #param_name: #ty }
                     })
                     .collect();
-                let param_names: Vec<&Ident> =
-                    params.iter().map(|p: &ClassParam| p.get_name()).collect();
+                let param_names: Vec<&Ident> = params
+                    .iter()
+                    .map(|param: &ClassParam| param.get_name())
+                    .collect();
                 let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
                     .get_extends()
                     .iter()
@@ -238,20 +246,22 @@ impl ToTokens for ClassDef {
                         let parent_name: &Ident = parent.get_name();
                         let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
                         if parent_args.is_empty() {
-                            quote! { #parent_name().get_style().to_string() + " " }
+                            quote! { #parent_name().get_style().to_string() + #STR_SPACE }
                         } else {
-                            quote! { #parent_name(#(#parent_args), *).get_style().to_string() + " " }
+                            quote! { #parent_name(#(#parent_args), *).get_style().to_string() + #STR_SPACE }
                         }
                     })
                     .collect();
                 for (key, value) in self.get_properties() {
                     let ClassPropValue::Expr(expr) = value;
-                    all_css_parts.push(quote! { #key.to_string() + ": " + &(#expr) + "; " });
+                    all_css_parts.push(quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr) + #CSS_DECL_TERMINATOR });
                 }
                 let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
                     quote! { #class_name_str.to_string() }
                 } else {
-                    quote! { format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)), *].join("-")) }
+                    let str_hyphen: &str = STR_HYPHEN;
+                    let name_format: String = format!("{{}}{str_hyphen}{{}}");
+                    quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#str_hyphen)) }
                 };
                 if has_extra {
                     let pseudo_expr: proc_macro2::TokenStream =
@@ -301,9 +311,9 @@ impl ToTokens for ClassDef {
                     for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
                         css_string.push_str(key);
-                        css_string.push_str(": ");
+                        css_string.push_str(CSS_PROP_SEPARATOR);
                         css_string.push_str(&expr_to_string(expr));
-                        css_string.push_str("; ");
+                        css_string.push_str(CSS_DECL_TERMINATOR);
                     }
                     if has_extra {
                         let pseudo_static: String =
@@ -345,16 +355,16 @@ impl ToTokens for ClassDef {
                             let parent_name: &Ident = parent.get_name();
                             let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
                             if parent_args.is_empty() {
-                                quote! { #parent_name().get_style().to_string() + " " }
+                                quote! { #parent_name().get_style().to_string() + #STR_SPACE }
                             } else {
-                                quote! { #parent_name(#(#parent_args), *).get_style().to_string() + " " }
+                                quote! { #parent_name(#(#parent_args), *).get_style().to_string() + #STR_SPACE }
                             }
                         })
                         .collect();
                     for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
                         all_css_parts
-                            .push(quote! { #key.to_string() + ": " + &(#expr).to_string() + "; " });
+                            .push(quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
                     }
                     if has_extra {
                         let pseudo_expr: proc_macro2::TokenStream =

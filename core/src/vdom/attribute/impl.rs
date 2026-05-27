@@ -91,7 +91,7 @@ impl AttributeValue {
                     };
                     if !class_segment.is_empty() {
                         if !result.is_empty() {
-                            result.push(' ');
+                            result.push(CHAR_SPACE);
                         }
                         result.push_str(&class_segment);
                     }
@@ -114,7 +114,7 @@ impl AttributeValue {
                 };
                 if !class_segment.is_empty() {
                     if !result.is_empty() {
-                        result.push(' ');
+                        result.push(CHAR_SPACE);
                     }
                     result.push_str(&class_segment);
                 }
@@ -153,7 +153,7 @@ impl AttributeValue {
                     };
                     if !style_segment.is_empty() {
                         if !result.is_empty() {
-                            result.push(' ');
+                            result.push(CHAR_SPACE);
                         }
                         result.push_str(&style_segment);
                     }
@@ -172,7 +172,7 @@ impl AttributeValue {
                 };
                 if !style_segment.is_empty() {
                     if !result.is_empty() {
-                        result.push(' ');
+                        result.push(CHAR_SPACE);
                     }
                     result.push_str(&style_segment);
                 }
@@ -284,7 +284,7 @@ impl Style {
         V: AsRef<str>,
     {
         self.get_mut_properties().push(StyleProperty::new(
-            name.as_ref().replace('_', "-"),
+            name.as_ref().replace(CHAR_UNDERSCORE, STR_HYPHEN),
             value.as_ref().to_string(),
         ));
         self
@@ -298,7 +298,13 @@ impl Style {
     pub fn to_css_string(&self) -> String {
         self.get_properties()
             .iter()
-            .map(|style: &StyleProperty| format!("{}: {};", style.get_name(), style.get_value()))
+            .map(|style: &StyleProperty| {
+                format!(
+                    "{name}{CSS_PROP_SEPARATOR}{value}",
+                    name = style.get_name(),
+                    value = style.get_value()
+                )
+            })
             .collect::<Vec<String>>()
             .join(" ")
     }
@@ -321,12 +327,12 @@ impl Style {
         let mut result: String = String::new();
         for (key, value) in props {
             if !result.is_empty() {
-                result.push(' ');
+                result.push(CHAR_SPACE);
             }
-            result.push_str(&key.replace('_', "-"));
-            result.push_str(": ");
+            result.push_str(&key.replace(CHAR_UNDERSCORE, STR_HYPHEN));
+            result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(value);
-            result.push(';');
+            result.push(CHAR_CSS_DECL_TERMINATOR);
         }
         result
     }
@@ -363,15 +369,15 @@ impl Css {
         let mut rules: Vec<PseudoRule> = Vec::new();
         let mut remaining: &str = input;
         while !remaining.is_empty() {
-            let selector_end: Option<usize> = remaining.find(" { ");
+            let selector_end: Option<usize> = remaining.find(CSS_RULE_OPEN);
             let Some(selector_end_index) = selector_end else {
                 break;
             };
             let selector: &str = &remaining[..selector_end_index];
             let after_selector: &str = remaining[selector_end_index..]
-                .strip_prefix(" { ")
-                .unwrap_or("");
-            let style_end: Option<usize> = after_selector.find('}');
+                .strip_prefix(CSS_RULE_OPEN)
+                .unwrap_or_default();
+            let style_end: Option<usize> = after_selector.find(CHAR_CSS_RULE_CLOSE);
             let Some(style_end_index) = style_end else {
                 break;
             };
@@ -380,8 +386,8 @@ impl Css {
                 rules.push(PseudoRule::new(selector.to_string(), style.to_string()));
             }
             remaining = after_selector[style_end_index..]
-                .strip_prefix('}')
-                .unwrap_or("");
+                .strip_prefix(CHAR_CSS_RULE_CLOSE)
+                .unwrap_or_default();
         }
         rules
     }
@@ -403,19 +409,19 @@ impl Css {
         let mut rules: Vec<MediaRule> = Vec::new();
         let mut remaining: &str = input;
         while !remaining.is_empty() {
-            if !remaining.starts_with("@media ") {
+            if !remaining.starts_with(CSS_MEDIA_PREFIX) {
                 break;
             }
-            let after_prefix: &str = remaining.strip_prefix("@media ").unwrap_or("");
-            let query_end: Option<usize> = after_prefix.find(" { ");
+            let after_prefix: &str = remaining.strip_prefix(CSS_MEDIA_PREFIX).unwrap_or_default();
+            let query_end: Option<usize> = after_prefix.find(CSS_RULE_OPEN);
             let Some(query_end_index) = query_end else {
                 break;
             };
             let query: &str = &after_prefix[..query_end_index];
             let after_query: &str = after_prefix[query_end_index..]
-                .strip_prefix(" { ")
-                .unwrap_or("");
-            let style_end: Option<usize> = after_query.find('}');
+                .strip_prefix(CSS_RULE_OPEN)
+                .unwrap_or_default();
+            let style_end: Option<usize> = after_query.find(CHAR_CSS_RULE_CLOSE);
             let Some(style_end_index) = style_end else {
                 break;
             };
@@ -424,8 +430,8 @@ impl Css {
                 rules.push(MediaRule::new(query.to_string(), style.to_string()));
             }
             remaining = after_query[style_end_index..]
-                .strip_prefix('}')
-                .unwrap_or("");
+                .strip_prefix(CHAR_CSS_RULE_CLOSE)
+                .unwrap_or_default();
         }
         rules
     }
@@ -446,28 +452,32 @@ impl Css {
         if !Self::mark_injected(self.get_name().clone()) {
             return;
         }
-        let class_rule: String = format!(".{} {{ {} }}", self.get_name(), self.get_style());
+        let class_rule: String = format!(
+            "{CHAR_CSS_CLASS_PREFIX}{} {{ {} }}",
+            self.get_name(),
+            self.get_style()
+        );
         let mut css_text: String = class_rule;
         for pseudo_rule in self.get_pseudo_rules() {
             if !pseudo_rule.get_style().is_empty() {
                 let pseudo_rule_str: String = format!(
-                    ".{}{} {{ {} }}",
+                    "{CHAR_CSS_CLASS_PREFIX}{}{} {{ {} }}",
                     self.get_name(),
                     pseudo_rule.get_selector(),
                     pseudo_rule.get_style()
                 );
-                css_text = format!("{}\n{}", css_text, pseudo_rule_str);
+                css_text = format!("{css_text}\n{pseudo_rule_str}");
             }
         }
         for media_rule in self.get_media_rules() {
             if !media_rule.get_query().is_empty() {
                 let media_rule_str: String = format!(
-                    "@media {} {{ .{} {{ {} }} }}",
+                    "@media {} {{ {CHAR_CSS_CLASS_PREFIX}{} {{ {} }} }}",
                     media_rule.get_query(),
                     self.get_name(),
                     media_rule.get_style()
                 );
-                css_text = format!("{}\n{}", css_text, media_rule_str);
+                css_text = format!("{css_text}\n{media_rule_str}");
             }
         }
         Self::append_css(&css_text);
@@ -503,7 +513,7 @@ impl Css {
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
     fn append_css(css_text: &str) {
-        let style_id: &str = "euv-css-injected";
+        let style_id: &str = EUV_CSS_INJECTED_ID;
         let document: Document = window()
             .expect("no global window exists")
             .document()
@@ -512,7 +522,7 @@ impl Css {
             Some(existing_element) => existing_element.dyn_into::<HtmlStyleElement>().unwrap(),
             None => {
                 let style_element_from_id: HtmlStyleElement = document
-                    .create_element("style")
+                    .create_element(STYLE_TAG)
                     .unwrap()
                     .dyn_into::<HtmlStyleElement>()
                     .unwrap();
@@ -553,7 +563,7 @@ impl Css {
 ///
 /// This enables `format!("{}", css)` to produce the class name string,
 /// which is required for reactive `if` conditions in `class:` attributes.
-impl std::fmt::Display for Css {
+impl Display for Css {
     /// Formats the CSS class as its name string.
     ///
     /// # Arguments
@@ -562,8 +572,8 @@ impl std::fmt::Display for Css {
     ///
     /// # Returns
     ///
-    /// - `std::fmt::Result` - The formatting result.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.get_name())
+    /// - `fmt::Result` - The formatting result.
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        write!(formatter, "{class_name}", class_name = self.get_name())
     }
 }

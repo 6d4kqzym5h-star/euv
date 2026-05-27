@@ -53,7 +53,7 @@ pub(crate) async fn generate_html(
     let html: String = template
         .replace(IMPORT_PATH_PLACEHOLDER, import_path)
         .replace(RELOAD_ROUTE_PLACEHOLDER, RELOAD_ROUTE);
-    let index_path: PathBuf = www_dir.join("index.html");
+    let index_path: PathBuf = www_dir.join(INDEX_HTML_FILE_NAME);
     create_dir_all(www_dir)
         .await
         .map_err(|error: io::Error| anyhow!("Failed to create static directory: {}", error))?;
@@ -73,13 +73,15 @@ pub(crate) async fn generate_html(
 ///
 /// - `PathBuf` - The resolved www directory containing `index.html`.
 pub(crate) async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
-    if metadata(www_dir.join("index.html")).await.is_ok() {
+    if metadata(www_dir.join(INDEX_HTML_FILE_NAME)).await.is_ok() {
         return www_dir.to_path_buf();
     }
-    let parent_name: Option<&str> = www_dir.file_name().and_then(|n: &ffi::OsStr| n.to_str());
+    let parent_name: Option<&str> = www_dir
+        .file_name()
+        .and_then(|file_name_os_str: &ffi::OsStr| file_name_os_str.to_str());
     if let Some(name) = parent_name {
         let nested: PathBuf = www_dir.join(name);
-        if metadata(nested.join("index.html")).await.is_ok() {
+        if metadata(nested.join(INDEX_HTML_FILE_NAME)).await.is_ok() {
             return nested;
         }
     }

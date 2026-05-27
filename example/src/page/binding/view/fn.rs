@@ -120,6 +120,7 @@ pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
 #[component]
 pub(crate) fn callback_input(props: VirtualNode) -> VirtualNode {
     let CallbackInputProps {
+        value,
         on_change,
         on_submit,
         on_reset,
@@ -143,6 +144,7 @@ pub(crate) fn callback_input(props: VirtualNode) -> VirtualNode {
                     r#type: "text"
                     autocomplete: "off"
                     placeholder: "Type something..."
+                    value: value
                     class: c_form_input_no_transition()
                     oninput: on_change
                 }
@@ -544,6 +546,7 @@ pub(crate) fn page_component_binding() -> VirtualNode {
                     }
                 }
                 callback_input {
+                    value: callback_text
                     on_change: custom_on_change(callback_state.get_text_value(), callback_state.get_last_event(), "on_change".to_string())
                     on_submit: custom_on_submit(callback_state.get_last_event(), "on_submit".to_string())
                     on_reset: custom_on_reset(callback_state.get_text_value(), callback_state.get_last_event(), "on_reset".to_string())

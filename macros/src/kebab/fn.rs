@@ -20,9 +20,12 @@ pub(crate) fn parse_ident_segment(input: ParseStream) -> syn::Result<String> {
     match token_tree {
         proc_macro2::TokenTree::Ident(ident) => {
             let raw_name: String = ident.to_string();
-            Ok(raw_name.strip_prefix("r#").unwrap_or(&raw_name).to_string())
+            Ok(raw_name
+                .strip_prefix(RAW_IDENT_PREFIX)
+                .unwrap_or(&raw_name)
+                .to_string())
         }
-        _ => Err(input.error("expected identifier")),
+        _ => Err(input.error(ERR_EXPECTED_IDENTIFIER)),
     }
 }
 
@@ -57,7 +60,7 @@ pub(crate) fn parse_kebab_name(input: ParseStream) -> syn::Result<String> {
     let mut name: String = String::new();
     while input.peek(Token![-]) {
         input.parse::<Token![-]>()?;
-        name.push('-');
+        name.push(CHAR_HYPHEN);
     }
     if !input.is_empty() && !input.peek(Token![:]) {
         let first_segment: String = parse_ident_segment(input)?;
@@ -65,7 +68,7 @@ pub(crate) fn parse_kebab_name(input: ParseStream) -> syn::Result<String> {
     }
     while input.peek(Token![-]) {
         input.parse::<Token![-]>()?;
-        name.push('-');
+        name.push(CHAR_HYPHEN);
         let next_segment: String = parse_ident_segment(input)?;
         name.push_str(&next_segment);
     }
@@ -102,12 +105,14 @@ pub(crate) fn reconstruct_kebab_from_tokens(tokens: &proc_macro2::TokenStream) -
         match token {
             proc_macro2::TokenTree::Ident(ident) => {
                 let raw_name: String = ident.to_string();
-                let clean_name: String =
-                    raw_name.strip_prefix("r#").unwrap_or(&raw_name).to_string();
+                let clean_name: String = raw_name
+                    .strip_prefix(RAW_IDENT_PREFIX)
+                    .unwrap_or(&raw_name)
+                    .to_string();
                 result.push_str(&clean_name);
             }
-            proc_macro2::TokenTree::Punct(punct) if punct.as_char() == '-' => {
-                result.push('-');
+            proc_macro2::TokenTree::Punct(punct) if punct.as_char() == CHAR_HYPHEN => {
+                result.push(CHAR_HYPHEN);
             }
             proc_macro2::TokenTree::Group(group) => {
                 let inner: String = reconstruct_kebab_from_tokens(&group.stream());

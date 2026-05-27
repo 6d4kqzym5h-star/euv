@@ -21,3 +21,34 @@ pub(crate) const ATTR_KEY_CHILDREN: &str = "children";
 
 /// Prefix for event handler attribute keys (e.g., `onclick`, `onchange`).
 pub(crate) const EVENT_ATTR_PREFIX: &str = "on";
+
+/// The Rust raw identifier prefix.
+pub(crate) const RAW_IDENT_PREFIX: &str = "r#";
+
+/// The hyphen character used in kebab-case names and CSS property conversion.
+pub(crate) const CHAR_HYPHEN: char = '-';
+
+/// The hyphen string used for replacing underscores in kebab-case conversion.
+pub(crate) const STR_HYPHEN: &str = "-";
+
+/// The underscore character, part of Rust identifiers.
+pub(crate) const CHAR_UNDERSCORE: char = '_';
+
+/// The underscore string used for replacing hyphens in Rust identifier conversion.
+pub(crate) const STR_UNDERSCORE: &str = "_";
+
+/// The space character used in CSS string formatting.
+pub(crate) const CHAR_SPACE: char = ' ';
+
+/// The CSS declaration terminator character.
+pub(crate) const CHAR_CSS_DECL_TERMINATOR: char = ';';
+
+/// Error message when HTML root content is not a valid element or expression.
+pub(crate) const ERR_EXPECTED_ELEMENT: &str =
+    "expected an element, string literal, if, match, for, or expression";
+
+/// Error message when an unexpected token is encountered inside an HTML element.
+pub(crate) const ERR_UNEXPECTED_TOKEN_IN_ELEMENT: &str = "unexpected token in HTML element";
+
+/// Error message when an unexpected token is encountered in HTML children.
+pub(crate) const ERR_UNEXPECTED_TOKEN_IN_HTML: &str = "unexpected token in HTML";

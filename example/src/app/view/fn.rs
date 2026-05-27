@@ -17,7 +17,7 @@ pub(crate) fn nav_item(route_signal: Signal<String>, label: &str, target: &str) 
     let is_active: bool = current_route_value == target;
     html! {
         a {
-            href: format!("#{}", target_string)
+            href: format!("#{target_string}")
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
             onclick: link_handler(target_string)
             label
@@ -49,7 +49,7 @@ fn mobile_nav_item(
     let nav_target: String = target_string.clone();
     html! {
         a {
-            href: format!("#{}", target_string)
+            href: format!("#{target_string}")
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
             onclick: move |_event: Event| {
                 navigate(&nav_target);
@@ -175,7 +175,7 @@ fn desktop_layout(
                     button {
                         class: c_nav_theme_button()
                         onclick: toggle_theme(theme_signal)
-                        if { theme_signal.get() == "dark" } {
+                        if { theme_signal.get() == THEME_DARK } {
                             "☀"
                         } else {
                             "🌙"
@@ -260,7 +260,7 @@ fn mobile_layout(
                 button {
                     class: c_mobile_menu_button()
                     onclick: toggle_theme(theme_signal)
-                    if { theme_signal.get() == "dark" } {
+                    if { theme_signal.get() == THEME_DARK } {
                         "☀"
                     } else {
                         "🌙"
@@ -332,7 +332,7 @@ fn mobile_layout(
                         button {
                             class: c_nav_theme_button()
                             onclick: toggle_theme(theme_signal)
-                            if { theme_signal.get() == "dark" } {
+                            if { theme_signal.get() == THEME_DARK } {
                                 "☀"
                             } else {
                                 "🌙"

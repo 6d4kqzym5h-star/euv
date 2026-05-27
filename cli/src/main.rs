@@ -12,7 +12,9 @@ mod server;
 use {build::*, fmt::*, logger::*, server::*};
 
 use std::{
-    ffi, io,
+    ffi,
+    fmt::Arguments,
+    io,
     net::SocketAddr,
     path::{Component, Path, PathBuf},
     process::{Output, Stdio},
@@ -147,9 +149,9 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
                 .unwrap_or(&crate_path_str),
         );
     }
-    let www_route_prefix: String = args.www_dir.replace('\\', "/");
+    let www_route_prefix: String = args.www_dir.replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD);
     let addr: SocketAddr = SocketAddr::from(([127, 0, 0, 1], args.port));
-    let server_url: String = format!("http://{}/{}/index.html", addr, www_route_prefix);
+    let server_url: String = format!("http://{addr}/{www_route_prefix}/{INDEX_HTML_FILE_NAME}");
     print_banner(Action::Run, &server_url);
     let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
@@ -186,7 +188,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     server.server_config(server_config);
     server.request_middleware::<RequestMiddleware>();
     server.response_middleware::<ResponseMiddleware>();
-    server.route::<IndexRoute>(format!("{}/{{path:.*}}", www_route_prefix));
+    server.route::<IndexRoute>(format!("{www_route_prefix}/{{path:.*}}"));
     server.route::<ReloadRoute>(RELOAD_ROUTE);
     if let Err(error) = set_global_state(Arc::clone(&state)) {
         log::error!("Failed to set global state: {}", error);

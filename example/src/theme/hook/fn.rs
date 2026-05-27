@@ -15,22 +15,29 @@ use crate::*;
 ///
 /// - `ThemeState` - The reactive theme state containing the theme signal and root class signal.
 pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
-    let theme: Signal<String> = use_signal(|| "light".to_string());
+    let theme: Signal<String> = use_signal(|| THEME_LIGHT.to_string());
     let initial_mobile: bool = mobile_signal.get();
     let initial_root: &'static str = if initial_mobile {
         c_mobile_app_root().get_name()
     } else {
         c_app_root().get_name()
     };
-    let root_class: Signal<String> =
-        use_signal(|| format!("{} {}", initial_root, theme_class_name("light")));
+    let root_class: Signal<String> = use_signal(|| {
+        format!(
+            "{initial_root} {theme_class}",
+            theme_class = theme_class_name(THEME_LIGHT)
+        )
+    });
     watch!(mobile_signal, theme, |mobile, theme_value| {
         let root: &'static str = if mobile {
             c_mobile_app_root().get_name()
         } else {
             c_app_root().get_name()
         };
-        root_class.set(format!("{} {}", root, theme_class_name(&theme_value)));
+        root_class.set(format!(
+            "{root} {theme_class}",
+            theme_class = theme_class_name(&theme_value)
+        ));
     });
     ThemeState { theme, root_class }
 }
@@ -47,10 +54,10 @@ pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
 pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> NativeEventHandler {
     NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
         let current: String = theme_signal.get();
-        if current == "light" {
-            theme_signal.set("dark".to_string());
+        if current == THEME_LIGHT {
+            theme_signal.set(THEME_DARK.to_string());
         } else {
-            theme_signal.set("light".to_string());
+            theme_signal.set(THEME_LIGHT.to_string());
         }
     })
 }
@@ -65,7 +72,7 @@ pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> NativeEventHandler {
 ///
 /// - `&'static str` - The CSS class name for the theme.
 pub(crate) fn theme_class_name(theme: &str) -> &'static str {
-    if theme == "dark" {
+    if theme == THEME_DARK {
         c_theme_dark().get_name()
     } else {
         c_theme_light().get_name()

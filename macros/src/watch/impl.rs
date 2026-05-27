@@ -43,9 +43,7 @@ impl Parse for WatchInput {
             body.push(stmt);
         }
         if signals.len() != param_names.len() {
-            return Err(input.error(
-                "the number of signal expressions must match the number of closure parameters",
-            ));
+            return Err(input.error(ERR_SIGNAL_PARAM_MISMATCH));
         }
         Ok(Self {
             signals,
@@ -86,7 +84,12 @@ impl ToTokens for WatchInput {
     /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let signal_clones: Vec<Ident> = (0..self.get_signals().len())
-            .map(|i: usize| Ident::new(&format!("__euv_watch_signal_{}", i), Span::call_site()))
+            .map(|signal_index: usize| {
+                Ident::new(
+                    &format!("{WATCH_SIGNAL_PREFIX}{}", signal_index),
+                    Span::call_site(),
+                )
+            })
             .collect();
         let signal_exprs: &Vec<Expr> = self.get_signals();
         let param_names: &Vec<Ident> = self.get_param_names();
@@ -101,7 +104,7 @@ impl ToTokens for WatchInput {
         let all_gets: Vec<proc_macro2::TokenStream> = signal_clones
             .iter()
             .zip(param_names.iter())
-            .map(|(sc, param)| quote! { let #param = #sc.get(); })
+            .map(|(signal_clone, param)| quote! { let #param = #signal_clone.get(); })
             .collect();
         let subscribe_calls: Vec<proc_macro2::TokenStream> = signal_clones
             .iter()

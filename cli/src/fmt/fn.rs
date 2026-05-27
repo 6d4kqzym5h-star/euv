@@ -45,50 +45,56 @@ fn format_euv_macros(source: &str) -> String {
     let mut result: String = String::new();
     let chars: Vec<char> = source.chars().collect();
     let len: usize = chars.len();
-    let mut i: usize = 0;
-    while i < len {
-        if is_euv_macro_start(&chars, i, len) {
-            let macro_name_end: usize = find_macro_name_end(&chars, i, len);
-            let name: String = chars[i..macro_name_end].iter().collect::<String>();
+    let mut position: usize = 0;
+    while position < len {
+        if is_euv_macro_start(&chars, position, len) {
+            let macro_name_end: usize = find_macro_name_end(&chars, position, len);
+            let name: String = chars[position..macro_name_end].iter().collect::<String>();
             result.push_str(&name);
-            i = macro_name_end;
-            i = skip_whitespace_and_comments(&chars, i, len, &mut result);
-            if i < len && chars[i] == '!' {
-                result.push('!');
-                i += 1;
-                i = skip_whitespace_and_comments(&chars, i, len, &mut result);
-                if i < len && chars[i] == '{' {
-                    let (body_content, end_pos) = extract_brace_content(&chars, i);
+            position = macro_name_end;
+            position = skip_whitespace_and_comments(&chars, position, len, &mut result);
+            if position < len && chars[position] == CHAR_MACRO_BANG {
+                result.push(CHAR_MACRO_BANG);
+                position += 1;
+                position = skip_whitespace_and_comments(&chars, position, len, &mut result);
+                if position < len && chars[position] == CHAR_BRACE_LEFT {
+                    let (body_content, end_pos) = extract_brace_content(&chars, position);
                     let formatted_body: String = format_macro_body(&body_content);
-                    result.push('{');
+                    result.push(CHAR_BRACE_LEFT);
                     result.push_str(&formatted_body);
-                    result.push('}');
-                    i = end_pos;
+                    result.push(CHAR_BRACE_RIGHT);
+                    position = end_pos;
                     continue;
                 }
             }
             continue;
         }
-        if chars[i] == '"' || chars[i] == '\'' {
-            let (literal, end_pos) = extract_string_literal(&chars, i, len);
+        if chars[position] == CHAR_DOUBLE_QUOTE || chars[position] == CHAR_SINGLE_QUOTE {
+            let (literal, end_pos) = extract_string_literal(&chars, position, len);
             result.push_str(&literal);
-            i = end_pos;
+            position = end_pos;
             continue;
         }
-        if i + 1 < len && chars[i] == '/' && chars[i + 1] == '/' {
-            let (comment, end_pos) = extract_line_comment(&chars, i, len);
+        if position + 1 < len
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_SLASH_FORWARD
+        {
+            let (comment, end_pos) = extract_line_comment(&chars, position, len);
             result.push_str(&comment);
-            i = end_pos;
+            position = end_pos;
             continue;
         }
-        if i + 1 < len && chars[i] == '/' && chars[i + 1] == '*' {
-            let (comment, end_pos) = extract_block_comment(&chars, i, len);
+        if position + 1 < len
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_ASTERISK
+        {
+            let (comment, end_pos) = extract_block_comment(&chars, position, len);
             result.push_str(&comment);
-            i = end_pos;
+            position = end_pos;
             continue;
         }
-        result.push(chars[i]);
-        i += 1;
+        result.push(chars[position]);
+        position += 1;
     }
     result
 }
@@ -159,7 +165,7 @@ fn is_raw_prefix(chars: &[char], pos: usize) -> bool {
     if pos < 2 {
         return false;
     }
-    chars[pos - 2] == 'r' && chars[pos - 1] == '#'
+    chars[pos - 2] == CHAR_LETTER_R && chars[pos - 1] == CHAR_HASH
 }
 
 /// Checks if a character can be part of a Rust identifier.
@@ -171,8 +177,8 @@ fn is_raw_prefix(chars: &[char], pos: usize) -> bool {
 /// # Returns
 ///
 /// - `bool`- `true` if the character is alphanumeric or underscore.
-fn is_ident_char(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_'
+fn is_ident_char(character: char) -> bool {
+    character.is_alphanumeric() || character == CHAR_UNDERSCORE
 }
 
 /// Skips whitespace and comments, preserving them in the output.
@@ -197,11 +203,17 @@ fn skip_whitespace_and_comments(
         if chars[pos].is_whitespace() {
             result.push(chars[pos]);
             pos += 1;
-        } else if pos + 1 < len && chars[pos] == '/' && chars[pos + 1] == '/' {
+        } else if pos + 1 < len
+            && chars[pos] == CHAR_SLASH_FORWARD
+            && chars[pos + 1] == CHAR_SLASH_FORWARD
+        {
             let (comment, end_pos) = extract_line_comment(chars, pos, len);
             result.push_str(&comment);
             pos = end_pos;
-        } else if pos + 1 < len && chars[pos] == '/' && chars[pos + 1] == '*' {
+        } else if pos + 1 < len
+            && chars[pos] == CHAR_SLASH_FORWARD
+            && chars[pos + 1] == CHAR_ASTERISK
+        {
             let (comment, end_pos) = extract_block_comment(chars, pos, len);
             result.push_str(&comment);
             pos = end_pos;
@@ -227,33 +239,39 @@ fn skip_whitespace_and_comments(
 /// - `(String, usize)` - The content including braces and the position after the closing `}`.
 fn extract_brace_block(chars: &[char], start: usize) -> (String, usize) {
     let mut depth: i32 = 0;
-    let mut i: usize = start;
-    while i < chars.len() {
-        if chars[i] == '"' || chars[i] == '\'' {
-            let (_, end) = extract_string_literal(chars, i, chars.len());
-            i = end;
+    let mut position: usize = start;
+    while position < chars.len() {
+        if chars[position] == CHAR_DOUBLE_QUOTE || chars[position] == CHAR_SINGLE_QUOTE {
+            let (_, end) = extract_string_literal(chars, position, chars.len());
+            position = end;
             continue;
         }
-        if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '/' {
-            let (_, end) = extract_line_comment(chars, i, chars.len());
-            i = end;
+        if position + 1 < chars.len()
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_SLASH_FORWARD
+        {
+            let (_, end) = extract_line_comment(chars, position, chars.len());
+            position = end;
             continue;
         }
-        if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '*' {
-            let (_, end) = extract_block_comment(chars, i, chars.len());
-            i = end;
+        if position + 1 < chars.len()
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_ASTERISK
+        {
+            let (_, end) = extract_block_comment(chars, position, chars.len());
+            position = end;
             continue;
         }
-        if chars[i] == '{' {
+        if chars[position] == CHAR_BRACE_LEFT {
             depth += 1;
-        } else if chars[i] == '}' {
+        } else if chars[position] == CHAR_BRACE_RIGHT {
             depth -= 1;
             if depth == 0 {
-                let content: String = chars[start..=i].iter().collect();
-                return (content, i + 1);
+                let content: String = chars[start..=position].iter().collect();
+                return (content, position + 1);
             }
         }
-        i += 1;
+        position += 1;
     }
     let content: String = chars[start..].iter().collect();
     (content, chars.len())
@@ -274,37 +292,43 @@ fn extract_brace_block(chars: &[char], start: usize) -> (String, usize) {
 /// - `(String, usize)` - The content inside the braces and the position after the closing `}`.
 fn extract_brace_content(chars: &[char], start: usize) -> (String, usize) {
     let mut depth: i32 = 0;
-    let mut i: usize = start;
+    let mut position: usize = start;
     let mut content_start: usize = start + 1;
-    while i < chars.len() {
-        if chars[i] == '"' || chars[i] == '\'' {
-            let (_, end) = extract_string_literal(chars, i, chars.len());
-            i = end;
+    while position < chars.len() {
+        if chars[position] == CHAR_DOUBLE_QUOTE || chars[position] == CHAR_SINGLE_QUOTE {
+            let (_, end) = extract_string_literal(chars, position, chars.len());
+            position = end;
             continue;
         }
-        if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '/' {
-            let (_, end) = extract_line_comment(chars, i, chars.len());
-            i = end;
+        if position + 1 < chars.len()
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_SLASH_FORWARD
+        {
+            let (_, end) = extract_line_comment(chars, position, chars.len());
+            position = end;
             continue;
         }
-        if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '*' {
-            let (_, end) = extract_block_comment(chars, i, chars.len());
-            i = end;
+        if position + 1 < chars.len()
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_ASTERISK
+        {
+            let (_, end) = extract_block_comment(chars, position, chars.len());
+            position = end;
             continue;
         }
-        if chars[i] == '{' {
+        if chars[position] == CHAR_BRACE_LEFT {
             if depth == 0 {
-                content_start = i + 1;
+                content_start = position + 1;
             }
             depth += 1;
-        } else if chars[i] == '}' {
+        } else if chars[position] == CHAR_BRACE_RIGHT {
             depth -= 1;
             if depth == 0 {
-                let content: String = chars[content_start..i].iter().collect();
-                return (content, i + 1);
+                let content: String = chars[content_start..position].iter().collect();
+                return (content, position + 1);
             }
         }
-        i += 1;
+        position += 1;
     }
     let content: String = chars[content_start..].iter().collect();
     (content, chars.len())
@@ -325,23 +349,23 @@ fn extract_brace_content(chars: &[char], start: usize) -> (String, usize) {
 /// - `(String, usize)` - The literal text and the position after the closing quote.
 fn extract_string_literal(chars: &[char], start: usize, len: usize) -> (String, usize) {
     let quote: char = chars[start];
-    let mut i: usize = start + 1;
+    let mut position: usize = start + 1;
     let mut result: String = String::new();
     result.push(quote);
-    while i < len {
-        if chars[i] == '\\' && i + 1 < len {
-            result.push(chars[i]);
-            result.push(chars[i + 1]);
-            i += 2;
+    while position < len {
+        if chars[position] == CHAR_SLASH_BACK && position + 1 < len {
+            result.push(chars[position]);
+            result.push(chars[position + 1]);
+            position += 2;
             continue;
         }
-        result.push(chars[i]);
-        if chars[i] == quote {
-            return (result, i + 1);
+        result.push(chars[position]);
+        if chars[position] == quote {
+            return (result, position + 1);
         }
-        i += 1;
+        position += 1;
     }
-    (result, i)
+    (result, position)
 }
 
 /// Extracts a line comment (`// ...`) from the source.
@@ -356,17 +380,17 @@ fn extract_string_literal(chars: &[char], start: usize, len: usize) -> (String, 
 ///
 /// - `(String, usize)` - The comment text and the position after the newline.
 fn extract_line_comment(chars: &[char], start: usize, len: usize) -> (String, usize) {
-    let mut i: usize = start;
+    let mut position: usize = start;
     let mut result: String = String::new();
-    while i < len && chars[i] != '\n' {
-        result.push(chars[i]);
-        i += 1;
+    while position < len && chars[position] != CHAR_NEWLINE {
+        result.push(chars[position]);
+        position += 1;
     }
-    if i < len {
-        result.push('\n');
-        i += 1;
+    if position < len {
+        result.push(CHAR_NEWLINE);
+        position += 1;
     }
-    (result, i)
+    (result, position)
 }
 
 /// Extracts a block comment (`/* ... */`) from the source.
@@ -381,21 +405,21 @@ fn extract_line_comment(chars: &[char], start: usize, len: usize) -> (String, us
 ///
 /// - `(String, usize)` - The comment text and the position after the closing `*/`.
 fn extract_block_comment(chars: &[char], start: usize, len: usize) -> (String, usize) {
-    let mut i: usize = start + 2;
-    let mut result: String = String::from("/*");
-    while i + 1 < len {
-        result.push(chars[i]);
-        if chars[i] == '*' && chars[i + 1] == '/' {
-            result.push('/');
-            return (result, i + 2);
+    let mut position: usize = start + 2;
+    let mut result: String = String::from(BLOCK_COMMENT_START);
+    while position + 1 < len {
+        result.push(chars[position]);
+        if chars[position] == CHAR_ASTERISK && chars[position + 1] == CHAR_SLASH_FORWARD {
+            result.push(CHAR_SLASH_FORWARD);
+            return (result, position + 2);
         }
-        i += 1;
+        position += 1;
     }
-    while i < len {
-        result.push(chars[i]);
-        i += 1;
+    while position < len {
+        result.push(chars[position]);
+        position += 1;
     }
-    (result, i)
+    (result, position)
 }
 
 /// Formats the body of a euv macro invocation.
@@ -421,135 +445,145 @@ fn format_macro_body(body: &str) -> String {
     let chars: Vec<char> = body.chars().collect();
     let len: usize = chars.len();
     let mut result: String = String::new();
-    let mut i: usize = 0;
-    while i < len {
-        if chars[i] == '"' || chars[i] == '\'' {
-            let (literal, end) = extract_string_literal(&chars, i, len);
+    let mut position: usize = 0;
+    while position < len {
+        if chars[position] == CHAR_DOUBLE_QUOTE || chars[position] == CHAR_SINGLE_QUOTE {
+            let (literal, end) = extract_string_literal(&chars, position, len);
             result.push_str(&literal);
-            i = end;
+            position = end;
             continue;
         }
-        if i + 1 < len && chars[i] == '/' && chars[i + 1] == '/' {
-            let (comment, end) = extract_line_comment(&chars, i, len);
+        if position + 1 < len
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_SLASH_FORWARD
+        {
+            let (comment, end) = extract_line_comment(&chars, position, len);
             result.push_str(&comment);
-            i = end;
+            position = end;
             continue;
         }
-        if i + 1 < len && chars[i] == '/' && chars[i + 1] == '*' {
-            let (comment, end) = extract_block_comment(&chars, i, len);
+        if position + 1 < len
+            && chars[position] == CHAR_SLASH_FORWARD
+            && chars[position + 1] == CHAR_ASTERISK
+        {
+            let (comment, end) = extract_block_comment(&chars, position, len);
             result.push_str(&comment);
-            i = end;
+            position = end;
             continue;
         }
-        if is_if_keyword(&chars, i, len) {
-            result.push_str("if");
-            i += 2;
-            let after_if: usize = skip_spaces_on_same_line(&chars, i, len);
-            if i < len && chars[after_if] == '{' {
-                result.push(' ');
+        if is_if_keyword(&chars, position, len) {
+            result.push_str(KEYWORD_IF);
+            position += 2;
+            let after_if: usize = skip_spaces_on_same_line(&chars, position, len);
+            if position < len && chars[after_if] == CHAR_BRACE_LEFT {
+                result.push(CHAR_SPACE);
                 let (block, end) = extract_brace_block(&chars, after_if);
                 result.push_str(&block);
-                i = end;
-                i = skip_spaces_on_same_line(&chars, i, len);
-                if i < len && chars[i] == '{' {
-                    result.push(' ');
+                position = end;
+                position = skip_spaces_on_same_line(&chars, position, len);
+                if position < len && chars[position] == CHAR_BRACE_LEFT {
+                    result.push(CHAR_SPACE);
                 }
             } else {
-                result.push(' ');
-                i = after_if;
+                result.push(CHAR_SPACE);
+                position = after_if;
             }
             continue;
         }
-        if is_else_keyword(&chars, i, len) {
-            if !result.ends_with(' ') && !result.ends_with('\n') && !result.ends_with('\t') {
-                result.push(' ');
+        if is_else_keyword(&chars, position, len) {
+            if !result.ends_with(CHAR_SPACE)
+                && !result.ends_with(CHAR_NEWLINE)
+                && !result.ends_with(CHAR_TAB)
+            {
+                result.push(CHAR_SPACE);
             }
-            result.push_str("else");
-            i += 4;
-            i = skip_spaces_on_same_line(&chars, i, len);
-            if is_if_keyword(&chars, i, len) {
-                result.push(' ');
+            result.push_str(KEYWORD_ELSE);
+            position += 4;
+            position = skip_spaces_on_same_line(&chars, position, len);
+            if is_if_keyword(&chars, position, len) {
+                result.push(CHAR_SPACE);
                 continue;
             }
-            if i < len && chars[i] == '{' {
-                result.push(' ');
+            if position < len && chars[position] == CHAR_BRACE_LEFT {
+                result.push(CHAR_SPACE);
             }
             continue;
         }
-        if is_match_keyword(&chars, i, len) {
-            result.push_str("match");
-            i += 5;
-            let after_match: usize = skip_spaces_on_same_line(&chars, i, len);
-            if after_match < len && chars[after_match] == '{' {
-                result.push(' ');
+        if is_match_keyword(&chars, position, len) {
+            result.push_str(KEYWORD_MATCH);
+            position += 5;
+            let after_match: usize = skip_spaces_on_same_line(&chars, position, len);
+            if after_match < len && chars[after_match] == CHAR_BRACE_LEFT {
+                result.push(CHAR_SPACE);
                 let (block, end) = extract_brace_block(&chars, after_match);
                 result.push_str(&block);
-                i = end;
-                i = skip_spaces_on_same_line(&chars, i, len);
-                if i < len && chars[i] == '{' {
-                    result.push(' ');
+                position = end;
+                position = skip_spaces_on_same_line(&chars, position, len);
+                if position < len && chars[position] == CHAR_BRACE_LEFT {
+                    result.push(CHAR_SPACE);
                 }
             } else {
-                result.push(' ');
-                i = after_match;
+                result.push(CHAR_SPACE);
+                position = after_match;
             }
             continue;
         }
-        if is_for_keyword(&chars, i, len) {
-            result.push_str("for");
-            i += 3;
-            i = skip_spaces_on_same_line(&chars, i, len);
-            if i < len && !is_in_keyword(&chars, i, len) {
-                result.push(' ');
+        if is_for_keyword(&chars, position, len) {
+            result.push_str(KEYWORD_FOR);
+            position += 3;
+            position = skip_spaces_on_same_line(&chars, position, len);
+            if position < len && !is_in_keyword(&chars, position, len) {
+                result.push(CHAR_SPACE);
             }
-            while i < len && !is_in_keyword(&chars, i, len) {
-                if chars[i] == '{' {
-                    let (block, end) = extract_brace_block(&chars, i);
+            while position < len && !is_in_keyword(&chars, position, len) {
+                if chars[position] == CHAR_BRACE_LEFT {
+                    let (block, end) = extract_brace_block(&chars, position);
                     result.push_str(&block);
-                    i = end;
+                    position = end;
                     continue;
                 }
-                if chars[i] == '"' || chars[i] == '\'' {
-                    let (literal, end) = extract_string_literal(&chars, i, len);
+                if chars[position] == CHAR_DOUBLE_QUOTE || chars[position] == CHAR_SINGLE_QUOTE {
+                    let (literal, end) = extract_string_literal(&chars, position, len);
                     result.push_str(&literal);
-                    i = end;
+                    position = end;
                     continue;
                 }
-                result.push(chars[i]);
-                i += 1;
+                result.push(chars[position]);
+                position += 1;
             }
-            if result.ends_with(' ') {
+            if result.ends_with(CHAR_SPACE) {
                 result.truncate(result.len() - 1);
             }
-            i = skip_spaces_on_same_line(&chars, i, len);
-            if is_in_keyword(&chars, i, len) {
-                result.push(' ');
-                result.push_str("in");
-                i += 2;
-                i = skip_spaces_on_same_line(&chars, i, len);
-                if i < len && chars[i] == '{' {
-                    result.push(' ');
-                    let (block, end) = extract_brace_block(&chars, i);
+            position = skip_spaces_on_same_line(&chars, position, len);
+            if is_in_keyword(&chars, position, len) {
+                result.push(CHAR_SPACE);
+                result.push_str(KEYWORD_IN);
+                position += 2;
+                position = skip_spaces_on_same_line(&chars, position, len);
+                if position < len && chars[position] == CHAR_BRACE_LEFT {
+                    result.push(CHAR_SPACE);
+                    let (block, end) = extract_brace_block(&chars, position);
                     result.push_str(&block);
-                    i = end;
-                    i = skip_spaces_on_same_line(&chars, i, len);
-                    if i < len && chars[i] == '{' {
-                        result.push(' ');
+                    position = end;
+                    position = skip_spaces_on_same_line(&chars, position, len);
+                    if position < len && chars[position] == CHAR_BRACE_LEFT {
+                        result.push(CHAR_SPACE);
                     }
                 }
             }
             continue;
         }
-        if chars[i] == ':' && i + 1 < len && chars[i + 1] != ':' {
-            if result.ends_with(':') {
-                result.push(':');
-                i += 1;
+        if chars[position] == CHAR_COLON && position + 1 < len && chars[position + 1] != CHAR_COLON
+        {
+            if result.ends_with(CHAR_COLON) {
+                result.push(CHAR_COLON);
+                position += 1;
                 continue;
             }
             let colon_prefix: String = find_ident_before(&result);
             if is_raw_ident_before(&result, &colon_prefix) {
-                result.push(':');
-                i += 1;
+                result.push(CHAR_COLON);
+                position += 1;
                 continue;
             }
             if !colon_prefix.is_empty() {
@@ -557,52 +591,58 @@ fn format_macro_body(body: &str) -> String {
                 result = before_colon;
                 result.push_str(&colon_prefix);
             }
-            result.push(':');
-            i += 1;
-            while i < len && (chars[i] == ' ' || chars[i] == '\t') {
-                i += 1;
+            result.push(CHAR_COLON);
+            position += 1;
+            while position < len && (chars[position] == CHAR_SPACE || chars[position] == CHAR_TAB) {
+                position += 1;
             }
-            if i < len && chars[i] != '\n' && chars[i] != '\r' {
-                result.push(' ');
+            if position < len
+                && chars[position] != CHAR_NEWLINE
+                && chars[position] != CHAR_CARRIAGE_RETURN
+            {
+                result.push(CHAR_SPACE);
             }
             continue;
         }
-        if i + 1 < len && chars[i] == '=' && chars[i + 1] == '>' {
+        if position + 1 < len
+            && chars[position] == CHAR_EQUALS
+            && chars[position + 1] == CHAR_GREATER_THAN
+        {
             let trailing: String = find_trailing_spaces(&result);
             if !trailing.is_empty() {
                 result.truncate(result.len() - trailing.len());
             }
-            result.push(' ');
-            result.push_str("=>");
-            i += 2;
-            while i < len && (chars[i] == ' ' || chars[i] == '\t') {
-                i += 1;
+            result.push(CHAR_SPACE);
+            result.push_str(ARROW_FAT);
+            position += 2;
+            while position < len && (chars[position] == CHAR_SPACE || chars[position] == CHAR_TAB) {
+                position += 1;
             }
-            result.push(' ');
+            result.push(CHAR_SPACE);
             continue;
         }
-        if is_ident_char(chars[i]) {
-            let start: usize = i;
-            while i < len && is_ident_char(chars[i]) {
-                i += 1;
+        if is_ident_char(chars[position]) {
+            let start: usize = position;
+            while position < len && is_ident_char(chars[position]) {
+                position += 1;
             }
-            let ident: String = chars[start..i].iter().collect();
+            let ident: String = chars[start..position].iter().collect();
             result.push_str(&ident);
-            let ws_start: usize = i;
-            while i < len && (chars[i] == ' ' || chars[i] == '\t') {
-                i += 1;
+            let ws_start: usize = position;
+            while position < len && (chars[position] == CHAR_SPACE || chars[position] == CHAR_TAB) {
+                position += 1;
             }
-            let had_whitespace: bool = i > ws_start;
-            if i < len && chars[i] == '{' {
-                result.push(' ');
+            let had_whitespace: bool = position > ws_start;
+            if position < len && chars[position] == CHAR_BRACE_LEFT {
+                result.push(CHAR_SPACE);
             } else if had_whitespace {
-                let ws: String = chars[ws_start..i].iter().collect();
+                let ws: String = chars[ws_start..position].iter().collect();
                 result.push_str(&ws);
             }
             continue;
         }
-        result.push(chars[i]);
-        i += 1;
+        result.push(chars[position]);
+        position += 1;
     }
     result
 }
@@ -622,8 +662,8 @@ fn is_if_keyword(chars: &[char], pos: usize, len: usize) -> bool {
     if pos + 2 > len {
         return false;
     }
-    chars[pos] == 'i'
-        && chars[pos + 1] == 'f'
+    chars[pos] == CHAR_LETTER_I
+        && chars[pos + 1] == CHAR_LETTER_F
         && (pos + 2 >= len || !is_ident_char(chars[pos + 2]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
         && !is_raw_prefix(chars, pos)
@@ -644,10 +684,10 @@ fn is_else_keyword(chars: &[char], pos: usize, len: usize) -> bool {
     if pos + 4 > len {
         return false;
     }
-    chars[pos] == 'e'
-        && chars[pos + 1] == 'l'
-        && chars[pos + 2] == 's'
-        && chars[pos + 3] == 'e'
+    chars[pos] == CHAR_LETTER_E
+        && chars[pos + 1] == CHAR_LETTER_L
+        && chars[pos + 2] == CHAR_LETTER_S
+        && chars[pos + 3] == CHAR_LETTER_E
         && (pos + 4 >= len || !is_ident_char(chars[pos + 4]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
         && !is_raw_prefix(chars, pos)
@@ -668,11 +708,11 @@ fn is_match_keyword(chars: &[char], pos: usize, len: usize) -> bool {
     if pos + 5 > len {
         return false;
     }
-    chars[pos] == 'm'
-        && chars[pos + 1] == 'a'
-        && chars[pos + 2] == 't'
-        && chars[pos + 3] == 'c'
-        && chars[pos + 4] == 'h'
+    chars[pos] == CHAR_LETTER_M
+        && chars[pos + 1] == CHAR_LETTER_A
+        && chars[pos + 2] == CHAR_LETTER_T
+        && chars[pos + 3] == CHAR_LETTER_C
+        && chars[pos + 4] == CHAR_LETTER_H
         && (pos + 5 >= len || !is_ident_char(chars[pos + 5]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
         && !is_raw_prefix(chars, pos)
@@ -693,9 +733,9 @@ fn is_for_keyword(chars: &[char], pos: usize, len: usize) -> bool {
     if pos + 3 > len {
         return false;
     }
-    chars[pos] == 'f'
-        && chars[pos + 1] == 'o'
-        && chars[pos + 2] == 'r'
+    chars[pos] == CHAR_LETTER_F
+        && chars[pos + 1] == CHAR_LETTER_O
+        && chars[pos + 2] == CHAR_LETTER_R
         && (pos + 3 >= len || !is_ident_char(chars[pos + 3]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
         && !is_raw_prefix(chars, pos)
@@ -716,8 +756,8 @@ fn is_in_keyword(chars: &[char], pos: usize, len: usize) -> bool {
     if pos + 2 > len {
         return false;
     }
-    chars[pos] == 'i'
-        && chars[pos + 1] == 'n'
+    chars[pos] == CHAR_LETTER_I
+        && chars[pos + 1] == CHAR_LETTER_N
         && (pos + 2 >= len || !is_ident_char(chars[pos + 2]))
         && (pos == 0 || !is_ident_char(chars[pos - 1]))
         && !is_raw_prefix(chars, pos)
@@ -735,7 +775,7 @@ fn is_in_keyword(chars: &[char], pos: usize, len: usize) -> bool {
 ///
 /// - `usize` - The position after skipping same-line spaces.
 fn skip_spaces_on_same_line(chars: &[char], mut pos: usize, len: usize) -> usize {
-    while pos < len && (chars[pos] == ' ' || chars[pos] == '\t') {
+    while pos < len && (chars[pos] == CHAR_SPACE || chars[pos] == CHAR_TAB) {
         pos += 1;
     }
     pos
@@ -756,7 +796,7 @@ fn skip_spaces_on_same_line(chars: &[char], mut pos: usize, len: usize) -> usize
 /// - `bool` - Whether the identifier is preceded by `r#`.
 fn is_raw_ident_before(result: &str, ident: &str) -> bool {
     let trimmed: &str = result.trim_end();
-    let search_target: String = format!("r#{}", ident);
+    let search_target: String = format!("{RAW_IDENT_PREFIX}{ident}");
     trimmed.ends_with(&search_target)
 }
 
@@ -772,7 +812,7 @@ fn is_raw_ident_before(result: &str, ident: &str) -> bool {
 fn find_ident_before(result: &str) -> String {
     let chars: Vec<char> = result.chars().collect();
     let mut end: usize = chars.len();
-    while end > 0 && chars[end - 1] == ' ' {
+    while end > 0 && chars[end - 1] == CHAR_SPACE {
         end -= 1;
     }
     let mut start: usize = end;
@@ -800,7 +840,7 @@ fn remove_trailing_spaces(result: &str, prefix_len: usize) -> String {
     let chars: Vec<char> = result.chars().collect();
     let total_len: usize = chars.len();
     let mut end: usize = total_len;
-    while end > 0 && chars[end - 1] == ' ' {
+    while end > 0 && chars[end - 1] == CHAR_SPACE {
         end -= 1;
     }
     if prefix_len > end {
@@ -822,7 +862,7 @@ fn remove_trailing_spaces(result: &str, prefix_len: usize) -> String {
 fn find_trailing_spaces(result: &str) -> String {
     let mut spaces: String = String::new();
     for ch in result.chars().rev() {
-        if ch == ' ' || ch == '\t' {
+        if ch == CHAR_SPACE || ch == CHAR_TAB {
             spaces.push(ch);
         } else {
             break;
@@ -932,12 +972,12 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
                     .unwrap_or_default()
                     .to_string_lossy()
                     .to_string();
-                if file_name != "target" && file_name != "node_modules" {
+                if file_name != TARGET_DIR_NAME && file_name != NODE_MODULES_DIR_NAME {
                     stack.push(entry_path);
                 }
             } else if entry_path
                 .extension()
-                .is_some_and(|ext: &std::ffi::OsStr| ext == "rs")
+                .is_some_and(|ext: &std::ffi::OsStr| ext == RS_EXTENSION)
             {
                 result.push(entry_path);
             }
