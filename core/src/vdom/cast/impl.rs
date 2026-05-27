@@ -179,12 +179,11 @@ where
     fn as_reactive_text(&self) -> VirtualNode {
         let initial: String = self.get().to_string();
         let string_signal: Signal<String> = Signal::create(initial.clone());
-        let source_signal: Signal<T> = *self;
         let string_signal_clone: Signal<String> = string_signal;
-        source_signal.replace_subscribe({
-            let source_inner: Signal<T> = source_signal;
+        self.replace_subscribe({
+            let source: Signal<T> = *self;
             move || {
-                let new_value: String = source_inner.get().to_string();
+                let new_value: String = source.get().to_string();
                 string_signal_clone.set_silent(new_value);
             }
         });

@@ -126,7 +126,28 @@ impl Renderer {
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 self.patch_children(dom_element, old_children, new_children);
             }
-            (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => {}
+            (VirtualNode::Dynamic(old_dynamic), VirtualNode::Dynamic(new_dynamic)) => {
+                let old_rendered: VirtualNode = old_dynamic.render();
+                let new_rendered: VirtualNode = new_dynamic.render();
+                let new_unwrapped: VirtualNode = self.unwrap_component(&new_rendered);
+                if !Self::visual_eq(&old_rendered, &new_unwrapped) {
+                    while let Some(child) = dom_element.first_child() {
+                        if let Some(child_element) = child.dyn_ref::<Element>() {
+                            self.cleanup_dom_subtree(child_element);
+                        }
+                        let _ = dom_element.remove_child(&child);
+                    }
+                    if let Some(dynamic_id_str) = dom_element.get_attribute(DATA_EUV_DYNAMIC_ID)
+                        && let Ok(dynamic_id) = dynamic_id_str.parse::<usize>()
+                    {
+                        cleanup_dynamic_node(dynamic_id);
+                    }
+                    let dynamic_id: usize = Self::assign_dynamic_id(dom_element);
+                    let initial_dom: Node =
+                        self.setup_dynamic_node(new_dynamic, dynamic_id, dom_element, true);
+                    let _ = dom_element.append_child(&initial_dom);
+                }
+            }
             (VirtualNode::Dynamic(_), _) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
@@ -552,6 +573,20 @@ impl Renderer {
                 for child in children {
                     let child_node: Node = self.create_dom_node_with_document(child, document);
                     element.append_child(&child_node).unwrap();
+                    if let VirtualNode::Text(text_node) = child
+                        && let Some(signal) = text_node.try_get_signal()
+                    {
+                        let signal_addr: usize = signal.get_inner_addr();
+                        let existing_addrs: String = element
+                            .get_attribute(DATA_EUV_SIGNAL_ADDRS)
+                            .unwrap_or_default();
+                        let updated_addrs: String = if existing_addrs.is_empty() {
+                            signal_addr.to_string()
+                        } else {
+                            format!("{existing_addrs}{SIGNAL_ADDRS_SEPARATOR}{signal_addr}")
+                        };
+                        let _ = element.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated_addrs);
+                    }
                 }
                 element.into()
             }
@@ -580,6 +615,20 @@ impl Renderer {
                 for child in children {
                     let child_node: Node = self.create_dom_node_with_document(child, document);
                     fragment.append_child(&child_node).unwrap();
+                    if let VirtualNode::Text(text_node) = child
+                        && let Some(signal) = text_node.try_get_signal()
+                    {
+                        let signal_addr: usize = signal.get_inner_addr();
+                        let existing_addrs: String = fragment
+                            .get_attribute(DATA_EUV_SIGNAL_ADDRS)
+                            .unwrap_or_default();
+                        let updated_addrs: String = if existing_addrs.is_empty() {
+                            signal_addr.to_string()
+                        } else {
+                            format!("{existing_addrs}{SIGNAL_ADDRS_SEPARATOR}{signal_addr}")
+                        };
+                        let _ = fragment.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated_addrs);
+                    }
                 }
                 fragment.into()
             }
@@ -896,12 +945,10 @@ impl Renderer {
         let child_nodes: NodeList = element.child_nodes();
         let length: u32 = child_nodes.length();
         for child_index in 0..length {
-            if let Some(child) = child_nodes.get(child_index) {
-                if let Some(child_element) = child.dyn_ref::<Element>() {
-                    self.cleanup_dom_subtree(child_element);
-                } else if let Some(text) = child.dyn_ref::<Text>() {
-                    cleanup_text_signal_listeners(text);
-                }
+            if let Some(child) = child_nodes.get(child_index)
+                && let Some(child_element) = child.dyn_ref::<Element>()
+            {
+                self.cleanup_dom_subtree(child_element);
             }
         }
     }

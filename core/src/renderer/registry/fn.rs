@@ -251,20 +251,6 @@ pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
     }
 }
 
-/// No-op for text node signal cleanup.
-///
-/// Text node signal listeners are cleaned up lazily via the `is_node_connected`
-/// guard in the `replace_subscribe` callback. When the signal fires and the
-/// text node is no longer in the DOM, the listener self-clears by calling
-/// `clear_listeners()`. This provides automatic cleanup without needing
-/// a separate registry for text-node-to-signal mappings.
-///
-/// # Arguments
-///
-/// - `&Text` - The text node being removed (unused, present for API consistency).
-#[allow(unused_variables)]
-pub(crate) fn cleanup_text_signal_listeners(text: &Text) {}
-
 /// Ensures the handler registry is initialized and returns a shared reference.
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).

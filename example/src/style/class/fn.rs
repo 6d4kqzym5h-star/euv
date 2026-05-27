@@ -2017,11 +2017,12 @@ class! {
         font-size: "13px";
         font-weight: "500";
         color: "#dc2626";
-        margin-top: "8px";
-        padding: "10px 10px 0px 10px";
+        margin-top: "10px";
+        padding: "6px 10px";
         border-radius: "6px";
         background: "rgba(220, 38, 38, 0.08)";
         border: "1px solid rgba(220, 38, 38, 0.2)";
+        margin-bottom: "0px";
     }
 
     pub(crate) c_binding_callback_form {

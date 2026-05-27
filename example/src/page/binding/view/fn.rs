@@ -99,7 +99,7 @@ pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
                     "Counter is disabled!"
                 }
             } else {
-                ""
+                p {}
             }
         }
     }

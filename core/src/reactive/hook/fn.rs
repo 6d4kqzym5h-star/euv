@@ -95,10 +95,9 @@ where
         return *existing;
     }
     let signal: Signal<T> = Signal::create(init());
-    let cleanup_signal: Signal<T> = signal;
     inner
         .get_mut_cleanups()
-        .push(Box::new(move || cleanup_signal.clear_listeners()));
+        .push(Box::new(move || signal.clear_listeners()));
     if index < inner.get_hooks().len() {
         inner.get_mut_hooks()[index] = Box::new(signal);
     } else {
