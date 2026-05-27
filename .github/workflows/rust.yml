@@ -31,15 +31,10 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache toml-cli
-        id: cache_toml
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/toml
-          key: toml-cli-${{ runner.os }}
       - name: Install toml-cli
-        if: steps.cache_toml.outputs.cache-hit != 'true'
-        run: cargo install toml-cli
+        uses: dtolnay/install@master
+        with:
+          crate: toml-cli
       - name: Read cargo metadata
         id: read
         run: |
@@ -160,19 +155,16 @@ jobs:
       - name: Checkout
         if: steps.check_branch.outputs.skip == 'false'
         uses: actions/checkout@v4
-      - name: Restore toml-cli
-        if: steps.check_branch.outputs.skip == 'false'
-        id: restore_toml
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/toml
-          key: toml-cli-${{ runner.os }}
       - name: Install toml-cli
-        if: steps.check_branch.outputs.skip == 'false' && steps.restore_toml.outputs.cache-hit != 'true'
-        run: cargo install toml-cli
+        if: steps.check_branch.outputs.skip == 'false'
+        uses: dtolnay/install@master
+        with:
+          crate: toml-cli
       - name: Install cargo-release
         if: steps.check_branch.outputs.skip == 'false'
-        run: cargo install cargo-release
+        uses: dtolnay/install@master
+        with:
+          crate: cargo-release
       - name: Configure git
         if: steps.check_branch.outputs.skip == 'false'
         run: |
