@@ -55,7 +55,7 @@ pub struct PseudoRule {
 /// Created by the `class!` macro and used in `html!` via the `class:` attribute.
 /// When the renderer encounters a `Css`, it injects the styles into the
 /// DOM's `<style>` element on first use and applies the class name to the element.
-#[derive(Clone, Data, Debug, Default)]
+#[derive(Clone, Data, Debug, Default, New)]
 pub struct Css {
     /// The CSS class name used in the DOM.
     name: String,

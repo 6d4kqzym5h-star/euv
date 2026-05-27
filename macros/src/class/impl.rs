@@ -240,7 +240,7 @@ impl ToTokens for ClassDef {
                         if parent_args.is_empty() {
                             quote! { #parent_name().get_style().to_string() + " " }
                         } else {
-                            quote! { #parent_name(#(#parent_args),*).get_style().to_string() + " " }
+                            quote! { #parent_name(#(#parent_args), *).get_style().to_string() + " " }
                         }
                     })
                     .collect();
@@ -251,7 +251,7 @@ impl ToTokens for ClassDef {
                 let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
                     quote! { #class_name_str.to_string() }
                 } else {
-                    quote! { format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")) }
+                    quote! { format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)), *].join("-")) }
                 };
                 if has_extra {
                     let pseudo_expr: proc_macro2::TokenStream =
@@ -261,14 +261,14 @@ impl ToTokens for ClassDef {
                         media_blocks_to_tokens(self.get_media_blocks())
                             .unwrap_or_else(|| quote! { vec![] });
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs),*) -> ::euv::Css {
-                            ::euv::Css::new_with_rules(#unique_name_expr, [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
+                        #vis fn #name(#(#param_defs), *) -> ::euv::Css {
+                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #pseudo_expr, #media_expr)
                         }
                     });
                 } else {
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs),*) -> ::euv::Css {
-                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts),*].concat())
+                        #vis fn #name(#(#param_defs), *) -> ::euv::Css {
+                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), vec![], vec![])
                         }
                     });
                 }
@@ -314,12 +314,14 @@ impl ToTokens for ClassDef {
                             #vis fn #fn_name_token() -> &'static ::euv::Css {
                                 static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv::Css::new_with_rules(
+                                    let css = ::euv::Css::new(
                                         #class_name_str.to_string(),
                                         #css_string.to_string(),
                                         ::euv::Css::parse_pseudo_rules(#pseudo_static),
                                         ::euv::Css::parse_media_rules(#media_static),
-                                    )
+                                    );
+                                    css.inject_style();
+                                    css
                                 })
                             }
                         });
@@ -328,7 +330,9 @@ impl ToTokens for ClassDef {
                             #vis fn #fn_name_token() -> &'static ::euv::Css {
                                 static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string())
+                                    let css = ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string(), vec![], vec![]);
+                                    css.inject_style();
+                                    css
                                 })
                             }
                         });
@@ -343,7 +347,7 @@ impl ToTokens for ClassDef {
                             if parent_args.is_empty() {
                                 quote! { #parent_name().get_style().to_string() + " " }
                             } else {
-                                quote! { #parent_name(#(#parent_args),*).get_style().to_string() + " " }
+                                quote! { #parent_name(#(#parent_args), *).get_style().to_string() + " " }
                             }
                         })
                         .collect();
@@ -363,7 +367,9 @@ impl ToTokens for ClassDef {
                             #vis fn #fn_name_token() -> &'static ::euv::Css {
                                 static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv::Css::new_with_rules(#class_name_str.to_string(), [#(#all_css_parts),*].concat(), #pseudo_expr, #media_expr)
+                                    let css = ::euv::Css::new(#class_name_str.to_string(), [#(#all_css_parts), *].concat(), #pseudo_expr, #media_expr);
+                                    css.inject_style();
+                                    css
                                 })
                             }
                         });
@@ -372,7 +378,9 @@ impl ToTokens for ClassDef {
                             #vis fn #fn_name_token() -> &'static ::euv::Css {
                                 static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                                 #const_name_token.get_or_init(|| {
-                                    ::euv::Css::new(#class_name_str.to_string(), [#(#all_css_parts),*].concat())
+                                    let css = ::euv::Css::new(#class_name_str.to_string(), [#(#all_css_parts), *].concat(), vec![], vec![]);
+                                    css.inject_style();
+                                    css
                                 })
                             }
                         });

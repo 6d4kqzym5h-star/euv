@@ -346,56 +346,6 @@ impl Default for Style {
 
 /// Implementation of Css construction and style injection.
 impl Css {
-    /// Creates a new CSS class with the given name and style declarations.
-    ///
-    /// Automatically injects the styles into the DOM upon creation.
-    ///
-    /// # Arguments
-    ///
-    /// - `String` - The class name.
-    /// - `String` - The CSS style declarations.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - A new CSS class with injected styles.
-    pub fn new(name: String, style: String) -> Self {
-        let mut css: Self = Self::default();
-        css.set_name(name);
-        css.set_style(style);
-        css.inject_style();
-        css
-    }
-
-    /// Creates a new CSS class with the given name, style declarations, and pseudo rules.
-    ///
-    /// Automatically injects the base styles, pseudo-class/pseudo-element rules,
-    /// and media query rules into the DOM upon creation.
-    ///
-    /// # Arguments
-    ///
-    /// - `String` - The class name.
-    /// - `String` - The CSS style declarations.
-    /// - `Vec<PseudoRule>` - The pseudo-class and pseudo-element rules.
-    /// - `Vec<MediaRule>` - The media query rules.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - A new CSS class with injected styles and pseudo rules.
-    pub fn new_with_rules(
-        name: String,
-        style: String,
-        pseudo_rules: Vec<PseudoRule>,
-        media_rules: Vec<MediaRule>,
-    ) -> Self {
-        let mut css: Self = Self::default();
-        css.set_name(name);
-        css.set_style(style);
-        css.set_pseudo_rules(pseudo_rules);
-        css.set_media_rules(media_rules);
-        css.inject_style();
-        css
-    }
-
     /// Parses pseudo-class/pseudo-element rules from a compact serialization string.
     ///
     /// The serialization format is: `:selector { key: value; key: value; }:another { ... }`

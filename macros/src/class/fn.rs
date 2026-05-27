@@ -187,12 +187,12 @@ pub(crate) fn pseudo_blocks_to_tokens(
             quote! {
                 ::euv::PseudoRule::new(
                     #selector.to_string(),
-                    [#(#style_parts),*].concat()
+                    [#(#style_parts), *].concat()
                 )
             }
         })
         .collect();
-    Some(quote! { vec![#(#parts),*] })
+    Some(quote! { vec![#(#parts), *] })
 }
 
 /// Generates a `Vec<::euv::MediaRule>` expression from a list of media blocks.
@@ -226,12 +226,12 @@ pub(crate) fn media_blocks_to_tokens(
             quote! {
                 ::euv::MediaRule::new(
                     #query.to_string(),
-                    [#(#style_parts),*].concat()
+                    [#(#style_parts), *].concat()
                 )
             }
         })
         .collect();
-    Some(quote! { vec![#(#parts),*] })
+    Some(quote! { vec![#(#parts), *] })
 }
 
 /// Generates static pseudo block string for compile-time evaluation.

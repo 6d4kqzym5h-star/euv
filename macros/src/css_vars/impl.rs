@@ -104,8 +104,10 @@ impl ToTokens for CssVarDef {
                     })
                     .collect();
                 tokens.extend(quote! {
-                    #vis fn #name(#(#param_defs),*) -> ::euv::Css {
-                        ::euv::Css::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)),*].join("-")), [#(#css_string_parts),*].concat())
+                    #vis fn #name(#(#param_defs), *) -> ::euv::Css {
+                        let css = ::euv::Css::new(format!("{}-{}", #class_name_str, [#(format!("{:?}", #param_names)), *].join("-")), [#(#css_string_parts), *].concat(), vec![], vec![]);
+                        css.inject_style();
+                        css
                     }
                 });
             }
@@ -132,7 +134,9 @@ impl ToTokens for CssVarDef {
                         #vis fn #fn_name_token() -> &'static ::euv::Css {
                             static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string())
+                                let css = ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string(), vec![], vec![]);
+                                css.inject_style();
+                                css
                             })
                         }
                     });
@@ -150,7 +154,9 @@ impl ToTokens for CssVarDef {
                         #vis fn #fn_name_token() -> &'static ::euv::Css {
                             static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
                             #const_name_token.get_or_init(|| {
-                                ::euv::Css::new(#class_name_str.to_string(), [#(#css_string_parts),*].concat())
+                                let css = ::euv::Css::new(#class_name_str.to_string(), [#(#css_string_parts), *].concat(), vec![], vec![]);
+                                css.inject_style();
+                                css
                             })
                         }
                     });

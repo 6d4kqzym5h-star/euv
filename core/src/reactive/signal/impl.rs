@@ -45,13 +45,18 @@ where
 
     /// Attempts to return the current value of the signal without panicking.
     ///
+    /// Unlike `get`, this method uses `try_borrow` and returns `None` if the
+    /// inner `RefCell` is already mutably borrowed, avoiding a panic.
+    ///
     /// # Returns
     ///
     /// - `Some(T)` - The current value if the borrow succeeds.
     /// - `None` - If the inner value is already mutably borrowed.
     pub fn try_get(&self) -> Option<T> {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        Some(rc.borrow().get_value().clone())
+        get_signal_inner_rc::<T>(self.get_inner())
+            .try_borrow()
+            .ok()
+            .map(|inner| inner.get_value().clone())
     }
 
     /// Subscribes a callback to be invoked when the signal changes.
@@ -75,7 +80,7 @@ where
     /// # Arguments
     ///
     /// - `FnMut() + 'static` - The callback to invoke when the signal changes.
-    pub fn replace_subscribe<F>(&self, callback: F)
+    pub(crate) fn replace_subscribe<F>(&self, callback: F)
     where
         F: FnMut() + 'static,
     {
@@ -88,7 +93,7 @@ where
 
     /// Removes all subscribed listeners from this signal and marks it as
     /// inactive.
-    pub fn clear_listeners(&self) {
+    pub(crate) fn clear_listeners(&self) {
         let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
         let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
         inner.set_alive(false);
@@ -155,18 +160,24 @@ where
 
     /// Attempts to set the value of the signal and notify listeners without panicking.
     ///
+    /// Unlike `set`, this method uses `try_borrow_mut` and returns `false` if
+    /// the inner `RefCell` is already borrowed, avoiding a panic.
+    ///
     /// # Arguments
     ///
     /// - `T` - The new value to assign to the signal.
     ///
     /// # Returns
     ///
-    /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged or inactive.
+    /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged, inactive, or already borrowed.
     pub fn try_set(&self, value: T) -> bool {
         let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
         let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         {
-            let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
+            let mut inner: RefMut<SignalInner<T>> = match rc.try_borrow_mut() {
+                Ok(inner) => inner,
+                Err(_) => return false,
+            };
             if !inner.get_alive() {
                 return false;
             }

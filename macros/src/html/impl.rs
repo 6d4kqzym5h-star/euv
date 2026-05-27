@@ -469,7 +469,7 @@ impl ToTokens for HtmlAttrValue {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::Style::create_style_string(&[#(#kv_tokens),*])
+                        ::euv::Style::create_style_string(&[#(#kv_tokens), *])
                     });
                 }
             }
@@ -481,7 +481,7 @@ impl ToTokens for HtmlAttrValue {
                     })
                     .collect();
                 tokens.extend(quote! {
-                    ::euv::AttributeValue::merge_class(&[#(#value_tokens),*])
+                    ::euv::AttributeValue::merge_class(&[#(#value_tokens), *])
                 });
             }
             HtmlAttrValue::Styles(values) => {
@@ -490,7 +490,7 @@ impl ToTokens for HtmlAttrValue {
                     .map(style_value_to_attribute_value_tokens)
                     .collect();
                 tokens.extend(quote! {
-                    ::euv::AttributeValue::merge_style(&[#(#value_tokens),*])
+                    ::euv::AttributeValue::merge_style(&[#(#value_tokens), *])
                 });
             }
         }
@@ -586,8 +586,8 @@ impl ToTokens for HtmlElement {
             tokens.extend(quote! {
                 #tag_ident(::euv::VirtualNode::Element {
                     tag: ::euv::Tag::Component(#tag_literal),
-                    attributes: vec![#(#attr_tokens),*],
-                    children: vec![#(#child_tokens),*],
+                    attributes: vec![#(#attr_tokens), *],
+                    children: vec![#(#child_tokens), *],
                     key: None,
                 })
             });
@@ -595,8 +595,8 @@ impl ToTokens for HtmlElement {
             tokens.extend(quote! {
                 ::euv::VirtualNode::Element {
                     tag: ::euv::Tag::Element(#tag_literal),
-                    attributes: vec![#(#attr_tokens),*],
-                    children: vec![#(#child_tokens),*],
+                    attributes: vec![#(#attr_tokens), *],
+                    children: vec![#(#child_tokens), *],
                     key: None,
                 }
             });

@@ -232,7 +232,7 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
                 child.to_tokens(&mut ts);
                 child_tokens.push(ts);
             }
-            quote! { ::euv::VirtualNode::Fragment(vec![#(#child_tokens),*]) }
+            quote! { ::euv::VirtualNode::Fragment(vec![#(#child_tokens), *]) }
         }
     }
 }
@@ -256,7 +256,7 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStr
         child.to_tokens(&mut token_stream);
         child_tokens.push(token_stream);
     }
-    quote! { vec![#(#child_tokens),*] }
+    quote! { vec![#(#child_tokens), *] }
 }
 
 /// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.
