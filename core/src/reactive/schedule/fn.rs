@@ -77,27 +77,28 @@ pub(crate) fn schedule_signal_update() {
     let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
 }
 
-/// Executes a closure with signal update scheduling suppressed.
+/// Batches signal updates within a closure, deferring DOM synchronization until completion.
 ///
 /// Saves the current `SUPPRESS_SCHEDULE` flag, sets it to `true`,
 /// executes the closure, and restores the previous flag value.
 /// This prevents `schedule_signal_update` from queuing microtasks
-/// during the closure execution.
+/// during the closure execution, allowing multiple signal mutations
+/// to be applied before triggering a single DOM update cycle.
 ///
 /// # Arguments
 ///
-/// - `F`- The closure to execute with suppressed scheduling.
+/// - `F`- The closure to execute with batched updates.
 ///
 /// # Returns
 ///
 /// - `R`- The result of the closure execution.
-pub fn with_suppressed_updates<F, R>(f: F) -> R
+pub fn batch_updates<F, R>(callback: F) -> R
 where
     F: FnOnce() -> R,
 {
     let previous: bool = SUPPRESS_SCHEDULE.load(Ordering::Relaxed);
     SUPPRESS_SCHEDULE.store(true, Ordering::Relaxed);
-    let result: R = f();
+    let result: R = callback();
     SUPPRESS_SCHEDULE.store(previous, Ordering::Relaxed);
     result
 }

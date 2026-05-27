@@ -63,7 +63,7 @@ impl Parse for WatchInput {
 ///    preventing duplicate subscriptions and infinite re-render loops.
 /// 2. Clones each signal into a local binding.
 /// 3. On first execution, the entire initialisation (subscribe registration
-///    and body execution) is wrapped in `with_suppressed_updates` so that
+///    and body execution) is wrapped in `batch_updates` so that
 ///    any `.set()` calls inside the body do not trigger premature
 ///    `schedule_signal_update()` dispatches. The guard signal is updated
 ///    via `set_silent` to avoid an unnecessary DOM re-render cycle.
@@ -123,7 +123,7 @@ impl ToTokens for WatchInput {
                     #(#all_gets)*
                     { #(#body)* }
                 }) as Box<dyn ::std::ops::FnMut()>)) as *mut Box<dyn ::std::ops::FnMut()> as usize;
-                ::euv::with_suppressed_updates(|| {
+                ::euv::batch_updates(|| {
                     #(#subscribe_calls)*
                     {
                         #(let #param_names = #get_calls;)*
