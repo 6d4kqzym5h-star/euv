@@ -17,12 +17,11 @@ pub(crate) fn primary_button(props: VirtualNode) -> VirtualNode {
         onclick,
         disabled,
     }: PrimaryButtonProps = props.into();
-    let display_children: Vec<VirtualNode> = if children.is_empty() {
+    let children_node: Vec<VirtualNode> = if children.is_empty() {
         vec![VirtualNode::Text(TextNode::new(label, None))]
     } else {
         children
     };
-    let children_node: VirtualNode = VirtualNode::Fragment(display_children);
     html! {
         button {
             class: if { disabled } { c_primary_button_disabled() } else { c_primary_button() }
@@ -51,12 +50,11 @@ pub(crate) fn modal_primary_button(props: VirtualNode) -> VirtualNode {
         onclick,
         disabled,
     }: PrimaryButtonProps = props.into();
-    let display_children: Vec<VirtualNode> = if children.is_empty() {
+    let children_node: Vec<VirtualNode> = if children.is_empty() {
         vec![VirtualNode::Text(TextNode::new(label, None))]
     } else {
         children
     };
-    let children_node: VirtualNode = VirtualNode::Fragment(display_children);
     html! {
         button {
             class: if { disabled } { c_modal_primary_button_disabled() } else { c_modal_primary_button() }

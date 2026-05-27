@@ -37,7 +37,7 @@ All `wasm-pack build` arguments are transparently forwarded after `--`.
 euv run -- --target web --out-name euv
 
 # Build and start dev server with custom crate path and port
-euv run --crate-path ./example --port 3000 -- --target web --out-name euv
+euv run --crate-path ./example --port 80 -- --target web --out-name euv
 
 # Release build with dev server
 euv run --crate-path ./example -- --release --target web --out-name euv
@@ -100,12 +100,12 @@ euv build -- --release --crate-path ./example --www-dir public -- --target web -
 #### Run (build + dev server)
 
 ```shell
-cargo run -p euv-cli -- run --crate-path ./example --port 3000 -- --target web --out-dir www/pkg --out-name euv
+cargo run -p euv-cli -- run --crate-path ./example --port 80 -- --target web --out-dir www/pkg --out-name euv
 ```
 
 ```shell
 # Custom static directory
-cargo run -p euv-cli -- run --crate-path ./example --www-dir public -- --target web --out-name euv
+cargo run -p euv-cli -- run --crate-path ./example --www-dir www -- --target web --out-name euv
 ```
 
 #### Build (build only)
@@ -131,7 +131,7 @@ cargo run -p euv-cli -- fmt --check --path ./example
 | Option         | Short | Default | Description                                                                  |
 | -------------- | ----- | ------- | ---------------------------------------------------------------------------- |
 | `--crate-path` | `-c`  | `.`     | Path to the Rust crate containing the WASM application                       |
-| `--port`       | `-p`  | `3000`  | Port for the development server                                              |
+| `--port`       | `-p`  | `80`    | Port for the development server                                              |
 | `--www-dir`    |       | `www`   | Directory name for static assets and generated HTML (relative to crate-path) |
 
 ### How `--www-dir` Works

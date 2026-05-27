@@ -24,7 +24,7 @@ pub struct ModeArgs {
     #[arg(short, long, default_value = ".")]
     pub crate_path: PathBuf,
     /// Port for the development server
-    #[arg(short, long, default_value_t = 3000)]
+    #[arg(short, long, default_value_t = 80)]
     #[get(type(copy))]
     pub port: u16,
     /// Directory name for static assets and generated HTML (relative to crate-path)

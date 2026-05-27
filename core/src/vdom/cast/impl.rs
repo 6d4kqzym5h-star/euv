@@ -12,6 +12,59 @@ impl IntoNode for VirtualNode {
     }
 }
 
+/// Converts a `Vec<VirtualNode>` into a `VirtualNode::Fragment` via `IntoNode`.
+///
+/// This enables using a `Vec<VirtualNode>` directly in the `html!` macro
+/// without manually wrapping it in `VirtualNode::Fragment(...)`.
+///
+/// # Returns
+///
+/// - `VirtualNode` - A `VirtualNode::Fragment` containing the nodes, or
+///   `VirtualNode::Empty` if the vector is empty.
+impl IntoNode for Vec<VirtualNode> {
+    fn into_node(self) -> VirtualNode {
+        if self.is_empty() {
+            VirtualNode::Empty
+        } else {
+            VirtualNode::Fragment(self)
+        }
+    }
+}
+
+/// Converts an `Option<VirtualNode>` into a `VirtualNode` via `IntoNode`.
+///
+/// `Some(node)` returns the inner node, `None` returns `VirtualNode::Empty`.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The inner node if `Some`, otherwise `VirtualNode::Empty`.
+impl IntoNode for Option<VirtualNode> {
+    fn into_node(self) -> VirtualNode {
+        match self {
+            Some(node) => node,
+            None => VirtualNode::Empty,
+        }
+    }
+}
+
+/// Converts an `Option<Vec<VirtualNode>>` into a `VirtualNode` via `IntoNode`.
+///
+/// `Some(vec)` converts the vector into a `VirtualNode::Fragment` (or `Empty`
+/// if the vector is empty), `None` returns `VirtualNode::Empty`.
+///
+/// # Returns
+///
+/// - `VirtualNode` - A `VirtualNode::Fragment` if `Some` with nodes,
+///   `VirtualNode::Empty` if `None` or the vector is empty.
+impl IntoNode for Option<Vec<VirtualNode>> {
+    fn into_node(self) -> VirtualNode {
+        match self {
+            Some(nodes) => nodes.into_node(),
+            None => VirtualNode::Empty,
+        }
+    }
+}
+
 /// Wraps a `FnMut() -> VirtualNode` closure into a `DynamicNode` via `IntoNode`.
 ///
 /// This enables writing `{move || html! { ... }}` directly in HTML markup

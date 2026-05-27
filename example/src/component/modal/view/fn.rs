@@ -11,9 +11,8 @@ use crate::*;
 /// - `VirtualNode` - A modal overlay element.
 #[component]
 pub(crate) fn my_modal(props: VirtualNode) -> VirtualNode {
-    let children: Vec<VirtualNode> = props.get_children();
+    let children_node: Vec<VirtualNode> = props.get_children();
     let MyModalProps { title, on_close }: MyModalProps = props.into();
-    let children_node: VirtualNode = VirtualNode::Fragment(children);
     html! {
         div {
             class: c_modal_overlay()
