@@ -15,11 +15,11 @@ pub(crate) struct Console;
 #[derive(Clone, Data, Debug, New, PartialEq)]
 pub(crate) struct ConsoleEntry {
     /// The log level determining the entry's category and display color.
-    #[get(pub(super), type(copy))]
-    #[set(pub(super))]
-    pub(super) level: LogLevel,
+    #[get(pub(crate), type(copy))]
+    #[set(pub(crate))]
+    pub(crate) level: LogLevel,
     /// The text content of the log message.
-    #[get(pub(super))]
-    #[set(pub(super))]
-    pub(super) message: String,
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) message: String,
 }
