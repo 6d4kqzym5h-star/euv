@@ -13,6 +13,7 @@ jobs:
       tag: ${{ steps.read.outputs.tag }}
       package_name: ${{ steps.read.outputs.package_name }}
       branch_name: ${{ steps.read.outputs.branch_name }}
+      setup_sha: ${{ steps.push.outputs.setup_sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +42,7 @@ jobs:
           echo "🌿 Branch: $BRANCH_NAME"
           if [ -z "$VERSION" ] || [ -z "$PACKAGE_NAME" ]; then
             echo "❌ Failed to read package info from Cargo.toml"
+            exit 1
           fi
           if [ "$BRANCH_NAME" = "master" ]; then
             TAG="v$VERSION"
@@ -51,45 +53,35 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-      - name: Sync workspace version
+      - name: Sync workspace versions
+        id: push
         run: |
           VERSION="${{ steps.read.outputs.version }}"
-          python3 -c "
-          import tomllib
-          VERSION = '$VERSION'
-          FILES_KEYS = {
-              'Cargo.toml': [
-                  ('workspace.dependencies.euv.version', VERSION),
-                  ('workspace.dependencies.euv-cli.version', VERSION),
-                  ('workspace.dependencies.euv-core.version', VERSION),
-                  ('workspace.dependencies.euv-macros.version', VERSION),
-                  ('workspace.dependencies.euv-example.version', VERSION),
-              ],
-              'core/Cargo.toml': [('package.version', VERSION)],
-              'macros/Cargo.toml': [('package.version', VERSION)],
-              'cli/Cargo.toml': [('package.version', VERSION)],
-              'example/Cargo.toml': [('package.version', VERSION)],
-          }
-          for filepath, replacements in FILES_KEYS.items():
-              with open(filepath, 'r') as f:
-                  content = f.read()
-              for key_path, new_value in replacements:
-                  keys = key_path.split('.')
-                  data = tomllib.loads(content)
-                  node = data
-                  for k in keys[:-1]:
-                      node = node[k]
-                  old_value = node[keys[-1]]
-                  content = content.replace(f'version = \"{old_value}\"', f'version = \"{new_value}\"', 1)
-              with open(filepath, 'w') as f:
-                  f.write(content)
-          "
+          echo "🔧 Syncing all versions to $VERSION"
+          sed -i "s|^euv = { path = \"./\", version = \".*\" }|euv = { path = \"./\", version = \"$VERSION\" }|" Cargo.toml
+          sed -i "s|^euv-cli = { path = \"cli\", version = \".*\" }|euv-cli = { path = \"cli\", version = \"$VERSION\" }|" Cargo.toml
+          sed -i "s|^euv-core = { path = \"core\", version = \".*\" }|euv-core = { path = \"core\", version = \"$VERSION\" }|" Cargo.toml
+          sed -i "s|^euv-macros = { path = \"macros\", version = \".*\" }|euv-macros = { path = \"macros\", version = \"$VERSION\" }|" Cargo.toml
+          sed -i "s|^euv-example = { path = \"example\", version = \".*\" }|euv-example = { path = \"example\", version = \"$VERSION\" }|" Cargo.toml
+          sed -i "s|^version = \".*\"|version = \"$VERSION\"|" core/Cargo.toml
+          sed -i "s|^version = \".*\"|version = \"$VERSION\"|" macros/Cargo.toml
+          sed -i "s|^version = \".*\"|version = \"$VERSION\"|" cli/Cargo.toml
+          sed -i "s|^version = \".*\"|version = \"$VERSION\"|" example/Cargo.toml
           echo "🔧 Synced all workspace.dependencies versions to $VERSION"
           echo "🔧 Synced all sub-crate package.version to $VERSION"
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
           git add .
-          git diff --cached --quiet || git commit -m "chore: sync all versions to $VERSION"
+          if git diff --cached --quiet; then
+            SETUP_SHA="${{ github.sha }}"
+            echo "✅ No version changes needed, already synced"
+          else
+            git commit -m "chore: sync all versions to $VERSION"
+            git push
+            SETUP_SHA=$(git rev-parse HEAD)
+            echo "✅ Pushed version sync commit: $SETUP_SHA"
+          fi
+          echo "setup_sha=$SETUP_SHA" >> $GITHUB_OUTPUT
 
   check:
     needs: setup
@@ -97,6 +89,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.setup_sha }}
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -111,6 +105,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.setup_sha }}
       - name: Prepare environment
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -124,6 +120,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.setup_sha }}
       - name: Load clippy
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -138,6 +136,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.setup.outputs.setup_sha }}
       - name: Setup build
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -167,51 +167,13 @@ jobs:
       - name: Checkout
         if: steps.check_branch.outputs.skip == 'false'
         uses: actions/checkout@v4
-      - name: Install cargo-release
-        if: steps.check_branch.outputs.skip == 'false'
-        run: cargo install cargo-release
+        with:
+          ref: ${{ needs.setup.outputs.setup_sha }}
       - name: Configure git
         if: steps.check_branch.outputs.skip == 'false'
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
-      - name: Sync and push workspace version
-        if: steps.check_branch.outputs.skip == 'false'
-        run: |
-          VERSION="${{ needs.setup.outputs.version }}"
-          python3 -c "
-          import tomllib
-          VERSION = '$VERSION'
-          FILES_KEYS = {
-              'Cargo.toml': [
-                  ('workspace.dependencies.euv.version', VERSION),
-                  ('workspace.dependencies.euv-cli.version', VERSION),
-                  ('workspace.dependencies.euv-core.version', VERSION),
-                  ('workspace.dependencies.euv-macros.version', VERSION),
-                  ('workspace.dependencies.euv-example.version', VERSION),
-              ],
-              'core/Cargo.toml': [('package.version', VERSION)],
-              'macros/Cargo.toml': [('package.version', VERSION)],
-              'cli/Cargo.toml': [('package.version', VERSION)],
-              'example/Cargo.toml': [('package.version', VERSION)],
-          }
-          for filepath, replacements in FILES_KEYS.items():
-              with open(filepath, 'r') as f:
-                  content = f.read()
-              for key_path, new_value in replacements:
-                  keys = key_path.split('.')
-                  data = tomllib.loads(content)
-                  node = data
-                  for k in keys[:-1]:
-                      node = node[k]
-                  old_value = node[keys[-1]]
-                  content = content.replace(f'version = \"{old_value}\"', f'version = \"{new_value}\"', 1)
-              with open(filepath, 'w') as f:
-                  f.write(content)
-          "
-          git add .
-          git diff --cached --quiet || git commit -m "chore: sync all versions to $VERSION"
-          git push
       - name: Publish to crates.io
         id: publish
         if: steps.check_branch.outputs.skip == 'false'
@@ -220,34 +182,58 @@ jobs:
         run: |
           set -e
           echo "published=false" >> $GITHUB_OUTPUT
+          VERSION="${{ needs.setup.outputs.version }}"
           echo "${{ secrets.CARGO_REGISTRY_TOKEN }}" | cargo login
-          PACKAGE_NAME=$(python3 -c "import tomllib; d=tomllib.load(open('Cargo.toml','rb')); print(d['package']['name'])")
-          VERSION=${{ needs.setup.outputs.version }}
-          MAX_RETRY=36
-          SUCCESS=false
-          for ((i=1; i<=MAX_RETRY; i++)); do
-            echo "🚀 Attempt $i/$MAX_RETRY: releasing $PACKAGE_NAME v$VERSION"
-            if cargo release "$VERSION" --workspace --execute --no-confirm; then
-              echo "✅ $pkg release success"
-              echo "published=true" >> "$GITHUB_OUTPUT"
-              echo "🎉🎉🎉 PUBLISH SUCCESSFUL 🎉🎉🎉"
-              echo "✅ Successfully published $PACKAGE_NAME v$VERSION to crates.io"
-              echo "📦 Crates.io: https://crates.io/crates/$PACKAGE_NAME/$VERSION"
-              echo "📚 Docs.rs: https://docs.rs/$PACKAGE_NAME/$VERSION"
-              SUCCESS=true
-              break
-            else
-              echo "⚠️ Attempt $i failed"
-              if [ "$i" -lt "$MAX_RETRY" ]; then
-                echo "🔁 Retrying..."
-                sleep 2
+          echo "📦 Publishing workspace crates in dependency order..."
+          PUBLISH_ORDER="core macros cli"
+          SUCCESS=true
+          for crate in $PUBLISH_ORDER; do
+            CRATE_DIR="$crate"
+            CRATE_NAME=$(python3 -c "import tomllib; d=tomllib.load(open('$CRATE_DIR/Cargo.toml','rb')); print(d['package']['name'])")
+            echo "🚀 Publishing $CRATE_NAME v$VERSION..."
+            MAX_RETRY=10
+            PUBLISHED=false
+            for ((i=1; i<=MAX_RETRY; i++)); do
+              if (cd "$CRATE_DIR" && cargo publish --no-verify 2>&1); then
+                echo "✅ Published $CRATE_NAME v$VERSION"
+                PUBLISHED=true
+                break
+              else
+                echo "⚠️ Attempt $i/$MAX_RETRY failed for $CRATE_NAME"
+                if [ "$i" -lt "$MAX_RETRY" ]; then
+                  echo "🔁 Retrying in 10s..."
+                  sleep 10
+                fi
               fi
+            done
+            if [ "$PUBLISHED" != "true" ]; then
+              echo "❌ Failed to publish $CRATE_NAME after $MAX_RETRY attempts"
+              SUCCESS=false
+              break
             fi
+            echo "⏳ Waiting 15s for $CRATE_NAME to propagate on crates.io..."
+            sleep 15
           done
-          if [ "$SUCCESS" != "true" ]; then
-            echo "❌ $pkg release failed after $MAX_RETRY attempts"
+          if [ "$SUCCESS" = "true" ]; then
+            echo "📦 Publishing root crate euv v$VERSION..."
+            MAX_RETRY=10
+            for ((i=1; i<=MAX_RETRY; i++)); do
+              if cargo publish --no-verify 2>&1; then
+                echo "✅ Published euv v$VERSION"
+                echo "published=true" >> $GITHUB_OUTPUT
+                echo "🎉🎉🎉 PUBLISH SUCCESSFUL 🎉🎉🎉"
+                echo "📦 Crates.io: https://crates.io/crates/euv/$VERSION"
+                echo "📚 Docs.rs: https://docs.rs/euv/$VERSION"
+                break
+              else
+                echo "⚠️ Attempt $i/$MAX_RETRY failed for euv"
+                if [ "$i" -lt "$MAX_RETRY" ]; then
+                  echo "🔁 Retrying in 10s..."
+                  sleep 10
+                fi
+              fi
+            done
           fi
-          cargo build --release --all-features
 
   release:
     needs: [setup, check, tests, clippy, build, publish]
@@ -263,6 +249,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ needs.setup.outputs.setup_sha }}
       - name: Get package name and branch info
         id: package_info
         run: |
