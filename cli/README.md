@@ -43,7 +43,7 @@ euv-cli run --crate-path ./example --port 80 -- --target web --out-name euv
 euv-cli run --crate-path ./example -- --release --target web --out-name euv
 
 # Use a custom static assets directory instead of the default "www"
-euv-cli run --www-dir public -- --target web --out-name euv
+euv-cli run --www-dir www -- --target web --out-name euv
 ```
 
 ### Fmt (format euv macros)
@@ -143,11 +143,11 @@ The `--www-dir` option controls where the CLI looks for and generates static ass
 - **Dev server** serves files under the `/{www-dir}/` route prefix
 - **JS import path** in `index.html` is automatically computed relative to the www directory
 
-For example, with `--www-dir public`:
+For example, with `--www-dir www`:
 
 ```
 example/
-├── public/           ← static assets directory
+├── www/           ← static assets directory
 │   ├── index.html    ← generated HTML
 │   └── pkg/          ← WASM build output
 │       ├── euv.js
