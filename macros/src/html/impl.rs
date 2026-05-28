@@ -582,8 +582,15 @@ impl ToTokens for HtmlElement {
                 )
             });
         } else {
-            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().map(|(key, value)| {
+            let mut key_expr: Option<proc_macro2::TokenStream> = None;
+            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value)| {
                 let key_str: String = key.to_string();
+                if key_str == "key" {
+                    if let HtmlAttrValue::Expr(expr) = value {
+                        key_expr = Some(quote! { Some(::euv::IntoReactiveString::into_reactive_string(#expr)) });
+                    }
+                    return None;
+                }
                 let value_tokens: proc_macro2::TokenStream = match value {
                     HtmlAttrValue::Style(props) => {
                         let has_if: bool = props.iter().any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
@@ -623,10 +630,11 @@ impl ToTokens for HtmlElement {
                     key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
                 };
                 let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
-                quote! {
+                Some(quote! {
                     ::euv::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
-                }
+                })
             }).collect();
+            let key_token: proc_macro2::TokenStream = key_expr.unwrap_or_else(|| quote! { None });
             let child_tokens: Vec<proc_macro2::TokenStream> = self
                 .get_children()
                 .iter()
@@ -642,7 +650,7 @@ impl ToTokens for HtmlElement {
                     tag: ::euv::Tag::Element(#tag_literal),
                     attributes: vec![#(#attr_tokens), *],
                     children: vec![#(#child_tokens), *],
-                    key: None,
+                    key: #key_token,
                 }
             });
         }

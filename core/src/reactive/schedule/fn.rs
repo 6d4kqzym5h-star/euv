@@ -33,7 +33,7 @@ fn ensure_dispatch_callback() {
 /// `window.__euv_dispatch` callback via `queueMicrotask` on WASM
 /// targets. On non-WASM targets, resets `SCHEDULED` immediately
 /// since there is no event loop to schedule on.
-pub(crate) fn schedule_signal_update() {
+pub fn schedule_signal_update() {
     if SCHEDULED.load(Ordering::Relaxed) || SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
         return;
     }

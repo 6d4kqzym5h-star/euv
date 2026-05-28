@@ -99,30 +99,46 @@ pub(crate) fn init_event_delegation() {
 /// Drains the registry into a local Vec, invokes each callback, and
 /// re-inserts survivors (non-removed entries) back into the registry.
 /// This avoids per-key HashMap lookups and a separate keys Vec allocation.
+///
+/// After completing one pass, checks whether new entries were added during
+/// callback execution (e.g., by IntersectionObserver or async callbacks).
+/// If so, performs additional passes until the registry stabilizes, up to
+/// a maximum iteration limit to prevent infinite loops.
 pub(crate) fn dispatch_signal_update_callbacks() {
     if SIGNAL_UPDATE_DISPATCHING.load(Ordering::Relaxed) {
         return;
     }
     SIGNAL_UPDATE_DISPATCHING.store(true, Ordering::Relaxed);
-    let entries: Vec<(usize, SignalUpdateEntry)> =
-        ensure_signal_update_registry_mut().drain().collect();
-    for (key, entry) in entries {
-        let callback: Option<Box<dyn FnMut()>> = {
-            let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
-            if slot.get_removed() {
-                continue;
+    let mut iterations: usize = 0;
+    const MAX_ITERATIONS: usize = 3;
+    loop {
+        let entries: Vec<(usize, SignalUpdateEntry)> =
+            ensure_signal_update_registry_mut().drain().collect();
+        if entries.is_empty() {
+            break;
+        }
+        for (key, entry) in entries {
+            let callback: Option<Box<dyn FnMut()>> = {
+                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+                if slot.get_removed() {
+                    continue;
+                }
+                slot.get_mut_callback().take()
+            };
+            if let Some(mut callback) = callback {
+                callback();
+                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+                if !slot.get_removed() {
+                    slot.set_callback(Some(callback));
+                }
             }
-            slot.get_mut_callback().take()
-        };
-        if let Some(mut callback) = callback {
-            callback();
-            let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
-            if !slot.get_removed() {
-                slot.set_callback(Some(callback));
+            if !entry.borrow().get_removed() {
+                ensure_signal_update_registry_mut().insert(key, entry);
             }
         }
-        if !entry.borrow().get_removed() {
-            ensure_signal_update_registry_mut().insert(key, entry);
+        iterations += 1;
+        if iterations >= MAX_ITERATIONS {
+            break;
         }
     }
     SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);

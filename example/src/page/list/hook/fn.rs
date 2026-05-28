@@ -102,11 +102,13 @@ pub(crate) fn todo_list_on_remove(items: Signal<Vec<String>>, index: usize) -> N
     })
 }
 
-/// Disconnects the previous `IntersectionObserver` stored on `window.__euv_list_observer`
-/// and creates a fresh one that observes all elements matching `selector`.
+/// Creates an `IntersectionObserver` stored on `window.__euv_list_observer`
+/// that observes the container element matching `selector`.
 ///
-/// When an element enters or leaves the viewport, its tag name, `data-index`
-/// attribute (if present), and intersection state are logged via `Console::log`.
+/// When the container enters or leaves the viewport, its tag name,
+/// intersection state, and child count are logged via `Console::log`.
+/// Only the container element itself is observed (not individual children)
+/// to avoid O(N) performance overhead with large lists.
 ///
 /// # Arguments
 ///
@@ -115,56 +117,47 @@ fn bind_observer(selector: &str) {
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let observer_key: JsValue = JsValue::from_str("__euv_list_observer");
-    if let Some(existing_observer) = Reflect::get(&window_value, &observer_key)
+    if Reflect::get(&window_value, &observer_key)
         .ok()
         .and_then(|value: JsValue| value.dyn_into::<IntersectionObserver>().ok())
+        .is_some()
     {
-        if let Some(container_element) = document_value.query_selector(selector).ok().flatten() {
-            existing_observer.observe(&container_element);
-            let children: NodeList = container_element
-                .query_selector_all("[data-index]")
-                .unwrap();
-            for child_index in 0..children.length() {
-                if let Some(child_node) = children.item(child_index)
-                    && let Ok(child_element) = child_node.dyn_into::<Element>()
-                {
-                    existing_observer.observe(&child_element);
-                }
-            }
-        }
         return;
     }
     let callback: Closure<dyn FnMut(Array)> = Closure::wrap(Box::new(move |entries: Array| {
-        for index in 0..entries.length() {
-            let entry: JsValue = entries.get(index);
-            let intersection_entry: IntersectionObserverEntry =
-                entry.dyn_into::<IntersectionObserverEntry>().unwrap();
-            if !intersection_entry.is_intersecting() {
-                continue;
-            }
-            let target: Element = intersection_entry.target();
-            let tag_name: String = target.tag_name();
-            let intersection_ratio: f64 = intersection_entry.intersection_ratio();
-            let data_index: Option<String> = target.get_attribute("data-index");
-            match data_index {
-                Some(index_value) => {
-                    Console::log(&format!(
-                        "[IntersectionObserver] <{}> index={}, intersection_ratio={:.2}",
-                        tag_name, index_value, intersection_ratio
-                    ));
+        batch_updates(|| {
+            for index in 0..entries.length() {
+                let entry: JsValue = entries.get(index);
+                let intersection_entry: IntersectionObserverEntry =
+                    entry.dyn_into::<IntersectionObserverEntry>().unwrap();
+                if !intersection_entry.is_intersecting() {
+                    continue;
                 }
-                None => {
-                    let children: NodeList = target.query_selector_all("[data-index]").unwrap();
-                    let total_count: u32 = children.length();
-                    let estimated_visible: u32 =
-                        (intersection_ratio * total_count as f64).ceil() as u32;
-                    Console::log(&format!(
-                        "[IntersectionObserver] <{}> intersection_ratio={:.2}, total_items={}, estimated_visible_items={}",
-                        tag_name, intersection_ratio, total_count, estimated_visible
-                    ));
+                let target: Element = intersection_entry.target();
+                let tag_name: String = target.tag_name();
+                let intersection_ratio: f64 = intersection_entry.intersection_ratio();
+                let data_index: Option<String> = target.get_attribute("data-index");
+                match data_index {
+                    Some(index_value) => {
+                        Console::log(&format!(
+                            "[IntersectionObserver] <{}> index={}, intersection_ratio={:.2}",
+                            tag_name, index_value, intersection_ratio
+                        ));
+                    }
+                    None => {
+                        let children: NodeList = target.query_selector_all("[data-index]").unwrap();
+                        let total_count: u32 = children.length();
+                        let estimated_visible: u32 =
+                            (intersection_ratio * total_count as f64).ceil() as u32;
+                        Console::log(&format!(
+                            "[IntersectionObserver] <{}> intersection_ratio={:.2}, total_items={}, estimated_visible_items={}",
+                            tag_name, intersection_ratio, total_count, estimated_visible
+                        ));
+                    }
                 }
             }
-        }
+        });
+        schedule_signal_update();
     }));
     let observer: IntersectionObserver =
         IntersectionObserver::new(callback.as_ref().unchecked_ref()).unwrap();
@@ -172,16 +165,6 @@ fn bind_observer(selector: &str) {
     callback.forget();
     if let Some(container_element) = document_value.query_selector(selector).ok().flatten() {
         observer.observe(&container_element);
-        let children: NodeList = container_element
-            .query_selector_all("[data-index]")
-            .unwrap();
-        for child_index in 0..children.length() {
-            if let Some(child_node) = children.item(child_index)
-                && let Ok(child_element) = child_node.dyn_into::<Element>()
-            {
-                observer.observe(&child_element);
-            }
-        }
     }
 }
 
@@ -217,26 +200,22 @@ fn schedule_bind_observer(selector: String) {
     request_animation_frame_closure.forget();
 }
 
-/// Observes elements matching the given CSS selector for viewport intersection changes.
+/// Observes the container element matching the given CSS selector for viewport
+/// intersection changes.
 ///
 /// On first call, schedules an initial binding via `requestAnimationFrame` so
 /// that the DOM is fully rendered and painted before querying elements.
-/// Also registers a `__euv_signal_update__` event listener on `window` so
-/// that the observer is re-bound after every signal-driven DOM patch, again
-/// deferred via `requestAnimationFrame` to ensure the DOM update has been
-/// painted.
+/// Only the container itself is observed (not individual children) to avoid
+/// O(N) overhead with large lists.
 ///
-/// A guard flag (`window.__euv_list_observer_listener`) ensures both the
-/// initial `requestAnimationFrame` and the event listener are only
-/// registered once.
+/// A guard flag (`window.__euv_list_observer_listener`) ensures the initial
+/// `requestAnimationFrame` is only registered once.
 ///
 /// # Arguments
 ///
-/// - `&str` - A CSS selector string to identify the elements to observe.
+/// - `&str` - A CSS selector string to identify the container element to observe.
 pub(crate) fn use_intersection_observer(selector: &str) {
-    let selector_owned: String = selector.to_string();
-    let rebind_selector: String = selector_owned.clone();
-    let init_selector: String = selector_owned.clone();
+    let init_selector: String = selector.to_string();
     let window_value: Window = window().expect("no global window exists");
     let listener_key: JsValue = JsValue::from_str("__euv_list_observer_listener");
     if Reflect::get(&window_value, &listener_key)
@@ -244,14 +223,6 @@ pub(crate) fn use_intersection_observer(selector: &str) {
         .is_undefined()
     {
         let _ = Reflect::set(&window_value, &listener_key, &JsValue::TRUE);
-        let rebind_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            schedule_bind_observer(rebind_selector.clone());
-        }));
-        let _ = window_value.add_event_listener_with_callback(
-            "__euv_signal_update__",
-            rebind_closure.as_ref().unchecked_ref(),
-        );
-        rebind_closure.forget();
         schedule_bind_observer(init_selector);
     }
 }
