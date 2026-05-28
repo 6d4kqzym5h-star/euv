@@ -574,6 +574,7 @@ impl ToTokens for HtmlElement {
                 .collect();
             tokens.extend(quote! {
                 #tag_ident(
+                    #[allow(clippy::needless_update)]
                     #props_type_ident { #(#all_fields), *, ..Default::default() },
                 )
             });

@@ -721,6 +721,7 @@ impl Renderer {
     /// # Returns
     ///
     /// - `VirtualNode`- The unwrapped virtual node with all components expanded.
+    #[allow(clippy::only_used_in_recursion)]
     fn unwrap_component(&self, node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -924,6 +925,7 @@ impl Renderer {
     /// # Arguments
     ///
     /// - `&Element`- The DOM element to clean up.
+    #[allow(clippy::only_used_in_recursion)]
     fn cleanup_dom_subtree(&self, element: &Element) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
