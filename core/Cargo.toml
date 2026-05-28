@@ -11,6 +11,9 @@ repository = "https://github.com/euv-dev/euv.git"
 categories = ["network-programming", "web-programming"]
 exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 js-sys = { workspace = true }
 web-sys = { workspace = true }

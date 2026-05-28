@@ -24,7 +24,7 @@ cargo install euv-cli
 
 ## Usage
 
-The CLI uses the pattern `euv <action>` where:
+The CLI uses the pattern `euv-cli <action>` where:
 
 - **Action**: `run` (build + start server), `build` (build only), or `fmt` (format euv macros)
 
@@ -34,16 +34,16 @@ All `wasm-pack build` arguments are transparently forwarded after `--`.
 
 ```shell
 # Build and start dev server with hot-reload
-euv run -- --target web --out-name euv
+euv-cli run -- --target web --out-name euv
 
 # Build and start dev server with custom crate path and port
-euv run --crate-path ./example --port 80 -- --target web --out-name euv
+euv-cli run --crate-path ./example --port 80 -- --target web --out-name euv
 
 # Release build with dev server
-euv run --crate-path ./example -- --release --target web --out-name euv
+euv-cli run --crate-path ./example -- --release --target web --out-name euv
 
 # Use a custom static assets directory instead of the default "www"
-euv run --www-dir public -- --target web --out-name euv
+euv-cli run --www-dir public -- --target web --out-name euv
 ```
 
 ### Fmt (format euv macros)
@@ -52,16 +52,16 @@ Format euv macro invocations (`html!`, `class!`, `css_vars!`, `watch!`) in Rust 
 
 ```shell
 # Format all .rs files in the current directory (recursive)
-euv fmt
+euv-cli fmt
 
 # Format all .rs files in a specific directory
-euv fmt --path ./src
+euv-cli fmt --path ./src
 
 # Format a single file
-euv fmt --path src/main.rs
+euv-cli fmt --path src/main.rs
 
 # Check if formatting is needed without modifying files
-euv fmt --check
+euv-cli fmt --check
 
 # Check a specific path
 euv fmt --path ./src --check
@@ -86,13 +86,13 @@ euv fmt --path ./src --check
 
 ```shell
 # Dev build
-euv build -- --target web --out-name euv
+euv-cli build -- --target web --out-name euv
 
 # Release build
-euv build -- --release --target web --out-name euv
+euv-cli build -- --release --target web --out-name euv
 
 # Build with custom crate path and static directory
-euv build -- --release --crate-path ./example --www-dir public -- --target web --out-name euv
+euv-cli build --crate-path ./example --www-dir www -- --release --target web --out-dir www/pkg --out-name euv
 ```
 
 ### Via Cargo

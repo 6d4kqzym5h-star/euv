@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.5.1"
+version = "0.5.2"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -10,6 +10,9 @@ keywords = ["cross-platform"]
 repository = "https://github.com/euv-dev/euv.git"
 categories = ["network-programming", "web-programming"]
 exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [workspace]
 members = ["cli", "core", "example", "macros"]
@@ -103,6 +106,7 @@ web-sys = { version = "0.3.99", features = [
     "WheelEvent",
     "Window",
 ] }
+
 
 [dependencies]
 euv-core = { workspace = true }
