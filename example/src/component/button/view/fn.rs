@@ -11,22 +11,22 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn primary_button(props: PrimaryButtonProps, children: Vec<VirtualNode>) -> VirtualNode {
+pub(crate) fn primary_button(props: PrimaryButtonProps) -> VirtualNode {
     let PrimaryButtonProps {
         label,
-        onclick,
+        onclick: click_handler,
         disabled,
+        children,
     } = props;
-    let children_node: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(TextNode::new(label.to_string(), None))]
-    } else {
-        children
+    let content: VirtualNode = match children {
+        VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
+        other => other,
     };
     html! {
         button {
             class: if { disabled } { c_primary_button_disabled() } else { c_primary_button() }
-            onclick: onclick
-            children_node
+            onclick: click_handler
+            content
         }
     }
 }
@@ -44,25 +44,22 @@ pub(crate) fn primary_button(props: PrimaryButtonProps, children: Vec<VirtualNod
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn modal_primary_button(
-    props: PrimaryButtonProps,
-    children: Vec<VirtualNode>,
-) -> VirtualNode {
+pub(crate) fn modal_primary_button(props: PrimaryButtonProps) -> VirtualNode {
     let PrimaryButtonProps {
         label,
-        onclick,
+        onclick: click_handler,
         disabled,
+        children,
     } = props;
-    let children_node: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(TextNode::new(label.to_string(), None))]
-    } else {
-        children
+    let content: VirtualNode = match children {
+        VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
+        other => other,
     };
     html! {
         button {
             class: if { disabled } { c_modal_primary_button_disabled() } else { c_modal_primary_button() }
-            onclick: onclick
-            children_node
+            onclick: click_handler
+            content
         }
     }
 }

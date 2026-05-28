@@ -1,4 +1,3 @@
-
 /// Props for the `form_input` component.
 ///
 /// Defines the strongly-typed interface for the labeled input field.

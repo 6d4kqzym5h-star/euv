@@ -11,9 +11,10 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled card element.
 #[component]
-pub(crate) fn my_card(props: MyCardProps, children: Vec<VirtualNode>) -> VirtualNode {
-    let MyCardProps { title, .. } = props;
-    let children_node: Vec<VirtualNode> = children;
+pub(crate) fn my_card(props: MyCardProps) -> VirtualNode {
+    let MyCardProps {
+        title, children, ..
+    } = props;
     html! {
         div {
             class: c_card()
@@ -21,7 +22,7 @@ pub(crate) fn my_card(props: MyCardProps, children: Vec<VirtualNode>) -> Virtual
                 class: c_card_title()
                 title
             }
-            children_node
+            children
         }
     }
 }

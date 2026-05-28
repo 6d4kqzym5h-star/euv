@@ -11,7 +11,7 @@ use crate::*;
 ///
 /// - `VirtualNode` - A labeled input element.
 #[component]
-pub(crate) fn form_input(props: FormInputProps, _children: Vec<VirtualNode>) -> VirtualNode {
+pub(crate) fn form_input(props: FormInputProps) -> VirtualNode {
     let FormInputProps {
         id,
         label: label_string,

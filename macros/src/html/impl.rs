@@ -560,20 +560,21 @@ impl ToTokens for HtmlElement {
                     }
                 })
                 .collect();
-            let child_tokens: Vec<proc_macro2::TokenStream> = self
-                .get_children()
+            let children: &[HtmlNode] = self.get_children();
+            let children_field_token: Option<proc_macro2::TokenStream> = if children.is_empty() {
+                None
+            } else {
+                let children_node_tokens: proc_macro2::TokenStream =
+                    children_to_node_tokens(children);
+                Some(quote! { children: #children_node_tokens })
+            };
+            let all_fields: Vec<&proc_macro2::TokenStream> = prop_field_tokens
                 .iter()
-                .map(|child: &HtmlNode| {
-                    let mut token_stream: proc_macro2::TokenStream =
-                        proc_macro2::TokenStream::new();
-                    child.to_tokens(&mut token_stream);
-                    token_stream
-                })
+                .chain(children_field_token.as_ref())
                 .collect();
             tokens.extend(quote! {
                 #tag_ident(
-                    #props_type_ident { #(#prop_field_tokens), *, ..Default::default() },
-                    vec![#(#child_tokens), *],
+                    #props_type_ident { #(#all_fields), *, ..Default::default() },
                 )
             });
         } else {

@@ -13,7 +13,7 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled child display element.
 #[component]
-pub(crate) fn child_display(props: ChildDisplayProps, _children: Vec<VirtualNode>) -> VirtualNode {
+pub(crate) fn child_display(props: ChildDisplayProps) -> VirtualNode {
     let ChildDisplayProps {
         message,
         on_respond,
@@ -51,10 +51,7 @@ pub(crate) fn child_display(props: ChildDisplayProps, _children: Vec<VirtualNode
 ///
 /// - `VirtualNode` - A styled limited counter element.
 #[component]
-pub(crate) fn limited_counter(
-    props: LimitedCounterProps,
-    _children: Vec<VirtualNode>,
-) -> VirtualNode {
+pub(crate) fn limited_counter(props: LimitedCounterProps) -> VirtualNode {
     let LimitedCounterProps {
         disabled,
         max_count,
@@ -121,10 +118,7 @@ pub(crate) fn limited_counter(
 ///
 /// - `VirtualNode` - A styled input with callback element.
 #[component]
-pub(crate) fn callback_input(
-    props: CallbackInputProps,
-    _children: Vec<VirtualNode>,
-) -> VirtualNode {
+pub(crate) fn callback_input(props: CallbackInputProps) -> VirtualNode {
     let CallbackInputProps {
         value,
         on_change,
