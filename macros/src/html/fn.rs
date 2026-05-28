@@ -160,7 +160,7 @@ fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashMap<String, Strin
 ///
 /// - `String` - The Props type name, or empty string if not extractable.
 fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
-    let inputs = &item_fn.sig.inputs;
+    let inputs: &syn::punctuated::Punctuated<syn::FnArg, Token![,]> = &item_fn.sig.inputs;
     for input in inputs {
         if let syn::FnArg::Typed(pat_type) = input {
             let ty: &Type = &pat_type.ty;

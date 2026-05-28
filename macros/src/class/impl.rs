@@ -53,7 +53,7 @@ impl Parse for ClassInput {
                     let keyword_str: String = keyword.to_string();
                     let is_extends: bool =
                         forked.peek(Paren) && !keyword_str.starts_with(KEYWORD_MEDIA) && {
-                            let forked_extends_buffer = content.fork();
+                            let forked_extends_buffer: ParseBuffer<'_> = content.fork();
                             let _ = forked_extends_buffer.parse::<Ident>();
                             if forked_extends_buffer.peek(Paren) {
                                 let _paren_content;
@@ -113,7 +113,7 @@ impl Parse for ClassInput {
                         || keyword_str == KEYWORD_NTH_LAST_CHILD)
                         && forked.peek(Paren)
                     {
-                        let forked_nth_check = forked;
+                        let forked_nth_check: ParseBuffer<'_> = forked;
                         let _paren_content;
                         parenthesized!(_paren_content in forked_nth_check);
                         if forked_nth_check.peek(Brace) {
@@ -147,7 +147,7 @@ impl Parse for ClassInput {
                             continue;
                         }
                     } else if keyword_str == KEYWORD_MEDIA && forked.peek(Paren) {
-                        let forked_media_check = forked;
+                        let forked_media_check: ParseBuffer<'_> = forked;
                         let paren_content2;
                         parenthesized!(paren_content2 in forked_media_check);
                         if forked_media_check.peek(Brace) {
