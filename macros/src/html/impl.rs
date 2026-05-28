@@ -317,35 +317,7 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::If(html_if) => {
-                let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                for (branch_index, (condition, body)) in html_if.get_branches().iter().enumerate() {
-                    let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
-                    match (branch_index, condition) {
-                        (0, Some(cond)) => {
-                            let stripped_cond: &Expr = strip_braces_from_expr(cond);
-                            if_chain.extend(quote! {
-                                if #stripped_cond {
-                                    #body_expr
-                                }
-                            });
-                        }
-                        (_, Some(cond)) => {
-                            let stripped_cond: &Expr = strip_braces_from_expr(cond);
-                            if_chain.extend(quote! {
-                                else if #stripped_cond {
-                                    #body_expr
-                                }
-                            });
-                        }
-                        (_, None) => {
-                            if_chain.extend(quote! {
-                                else {
-                                    #body_expr
-                                }
-                            });
-                        }
-                    }
-                }
+                let if_chain = build_html_if_chain(html_if.get_branches());
                 tokens.extend(quote! {
                     ::euv::VirtualNode::create_dynamic(move || { #if_chain })
                 });

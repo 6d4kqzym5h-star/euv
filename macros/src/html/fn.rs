@@ -249,6 +249,21 @@ pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<Html
     }
 }
 
+/// Converts a slice of `HtmlNode` children into a `Vec<proc_macro2::TokenStream>`.
+///
+/// Shared helper used by both `children_to_node_tokens` and `children_to_tokens`.
+#[inline]
+fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::TokenStream> {
+    children
+        .iter()
+        .map(|child| {
+            let mut ts = proc_macro2::TokenStream::new();
+            child.to_tokens(&mut ts);
+            ts
+        })
+        .collect()
+}
+
 /// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream.
 ///
 /// - 0 children → `VirtualNode::Empty`
@@ -266,18 +281,12 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
     match children.len() {
         0 => quote! { ::euv::VirtualNode::Empty },
         1 => {
-            let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-            children[0].to_tokens(&mut token_stream);
-            token_stream
+            let mut ts = proc_macro2::TokenStream::new();
+            children[0].to_tokens(&mut ts);
+            ts
         }
         _ => {
-            let mut child_tokens: Vec<proc_macro2::TokenStream> =
-                Vec::with_capacity(children.len());
-            for child in children {
-                let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                child.to_tokens(&mut ts);
-                child_tokens.push(ts);
-            }
+            let child_tokens = nodes_to_token_vec(children);
             quote! { ::euv::VirtualNode::Fragment(vec![#(#child_tokens), *]) }
         }
     }
@@ -296,12 +305,7 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
 ///
 /// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
-    let mut child_tokens: Vec<proc_macro2::TokenStream> = Vec::with_capacity(children.len());
-    for child in children {
-        let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-        child.to_tokens(&mut token_stream);
-        child_tokens.push(token_stream);
-    }
+    let child_tokens = nodes_to_token_vec(children);
     quote! { vec![#(#child_tokens), *] }
 }
 
@@ -385,26 +389,53 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
+        let stripped_body = strip_braces_from_expr(body);
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                let stripped_cond: &Expr = strip_braces_from_expr(cond);
-                let stripped_body: &Expr = strip_braces_from_expr(body);
-                if_chain.extend(quote! {
-                    if #stripped_cond { #stripped_body }
-                });
+                let stripped_cond = strip_braces_from_expr(cond);
+                if_chain.extend(quote! { if #stripped_cond { #stripped_body } });
             }
             (_, Some(cond)) => {
-                let stripped_cond: &Expr = strip_braces_from_expr(cond);
-                let stripped_body: &Expr = strip_braces_from_expr(body);
-                if_chain.extend(quote! {
-                    else if #stripped_cond { #stripped_body }
-                });
+                let stripped_cond = strip_braces_from_expr(cond);
+                if_chain.extend(quote! { else if #stripped_cond { #stripped_body } });
             }
             (_, None) => {
-                let stripped_body: &Expr = strip_braces_from_expr(body);
-                if_chain.extend(quote! {
-                    else { #stripped_body }
-                });
+                if_chain.extend(quote! { else { #stripped_body } });
+            }
+        }
+    }
+    if_chain
+}
+
+/// Builds a Rust `if/else if/else` chain token stream from `HtmlIf` branches.
+///
+/// Each branch body is converted to a `VirtualNode` token stream via `children_to_node_tokens`.
+/// Used by `HtmlNode::If` in `ToTokens`.
+///
+/// # Arguments
+///
+/// - `&[(Option<Expr>, Vec<HtmlNode>)]` - The branches from an `HtmlIf`.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The generated if-chain token stream.
+pub(crate) fn build_html_if_chain(
+    branches: &[(Option<Expr>, Vec<HtmlNode>)],
+) -> proc_macro2::TokenStream {
+    let mut if_chain = proc_macro2::TokenStream::new();
+    for (branch_index, (condition, body)) in branches.iter().enumerate() {
+        let body_expr = children_to_node_tokens(body);
+        match (branch_index, condition) {
+            (0, Some(cond)) => {
+                let stripped_cond = strip_braces_from_expr(cond);
+                if_chain.extend(quote! { if #stripped_cond { #body_expr } });
+            }
+            (_, Some(cond)) => {
+                let stripped_cond = strip_braces_from_expr(cond);
+                if_chain.extend(quote! { else if #stripped_cond { #body_expr } });
+            }
+            (_, None) => {
+                if_chain.extend(quote! { else { #body_expr } });
             }
         }
     }
@@ -497,32 +528,40 @@ pub(crate) fn merge_same_key_attributes(
     let mut style_values: Vec<HtmlAttrValue> = Vec::new();
     let mut result: Vec<(Ident, HtmlAttrValue)> = Vec::new();
     for (key, value) in attributes {
-        let key_str: String = key.to_string();
-        if key_str == ATTR_KEY_CLASS {
-            class_values.push(value);
-        } else if key_str == ATTR_KEY_STYLE {
-            match value {
-                HtmlAttrValue::Style(props) => style_values.push(HtmlAttrValue::Style(props)),
-                other => style_values.push(other),
-            }
-        } else {
-            result.push((key, value));
+        match key.to_string().as_str() {
+            ATTR_KEY_CLASS => class_values.push(value),
+            ATTR_KEY_STYLE => style_values.push(value),
+            _ => result.push((key, value)),
         }
     }
-    if class_values.len() == 1 {
-        let class_key: Ident = Ident::new(ATTR_KEY_CLASS, proc_macro2::Span::call_site());
-        result.push((class_key, class_values.into_iter().next().unwrap()));
-    } else if class_values.len() > 1 {
-        let class_key: Ident = Ident::new(ATTR_KEY_CLASS, proc_macro2::Span::call_site());
-        result.push((class_key, HtmlAttrValue::Classes(class_values)));
-    }
-    if style_values.len() == 1 {
-        let style_key: Ident = Ident::new(ATTR_KEY_STYLE, proc_macro2::Span::call_site());
-        result.push((style_key, style_values.into_iter().next().unwrap()));
-    } else if style_values.len() > 1 {
-        let style_key: Ident = Ident::new(ATTR_KEY_STYLE, proc_macro2::Span::call_site());
-        result.push((style_key, HtmlAttrValue::Styles(style_values)));
-    }
+    let push_merged = |result: &mut Vec<(Ident, HtmlAttrValue)>,
+                       key_str: &str,
+                       mut values: Vec<HtmlAttrValue>,
+                       wrap: fn(Vec<HtmlAttrValue>) -> HtmlAttrValue| {
+        match values.len() {
+            0 => {}
+            1 => result.push((
+                Ident::new(key_str, proc_macro2::Span::call_site()),
+                values.remove(0),
+            )),
+            _ => result.push((
+                Ident::new(key_str, proc_macro2::Span::call_site()),
+                wrap(values),
+            )),
+        }
+    };
+    push_merged(
+        &mut result,
+        ATTR_KEY_CLASS,
+        class_values,
+        HtmlAttrValue::Classes,
+    );
+    push_merged(
+        &mut result,
+        ATTR_KEY_STYLE,
+        style_values,
+        HtmlAttrValue::Styles,
+    );
     result
 }
 
