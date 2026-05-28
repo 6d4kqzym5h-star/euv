@@ -108,7 +108,7 @@ pub(crate) fn limited_counter(props: LimitedCounterProps) -> VirtualNode {
 /// A callback input component that receives custom callback functions as props.
 ///
 /// Demonstrates passing `on_change` and `on_submit` callbacks through
-/// `html!` macro and extracting them with `try_get_callback` via `From<&VirtualNode>`.
+/// `html!` macro and extracting them with `try_get_event` via `From<&VirtualNode>`.
 ///
 /// # Arguments
 ///

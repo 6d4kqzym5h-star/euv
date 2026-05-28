@@ -30,8 +30,8 @@ pub(crate) fn my_modal(props: MyModalProps) -> VirtualNode {
                         class: c_modal_title()
                         title
                     }
-                    modal_primary_button {
-                        label: "Close"
+                    button {
+                        class: c_modal_close_button()
                         onclick: onclick
                         "×"
                     }

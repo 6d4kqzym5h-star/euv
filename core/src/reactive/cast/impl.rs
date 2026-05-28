@@ -251,10 +251,7 @@ where
     ///
     /// - `AttributeValue` - An event attribute value wrapping this closure.
     fn into_callback_attribute(self) -> AttributeValue {
-        AttributeValue::Event(NativeEventHandler::create(
-            NativeEventName::Other(CALLBACK_EVENT_NAME.to_string()),
-            self,
-        ))
+        AttributeValue::Event(NativeEventHandler::create(CALLBACK_EVENT_NAME, self))
     }
 }
 
@@ -303,10 +300,7 @@ where
     ///
     /// - `Option<NativeEventHandler>` - A `Some` wrapping the handler.
     fn into_event_prop(self) -> Option<NativeEventHandler> {
-        Some(NativeEventHandler::create(
-            NativeEventName::Other(CALLBACK_EVENT_NAME.to_string()),
-            self,
-        ))
+        Some(NativeEventHandler::create(CALLBACK_EVENT_NAME, self))
     }
 }
 

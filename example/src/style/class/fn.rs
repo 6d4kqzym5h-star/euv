@@ -229,6 +229,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         gap: "8px";
+        flex: "1";
+        min-width: "0";
         background: "#4f46e5";
         color: "white";
         border: "none";
@@ -254,6 +256,25 @@ class! {
         cursor: "not-allowed";
         opacity: "0.55";
         box-shadow: "none";
+    }
+
+    pub(crate) c_modal_close_button {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        background: "transparent";
+        color: "inherit";
+        border: "none";
+        padding: "6px 10px";
+        border-radius: "6px";
+        cursor: "pointer";
+        font-size: "20px";
+        font-weight: "400";
+        line-height: "1";
+        transition: "background 0.15s ease";
+        outline: "none";
+        opacity: "0.6";
+        flex-shrink: "0";
     }
 
     pub(crate) c_badge {
@@ -886,12 +907,7 @@ class! {
     pub(crate) c_modal_actions {
         display: "flex";
         gap: "12px";
-        justify-content: "flex-end";
         margin-top: "20px";
-        media("(max-width: 767px)") {
-            flex-wrap: "wrap";
-            justify-content: "stretch";
-        }
     }
 
     pub(crate) c_select_input {
@@ -1016,7 +1032,7 @@ class! {
     pub(crate) c_progress_bar {
         height: "100%";
         border-radius: "999px";
-        transition: "width 0.1s ease";
+        transition: "width 0.05s linear";
     }
 
     pub(crate) c_progress_text {
@@ -1953,7 +1969,6 @@ class! {
         justify-content: "center";
         margin-bottom: "16px";
         border: format!("1px solid {}", var!(border-subtle));
-        transition: "background 0.3s ease";
     }
 
     pub(crate) c_binding_color_hex {
@@ -1983,6 +1998,8 @@ class! {
         height: "6px";
         cursor: "pointer";
         accent-color: "#4f46e5";
+        will-change: "auto";
+        touch-action: "pan-x";
     }
 
     pub(crate) c_binding_slider_value {

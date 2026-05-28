@@ -552,11 +552,11 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
                 if is_component {
                     let callback_name: String = key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN);
                     quote! {
-                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name)
                     }
                 } else {
                     quote! {
-                        ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str.parse::<::euv::NativeEventName>().unwrap())
+                        ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
                     }
                 }
             } else if key_str == ATTR_KEY_CHILDREN {

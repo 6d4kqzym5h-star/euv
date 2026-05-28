@@ -13,7 +13,7 @@ pub(crate) struct HandlerSlot {
 /// Stores a signal update callback and its cleanup flag.
 #[derive(CustomDebug, Data, New)]
 pub(crate) struct SignalUpdateSlot {
-    /// The callback to invoke when `NativeEventName::EuvSignalUpdate.to_string()` fires.
+    /// The callback to invoke when signal update events fire.
     #[debug(skip)]
     #[get(skip)]
     #[set(pub(crate))]

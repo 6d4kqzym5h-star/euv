@@ -415,8 +415,8 @@ impl ToTokens for HtmlStylePropValue {
 /// Implementation of `ToTokens` for `HtmlAttrValue`, converting attribute values into tokens.
 ///
 /// For `HtmlAttrValue::If`, generates a reactive signal via `AttributeValue::create_reactive_signal`.
-/// For `HtmlAttrValue::Style` containing `If` conditions, generates a reactive
-/// signal via `AttributeValue::create_reactive_style`.
+/// For `HtmlAttrValue::Style` containing `If` conditions, generates a reactive signal via
+/// `AttributeValue::create_reactive_signal`.
 /// For static values (`Expr` and `Style` without `If`), the value is emitted directly.
 impl ToTokens for HtmlAttrValue {
     /// Converts this attribute value into its token stream representation.
@@ -448,7 +448,7 @@ impl ToTokens for HtmlAttrValue {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::AttributeValue::create_reactive_style(move || ::euv::Style::default()#(#prop_tokens)*.to_css_string())
+                        ::euv::AttributeValue::create_reactive_signal(move || ::euv::Style::default()#(#prop_tokens)*.to_css_string())
                     });
                 } else if all_literal {
                     let mut css_string: String = String::new();
@@ -609,7 +609,7 @@ impl ToTokens for HtmlElement {
                     HtmlAttrValue::Expr(expr) => {
                         if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                             quote! {
-                                ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str.parse::<::euv::NativeEventName>().unwrap())
+                                ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
                             }
                         } else if key_str == ATTR_KEY_CHILDREN {
                             quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }

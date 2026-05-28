@@ -32,11 +32,12 @@ pub(crate) fn progress_on_start(state: UseProgress) -> Option<Rc<dyn Fn(Event)>>
         let value_signal: Signal<i32> = state.get_value();
         let running_signal: Signal<bool> = state.get_running();
         let handle_signal: Signal<Option<IntervalHandle>> = state.get_handle();
-        let new_handle: IntervalHandle = use_interval(30, move || {
+        let new_handle: IntervalHandle = use_interval(16, move || {
             if running_signal.get() {
                 let current: i32 = value_signal.get();
                 if current < 100 {
-                    value_signal.set(current + 1);
+                    let next: i32 = (current + 2).min(100);
+                    value_signal.set(next);
                 } else {
                     running_signal.set(false);
                 }

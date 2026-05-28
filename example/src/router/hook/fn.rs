@@ -16,10 +16,7 @@ pub(crate) fn use_hash_change(route_signal: Signal<String>) {
         let new_route: String = current_route();
         route_signal.set(new_route);
     }));
-    let _ = window.add_event_listener_with_callback(
-        &NativeEventName::HashChange.to_string(),
-        closure.as_ref().unchecked_ref(),
-    );
+    let _ = window.add_event_listener_with_callback("hashchange", closure.as_ref().unchecked_ref());
     closure.forget();
 }
 
@@ -68,10 +65,7 @@ pub(crate) fn use_pop_state(panel_open: Signal<bool>) {
             panel_open.set(false);
         }
     }));
-    let _ = window.add_event_listener_with_callback(
-        &NativeEventName::PopState.to_string(),
-        closure.as_ref().unchecked_ref(),
-    );
+    let _ = window.add_event_listener_with_callback("popstate", closure.as_ref().unchecked_ref());
     closure.forget();
 }
 
@@ -113,10 +107,8 @@ pub(crate) fn use_resize() -> Signal<bool> {
             .unwrap_or(0);
         timer_signal.set(Some(new_timer));
     }));
-    let _ = resize_window.add_event_listener_with_callback(
-        &NativeEventName::Resize.to_string(),
-        closure.as_ref().unchecked_ref(),
-    );
+    let _ =
+        resize_window.add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref());
     closure.forget();
     debounce_closure.forget();
     mobile_signal

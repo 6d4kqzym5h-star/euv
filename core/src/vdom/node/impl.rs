@@ -386,21 +386,4 @@ impl VirtualNode {
         }
         None
     }
-
-    /// Extracts an event handler from this node by a custom attribute name.
-    ///
-    /// This is an alias for `try_get_event` — both search attributes by name
-    /// and extract the contained `NativeEventHandler`.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The custom callback attribute name to look for.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<NativeEventHandler>`- The handler, or `None` if not found.
-    #[inline]
-    pub fn try_get_callback(&self, name: &str) -> Option<NativeEventHandler> {
-        self.try_get_event(name)
-    }
 }

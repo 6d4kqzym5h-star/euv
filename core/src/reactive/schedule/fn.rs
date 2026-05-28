@@ -25,7 +25,7 @@ fn ensure_dispatch_callback() {
     }
 }
 
-/// Schedules a deferred `NativeEventName::EuvSignalUpdate.to_string()` event via a microtask.
+/// Schedules a deferred signal update event via a microtask.
 ///
 /// If a schedule is already pending (`SCHEDULED` is true) or updates
 /// are suppressed (`SUPPRESS_SCHEDULE` is true), this is a no-op.
