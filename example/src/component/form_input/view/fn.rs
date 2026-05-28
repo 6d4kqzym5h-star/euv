@@ -23,12 +23,12 @@ pub(crate) fn form_input(props: FormInputProps, _children: Vec<VirtualNode>) -> 
         div {
             class: c_form_input_wrapper()
             label {
-                r#for: id.clone()
+                r#for: id
                 class: c_form_label()
-                label: label_string
+                label_string
             }
             input {
-                id: id.clone()
+                id: id
                 name: id
                 r#type: "text"
                 placeholder: placeholder

@@ -18,7 +18,7 @@ pub(crate) fn primary_button(props: PrimaryButtonProps, children: Vec<VirtualNod
         disabled,
     } = props;
     let children_node: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(TextNode::new(label, None))]
+        vec![VirtualNode::Text(TextNode::new(label.to_string(), None))]
     } else {
         children
     };
@@ -54,7 +54,7 @@ pub(crate) fn modal_primary_button(
         disabled,
     } = props;
     let children_node: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(TextNode::new(label, None))]
+        vec![VirtualNode::Text(TextNode::new(label.to_string(), None))]
     } else {
         children
     };

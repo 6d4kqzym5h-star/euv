@@ -242,12 +242,12 @@ fn format_time(total_seconds: i32) -> String {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that increments the counter.
-pub(crate) fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that increments the counter.
+pub(crate) fn keep_alive_counter_on_increment(count: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let current: i32 = count.get();
         count.set(current + 1);
-    })
+    }))
 }
 
 /// Creates a click event handler that decrements the counter signal.
@@ -258,12 +258,12 @@ pub(crate) fn keep_alive_counter_on_increment(count: Signal<i32>) -> NativeEvent
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that decrements the counter.
-pub(crate) fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that decrements the counter.
+pub(crate) fn keep_alive_counter_on_decrement(count: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let current: i32 = count.get();
         count.set(current - 1);
-    })
+    }))
 }
 
 /// Creates a click event handler that resets the counter signal to zero.
@@ -274,11 +274,11 @@ pub(crate) fn keep_alive_counter_on_decrement(count: Signal<i32>) -> NativeEvent
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that resets the counter.
-pub(crate) fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that resets the counter.
+pub(crate) fn keep_alive_counter_on_reset(count: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         count.set(0);
-    })
+    }))
 }
 
 /// Creates a click event handler that starts the timer.
@@ -289,11 +289,11 @@ pub(crate) fn keep_alive_counter_on_reset(count: Signal<i32>) -> NativeEventHand
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that starts the timer.
-pub(crate) fn keep_alive_timer_on_start(running: Signal<bool>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that starts the timer.
+pub(crate) fn keep_alive_timer_on_start(running: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         running.set(true);
-    })
+    }))
 }
 
 /// Creates a click event handler that pauses the timer.
@@ -305,14 +305,14 @@ pub(crate) fn keep_alive_timer_on_start(running: Signal<bool>) -> NativeEventHan
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that pauses the timer.
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that pauses the timer.
 pub(crate) fn keep_alive_timer_on_pause(
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
-) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         running.set(false);
-    })
+    }))
 }
 
 /// Creates a click event handler that resets the timer.
@@ -325,16 +325,16 @@ pub(crate) fn keep_alive_timer_on_pause(
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that resets the timer.
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that resets the timer.
 pub(crate) fn keep_alive_timer_on_reset(
     elapsed: Signal<i32>,
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
-) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         running.set(false);
         elapsed.set(0);
-    })
+    }))
 }
 
 /// A keep-alive demo page demonstrating state preservation across tab switches.

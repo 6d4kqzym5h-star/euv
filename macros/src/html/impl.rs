@@ -534,33 +534,28 @@ impl ToTokens for HtmlElement {
                 .get_attributes()
                 .iter()
                 .map(|(key, value)| {
-                    let key_str: String = key.to_string();
                     let field_ident: Ident = key.clone();
                     match value {
                         HtmlAttrValue::Expr(expr) => {
-                            if key_str.starts_with(EVENT_ATTR_PREFIX) {
-                                quote! { #field_ident: ::euv::IntoEventProp::into_event_prop(#expr) }
-                            } else {
-                                quote! { #field_ident: (#expr).into() }
-                            }
+                            quote! { #field_ident: #expr }
                         }
                         HtmlAttrValue::If(html_attr_if) => {
                             let if_chain: proc_macro2::TokenStream =
                                 attr_if_to_tokens(html_attr_if);
-                            quote! { #field_ident: (#if_chain).into() }
+                            quote! { #field_ident: #if_chain }
                         }
                         HtmlAttrValue::Style(props) => {
                             let has_if: bool = props.iter().any(|(_, style_value)| {
                                 matches!(style_value, HtmlStylePropValue::If(_))
                             });
                             if has_if {
-                                quote! { #field_ident: (#value).into() }
+                                quote! { #field_ident: #value }
                             } else {
-                                quote! { #field_ident: (#value).to_string().into() }
+                                quote! { #field_ident: (#value).to_string() }
                             }
                         }
                         _ => {
-                            quote! { #field_ident: (#value).into() }
+                            quote! { #field_ident: #value }
                         }
                     }
                 })

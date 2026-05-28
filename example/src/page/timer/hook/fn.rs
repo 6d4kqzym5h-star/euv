@@ -75,9 +75,9 @@ pub(crate) fn use_countdown() -> UseCountdown {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to start the stopwatch.
-pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to start the stopwatch.
+pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let was_running: bool = state.get_running().get();
         if !was_running {
             state.get_running().set(true);
@@ -96,7 +96,7 @@ pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
             });
             handle_signal.set(Some(new_handle));
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that pauses the stopwatch.
@@ -107,16 +107,16 @@ pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to pause the stopwatch.
-pub(crate) fn stopwatch_on_pause(state: UseStopwatch) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to pause the stopwatch.
+pub(crate) fn stopwatch_on_pause(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
         }
         state.get_handle().set(None);
-    })
+    }))
 }
 
 /// Creates a click event handler that resets the stopwatch.
@@ -127,9 +127,9 @@ pub(crate) fn stopwatch_on_pause(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to reset the stopwatch.
-pub(crate) fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to reset the stopwatch.
+pub(crate) fn stopwatch_on_reset(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -137,7 +137,7 @@ pub(crate) fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
         }
         state.get_handle().set(None);
         state.get_seconds().set(0);
-    })
+    }))
 }
 
 /// Creates a click event handler that starts the countdown.
@@ -148,9 +148,9 @@ pub(crate) fn stopwatch_on_reset(state: UseStopwatch) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to start the countdown.
-pub(crate) fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to start the countdown.
+pub(crate) fn countdown_on_start(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let input_text: String = state.get_input().get();
         let parsed: i32 = input_text.parse::<i32>().unwrap_or(60);
         let safe_total: i32 = if parsed > 0 { parsed } else { 60 };
@@ -175,7 +175,7 @@ pub(crate) fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
             }
         });
         handle_signal.set(Some(new_handle));
-    })
+    }))
 }
 
 /// Creates a click event handler that pauses the countdown.
@@ -186,16 +186,16 @@ pub(crate) fn countdown_on_start(state: UseCountdown) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to pause the countdown.
-pub(crate) fn countdown_on_pause(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to pause the countdown.
+pub(crate) fn countdown_on_pause(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
         }
         state.get_handle().set(None);
-    })
+    }))
 }
 
 /// Creates a click event handler that resets the countdown.
@@ -206,9 +206,9 @@ pub(crate) fn countdown_on_pause(state: UseCountdown) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to reset the countdown.
-pub(crate) fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to reset the countdown.
+pub(crate) fn countdown_on_reset(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -217,7 +217,7 @@ pub(crate) fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
         state.get_handle().set(None);
         let current_total: i32 = state.get_total().get();
         state.get_remaining().set(current_total);
-    })
+    }))
 }
 
 /// Creates an input event handler that updates the countdown input signal.
@@ -228,13 +228,13 @@ pub(crate) fn countdown_on_reset(state: UseCountdown) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - An input handler for the countdown input field.
-pub(crate) fn countdown_on_input(state: UseCountdown) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - An input handler for the countdown input field.
+pub(crate) fn countdown_on_input(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             state.get_input().set(input.value());
         }
-    })
+    }))
 }

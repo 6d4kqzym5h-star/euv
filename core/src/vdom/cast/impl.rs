@@ -280,6 +280,34 @@ impl EventAdapter<Option<NativeEventHandler>> {
     }
 }
 
+/// Adapts an `Option<Rc<dyn Fn(Event)>>` into an `AttributeValue`.
+///
+/// `Some(callback)` becomes `AttributeValue::Event` by wrapping the shared closure
+/// into a `NativeEventHandler`, and `None` becomes `AttributeValue::Text(String::new())`.
+/// This supports component Props that use `Option<Rc<dyn Fn(Event)>>` for event callbacks.
+impl EventAdapter<Option<Rc<dyn Fn(Event)>>> {
+    /// Converts the wrapped optional shared closure into an attribute value.
+    ///
+    /// # Arguments
+    ///
+    /// - `NativeEventName` - The event name to bind the handler to.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
+    pub fn into_attribute(self, event_name: NativeEventName) -> AttributeValue {
+        match self.into_inner() {
+            Some(callback) => {
+                let wrapper = move |event: Event| {
+                    callback(event);
+                };
+                AttributeValue::Event(NativeEventHandler::create(event_name, wrapper))
+            }
+            None => AttributeValue::Text(String::new()),
+        }
+    }
+}
+
 /// Constructs an `AttrValueAdapter` that wraps any attribute-compatible value.
 impl<T> AttrValueAdapter<T> {
     /// Returns the inner wrapped value, consuming the adapter.

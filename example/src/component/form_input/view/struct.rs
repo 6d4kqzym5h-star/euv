@@ -1,28 +1,17 @@
-use crate::*;
 
 /// Props for the `form_input` component.
 ///
 /// Defines the strongly-typed interface for the labeled input field.
-#[derive(Data, Debug, Default, New)]
+#[derive(Default)]
 pub(crate) struct FormInputProps {
     /// The unique identifier for the input element.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) id: String,
+    pub(crate) id: &'static str,
     /// The label text displayed above the input.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) label: String,
+    pub(crate) label: &'static str,
     /// The placeholder text shown when the input is empty.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) placeholder: String,
+    pub(crate) placeholder: &'static str,
     /// The current input value.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) value: String,
+    pub(crate) value: &'static str,
     /// The autocomplete hint for the browser.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) autocomplete: String,
+    pub(crate) autocomplete: &'static str,
 }

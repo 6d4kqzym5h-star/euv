@@ -22,11 +22,10 @@ pub(crate) fn my_badge(props: MyBadgeProps, _children: Vec<VirtualNode>) -> Virt
         on_click,
     } = props;
     if outline {
-        let border_color: String = color.clone();
         html! {
             span {
                 class: c_badge_outline()
-                style: { color: { &color }; border-color: { &border_color }; }
+                style: { color: { color }; border-color: { color }; }
                 onclick: on_click
                 text
             }
@@ -35,7 +34,7 @@ pub(crate) fn my_badge(props: MyBadgeProps, _children: Vec<VirtualNode>) -> Virt
         html! {
             span {
                 class: c_badge()
-                style: { background: { &color }; }
+                style: { background: { color }; }
                 onclick: on_click
                 text
             }

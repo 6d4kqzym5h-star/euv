@@ -246,9 +246,9 @@ pub(crate) fn location_pathname() -> String {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to set the localStorage item.
-pub(crate) fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to set the localStorage item.
+pub(crate) fn local_storage_on_set(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let key: String = state.get_local_key().get();
         let value: String = state.get_local_value().get();
         if !key.is_empty() {
@@ -257,7 +257,7 @@ pub(crate) fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
                 .get_local_result()
                 .set(format!("Set: {} = {}", key, value));
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that gets a localStorage item.
@@ -268,9 +268,9 @@ pub(crate) fn local_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to get the localStorage item.
-pub(crate) fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to get the localStorage item.
+pub(crate) fn local_storage_on_get(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let key: String = state.get_local_key().get();
         let value: Option<String> = local_storage_get(&key);
         match value {
@@ -281,7 +281,7 @@ pub(crate) fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
                 .get_local_result()
                 .set(format!("Key '{}' not found", key)),
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that removes a localStorage item.
@@ -292,15 +292,15 @@ pub(crate) fn local_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to remove the localStorage item.
-pub(crate) fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to remove the localStorage item.
+pub(crate) fn local_storage_on_remove(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let key: String = state.get_local_key().get();
         local_storage_remove(&key);
         state
             .get_local_result()
             .set(format!("Removed key: {}", key));
-    })
+    }))
 }
 
 /// Creates a click event handler that sets a sessionStorage item.
@@ -311,9 +311,9 @@ pub(crate) fn local_storage_on_remove(state: UseBrowserApi) -> NativeEventHandle
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to set the sessionStorage item.
-pub(crate) fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to set the sessionStorage item.
+pub(crate) fn session_storage_on_set(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let key: String = state.get_session_key().get();
         let value: String = state.get_session_value().get();
         if !key.is_empty() {
@@ -322,7 +322,7 @@ pub(crate) fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler
                 .get_session_result()
                 .set(format!("Set: {} = {}", key, value));
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that gets a sessionStorage item.
@@ -333,9 +333,9 @@ pub(crate) fn session_storage_on_set(state: UseBrowserApi) -> NativeEventHandler
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to get the sessionStorage item.
-pub(crate) fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to get the sessionStorage item.
+pub(crate) fn session_storage_on_get(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let key: String = state.get_session_key().get();
         let value: Option<String> = session_storage_get(&key);
         match value {
@@ -346,7 +346,7 @@ pub(crate) fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler
                 .get_session_result()
                 .set(format!("Key '{}' not found", key)),
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that removes a sessionStorage item.
@@ -357,15 +357,15 @@ pub(crate) fn session_storage_on_get(state: UseBrowserApi) -> NativeEventHandler
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to remove the sessionStorage item.
-pub(crate) fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to remove the sessionStorage item.
+pub(crate) fn session_storage_on_remove(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let key: String = state.get_session_key().get();
         session_storage_remove(&key);
         state
             .get_session_result()
             .set(format!("Removed key: {}", key));
-    })
+    }))
 }
 
 /// Creates a click event handler that copies text to clipboard.
@@ -376,9 +376,9 @@ pub(crate) fn session_storage_on_remove(state: UseBrowserApi) -> NativeEventHand
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to copy text to clipboard.
-pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to copy text to clipboard.
+pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let text: String = state.get_clipboard_text().get();
         let text_clone: String = text.clone();
         let result: Signal<String> = state.get_clipboard_result();
@@ -394,7 +394,7 @@ pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
                 }
             });
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that reads text from clipboard.
@@ -405,15 +405,15 @@ pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to read text from clipboard.
-pub(crate) fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to read text from clipboard.
+pub(crate) fn clipboard_on_paste(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let result: Signal<String> = state.get_clipboard_result();
         spawn_local(async move {
             let text: String = clipboard_read_text().await;
             result.set(format!("Pasted: {}", text));
         });
-    })
+    }))
 }
 
 /// Creates a click event handler that refreshes the window size display.
@@ -424,14 +424,14 @@ pub(crate) fn clipboard_on_paste(state: UseBrowserApi) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to refresh the window size.
-pub(crate) fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to refresh the window size.
+pub(crate) fn window_on_refresh_size(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let (width, height): (i32, i32) = window_inner_size();
         state
             .get_window_size()
             .set(format!("{} x {}", width, height));
-    })
+    }))
 }
 
 /// Creates a click event handler that logs a console message.
@@ -442,12 +442,12 @@ pub(crate) fn window_on_refresh_size(state: UseBrowserApi) -> NativeEventHandler
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler for console.log.
-pub(crate) fn console_on_log(console_input: Signal<String>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.log.
+pub(crate) fn console_on_log(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let message: String = console_input.get();
         Console::log(&message);
-    })
+    }))
 }
 
 /// Creates a click event handler that warns a console message.
@@ -458,12 +458,12 @@ pub(crate) fn console_on_log(console_input: Signal<String>) -> NativeEventHandle
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler for console.warn.
-pub(crate) fn console_on_warn(console_input: Signal<String>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.warn.
+pub(crate) fn console_on_warn(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let message: String = console_input.get();
         Console::warn(&message);
-    })
+    }))
 }
 
 /// Creates a click event handler that errors a console message.
@@ -474,10 +474,10 @@ pub(crate) fn console_on_warn(console_input: Signal<String>) -> NativeEventHandl
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler for console.error.
-pub(crate) fn console_on_error(console_input: Signal<String>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.error.
+pub(crate) fn console_on_error(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let message: String = console_input.get();
         Console::error(&message);
-    })
+    }))
 }

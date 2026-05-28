@@ -24,9 +24,9 @@ pub(crate) fn use_fetch() -> UseFetch {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to trigger the fetch.
-pub(crate) fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to trigger the fetch.
+pub(crate) fn fetch_on_fetch(state: UseFetch) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_loading().set(true);
         state.get_error().set(String::new());
         state.get_data().set(String::new());
@@ -61,5 +61,5 @@ pub(crate) fn fetch_on_fetch(state: UseFetch) -> NativeEventHandler {
             }
             loading_signal.set(false);
         });
-    })
+    }))
 }
