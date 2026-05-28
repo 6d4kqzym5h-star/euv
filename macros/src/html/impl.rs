@@ -506,8 +506,11 @@ impl ToTokens for HtmlAttrValue {
 ///
 /// For identifier tags, the macro checks whether the tag name corresponds to a
 /// user-defined function in the project source. If it does, the tag is treated
-/// as a component function call with `Tag::Component`. If not, it is treated
-/// as a native HTML element with `Tag::Element` (supports custom HTML5 tags).
+/// as a component function call with typed Props struct initialization and
+/// children passed as a separate `Vec<VirtualNode>` argument.
+///
+/// For non-component tags (HTML elements), the existing `VirtualNode::Element`
+/// construction with `Tag::Element` is preserved.
 ///
 /// String literal tags always produce `Tag::Element`, supporting custom
 /// HTML5 elements (Web Components).
@@ -524,79 +527,116 @@ impl ToTokens for HtmlElement {
         let tag_literal: proc_macro2::TokenStream =
             quote_spanned!(tag_span=> #tag_name.to_string());
         let is_component: bool = self.get_is_ident_tag() && is_user_fn(&tag_name);
-        let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().map(|(key, value)| {
-            let key_str: String = key.to_string();
-            let value_tokens: proc_macro2::TokenStream = match value {
-                HtmlAttrValue::Style(props) => {
-                    let has_if: bool = props.iter().any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
-                    if has_if {
-                        quote! { #value }
-                    } else {
-                        quote! { ::euv::AttributeValue::Text(#value) }
-                    }
-                }
-                HtmlAttrValue::If(_) => {
-                    quote! { #value }
-                }
-                HtmlAttrValue::Classes(_) => {
-                    quote! { #value }
-                }
-                HtmlAttrValue::Styles(_) => {
-                    quote! { #value }
-                }
-                HtmlAttrValue::Expr(expr) => {
-                    if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
-                        if is_component {
-                            let callback_name: String = key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN);
-                            quote! {
-                                ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+        if is_component {
+            let props_type_name: &str = get_user_fn_props_type(&tag_name).unwrap_or("");
+            let props_type_ident: Ident = Ident::new(props_type_name, tag_span);
+            let prop_field_tokens: Vec<proc_macro2::TokenStream> = self
+                .get_attributes()
+                .iter()
+                .map(|(key, value)| {
+                    let key_str: String = key.to_string();
+                    let field_ident: Ident = key.clone();
+                    match value {
+                        HtmlAttrValue::Expr(expr) => {
+                            if key_str.starts_with(EVENT_ATTR_PREFIX) {
+                                quote! { #field_ident: ::euv::IntoEventProp::into_event_prop(#expr) }
+                            } else {
+                                quote! { #field_ident: (#expr).into() }
                             }
+                        }
+                        HtmlAttrValue::If(html_attr_if) => {
+                            let if_chain: proc_macro2::TokenStream =
+                                attr_if_to_tokens(html_attr_if);
+                            quote! { #field_ident: (#if_chain).into() }
+                        }
+                        HtmlAttrValue::Style(props) => {
+                            let has_if: bool = props.iter().any(|(_, style_value)| {
+                                matches!(style_value, HtmlStylePropValue::If(_))
+                            });
+                            if has_if {
+                                quote! { #field_ident: (#value).into() }
+                            } else {
+                                quote! { #field_ident: (#value).to_string().into() }
+                            }
+                        }
+                        _ => {
+                            quote! { #field_ident: (#value).into() }
+                        }
+                    }
+                })
+                .collect();
+            let child_tokens: Vec<proc_macro2::TokenStream> = self
+                .get_children()
+                .iter()
+                .map(|child: &HtmlNode| {
+                    let mut token_stream: proc_macro2::TokenStream =
+                        proc_macro2::TokenStream::new();
+                    child.to_tokens(&mut token_stream);
+                    token_stream
+                })
+                .collect();
+            tokens.extend(quote! {
+                #tag_ident(
+                    #props_type_ident { #(#prop_field_tokens), *, ..Default::default() },
+                    vec![#(#child_tokens), *],
+                )
+            });
+        } else {
+            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().map(|(key, value)| {
+                let key_str: String = key.to_string();
+                let value_tokens: proc_macro2::TokenStream = match value {
+                    HtmlAttrValue::Style(props) => {
+                        let has_if: bool = props.iter().any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
+                        if has_if {
+                            quote! { #value }
                         } else {
+                            quote! { ::euv::AttributeValue::Text(#value) }
+                        }
+                    }
+                    HtmlAttrValue::If(_) => {
+                        quote! { #value }
+                    }
+                    HtmlAttrValue::Classes(_) => {
+                        quote! { #value }
+                    }
+                    HtmlAttrValue::Styles(_) => {
+                        quote! { #value }
+                    }
+                    HtmlAttrValue::Expr(expr) => {
+                        if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                             quote! {
                                 ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str.parse::<::euv::NativeEventName>().unwrap())
                             }
-                        }
-                    } else if key_str == ATTR_KEY_CHILDREN {
-                        quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
-                    } else {
-                        quote! {
-                            ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                        } else if key_str == ATTR_KEY_CHILDREN {
+                            quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
+                        } else {
+                            quote! {
+                                ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                            }
                         }
                     }
+                };
+                let is_event: bool = key_str.starts_with(EVENT_ATTR_PREFIX);
+                let raw_key: String = if is_event {
+                    key_str.clone()
+                } else {
+                    key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
+                };
+                let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
+                quote! {
+                    ::euv::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
                 }
-            };
-            let is_event: bool = key_str.starts_with(EVENT_ATTR_PREFIX);
-            let raw_key: String = if is_component {
-                key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
-            } else if is_event {
-                key_str.clone()
-            } else {
-                key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
-            };
-            let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
-            quote! {
-                ::euv::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
-            }
-        }).collect();
-        let child_tokens: Vec<proc_macro2::TokenStream> = self
-            .get_children()
-            .iter()
-            .map(|child: &HtmlNode| {
-                let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                child.to_tokens(&mut token_stream);
-                token_stream
-            })
-            .collect();
-        if is_component {
-            tokens.extend(quote! {
-                #tag_ident(::euv::VirtualNode::Element {
-                    tag: ::euv::Tag::Component(#tag_literal),
-                    attributes: vec![#(#attr_tokens), *],
-                    children: vec![#(#child_tokens), *],
-                    key: None,
+            }).collect();
+            let child_tokens: Vec<proc_macro2::TokenStream> = self
+                .get_children()
+                .iter()
+                .map(|child: &HtmlNode| {
+                    let mut token_stream: proc_macro2::TokenStream =
+                        proc_macro2::TokenStream::new();
+                    child.to_tokens(&mut token_stream);
+                    token_stream
                 })
-            });
-        } else {
+                .collect();
             tokens.extend(quote! {
                 ::euv::VirtualNode::Element {
                     tag: ::euv::Tag::Element(#tag_literal),

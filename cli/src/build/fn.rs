@@ -83,7 +83,8 @@ fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
 /// Resolves the output JS filename for HTML generation.
 ///
 /// Uses `--out-name` from wasm-pack args if specified,
-/// otherwise falls back to the crate name derived from `Cargo.toml`.
+/// otherwise reads the crate name from `Cargo.toml` `[package] name` field
+/// and replaces hyphens with underscores (matching wasm-pack behavior).
 /// Appends `.js` extension to form the complete JS filename.
 ///
 /// # Arguments
@@ -92,20 +93,54 @@ fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
 ///
 /// # Returns
 ///
-/// - `String` - The resolved JS filename with `.js` extension (e.g. `euv.js`).
+/// - `String` - The resolved JS filename with `.js` extension (e.g. `euv_example.js`).
 pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
     let name: String = if let Some(out_name) = extract_out_name(&args.wasm_pack_args) {
         out_name
     } else {
         let cargo_toml_path: PathBuf = args.crate_path.join(CARGO_TOML_FILE_NAME);
-        let crate_name: String = cargo_toml_path
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-        crate_name
+        let crate_name: String = read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
+            args.crate_path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        });
+        crate_name.replace('-', "_")
     };
     format!("{name}{JS_EXTENSION}")
+}
+
+/// Reads the `name` field from a Cargo.toml file.
+///
+/// Parses the file line-by-line looking for `name = "..."` within the `[package]` section.
+///
+/// # Arguments
+///
+/// - `&Path` - The path to the Cargo.toml file.
+///
+/// # Returns
+///
+/// - `Option<String>` - The crate name if found.
+fn read_crate_name_from_toml(path: &Path) -> Option<String> {
+    let content: String = std::fs::read_to_string(path).ok()?;
+    let mut in_package: bool = false;
+    for line in content.lines() {
+        let trimmed: &str = line.trim();
+        if trimmed.starts_with('[') {
+            in_package = trimmed == "[package]";
+            continue;
+        }
+        if in_package
+            && trimmed.starts_with("name")
+            && let Some(value) = trimmed.strip_prefix("name")
+        {
+            let value: &str = value.trim().strip_prefix('=')?.trim();
+            let value: &str = value.strip_prefix('"')?.strip_suffix('"')?;
+            return Some(value.to_string());
+        }
+    }
+    None
 }
 
 /// Resolves the JS import path for HTML generation.
@@ -406,6 +441,13 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     if !has_out_dir {
         command.arg(OUT_DIR_ARG).arg(&default_out_dir);
     }
+    let has_target: bool = args
+        .wasm_pack_args
+        .iter()
+        .any(|arg| arg == TARGET_ARG || arg.starts_with(&format!("{TARGET_ARG}=")));
+    if !has_target {
+        command.arg(TARGET_ARG).arg(TARGET_WEB);
+    }
     command.current_dir(&args.crate_path);
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     let display_args: Vec<String> = args
@@ -416,6 +458,11 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
             Vec::new()
         } else {
             vec![OUT_DIR_ARG.to_string(), default_out_dir]
+        })
+        .chain(if has_target {
+            Vec::new()
+        } else {
+            vec![TARGET_ARG.to_string(), TARGET_WEB.to_string()]
         })
         .collect();
     let out_dir_absolute: PathBuf = resolve_out_dir(args);

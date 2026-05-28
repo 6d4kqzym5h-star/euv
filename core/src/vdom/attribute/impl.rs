@@ -300,7 +300,7 @@ impl Style {
             .iter()
             .map(|style: &StyleProperty| {
                 format!(
-                    "{name}{CSS_PROP_SEPARATOR}{value}",
+                    "{name}{CSS_PROP_SEPARATOR}{value}{CHAR_CSS_DECL_TERMINATOR}",
                     name = style.get_name(),
                     value = style.get_value()
                 )

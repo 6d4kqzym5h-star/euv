@@ -17,7 +17,6 @@ use std::{
     fmt::{self, Display, Formatter},
     mem::{swap, take},
     num::ParseIntError,
-    ops::{Deref, DerefMut},
     rc::Rc,
     str::FromStr,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},

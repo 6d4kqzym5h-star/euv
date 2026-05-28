@@ -15,7 +15,7 @@ use crate::*;
 ///
 /// - `&Event`- The native DOM event being dispatched.
 /// - `&str`- The name of the event type being delegated.
-fn dispatch_delegated_event(event: &Event, event_name: &str) {
+fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
     let target: EventTarget = match event.target() {
         Some(t) => t,
         None => return,
@@ -30,9 +30,9 @@ fn dispatch_delegated_event(event: &Event, event_name: &str) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
         {
-            let key: (usize, String) = (euv_id, event_name.to_string());
+            let key: (usize, &'static str) = (euv_id, event_name);
             let found: Option<NativeEventHandler> = {
-                let registry: &HashMap<(usize, String), HandlerEntry> = ensure_handler_registry();
+                let registry: &HandlerRegistryMap = ensure_handler_registry();
                 registry.get(&key).and_then(|entry: &HandlerEntry| {
                     let slot: Ref<HandlerSlot> = entry.borrow();
                     slot.try_get_handler().as_ref().cloned()
@@ -62,19 +62,18 @@ fn dispatch_delegated_event(event: &Event, event_name: &str) {
 /// # Panics
 ///
 /// Panics if `window()` returns `None` or if `add_event_listener_with_callback_and_bool` fails.
-pub(crate) fn ensure_delegated_listener(event_name: String) {
-    let already_delegated: bool = is_delegated_event(&event_name);
+pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
+    let already_delegated: bool = is_delegated_event(event_name);
     if already_delegated {
         return;
     }
-    let event_name_clone: String = event_name.clone();
     let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-        dispatch_delegated_event(&event, &event_name_clone);
+        dispatch_delegated_event(&event, event_name);
     }));
     let window: Window = window().unwrap();
     window
         .add_event_listener_with_callback_and_bool(
-            &event_name,
+            event_name,
             closure.as_ref().unchecked_ref(),
             true,
         )
@@ -90,79 +89,40 @@ pub(crate) fn ensure_delegated_listener(event_name: String) {
 /// capturing-phase listeners on `window`.
 pub(crate) fn init_event_delegation() {
     for event_name_str in DELEGATABLE_EVENT_NAMES {
-        ensure_delegated_listener(event_name_str.to_string());
+        ensure_delegated_listener(event_name_str);
     }
-}
-
-/// Ensures the global `NativeEventName::EuvSignalUpdate.to_string()` listener is registered on window.
-///
-/// If already registered (`SIGNAL_UPDATE_LISTENER_REGISTERED` is true),
-/// this is a no-op. Otherwise, creates a `Closure` that calls
-/// `dispatch_signal_update_callbacks`, registers it as a listener for
-/// the `NativeEventName::EuvSignalUpdate.to_string()` event on `window`, and sets the flag.
-///
-/// # Panics
-///
-/// Panics if `window()` returns `None` or if `add_event_listener_with_callback` fails.
-pub(crate) fn ensure_signal_update_listener() {
-    if is_signal_update_listener_registered() {
-        return;
-    }
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(|| {
-        dispatch_signal_update_callbacks();
-    }));
-    let event_name: String = NativeEventName::EuvSignalUpdate.to_string();
-    window()
-        .unwrap()
-        .add_event_listener_with_callback(&event_name, closure.as_ref().unchecked_ref())
-        .unwrap();
-    closure.forget();
-    set_signal_update_listener_registered(true);
 }
 
 /// Invokes all active callbacks in the signal update registry.
 ///
 /// Guards against re-entrant dispatch with `SIGNAL_UPDATE_DISPATCHING`.
-/// Iterates over all registry keys, takes each callback out of its slot,
-/// invokes it, and puts it back (unless the slot has been marked as
-/// removed during execution). Removed entries are cleaned up afterward.
-fn dispatch_signal_update_callbacks() {
+/// Drains the registry into a local Vec, invokes each callback, and
+/// re-inserts survivors (non-removed entries) back into the registry.
+/// This avoids per-key HashMap lookups and a separate keys Vec allocation.
+pub(crate) fn dispatch_signal_update_callbacks() {
     if SIGNAL_UPDATE_DISPATCHING.load(Ordering::Relaxed) {
         return;
     }
     SIGNAL_UPDATE_DISPATCHING.store(true, Ordering::Relaxed);
-    let keys: Vec<usize> = ensure_signal_update_registry().keys().cloned().collect();
-    let mut keys_to_cleanup: Vec<usize> = Vec::new();
-    for key in keys {
+    let entries: Vec<(usize, SignalUpdateEntry)> =
+        ensure_signal_update_registry_mut().drain().collect();
+    for (key, entry) in entries {
         let callback: Option<Box<dyn FnMut()>> = {
-            let registry_ref: &HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry();
-            let Some(entry) = registry_ref.get(&key) else {
-                continue;
-            };
             let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
             if slot.get_removed() {
-                keys_to_cleanup.push(key);
                 continue;
             }
             slot.get_mut_callback().take()
         };
         if let Some(mut callback) = callback {
             callback();
-            let registry_ref: &mut HashMap<usize, SignalUpdateEntry> =
-                ensure_signal_update_registry_mut();
-            if let Some(entry) = registry_ref.get(&key) {
-                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
-                if !slot.get_removed() {
-                    slot.set_callback(Some(callback));
-                }
+            let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+            if !slot.get_removed() {
+                slot.set_callback(Some(callback));
             }
         }
-    }
-    if !keys_to_cleanup.is_empty() {
-        let registry_ref: &mut HashMap<usize, SignalUpdateEntry> =
-            ensure_signal_update_registry_mut();
-        for key in keys_to_cleanup {
-            registry_ref.remove(&key);
+        if !entry.borrow().get_removed() {
+            ensure_signal_update_registry_mut().insert(key, entry);
         }
     }
     SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
@@ -179,7 +139,6 @@ fn dispatch_signal_update_callbacks() {
 /// - `usize`- The unique ID of the `DynamicNode`.
 /// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
 pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnMut()>) {
-    ensure_signal_update_listener();
     let entry: SignalUpdateEntry =
         Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false)));
     ensure_signal_update_registry_mut().insert(dynamic_id, entry);
@@ -209,8 +168,8 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
 ///
 /// - `usize`- The euv ID of the DOM element.
 /// - `&str`- The event name of the handler to remove.
-pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &str) {
-    let key: (usize, String) = (_euv_id, event_name.to_string());
+pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &'static str) {
+    let key: (usize, &'static str) = (_euv_id, event_name);
     ensure_handler_registry_mut().remove(&key);
 }
 
@@ -223,11 +182,11 @@ pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &str) {
 ///
 /// - `usize`- The euv ID of the DOM element being removed.
 pub(crate) fn cleanup_element_handlers(euv_id: usize) {
-    let registry_ref: &mut HashMap<(usize, String), HandlerEntry> = ensure_handler_registry_mut();
-    let keys_to_remove: Vec<(usize, String)> = registry_ref
+    let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
+    let keys_to_remove: Vec<(usize, &'static str)> = registry_ref
         .keys()
         .filter(|(id, _)| *id == euv_id)
-        .cloned()
+        .copied()
         .collect();
     for key in keys_to_remove {
         registry_ref.remove(&key);
@@ -307,9 +266,9 @@ pub(crate) fn is_delegated_event(event_name: &str) -> bool {
 ///
 /// # Arguments
 ///
-/// - `String`- The event name to insert.
+/// - `&'static str`- The event name to insert.
 #[allow(static_mut_refs)]
-pub(crate) fn insert_delegated_event(event_name: String) {
+pub(crate) fn insert_delegated_event(event_name: &'static str) {
     unsafe {
         if (*DELEGATED_EVENTS.get_0().get()).is_none() {
             (*DELEGATED_EVENTS.get_0().get()) = Some(HashSet::new());
@@ -348,27 +307,5 @@ fn ensure_signal_update_registry_mut() -> &'static mut HashMap<usize, SignalUpda
         (*SIGNAL_UPDATE_REGISTRY.get_0().get())
             .as_mut()
             .unwrap_unchecked()
-    }
-}
-
-/// Returns whether the signal update listener has been registered.
-///
-/// # Returns
-///
-/// - `bool`- Whether the listener is registered.
-#[allow(static_mut_refs)]
-pub(crate) fn is_signal_update_listener_registered() -> bool {
-    unsafe { *SIGNAL_UPDATE_LISTENER_REGISTERED.get_0().get() }
-}
-
-/// Sets the signal update listener registered flag.
-///
-/// # Arguments
-///
-/// - `bool`- The new flag value.
-#[allow(static_mut_refs)]
-pub(crate) fn set_signal_update_listener_registered(value: bool) {
-    unsafe {
-        *SIGNAL_UPDATE_LISTENER_REGISTERED.get_0().get() = value;
     }
 }

@@ -195,11 +195,11 @@ impl Renderer {
             .collect();
         for old_attr in old_attrs {
             if !new_map.contains_key(old_attr.get_name().as_str()) {
-                if let AttributeValue::Event(_) = old_attr.get_value()
+                if let AttributeValue::Event(handler) = old_attr.get_value()
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
                 {
-                    cleanup_event_handler(euv_id, old_attr.get_name());
+                    cleanup_event_handler(euv_id, handler.get_event_name());
                 }
                 remove_dom_attribute_or_property(element, old_attr.get_name());
             }
@@ -974,13 +974,12 @@ impl Renderer {
                 new_id
             }
         };
-        let event_name: String = handler.get_event_name().clone();
-        if !DELEGATABLE_EVENT_NAMES.contains(&event_name.as_str()) {
-            ensure_delegated_listener(event_name.clone());
+        let event_name: &'static str = handler.get_event_name();
+        if !DELEGATABLE_EVENT_NAMES.contains(&event_name) {
+            ensure_delegated_listener(event_name);
         }
-        let key: (usize, String) = (euv_id, event_name);
-        let registry_ref: &mut HashMap<(usize, String), HandlerEntry> =
-            ensure_handler_registry_mut();
+        let key: (usize, &'static str) = (euv_id, event_name);
+        let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
         if let Some(existing_entry) = registry_ref.get(&key) {
             let mut slot: RefMut<HandlerSlot> = existing_entry.borrow_mut();
             slot.set_handler(Some(handler.clone()));

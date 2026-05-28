@@ -4,19 +4,20 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing title, onclick (close handler), and children.
+/// - `MyModalProps` - The typed props containing title and onclick (close handler).
+/// - `Vec<VirtualNode>` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A modal overlay element.
 #[component]
-pub(crate) fn my_modal(props: VirtualNode) -> VirtualNode {
-    let children_node: Vec<VirtualNode> = props.get_children();
-    let MyModalProps { title, on_close }: MyModalProps = props.into();
+pub(crate) fn my_modal(props: MyModalProps, children: Vec<VirtualNode>) -> VirtualNode {
+    let children_node: Vec<VirtualNode> = children;
+    let MyModalProps { title, onclick } = props;
     html! {
         div {
             class: c_modal_overlay()
-            onclick: on_close.clone()
+            onclick: onclick.clone()
             div {
                 class: c_modal_content()
                 onclick: move |_event: Event| { }
@@ -28,7 +29,7 @@ pub(crate) fn my_modal(props: VirtualNode) -> VirtualNode {
                     }
                     modal_primary_button {
                         label: "Close"
-                        onclick: on_close
+                        onclick: onclick
                         "×"
                     }
                 }

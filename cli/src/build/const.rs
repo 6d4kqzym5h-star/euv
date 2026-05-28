@@ -28,6 +28,12 @@ pub(crate) const OUT_DIR_ARG: &str = "--out-dir";
 /// The wasm-pack argument for specifying the output name.
 pub(crate) const OUT_NAME_ARG: &str = "--out-name";
 
+/// The wasm-pack argument for specifying the target.
+pub(crate) const TARGET_ARG: &str = "--target";
+
+/// The default wasm-pack target for browser usage.
+pub(crate) const TARGET_WEB: &str = "web";
+
 /// The default output subdirectory name for wasm-pack artifacts.
 pub(crate) const PKG_DIR_NAME: &str = "pkg";
 

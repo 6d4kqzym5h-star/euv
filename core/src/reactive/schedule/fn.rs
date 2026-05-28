@@ -1,25 +1,10 @@
 use crate::*;
 
-/// Dispatches a custom `NativeEventName::EuvSignalUpdate.to_string()` event on the global window.
-///
-/// Used by the scheduler to trigger a DOM update cycle after signal changes.
-/// Does nothing if the window object is unavailable.
-///
-/// # Panics
-///
-/// Panics if `Event::new` fails to create the event object.
-pub(crate) fn dispatch_signal_update() {
-    if let Some(window_value) = window() {
-        let event: Event = Event::new(&NativeEventName::EuvSignalUpdate.to_string()).unwrap();
-        let _ = window_value.dispatch_event(&event);
-    }
-}
-
 /// Ensures the `window.__euv_dispatch` callback is registered.
 ///
-/// Creates a `Closure` that resets the `SCHEDULED` flag and dispatches
-/// the signal update event, then stores it on the `window` object
-/// so it can be invoked via `queueMicrotask`.
+/// Creates a `Closure` that resets the `SCHEDULED` flag and directly
+/// invokes `dispatch_signal_update_callbacks`, then stores it on the
+/// `window` object so it can be invoked via `queueMicrotask`.
 ///
 /// # Panics
 ///
@@ -33,7 +18,7 @@ fn ensure_dispatch_callback() {
     {
         let closure: closure::Closure<dyn FnMut()> = closure::Closure::wrap(Box::new(|| {
             SCHEDULED.store(false, Ordering::Relaxed);
-            dispatch_signal_update();
+            dispatch_signal_update_callbacks();
         }));
         let _ = Reflect::set(&window_value, &key, closure.as_ref());
         closure.forget();
@@ -103,7 +88,7 @@ where
     result
 }
 
-/// Subscribes an attribute signal to the global `NativeEventName::EuvSignalUpdate.to_string()` event.
+/// Subscribes an attribute signal to the global signal update dispatch cycle.
 ///
 /// Creates a callback that re-computes the attribute value and sets
 /// it on the signal whenever a signal update cycle runs. The callback

@@ -49,7 +49,7 @@ pub(crate) struct DelegatedEventsCell(
     /// Interior-mutable storage for the delegated events set.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashSet<String>>>,
+    pub(crate) UnsafeCell<Option<HashSet<&'static str>>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashMap` access.
@@ -64,18 +64,4 @@ pub(crate) struct SignalUpdateRegistryCell(
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HashMap<usize, SignalUpdateEntry>>>,
-);
-
-/// A `Sync` wrapper for single-threaded global `bool` access.
-///
-/// SAFETY: This type is only safe to use in single-threaded contexts
-/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
-/// variable, but concurrent access from multiple threads would be
-/// undefined behavior.
-#[derive(Data, Debug, New)]
-pub(crate) struct SignalUpdateListenerRegisteredCell(
-    /// Interior-mutable storage for the flag.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) UnsafeCell<bool>,
 );

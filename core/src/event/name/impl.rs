@@ -1,5 +1,84 @@
 use crate::*;
 
+/// Returns a `&'static str` for known event names, or leaks the owned
+/// `String` to produce a `&'static str` for `Other` variants.
+///
+/// This is the zero-allocation way to obtain the event name string
+/// for HashMap lookups and DOM API calls that accept `&str`.
+impl NativeEventName {
+    /// Returns the event name as a `&'static str`.
+    ///
+    /// For well-known variants, this is a compile-time constant.
+    /// For `Other(name)`, the owned `String` is leaked to produce a
+    /// `&'static str`. This is acceptable because event names are
+    /// registered once and live for the entire application lifetime.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            NativeEventName::Click => EVENT_NAME_CLICK,
+            NativeEventName::DblClick => EVENT_NAME_DBLCLICK,
+            NativeEventName::MouseDown => EVENT_NAME_MOUSEDOWN,
+            NativeEventName::MouseUp => EVENT_NAME_MOUSEUP,
+            NativeEventName::MouseMove => EVENT_NAME_MOUSEMOVE,
+            NativeEventName::MouseEnter => EVENT_NAME_MOUSEENTER,
+            NativeEventName::MouseLeave => EVENT_NAME_MOUSELEAVE,
+            NativeEventName::MouseOver => EVENT_NAME_MOUSEOVER,
+            NativeEventName::MouseOut => EVENT_NAME_MOUSEOUT,
+            NativeEventName::ContextMenu => EVENT_NAME_CONTEXTMENU,
+            NativeEventName::Input => EVENT_NAME_INPUT,
+            NativeEventName::KeyDown => EVENT_NAME_KEYDOWN,
+            NativeEventName::KeyUp => EVENT_NAME_KEYUP,
+            NativeEventName::KeyPress => EVENT_NAME_KEYPRESS,
+            NativeEventName::Focus => EVENT_NAME_FOCUS,
+            NativeEventName::Blur => EVENT_NAME_BLUR,
+            NativeEventName::FocusIn => EVENT_NAME_FOCUSIN,
+            NativeEventName::FocusOut => EVENT_NAME_FOCUSOUT,
+            NativeEventName::Submit => EVENT_NAME_SUBMIT,
+            NativeEventName::Change => EVENT_NAME_CHANGE,
+            NativeEventName::Drag => EVENT_NAME_DRAG,
+            NativeEventName::DragStart => EVENT_NAME_DRAGSTART,
+            NativeEventName::DragEnd => EVENT_NAME_DRAGEND,
+            NativeEventName::DragOver => EVENT_NAME_DRAGOVER,
+            NativeEventName::DragEnter => EVENT_NAME_DRAGENTER,
+            NativeEventName::DragLeave => EVENT_NAME_DRAGLEAVE,
+            NativeEventName::Drop => EVENT_NAME_DROP,
+            NativeEventName::TouchStart => EVENT_NAME_TOUCHSTART,
+            NativeEventName::TouchEnd => EVENT_NAME_TOUCHEND,
+            NativeEventName::TouchMove => EVENT_NAME_TOUCHMOVE,
+            NativeEventName::TouchCancel => EVENT_NAME_TOUCHCANCEL,
+            NativeEventName::Wheel => EVENT_NAME_WHEEL,
+            NativeEventName::Copy => EVENT_NAME_COPY,
+            NativeEventName::Cut => EVENT_NAME_CUT,
+            NativeEventName::Paste => EVENT_NAME_PASTE,
+            NativeEventName::Play => EVENT_NAME_PLAY,
+            NativeEventName::Pause => EVENT_NAME_PAUSE,
+            NativeEventName::Ended => EVENT_NAME_ENDED,
+            NativeEventName::LoadedData => EVENT_NAME_LOADEDDATA,
+            NativeEventName::CanPlay => EVENT_NAME_CANPLAY,
+            NativeEventName::VolumeChange => EVENT_NAME_VOLUMECHANGE,
+            NativeEventName::TimeUpdate => EVENT_NAME_TIMEUPDATE,
+            NativeEventName::HashChange => EVENT_NAME_HASHCHANGE,
+            NativeEventName::PopState => EVENT_NAME_POPSTATE,
+            NativeEventName::Resize => EVENT_NAME_RESIZE,
+            NativeEventName::Scroll => EVENT_NAME_SCROLL,
+            NativeEventName::Load => EVENT_NAME_LOAD,
+            NativeEventName::Unload => EVENT_NAME_UNLOAD,
+            NativeEventName::BeforeUnload => EVENT_NAME_BEFOREUNLOAD,
+            NativeEventName::Error => EVENT_NAME_ERROR,
+            NativeEventName::Online => EVENT_NAME_ONLINE,
+            NativeEventName::Offline => EVENT_NAME_OFFLINE,
+            NativeEventName::VisibilityChange => EVENT_NAME_VISIBILITYCHANGE,
+            NativeEventName::AnimationStart => EVENT_NAME_ANIMATIONSTART,
+            NativeEventName::AnimationEnd => EVENT_NAME_ANIMATIONEND,
+            NativeEventName::AnimationIteration => EVENT_NAME_ANIMATIONITERATION,
+            NativeEventName::TransitionStart => EVENT_NAME_TRANSITIONSTART,
+            NativeEventName::TransitionEnd => EVENT_NAME_TRANSITIONEND,
+            NativeEventName::TransitionRun => EVENT_NAME_TRANSITIONRUN,
+            NativeEventName::EuvSignalUpdate => EUV_SIGNAL_UPDATE,
+            NativeEventName::Other(name) => Box::leak(name.clone().into_boxed_str()),
+        }
+    }
+}
+
 /// Implements `Display` for `NativeEventName` to provide string representation.
 ///
 /// This also provides `ToString::to_string()` via the standard blanket implementation,

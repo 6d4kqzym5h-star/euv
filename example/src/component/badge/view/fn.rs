@@ -7,19 +7,20 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing color, text, outline, and on_click.
+/// - `MyBadgeProps` - The typed props containing color, text, outline, and on_click.
+/// - `Vec<VirtualNode>` - The children nodes (unused).
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled span badge element.
 #[component]
-pub(crate) fn my_badge(props: VirtualNode) -> VirtualNode {
+pub(crate) fn my_badge(props: MyBadgeProps, _children: Vec<VirtualNode>) -> VirtualNode {
     let MyBadgeProps {
         color,
         text,
         outline,
         on_click,
-    }: MyBadgeProps = props.into();
+    } = props;
     if outline {
         let border_color: String = color.clone();
         html! {

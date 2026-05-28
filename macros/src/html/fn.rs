@@ -1,30 +1,46 @@
 use crate::*;
 
-/// Sets the user-defined function names for the current thread.
+/// Sets the user-defined component registry for the current thread.
 ///
 /// # Arguments
 ///
-/// - `HashSet<String>`- The set of user-defined function names to store.
-pub(crate) fn set_user_fn_names(names: HashSet<String>) {
+/// - `HashMap<String, String>`- The map of function names to Props type names.
+pub(crate) fn set_user_fn_names(names: HashMap<String, String>) {
     unsafe {
-        let ptr: *mut MaybeUninit<HashSet<String>> = &raw mut USER_FN_NAMES;
+        let ptr: *mut MaybeUninit<HashMap<String, String>> = &raw mut USER_FN_NAMES;
         (*ptr).write(names);
     }
 }
 
-/// Checks whether a given name corresponds to a user-defined function.
+/// Checks whether a given name corresponds to a user-defined component function.
 ///
 /// # Arguments
 ///
-/// - `&str`- The name to check against the stored user-defined function names.
+/// - `&str`- The name to check against the stored component registry.
 ///
 /// # Returns
 ///
-/// - `bool`- `true` if the name exists in the user-defined function set, `false` otherwise.
+/// - `bool`- `true` if the name exists in the component registry, `false` otherwise.
 pub(crate) fn is_user_fn(name: &str) -> bool {
     unsafe {
-        let ptr: *const MaybeUninit<HashSet<String>> = &raw const USER_FN_NAMES;
-        (*ptr).assume_init_ref().contains(name)
+        let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
+        (*ptr).assume_init_ref().contains_key(name)
+    }
+}
+
+/// Returns the Props type name for a given component function name.
+///
+/// # Arguments
+///
+/// - `&str`- The component function name.
+///
+/// # Returns
+///
+/// - `Option<&'static str>`- The Props type name if found.
+pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
+    unsafe {
+        let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
+        (*ptr).assume_init_ref().get(name).map(|s| s.as_str())
     }
 }
 
@@ -48,7 +64,7 @@ pub(crate) fn is_user_fn(name: &str) -> bool {
 ///
 /// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
-    let fn_names: HashSet<String> = load_component_registry();
+    let fn_names: HashMap<String, String> = load_component_registry();
     set_user_fn_names(fn_names);
     let tokens: proc_macro2::TokenStream = match parse::<HtmlRoot>(input) {
         Ok(nodes) => nodes.into_token_stream(),
@@ -60,18 +76,18 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 /// Loads the component registry by scanning the project source for `#[component]` annotations.
 ///
 /// Recursively scans `.rs` files under `CARGO_MANIFEST_DIR/src/` and extracts
-/// function names that are annotated with `#[component]`.
+/// function names and their Props type names from annotated functions.
 ///
 /// # Returns
 ///
-/// - `HashSet<String>` - The set of component function names.
-fn load_component_registry() -> HashSet<String> {
+/// - `HashMap<String, String>` - Map of component function names to Props type names.
+fn load_component_registry() -> HashMap<String, String> {
     let manifest_dir: Option<String> = env::var(CARGO_MANIFEST_DIR).ok();
     let Some(manifest_dir) = manifest_dir else {
-        return HashSet::new();
+        return HashMap::new();
     };
     let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
-    let mut fn_names: HashSet<String> = HashSet::new();
+    let mut fn_names: HashMap<String, String> = HashMap::new();
     scan_dir_for_components(&src_dir, &mut fn_names);
     fn_names
 }
@@ -81,8 +97,8 @@ fn load_component_registry() -> HashSet<String> {
 /// # Arguments
 ///
 /// - `&PathBuf` - The directory to scan.
-/// - `&mut HashSet<String>` - The set to populate with discovered component names.
-fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashSet<String>) {
+/// - `&mut HashMap<String, String>` - The map to populate with discovered component names and Props types.
+fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashMap<String, String>) {
     let entries: Result<ReadDir, std::io::Error> = read_dir(dir);
     let Ok(entries) = entries else {
         return;
@@ -100,13 +116,14 @@ fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashSet<String>) {
     }
 }
 
-/// Parses a single `.rs` file and extracts function names annotated with `#[component]`.
+/// Parses a single `.rs` file and extracts function names annotated with `#[component]`,
+/// along with their first parameter's type name (the Props type).
 ///
 /// # Arguments
 ///
 /// - `&PathBuf` - The file path to parse.
-/// - `&mut HashSet<String>` - The set to populate with discovered component names.
-fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashSet<String>) {
+/// - `&mut HashMap<String, String>` - The map to populate with function name → Props type name.
+fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashMap<String, String>) {
     let content: String = match read_to_string(path) {
         Ok(data) => data,
         Err(_) => return,
@@ -122,10 +139,39 @@ fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashSet<String>) {
                 .iter()
                 .any(|attr: &Attribute| attr.path().is_ident(COMPONENT_ATTR));
             if has_component_attr {
-                fn_names.insert(item_fn.sig.ident.to_string());
+                let fn_name: String = item_fn.sig.ident.to_string();
+                let props_type: String = extract_props_type_from_fn(item_fn);
+                fn_names.insert(fn_name, props_type);
             }
         }
     }
+}
+
+/// Extracts the Props type name from the first parameter of a component function.
+///
+/// Looks for the first parameter's type. If the type is a simple path (e.g., `PrimaryButtonProps`),
+/// returns its string representation. Falls back to an empty string if not found.
+///
+/// # Arguments
+///
+/// - `&syn::ItemFn` - The function item to extract from.
+///
+/// # Returns
+///
+/// - `String` - The Props type name, or empty string if not extractable.
+fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
+    let inputs = &item_fn.sig.inputs;
+    for input in inputs {
+        if let syn::FnArg::Typed(pat_type) = input {
+            let ty: &Type = &pat_type.ty;
+            if let Type::Path(type_path) = ty
+                && let Some(segment) = type_path.path.segments.last()
+            {
+                return segment.ident.to_string();
+            }
+        }
+    }
+    String::new()
 }
 
 /// Parses a stream of tokens into a list of HTML child nodes.

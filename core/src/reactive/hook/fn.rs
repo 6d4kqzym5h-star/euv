@@ -10,22 +10,12 @@ use crate::*;
 ///
 /// - `HookContext`- The currently active hook context.
 pub(crate) fn get_current_hook_context() -> HookContext {
-    let hook_context_option: Option<HookContextRc> = current_hook_context().clone();
-    match hook_context_option {
-        Some(hook_context_rc) => {
-            let mut hook_context: HookContext =
-                HookContext::new(Rc::new(RefCell::new(HookContextInner::default())));
-            hook_context.set_inner(hook_context_rc);
-            hook_context
-        }
+    match current_hook_context() {
+        Some(hook_context_rc) => HookContext::new(hook_context_rc.clone()),
         None => {
-            let default_hook_context_rc: HookContextRc =
-                Rc::new(RefCell::new(HookContextInner::default()));
-            *current_hook_context_mut() = Some(default_hook_context_rc.clone());
-            let mut hook_context: HookContext =
-                HookContext::new(Rc::new(RefCell::new(HookContextInner::default())));
-            hook_context.set_inner(default_hook_context_rc);
-            hook_context
+            let rc: HookContextRc = Rc::new(RefCell::new(HookContextInner::default()));
+            *current_hook_context_mut() = Some(rc.clone());
+            HookContext::new(rc)
         }
     }
 }

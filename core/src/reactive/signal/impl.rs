@@ -33,14 +33,24 @@ where
         self.get_inner()
     }
 
+    /// Returns a reference to the inner `RefCell` for this signal.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static RefCell<SignalInner<T>>` - A reference to the inner state.
+    #[inline(always)]
+    fn inner_ref(&self) -> &'static RefCell<SignalInner<T>> {
+        get_signal_inner_ref(self.get_inner())
+    }
+
     /// Returns the current value of the signal.
     ///
     /// # Returns
     ///
     /// - `T` - The current value of the signal.
+    #[inline]
     pub fn get(&self) -> T {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        rc.borrow().get_value().clone()
+        self.inner_ref().borrow().get_value().clone()
     }
 
     /// Attempts to return the current value of the signal without panicking.
@@ -53,7 +63,7 @@ where
     /// - `Some(T)` - The current value if the borrow succeeds.
     /// - `None` - If the inner value is already mutably borrowed.
     pub fn try_get(&self) -> Option<T> {
-        get_signal_inner_rc::<T>(self.get_inner())
+        self.inner_ref()
             .try_borrow()
             .ok()
             .map(|inner| inner.get_value().clone())
@@ -68,8 +78,10 @@ where
     where
         F: FnMut() + 'static,
     {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        rc.borrow_mut().get_mut_listeners().push(Box::new(callback));
+        self.inner_ref()
+            .borrow_mut()
+            .get_mut_listeners()
+            .push(Box::new(callback));
     }
 
     /// Replaces all listeners with a single new callback.
@@ -84,8 +96,7 @@ where
     where
         F: FnMut() + 'static,
     {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
+        let mut inner: RefMut<SignalInner<T>> = self.inner_ref().borrow_mut();
         let listeners: &mut Vec<Box<dyn FnMut()>> = inner.get_mut_listeners();
         listeners.clear();
         listeners.push(Box::new(callback));
@@ -94,27 +105,25 @@ where
     /// Removes all subscribed listeners from this signal and marks it as
     /// inactive.
     pub(crate) fn clear_listeners(&self) {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
+        let mut inner: RefMut<SignalInner<T>> = self.inner_ref().borrow_mut();
         inner.set_alive(false);
         inner.get_mut_listeners().clear();
     }
 
-    /// Sets the value of the signal and notifies listeners.
+    /// Core implementation of value update and listener notification.
     ///
-    /// # Arguments
-    ///
-    /// - `T` - The new value to assign to the signal.
-    pub fn set(&self, value: T) {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
+    /// Returns `true` if the value was updated and listeners were notified.
+    #[inline]
+    fn update_and_notify(&self, value: T) -> bool {
+        let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
         let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         {
-            let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
+            let mut inner: RefMut<SignalInner<T>> = inner_ref.borrow_mut();
             if !inner.get_alive() {
-                return;
+                return false;
             }
             if *inner.get_value() == value {
-                return;
+                return false;
             }
             inner.set_value(value);
             swap(inner.get_mut_listeners(), &mut listeners);
@@ -123,10 +132,22 @@ where
             listener();
         }
         {
-            let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
+            let mut inner: RefMut<SignalInner<T>> = inner_ref.borrow_mut();
             swap(inner.get_mut_listeners(), &mut listeners);
         }
-        schedule_signal_update();
+        true
+    }
+
+    /// Sets the value of the signal and notifies listeners.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - The new value to assign to the signal.
+    #[inline]
+    pub fn set(&self, value: T) {
+        if self.update_and_notify(value) {
+            schedule_signal_update();
+        }
     }
 
     /// Sets the value of the signal and notifies listeners without scheduling
@@ -135,27 +156,9 @@ where
     /// # Arguments
     ///
     /// - `T` - The new value to assign to the signal.
+    #[inline]
     pub fn set_silent(&self, value: T) {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
-        let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
-        {
-            let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
-            if !inner.get_alive() {
-                return;
-            }
-            if *inner.get_value() == value {
-                return;
-            }
-            inner.set_value(value);
-            swap(inner.get_mut_listeners(), &mut listeners);
-        }
-        for listener in listeners.iter_mut() {
-            listener();
-        }
-        {
-            let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
-            swap(inner.get_mut_listeners(), &mut listeners);
-        }
+        self.update_and_notify(value);
     }
 
     /// Attempts to set the value of the signal and notify listeners without panicking.
@@ -171,10 +174,10 @@ where
     ///
     /// - `bool` - `true` if the value was successfully updated and listeners were notified, `false` if unchanged, inactive, or already borrowed.
     pub fn try_set(&self, value: T) -> bool {
-        let rc: Rc<RefCell<SignalInner<T>>> = get_signal_inner_rc(self.get_inner());
+        let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
         let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         {
-            let mut inner: RefMut<SignalInner<T>> = match rc.try_borrow_mut() {
+            let mut inner: RefMut<SignalInner<T>> = match inner_ref.try_borrow_mut() {
                 Ok(inner) => inner,
                 Err(_) => return false,
             };
@@ -191,37 +194,11 @@ where
             listener();
         }
         {
-            let mut inner: RefMut<SignalInner<T>> = rc.borrow_mut();
+            let mut inner: RefMut<SignalInner<T>> = inner_ref.borrow_mut();
             swap(inner.get_mut_listeners(), &mut listeners);
         }
         schedule_signal_update();
         true
-    }
-}
-
-/// Prevents direct dereference of a signal to enforce explicit API usage.
-///
-/// Panics at runtime to guide users towards `.get()` instead.
-impl<T> Deref for Signal<T>
-where
-    T: Clone + PartialEq + 'static,
-{
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        panic!("Signal does not support direct dereference; use .get() instead");
-    }
-}
-
-/// Prevents direct mutable dereference of a signal to enforce explicit API usage.
-///
-/// Panics at runtime to guide users towards `.set()` instead.
-impl<T> DerefMut for Signal<T>
-where
-    T: Clone + PartialEq + 'static,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        panic!("Signal does not support direct dereference; use .set() instead");
     }
 }
 

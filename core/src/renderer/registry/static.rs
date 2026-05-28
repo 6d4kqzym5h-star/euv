@@ -20,7 +20,3 @@ pub(crate) static mut DELEGATED_EVENTS: DelegatedEventsCell =
 /// Global signal update callback registry, mapping keys to SignalUpdateEntry.
 pub(crate) static mut SIGNAL_UPDATE_REGISTRY: SignalUpdateRegistryCell =
     SignalUpdateRegistryCell(UnsafeCell::new(None));
-
-/// Whether the global `NativeEventName::EuvSignalUpdate.to_string()` listener has been registered.
-pub(crate) static mut SIGNAL_UPDATE_LISTENER_REGISTERED: SignalUpdateListenerRegisteredCell =
-    SignalUpdateListenerRegisteredCell(UnsafeCell::new(false));

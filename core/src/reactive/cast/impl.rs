@@ -289,3 +289,47 @@ impl IntoCallbackAttribute for Option<NativeEventHandler> {
         AttrValueAdapter::new(self).into_callback_attribute_value()
     }
 }
+
+/// Converts a `FnMut(Event)` closure into `Option<NativeEventHandler>`.
+///
+/// Wraps the closure in a `NativeEventHandler` with a generic callback event name.
+impl<F> IntoEventProp for F
+where
+    F: FnMut(Event) + 'static,
+{
+    /// Wraps this closure into `Some(NativeEventHandler)`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<NativeEventHandler>` - A `Some` wrapping the handler.
+    fn into_event_prop(self) -> Option<NativeEventHandler> {
+        Some(NativeEventHandler::create(
+            NativeEventName::Other(CALLBACK_EVENT_NAME.to_string()),
+            self,
+        ))
+    }
+}
+
+/// Converts an owned `NativeEventHandler` into `Option<NativeEventHandler>`.
+impl IntoEventProp for NativeEventHandler {
+    /// Wraps this handler into `Some`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<NativeEventHandler>` - A `Some` wrapping the handler.
+    fn into_event_prop(self) -> Option<NativeEventHandler> {
+        Some(self)
+    }
+}
+
+/// Converts an `Option<NativeEventHandler>` into itself.
+impl IntoEventProp for Option<NativeEventHandler> {
+    /// Returns this optional handler as-is.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<NativeEventHandler>` - The same optional handler.
+    fn into_event_prop(self) -> Option<NativeEventHandler> {
+        self
+    }
+}

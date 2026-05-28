@@ -4,20 +4,21 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing label, placeholder, and value.
+/// - `FormInputProps` - The typed props containing id, label, placeholder, value, autocomplete.
+/// - `Vec<VirtualNode>` - The children nodes (unused).
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A labeled input element.
 #[component]
-pub(crate) fn form_input(props: VirtualNode) -> VirtualNode {
+pub(crate) fn form_input(props: FormInputProps, _children: Vec<VirtualNode>) -> VirtualNode {
     let FormInputProps {
         id,
         label: label_string,
         placeholder,
         value,
         autocomplete,
-    }: FormInputProps = props.into();
+    } = props;
     html! {
         div {
             class: c_form_input_wrapper()
