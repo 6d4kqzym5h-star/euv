@@ -161,7 +161,6 @@ fn desktop_layout(
                         "E"
                     }
                     span {
-                        class: c_inline()
                         "Euv"
                     }
                 }
@@ -253,7 +252,6 @@ fn mobile_layout(
                         "E"
                     }
                     span {
-                        class: c_inline()
                         "euv"
                     }
                 }
@@ -310,7 +308,6 @@ fn mobile_layout(
                                 "E"
                             }
                             span {
-                                class: c_inline()
                                 "Euv"
                             }
                         }

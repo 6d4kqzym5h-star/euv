@@ -745,9 +745,6 @@ class! {
         margin-bottom: "16px";
     }
 
-    pub(crate) c_inline {
-        display: "inline";
-    }
 
     pub(crate) c_event_result {
         font-size: "14px";
