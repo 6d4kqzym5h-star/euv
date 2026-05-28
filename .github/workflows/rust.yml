@@ -31,23 +31,11 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache toml-cli
-        id: cache_toml
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/toml
-          key: toml-cli-${{ runner.os }}
-      - name: Install toml-cli
-        if: steps.cache_toml.outputs.cache-hit != 'true'
-        run: cargo install toml-cli
-      - name: Fix toml-cli permissions
-        if: steps.cache_toml.outputs.cache-hit == 'true'
-        run: chmod +x ~/.cargo/bin/toml
       - name: Read cargo metadata
         id: read
         run: |
-          VERSION=$(toml get Cargo.toml package.version --raw)
-          PACKAGE_NAME=$(toml get Cargo.toml package.name --raw)
+          VERSION=$(python3 -c "import tomllib; d=tomllib.load(open('Cargo.toml','rb')); print(d['package']['version'])")
+          PACKAGE_NAME=$(python3 -c "import tomllib; d=tomllib.load(open('Cargo.toml','rb')); print(d['package']['name'])")
           BRANCH_NAME="${{ github.ref_name }}"
           echo "📦 Detected package: $PACKAGE_NAME v$VERSION"
           echo "🌿 Branch: $BRANCH_NAME"
@@ -66,21 +54,37 @@ jobs:
       - name: Sync workspace version
         run: |
           VERSION="${{ steps.read.outputs.version }}"
-          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-cli.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-core.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-macros.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-example.version "$VERSION")
-          printf '%s\n' "$CONTENT" > Cargo.toml
+          python3 -c "
+          import tomllib
+          VERSION = '$VERSION'
+          FILES_KEYS = {
+              'Cargo.toml': [
+                  ('workspace.dependencies.euv.version', VERSION),
+                  ('workspace.dependencies.euv-cli.version', VERSION),
+                  ('workspace.dependencies.euv-core.version', VERSION),
+                  ('workspace.dependencies.euv-macros.version', VERSION),
+                  ('workspace.dependencies.euv-example.version', VERSION),
+              ],
+              'core/Cargo.toml': [('package.version', VERSION)],
+              'macros/Cargo.toml': [('package.version', VERSION)],
+              'cli/Cargo.toml': [('package.version', VERSION)],
+              'example/Cargo.toml': [('package.version', VERSION)],
+          }
+          for filepath, replacements in FILES_KEYS.items():
+              with open(filepath, 'r') as f:
+                  content = f.read()
+              for key_path, new_value in replacements:
+                  keys = key_path.split('.')
+                  data = tomllib.loads(content)
+                  node = data
+                  for k in keys[:-1]:
+                      node = node[k]
+                  old_value = node[keys[-1]]
+                  content = content.replace(f'version = \"{old_value}\"', f'version = \"{new_value}\"', 1)
+              with open(filepath, 'w') as f:
+                  f.write(content)
+          "
           echo "🔧 Synced all workspace.dependencies versions to $VERSION"
-          CONTENT=$(toml set core/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > core/Cargo.toml
-          CONTENT=$(toml set macros/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > macros/Cargo.toml
-          CONTENT=$(toml set cli/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > cli/Cargo.toml
-          CONTENT=$(toml set example/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > example/Cargo.toml
           echo "🔧 Synced all sub-crate package.version to $VERSION"
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
@@ -163,19 +167,6 @@ jobs:
       - name: Checkout
         if: steps.check_branch.outputs.skip == 'false'
         uses: actions/checkout@v4
-      - name: Cache toml-cli
-        if: steps.check_branch.outputs.skip == 'false'
-        id: cache_toml_publish
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/toml
-          key: toml-cli-${{ runner.os }}
-      - name: Install toml-cli
-        if: steps.check_branch.outputs.skip == 'false' && steps.cache_toml_publish.outputs.cache-hit != 'true'
-        run: cargo install toml-cli
-      - name: Fix toml-cli permissions
-        if: steps.check_branch.outputs.skip == 'false' && steps.cache_toml_publish.outputs.cache-hit == 'true'
-        run: chmod +x ~/.cargo/bin/toml
       - name: Install cargo-release
         if: steps.check_branch.outputs.skip == 'false'
         run: cargo install cargo-release
@@ -188,20 +179,36 @@ jobs:
         if: steps.check_branch.outputs.skip == 'false'
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
-          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-cli.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-core.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-macros.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-example.version "$VERSION")
-          printf '%s\n' "$CONTENT" > Cargo.toml
-          CONTENT=$(toml set core/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > core/Cargo.toml
-          CONTENT=$(toml set macros/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > macros/Cargo.toml
-          CONTENT=$(toml set cli/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > cli/Cargo.toml
-          CONTENT=$(toml set example/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > example/Cargo.toml
+          python3 -c "
+          import tomllib
+          VERSION = '$VERSION'
+          FILES_KEYS = {
+              'Cargo.toml': [
+                  ('workspace.dependencies.euv.version', VERSION),
+                  ('workspace.dependencies.euv-cli.version', VERSION),
+                  ('workspace.dependencies.euv-core.version', VERSION),
+                  ('workspace.dependencies.euv-macros.version', VERSION),
+                  ('workspace.dependencies.euv-example.version', VERSION),
+              ],
+              'core/Cargo.toml': [('package.version', VERSION)],
+              'macros/Cargo.toml': [('package.version', VERSION)],
+              'cli/Cargo.toml': [('package.version', VERSION)],
+              'example/Cargo.toml': [('package.version', VERSION)],
+          }
+          for filepath, replacements in FILES_KEYS.items():
+              with open(filepath, 'r') as f:
+                  content = f.read()
+              for key_path, new_value in replacements:
+                  keys = key_path.split('.')
+                  data = tomllib.loads(content)
+                  node = data
+                  for k in keys[:-1]:
+                      node = node[k]
+                  old_value = node[keys[-1]]
+                  content = content.replace(f'version = \"{old_value}\"', f'version = \"{new_value}\"', 1)
+              with open(filepath, 'w') as f:
+                  f.write(content)
+          "
           git add .
           git diff --cached --quiet || git commit -m "chore: sync all versions to $VERSION"
           git push
@@ -214,7 +221,7 @@ jobs:
           set -e
           echo "published=false" >> $GITHUB_OUTPUT
           echo "${{ secrets.CARGO_REGISTRY_TOKEN }}" | cargo login
-          PACKAGE_NAME=$(toml get Cargo.toml package.name --raw)
+          PACKAGE_NAME=$(python3 -c "import tomllib; d=tomllib.load(open('Cargo.toml','rb')); print(d['package']['name'])")
           VERSION=${{ needs.setup.outputs.version }}
           MAX_RETRY=36
           SUCCESS=false
