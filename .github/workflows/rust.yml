@@ -58,33 +58,6 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
-      - name: Sync workspace version
-        run: |
-          VERSION="${{ steps.read.outputs.version }}"
-          echo "🔧 Syncing all versions to $VERSION"
-          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-cli.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-core.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-macros.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-example.version "$VERSION")
-          printf '%s\n' "$CONTENT" > Cargo.toml
-          echo "🔧 Synced workspace.dependencies versions to $VERSION"
-          CONTENT=$(toml set cli/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > cli/Cargo.toml
-          echo "🔧 Synced cli/Cargo.toml version to $VERSION"
-          CONTENT=$(toml set core/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > core/Cargo.toml
-          echo "🔧 Synced core/Cargo.toml version to $VERSION"
-          CONTENT=$(toml set macros/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > macros/Cargo.toml
-          echo "🔧 Synced macros/Cargo.toml version to $VERSION"
-          CONTENT=$(toml set example/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > example/Cargo.toml
-          echo "🔧 Synced example/Cargo.toml version to $VERSION"
-          git config user.name "eastspire"
-          git config user.email "root@ltpp.vip"
-          git add Cargo.toml cli/Cargo.toml core/Cargo.toml macros/Cargo.toml example/Cargo.toml
-          git diff --cached --quiet || git commit -m "chore: sync all package versions to $VERSION"
 
   check:
     needs: setup
@@ -176,27 +149,18 @@ jobs:
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
-      - name: Sync and push workspace version
+      - name: Sync workspace version
         if: steps.check_branch.outputs.skip == 'false'
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
-          echo "🔧 Syncing all versions to $VERSION"
           CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-cli.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-core.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-macros.version "$VERSION")
-          CONTENT=$(echo "$CONTENT" | toml set - workspace.dependencies.euv-example.version "$VERSION")
           printf '%s\n' "$CONTENT" > Cargo.toml
-          CONTENT=$(toml set cli/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > cli/Cargo.toml
-          CONTENT=$(toml set core/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > core/Cargo.toml
-          CONTENT=$(toml set macros/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > macros/Cargo.toml
-          CONTENT=$(toml set example/Cargo.toml package.version "$VERSION")
-          printf '%s\n' "$CONTENT" > example/Cargo.toml
-          git add Cargo.toml cli/Cargo.toml core/Cargo.toml macros/Cargo.toml example/Cargo.toml
-          git diff --cached --quiet || git commit -m "chore: sync all package versions to $VERSION"
+          echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
+          git add Cargo.toml
+          git diff --cached --quiet || git commit -m "chore: sync workspace.dependencies.euv version to $VERSION"
+      - name: Sync and push workspace version
+        if: steps.check_branch.outputs.skip == 'false'
+        run: |
           git push
       - name: Publish to crates.io
         id: publish
