@@ -161,6 +161,20 @@ where
         self.update_and_notify(value);
     }
 
+    /// Sets the value of the signal without notifying listeners or scheduling
+    /// a DOM update. This is useful for breaking circular watch dependencies
+    /// where two signals watch each other and would otherwise recurse infinitely.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - The new value to assign to the signal.
+    #[inline]
+    pub fn set_untracked(&self, value: T) {
+        let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
+        let mut inner: RefMut<SignalInner<T>> = inner_ref.borrow_mut();
+        inner.set_value(value);
+    }
+
     /// Attempts to set the value of the signal and notify listeners without panicking.
     ///
     /// Unlike `set`, this method uses `try_borrow_mut` and returns `false` if

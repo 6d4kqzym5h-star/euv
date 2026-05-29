@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Creates a `Closure` that resets the `SCHEDULED` flag and directly
 /// invokes `dispatch_signal_update_callbacks`, then stores it on the
-/// `window` object so it can be invoked via `queueMicrotask`.
+/// `window` object so it can be invoked via `requestAnimationFrame`.
 ///
 /// # Panics
 ///
@@ -25,19 +25,24 @@ fn ensure_dispatch_callback() {
     }
 }
 
-/// Schedules a deferred signal update event via a microtask.
+/// Schedules a deferred signal update event via `requestAnimationFrame`.
 ///
 /// If a schedule is already pending (`SCHEDULED` is true) or updates
 /// are suppressed (`SUPPRESS_SCHEDULE` is true), this is a no-op.
 /// Otherwise, sets `SCHEDULED` to true and queues the
-/// `window.__euv_dispatch` callback via `queueMicrotask` on WASM
-/// targets. On non-WASM targets, resets `SCHEDULED` immediately
-/// since there is no event loop to schedule on.
+/// `window.__euv_dispatch` callback via `requestAnimationFrame` on WASM
+/// targets. This ensures that no matter how many signal updates occur
+/// within a single animation frame, only one dispatch cycle runs,
+/// preventing CPU spikes during rapid input events (e.g., slider dragging).
+///
+/// On non-WASM targets, resets `SCHEDULED` immediately since there is
+/// no event loop to schedule on.
 pub fn schedule_signal_update() {
     if SCHEDULED.load(Ordering::Relaxed) || SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
         return;
     }
     SCHEDULED.store(true, Ordering::Relaxed);
+    mark_all_slots_dirty();
     let window_option: Option<Window> = window();
     if window_option.is_none() {
         SCHEDULED.store(false, Ordering::Relaxed);
@@ -51,15 +56,24 @@ pub fn schedule_signal_update() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
-    let queue_microtask_val: JsValue =
-        Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
+    let raf_val: JsValue =
+        Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
             .unwrap_or(JsValue::UNDEFINED);
-    if queue_microtask_val.is_undefined() {
-        SCHEDULED.store(false, Ordering::Relaxed);
+    if raf_val.is_undefined() {
+        // Fallback to queueMicrotask if rAF is unavailable (e.g., Web Workers).
+        let queue_microtask_val: JsValue =
+            Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
+                .unwrap_or(JsValue::UNDEFINED);
+        if queue_microtask_val.is_undefined() {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            return;
+        }
+        let queue_microtask: Function = queue_microtask_val.into();
+        let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
         return;
     }
-    let queue_microtask: Function = queue_microtask_val.into();
-    let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
+    let raf: Function = raf_val.into();
+    let _ = raf.call1(&JsValue::NULL, &dispatch_fn);
 }
 
 /// Batches signal updates within a closure, deferring DOM synchronization until completion.

@@ -112,17 +112,33 @@ pub(crate) fn dispatch_signal_update_callbacks() {
     let mut iterations: usize = 0;
     const MAX_ITERATIONS: usize = 3;
     loop {
-        let entries: Vec<(usize, SignalUpdateEntry)> =
-            ensure_signal_update_registry_mut().drain().collect();
-        if entries.is_empty() {
+        let registry: &mut HashMap<usize, SignalUpdateEntry> =
+            ensure_signal_update_registry_mut();
+        let dirty_keys: Vec<usize> = registry
+            .iter()
+            .filter_map(|(key, entry)| {
+                let slot: Ref<SignalUpdateSlot> = entry.borrow();
+                if slot.get_dirty() && !slot.get_removed() {
+                    Some(*key)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        if dirty_keys.is_empty() {
             break;
         }
-        for (key, entry) in entries {
+        for key in dirty_keys {
+            let entry: SignalUpdateEntry = match ensure_signal_update_registry_mut().remove(&key) {
+                Some(e) => e,
+                None => continue,
+            };
             let callback: Option<Box<dyn FnMut()>> = {
                 let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
                 if slot.get_removed() {
                     continue;
                 }
+                slot.set_dirty(false);
                 slot.get_mut_callback().take()
             };
             if let Some(mut callback) = callback {
@@ -144,6 +160,21 @@ pub(crate) fn dispatch_signal_update_callbacks() {
     SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
 }
 
+/// Marks all non-removed slots in the signal update registry as dirty.
+///
+/// Called by `schedule_signal_update` to indicate that at least one signal
+/// has changed and all dynamic nodes need to check for updates on the next
+/// dispatch cycle.
+pub(crate) fn mark_all_slots_dirty() {
+    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
+    for entry in registry.values() {
+        let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+        if !slot.get_removed() {
+            slot.set_dirty(true);
+        }
+    }
+}
+
 /// Registers a signal update callback for a DynamicNode placeholder.
 ///
 /// On WASM targets, ensures the signal update listener is active first.
@@ -156,7 +187,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
 /// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
 pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnMut()>) {
     let entry: SignalUpdateEntry =
-        Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false)));
+        Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false, true)));
     ensure_signal_update_registry_mut().insert(dynamic_id, entry);
 }
 
@@ -171,7 +202,7 @@ pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnM
 /// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
 pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn FnMut()>) {
     let entry: SignalUpdateEntry =
-        Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false)));
+        Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false, true)));
     ensure_signal_update_registry_mut().insert(signal_key, entry);
 }
 

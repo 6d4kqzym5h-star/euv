@@ -22,6 +22,12 @@ pub(crate) struct SignalUpdateSlot {
     #[get(type(copy))]
     #[set(pub(crate))]
     pub(crate) removed: bool,
+    /// Whether this slot has pending changes that need dispatching.
+    /// Only dirty slots are invoked during dispatch, avoiding O(N)
+    /// broadcast to all dynamic nodes when only one signal changed.
+    #[get(type(copy))]
+    #[set(pub(crate))]
+    pub(crate) dirty: bool,
 }
 
 /// A `Sync` wrapper for single-threaded global `HashMap` access.
