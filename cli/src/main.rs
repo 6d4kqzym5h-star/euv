@@ -136,9 +136,8 @@ async fn fmt_mode(args: FmtArgs) -> Result<()> {
 async fn run_mode(mut args: ModeArgs) -> Result<()> {
     args.crate_path = std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| {
         anyhow!(
-            "Invalid crate-path '{}': {}",
+            "Invalid crate-path '{}': {error}",
             args.crate_path.display(),
-            error
         )
     })?;
     let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
@@ -157,7 +156,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     let initial_html: String = match run_build_pipeline(&args, None).await {
         Ok(html) => html,
         Err(error) => {
-            log::error!("Initial build pipeline failed: {}", error);
+            log::error!("Initial build pipeline failed: {error}");
             let import_path: String = resolve_import_path(&args);
             let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
             let custom_html: Option<&Path> = args.index_html.as_deref();
@@ -178,7 +177,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     let state_for_watch: Arc<AppState> = Arc::clone(&state);
     tokio::spawn(async move {
         if let Err(error) = watch_and_build(state_for_watch).await {
-            log::error!("Watch error: {}", error);
+            log::error!("Watch error: {error}");
         }
     });
     let pkg_dir: PathBuf = resolve_pkg_dir(&args);
@@ -192,9 +191,9 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     server.route::<IndexRoute>(format!("{www_route_prefix}/{{path:.*}}"));
     server.route::<ReloadRoute>(RELOAD_ROUTE);
     if let Err(error) = set_global_state(Arc::clone(&state)) {
-        log::error!("Failed to set global state: {}", error);
+        log::error!("Failed to set global state: {error}");
     }
-    log::info!("Server: {}", server_url);
+    log::info!("Server: {server_url}");
     let server_control_hook: ServerControlHook = server
         .run()
         .await

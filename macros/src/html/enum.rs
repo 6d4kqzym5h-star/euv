@@ -69,6 +69,8 @@ pub(crate) enum HtmlStylePropValue {
     Literal(String),
     /// A dynamic expression.
     Expr(Expr),
-    /// A reactive conditional: `if {expr} { value } else if {expr} { value } else { value }`.
+    /// A reactive conditional in attribute value position.
+    ///
+    /// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`.
     If(HtmlAttrIf),
 }

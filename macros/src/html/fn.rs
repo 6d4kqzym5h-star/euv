@@ -40,7 +40,10 @@ pub(crate) fn is_user_fn(name: &str) -> bool {
 pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
     unsafe {
         let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
-        (*ptr).assume_init_ref().get(name).map(|s| s.as_str())
+        (*ptr)
+            .assume_init_ref()
+            .get(name)
+            .map(|data: &String| data.as_str())
     }
 }
 
@@ -202,7 +205,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
             let html_for: HtmlFor = content.parse()?;
             children.push(HtmlNode::For(html_for));
         } else if content.peek(Brace) {
-            let child_content;
+            let child_content: ParseBuffer<'_>;
             braced!(child_content in content);
             let expr: Expr = child_content.parse()?;
             children.push(HtmlNode::Dynamic(expr));
@@ -240,7 +243,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
 /// - `syn::Result<Vec<HtmlNode>>` - The parsed list of HTML nodes for the arm body.
 pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<HtmlNode>> {
     if content.peek(Brace) {
-        let child_content;
+        let child_content: ParseBuffer<'_>;
         braced!(child_content in content);
         parse_html_children(&child_content)
     } else {
@@ -256,10 +259,10 @@ pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<Html
 fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::TokenStream> {
     children
         .iter()
-        .map(|child| {
-            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-            child.to_tokens(&mut ts);
-            ts
+        .map(|child: &HtmlNode| {
+            let mut token: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+            child.to_tokens(&mut token);
+            token
         })
         .collect()
 }
@@ -323,10 +326,10 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStr
 pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
     let mut branches: Vec<(Option<Expr>, Expr)> = Vec::new();
     content.parse::<Token![if]>()?;
-    let cond_content;
+    let cond_content: ParseBuffer<'_>;
     braced!(cond_content in content);
     let condition: Expr = cond_content.parse()?;
-    let body_content;
+    let body_content: ParseBuffer<'_>;
     braced!(body_content in content);
     let body: Expr = body_content.parse()?;
     branches.push((Some(condition), body));
@@ -334,15 +337,15 @@ pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
         content.parse::<Token![else]>()?;
         if content.peek(Token![if]) {
             content.parse::<Token![if]>()?;
-            let cond_content;
+            let cond_content: ParseBuffer<'_>;
             braced!(cond_content in content);
             let condition: Expr = cond_content.parse()?;
-            let body_content;
+            let body_content: ParseBuffer<'_>;
             braced!(body_content in content);
             let body: Expr = body_content.parse()?;
             branches.push((Some(condition), body));
         } else {
-            let body_content;
+            let body_content: ParseBuffer<'_>;
             braced!(body_content in content);
             let body: Expr = body_content.parse()?;
             branches.push((None, body));
@@ -463,7 +466,7 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
         return Ok(HtmlAttrValue::If(html_attr_if));
     }
     if key_str == ATTR_KEY_STYLE && content.peek(Brace) {
-        let style_content;
+        let style_content: ParseBuffer<'_>;
         braced!(style_content in content);
         let is_style_object: bool = style_content.peek(LitStr) || style_content.peek(Ident);
         if is_style_object {
@@ -478,7 +481,7 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
                     let lit: LitStr = style_content.parse()?;
                     HtmlStylePropValue::Literal(lit.value())
                 } else if style_content.peek(Brace) {
-                    let expr_content;
+                    let expr_content: ParseBuffer<'_>;
                     braced!(expr_content in style_content);
                     if expr_content.peek(Token![if]) {
                         let html_attr_if: HtmlAttrIf = parse_attr_if(&expr_content)?;
@@ -610,9 +613,12 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
             quote! { #value }
         }
         HtmlAttrValue::Style(props) => {
-            let has_if: bool = props
-                .iter()
-                .any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
+            let has_if: bool =
+                props
+                    .iter()
+                    .any(|(_, style_value): &(String, HtmlStylePropValue)| {
+                        matches!(style_value, HtmlStylePropValue::If(_))
+                    });
             if has_if {
                 quote! { #value }
             } else {
@@ -643,9 +649,12 @@ pub(crate) fn style_value_to_attribute_value_tokens(
 ) -> proc_macro2::TokenStream {
     match value {
         HtmlAttrValue::Style(props) => {
-            let has_if: bool = props
-                .iter()
-                .any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
+            let has_if: bool =
+                props
+                    .iter()
+                    .any(|(_, style_value): &(String, HtmlStylePropValue)| {
+                        matches!(style_value, HtmlStylePropValue::If(_))
+                    });
             if has_if {
                 quote! { #value }
             } else {

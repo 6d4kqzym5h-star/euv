@@ -1,41 +1,5 @@
 use crate::*;
 
-/// Parameters for `emit_once_lock_fn`.
-struct OnceLockParams<'a> {
-    vis: &'a Visibility,
-    fn_name_token: &'a proc_macro2::TokenStream,
-    const_name_token: &'a proc_macro2::TokenStream,
-    class_name_str: &'a str,
-    style_expr: &'a proc_macro2::TokenStream,
-    pseudo_expr: &'a proc_macro2::TokenStream,
-    media_expr: &'a proc_macro2::TokenStream,
-}
-
-/// Generates the `OnceLock`-based static function body for a no-param class.
-///
-/// Shared by both the all-static and dynamic paths in `ClassDef::to_tokens`.
-fn emit_once_lock_fn(tokens: &mut proc_macro2::TokenStream, p: OnceLockParams<'_>) {
-    let OnceLockParams {
-        vis,
-        fn_name_token,
-        const_name_token,
-        class_name_str,
-        style_expr,
-        pseudo_expr,
-        media_expr,
-    } = p;
-    tokens.extend(quote! {
-        #vis fn #fn_name_token() -> &'static ::euv::Css {
-            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-            #const_name_token.get_or_init(|| {
-                let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #pseudo_expr, #media_expr);
-                css.inject_style();
-                css
-            })
-        }
-    });
-}
-
 /// Implementation of `Parse` for `ClassInput`, parsing the `class!` macro input.
 impl Parse for ClassInput {
     /// Parses the `class!` macro input into a `ClassInput` AST.
@@ -53,7 +17,7 @@ impl Parse for ClassInput {
             let visibility: Visibility = input.parse()?;
             let name: Ident = input.parse()?;
             let params: Option<Vec<ClassParam>> = if input.peek(Paren) {
-                let param_content;
+                let param_content: ParseBuffer<'_>;
                 parenthesized!(param_content in input);
                 let mut param_list: Vec<ClassParam> = Vec::new();
                 while !param_content.is_empty() {
@@ -92,7 +56,7 @@ impl Parse for ClassInput {
                             let forked_extends_buffer: ParseBuffer<'_> = content.fork();
                             let _ = forked_extends_buffer.parse::<Ident>();
                             if forked_extends_buffer.peek(Paren) {
-                                let _paren_content;
+                                let _paren_content: ParseBuffer<'_>;
                                 parenthesized!(_paren_content in forked_extends_buffer);
                                 forked_extends_buffer.peek(Semi) || forked_extends_buffer.is_empty()
                             } else {
@@ -127,7 +91,7 @@ impl Parse for ClassInput {
                     {
                         content.parse::<Ident>()?;
                         let selector: &'static str = selector;
-                        let block_content;
+                        let block_content: ParseBuffer<'_>;
                         braced!(block_content in content);
                         let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
                         while !block_content.is_empty() {
@@ -155,7 +119,7 @@ impl Parse for ClassInput {
                         parenthesized!(_paren_content in forked_nth_check);
                         if forked_nth_check.peek(Brace) {
                             content.parse::<Ident>()?;
-                            let paren_content;
+                            let paren_content: ParseBuffer<'_>;
                             parenthesized!(paren_content in content);
                             let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
                             let arg_str: String = arg_tokens.to_string().replace(CHAR_SPACE, "");
@@ -327,28 +291,40 @@ impl ToTokens for ClassDef {
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
                 let all_static: bool = !has_extends
-                    && self.get_properties().iter().all(|(_, value)| {
-                        let ClassPropValue::Expr(expr) = value;
-                        is_static_string_expr(expr)
-                    })
-                    && self.get_pseudo_blocks().iter().all(|block: &PseudoBlock| {
-                        block.get_properties().iter().all(|(_, value)| {
+                    && self
+                        .get_properties()
+                        .iter()
+                        .all(|(_, value): &(String, ClassPropValue)| {
                             let ClassPropValue::Expr(expr) = value;
                             is_static_string_expr(expr)
                         })
+                    && self.get_pseudo_blocks().iter().all(|block: &PseudoBlock| {
+                        block.get_properties().iter().all(
+                            |(_, value): &(String, ClassPropValue)| {
+                                let ClassPropValue::Expr(expr) = value;
+                                is_static_string_expr(expr)
+                            },
+                        )
                     })
                     && self.get_media_blocks().iter().all(|block: &MediaBlock| {
-                        block.get_properties().iter().all(|(_, value)| {
-                            let ClassPropValue::Expr(expr) = value;
-                            is_static_string_expr(expr)
-                        })
+                        block.get_properties().iter().all(
+                            |(_, value): &(String, ClassPropValue)| {
+                                let ClassPropValue::Expr(expr) = value;
+                                is_static_string_expr(expr)
+                            },
+                        )
                     });
-                let (pseudo_expr, media_expr) = if has_extra {
-                    let p = pseudo_blocks_to_tokens(self.get_pseudo_blocks())
-                        .unwrap_or_else(|| quote! { vec![] });
-                    let m = media_blocks_to_tokens(self.get_media_blocks())
-                        .unwrap_or_else(|| quote! { vec![] });
-                    (p, m)
+                let (pseudo_expr, media_expr): (
+                    proc_macro2::TokenStream,
+                    proc_macro2::TokenStream,
+                ) = if has_extra {
+                    let pseudo: proc_macro2::TokenStream =
+                        pseudo_blocks_to_tokens(self.get_pseudo_blocks())
+                            .unwrap_or_else(|| quote! { vec![] });
+                    let media: proc_macro2::TokenStream =
+                        media_blocks_to_tokens(self.get_media_blocks())
+                            .unwrap_or_else(|| quote! { vec![] });
+                    (pseudo, media)
                 } else {
                     (quote! { vec![] }, quote! { vec![] })
                 };

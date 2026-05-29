@@ -39,22 +39,25 @@ impl PartialEq for VirtualNode {
             ) => {
                 old_tag == new_tag
                     && old_attrs.len() == new_attrs.len()
-                    && old_attrs
-                        .iter()
-                        .zip(new_attrs.iter())
-                        .all(|(old_attr, new_attr)| old_attr == new_attr)
+                    && old_attrs.iter().zip(new_attrs.iter()).all(
+                        |(old_attr, new_attr): (&AttributeEntry, &AttributeEntry)| {
+                            old_attr == new_attr
+                        },
+                    )
                     && old_children.len() == new_children.len()
-                    && old_children
-                        .iter()
-                        .zip(new_children.iter())
-                        .all(|(old_child, new_child)| old_child == new_child)
+                    && old_children.iter().zip(new_children.iter()).all(
+                        |(old_child, new_child): (&VirtualNode, &VirtualNode)| {
+                            old_child == new_child
+                        },
+                    )
             }
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 old_children.len() == new_children.len()
-                    && old_children
-                        .iter()
-                        .zip(new_children.iter())
-                        .all(|(old_child, new_child)| old_child == new_child)
+                    && old_children.iter().zip(new_children.iter()).all(
+                        |(old_child, new_child): (&VirtualNode, &VirtualNode)| {
+                            old_child == new_child
+                        },
+                    )
             }
             (VirtualNode::Dynamic(_), VirtualNode::Dynamic(_)) => false,
             (VirtualNode::Empty, VirtualNode::Empty) => true,

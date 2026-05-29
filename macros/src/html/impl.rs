@@ -67,7 +67,7 @@ impl Parse for HtmlNode {
             return Ok(HtmlNode::For(html_for));
         }
         if input.peek(Brace) {
-            let content;
+            let content: ParseBuffer<'_>;
             braced!(content in input);
             let expr: Expr = content.parse()?;
             return Ok(HtmlNode::Dynamic(expr));
@@ -98,10 +98,10 @@ impl Parse for HtmlIf {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut branches: Vec<(Option<Expr>, Vec<HtmlNode>)> = Vec::new();
         input.parse::<Token![if]>()?;
-        let cond_content;
+        let cond_content: ParseBuffer<'_>;
         braced!(cond_content in input);
         let condition: Expr = cond_content.parse()?;
-        let body_content;
+        let body_content: ParseBuffer<'_>;
         braced!(body_content in input);
         let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
         branches.push((Some(condition), body));
@@ -109,15 +109,15 @@ impl Parse for HtmlIf {
             input.parse::<Token![else]>()?;
             if input.peek(Token![if]) {
                 input.parse::<Token![if]>()?;
-                let cond_content;
+                let cond_content: ParseBuffer<'_>;
                 braced!(cond_content in input);
                 let condition: Expr = cond_content.parse()?;
-                let body_content;
+                let body_content: ParseBuffer<'_>;
                 braced!(body_content in input);
                 let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
                 branches.push((Some(condition), body));
             } else {
-                let body_content;
+                let body_content: ParseBuffer<'_>;
                 braced!(body_content in input);
                 let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
                 branches.push((None, body));
@@ -145,10 +145,10 @@ impl Parse for HtmlMatch {
     /// - `syn::Result<Self>`- The parsed `HtmlMatch`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![match]>()?;
-        let scrutinee_content;
+        let scrutinee_content: ParseBuffer<'_>;
         braced!(scrutinee_content in input);
         let scrutinee: Expr = scrutinee_content.parse()?;
-        let arms_content;
+        let arms_content: ParseBuffer<'_>;
         braced!(arms_content in input);
         let mut arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)> = Vec::new();
         while !arms_content.is_empty() {
@@ -187,10 +187,10 @@ impl Parse for HtmlFor {
             pattern_tokens.extend([token_tree]);
         }
         input.parse::<Token![in]>()?;
-        let iter_content;
+        let iter_content: ParseBuffer<'_>;
         braced!(iter_content in input);
         let iterable: Expr = iter_content.parse()?;
-        let body_content;
+        let body_content: ParseBuffer<'_>;
         braced!(body_content in input);
         let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
         Ok(Self {
@@ -226,7 +226,7 @@ impl Parse for HtmlElement {
             let tag_str: String = tag.to_string();
             (tag, tag_str, true)
         };
-        let content;
+        let content: ParseBuffer<'_>;
         braced!(content in input);
         let mut attributes: Vec<(Ident, HtmlAttrValue)> = Vec::new();
         let mut children: Vec<HtmlNode> = Vec::new();
@@ -241,7 +241,7 @@ impl Parse for HtmlElement {
                 let html_for: HtmlFor = content.parse()?;
                 children.push(HtmlNode::For(html_for));
             } else if content.peek(Brace) {
-                let child_content;
+                let child_content: ParseBuffer<'_>;
                 braced!(child_content in content);
                 let expr: Expr = child_content.parse()?;
                 children.push(HtmlNode::Dynamic(expr));
@@ -329,15 +329,20 @@ impl ToTokens for HtmlNode {
                     .get_arms()
                     .iter()
                     .enumerate()
-                    .map(|(arm_index, (pattern, body))| {
-                        let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
-                        quote! {
-                            #pattern => {
-                                __euv_hook_context.set_arm_changed(#arm_index);
-                                #body_expr
+                    .map(
+                        |(arm_index, (pattern, body)): (
+                            usize,
+                            &(proc_macro2::TokenStream, Vec<HtmlNode>),
+                        )| {
+                            let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
+                            quote! {
+                                #pattern => {
+                                    __euv_hook_context.set_arm_changed(#arm_index);
+                                    #body_expr
+                                }
                             }
-                        }
-                    })
+                        },
+                    )
                     .collect();
                 tokens.extend(quote! {
                     ::euv::VirtualNode::create_dynamic_with_context(move |__euv_hook_context: &mut ::euv::HookContext| {
@@ -409,14 +414,19 @@ impl ToTokens for HtmlAttrValue {
             HtmlAttrValue::Style(props) => {
                 let has_if: bool = props
                     .iter()
-                    .any(|(_, value)| matches!(value, HtmlStylePropValue::If(_)));
-                let all_literal: bool = props
-                    .iter()
-                    .all(|(_, value)| matches!(value, HtmlStylePropValue::Literal(_)));
+                    .any(|(_, value): &(String, HtmlStylePropValue)| {
+                        matches!(value, HtmlStylePropValue::If(_))
+                    });
+                let all_literal: bool =
+                    props
+                        .iter()
+                        .all(|(_, value): &(String, HtmlStylePropValue)| {
+                            matches!(value, HtmlStylePropValue::Literal(_))
+                        });
                 if has_if {
                     let prop_tokens: Vec<proc_macro2::TokenStream> = props
                         .iter()
-                        .map(|(key, value)| {
+                        .map(|(key, value): &(String, HtmlStylePropValue)| {
                             quote! { .property(#key, #value) }
                         })
                         .collect();
@@ -442,7 +452,7 @@ impl ToTokens for HtmlAttrValue {
                 } else {
                     let kv_tokens: Vec<proc_macro2::TokenStream> = props
                         .iter()
-                        .map(|(key, value)| {
+                        .map(|(key, value): &(String, HtmlStylePropValue)| {
                             quote! { (#key, #value) }
                         })
                         .collect();
@@ -506,7 +516,7 @@ impl ToTokens for HtmlElement {
             let prop_field_tokens: Vec<proc_macro2::TokenStream> = self
                 .get_attributes()
                 .iter()
-                .map(|(key, value)| {
+                .map(|(key, value): &(Ident, HtmlAttrValue)| {
                     let field_ident: Ident = key.clone();
                     match value {
                         HtmlAttrValue::Expr(expr) => {
@@ -518,9 +528,11 @@ impl ToTokens for HtmlElement {
                             quote! { #field_ident: #if_chain }
                         }
                         HtmlAttrValue::Style(props) => {
-                            let has_if: bool = props.iter().any(|(_, style_value)| {
-                                matches!(style_value, HtmlStylePropValue::If(_))
-                            });
+                            let has_if: bool = props.iter().any(
+                                |(_, style_value): &(String, HtmlStylePropValue)| {
+                                    matches!(style_value, HtmlStylePropValue::If(_))
+                                },
+                            );
                             if has_if {
                                 quote! { #field_ident: #value }
                             } else {
@@ -553,7 +565,7 @@ impl ToTokens for HtmlElement {
             });
         } else {
             let mut key_expr: Option<proc_macro2::TokenStream> = None;
-            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value)| {
+            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(Ident, HtmlAttrValue)| {
                 let key_str: String = key.to_string();
                 if key_str == "key" {
                     if let HtmlAttrValue::Expr(expr) = value {
@@ -563,7 +575,7 @@ impl ToTokens for HtmlElement {
                 }
                 let value_tokens: proc_macro2::TokenStream = match value {
                     HtmlAttrValue::Style(props) => {
-                        let has_if: bool = props.iter().any(|(_, style_value)| matches!(style_value, HtmlStylePropValue::If(_)));
+                        let has_if: bool = props.iter().any(|(_, style_value): &(String, HtmlStylePropValue)| matches!(style_value, HtmlStylePropValue::If(_)));
                         if has_if {
                             quote! { #value }
                         } else {

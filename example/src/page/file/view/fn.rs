@@ -17,7 +17,8 @@ fn build_file_list(state: UseFileUpload) -> VirtualNode {
     let items: Vec<VirtualNode> = names
         .iter()
         .enumerate()
-        .map(|(index, name)| {
+        .map(|tuple: (usize, &String)| {
+            let (index, name) = tuple;
             let display_name: String = name.clone();
             html! {
                 div {

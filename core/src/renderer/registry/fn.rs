@@ -113,7 +113,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
         let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
         let dirty_keys: Vec<usize> = registry
             .iter()
-            .filter_map(|(key, entry)| {
+            .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
                 let slot: Ref<SignalUpdateSlot> = entry.borrow();
                 if slot.get_dirty() && !slot.get_removed() {
                     Some(*key)
@@ -235,7 +235,7 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
     let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
     let keys_to_remove: Vec<(usize, &'static str)> = registry_ref
         .keys()
-        .filter(|(id, _)| *id == euv_id)
+        .filter(|(id, _): &&(usize, &'static str)| *id == euv_id)
         .copied()
         .collect();
     for key in keys_to_remove {

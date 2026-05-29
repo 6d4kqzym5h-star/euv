@@ -178,7 +178,7 @@ pub(crate) fn pseudo_blocks_to_tokens(
             let style_parts: Vec<proc_macro2::TokenStream> = block
                 .get_properties()
                 .iter()
-                .map(|(key, value)| match value {
+                .map(|(key, value): &(String, ClassPropValue)| match value {
                     ClassPropValue::Expr(expr) => {
                         quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
@@ -217,7 +217,7 @@ pub(crate) fn media_blocks_to_tokens(
             let style_parts: Vec<proc_macro2::TokenStream> = block
                 .get_properties()
                 .iter()
-                .map(|(key, value)| match value {
+                .map(|(key, value): &(String, ClassPropValue)| match value {
                     ClassPropValue::Expr(expr) => {
                         quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
@@ -285,6 +285,36 @@ pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> Stri
         result.push('}');
     }
     result
+}
+
+/// Generates the `OnceLock`-based static function body for a no-param class.
+///
+/// Shared by both the all-static and dynamic paths in `ClassDef::to_tokens`.
+///
+/// # Arguments
+///
+/// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
+/// - `OnceLockParams` - The parameters for the OnceLock function generation.
+pub(crate) fn emit_once_lock_fn(tokens: &mut proc_macro2::TokenStream, p: OnceLockParams<'_>) {
+    let OnceLockParams {
+        vis,
+        fn_name_token,
+        const_name_token,
+        class_name_str,
+        style_expr,
+        pseudo_expr,
+        media_expr,
+    } = p;
+    tokens.extend(quote! {
+        #vis fn #fn_name_token() -> &'static ::euv::Css {
+            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
+            #const_name_token.get_or_init(|| {
+                let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #pseudo_expr, #media_expr);
+                css.inject_style();
+                css
+            })
+        }
+    });
 }
 
 /// Looks up a CSS pseudo selector by keyword.

@@ -1,6 +1,3 @@
-#[allow(unused_imports)]
-use super::*;
-
 /// All DOM event names that should be delegated at the window level.
 ///
 /// These are registered once at mount time so that no per-element

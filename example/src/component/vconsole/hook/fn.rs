@@ -41,7 +41,7 @@ pub(crate) fn filter_console_entries(
     log_list
         .iter()
         .enumerate()
-        .filter(|(_, entry)| {
+        .filter(|(_, entry): &(usize, &ConsoleEntry)| {
             if filter_value == "all" {
                 return true;
             }
@@ -52,7 +52,7 @@ pub(crate) fn filter_console_entries(
                 _ => true,
             }
         })
-        .map(|(index, entry)| (index, entry.clone()))
+        .map(|(index, entry): (usize, &ConsoleEntry)| (index, entry.clone()))
         .collect::<Vec<(usize, ConsoleEntry)>>()
         .into_iter()
         .rev()

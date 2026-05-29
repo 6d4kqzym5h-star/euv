@@ -1,6 +1,3 @@
-#[allow(unused_imports)]
-use super::*;
-
 /// The DOM attribute name used to store the dynamic node identifier on a placeholder element.
 ///
 /// This attribute is assigned to every DynamicNode placeholder so the framework

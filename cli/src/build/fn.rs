@@ -476,7 +476,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     let has_target: bool = args
         .wasm_pack_args
         .iter()
-        .any(|arg| arg == TARGET_ARG || arg.starts_with(&format!("{TARGET_ARG}=")));
+        .any(|arg: &String| arg == TARGET_ARG || arg.starts_with(&format!("{TARGET_ARG}=")));
     if !has_target {
         command.arg(TARGET_ARG).arg(TARGET_WEB);
     }

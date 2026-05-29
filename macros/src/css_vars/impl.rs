@@ -1,35 +1,5 @@
 use crate::*;
 
-/// Generates the `OnceLock`-based static function body for a no-param CSS variable block.
-///
-/// # Arguments
-///
-/// - `tokens` - The target token stream to append to.
-/// - `vis` - The visibility modifier.
-/// - `fn_name_token` - The function name token stream.
-/// - `const_name_token` - The `OnceLock` constant name token stream.
-/// - `class_name_str` - The class name string literal.
-/// - `style_expr` - Token stream that evaluates to the CSS style string.
-fn emit_css_var_once_lock_fn(
-    tokens: &mut proc_macro2::TokenStream,
-    vis: &Visibility,
-    fn_name_token: &proc_macro2::TokenStream,
-    const_name_token: &proc_macro2::TokenStream,
-    class_name_str: &str,
-    style_expr: &proc_macro2::TokenStream,
-) {
-    tokens.extend(quote! {
-        #vis fn #fn_name_token() -> &'static ::euv::Css {
-            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-            #const_name_token.get_or_init(|| {
-                let css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, vec![], vec![]);
-                css.inject_style();
-                css
-            })
-        }
-    });
-}
-
 /// Implementation of `Parse` for `CssVarInput`, parsing the `css_vars!` macro input.
 impl Parse for CssVarInput {
     /// Parses the `css_vars!` macro input into a `CssVarInput` AST.
@@ -47,7 +17,7 @@ impl Parse for CssVarInput {
             let visibility: Visibility = input.parse()?;
             let name: Ident = input.parse()?;
             let params: Option<Vec<CssVarParam>> = if input.peek(Paren) {
-                let param_content;
+                let param_content: ParseBuffer<'_>;
                 syn::parenthesized!(param_content in input);
                 let mut param_list: Vec<CssVarParam> = Vec::new();
                 while !param_content.is_empty() {
@@ -70,7 +40,7 @@ impl Parse for CssVarInput {
             } else {
                 None
             };
-            let content;
+            let content: ParseBuffer<'_>;
             braced!(content in input);
             let mut vars: Vec<(String, CssVarValue)> = Vec::new();
             while !content.is_empty() {
@@ -129,7 +99,7 @@ impl ToTokens for CssVarDef {
                 let css_string_parts: Vec<proc_macro2::TokenStream> = self
                     .get_vars()
                     .iter()
-                    .map(|(key, value)| match value {
+                    .map(|(key, value): &(String, CssVarValue)| match value {
                         CssVarValue::Expr(expr) => {
                             quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                         }
@@ -139,7 +109,7 @@ impl ToTokens for CssVarDef {
                 let name_format: String = format!("{{}}{str_hyphen}{{}}");
                 tokens.extend(quote! {
                     #vis fn #name(#(#param_defs), *) -> ::euv::Css {
-                        let css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#str_hyphen)), [#(#css_string_parts), *].concat(), vec![], vec![]);
+                        let css: ::euv::Css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#str_hyphen)), [#(#css_string_parts), *].concat(), vec![], vec![]);
                         css.inject_style();
                         css
                     }
@@ -151,10 +121,13 @@ impl ToTokens for CssVarDef {
                 let const_name_token: proc_macro2::TokenStream =
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
-                let all_static: bool = self.get_vars().iter().all(|(_, value)| {
-                    let CssVarValue::Expr(expr) = value;
-                    is_static_string_expr(expr)
-                });
+                let all_static: bool =
+                    self.get_vars()
+                        .iter()
+                        .all(|(_, value): &(String, CssVarValue)| {
+                            let CssVarValue::Expr(expr) = value;
+                            is_static_string_expr(expr)
+                        });
                 let style_expr: proc_macro2::TokenStream = if all_static {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_vars() {
@@ -169,12 +142,12 @@ impl ToTokens for CssVarDef {
                     let css_string_parts: Vec<proc_macro2::TokenStream> = self
                         .get_vars()
                         .iter()
-                        .map(|(key, value)| match value {
-                            CssVarValue::Expr(expr) => {
-                                quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
-                            }
-                        })
-                        .collect();
+                    .map(|(key, value): &(String, CssVarValue)| match value {
+                        CssVarValue::Expr(expr) => {
+                            quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                        }
+                    })
+                    .collect();
                     quote! { [#(#css_string_parts), *].concat() }
                 };
                 emit_css_var_once_lock_fn(

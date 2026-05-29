@@ -106,3 +106,24 @@ pub(crate) struct ClassInput {
     #[set(pub(crate))]
     pub(crate) classes: Vec<ClassDef>,
 }
+
+/// Parameters for `emit_once_lock_fn`.
+///
+/// Bundles the values needed to generate a `OnceLock`-based static function body
+/// for a no-param class definition.
+pub(crate) struct OnceLockParams<'a> {
+    /// The visibility modifier for the generated function.
+    pub(crate) vis: &'a Visibility,
+    /// The function name token stream.
+    pub(crate) fn_name_token: &'a proc_macro2::TokenStream,
+    /// The `OnceLock` constant name token stream.
+    pub(crate) const_name_token: &'a proc_macro2::TokenStream,
+    /// The class name as a string literal.
+    pub(crate) class_name_str: &'a str,
+    /// Token stream that evaluates to the CSS style string.
+    pub(crate) style_expr: &'a proc_macro2::TokenStream,
+    /// Token stream that evaluates to the pseudo rules vector.
+    pub(crate) pseudo_expr: &'a proc_macro2::TokenStream,
+    /// Token stream that evaluates to the media rules vector.
+    pub(crate) media_expr: &'a proc_macro2::TokenStream,
+}

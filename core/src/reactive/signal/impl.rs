@@ -66,7 +66,7 @@ where
         self.inner_ref()
             .try_borrow()
             .ok()
-            .map(|inner| inner.get_value().clone())
+            .map(|inner: Ref<SignalInner<T>>| inner.get_value().clone())
     }
 
     /// Subscribes a callback to be invoked when the signal changes.

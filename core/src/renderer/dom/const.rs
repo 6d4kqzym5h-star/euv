@@ -1,6 +1,3 @@
-#[allow(unused_imports)]
-use super::*;
-
 /// The JavaScript property name used to check if a DOM node is connected to the document.
 pub(crate) const IS_CONNECTED: &str = "isConnected";
 
