@@ -74,11 +74,13 @@ pub(crate) fn page_dynamic_component() -> VirtualNode {
                     class: c_demo_text_muted()
                     {format!("Current tag: {}", tag_name.get())}
                 }
-                {tag_name.get()} {
+                div {
                     class: c_dynamic_component_panel()
-                    title: "Dynamic my_card"
-                    onclick: badge_on_click("Dynamic Badge", LogLevel::Log)
-                    {content.get()}
+                    {tag_name.get()} {
+                        title: "Dynamic my_card"
+                        onclick: badge_on_click("Dynamic Badge", LogLevel::Log)
+                        {content.get()}
+                    }
                 }
             }
         }

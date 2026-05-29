@@ -2075,10 +2075,13 @@ class! {
     }
 
     pub(crate) c_dynamic_component_panel {
+        display: "block";
         padding: "16px";
         border-radius: "8px";
         border: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-primary);
+        min-height: "48px";
+        margin-top: "12px";
     }
 
     pub(crate) c_dynamic_component_panel_title {
