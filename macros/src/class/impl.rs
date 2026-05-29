@@ -28,7 +28,7 @@ fn emit_once_lock_fn(tokens: &mut proc_macro2::TokenStream, p: OnceLockParams<'_
         #vis fn #fn_name_token() -> &'static ::euv::Css {
             static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
             #const_name_token.get_or_init(|| {
-                let css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #pseudo_expr, #media_expr);
+                let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #pseudo_expr, #media_expr);
                 css.inject_style();
                 css
             })
@@ -76,7 +76,7 @@ impl Parse for ClassInput {
             } else {
                 None
             };
-            let content;
+            let content: ParseBuffer<'_>;
             braced!(content in input);
             let mut extends: Vec<ClassExtend> = Vec::new();
             let mut properties: Vec<(String, ClassPropValue)> = Vec::new();
@@ -101,7 +101,7 @@ impl Parse for ClassInput {
                         };
                     if is_extends {
                         content.parse::<Ident>()?;
-                        let paren_content;
+                        let paren_content: ParseBuffer<'_>;
                         parenthesized!(paren_content in content);
                         let mut args: Vec<proc_macro2::TokenStream> = Vec::new();
                         while !paren_content.is_empty() {
@@ -151,7 +151,7 @@ impl Parse for ClassInput {
                         && forked.peek(Paren)
                     {
                         let forked_nth_check: ParseBuffer<'_> = forked;
-                        let _paren_content;
+                        let _paren_content: ParseBuffer<'_>;
                         parenthesized!(_paren_content in forked_nth_check);
                         if forked_nth_check.peek(Brace) {
                             content.parse::<Ident>()?;
@@ -163,7 +163,7 @@ impl Parse for ClassInput {
                                 ":{keyword_kebab}({arg_str})",
                                 keyword_kebab = keyword_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
                             );
-                            let block_content;
+                            let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
                             let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
                             while !block_content.is_empty() {
@@ -185,11 +185,11 @@ impl Parse for ClassInput {
                         }
                     } else if keyword_str == KEYWORD_MEDIA && forked.peek(Paren) {
                         let forked_media_check: ParseBuffer<'_> = forked;
-                        let paren_content2;
+                        let paren_content2: ParseBuffer<'_>;
                         parenthesized!(paren_content2 in forked_media_check);
                         if forked_media_check.peek(Brace) {
                             content.parse::<Ident>()?;
-                            let query_content;
+                            let query_content: ParseBuffer<'_>;
                             parenthesized!(query_content in content);
                             let query_expr: Expr = query_content.parse()?;
                             let query_str: String = match &query_expr {
@@ -202,7 +202,7 @@ impl Parse for ClassInput {
                                     .to_string()
                                     .replace(CHAR_SPACE, ""),
                             };
-                            let block_content;
+                            let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
                             let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
                             while !block_content.is_empty() {
@@ -364,7 +364,8 @@ impl ToTokens for ClassDef {
                     if has_extra {
                         let pseudo_static: String =
                             pseudo_blocks_to_static_string(self.get_pseudo_blocks());
-                        let media_static: String = media_blocks_to_static_string(self.get_media_blocks());
+                        let media_static: String =
+                            media_blocks_to_static_string(self.get_media_blocks());
                         emit_once_lock_fn(
                             tokens,
                             OnceLockParams {

@@ -93,7 +93,7 @@ async fn build_mode(mut args: ModeArgs) -> Result<()> {
                 .unwrap_or(&crate_path_str),
         );
     }
-    print_banner(Action::Build, "");
+    print_banner(Action::Build);
     run_build_only_pipeline(&args).await?;
     log::info!("Build completed. Exiting (build-only mode).");
     Ok(())
@@ -164,7 +164,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
             generate_html(&www_absolute, &import_path, is_release, custom_html).await?
         }
     };
-    print_banner(Action::Run, &server_url);
+    print_banner(Action::Run);
     let (reload_tx, _): (
         broadcast::Sender<ReloadEvent>,
         broadcast::Receiver<ReloadEvent>,
@@ -194,6 +194,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     if let Err(error) = set_global_state(Arc::clone(&state)) {
         log::error!("Failed to set global state: {}", error);
     }
+    log::info!("Server: {}", server_url);
     let server_control_hook: ServerControlHook = server
         .run()
         .await

@@ -317,7 +317,8 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::If(html_if) => {
-                let if_chain: proc_macro2::TokenStream = build_html_if_chain(html_if.get_branches());
+                let if_chain: proc_macro2::TokenStream =
+                    build_html_if_chain(html_if.get_branches());
                 tokens.extend(quote! {
                     ::euv::VirtualNode::create_dynamic(move || { #if_chain })
                 });

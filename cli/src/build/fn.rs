@@ -529,17 +529,13 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
 /// # Arguments
 ///
 /// - `Action` - The action to perform (run or build).
-/// - `&str` - The server URL (only meaningful in run mode).
-pub(crate) fn print_banner(action: Action, server_url: &str) {
+pub(crate) fn print_banner(action: Action) {
     log::info!("euv v{}", env!("CARGO_PKG_VERSION"));
     let action_name: &str = match action {
         Action::Run => ACTION_RUN,
         Action::Build => ACTION_BUILD,
     };
     log::info!("Mode: {}", action_name);
-    if action == Action::Run {
-        log::info!("Server: {}", server_url);
-    }
     log::info!(".gitignore can exclude unwanted file change events from triggering rebuilds");
 }
 
