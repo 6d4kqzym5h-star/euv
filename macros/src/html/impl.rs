@@ -66,6 +66,34 @@ impl Parse for HtmlNode {
             let html_for: HtmlFor = input.parse()?;
             return Ok(HtmlNode::For(html_for));
         }
+        if input.peek(Brace) && input.peek2(Brace) {
+            let forked: ParseBuffer<'_> = input.fork();
+            let _first_brace: ParseBuffer<'_>;
+            braced!(_first_brace in forked);
+            let second_brace: ParseBuffer<'_>;
+            braced!(second_brace in forked);
+            let is_dynamic_tag: bool = second_brace.is_empty()
+                || (second_brace.peek(Ident)
+                    && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
+                || second_brace.peek(Token![if])
+                || second_brace.peek(Token![match])
+                || second_brace.peek(Token![for])
+                || second_brace.peek(LitStr)
+                || (second_brace.peek(Brace) && second_brace.peek2(Colon))
+                || (second_brace.peek(Brace) && second_brace.peek2(Brace));
+            if is_dynamic_tag {
+                let tag_content: ParseBuffer<'_>;
+                braced!(tag_content in input);
+                let tag_expr: Expr = tag_content.parse()?;
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in input);
+                let (attributes, children): (HtmlAttrs, Vec<HtmlNode>) =
+                    parse_dynamic_component_children(&body_content)?;
+                return Ok(HtmlNode::DynamicTag(HtmlDynamicTag::new(
+                    tag_expr, attributes, children,
+                )));
+            }
+        }
         if input.peek(Brace) {
             let content: ParseBuffer<'_>;
             braced!(content in input);
@@ -228,7 +256,7 @@ impl Parse for HtmlElement {
         };
         let content: ParseBuffer<'_>;
         braced!(content in input);
-        let mut attributes: Vec<(Ident, HtmlAttrValue)> = Vec::new();
+        let mut attributes: HtmlAttrs = Vec::new();
         let mut children: Vec<HtmlNode> = Vec::new();
         while !content.is_empty() {
             if content.peek(Token![if]) {
@@ -240,6 +268,47 @@ impl Parse for HtmlElement {
             } else if content.peek(Token![for]) {
                 let html_for: HtmlFor = content.parse()?;
                 children.push(HtmlNode::For(html_for));
+            } else if content.peek(Brace) && content.peek2(Brace) {
+                let forked: ParseBuffer<'_> = content.fork();
+                let _first_brace: ParseBuffer<'_>;
+                braced!(_first_brace in forked);
+                let second_brace: ParseBuffer<'_>;
+                braced!(second_brace in forked);
+                let is_dynamic_tag: bool = second_brace.is_empty()
+                    || (second_brace.peek(Ident)
+                        && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
+                    || second_brace.peek(Token![if])
+                    || second_brace.peek(Token![match])
+                    || second_brace.peek(Token![for])
+                    || second_brace.peek(LitStr)
+                    || (second_brace.peek(Brace) && second_brace.peek2(Colon))
+                    || (second_brace.peek(Brace) && second_brace.peek2(Brace));
+                if is_dynamic_tag {
+                    let tag_content: ParseBuffer<'_>;
+                    braced!(tag_content in content);
+                    let tag_expr: Expr = tag_content.parse()?;
+                    let body_content: ParseBuffer<'_>;
+                    braced!(body_content in content);
+                    let (dynamic_attrs, dynamic_children): (HtmlAttrs, Vec<HtmlNode>) =
+                        parse_dynamic_component_children(&body_content)?;
+                    children.push(HtmlNode::DynamicTag(HtmlDynamicTag::new(
+                        tag_expr,
+                        dynamic_attrs,
+                        dynamic_children,
+                    )));
+                } else {
+                    let child_content: ParseBuffer<'_>;
+                    braced!(child_content in content);
+                    let expr: Expr = child_content.parse()?;
+                    children.push(HtmlNode::Dynamic(expr));
+                }
+            } else if content.peek(Brace) && content.peek2(Colon) {
+                let key_content: ParseBuffer<'_>;
+                braced!(key_content in content);
+                let key_expr: Expr = key_content.parse()?;
+                content.parse::<Colon>()?;
+                let value: HtmlAttrValue = parse_attr_value(&content, "")?;
+                attributes.push((HtmlAttrKey::Dynamic(key_expr.to_token_stream()), value));
             } else if content.peek(Brace) {
                 let child_content: ParseBuffer<'_>;
                 braced!(child_content in content);
@@ -254,7 +323,7 @@ impl Parse for HtmlElement {
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
-                attributes.push((key, value));
+                attributes.push((HtmlAttrKey::Static(key), value));
             } else if content.peek(Ident) && (content.peek2(Colon) || content.peek2(Token![-])) {
                 let key_string: String = parse_kebab_name(&content)?;
                 let key_clean: &str = key_string
@@ -264,7 +333,7 @@ impl Parse for HtmlElement {
                 content.parse::<Colon>()?;
                 let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
-                attributes.push((key, value));
+                attributes.push((HtmlAttrKey::Static(key), value));
             } else if content.peek(LitStr) {
                 let lit: LitStr = content.parse()?;
                 children.push(HtmlNode::Text(lit.value()));
@@ -280,7 +349,7 @@ impl Parse for HtmlElement {
                 return Err(content.error(ERR_UNEXPECTED_TOKEN_IN_ELEMENT));
             }
         }
-        let merged_attributes: Vec<(Ident, HtmlAttrValue)> = merge_same_key_attributes(attributes);
+        let merged_attributes: HtmlAttrs = merge_same_key_attributes(attributes);
         Ok(Self {
             tag,
             tag_name,
@@ -366,6 +435,9 @@ impl ToTokens for HtmlNode {
                         ::euv::VirtualNode::Fragment(__euv_for_nodes)
                     })
                 });
+            }
+            HtmlNode::DynamicTag(dynamic_tag) => {
+                dynamic_tag.to_tokens(tokens);
             }
         }
     }
@@ -485,6 +557,144 @@ impl ToTokens for HtmlAttrValue {
     }
 }
 
+/// Implementation of `ToTokens` for `HtmlDynamicTag`, converting dynamic tags
+/// into a reactive `DynamicNode` that re-renders when the tag expression changes.
+///
+/// The generated code wraps the tag expression in a `VirtualNode::create_dynamic`
+/// closure. Inside the closure, the expression is evaluated to a tag name string.
+/// If the tag name matches a registered user component, the component function
+/// is called with default props and attributes/children are injected. Otherwise,
+/// a native HTML element is created.
+impl ToTokens for HtmlDynamicTag {
+    /// Converts this dynamic tag into its virtual node token stream.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let tag_expr: &Expr = self.get_tag_expr();
+        let attributes: &[(HtmlAttrKey, HtmlAttrValue)] = self.get_attributes();
+        let children: &[HtmlNode] = self.get_children();
+        let attr_tokens: Vec<proc_macro2::TokenStream> = attributes
+            .iter()
+            .map(|(key, value): &(HtmlAttrKey, HtmlAttrValue)| {
+                let (key_str, attr_name_token): (String, proc_macro2::TokenStream) = match key {
+                    HtmlAttrKey::Static(key_ident) => {
+                        let key_string: String = key_ident.to_string();
+                        let is_event: bool = key_string.starts_with(EVENT_ATTR_PREFIX);
+                        let raw_key: String = if is_event {
+                            key_string.clone()
+                        } else {
+                            key_string.replace(CHAR_UNDERSCORE, STR_HYPHEN)
+                        };
+                        let attr_name_str: String = raw_key
+                            .strip_prefix(RAW_IDENT_PREFIX)
+                            .unwrap_or(&raw_key)
+                            .to_string();
+                        (key_string, quote! { #attr_name_str.to_string() })
+                    }
+                    HtmlAttrKey::Dynamic(key_expr) => {
+                        (String::new(), quote! { (#key_expr).to_string() })
+                    }
+                };
+                let value_tokens: proc_macro2::TokenStream = match value {
+                    HtmlAttrValue::Style(props) => {
+                        let has_if: bool =
+                            props
+                                .iter()
+                                .any(|(_, style_value): &(String, HtmlStylePropValue)| {
+                                    matches!(style_value, HtmlStylePropValue::If(_))
+                                });
+                        if has_if {
+                            quote! { #value }
+                        } else {
+                            quote! { ::euv::AttributeValue::Text(#value) }
+                        }
+                    }
+                    HtmlAttrValue::If(_) => {
+                        quote! { #value }
+                    }
+                    HtmlAttrValue::Classes(_) => {
+                        quote! { #value }
+                    }
+                    HtmlAttrValue::Styles(_) => {
+                        quote! { #value }
+                    }
+                    HtmlAttrValue::Expr(expr) => {
+                        if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
+                            quote! {
+                                ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
+                            }
+                        } else if key_str == ATTR_KEY_CHILDREN {
+                            quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
+                        } else {
+                            quote! {
+                                ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                            }
+                        }
+                    }
+                };
+                quote! {
+                    ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
+                }
+            })
+            .collect();
+        let child_tokens: Vec<proc_macro2::TokenStream> = children
+            .iter()
+            .map(|child: &HtmlNode| {
+                let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+                child.to_tokens(&mut token_stream);
+                token_stream
+            })
+            .collect();
+        let component_registry: HashMap<String, String> = load_component_registry();
+        let component_match_arms: Vec<proc_macro2::TokenStream> = component_registry
+            .iter()
+            .map(|(fn_name, props_type_name): (&String, &String)| {
+                let fn_ident: Ident = Ident::new(fn_name, proc_macro2::Span::call_site());
+                let props_ident: Ident = Ident::new(props_type_name, proc_macro2::Span::call_site());
+                let fn_name_str: String = fn_name.clone();
+                quote! {
+                    #fn_name_str => {
+                        let mut __euv_dyn_node: ::euv::VirtualNode = ::euv::IntoNode::into_node(#fn_ident(#props_ident::default()));
+                        if let ::euv::VirtualNode::Element { ref mut attributes, ref mut children, .. } = __euv_dyn_node {
+                            let __euv_dyn_attrs: Vec<::euv::AttributeEntry> = vec![#(#attr_tokens), *];
+                            for __euv_dyn_attr in __euv_dyn_attrs {
+                                if !__euv_dyn_attr.get_name().is_empty() {
+                                    attributes.push(__euv_dyn_attr);
+                                }
+                            }
+                            let __euv_dyn_children: Vec<::euv::VirtualNode> = vec![#(#child_tokens), *];
+                            for __euv_dyn_child in __euv_dyn_children {
+                                if !matches!(__euv_dyn_child, ::euv::VirtualNode::Empty) {
+                                    children.push(__euv_dyn_child);
+                                }
+                            }
+                        }
+                        __euv_dyn_node
+                    }
+                }
+            })
+            .collect();
+        tokens.extend(quote! {
+            ::euv::VirtualNode::create_dynamic(move || {
+                let __euv_tag_name: String = (#tag_expr).to_string();
+                match __euv_tag_name.as_str() {
+                    #(#component_match_arms)*
+                    _ => {
+                        ::euv::VirtualNode::Element {
+                            tag: ::euv::Tag::Element(__euv_tag_name),
+                            attributes: vec![#(#attr_tokens), *],
+                            children: vec![#(#child_tokens), *],
+                            key: None,
+                        }
+                    }
+                }
+            })
+        });
+    }
+}
+
 /// Implementation of `ToTokens` for `HtmlElement`, converting HTML elements into virtual element tokens.
 ///
 /// For identifier tags, the macro checks whether the tag name corresponds to a
@@ -516,9 +726,12 @@ impl ToTokens for HtmlElement {
             let prop_field_tokens: Vec<proc_macro2::TokenStream> = self
                 .get_attributes()
                 .iter()
-                .map(|(key, value): &(Ident, HtmlAttrValue)| {
-                    let field_ident: Ident = key.clone();
-                    match value {
+                .filter_map(|(key, value): &(HtmlAttrKey, HtmlAttrValue)| {
+                    let HtmlAttrKey::Static(key_ident) = key else {
+                        return None;
+                    };
+                    let field_ident: Ident = key_ident.clone();
+                    Some(match value {
                         HtmlAttrValue::Expr(expr) => {
                             quote! { #field_ident: #expr }
                         }
@@ -542,7 +755,7 @@ impl ToTokens for HtmlElement {
                         _ => {
                             quote! { #field_ident: #value }
                         }
-                    }
+                    })
                 })
                 .collect();
             let children: &[HtmlNode] = self.get_children();
@@ -565,8 +778,23 @@ impl ToTokens for HtmlElement {
             });
         } else {
             let mut key_expr: Option<proc_macro2::TokenStream> = None;
-            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(Ident, HtmlAttrValue)| {
-                let key_str: String = key.to_string();
+            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(HtmlAttrKey, HtmlAttrValue)| {
+                let (key_str, attr_name_token): (String, proc_macro2::TokenStream) = match key {
+                    HtmlAttrKey::Static(key_ident) => {
+                        let key_string: String = key_ident.to_string();
+                        let is_event: bool = key_string.starts_with(EVENT_ATTR_PREFIX);
+                        let raw_key: String = if is_event {
+                            key_string.clone()
+                        } else {
+                            key_string.replace(CHAR_UNDERSCORE, STR_HYPHEN)
+                        };
+                        let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
+                        (key_string, quote! { #attr_name_str.to_string() })
+                    }
+                    HtmlAttrKey::Dynamic(key_expr) => {
+                        (String::new(), quote! { (#key_expr).to_string() })
+                    }
+                };
                 if key_str == "key" {
                     if let HtmlAttrValue::Expr(expr) = value {
                         key_expr = Some(quote! { Some(::euv::IntoReactiveString::into_reactive_string(#expr)) });
@@ -605,15 +833,8 @@ impl ToTokens for HtmlElement {
                         }
                     }
                 };
-                let is_event: bool = key_str.starts_with(EVENT_ATTR_PREFIX);
-                let raw_key: String = if is_event {
-                    key_str.clone()
-                } else {
-                    key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
-                };
-                let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
                 Some(quote! {
-                    ::euv::AttributeEntry::new(#attr_name_str.to_string(), #value_tokens)
+                    ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
                 })
             }).collect();
             let key_token: proc_macro2::TokenStream = key_expr.unwrap_or_else(|| quote! { None });

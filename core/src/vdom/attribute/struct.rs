@@ -24,12 +24,10 @@ pub struct Style {
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
-    #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: String,
     /// The value of the attribute.
     #[debug(skip)]
-    #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) value: AttributeValue,
 }

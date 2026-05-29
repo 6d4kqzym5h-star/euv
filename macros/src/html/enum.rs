@@ -34,6 +34,26 @@ pub(crate) enum HtmlNode {
     /// The iterable expression in braces is re-evaluated on signal change,
     /// and each iteration's HTML is collected into a `DynamicNode` fragment.
     For(HtmlFor),
+    /// A dynamic tag: `{tag_expr} { attr: value, ... children ... }`.
+    ///
+    /// The expression in braces evaluates to a tag name string at runtime.
+    /// If the tag name matches a registered user component, the component
+    /// function is called with the provided attributes and children.
+    /// Otherwise, a native HTML element is created.
+    DynamicTag(HtmlDynamicTag),
+}
+
+/// Represents the key side of an HTML attribute.
+///
+/// Supports two forms:
+/// - `Static`: A compile-time identifier key (e.g., `class`, `onclick`, `"data-id"`).
+/// - `Dynamic`: A runtime expression wrapped in braces (e.g., `{key_var}`) that evaluates to a string.
+#[derive(Clone, Debug)]
+pub(crate) enum HtmlAttrKey {
+    /// A static attribute key known at compile time.
+    Static(Ident),
+    /// A dynamic expression that evaluates to an attribute key string at runtime.
+    Dynamic(proc_macro2::TokenStream),
 }
 
 /// Represents the value side of an attribute.

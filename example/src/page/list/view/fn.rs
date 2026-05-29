@@ -16,11 +16,11 @@ pub(crate) fn page_list() -> VirtualNode {
                 div {
                     class: c_list_input_row()
                     input {
-                        id: "list-new-item"
-                        name: "new_item"
-                        r#type: "text"
-                        autocomplete: "off"
-                        placeholder: "Enter new item"
+                        id: LIST_NEW_ITEM_ID
+                        name: LIST_NEW_ITEM_NAME
+                        r#type: LIST_TEXT_TYPE
+                        autocomplete: LIST_AUTOCOMPLETE_OFF
+                        placeholder: LIST_NEW_ITEM_PLACEHOLDER
                         value: state.get_new_item()
                         class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_list_input_error() }
                         oninput: todo_list_on_input_new_item(state)

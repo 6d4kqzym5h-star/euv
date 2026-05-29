@@ -90,6 +90,7 @@ fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
             { nav_item(route_signal, "Keep-Alive", "/keep-alive") }
             { nav_item(route_signal, "Component Binding", "/component-binding") }
             { nav_item(route_signal, "Custom Attrs", "/custom-attrs") }
+            { nav_item(route_signal, "Dynamic Component", "/dynamic-component") }
         }
     }
 }
@@ -210,6 +211,7 @@ fn desktop_layout(
                     "/keep-alive" => page_keep_alive(),
                     "/component-binding" => page_component_binding(),
                     "/custom-attrs" => page_custom_attrs(),
+                    "/dynamic-component" => page_dynamic_component(),
                     _ => page_not_found()
                 }
             }
@@ -288,6 +290,7 @@ fn mobile_layout(
                     "/keep-alive" => page_keep_alive(),
                     "/component-binding" => page_component_binding(),
                     "/custom-attrs" => page_custom_attrs(),
+                    "/dynamic-component" => page_dynamic_component(),
                     _ => page_not_found()
                 }
             }

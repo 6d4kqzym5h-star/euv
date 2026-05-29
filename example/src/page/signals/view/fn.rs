@@ -19,7 +19,7 @@ pub(crate) fn page_signals() -> VirtualNode {
                         class: c_counter_text()
                         "Count: "
                         span {
-                            id: "counter"
+                            id: COUNTER_ID
                             class: c_counter_value()
                             count
                         }

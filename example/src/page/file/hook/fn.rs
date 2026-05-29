@@ -81,10 +81,11 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Ev
 pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
         let document: Document = window().unwrap().document().unwrap();
-        if let Some(input) = document.get_element_by_id("file-upload")
-            && let Ok(html_input) = input.dyn_into::<HtmlInputElement>() {
-                html_input.click();
-            }
+        if let Some(input) = document.get_element_by_id(FILE_UPLOAD_ID)
+            && let Ok(html_input) = input.dyn_into::<HtmlInputElement>()
+        {
+            html_input.click();
+        }
     }))
 }
 

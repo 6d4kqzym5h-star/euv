@@ -80,6 +80,12 @@ pub(crate) struct HtmlMatch {
     pub(crate) arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)>,
 }
 
+/// A type alias for a list of HTML attribute key-value pairs.
+///
+/// Used throughout the `html!` macro parsing to represent parsed attributes
+/// in a more readable and maintainable form than the raw `Vec<(HtmlAttrKey, HtmlAttrValue)>`.
+pub(crate) type HtmlAttrs = Vec<(HtmlAttrKey, HtmlAttrValue)>;
+
 /// Represents an HTML element with a tag name, attributes, and children.
 ///
 /// Stores the parsed structure of an HTML element for token generation.
@@ -103,8 +109,32 @@ pub(crate) struct HtmlElement {
     /// The attributes of this element.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) attributes: Vec<(Ident, HtmlAttrValue)>,
+    pub(crate) attributes: HtmlAttrs,
     /// The child nodes.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) children: Vec<HtmlNode>,
+}
+
+/// Represents a dynamic tag in HTML.
+///
+/// Syntax: `{tag_expr} { attr: value, ... children ... }`.
+///
+/// The expression in braces evaluates to a tag name string at runtime.
+/// If the tag name matches a registered user component function, that
+/// component is called with the attributes and children. Otherwise,
+/// a native HTML element is created.
+#[derive(Clone, Data, Debug, New)]
+pub(crate) struct HtmlDynamicTag {
+    /// The expression that evaluates to a tag name string.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) tag_expr: Expr,
+    /// The attributes passed to the dynamic element.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) attributes: HtmlAttrs,
+    /// The child nodes of the dynamic element.
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) children: Vec<HtmlNode>,

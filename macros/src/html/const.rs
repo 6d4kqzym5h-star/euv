@@ -52,3 +52,7 @@ pub(crate) const ERR_UNEXPECTED_TOKEN_IN_ELEMENT: &str = "unexpected token in HT
 
 /// Error message when an unexpected token is encountered in HTML children.
 pub(crate) const ERR_UNEXPECTED_TOKEN_IN_HTML: &str = "unexpected token in HTML";
+
+/// Error message when an unexpected token is encountered inside a dynamic component.
+pub(crate) const ERR_UNEXPECTED_TOKEN_IN_DYNAMIC_COMPONENT: &str =
+    "unexpected token in dynamic component";

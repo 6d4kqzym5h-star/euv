@@ -73,18 +73,18 @@ pub(crate) fn page_timer() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "countdown-seconds"
+                        r#for: COUNTDOWN_SECONDS_ID
                         class: c_form_label()
                         "Set seconds"
                     }
                     input {
-                        id: "countdown-seconds"
-                        name: "seconds"
-                        r#type: "number"
-                        autocomplete: "off"
-                        min: "1"
-                        max: "3600"
-                        placeholder: "Enter seconds..."
+                        id: COUNTDOWN_SECONDS_ID
+                        name: COUNTDOWN_SECONDS_NAME
+                        r#type: TIMER_NUMBER_TYPE
+                        autocomplete: TIMER_AUTOCOMPLETE_OFF
+                        min: COUNTDOWN_SECONDS_MIN
+                        max: COUNTDOWN_SECONDS_MAX
+                        placeholder: COUNTDOWN_SECONDS_PLACEHOLDER
                         value: countdown.get_input()
                         class: c_form_input()
                         oninput: countdown_on_input(countdown)

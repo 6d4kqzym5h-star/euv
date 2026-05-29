@@ -29,7 +29,7 @@ pub(crate) struct PseudoBlock {
     /// The style properties inside this pseudo block.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) properties: Vec<(String, ClassPropValue)>,
+    pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
 }
 
 /// A media query block parsed from the `class!` macro.
@@ -44,7 +44,7 @@ pub(crate) struct MediaBlock {
     /// The style properties inside this media block.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) properties: Vec<(String, ClassPropValue)>,
+    pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
 }
 
 /// A parent class reference in an extends clause.
@@ -87,7 +87,7 @@ pub(crate) struct ClassDef {
     /// The style properties for this class.
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) properties: Vec<(String, ClassPropValue)>,
+    pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
     /// The pseudo-class and pseudo-element blocks for this class.
     #[get(pub(crate))]
     #[set(pub(crate))]

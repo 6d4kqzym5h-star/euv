@@ -89,16 +89,16 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
-                    r#for: "keep-alive-name"
+                    r#for: KEEP_ALIVE_NAME_ID
                     class: c_form_label()
                     "Name"
                 }
                 input {
-                    id: "keep-alive-name"
-                    name: "name"
-                    r#type: "text"
-                    autocomplete: "name"
-                    placeholder: "Enter your name..."
+                    id: KEEP_ALIVE_NAME_ID
+                    name: KEEP_ALIVE_NAME_NAME
+                    r#type: KEEP_ALIVE_TEXT_TYPE
+                    autocomplete: KEEP_ALIVE_AUTOCOMPLETE_NAME
+                    placeholder: KEEP_ALIVE_NAME_PLACEHOLDER
                     value: name.get()
                     class: c_form_input()
                     oninput: on_input_value(name)
@@ -107,16 +107,16 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
-                    r#for: "keep-alive-email"
+                    r#for: KEEP_ALIVE_EMAIL_ID
                     class: c_form_label()
                     "Email"
                 }
                 input {
-                    id: "keep-alive-email"
-                    name: "email"
-                    r#type: "email"
-                    autocomplete: "email"
-                    placeholder: "Enter your email..."
+                    id: KEEP_ALIVE_EMAIL_ID
+                    name: KEEP_ALIVE_EMAIL_NAME
+                    r#type: KEEP_ALIVE_EMAIL_TYPE
+                    autocomplete: KEEP_ALIVE_AUTOCOMPLETE_EMAIL
+                    placeholder: KEEP_ALIVE_EMAIL_PLACEHOLDER
                     value: email.get()
                     class: c_form_input()
                     oninput: on_input_value(email)
@@ -125,18 +125,18 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
-                    r#for: "keep-alive-message"
+                    r#for: KEEP_ALIVE_MESSAGE_ID
                     class: c_form_label()
                     "Message"
                 }
                 textarea {
-                    id: "keep-alive-message"
-                    name: "message"
-                    autocomplete: "off"
-                    placeholder: "Write a message..."
+                    id: KEEP_ALIVE_MESSAGE_ID
+                    name: KEEP_ALIVE_MESSAGE_NAME
+                    autocomplete: KEEP_ALIVE_AUTOCOMPLETE_OFF
+                    placeholder: KEEP_ALIVE_MESSAGE_PLACEHOLDER
                     value: message.get()
                     class: c_textarea_input()
-                    rows: "3"
+                    rows: KEEP_ALIVE_MESSAGE_ROWS
                     oninput: on_input_value(message)
                 }
             }

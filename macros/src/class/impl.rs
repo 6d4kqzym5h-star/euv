@@ -43,7 +43,7 @@ impl Parse for ClassInput {
             let content: ParseBuffer<'_>;
             braced!(content in input);
             let mut extends: Vec<ClassExtend> = Vec::new();
-            let mut properties: Vec<(String, ClassPropValue)> = Vec::new();
+            let mut properties: Vec<(ClassPropKey, ClassPropValue)> = Vec::new();
             let mut pseudo_blocks: Vec<PseudoBlock> = Vec::new();
             let mut media_blocks: Vec<MediaBlock> = Vec::new();
             while !content.is_empty() {
@@ -93,9 +93,9 @@ impl Parse for ClassInput {
                         let selector: &'static str = selector;
                         let block_content: ParseBuffer<'_>;
                         braced!(block_content in content);
-                        let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
+                        let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> = Vec::new();
                         while !block_content.is_empty() {
-                            let css_key: String = parse_kebab_name(&block_content)?;
+                            let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
                             block_content.parse::<Token![:]>()?;
                             let expr: Expr = block_content.parse()?;
                             let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
@@ -129,9 +129,10 @@ impl Parse for ClassInput {
                             );
                             let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
-                            let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
+                            let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> =
+                                Vec::new();
                             while !block_content.is_empty() {
-                                let css_key: String = parse_kebab_name(&block_content)?;
+                                let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
                                 block_content.parse::<Token![:]>()?;
                                 let expr: Expr = block_content.parse()?;
                                 let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
@@ -168,9 +169,10 @@ impl Parse for ClassInput {
                             };
                             let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
-                            let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
+                            let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> =
+                                Vec::new();
                             while !block_content.is_empty() {
-                                let css_key: String = parse_kebab_name(&block_content)?;
+                                let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
                                 block_content.parse::<Token![:]>()?;
                                 let expr: Expr = block_content.parse()?;
                                 let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
@@ -188,7 +190,7 @@ impl Parse for ClassInput {
                         }
                     }
                 }
-                let css_key: String = parse_kebab_name(&content)?;
+                let css_key: ClassPropKey = parse_class_prop_key(&content)?;
                 content.parse::<Token![:]>()?;
                 let expr: Expr = content.parse()?;
                 let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
@@ -255,7 +257,8 @@ impl ToTokens for ClassDef {
                     .collect();
                 for (key, value) in self.get_properties() {
                     let ClassPropValue::Expr(expr) = value;
-                    all_css_parts.push(quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr) + #CSS_DECL_TERMINATOR });
+                    let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
+                    all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr) + #CSS_DECL_TERMINATOR });
                 }
                 let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
                     quote! { #class_name_str.to_string() }
@@ -291,16 +294,21 @@ impl ToTokens for ClassDef {
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
                 let all_static: bool = !has_extends
-                    && self
-                        .get_properties()
-                        .iter()
-                        .all(|(_, value): &(String, ClassPropValue)| {
+                    && self.get_properties().iter().all(
+                        |(key, value): &(ClassPropKey, ClassPropValue)| {
+                            let ClassPropKey::Static(_) = key else {
+                                return false;
+                            };
                             let ClassPropValue::Expr(expr) = value;
                             is_static_string_expr(expr)
-                        })
+                        },
+                    )
                     && self.get_pseudo_blocks().iter().all(|block: &PseudoBlock| {
                         block.get_properties().iter().all(
-                            |(_, value): &(String, ClassPropValue)| {
+                            |(key, value): &(ClassPropKey, ClassPropValue)| {
+                                let ClassPropKey::Static(_) = key else {
+                                    return false;
+                                };
                                 let ClassPropValue::Expr(expr) = value;
                                 is_static_string_expr(expr)
                             },
@@ -308,7 +316,10 @@ impl ToTokens for ClassDef {
                     })
                     && self.get_media_blocks().iter().all(|block: &MediaBlock| {
                         block.get_properties().iter().all(
-                            |(_, value): &(String, ClassPropValue)| {
+                            |(key, value): &(ClassPropKey, ClassPropValue)| {
+                                let ClassPropKey::Static(_) = key else {
+                                    return false;
+                                };
                                 let ClassPropValue::Expr(expr) = value;
                                 is_static_string_expr(expr)
                             },
@@ -332,7 +343,10 @@ impl ToTokens for ClassDef {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
-                        css_string.push_str(key);
+                        let ClassPropKey::Static(key_str) = key else {
+                            continue;
+                        };
+                        css_string.push_str(key_str);
                         css_string.push_str(CSS_PROP_SEPARATOR);
                         css_string.push_str(&expr_to_string(expr));
                         css_string.push_str(CSS_DECL_TERMINATOR);
@@ -384,8 +398,9 @@ impl ToTokens for ClassDef {
                         .collect();
                     for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
+                        let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
                         all_css_parts
-                            .push(quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                            .push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
                     }
                     emit_once_lock_fn(
                         tokens,

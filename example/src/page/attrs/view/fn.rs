@@ -1,29 +1,152 @@
 use crate::*;
 
-/// A custom attributes demo page showcasing data-* and aria-* attributes.
+/// A custom attributes demo page showcasing static and dynamic attribute keys and values.
+///
+/// Static attributes use compile-time constant keys and values from `const.rs`.
+/// Dynamic attributes allow runtime key and value input via text fields,
+/// demonstrating the `{key}: value` syntax in the `html!` and `class!` macros.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The custom attributes demo page virtual DOM tree.
 pub(crate) fn page_custom_attrs() -> VirtualNode {
+    let dynamic_key: Signal<String> = use_signal(|| "data-custom".to_string());
+    let dynamic_value: Signal<String> = use_signal(String::new);
+    let static_key: String = STATIC_ATTR_KEY.to_string();
+    let static_value: String = STATIC_ATTR_VALUE.to_string();
+    let class_prop_key: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_KEY.to_string());
+    let class_prop_value: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_VALUE.to_string());
     html! {
         div {
             class: c_page_container()
-            page_header("Custom Attributes", "Using data-* and aria-* attributes on elements.")
+            page_header("Custom Attributes", "Static and dynamic attribute keys and values.")
             my_card {
-                title: "Data & ARIA Attributes"
+                title: "HTML Static Attribute (Constant Key & Value)"
                 div {
-                    data_role: "container"
-                    data_id: "12345"
-                    aria_label: "Demo section"
+                    {static_key}: static_value
                     class: c_custom_attrs_demo()
                     p {
                         class: c_demo_text()
-                        "This div has custom data-* and aria-* attributes."
+                        "This div uses a static attribute key and value from constants."
                     }
                     p {
                         class: c_demo_text_muted()
-                        "Inspect the element to see data-role, data-id, and aria-label."
+                        {format!("Attribute: {}=\"{}\"", STATIC_ATTR_KEY, STATIC_ATTR_VALUE)}
+                    }
+                }
+            }
+            my_card {
+                title: "HTML Dynamic Attribute (Variable Key & Value)"
+                div {
+                    class: c_form_input_wrapper()
+                    label {
+                        r#for: DYNAMIC_KEY_INPUT_ID
+                        class: c_form_label()
+                        "Attribute Key"
+                    }
+                    input {
+                        id: DYNAMIC_KEY_INPUT_ID
+                        name: DYNAMIC_KEY_INPUT_ID
+                        r#type: "text"
+                        placeholder: DYNAMIC_KEY_PLACEHOLDER
+                        value: dynamic_key
+                        autocomplete: ATTRS_AUTOCOMPLETE_OFF
+                        class: c_form_input()
+                        oninput: attrs_on_input_key(dynamic_key)
+                    }
+                }
+                div {
+                    class: c_form_input_wrapper()
+                    label {
+                        r#for: DYNAMIC_VALUE_INPUT_ID
+                        class: c_form_label()
+                        "Attribute Value"
+                    }
+                    input {
+                        id: DYNAMIC_VALUE_INPUT_ID
+                        name: DYNAMIC_VALUE_INPUT_ID
+                        r#type: "text"
+                        placeholder: DYNAMIC_VALUE_PLACEHOLDER
+                        value: dynamic_value
+                        autocomplete: ATTRS_AUTOCOMPLETE_OFF
+                        class: c_form_input()
+                        oninput: attrs_on_input_value(dynamic_value)
+                    }
+                }
+                div {
+                    {dynamic_key.get()}: dynamic_value
+                    class: c_custom_attrs_demo()
+                    p {
+                        class: c_demo_text()
+                        "This div has a dynamic attribute set by the inputs above."
+                    }
+                    if { !dynamic_key.get().is_empty() } {
+                        p {
+                            class: c_demo_text_muted()
+                            {format!("{}=\"{}\"", dynamic_key.get(), dynamic_value.get())}
+                        }
+                    } else {
+                        p {
+                            class: c_demo_text_muted()
+                            "Enter an attribute key and value above to see the result."
+                        }
+                    }
+                }
+            }
+            my_card {
+                title: "CSS Dynamic Key (class! macro)"
+                div {
+                    class: c_form_input_wrapper()
+                    label {
+                        r#for: CLASS_KEY_INPUT_ID
+                        class: c_form_label()
+                        "CSS Property Key"
+                    }
+                    input {
+                        id: CLASS_KEY_INPUT_ID
+                        name: CLASS_KEY_INPUT_ID
+                        r#type: "text"
+                        placeholder: CLASS_KEY_PLACEHOLDER
+                        value: class_prop_key
+                        autocomplete: ATTRS_AUTOCOMPLETE_OFF
+                        class: c_form_input()
+                        oninput: attrs_on_input_key(class_prop_key)
+                    }
+                }
+                div {
+                    class: c_form_input_wrapper()
+                    label {
+                        r#for: CLASS_VALUE_INPUT_ID
+                        class: c_form_label()
+                        "CSS Property Value"
+                    }
+                    input {
+                        id: CLASS_VALUE_INPUT_ID
+                        name: CLASS_VALUE_INPUT_ID
+                        r#type: "text"
+                        placeholder: CLASS_VALUE_PLACEHOLDER
+                        value: class_prop_value
+                        autocomplete: ATTRS_AUTOCOMPLETE_OFF
+                        class: c_form_input()
+                        oninput: attrs_on_input_value(class_prop_value)
+                    }
+                }
+                div {
+                    class: c_attrs_dynamic_demo(&class_prop_key.get(), &class_prop_value.get())
+                    p {
+                        class: c_demo_text()
+                        "This div uses a class with a dynamic CSS property key and value."
+                    }
+                    if { !class_prop_key.get().is_empty() } {
+                        p {
+                            class: c_demo_text_muted()
+                            {format!("{}: {}", class_prop_key.get(), class_prop_value.get())}
+                        }
+                    } else {
+                        p {
+                            class: c_demo_text_muted()
+                            "Enter a CSS property key and value above to see the result."
+                        }
                     }
                 }
             }

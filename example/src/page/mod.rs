@@ -4,6 +4,7 @@ mod attrs;
 mod binding;
 mod browser;
 mod conditional;
+mod dynamic_component;
 mod event;
 mod file;
 mod form;
@@ -18,7 +19,7 @@ mod signals;
 mod timer;
 
 pub(crate) use {
-    animation::*, r#async::*, attrs::*, binding::*, browser::*, conditional::*, event::*, file::*,
-    form::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, observer::*, select::*,
-    signals::*, timer::*,
+    animation::*, r#async::*, attrs::*, binding::*, browser::*, conditional::*,
+    dynamic_component::*, event::*, file::*, form::*, keep_alive::*, lifecycle::*, list::*,
+    modal::*, not_found::*, observer::*, select::*, signals::*, timer::*,
 };

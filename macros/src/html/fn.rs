@@ -84,7 +84,7 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 /// # Returns
 ///
 /// - `HashMap<String, String>` - Map of component function names to Props type names.
-fn load_component_registry() -> HashMap<String, String> {
+pub(crate) fn load_component_registry() -> HashMap<String, String> {
     let manifest_dir: Option<String> = env::var(CARGO_MANIFEST_DIR).ok();
     let Some(manifest_dir) = manifest_dir else {
         return HashMap::new();
@@ -189,7 +189,41 @@ fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
 pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlNode>> {
     let mut children: Vec<HtmlNode> = Vec::new();
     while !content.is_empty() {
-        if content.peek(LitStr) && content.peek2(Brace) {
+        if content.peek(Brace) && content.peek2(Brace) {
+            let forked: ParseBuffer<'_> = content.fork();
+            let _first_brace: ParseBuffer<'_>;
+            braced!(_first_brace in forked);
+            let second_brace: ParseBuffer<'_>;
+            braced!(second_brace in forked);
+            let is_dynamic_tag: bool = second_brace.is_empty()
+                || (second_brace.peek(Ident)
+                    && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
+                || second_brace.peek(Token![if])
+                || second_brace.peek(Token![match])
+                || second_brace.peek(Token![for])
+                || second_brace.peek(LitStr)
+                || (second_brace.peek(Brace) && second_brace.peek2(Colon))
+                || (second_brace.peek(Brace) && second_brace.peek2(Brace));
+            if is_dynamic_tag {
+                let tag_content: ParseBuffer<'_>;
+                braced!(tag_content in content);
+                let tag_expr: Expr = tag_content.parse()?;
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in content);
+                let (dynamic_attrs, dynamic_children): (HtmlAttrs, Vec<HtmlNode>) =
+                    parse_dynamic_component_children(&body_content)?;
+                children.push(HtmlNode::DynamicTag(HtmlDynamicTag::new(
+                    tag_expr,
+                    dynamic_attrs,
+                    dynamic_children,
+                )));
+            } else {
+                let child_content: ParseBuffer<'_>;
+                braced!(child_content in content);
+                let expr: Expr = child_content.parse()?;
+                children.push(HtmlNode::Dynamic(expr));
+            }
+        } else if content.peek(LitStr) && content.peek2(Brace) {
             let element: HtmlElement = content.parse()?;
             children.push(HtmlNode::Element(element));
         } else if content.peek(LitStr) {
@@ -250,6 +284,120 @@ pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<Html
         let node: HtmlNode = content.parse()?;
         Ok(vec![node])
     }
+}
+
+/// Parses the body of a dynamic component `@ {expr} { ... }`.
+///
+/// The body contains attributes (key: value) and children (HTML nodes),
+/// similar to an `HtmlElement` body but without a tag name.
+/// Attributes are recognized by the pattern `ident:` or `ident-...:`.
+/// Everything else is treated as child content.
+///
+/// # Arguments
+///
+/// - `ParseStream` - The parse stream containing the dynamic component body.
+///
+/// # Returns
+///
+/// - `syn::Result<(HtmlAttrs, Vec<HtmlNode>)>` - The parsed attributes and children.
+pub(crate) fn parse_dynamic_component_children(
+    content: ParseStream,
+) -> syn::Result<(HtmlAttrs, Vec<HtmlNode>)> {
+    let mut attributes: HtmlAttrs = Vec::new();
+    let mut children: Vec<HtmlNode> = Vec::new();
+    while !content.is_empty() {
+        if content.peek(Brace) && content.peek2(Brace) {
+            let forked: ParseBuffer<'_> = content.fork();
+            let _first_brace: ParseBuffer<'_>;
+            braced!(_first_brace in forked);
+            let second_brace: ParseBuffer<'_>;
+            braced!(second_brace in forked);
+            let is_dynamic_tag: bool = second_brace.is_empty()
+                || (second_brace.peek(Ident)
+                    && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
+                || second_brace.peek(Token![if])
+                || second_brace.peek(Token![match])
+                || second_brace.peek(Token![for])
+                || second_brace.peek(LitStr)
+                || (second_brace.peek(Brace) && second_brace.peek2(Colon))
+                || (second_brace.peek(Brace) && second_brace.peek2(Brace));
+            if is_dynamic_tag {
+                let tag_content: ParseBuffer<'_>;
+                braced!(tag_content in content);
+                let tag_expr: Expr = tag_content.parse()?;
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in content);
+                let (dynamic_attrs, dynamic_children): (HtmlAttrs, Vec<HtmlNode>) =
+                    parse_dynamic_component_children(&body_content)?;
+                children.push(HtmlNode::DynamicTag(HtmlDynamicTag::new(
+                    tag_expr,
+                    dynamic_attrs,
+                    dynamic_children,
+                )));
+            } else {
+                let child_content: ParseBuffer<'_>;
+                braced!(child_content in content);
+                let expr: Expr = child_content.parse()?;
+                children.push(HtmlNode::Dynamic(expr));
+            }
+        } else if content.peek(Token![if]) {
+            let html_if: HtmlIf = content.parse()?;
+            children.push(HtmlNode::If(html_if));
+        } else if content.peek(Token![match]) {
+            let html_match: HtmlMatch = content.parse()?;
+            children.push(HtmlNode::Match(html_match));
+        } else if content.peek(Token![for]) {
+            let html_for: HtmlFor = content.parse()?;
+            children.push(HtmlNode::For(html_for));
+        } else if content.peek(Brace) && content.peek2(Colon) {
+            let key_content: ParseBuffer<'_>;
+            braced!(key_content in content);
+            let key_expr: Expr = key_content.parse()?;
+            content.parse::<Colon>()?;
+            let value: HtmlAttrValue = parse_attr_value(content, "")?;
+            attributes.push((HtmlAttrKey::Dynamic(key_expr.to_token_stream()), value));
+        } else if content.peek(Brace) {
+            let child_content: ParseBuffer<'_>;
+            braced!(child_content in content);
+            let expr: Expr = child_content.parse()?;
+            children.push(HtmlNode::Dynamic(expr));
+        } else if content.peek(LitStr) && content.peek2(Brace) {
+            let element: HtmlElement = content.parse()?;
+            children.push(HtmlNode::Element(element));
+        } else if content.peek(LitStr) && content.peek2(Colon) {
+            let literal_string: LitStr = content.parse()?;
+            let key: Ident = Ident::new(&literal_string.value(), literal_string.span());
+            content.parse::<Colon>()?;
+            let key_str: String = key.to_string();
+            let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
+            attributes.push((HtmlAttrKey::Static(key), value));
+        } else if content.peek(Ident) && (content.peek2(Colon) || content.peek2(Token![-])) {
+            let key_string: String = parse_kebab_name(content)?;
+            let key_clean: &str = key_string
+                .strip_prefix(RAW_IDENT_PREFIX)
+                .unwrap_or(&key_string);
+            let key: Ident = Ident::new(key_clean, content.span());
+            content.parse::<Colon>()?;
+            let key_str: String = key.to_string();
+            let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
+            attributes.push((HtmlAttrKey::Static(key), value));
+        } else if content.peek(LitStr) {
+            let lit: LitStr = content.parse()?;
+            children.push(HtmlNode::Text(lit.value()));
+        } else if content.peek(Ident) {
+            if content.peek2(Brace) {
+                let element: HtmlElement = content.parse()?;
+                children.push(HtmlNode::Element(element));
+            } else {
+                let expr: Expr = content.parse()?;
+                children.push(HtmlNode::Expr(expr));
+            }
+        } else {
+            return Err(content.error(ERR_UNEXPECTED_TOKEN_IN_DYNAMIC_COMPONENT));
+        }
+    }
+    let merged_attributes: HtmlAttrs = merge_same_key_attributes(attributes);
+    Ok((merged_attributes, children))
 }
 
 /// Converts a slice of `HtmlNode` children into a `Vec<proc_macro2::TokenStream>`.
@@ -524,31 +672,33 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
 /// # Returns
 ///
 /// - `Vec<(Ident, HtmlAttrValue)>` - The merged attributes with at most one `class` and one `style` entry.
-pub(crate) fn merge_same_key_attributes(
-    attributes: Vec<(Ident, HtmlAttrValue)>,
-) -> Vec<(Ident, HtmlAttrValue)> {
+pub(crate) fn merge_same_key_attributes(attributes: HtmlAttrs) -> HtmlAttrs {
     let mut class_values: Vec<HtmlAttrValue> = Vec::new();
     let mut style_values: Vec<HtmlAttrValue> = Vec::new();
-    let mut result: Vec<(Ident, HtmlAttrValue)> = Vec::new();
+    let mut result: HtmlAttrs = Vec::new();
     for (key, value) in attributes {
-        match key.to_string().as_str() {
-            ATTR_KEY_CLASS => class_values.push(value),
-            ATTR_KEY_STYLE => style_values.push(value),
+        match &key {
+            HtmlAttrKey::Static(key_ident) if key_ident == ATTR_KEY_CLASS => {
+                class_values.push(value);
+            }
+            HtmlAttrKey::Static(key_ident) if key_ident == ATTR_KEY_STYLE => {
+                style_values.push(value);
+            }
             _ => result.push((key, value)),
         }
     }
-    let push_merged = |result: &mut Vec<(Ident, HtmlAttrValue)>,
+    let push_merged = |result: &mut HtmlAttrs,
                        key_str: &str,
                        mut values: Vec<HtmlAttrValue>,
                        wrap: fn(Vec<HtmlAttrValue>) -> HtmlAttrValue| {
         match values.len() {
             0 => {}
             1 => result.push((
-                Ident::new(key_str, proc_macro2::Span::call_site()),
+                HtmlAttrKey::Static(Ident::new(key_str, proc_macro2::Span::call_site())),
                 values.remove(0),
             )),
             _ => result.push((
-                Ident::new(key_str, proc_macro2::Span::call_site()),
+                HtmlAttrKey::Static(Ident::new(key_str, proc_macro2::Span::call_site())),
                 wrap(values),
             )),
         }

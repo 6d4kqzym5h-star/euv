@@ -2057,4 +2057,54 @@ class! {
         flex-direction: "column";
         gap: "10px";
     }
+
+    pub(crate) c_attrs_dynamic_demo(prop_key: &str, prop_value: &str) {
+        {prop_key}: prop_value;
+        padding: "16px";
+        border-radius: "8px";
+        border: format!("1px solid {}", var!(border-input));
+        color: "inherit";
+        margin-top: "12px";
+    }
+
+    pub(crate) c_dynamic_component_tab_bar {
+        display: "flex";
+        gap: "8px";
+        margin-bottom: "16px";
+        flex-wrap: "wrap";
+    }
+
+    pub(crate) c_dynamic_component_panel {
+        padding: "16px";
+        border-radius: "8px";
+        border: format!("1px solid {}", var!(border-subtle));
+        background: var!(bg-primary);
+    }
+
+    pub(crate) c_dynamic_component_panel_title {
+        margin: "0 0 12px 0";
+        font-size: "16px";
+        font-weight: "600";
+        color: var!(text-primary);
+    }
+
+    pub(crate) c_dynamic_component_inline {
+        padding: "12px 16px";
+        border-radius: "6px";
+        background: "rgba(79, 70, 229, 0.1)";
+        border: "1px solid rgba(79, 70, 229, 0.3)";
+        color: "#4f46e5";
+        font-weight: "500";
+        font-size: "14px";
+    }
+
+    pub(crate) c_dynamic_component_inline_alt {
+        padding: "12px 16px";
+        border-radius: "6px";
+        background: "rgba(16, 185, 129, 0.1)";
+        border: "1px solid rgba(16, 185, 129, 0.3)";
+        color: "#059669";
+        font-weight: "500";
+        font-size: "14px";
+    }
 }

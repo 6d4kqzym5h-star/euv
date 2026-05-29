@@ -17,6 +17,51 @@ pub fn parse_class(input: TokenStream) -> TokenStream {
     TokenStream::from(tokens)
 }
 
+/// Parses a CSS property key from the token stream.
+///
+/// Supports two forms:
+/// - Static: A kebab-case identifier or string literal (e.g., `font_size`, `"background"`).
+/// - Dynamic: A braced expression (e.g., `{key_var}`) that evaluates to a string at runtime.
+///
+/// # Arguments
+///
+/// - `ParseStream` - The syn parse stream to read from.
+///
+/// # Returns
+///
+/// - `syn::Result<ClassPropKey>` - The parsed property key.
+pub(crate) fn parse_class_prop_key(input: ParseStream) -> syn::Result<ClassPropKey> {
+    if input.peek(Brace) {
+        let content: ParseBuffer<'_>;
+        braced!(content in input);
+        let expr: Expr = content.parse()?;
+        Ok(ClassPropKey::Dynamic(expr.to_token_stream()))
+    } else {
+        let key: String = parse_kebab_name(input)?;
+        Ok(ClassPropKey::Static(key))
+    }
+}
+
+/// Converts a `ClassPropKey` into a token stream that evaluates to a `String`.
+///
+/// # Arguments
+///
+/// - `&ClassPropKey` - The property key to convert.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - Token stream that evaluates to a `String`.
+pub(crate) fn class_prop_key_to_tokens(key: &ClassPropKey) -> proc_macro2::TokenStream {
+    match key {
+        ClassPropKey::Static(s) => {
+            quote! { #s.to_string() }
+        }
+        ClassPropKey::Dynamic(expr) => {
+            quote! { (#expr).to_string() }
+        }
+    }
+}
+
 /// Recursively expands `var!(name)` macro calls within an expression tree
 /// into the corresponding CSS `var()` string literal.
 ///
@@ -178,9 +223,10 @@ pub(crate) fn pseudo_blocks_to_tokens(
             let style_parts: Vec<proc_macro2::TokenStream> = block
                 .get_properties()
                 .iter()
-                .map(|(key, value): &(String, ClassPropValue)| match value {
+                .map(|(key, value): &(ClassPropKey, ClassPropValue)| match value {
                     ClassPropValue::Expr(expr) => {
-                        quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                        let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
+                        quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
                 })
                 .collect();
@@ -217,9 +263,10 @@ pub(crate) fn media_blocks_to_tokens(
             let style_parts: Vec<proc_macro2::TokenStream> = block
                 .get_properties()
                 .iter()
-                .map(|(key, value): &(String, ClassPropValue)| match value {
+                .map(|(key, value): &(ClassPropKey, ClassPropValue)| match value {
                     ClassPropValue::Expr(expr) => {
-                        quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                        let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
+                        quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
                 })
                 .collect();
@@ -250,7 +297,10 @@ pub(crate) fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> S
         result.push_str(CSS_RULE_OPEN);
         for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
-            result.push_str(key);
+            let ClassPropKey::Static(key_str) = key else {
+                continue;
+            };
+            result.push_str(key_str);
             result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(&expr_to_string(expr));
             result.push_str(CSS_DECL_TERMINATOR);
@@ -277,7 +327,10 @@ pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> Stri
         result.push_str(CSS_RULE_OPEN);
         for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
-            result.push_str(key);
+            let ClassPropKey::Static(key_str) = key else {
+                continue;
+            };
+            result.push_str(key_str);
             result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(&expr_to_string(expr));
             result.push_str(CSS_DECL_TERMINATOR);

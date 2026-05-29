@@ -16,16 +16,16 @@ pub(crate) fn page_form() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "form-username"
+                        r#for: FORM_USERNAME_ID
                         class: c_form_label()
                         "Username"
                     }
                     input {
-                        id: "form-username"
-                        name: "username"
-                        r#type: "text"
-                        autocomplete: "username"
-                        placeholder: "Enter username"
+                        id: FORM_USERNAME_ID
+                        name: FORM_USERNAME_NAME
+                        r#type: FORM_TEXT_TYPE
+                        autocomplete: FORM_AUTOCOMPLETE_USERNAME
+                        placeholder: FORM_USERNAME_PLACEHOLDER
                         value: form.get_username()
                         class: if { form.get_username_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                         oninput: form_on_input_username(form)
@@ -42,16 +42,16 @@ pub(crate) fn page_form() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "form-email"
+                        r#for: FORM_EMAIL_ID
                         class: c_form_label()
                         "Email"
                     }
                     input {
-                        id: "form-email"
-                        name: "email"
-                        r#type: "email"
-                        autocomplete: "email"
-                        placeholder: "Enter email"
+                        id: FORM_EMAIL_ID
+                        name: FORM_EMAIL_NAME
+                        r#type: FORM_EMAIL_TYPE
+                        autocomplete: FORM_AUTOCOMPLETE_EMAIL
+                        placeholder: FORM_EMAIL_PLACEHOLDER
                         value: form.get_email()
                         class: if { form.get_email_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                         oninput: form_on_input_email(form)
@@ -68,16 +68,16 @@ pub(crate) fn page_form() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "form-password"
+                        r#for: FORM_PASSWORD_ID
                         class: c_form_label()
                         "Password"
                     }
                     input {
-                        id: "form-password"
-                        name: "password"
-                        r#type: "password"
-                        autocomplete: "new-password"
-                        placeholder: "Enter password"
+                        id: FORM_PASSWORD_ID
+                        name: FORM_PASSWORD_NAME
+                        r#type: FORM_PASSWORD_TYPE
+                        autocomplete: FORM_AUTOCOMPLETE_NEW_PASSWORD
+                        placeholder: FORM_PASSWORD_PLACEHOLDER
                         value: form.get_password()
                         class: if { form.get_password_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                         oninput: form_on_input_password(form)
@@ -94,16 +94,16 @@ pub(crate) fn page_form() -> VirtualNode {
                 div {
                     class: c_form_checkbox_row()
                     input {
-                        id: "form-agree"
-                        name: "agree"
-                        r#type: "checkbox"
-                        autocomplete: "off"
+                        id: FORM_AGREE_ID
+                        name: FORM_AGREE_NAME
+                        r#type: FORM_CHECKBOX_TYPE
+                        autocomplete: FORM_AUTOCOMPLETE_OFF
                         checked: form.get_agree()
                         class: c_form_checkbox()
                         onchange: form_on_change_agree(form)
                     }
                     label {
-                        r#for: "form-agree"
+                        r#for: FORM_AGREE_ID
                         class: c_form_checkbox_label()
                         "I agree to the terms and conditions"
                     }

@@ -16,14 +16,14 @@ pub(crate) fn page_select() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "select-fruit"
+                        r#for: SELECT_FRUIT_ID
                         class: c_form_label()
                         "Choose a fruit"
                     }
                     select {
-                        id: "select-fruit"
-                        name: "fruit"
-                        autocomplete: "off"
+                        id: SELECT_FRUIT_ID
+                        name: SELECT_FRUIT_NAME
+                        autocomplete: SELECT_AUTOCOMPLETE_OFF
                         class: c_select_input()
                         value: state.get_selected_fruit()
                         onchange: on_change_value(state.get_selected_fruit())
@@ -59,14 +59,14 @@ pub(crate) fn page_select() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "select-country"
+                        r#for: SELECT_COUNTRY_ID
                         class: c_form_label()
                         "Country"
                     }
                     select {
-                        id: "select-country"
-                        name: "country"
-                        autocomplete: "country"
+                        id: SELECT_COUNTRY_ID
+                        name: SELECT_COUNTRY_NAME
+                        autocomplete: SELECT_AUTOCOMPLETE_COUNTRY
                         class: c_select_input()
                         onchange: select_on_country_change(state)
                         option {
@@ -91,14 +91,14 @@ pub(crate) fn page_select() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: "select-city"
+                            r#for: SELECT_CITY_ID
                             class: c_form_label()
                             "City"
                         }
                         select {
-                            id: "select-city"
-                            name: "city"
-                            autocomplete: "off"
+                            id: SELECT_CITY_ID
+                            name: SELECT_CITY_NAME
+                            autocomplete: SELECT_AUTOCOMPLETE_OFF
                             class: c_select_input()
                             onchange: on_change_value(state.get_selected_city())
                             option { value: "none" "-- Select City --" }
@@ -111,14 +111,14 @@ pub(crate) fn page_select() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: "select-city"
+                            r#for: SELECT_CITY_ID
                             class: c_form_label()
                             "City"
                         }
                         select {
-                            id: "select-city"
-                            name: "city"
-                            autocomplete: "off"
+                            id: SELECT_CITY_ID
+                            name: SELECT_CITY_NAME
+                            autocomplete: SELECT_AUTOCOMPLETE_OFF
                             class: c_select_input()
                             onchange: on_change_value(state.get_selected_city())
                             option { value: "none" "-- Select City --" }
@@ -131,14 +131,14 @@ pub(crate) fn page_select() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: "select-city"
+                            r#for: SELECT_CITY_ID
                             class: c_form_label()
                             "City"
                         }
                         select {
-                            id: "select-city"
-                            name: "city"
-                            autocomplete: "off"
+                            id: SELECT_CITY_ID
+                            name: SELECT_CITY_NAME
+                            autocomplete: SELECT_AUTOCOMPLETE_OFF
                             class: c_select_input()
                             onchange: on_change_value(state.get_selected_city())
                             option { value: "none" "-- Select City --" }
@@ -168,19 +168,19 @@ pub(crate) fn page_select() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "select-feedback"
+                        r#for: SELECT_FEEDBACK_ID
                         class: c_form_label()
                         "Your feedback"
                     }
                     textarea {
-                        id: "select-feedback"
-                        name: "feedback"
-                        autocomplete: "off"
+                        id: SELECT_FEEDBACK_ID
+                        name: SELECT_FEEDBACK_NAME
+                        autocomplete: SELECT_AUTOCOMPLETE_OFF
                         class: if { state.get_textarea_error().get().is_empty() } { c_textarea_input() } else { c_form_input_error() }
-                        placeholder: "Share your thoughts..."
+                        placeholder: SELECT_FEEDBACK_PLACEHOLDER
                         value: state.get_textarea_content()
                         oninput: select_on_input_textarea(state)
-                        rows: "4"
+                        rows: SELECT_FEEDBACK_ROWS
                     }
                     if { !state.get_textarea_error().get().is_empty() } {
                         p {

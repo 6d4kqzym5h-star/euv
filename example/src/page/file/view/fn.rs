@@ -92,10 +92,10 @@ pub(crate) fn page_file_upload() -> VirtualNode {
                         "Select file(s)"
                     }
                     input {
-                        id: "file-upload"
-                        name: "file_upload"
-                        r#type: "file"
-                        autocomplete: "off"
+                        id: FILE_UPLOAD_ID
+                        name: FILE_UPLOAD_NAME
+                        r#type: FILE_INPUT_TYPE
+                        autocomplete: FILE_AUTOCOMPLETE_OFF
                         class: c_file_upload_input_hidden()
                         accept: state.get_accept()
                         multiple: state.get_multiple()
@@ -111,17 +111,17 @@ pub(crate) fn page_file_upload() -> VirtualNode {
                     class: c_file_upload_options()
                     div {
                         class: c_form_checkbox_row()
-                        input {
-                            id: "file-multiple"
-                            name: "multiple"
-                            r#type: "checkbox"
-                            autocomplete: "off"
+                            input {
+                            id: FILE_MULTIPLE_ID
+                            name: FILE_MULTIPLE_NAME
+                            r#type: FILE_CHECKBOX_TYPE
+                            autocomplete: FILE_AUTOCOMPLETE_OFF
                             class: c_form_checkbox()
                             checked: state.get_multiple()
                             onchange: on_change_checked(state.get_multiple())
                         }
                         label {
-                            r#for: "file-multiple"
+                            r#for: FILE_MULTIPLE_ID
                             class: c_form_checkbox_label()
                             "Allow multiple files"
                         }
@@ -129,17 +129,17 @@ pub(crate) fn page_file_upload() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: "file-accept"
+                            r#for: FILE_ACCEPT_ID
                             class: c_form_label()
                             "Accept filter (e.g. .png,.jpg,image/*)"
                         }
-                    input {
-                        id: "file-accept"
-                        name: "accept"
-                        r#type: "text"
-                        autocomplete: "off"
+                        input {
+                            id: FILE_ACCEPT_ID
+                        name: FILE_ACCEPT_NAME
+                        r#type: FILE_TEXT_TYPE
+                        autocomplete: FILE_AUTOCOMPLETE_OFF
                         class: c_form_input_no_transition()
-                            placeholder: ".png,.jpg,image/*"
+                            placeholder: FILE_ACCEPT_PLACEHOLDER
                             value: state.get_accept()
                             oninput: on_input_value(state.get_accept())
                         }

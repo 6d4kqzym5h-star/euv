@@ -48,11 +48,11 @@ pub(crate) fn page_event() -> VirtualNode {
             my_card {
                 title: "Keyboard Events"
                 input {
-                    id: "event-keyboard"
-                    name: "keyboard"
-                    r#type: "text"
-                    autocomplete: "off"
-                    placeholder: "Type here to capture key events..."
+                    id: EVENT_KEYBOARD_ID
+                    name: EVENT_KEYBOARD_NAME
+                    r#type: EVENT_TEXT_TYPE
+                    autocomplete: EVENT_AUTOCOMPLETE_OFF
+                    placeholder: EVENT_KEYBOARD_PLACEHOLDER
                     class: c_form_input()
                     onkeydown: move |event: Event| {
                         if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
@@ -355,11 +355,11 @@ pub(crate) fn page_event() -> VirtualNode {
             my_card {
                 title: "Focus Events"
                 input {
-                    id: "event-focus"
-                    name: "focus"
-                    r#type: "text"
-                    autocomplete: "off"
-                    placeholder: "Click to focus, click outside to blur..."
+                    id: EVENT_FOCUS_ID
+                    name: EVENT_FOCUS_NAME
+                    r#type: EVENT_TEXT_TYPE
+                    autocomplete: EVENT_AUTOCOMPLETE_OFF
+                    placeholder: EVENT_FOCUS_PLACEHOLDER
                     class: c_form_input()
                     onfocus: move |_event: Event| {
                         focus_status.set("Focused".to_string());
@@ -457,7 +457,7 @@ pub(crate) fn page_event() -> VirtualNode {
                     }
                     div {
                         class: c_event_drag_item()
-                        draggable: "true"
+                        draggable: EVENT_DRAGGABLE_TRUE
                         "Drag Me"
                     }
                     p {
@@ -546,11 +546,11 @@ pub(crate) fn page_event() -> VirtualNode {
                 div {
                     class: c_event_clipboard_area()
                         input {
-                            id: "event-clipboard"
-                            name: "clipboard"
-                            r#type: "text"
-                            autocomplete: "off"
-                            placeholder: "Try copy, cut, or paste here..."
+                            id: EVENT_CLIPBOARD_ID
+                            name: EVENT_CLIPBOARD_NAME
+                            r#type: EVENT_TEXT_TYPE
+                            autocomplete: EVENT_AUTOCOMPLETE_OFF
+                            placeholder: EVENT_CLIPBOARD_PLACEHOLDER
                         class: c_form_input()
                         value: "Sample text for clipboard"
                         oncopy: move |event: Event| {
@@ -671,16 +671,16 @@ pub(crate) fn page_event() -> VirtualNode {
                         div {
                             class: c_form_input_wrapper()
                             label {
-                                r#for: "event-form-input"
+                                r#for: EVENT_FORM_INPUT_ID
                                 class: c_form_label()
                                 "Input (oninput & onchange)"
                             }
                             input {
-                                r#type: "text"
-                                id: "event-form-input"
-                                name: "form_input"
-                                autocomplete: "off"
-                                placeholder: "Type to trigger input/change events..."
+                                r#type: EVENT_TEXT_TYPE
+                                id: EVENT_FORM_INPUT_ID
+                                name: EVENT_FORM_INPUT_NAME
+                                autocomplete: EVENT_AUTOCOMPLETE_OFF
+                                placeholder: EVENT_FORM_INPUT_PLACEHOLDER
                                 class: c_form_input()
                                 oninput: move |event: Event| {
                                     if let Some(target) = event.target()
@@ -699,10 +699,10 @@ pub(crate) fn page_event() -> VirtualNode {
                         div {
                             class: c_form_checkbox_row()
                             input {
-                                id: "event-form-checkbox"
-                                name: "form_checkbox"
-                                r#type: "checkbox"
-                                autocomplete: "off"
+                                id: EVENT_FORM_CHECKBOX_ID
+                                name: EVENT_FORM_CHECKBOX_NAME
+                                r#type: EVENT_CHECKBOX_TYPE
+                                autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 class: c_form_checkbox()
                                 onchange: move |event: Event| {
                                     if let Some(target) = event.target()
@@ -712,7 +712,7 @@ pub(crate) fn page_event() -> VirtualNode {
                                 }
                             }
                             label {
-                                r#for: "event-form-checkbox"
+                                r#for: EVENT_FORM_CHECKBOX_ID
                                 class: c_form_checkbox_label()
                                 "Checkbox (onchange)"
                             }
@@ -720,14 +720,14 @@ pub(crate) fn page_event() -> VirtualNode {
                         div {
                             class: c_form_input_wrapper()
                             label {
-                                r#for: "event-form-select"
+                                r#for: EVENT_FORM_SELECT_ID
                                 class: c_form_label()
                                 "Select (onchange)"
                             }
                             select {
-                                id: "event-form-select"
-                                name: "form_select"
-                                autocomplete: "off"
+                                id: EVENT_FORM_SELECT_ID
+                                name: EVENT_FORM_SELECT_NAME
+                                autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 class: c_select_input()
                                 onchange: move |event: Event| {
                                     if let Some(target) = event.target()
@@ -809,7 +809,7 @@ pub(crate) fn page_event() -> VirtualNode {
                     class: c_event_media_area()
                     audio {
                         class: c_event_audio()
-                        controls: "true"
+                        controls: EVENT_CONTROLS_TRUE
                         src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
                         onplay: move |_event: Event| {
                             media_status.set("Playing".to_string());

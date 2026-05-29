@@ -111,16 +111,16 @@ pub(crate) fn page_modal() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: "modal-name"
+                            r#for: MODAL_NAME_ID
                             class: c_form_label()
                             "Name"
                         }
                         input {
-                            id: "modal-name"
-                            name: "name"
-                            r#type: "text"
-                            autocomplete: "name"
-                            placeholder: "Enter your name"
+                            id: MODAL_NAME_ID
+                            name: MODAL_NAME_NAME
+                            r#type: MODAL_TEXT_TYPE
+                            autocomplete: MODAL_AUTOCOMPLETE_NAME
+                            placeholder: MODAL_NAME_PLACEHOLDER
                             value: state.get_modal_name()
                             class: if { state.get_name_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                             oninput: modal_on_input_name(state)
@@ -137,16 +137,16 @@ pub(crate) fn page_modal() -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: "modal-email"
+                            r#for: MODAL_EMAIL_ID
                             class: c_form_label()
                             "Email"
                         }
                         input {
-                            id: "modal-email"
-                            name: "email"
-                            r#type: "email"
-                            autocomplete: "email"
-                            placeholder: "Enter your email"
+                            id: MODAL_EMAIL_ID
+                            name: MODAL_EMAIL_NAME
+                            r#type: MODAL_EMAIL_TYPE
+                            autocomplete: MODAL_AUTOCOMPLETE_EMAIL
+                            placeholder: MODAL_EMAIL_PLACEHOLDER
                             value: state.get_modal_email()
                             class: if { state.get_email_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
                             oninput: modal_on_input_email(state)
