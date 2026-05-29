@@ -1,5 +1,18 @@
 use crate::*;
 
+/// Cleans up the keep-alive timer interval when the page is unmounted.
+///
+/// # Arguments
+///
+/// - `Signal<Option<IntervalHandle>>` - The handle signal for the timer interval.
+fn keep_alive_cleanup(handle: Signal<Option<IntervalHandle>>) {
+    use_cleanup(move || {
+        if let Some(h) = handle.get() {
+            h.clear();
+        }
+    });
+}
+
 /// Renders the counter tab content for the keep-alive demo.
 ///
 /// Maintains its own counter signal that persists when the tab is hidden
@@ -159,6 +172,7 @@ fn timer_tab() -> VirtualNode {
     let elapsed: Signal<i32> = use_signal(|| 0);
     let running: Signal<bool> = use_signal(|| false);
     let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
+    keep_alive_cleanup(handle);
     watch!(running, |is_running| {
         if is_running {
             let elapsed_signal: Signal<i32> = elapsed;

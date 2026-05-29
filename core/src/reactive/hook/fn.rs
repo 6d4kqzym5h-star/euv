@@ -95,3 +95,30 @@ where
     }
     signal
 }
+
+/// Registers a cleanup callback that will be executed when the current
+/// hook context is cleared (e.g., when a `match` arm switches).
+///
+/// This is useful for cleaning up side effects like intervals, timeouts,
+/// or subscriptions that are not automatically managed by signals.
+///
+/// The cleanup callback is only registered once on the first render.
+/// On subsequent re-renders at the same hook index, this is a no-op.
+///
+/// # Arguments
+///
+/// - `FnOnce() + 'static` - The cleanup callback to execute on context teardown.
+pub fn use_cleanup<F>(cleanup: F)
+where
+    F: FnOnce() + 'static,
+{
+    let hook_context: HookContext = get_current_hook_context();
+    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let index: usize = inner.get_hook_index();
+    inner.set_hook_index(index + 1);
+    if index < inner.get_hooks().len() {
+        return;
+    }
+    inner.get_mut_cleanups().push(Box::new(cleanup));
+    inner.get_mut_hooks().push(Box::new(()));
+}

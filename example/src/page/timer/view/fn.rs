@@ -23,6 +23,16 @@ fn format_time(total_seconds: i32) -> String {
 pub(crate) fn page_timer() -> VirtualNode {
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
+    let sw_handle: Signal<Option<IntervalHandle>> = stopwatch.get_handle();
+    let cd_handle: Signal<Option<IntervalHandle>> = countdown.get_handle();
+    use_cleanup(move || {
+        if let Some(handle) = sw_handle.get() {
+            handle.clear();
+        }
+        if let Some(handle) = cd_handle.get() {
+            handle.clear();
+        }
+    });
     html! {
         div {
             class: c_page_container()

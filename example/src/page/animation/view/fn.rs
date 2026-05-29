@@ -12,6 +12,12 @@ pub(crate) fn page_animation() -> VirtualNode {
     let progress: UseProgress = use_progress();
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
+    let progress_handle: Signal<Option<IntervalHandle>> = progress.get_handle();
+    use_cleanup(move || {
+        if let Some(handle) = progress_handle.get() {
+            handle.clear();
+        }
+    });
     html! {
         div {
             class: c_page_container()
