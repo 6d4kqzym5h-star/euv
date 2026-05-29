@@ -7,7 +7,6 @@ use crate::*;
 /// - `VirtualNode` - The list demo page virtual DOM tree.
 pub(crate) fn page_list() -> VirtualNode {
     let state: UseTodoList = use_todo_list();
-    use_intersection_observer("[data-list-container]");
     html! {
         div {
             class: c_page_container()

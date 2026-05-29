@@ -44,13 +44,24 @@ pub(crate) async fn generate_html(
     www_dir: &Path,
     import_path: &str,
     is_release: bool,
+    custom_index_html: Option<&Path>,
 ) -> Result<String> {
-    let template: &str = if is_release {
-        INDEX_HTML_RELEASE
+    let template_content: String = if let Some(custom_path) = custom_index_html {
+        let bytes: Vec<u8> = read(custom_path).await.map_err(|error: io::Error| {
+            anyhow!(
+                "Failed to read custom index.html '{}': {}",
+                custom_path.display(),
+                error
+            )
+        })?;
+        String::from_utf8(bytes)
+            .map_err(|error| anyhow!("Custom index.html is not valid UTF-8: {}", error))?
+    } else if is_release {
+        INDEX_HTML_RELEASE.to_string()
     } else {
-        INDEX_HTML_DEV
+        INDEX_HTML_DEV.to_string()
     };
-    let html: String = template
+    let html: String = template_content
         .replace(IMPORT_PATH_PLACEHOLDER, import_path)
         .replace(RELOAD_ROUTE_PLACEHOLDER, RELOAD_ROUTE);
     let index_path: PathBuf = www_dir.join(INDEX_HTML_FILE_NAME);

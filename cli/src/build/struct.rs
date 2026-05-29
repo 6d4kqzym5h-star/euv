@@ -16,8 +16,8 @@ pub struct Cli {
 
 /// euv-specific arguments combined with wasm-pack passthrough.
 ///
-/// Only `--crate-path`, `--port`, and `--www-dir` belong to euv; everything
-/// in `wasm_pack_args` is forwarded to `wasm-pack build` as-is.
+/// Only `--crate-path`, `--port`, `--www-dir`, and `--index-html` belong to euv;
+/// everything in `wasm_pack_args` is forwarded to `wasm-pack build` as-is.
 #[derive(Clone, Data, Debug, New, Parser)]
 pub struct ModeArgs {
     /// Path to the Rust crate containing the WASM application
@@ -30,6 +30,11 @@ pub struct ModeArgs {
     /// Directory name for static assets and generated HTML (relative to crate-path)
     #[arg(long, default_value = "www")]
     pub www_dir: String,
+    /// Path to a custom index.html template file.
+    /// When specified, uses this file instead of the built-in template.
+    /// The placeholders `__IMPORT_PATH__` and `__RELOAD_ROUTE__` will be replaced.
+    #[arg(long)]
+    pub index_html: Option<PathBuf>,
     /// Arguments transparently forwarded to `wasm-pack build`
     #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
     pub wasm_pack_args: Vec<String>,

@@ -12,12 +12,13 @@ mod lifecycle;
 mod list;
 mod modal;
 mod not_found;
+mod observer;
 mod select;
 mod signals;
 mod timer;
 
 pub(crate) use {
     animation::*, r#async::*, attrs::*, binding::*, browser::*, conditional::*, event::*, file::*,
-    form::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, select::*, signals::*,
-    timer::*,
+    form::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, observer::*, select::*,
+    signals::*, timer::*,
 };

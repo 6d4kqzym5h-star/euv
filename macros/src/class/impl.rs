@@ -1,5 +1,41 @@
 use crate::*;
 
+/// Parameters for `emit_once_lock_fn`.
+struct OnceLockParams<'a> {
+    vis: &'a Visibility,
+    fn_name_token: &'a proc_macro2::TokenStream,
+    const_name_token: &'a proc_macro2::TokenStream,
+    class_name_str: &'a str,
+    style_expr: &'a proc_macro2::TokenStream,
+    pseudo_expr: &'a proc_macro2::TokenStream,
+    media_expr: &'a proc_macro2::TokenStream,
+}
+
+/// Generates the `OnceLock`-based static function body for a no-param class.
+///
+/// Shared by both the all-static and dynamic paths in `ClassDef::to_tokens`.
+fn emit_once_lock_fn(tokens: &mut proc_macro2::TokenStream, p: OnceLockParams<'_>) {
+    let OnceLockParams {
+        vis,
+        fn_name_token,
+        const_name_token,
+        class_name_str,
+        style_expr,
+        pseudo_expr,
+        media_expr,
+    } = p;
+    tokens.extend(quote! {
+        #vis fn #fn_name_token() -> &'static ::euv::Css {
+            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
+            #const_name_token.get_or_init(|| {
+                let css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #pseudo_expr, #media_expr);
+                css.inject_style();
+                css
+            })
+        }
+    });
+}
+
 /// Implementation of `Parse` for `ClassInput`, parsing the `class!` macro input.
 impl Parse for ClassInput {
     /// Parses the `class!` macro input into a `ClassInput` AST.
@@ -53,7 +89,7 @@ impl Parse for ClassInput {
                     let keyword_str: String = keyword.to_string();
                     let is_extends: bool =
                         forked.peek(Paren) && !keyword_str.starts_with(KEYWORD_MEDIA) && {
-                            let forked_extends_buffer = content.fork();
+                            let forked_extends_buffer: ParseBuffer<'_> = content.fork();
                             let _ = forked_extends_buffer.parse::<Ident>();
                             if forked_extends_buffer.peek(Paren) {
                                 let _paren_content;
@@ -86,10 +122,11 @@ impl Parse for ClassInput {
                         }
                         continue;
                     }
-                    if lookup_pseudo_selector(&keyword_str).is_some() && forked.peek(Brace) {
+                    if let Some(selector) = lookup_pseudo_selector(&keyword_str)
+                        && forked.peek(Brace)
+                    {
                         content.parse::<Ident>()?;
-                        let selector: &'static str = lookup_pseudo_selector(&keyword_str)
-                            .expect("pseudo selector lookup should succeed after check");
+                        let selector: &'static str = selector;
                         let block_content;
                         braced!(block_content in content);
                         let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
@@ -113,7 +150,7 @@ impl Parse for ClassInput {
                         || keyword_str == KEYWORD_NTH_LAST_CHILD)
                         && forked.peek(Paren)
                     {
-                        let forked_nth_check = forked;
+                        let forked_nth_check: ParseBuffer<'_> = forked;
                         let _paren_content;
                         parenthesized!(_paren_content in forked_nth_check);
                         if forked_nth_check.peek(Brace) {
@@ -147,7 +184,7 @@ impl Parse for ClassInput {
                             continue;
                         }
                     } else if keyword_str == KEYWORD_MEDIA && forked.peek(Paren) {
-                        let forked_media_check = forked;
+                        let forked_media_check: ParseBuffer<'_> = forked;
                         let paren_content2;
                         parenthesized!(paren_content2 in forked_media_check);
                         if forked_media_check.peek(Brace) {
@@ -306,6 +343,15 @@ impl ToTokens for ClassDef {
                             is_static_string_expr(expr)
                         })
                     });
+                let (pseudo_expr, media_expr) = if has_extra {
+                    let p = pseudo_blocks_to_tokens(self.get_pseudo_blocks())
+                        .unwrap_or_else(|| quote! { vec![] });
+                    let m = media_blocks_to_tokens(self.get_media_blocks())
+                        .unwrap_or_else(|| quote! { vec![] });
+                    (p, m)
+                } else {
+                    (quote! { vec![] }, quote! { vec![] })
+                };
                 if all_static {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_properties() {
@@ -318,34 +364,32 @@ impl ToTokens for ClassDef {
                     if has_extra {
                         let pseudo_static: String =
                             pseudo_blocks_to_static_string(self.get_pseudo_blocks());
-                        let media_static: String =
-                            media_blocks_to_static_string(self.get_media_blocks());
-                        tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv::Css {
-                                static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-                                #const_name_token.get_or_init(|| {
-                                    let css = ::euv::Css::new(
-                                        #class_name_str.to_string(),
-                                        #css_string.to_string(),
-                                        ::euv::Css::parse_pseudo_rules(#pseudo_static),
-                                        ::euv::Css::parse_media_rules(#media_static),
-                                    );
-                                    css.inject_style();
-                                    css
-                                })
-                            }
-                        });
+                        let media_static: String = media_blocks_to_static_string(self.get_media_blocks());
+                        emit_once_lock_fn(
+                            tokens,
+                            OnceLockParams {
+                                vis,
+                                fn_name_token: &fn_name_token,
+                                const_name_token: &const_name_token,
+                                class_name_str: &class_name_str,
+                                style_expr: &quote! { #css_string.to_string() },
+                                pseudo_expr: &quote! { ::euv::Css::parse_pseudo_rules(#pseudo_static) },
+                                media_expr: &quote! { ::euv::Css::parse_media_rules(#media_static) },
+                            },
+                        );
                     } else {
-                        tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv::Css {
-                                static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-                                #const_name_token.get_or_init(|| {
-                                    let css = ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string(), vec![], vec![]);
-                                    css.inject_style();
-                                    css
-                                })
-                            }
-                        });
+                        emit_once_lock_fn(
+                            tokens,
+                            OnceLockParams {
+                                vis,
+                                fn_name_token: &fn_name_token,
+                                const_name_token: &const_name_token,
+                                class_name_str: &class_name_str,
+                                style_expr: &quote! { #css_string.to_string() },
+                                pseudo_expr: &pseudo_expr,
+                                media_expr: &media_expr,
+                            },
+                        );
                     }
                 } else {
                     let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
@@ -366,35 +410,18 @@ impl ToTokens for ClassDef {
                         all_css_parts
                             .push(quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
                     }
-                    if has_extra {
-                        let pseudo_expr: proc_macro2::TokenStream =
-                            pseudo_blocks_to_tokens(self.get_pseudo_blocks())
-                                .unwrap_or_else(|| quote! { vec![] });
-                        let media_expr: proc_macro2::TokenStream =
-                            media_blocks_to_tokens(self.get_media_blocks())
-                                .unwrap_or_else(|| quote! { vec![] });
-                        tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv::Css {
-                                static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-                                #const_name_token.get_or_init(|| {
-                                    let css = ::euv::Css::new(#class_name_str.to_string(), [#(#all_css_parts), *].concat(), #pseudo_expr, #media_expr);
-                                    css.inject_style();
-                                    css
-                                })
-                            }
-                        });
-                    } else {
-                        tokens.extend(quote! {
-                            #vis fn #fn_name_token() -> &'static ::euv::Css {
-                                static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-                                #const_name_token.get_or_init(|| {
-                                    let css = ::euv::Css::new(#class_name_str.to_string(), [#(#all_css_parts), *].concat(), vec![], vec![]);
-                                    css.inject_style();
-                                    css
-                                })
-                            }
-                        });
-                    }
+                    emit_once_lock_fn(
+                        tokens,
+                        OnceLockParams {
+                            vis,
+                            fn_name_token: &fn_name_token,
+                            const_name_token: &const_name_token,
+                            class_name_str: &class_name_str,
+                            style_expr: &quote! { [#(#all_css_parts), *].concat() },
+                            pseudo_expr: &pseudo_expr,
+                            media_expr: &media_expr,
+                        },
+                    );
                 }
             }
         }

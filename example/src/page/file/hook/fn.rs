@@ -28,9 +28,9 @@ pub(crate) fn use_file_upload() -> UseFileUpload {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A change handler for the file input.
-pub(crate) fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A change handler for the file input.
+pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
@@ -70,7 +70,7 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler 
                 Console::log(&format!("Files selected: {:?}", names));
             }
         }
-    })
+    }))
 }
 
 /// Creates a click event handler that clears all selected files.
@@ -81,15 +81,15 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> NativeEventHandler 
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to clear files.
-pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to clear files.
+pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_file_names().set(Vec::new());
         state.get_file_sizes().set(Vec::new());
         state.get_file_types().set(Vec::new());
         state.get_drag_over().set(false);
         state.get_status().set("No files selected".to_string());
-    })
+    }))
 }
 
 /// Creates a drag-enter event handler that activates the drop zone.
@@ -100,11 +100,11 @@ pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A dragenter handler.
-pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::DragEnter, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A dragenter handler.
+pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_drag_over().set(true);
-    })
+    }))
 }
 
 /// Creates a drag-leave event handler that deactivates the drop zone.
@@ -115,11 +115,11 @@ pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> NativeEventHand
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A dragleave handler.
-pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::DragLeave, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A dragleave handler.
+pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_drag_over().set(false);
-    })
+    }))
 }
 
 /// Creates a drag-over event handler that prevents default and keeps the drop zone active.
@@ -130,11 +130,11 @@ pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> NativeEventHand
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A dragover handler.
-pub(crate) fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::DragOver, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A dragover handler.
+pub(crate) fn file_upload_on_drag_over(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_drag_over().set(true);
-    })
+    }))
 }
 
 /// Creates a drop event handler that reads the dropped file names.
@@ -145,9 +145,9 @@ pub(crate) fn file_upload_on_drag_over(state: UseFileUpload) -> NativeEventHandl
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A drop handler.
-pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Drop, move |event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A drop handler.
+pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         state.get_drag_over().set(false);
         if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
             let has_files: bool = drag_event
@@ -168,5 +168,5 @@ pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> NativeEventHandler {
                 state.get_status().set("No files in drop data".to_string());
             }
         }
-    })
+    }))
 }

@@ -18,9 +18,9 @@ pub(crate) struct NativeEventCallbackInner {
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
-    #[get(pub(crate))]
+    #[get(type(copy))]
     #[set(pub(crate))]
-    pub(crate) event_name: String,
+    pub(crate) event_name: &'static str,
     /// Shared reference to the heap-allocated callback closure inner state.
     #[debug(skip)]
     #[get(pub(crate))]

@@ -1,5 +1,35 @@
 use crate::*;
 
+/// Generates the `OnceLock`-based static function body for a no-param CSS variable block.
+///
+/// # Arguments
+///
+/// - `tokens` - The target token stream to append to.
+/// - `vis` - The visibility modifier.
+/// - `fn_name_token` - The function name token stream.
+/// - `const_name_token` - The `OnceLock` constant name token stream.
+/// - `class_name_str` - The class name string literal.
+/// - `style_expr` - Token stream that evaluates to the CSS style string.
+fn emit_css_var_once_lock_fn(
+    tokens: &mut proc_macro2::TokenStream,
+    vis: &Visibility,
+    fn_name_token: &proc_macro2::TokenStream,
+    const_name_token: &proc_macro2::TokenStream,
+    class_name_str: &str,
+    style_expr: &proc_macro2::TokenStream,
+) {
+    tokens.extend(quote! {
+        #vis fn #fn_name_token() -> &'static ::euv::Css {
+            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
+            #const_name_token.get_or_init(|| {
+                let css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, vec![], vec![]);
+                css.inject_style();
+                css
+            })
+        }
+    });
+}
+
 /// Implementation of `Parse` for `CssVarInput`, parsing the `css_vars!` macro input.
 impl Parse for CssVarInput {
     /// Parses the `css_vars!` macro input into a `CssVarInput` AST.
@@ -125,7 +155,7 @@ impl ToTokens for CssVarDef {
                     let CssVarValue::Expr(expr) = value;
                     is_static_string_expr(expr)
                 });
-                if all_static {
+                let style_expr: proc_macro2::TokenStream = if all_static {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_vars() {
                         let CssVarValue::Expr(expr) = value;
@@ -134,16 +164,7 @@ impl ToTokens for CssVarDef {
                         css_string.push_str(&expr_to_string(expr));
                         css_string.push_str(CSS_DECL_TERMINATOR);
                     }
-                    tokens.extend(quote! {
-                        #vis fn #fn_name_token() -> &'static ::euv::Css {
-                            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-                            #const_name_token.get_or_init(|| {
-                                let css = ::euv::Css::new(#class_name_str.to_string(), #css_string.to_string(), vec![], vec![]);
-                                css.inject_style();
-                                css
-                            })
-                        }
-                    });
+                    quote! { #css_string.to_string() }
                 } else {
                     let css_string_parts: Vec<proc_macro2::TokenStream> = self
                         .get_vars()
@@ -154,17 +175,16 @@ impl ToTokens for CssVarDef {
                             }
                         })
                         .collect();
-                    tokens.extend(quote! {
-                        #vis fn #fn_name_token() -> &'static ::euv::Css {
-                            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-                            #const_name_token.get_or_init(|| {
-                                let css = ::euv::Css::new(#class_name_str.to_string(), [#(#css_string_parts), *].concat(), vec![], vec![]);
-                                css.inject_style();
-                                css
-                            })
-                        }
-                    });
-                }
+                    quote! { [#(#css_string_parts), *].concat() }
+                };
+                emit_css_var_once_lock_fn(
+                    tokens,
+                    vis,
+                    &fn_name_token,
+                    &const_name_token,
+                    &class_name_str,
+                    &style_expr,
+                );
             }
         }
     }

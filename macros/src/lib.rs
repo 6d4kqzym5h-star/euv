@@ -15,7 +15,7 @@ mod watch;
 pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
 
 use std::{
-    collections::HashSet,
+    collections::HashMap,
     env,
     ffi::OsStr,
     fs::{ReadDir, read_dir, read_to_string},

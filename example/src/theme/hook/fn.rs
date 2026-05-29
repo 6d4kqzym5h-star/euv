@@ -50,16 +50,16 @@ pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click event handler that flips the theme value.
-pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that flips the theme value.
+pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let current: String = theme_signal.get();
         if current == THEME_LIGHT {
             theme_signal.set(THEME_DARK.to_string());
         } else {
             theme_signal.set(THEME_LIGHT.to_string());
         }
-    })
+    }))
 }
 
 /// Returns the CSS class name for the given theme value.

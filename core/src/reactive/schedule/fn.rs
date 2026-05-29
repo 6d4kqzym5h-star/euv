@@ -1,31 +1,16 @@
 use crate::*;
 
-/// Dispatches a custom `NativeEventName::EuvSignalUpdate.to_string()` event on the global window.
-///
-/// Used by the scheduler to trigger a DOM update cycle after signal changes.
-/// Does nothing if the window object is unavailable.
-///
-/// # Panics
-///
-/// Panics if `Event::new` fails to create the event object.
-pub(crate) fn dispatch_signal_update() {
-    if let Some(window_value) = window() {
-        let event: Event = Event::new(&NativeEventName::EuvSignalUpdate.to_string()).unwrap();
-        let _ = window_value.dispatch_event(&event);
-    }
-}
-
 /// Ensures the `window.__euv_dispatch` callback is registered.
 ///
-/// Creates a `Closure` that resets the `SCHEDULED` flag and dispatches
-/// the signal update event, then stores it on the `window` object
-/// so it can be invoked via `queueMicrotask`.
+/// Creates a `Closure` that resets the `SCHEDULED` flag and directly
+/// invokes `dispatch_signal_update_callbacks`, then stores it on the
+/// `window` object so it can be invoked via `requestAnimationFrame`.
 ///
-/// # Panics
-///
-/// Panics if `window()` returns `None`.
 fn ensure_dispatch_callback() {
-    let window_value: Window = window().unwrap();
+    let window_value: Window = match window() {
+        Some(w) => w,
+        None => return,
+    };
     let key: JsValue = JsValue::from_str(EUV_DISPATCH);
     if Reflect::get(&window_value, &key)
         .unwrap_or(JsValue::UNDEFINED)
@@ -33,48 +18,66 @@ fn ensure_dispatch_callback() {
     {
         let closure: closure::Closure<dyn FnMut()> = closure::Closure::wrap(Box::new(|| {
             SCHEDULED.store(false, Ordering::Relaxed);
-            dispatch_signal_update();
+            dispatch_signal_update_callbacks();
         }));
         let _ = Reflect::set(&window_value, &key, closure.as_ref());
         closure.forget();
     }
 }
 
-/// Schedules a deferred `NativeEventName::EuvSignalUpdate.to_string()` event via a microtask.
+/// Schedules a deferred signal update event via `requestAnimationFrame`.
 ///
 /// If a schedule is already pending (`SCHEDULED` is true) or updates
 /// are suppressed (`SUPPRESS_SCHEDULE` is true), this is a no-op.
 /// Otherwise, sets `SCHEDULED` to true and queues the
-/// `window.__euv_dispatch` callback via `queueMicrotask` on WASM
-/// targets. On non-WASM targets, resets `SCHEDULED` immediately
-/// since there is no event loop to schedule on.
-pub(crate) fn schedule_signal_update() {
+/// `window.__euv_dispatch` callback via `requestAnimationFrame` on WASM
+/// targets. This ensures that no matter how many signal updates occur
+/// within a single animation frame, only one dispatch cycle runs,
+/// preventing CPU spikes during rapid input events (e.g., slider dragging).
+///
+/// On non-WASM targets, resets `SCHEDULED` immediately since there is
+/// no event loop to schedule on.
+pub fn schedule_signal_update() {
     if SCHEDULED.load(Ordering::Relaxed) || SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
         return;
     }
     SCHEDULED.store(true, Ordering::Relaxed);
+    mark_all_slots_dirty();
     let window_option: Option<Window> = window();
     if window_option.is_none() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
     ensure_dispatch_callback();
-    let window_value: Window = window_option.unwrap();
+    let window_value: Window = match window_option {
+        Some(w) => w,
+        None => {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            return;
+        }
+    };
     let dispatch_fn: JsValue =
         Reflect::get(&window_value, &JsValue::from_str(EUV_DISPATCH)).unwrap_or(JsValue::UNDEFINED);
     if dispatch_fn.is_undefined() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
-    let queue_microtask_val: JsValue =
-        Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
-            .unwrap_or(JsValue::UNDEFINED);
-    if queue_microtask_val.is_undefined() {
-        SCHEDULED.store(false, Ordering::Relaxed);
+    let raf_val: JsValue = Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
+        .unwrap_or(JsValue::UNDEFINED);
+    if raf_val.is_undefined() {
+        let queue_microtask_val: JsValue =
+            Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
+                .unwrap_or(JsValue::UNDEFINED);
+        if queue_microtask_val.is_undefined() {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            return;
+        }
+        let queue_microtask: Function = queue_microtask_val.into();
+        let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
         return;
     }
-    let queue_microtask: Function = queue_microtask_val.into();
-    let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
+    let raf: Function = raf_val.into();
+    let _ = raf.call1(&JsValue::NULL, &dispatch_fn);
 }
 
 /// Batches signal updates within a closure, deferring DOM synchronization until completion.
@@ -103,7 +106,7 @@ where
     result
 }
 
-/// Subscribes an attribute signal to the global `NativeEventName::EuvSignalUpdate.to_string()` event.
+/// Subscribes an attribute signal to the global signal update dispatch cycle.
 ///
 /// Creates a callback that re-computes the attribute value and sets
 /// it on the signal whenever a signal update cycle runs. The callback

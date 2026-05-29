@@ -1,0 +1,45 @@
+use crate::*;
+
+/// An IntersectionObserver demo page showcasing viewport intersection detection.
+///
+/// Demonstrates how to observe a container element for viewport intersection
+/// changes, logging intersection ratio and child item visibility.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The observer demo page virtual DOM tree.
+pub(crate) fn page_observer() -> VirtualNode {
+    use_intersection_observer("[data-observer-container]");
+    html! {
+        div {
+            class: c_page_container()
+            page_header("Observer", "IntersectionObserver API demo: detect when elements enter or leave the viewport.")
+            my_card {
+                title: "Intersection Observer"
+                p {
+                    class: c_demo_text()
+                    "The container below is observed for viewport intersection changes."
+                }
+                p {
+                    class: c_demo_text_muted()
+                    "Open the browser console to see intersection events logged as you scroll."
+                }
+                ul {
+                    class: c_list_ul()
+                    data_observer_container: "true"
+                    for index in { 0..20 } {
+                        li {
+                            key: index.to_string()
+                            class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
+                            data_index: index.to_string()
+                            span {
+                                class: c_list_item_text()
+                                { format!("Observed Item {}", index + 1) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

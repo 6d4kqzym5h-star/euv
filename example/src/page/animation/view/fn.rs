@@ -12,6 +12,12 @@ pub(crate) fn page_animation() -> VirtualNode {
     let progress: UseProgress = use_progress();
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
+    let progress_handle: Signal<Option<IntervalHandle>> = progress.get_handle();
+    use_cleanup(move || {
+        if let Some(handle) = progress_handle.get() {
+            handle.clear();
+        }
+    });
     html! {
         div {
             class: c_page_container()
@@ -112,7 +118,7 @@ fn build_progress_bar(progress_value: Signal<i32>) -> VirtualNode {
             class: c_progress_container()
             div {
                 class: c_progress_bar()
-                style: { width: format!("{}%", progress_value.get()); transition: "width 0.1s ease"; background: if { progress_value.get() >= 100 } { "#059669".to_string() } else { "#4f46e5".to_string() }; height: "100%"; border-radius: "999px"; transition: "all 0.3s ease"; }
+                style: { width: format!("{}%", progress_value.get()); background: if { progress_value.get() >= 100 } { "#059669".to_string() } else { "#4f46e5".to_string() }; }
             }
         }
         p {

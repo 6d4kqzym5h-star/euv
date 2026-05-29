@@ -83,7 +83,8 @@ fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
 /// Resolves the output JS filename for HTML generation.
 ///
 /// Uses `--out-name` from wasm-pack args if specified,
-/// otherwise falls back to the crate name derived from `Cargo.toml`.
+/// otherwise reads the crate name from `Cargo.toml` `[package] name` field
+/// and replaces hyphens with underscores (matching wasm-pack behavior).
 /// Appends `.js` extension to form the complete JS filename.
 ///
 /// # Arguments
@@ -92,20 +93,54 @@ fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
 ///
 /// # Returns
 ///
-/// - `String` - The resolved JS filename with `.js` extension (e.g. `euv.js`).
+/// - `String` - The resolved JS filename with `.js` extension (e.g. `euv_example.js`).
 pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
     let name: String = if let Some(out_name) = extract_out_name(&args.wasm_pack_args) {
         out_name
     } else {
         let cargo_toml_path: PathBuf = args.crate_path.join(CARGO_TOML_FILE_NAME);
-        let crate_name: String = cargo_toml_path
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-        crate_name
+        let crate_name: String = read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
+            args.crate_path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        });
+        crate_name.replace('-', "_")
     };
     format!("{name}{JS_EXTENSION}")
+}
+
+/// Reads the `name` field from a Cargo.toml file.
+///
+/// Parses the file line-by-line looking for `name = "..."` within the `[package]` section.
+///
+/// # Arguments
+///
+/// - `&Path` - The path to the Cargo.toml file.
+///
+/// # Returns
+///
+/// - `Option<String>` - The crate name if found.
+fn read_crate_name_from_toml(path: &Path) -> Option<String> {
+    let content: String = std::fs::read_to_string(path).ok()?;
+    let mut in_package: bool = false;
+    for line in content.lines() {
+        let trimmed: &str = line.trim();
+        if trimmed.starts_with('[') {
+            in_package = trimmed == "[package]";
+            continue;
+        }
+        if in_package
+            && trimmed.starts_with("name")
+            && let Some(value) = trimmed.strip_prefix("name")
+        {
+            let value: &str = value.trim().strip_prefix('=')?.trim();
+            let value: &str = value.strip_prefix('"')?.strip_suffix('"')?;
+            return Some(value.to_string());
+        }
+    }
+    None
 }
 
 /// Resolves the JS import path for HTML generation.
@@ -187,6 +222,8 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {}", error);
     }
+    let out_dir: PathBuf = resolve_out_dir(args);
+    clean_out_dir(&out_dir).await;
     build_wasm(args).await?;
     log::info!("WASM build completed successfully");
     let pkg_dir: PathBuf = resolve_out_dir(args);
@@ -194,8 +231,35 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
-    generate_html(&www_dir, &import_path, is_release).await?;
+    let custom_html: Option<&Path> = args.index_html.as_deref();
+    generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(())
+}
+
+/// Cleans the output directory before a fresh build.
+///
+/// Removes all files and subdirectories within the output directory
+/// so that stale artifacts from previous builds do not remain.
+/// The directory itself is preserved (recreated if missing).
+///
+/// # Arguments
+///
+/// - `&Path` - The output directory to clean.
+pub(crate) async fn clean_out_dir(out_dir: &Path) {
+    let mut entries: ReadDir = match read_dir(out_dir).await {
+        Ok(dir) => dir,
+        Err(_) => return,
+    };
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        let path: PathBuf = entry.path();
+        if path.is_dir() {
+            if let Err(error) = tokio::fs::remove_dir_all(&path).await {
+                log::warn!("Failed to remove directory '{}': {}", path.display(), error);
+            }
+        } else if let Err(error) = remove_file(&path).await {
+            log::warn!("Failed to remove file '{}': {}", path.display(), error);
+        }
+    }
 }
 
 /// Removes unnecessary files from the wasm-pack output directory.
@@ -281,6 +345,8 @@ pub(crate) async fn run_build_pipeline(
     if let Err(error) = run_hyperlane_fmt().await {
         log::warn!("hyperlane-cli fmt error: {}", error);
     }
+    let out_dir: PathBuf = resolve_out_dir(args);
+    clean_out_dir(&out_dir).await;
     match build_wasm(args).await {
         Ok(()) => {
             log::info!("WASM build completed successfully");
@@ -298,7 +364,8 @@ pub(crate) async fn run_build_pipeline(
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
-    let html: String = generate_html(&www_dir, &import_path, is_release).await?;
+    let custom_html: Option<&Path> = args.index_html.as_deref();
+    let html: String = generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(html)
 }
 
@@ -406,6 +473,13 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     if !has_out_dir {
         command.arg(OUT_DIR_ARG).arg(&default_out_dir);
     }
+    let has_target: bool = args
+        .wasm_pack_args
+        .iter()
+        .any(|arg| arg == TARGET_ARG || arg.starts_with(&format!("{TARGET_ARG}=")));
+    if !has_target {
+        command.arg(TARGET_ARG).arg(TARGET_WEB);
+    }
     command.current_dir(&args.crate_path);
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     let display_args: Vec<String> = args
@@ -416,6 +490,11 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
             Vec::new()
         } else {
             vec![OUT_DIR_ARG.to_string(), default_out_dir]
+        })
+        .chain(if has_target {
+            Vec::new()
+        } else {
+            vec![TARGET_ARG.to_string(), TARGET_WEB.to_string()]
         })
         .collect();
     let out_dir_absolute: PathBuf = resolve_out_dir(args);

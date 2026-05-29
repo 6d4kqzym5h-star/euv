@@ -13,11 +13,11 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled child display element.
 #[component]
-pub(crate) fn child_display(props: VirtualNode) -> VirtualNode {
+pub(crate) fn child_display(props: ChildDisplayProps) -> VirtualNode {
     let ChildDisplayProps {
         message,
         on_respond,
-    }: ChildDisplayProps = props.into();
+    } = props;
     html! {
         div {
             class: c_binding_child_box()
@@ -51,13 +51,13 @@ pub(crate) fn child_display(props: VirtualNode) -> VirtualNode {
 ///
 /// - `VirtualNode` - A styled limited counter element.
 #[component]
-pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
+pub(crate) fn limited_counter(props: LimitedCounterProps) -> VirtualNode {
     let LimitedCounterProps {
         disabled,
         max_count,
         on_increment,
         on_reset,
-    }: LimitedCounterProps = props.into();
+    } = props;
     html! {
         div {
             class: c_binding_child_box()
@@ -108,7 +108,7 @@ pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
 /// A callback input component that receives custom callback functions as props.
 ///
 /// Demonstrates passing `on_change` and `on_submit` callbacks through
-/// `html!` macro and extracting them with `try_get_callback` via `From<&VirtualNode>`.
+/// `html!` macro and extracting them with `try_get_event` via `From<&VirtualNode>`.
 ///
 /// # Arguments
 ///
@@ -118,13 +118,13 @@ pub(crate) fn limited_counter(props: VirtualNode) -> VirtualNode {
 ///
 /// - `VirtualNode` - A styled input with callback element.
 #[component]
-pub(crate) fn callback_input(props: VirtualNode) -> VirtualNode {
+pub(crate) fn callback_input(props: CallbackInputProps) -> VirtualNode {
     let CallbackInputProps {
         value,
         on_change,
         on_submit,
         on_reset,
-    }: CallbackInputProps = props.into();
+    } = props;
     html! {
         div {
             class: c_binding_child_box()
@@ -446,7 +446,7 @@ pub(crate) fn page_component_binding() -> VirtualNode {
                 }
                 child_display {
                     message: props_state.get_parent_message()
-                    onclick: props_on_child_respond(
+                    on_respond: props_on_child_respond(
                         props_state.get_child_response(),
                         format!("Child says: I got \"{}\"!", props_state.get_parent_message().get()),
                     )

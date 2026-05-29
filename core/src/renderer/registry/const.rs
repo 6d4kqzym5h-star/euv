@@ -1,3 +1,6 @@
+#[allow(unused_imports)]
+use super::*;
+
 /// The DOM attribute name used to store the unique euv identifier on an element.
 ///
 /// This attribute is set on every element that registers an event listener

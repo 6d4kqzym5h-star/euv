@@ -8,6 +8,7 @@ mod reactive;
 mod renderer;
 mod vdom;
 
+pub use std::rc::Rc;
 pub use {event::*, reactive::*, renderer::*, vdom::*};
 
 use std::{
@@ -17,8 +18,6 @@ use std::{
     fmt::{self, Display, Formatter},
     mem::{swap, take},
     num::ParseIntError,
-    ops::{Deref, DerefMut},
-    rc::Rc,
     str::FromStr,
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };

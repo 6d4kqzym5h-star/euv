@@ -20,9 +20,9 @@ pub(crate) fn use_progress() -> UseProgress {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to start the progress bar.
-pub(crate) fn progress_on_start(state: UseProgress) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to start the progress bar.
+pub(crate) fn progress_on_start(state: UseProgress) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_value().set(0);
         state.get_running().set(true);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
@@ -32,18 +32,19 @@ pub(crate) fn progress_on_start(state: UseProgress) -> NativeEventHandler {
         let value_signal: Signal<i32> = state.get_value();
         let running_signal: Signal<bool> = state.get_running();
         let handle_signal: Signal<Option<IntervalHandle>> = state.get_handle();
-        let new_handle: IntervalHandle = use_interval(30, move || {
+        let new_handle: IntervalHandle = use_interval(16, move || {
             if running_signal.get() {
                 let current: i32 = value_signal.get();
                 if current < 100 {
-                    value_signal.set(current + 1);
+                    let next: i32 = (current + 2).min(100);
+                    value_signal.set(next);
                 } else {
                     running_signal.set(false);
                 }
             }
         });
         handle_signal.set(Some(new_handle));
-    })
+    }))
 }
 
 /// Creates a click event handler that resets the progress bar.
@@ -54,9 +55,9 @@ pub(crate) fn progress_on_start(state: UseProgress) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to reset the progress bar.
-pub(crate) fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to reset the progress bar.
+pub(crate) fn progress_on_reset(state: UseProgress) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_running().set(false);
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
@@ -64,7 +65,7 @@ pub(crate) fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
         }
         state.get_handle().set(None);
         state.get_value().set(0);
-    })
+    }))
 }
 
 /// Creates a click event handler that cycles to the next animation color.
@@ -75,10 +76,10 @@ pub(crate) fn progress_on_reset(state: UseProgress) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to advance the color index.
-pub(crate) fn color_cycle_on_next(color_index: Signal<i32>) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to advance the color index.
+pub(crate) fn color_cycle_on_next(color_index: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         let current: i32 = color_index.get();
         color_index.set((current + 1) % 5);
-    })
+    }))
 }

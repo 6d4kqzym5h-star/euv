@@ -45,15 +45,15 @@ pub(crate) fn validate_select_textarea(state: UseSelect) {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A change handler for the country select.
-pub(crate) fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Change, move |event: Event| {
+pub(crate) fn select_on_country_change(state: UseSelect) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>()
         {
             state.get_selected_country().set(select.value());
             state.get_selected_city().set(String::new());
         }
-    })
+    }))
 }
 
 /// Creates an input event handler that updates the textarea content and validates it.
@@ -65,15 +65,15 @@ pub(crate) fn select_on_country_change(state: UseSelect) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - An input handler.
-pub(crate) fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
+pub(crate) fn select_on_input_textarea(state: UseSelect) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(textarea) = target.clone().dyn_into::<HtmlTextAreaElement>()
         {
             state.get_textarea_content().set(textarea.value());
         }
         validate_select_textarea(state);
-    })
+    }))
 }
 
 /// Creates a click event handler that submits the textarea feedback.
@@ -85,8 +85,8 @@ pub(crate) fn select_on_input_textarea(state: UseSelect) -> NativeEventHandler {
 /// # Returns
 ///
 /// - `NativeEventHandler` - A click handler to submit feedback.
-pub(crate) fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+pub(crate) fn select_on_submit_feedback(state: UseSelect) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         validate_select_textarea(state);
         let textarea_error_value: String = state.get_textarea_error().get();
         if textarea_error_value.is_empty() {
@@ -96,5 +96,5 @@ pub(crate) fn select_on_submit_feedback(state: UseSelect) -> NativeEventHandler 
                 .set(format!("Thank you for your feedback: \"{}\"", content));
             state.get_textarea_content().set(String::new());
         }
-    })
+    }))
 }

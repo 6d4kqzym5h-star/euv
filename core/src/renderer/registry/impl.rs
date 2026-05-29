@@ -30,6 +30,3 @@ unsafe impl Sync for DelegatedEventsCell {}
 
 /// SAFETY: `SignalUpdateRegistryCell` is only used in single-threaded WASM contexts.
 unsafe impl Sync for SignalUpdateRegistryCell {}
-
-/// SAFETY: `SignalUpdateListenerRegisteredCell` is only used in single-threaded WASM contexts.
-unsafe impl Sync for SignalUpdateListenerRegisteredCell {}

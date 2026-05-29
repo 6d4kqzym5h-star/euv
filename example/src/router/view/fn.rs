@@ -38,7 +38,7 @@ pub(crate) fn navigate(route: &str) {
 ///
 /// - `NativeEventHandler` - An event handler for click events.
 pub(crate) fn link_handler(route: String) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+    NativeEventHandler::create("click", move |_event: Event| {
         navigate(&route);
     })
 }

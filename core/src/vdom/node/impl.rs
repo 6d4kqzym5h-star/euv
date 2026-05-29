@@ -339,16 +339,16 @@ impl VirtualNode {
         None
     }
 
-    /// Extracts children from this node if it is an element.
+    /// Returns a slice of the children if this node is an element.
     ///
     /// # Returns
     ///
-    /// - `Vec<Self>`- The children, or an empty vec if not an element.
-    pub fn get_children(&self) -> Vec<Self> {
+    /// - `&[Self]`- The children slice, or an empty slice if not an element.
+    pub fn get_children(&self) -> &[Self] {
         if let Self::Element { children, .. } = self {
-            children.clone()
+            children
         } else {
-            Vec::new()
+            &[]
         }
     }
 
@@ -375,28 +375,6 @@ impl VirtualNode {
     ///
     /// - `Option<NativeEventHandler>`- The handler, or `None` if not found.
     pub fn try_get_event(&self, name: &str) -> Option<NativeEventHandler> {
-        if let Self::Element { attributes, .. } = self {
-            for attr in attributes {
-                if attr.get_name() == name
-                    && let AttributeValue::Event(handler) = attr.get_value()
-                {
-                    return Some(handler.clone());
-                }
-            }
-        }
-        None
-    }
-
-    /// Extracts an event handler from this node by a custom attribute name.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The custom callback attribute name to look for.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<NativeEventHandler>`- The handler, or `None` if not found.
-    pub fn try_get_callback(&self, name: &str) -> Option<NativeEventHandler> {
         if let Self::Element { attributes, .. } = self {
             for attr in attributes {
                 if attr.get_name() == name

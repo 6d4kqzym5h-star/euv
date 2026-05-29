@@ -4,29 +4,29 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing label, onclick, and children.
+/// - `PrimaryButtonProps` - The typed props containing label, onclick, and disabled.
+/// - `Vec<VirtualNode>` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn primary_button(props: VirtualNode) -> VirtualNode {
-    let children: Vec<VirtualNode> = props.get_children();
+pub(crate) fn primary_button(props: PrimaryButtonProps) -> VirtualNode {
     let PrimaryButtonProps {
         label,
-        onclick,
+        onclick: click_handler,
         disabled,
-    }: PrimaryButtonProps = props.into();
-    let children_node: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(TextNode::new(label, None))]
-    } else {
-        children
+        children,
+    } = props;
+    let content: VirtualNode = match children {
+        VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
+        other => other,
     };
     html! {
         button {
             class: if { disabled } { c_primary_button_disabled() } else { c_primary_button() }
-            onclick: onclick
-            children_node
+            onclick: click_handler
+            content
         }
     }
 }
@@ -37,29 +37,29 @@ pub(crate) fn primary_button(props: VirtualNode) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing label, onclick, and children.
+/// - `PrimaryButtonProps` - The typed props containing label, onclick, and disabled.
+/// - `Vec<VirtualNode>` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn modal_primary_button(props: VirtualNode) -> VirtualNode {
-    let children: Vec<VirtualNode> = props.get_children();
+pub(crate) fn modal_primary_button(props: PrimaryButtonProps) -> VirtualNode {
     let PrimaryButtonProps {
         label,
-        onclick,
+        onclick: click_handler,
         disabled,
-    }: PrimaryButtonProps = props.into();
-    let children_node: Vec<VirtualNode> = if children.is_empty() {
-        vec![VirtualNode::Text(TextNode::new(label, None))]
-    } else {
-        children
+        children,
+    } = props;
+    let content: VirtualNode = match children {
+        VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
+        other => other,
     };
     html! {
         button {
             class: if { disabled } { c_modal_primary_button_disabled() } else { c_modal_primary_button() }
-            onclick: onclick
-            children_node
+            onclick: click_handler
+            content
         }
     }
 }

@@ -76,6 +76,7 @@ fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
             { nav_item(route_signal, "Signals", "/signals") }
             { nav_item(route_signal, "Event", "/event") }
             { nav_item(route_signal, "List", "/list") }
+            { nav_item(route_signal, "Observer", "/observer") }
             { nav_item(route_signal, "Conditional", "/conditional") }
             { nav_item(route_signal, "Modal", "/modal") }
             { nav_item(route_signal, "Select", "/select") }
@@ -112,6 +113,7 @@ fn build_mobile_nav_items(route_signal: Signal<String>, drawer_open: Signal<bool
             { mobile_nav_item(route_signal, drawer_open, "Signals", "/signals") }
             { mobile_nav_item(route_signal, drawer_open, "Event", "/event") }
             { mobile_nav_item(route_signal, drawer_open, "List", "/list") }
+            { mobile_nav_item(route_signal, drawer_open, "Observer", "/observer") }
             { mobile_nav_item(route_signal, drawer_open, "Conditional", "/conditional") }
             { mobile_nav_item(route_signal, drawer_open, "Modal", "/modal") }
             { mobile_nav_item(route_signal, drawer_open, "Select", "/select") }
@@ -161,7 +163,6 @@ fn desktop_layout(
                         "E"
                     }
                     span {
-                        class: c_inline()
                         "Euv"
                     }
                 }
@@ -195,6 +196,7 @@ fn desktop_layout(
                     "/" | "/signals" => page_signals(),
                     "/event" => page_event(),
                     "/list" => page_list(),
+                    "/observer" => page_observer(),
                     "/conditional" => page_conditional(),
                     "/modal" => page_modal(),
                     "/select" => page_select(),
@@ -253,7 +255,6 @@ fn mobile_layout(
                         "E"
                     }
                     span {
-                        class: c_inline()
                         "euv"
                     }
                 }
@@ -273,6 +274,7 @@ fn mobile_layout(
                     "/" | "/signals" => page_signals(),
                     "/event" => page_event(),
                     "/list" => page_list(),
+                    "/observer" => page_observer(),
                     "/conditional" => page_conditional(),
                     "/modal" => page_modal(),
                     "/select" => page_select(),
@@ -310,7 +312,6 @@ fn mobile_layout(
                                 "E"
                             }
                             span {
-                                class: c_inline()
                                 "Euv"
                             }
                         }

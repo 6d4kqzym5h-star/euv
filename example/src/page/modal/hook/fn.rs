@@ -49,11 +49,11 @@ pub(crate) fn validate_modal_email(state: UseModal) {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to open the basic modal.
-pub(crate) fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the basic modal.
+pub(crate) fn modal_on_open_basic(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_show_basic().set(true);
-    })
+    }))
 }
 
 /// Creates a click event handler that opens the confirm modal.
@@ -64,12 +64,12 @@ pub(crate) fn modal_on_open_basic(state: UseModal) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to open the confirm modal.
-pub(crate) fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the confirm modal.
+pub(crate) fn modal_on_open_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_show_confirm().set(true);
         state.get_confirm_result().set(String::new());
-    })
+    }))
 }
 
 /// Creates a click event handler that opens the form modal.
@@ -80,9 +80,9 @@ pub(crate) fn modal_on_open_confirm(state: UseModal) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to open the form modal.
-pub(crate) fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the form modal.
+pub(crate) fn modal_on_open_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state.get_show_form().set(true);
         state.get_modal_name().set(String::new());
         state.get_modal_email().set(String::new());
@@ -90,7 +90,7 @@ pub(crate) fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
         state.get_modal_error().set(String::new());
         state.get_name_error().set(String::new());
         state.get_email_error().set(String::new());
-    })
+    }))
 }
 
 /// Creates a click event handler that confirms the action and closes the confirm modal.
@@ -101,14 +101,14 @@ pub(crate) fn modal_on_open_form(state: UseModal) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to confirm the action.
-pub(crate) fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to confirm the action.
+pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         state
             .get_confirm_result()
             .set("Action confirmed!".to_string());
         state.get_show_confirm().set(false);
-    })
+    }))
 }
 
 /// Creates an input event handler that updates the modal name and validates it.
@@ -119,16 +119,16 @@ pub(crate) fn modal_on_confirm(state: UseModal) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - An input handler.
-pub(crate) fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - An input handler.
+pub(crate) fn modal_on_input_name(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             state.get_modal_name().set(input.value());
         }
         validate_modal_name(state);
-    })
+    }))
 }
 
 /// Creates an input event handler that updates the modal email and validates it.
@@ -139,16 +139,16 @@ pub(crate) fn modal_on_input_name(state: UseModal) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - An input handler.
-pub(crate) fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Input, move |event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - An input handler.
+pub(crate) fn modal_on_input_email(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             state.get_modal_email().set(input.value());
         }
         validate_modal_email(state);
-    })
+    }))
 }
 
 /// Creates a click event handler that submits the form modal.
@@ -159,9 +159,9 @@ pub(crate) fn modal_on_input_email(state: UseModal) -> NativeEventHandler {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler to submit the form modal.
-pub(crate) fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
-    NativeEventHandler::create(NativeEventName::Click, move |_event: Event| {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to submit the form modal.
+pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
         validate_modal_name(state);
         validate_modal_email(state);
         let name_error_value: String = state.get_name_error().get();
@@ -184,5 +184,5 @@ pub(crate) fn modal_on_form_submit(state: UseModal) -> NativeEventHandler {
         } else {
             state.get_modal_error().set(validation_errors.join("; "));
         }
-    })
+    }))
 }

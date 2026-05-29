@@ -1,30 +1,46 @@
 use crate::*;
 
-/// Sets the user-defined function names for the current thread.
+/// Sets the user-defined component registry for the current thread.
 ///
 /// # Arguments
 ///
-/// - `HashSet<String>`- The set of user-defined function names to store.
-pub(crate) fn set_user_fn_names(names: HashSet<String>) {
+/// - `HashMap<String, String>`- The map of function names to Props type names.
+pub(crate) fn set_user_fn_names(names: HashMap<String, String>) {
     unsafe {
-        let ptr: *mut MaybeUninit<HashSet<String>> = &raw mut USER_FN_NAMES;
+        let ptr: *mut MaybeUninit<HashMap<String, String>> = &raw mut USER_FN_NAMES;
         (*ptr).write(names);
     }
 }
 
-/// Checks whether a given name corresponds to a user-defined function.
+/// Checks whether a given name corresponds to a user-defined component function.
 ///
 /// # Arguments
 ///
-/// - `&str`- The name to check against the stored user-defined function names.
+/// - `&str`- The name to check against the stored component registry.
 ///
 /// # Returns
 ///
-/// - `bool`- `true` if the name exists in the user-defined function set, `false` otherwise.
+/// - `bool`- `true` if the name exists in the component registry, `false` otherwise.
 pub(crate) fn is_user_fn(name: &str) -> bool {
     unsafe {
-        let ptr: *const MaybeUninit<HashSet<String>> = &raw const USER_FN_NAMES;
-        (*ptr).assume_init_ref().contains(name)
+        let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
+        (*ptr).assume_init_ref().contains_key(name)
+    }
+}
+
+/// Returns the Props type name for a given component function name.
+///
+/// # Arguments
+///
+/// - `&str`- The component function name.
+///
+/// # Returns
+///
+/// - `Option<&'static str>`- The Props type name if found.
+pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
+    unsafe {
+        let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
+        (*ptr).assume_init_ref().get(name).map(|s| s.as_str())
     }
 }
 
@@ -48,7 +64,7 @@ pub(crate) fn is_user_fn(name: &str) -> bool {
 ///
 /// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
-    let fn_names: HashSet<String> = load_component_registry();
+    let fn_names: HashMap<String, String> = load_component_registry();
     set_user_fn_names(fn_names);
     let tokens: proc_macro2::TokenStream = match parse::<HtmlRoot>(input) {
         Ok(nodes) => nodes.into_token_stream(),
@@ -60,18 +76,18 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 /// Loads the component registry by scanning the project source for `#[component]` annotations.
 ///
 /// Recursively scans `.rs` files under `CARGO_MANIFEST_DIR/src/` and extracts
-/// function names that are annotated with `#[component]`.
+/// function names and their Props type names from annotated functions.
 ///
 /// # Returns
 ///
-/// - `HashSet<String>` - The set of component function names.
-fn load_component_registry() -> HashSet<String> {
+/// - `HashMap<String, String>` - Map of component function names to Props type names.
+fn load_component_registry() -> HashMap<String, String> {
     let manifest_dir: Option<String> = env::var(CARGO_MANIFEST_DIR).ok();
     let Some(manifest_dir) = manifest_dir else {
-        return HashSet::new();
+        return HashMap::new();
     };
     let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
-    let mut fn_names: HashSet<String> = HashSet::new();
+    let mut fn_names: HashMap<String, String> = HashMap::new();
     scan_dir_for_components(&src_dir, &mut fn_names);
     fn_names
 }
@@ -81,8 +97,8 @@ fn load_component_registry() -> HashSet<String> {
 /// # Arguments
 ///
 /// - `&PathBuf` - The directory to scan.
-/// - `&mut HashSet<String>` - The set to populate with discovered component names.
-fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashSet<String>) {
+/// - `&mut HashMap<String, String>` - The map to populate with discovered component names and Props types.
+fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashMap<String, String>) {
     let entries: Result<ReadDir, std::io::Error> = read_dir(dir);
     let Ok(entries) = entries else {
         return;
@@ -100,13 +116,14 @@ fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashSet<String>) {
     }
 }
 
-/// Parses a single `.rs` file and extracts function names annotated with `#[component]`.
+/// Parses a single `.rs` file and extracts function names annotated with `#[component]`,
+/// along with their first parameter's type name (the Props type).
 ///
 /// # Arguments
 ///
 /// - `&PathBuf` - The file path to parse.
-/// - `&mut HashSet<String>` - The set to populate with discovered component names.
-fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashSet<String>) {
+/// - `&mut HashMap<String, String>` - The map to populate with function name → Props type name.
+fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashMap<String, String>) {
     let content: String = match read_to_string(path) {
         Ok(data) => data,
         Err(_) => return,
@@ -122,10 +139,39 @@ fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashSet<String>) {
                 .iter()
                 .any(|attr: &Attribute| attr.path().is_ident(COMPONENT_ATTR));
             if has_component_attr {
-                fn_names.insert(item_fn.sig.ident.to_string());
+                let fn_name: String = item_fn.sig.ident.to_string();
+                let props_type: String = extract_props_type_from_fn(item_fn);
+                fn_names.insert(fn_name, props_type);
             }
         }
     }
+}
+
+/// Extracts the Props type name from the first parameter of a component function.
+///
+/// Looks for the first parameter's type. If the type is a simple path (e.g., `PrimaryButtonProps`),
+/// returns its string representation. Falls back to an empty string if not found.
+///
+/// # Arguments
+///
+/// - `&syn::ItemFn` - The function item to extract from.
+///
+/// # Returns
+///
+/// - `String` - The Props type name, or empty string if not extractable.
+fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
+    let inputs: &syn::punctuated::Punctuated<syn::FnArg, Token![,]> = &item_fn.sig.inputs;
+    for input in inputs {
+        if let syn::FnArg::Typed(pat_type) = input {
+            let ty: &Type = &pat_type.ty;
+            if let Type::Path(type_path) = ty
+                && let Some(segment) = type_path.path.segments.last()
+            {
+                return segment.ident.to_string();
+            }
+        }
+    }
+    String::new()
 }
 
 /// Parses a stream of tokens into a list of HTML child nodes.
@@ -203,6 +249,21 @@ pub(crate) fn parse_match_arm_body(content: ParseStream) -> syn::Result<Vec<Html
     }
 }
 
+/// Converts a slice of `HtmlNode` children into a `Vec<proc_macro2::TokenStream>`.
+///
+/// Shared helper used by both `children_to_node_tokens` and `children_to_tokens`.
+#[inline]
+fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::TokenStream> {
+    children
+        .iter()
+        .map(|child| {
+            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+            child.to_tokens(&mut ts);
+            ts
+        })
+        .collect()
+}
+
 /// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream.
 ///
 /// - 0 children → `VirtualNode::Empty`
@@ -220,18 +281,12 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
     match children.len() {
         0 => quote! { ::euv::VirtualNode::Empty },
         1 => {
-            let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-            children[0].to_tokens(&mut token_stream);
-            token_stream
+            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+            children[0].to_tokens(&mut ts);
+            ts
         }
         _ => {
-            let mut child_tokens: Vec<proc_macro2::TokenStream> =
-                Vec::with_capacity(children.len());
-            for child in children {
-                let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                child.to_tokens(&mut ts);
-                child_tokens.push(ts);
-            }
+            let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
             quote! { ::euv::VirtualNode::Fragment(vec![#(#child_tokens), *]) }
         }
     }
@@ -250,12 +305,7 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
 ///
 /// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
-    let mut child_tokens: Vec<proc_macro2::TokenStream> = Vec::with_capacity(children.len());
-    for child in children {
-        let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-        child.to_tokens(&mut token_stream);
-        child_tokens.push(token_stream);
-    }
+    let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
     quote! { vec![#(#child_tokens), *] }
 }
 
@@ -339,26 +389,53 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
+        let stripped_body: &Expr = strip_braces_from_expr(body);
         match (branch_index, condition) {
             (0, Some(cond)) => {
                 let stripped_cond: &Expr = strip_braces_from_expr(cond);
-                let stripped_body: &Expr = strip_braces_from_expr(body);
-                if_chain.extend(quote! {
-                    if #stripped_cond { #stripped_body }
-                });
+                if_chain.extend(quote! { if #stripped_cond { #stripped_body } });
             }
             (_, Some(cond)) => {
                 let stripped_cond: &Expr = strip_braces_from_expr(cond);
-                let stripped_body: &Expr = strip_braces_from_expr(body);
-                if_chain.extend(quote! {
-                    else if #stripped_cond { #stripped_body }
-                });
+                if_chain.extend(quote! { else if #stripped_cond { #stripped_body } });
             }
             (_, None) => {
-                let stripped_body: &Expr = strip_braces_from_expr(body);
-                if_chain.extend(quote! {
-                    else { #stripped_body }
-                });
+                if_chain.extend(quote! { else { #stripped_body } });
+            }
+        }
+    }
+    if_chain
+}
+
+/// Builds a Rust `if/else if/else` chain token stream from `HtmlIf` branches.
+///
+/// Each branch body is converted to a `VirtualNode` token stream via `children_to_node_tokens`.
+/// Used by `HtmlNode::If` in `ToTokens`.
+///
+/// # Arguments
+///
+/// - `&[(Option<Expr>, Vec<HtmlNode>)]` - The branches from an `HtmlIf`.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The generated if-chain token stream.
+pub(crate) fn build_html_if_chain(
+    branches: &[(Option<Expr>, Vec<HtmlNode>)],
+) -> proc_macro2::TokenStream {
+    let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    for (branch_index, (condition, body)) in branches.iter().enumerate() {
+        let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
+        match (branch_index, condition) {
+            (0, Some(cond)) => {
+                let stripped_cond: &Expr = strip_braces_from_expr(cond);
+                if_chain.extend(quote! { if #stripped_cond { #body_expr } });
+            }
+            (_, Some(cond)) => {
+                let stripped_cond: &Expr = strip_braces_from_expr(cond);
+                if_chain.extend(quote! { else if #stripped_cond { #body_expr } });
+            }
+            (_, None) => {
+                if_chain.extend(quote! { else { #body_expr } });
             }
         }
     }
@@ -451,32 +528,40 @@ pub(crate) fn merge_same_key_attributes(
     let mut style_values: Vec<HtmlAttrValue> = Vec::new();
     let mut result: Vec<(Ident, HtmlAttrValue)> = Vec::new();
     for (key, value) in attributes {
-        let key_str: String = key.to_string();
-        if key_str == ATTR_KEY_CLASS {
-            class_values.push(value);
-        } else if key_str == ATTR_KEY_STYLE {
-            match value {
-                HtmlAttrValue::Style(props) => style_values.push(HtmlAttrValue::Style(props)),
-                other => style_values.push(other),
-            }
-        } else {
-            result.push((key, value));
+        match key.to_string().as_str() {
+            ATTR_KEY_CLASS => class_values.push(value),
+            ATTR_KEY_STYLE => style_values.push(value),
+            _ => result.push((key, value)),
         }
     }
-    if class_values.len() == 1 {
-        let class_key: Ident = Ident::new(ATTR_KEY_CLASS, proc_macro2::Span::call_site());
-        result.push((class_key, class_values.into_iter().next().unwrap()));
-    } else if class_values.len() > 1 {
-        let class_key: Ident = Ident::new(ATTR_KEY_CLASS, proc_macro2::Span::call_site());
-        result.push((class_key, HtmlAttrValue::Classes(class_values)));
-    }
-    if style_values.len() == 1 {
-        let style_key: Ident = Ident::new(ATTR_KEY_STYLE, proc_macro2::Span::call_site());
-        result.push((style_key, style_values.into_iter().next().unwrap()));
-    } else if style_values.len() > 1 {
-        let style_key: Ident = Ident::new(ATTR_KEY_STYLE, proc_macro2::Span::call_site());
-        result.push((style_key, HtmlAttrValue::Styles(style_values)));
-    }
+    let push_merged = |result: &mut Vec<(Ident, HtmlAttrValue)>,
+                       key_str: &str,
+                       mut values: Vec<HtmlAttrValue>,
+                       wrap: fn(Vec<HtmlAttrValue>) -> HtmlAttrValue| {
+        match values.len() {
+            0 => {}
+            1 => result.push((
+                Ident::new(key_str, proc_macro2::Span::call_site()),
+                values.remove(0),
+            )),
+            _ => result.push((
+                Ident::new(key_str, proc_macro2::Span::call_site()),
+                wrap(values),
+            )),
+        }
+    };
+    push_merged(
+        &mut result,
+        ATTR_KEY_CLASS,
+        class_values,
+        HtmlAttrValue::Classes,
+    );
+    push_merged(
+        &mut result,
+        ATTR_KEY_STYLE,
+        style_values,
+        HtmlAttrValue::Styles,
+    );
     result
 }
 
@@ -506,11 +591,11 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
                 if is_component {
                     let callback_name: String = key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN);
                     quote! {
-                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name.to_string())
+                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name)
                     }
                 } else {
                     quote! {
-                        ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str.parse::<::euv::NativeEventName>().unwrap())
+                        ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
                     }
                 }
             } else if key_str == ATTR_KEY_CHILDREN {

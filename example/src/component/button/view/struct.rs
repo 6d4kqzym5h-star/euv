@@ -3,18 +3,14 @@ use crate::*;
 /// Props for the `primary_button` component.
 ///
 /// Defines the strongly-typed interface for the primary button.
-#[derive(Data, Debug, Default, New)]
+#[derive(Default)]
 pub(crate) struct PrimaryButtonProps {
     /// The button label text, used as fallback when no children are provided.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) label: String,
+    pub(crate) label: &'static str,
     /// Optional click event handler.
-    #[get(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) onclick: Option<NativeEventHandler>,
+    pub(crate) onclick: Option<Rc<dyn Fn(Event)>>,
     /// Whether the button is disabled.
-    #[get(pub(crate), type(copy))]
-    #[set(pub(crate))]
     pub(crate) disabled: bool,
+    /// The child content rendered inside the button.
+    pub(crate) children: VirtualNode,
 }

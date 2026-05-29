@@ -4,15 +4,17 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing title and children.
+/// - `MyCardProps` - The typed props containing title.
+/// - `Vec<VirtualNode>` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled card element.
 #[component]
-pub(crate) fn my_card(props: VirtualNode) -> VirtualNode {
-    let children_node: Vec<VirtualNode> = props.get_children();
-    let MyCardProps { title, .. }: MyCardProps = props.into();
+pub(crate) fn my_card(props: MyCardProps) -> VirtualNode {
+    let MyCardProps {
+        title, children, ..
+    } = props;
     html! {
         div {
             class: c_card()
@@ -20,7 +22,7 @@ pub(crate) fn my_card(props: VirtualNode) -> VirtualNode {
                 class: c_card_title()
                 title
             }
-            children_node
+            children
         }
     }
 }
