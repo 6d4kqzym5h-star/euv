@@ -23,7 +23,7 @@ pub(crate) fn my_modal(props: MyModalProps) -> VirtualNode {
             onclick: onclick.clone()
             div {
                 class: c_modal_content()
-                onclick: move |_event: Event| { }
+                onclick: move |_event: Event| {}
                 div {
                     class: c_modal_header()
                     h3 {

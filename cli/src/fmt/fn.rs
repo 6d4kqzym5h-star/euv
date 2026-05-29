@@ -621,6 +621,29 @@ fn format_macro_body(body: &str) -> String {
             result.push(CHAR_SPACE);
             continue;
         }
+        if chars[position] == CHAR_BRACE_LEFT {
+            let (inner, end) = extract_brace_content(&chars, position);
+            if inner.contains(CHAR_NEWLINE) {
+                let formatted_inner: String = format_macro_body(&inner);
+                result.push(CHAR_BRACE_LEFT);
+                result.push_str(&formatted_inner);
+                result.push(CHAR_BRACE_RIGHT);
+            } else {
+                let trimmed_inner: &str = inner.trim();
+                if trimmed_inner.is_empty() {
+                    result.push(CHAR_BRACE_LEFT);
+                    result.push(CHAR_BRACE_RIGHT);
+                } else {
+                    result.push(CHAR_BRACE_LEFT);
+                    result.push(CHAR_SPACE);
+                    result.push_str(trimmed_inner);
+                    result.push(CHAR_SPACE);
+                    result.push(CHAR_BRACE_RIGHT);
+                }
+            }
+            position = end;
+            continue;
+        }
         if is_ident_char(chars[position]) {
             let start: usize = position;
             while position < len && is_ident_char(chars[position]) {

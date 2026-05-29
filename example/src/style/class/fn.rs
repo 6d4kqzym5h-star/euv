@@ -2059,7 +2059,7 @@ class! {
     }
 
     pub(crate) c_attrs_dynamic_demo(prop_key: &str, prop_value: &str) {
-        {prop_key}: prop_value;
+        { prop_key }: prop_value;
         padding: "16px";
         border-radius: "8px";
         border: format!("1px solid {}", var!(border-input));
