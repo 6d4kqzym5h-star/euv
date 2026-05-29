@@ -30,7 +30,7 @@ use {
     proc_macro2::Span,
     quote::{ToTokens, quote, quote_spanned},
     syn::{
-        Attribute, Expr, ExprLit, File, Ident, Item, Lit, LitStr, Path, Stmt, Token, Type,
+        Attribute, Expr, ExprLit, Field, File, Ident, Item, Lit, LitStr, Path, Stmt, Token, Type,
         Visibility, braced, parenthesized, parse,
         parse::{Parse, ParseBuffer, ParseStream},
         parse_file, parse2,

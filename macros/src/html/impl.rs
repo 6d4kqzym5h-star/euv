@@ -647,24 +647,104 @@ impl ToTokens for HtmlDynamicTag {
                 token_stream
             })
             .collect();
-        let component_registry: HashMap<String, String> = load_component_registry();
+        let component_registry: HashMap<String, ComponentInfo> = load_component_registry();
         let component_match_arms: Vec<proc_macro2::TokenStream> = component_registry
             .iter()
-            .map(|(fn_name, props_type_name): (&String, &String)| {
+            .map(|(fn_name, component_info): (&String, &ComponentInfo)| {
                 let fn_ident: Ident = Ident::new(fn_name, proc_macro2::Span::call_site());
-                let props_ident: Ident = Ident::new(props_type_name, proc_macro2::Span::call_site());
+                let props_ident: Ident = Ident::new(&component_info.props_type, proc_macro2::Span::call_site());
                 let fn_name_str: String = fn_name.clone();
+                let props_fields: &Vec<String> = &component_info.props_fields;
+                let prop_field_tokens: Vec<proc_macro2::TokenStream> = attributes
+                    .iter()
+                    .filter_map(|(key, value): &(HtmlAttrKey, HtmlAttrValue)| {
+                        let HtmlAttrKey::Static(key_ident) = key else {
+                            return None;
+                        };
+                        let key_string: String = key_ident.to_string();
+                        if !props_fields.contains(&key_string) {
+                            return None;
+                        }
+                        let field_ident: Ident = key_ident.clone();
+                        Some(match value {
+                            HtmlAttrValue::Expr(expr) => {
+                                quote! { #field_ident: #expr }
+                            }
+                            HtmlAttrValue::If(html_attr_if) => {
+                                let if_chain: proc_macro2::TokenStream =
+                                    attr_if_to_tokens(html_attr_if);
+                                quote! { #field_ident: #if_chain }
+                            }
+                            HtmlAttrValue::Style(props) => {
+                                let has_if: bool = props.iter().any(
+                                    |(_, style_value): &(String, HtmlStylePropValue)| {
+                                        matches!(style_value, HtmlStylePropValue::If(_))
+                                    },
+                                );
+                                if has_if {
+                                    quote! { #field_ident: #value }
+                                } else {
+                                    quote! { #field_ident: (#value).to_string() }
+                                }
+                            }
+                            _ => {
+                                quote! { #field_ident: #value }
+                            }
+                        })
+                    })
+                    .collect();
+                let has_children_field: bool = props_fields.contains(&ATTR_KEY_CHILDREN.to_string());
+                let children_field_token: Option<proc_macro2::TokenStream> = if children.is_empty() || !has_children_field {
+                    None
+                } else {
+                    let children_node_tokens: proc_macro2::TokenStream =
+                        children_to_node_tokens(children);
+                    Some(quote! { children: #children_node_tokens })
+                };
+                let all_prop_fields: Vec<&proc_macro2::TokenStream> = prop_field_tokens
+                    .iter()
+                    .chain(children_field_token.as_ref())
+                    .collect();
+                let non_prop_attr_tokens: Vec<proc_macro2::TokenStream> = attributes
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, (key, _)): &(usize, &(HtmlAttrKey, HtmlAttrValue))| {
+                        match key {
+                            HtmlAttrKey::Static(key_ident) => {
+                                let key_string: String = key_ident.to_string();
+                                key_string == ATTR_KEY_CLASS
+                                    || key_string == ATTR_KEY_STYLE
+                                    || key_string.starts_with(EVENT_ATTR_PREFIX)
+                            }
+                            HtmlAttrKey::Dynamic(_) => true,
+                        }
+                    })
+                    .map(|(index, _): (usize, &(HtmlAttrKey, HtmlAttrValue))| attr_tokens[index].clone())
+                    .collect();
+                let inject_children_tokens: Vec<proc_macro2::TokenStream> = if has_children_field || children.is_empty() {
+                    vec![]
+                } else {
+                    child_tokens.clone()
+                };
+                let props_init_tokens: proc_macro2::TokenStream = if all_prop_fields.is_empty() {
+                    quote! { #props_ident::default() }
+                } else {
+                    quote! {
+                        #[allow(clippy::needless_update)]
+                        #props_ident { #(#all_prop_fields), *, ..Default::default() }
+                    }
+                };
                 quote! {
                     #fn_name_str => {
-                        let mut __euv_dyn_node: ::euv::VirtualNode = ::euv::IntoNode::into_node(#fn_ident(#props_ident::default()));
+                        let mut __euv_dyn_node: ::euv::VirtualNode = ::euv::IntoNode::into_node(#fn_ident(#props_init_tokens));
                         if let ::euv::VirtualNode::Element { ref mut attributes, ref mut children, .. } = __euv_dyn_node {
-                            let __euv_dyn_attrs: Vec<::euv::AttributeEntry> = vec![#(#attr_tokens), *];
+                            let __euv_dyn_attrs: Vec<::euv::AttributeEntry> = vec![#(#non_prop_attr_tokens), *];
                             for __euv_dyn_attr in __euv_dyn_attrs {
                                 if !__euv_dyn_attr.get_name().is_empty() {
                                     attributes.push(__euv_dyn_attr);
                                 }
                             }
-                            let __euv_dyn_children: Vec<::euv::VirtualNode> = vec![#(#child_tokens), *];
+                            let __euv_dyn_children: Vec<::euv::VirtualNode> = vec![#(#inject_children_tokens), *];
                             for __euv_dyn_child in __euv_dyn_children {
                                 if !matches!(__euv_dyn_child, ::euv::VirtualNode::Empty) {
                                     children.push(__euv_dyn_child);

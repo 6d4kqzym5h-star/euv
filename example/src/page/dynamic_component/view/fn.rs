@@ -52,13 +52,13 @@ pub(crate) fn page_dynamic_component() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "dynamic-tag-content-input"
+                        r#for: TAG_CONTENT_INPUT_ID
                         class: c_form_label()
                         "Content Text"
                     }
                     input {
-                        id: "dynamic-tag-content-input"
-                        name: "dynamic-tag-content-input"
+                        id: TAG_CONTENT_INPUT_ID
+                        name: TAG_CONTENT_INPUT_ID
                         r#type: "text"
                         placeholder: TAG_CONTENT_PLACEHOLDER
                         value: content
@@ -71,11 +71,13 @@ pub(crate) fn page_dynamic_component() -> VirtualNode {
             my_card {
                 title: "Result"
                 p {
-                    class: c_demo_text()
+                    class: c_demo_text_muted()
                     {format!("Current tag: {}", tag_name.get())}
                 }
                 {tag_name.get()} {
                     class: c_dynamic_component_panel()
+                    title: "Dynamic my_card"
+                    onclick: badge_on_click("Dynamic Badge", LogLevel::Log)
                     {content.get()}
                 }
             }

@@ -4,10 +4,10 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `HashMap<String, String>`- The map of function names to Props type names.
-pub(crate) fn set_user_fn_names(names: HashMap<String, String>) {
+/// - `HashMap<String, ComponentInfo>`- The map of function names to component metadata.
+pub(crate) fn set_user_fn_names(names: HashMap<String, ComponentInfo>) {
     unsafe {
-        let ptr: *mut MaybeUninit<HashMap<String, String>> = &raw mut USER_FN_NAMES;
+        let ptr: *mut MaybeUninit<HashMap<String, ComponentInfo>> = &raw mut USER_FN_NAMES;
         (*ptr).write(names);
     }
 }
@@ -23,7 +23,7 @@ pub(crate) fn set_user_fn_names(names: HashMap<String, String>) {
 /// - `bool`- `true` if the name exists in the component registry, `false` otherwise.
 pub(crate) fn is_user_fn(name: &str) -> bool {
     unsafe {
-        let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
+        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
         (*ptr).assume_init_ref().contains_key(name)
     }
 }
@@ -39,11 +39,11 @@ pub(crate) fn is_user_fn(name: &str) -> bool {
 /// - `Option<&'static str>`- The Props type name if found.
 pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
     unsafe {
-        let ptr: *const MaybeUninit<HashMap<String, String>> = &raw const USER_FN_NAMES;
+        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
         (*ptr)
             .assume_init_ref()
             .get(name)
-            .map(|data: &String| data.as_str())
+            .map(|info: &ComponentInfo| info.props_type.as_str())
     }
 }
 
@@ -67,7 +67,7 @@ pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
 ///
 /// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
 pub fn parse_html(input: TokenStream) -> TokenStream {
-    let fn_names: HashMap<String, String> = load_component_registry();
+    let fn_names: HashMap<String, ComponentInfo> = load_component_registry();
     set_user_fn_names(fn_names);
     let tokens: proc_macro2::TokenStream = match parse::<HtmlRoot>(input) {
         Ok(nodes) => nodes.into_token_stream(),
@@ -83,15 +83,23 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 ///
 /// # Returns
 ///
-/// - `HashMap<String, String>` - Map of component function names to Props type names.
-pub(crate) fn load_component_registry() -> HashMap<String, String> {
+/// - `HashMap<String, ComponentInfo>` - Map of component function names to component metadata.
+pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
     let manifest_dir: Option<String> = env::var(CARGO_MANIFEST_DIR).ok();
     let Some(manifest_dir) = manifest_dir else {
         return HashMap::new();
     };
     let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
-    let mut fn_names: HashMap<String, String> = HashMap::new();
-    scan_dir_for_components(&src_dir, &mut fn_names);
+    let mut global_props_fields_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut rs_files: Vec<PathBuf> = Vec::new();
+    collect_rs_files(&src_dir, &mut rs_files);
+    for path in &rs_files {
+        collect_props_structs_from_file(path, &mut global_props_fields_map);
+    }
+    let mut fn_names: HashMap<String, ComponentInfo> = HashMap::new();
+    for path in &rs_files {
+        scan_file_for_components_with_map(path, &global_props_fields_map, &mut fn_names);
+    }
     fn_names
 }
 
@@ -100,8 +108,8 @@ pub(crate) fn load_component_registry() -> HashMap<String, String> {
 /// # Arguments
 ///
 /// - `&PathBuf` - The directory to scan.
-/// - `&mut HashMap<String, String>` - The map to populate with discovered component names and Props types.
-fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashMap<String, String>) {
+/// - `&mut HashMap<String, ComponentInfo>` - The map to populate with discovered component metadata.
+fn collect_rs_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
     let entries: Result<ReadDir, std::io::Error> = read_dir(dir);
     let Ok(entries) = entries else {
         return;
@@ -109,24 +117,43 @@ fn scan_dir_for_components(dir: &PathBuf, fn_names: &mut HashMap<String, String>
     for entry in entries.flatten() {
         let path: PathBuf = entry.path();
         if path.is_dir() {
-            scan_dir_for_components(&path, fn_names);
+            collect_rs_files(&path, files);
         } else if path
             .extension()
             .is_some_and(|ext: &OsStr| ext == OsStr::new(RUST_FILE_EXTENSION))
         {
-            scan_file_for_components(&path, fn_names);
+            files.push(path);
         }
     }
 }
 
 /// Parses a single `.rs` file and extracts function names annotated with `#[component]`,
-/// along with their first parameter's type name (the Props type).
+/// along with their first parameter's type name (the Props type) and the Props struct field names.
 ///
 /// # Arguments
 ///
 /// - `&PathBuf` - The file path to parse.
-/// - `&mut HashMap<String, String>` - The map to populate with function name → Props type name.
-fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashMap<String, String>) {
+/// - `&mut HashMap<String, ComponentInfo>` - The map to populate with function name → component metadata.
+fn collect_props_structs_from_file(path: &PathBuf, global_map: &mut HashMap<String, Vec<String>>) {
+    let content: String = match read_to_string(path) {
+        Ok(data) => data,
+        Err(_) => return,
+    };
+    let file: File = match parse_file(&content) {
+        Ok(file) => file,
+        Err(_) => return,
+    };
+    let file_map: HashMap<String, Vec<String>> = extract_props_structs(&file);
+    for (struct_name, field_names) in file_map {
+        global_map.insert(struct_name, field_names);
+    }
+}
+
+fn scan_file_for_components_with_map(
+    path: &PathBuf,
+    global_props_fields_map: &HashMap<String, Vec<String>>,
+    fn_names: &mut HashMap<String, ComponentInfo>,
+) {
     let content: String = match read_to_string(path) {
         Ok(data) => data,
         Err(_) => return,
@@ -144,10 +171,47 @@ fn scan_file_for_components(path: &PathBuf, fn_names: &mut HashMap<String, Strin
             if has_component_attr {
                 let fn_name: String = item_fn.sig.ident.to_string();
                 let props_type: String = extract_props_type_from_fn(item_fn);
-                fn_names.insert(fn_name, props_type);
+                let props_fields: Vec<String> = global_props_fields_map
+                    .get(&props_type)
+                    .cloned()
+                    .unwrap_or_default();
+                fn_names.insert(
+                    fn_name,
+                    ComponentInfo {
+                        props_type,
+                        props_fields,
+                    },
+                );
             }
         }
     }
+}
+
+/// Extracts all struct definitions from a file and maps their names to field name lists.
+///
+/// # Arguments
+///
+/// - `&File` - The parsed Rust source file.
+///
+/// # Returns
+///
+/// - `HashMap<String, Vec<String>>` - Map of struct name → list of field names.
+fn extract_props_structs(file: &File) -> HashMap<String, Vec<String>> {
+    let mut result: HashMap<String, Vec<String>> = HashMap::new();
+    for item in &file.items {
+        if let Item::Struct(item_struct) = item {
+            let struct_name: String = item_struct.ident.to_string();
+            let field_names: Vec<String> = item_struct
+                .fields
+                .iter()
+                .filter_map(|field: &Field| {
+                    field.ident.as_ref().map(|ident: &Ident| ident.to_string())
+                })
+                .collect();
+            result.insert(struct_name, field_names);
+        }
+    }
+    result
 }
 
 /// Extracts the Props type name from the first parameter of a component function.
@@ -202,7 +266,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
                 || second_brace.peek(Token![match])
                 || second_brace.peek(Token![for])
                 || second_brace.peek(LitStr)
-                || (second_brace.peek(Brace) && second_brace.peek2(Colon))
+                || (second_brace.peek(Brace) && content.peek2(Colon))
                 || (second_brace.peek(Brace) && second_brace.peek2(Brace));
             if is_dynamic_tag {
                 let tag_content: ParseBuffer<'_>;

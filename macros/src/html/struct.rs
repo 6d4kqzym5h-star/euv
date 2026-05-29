@@ -139,3 +139,15 @@ pub(crate) struct HtmlDynamicTag {
     #[set(pub(crate))]
     pub(crate) children: Vec<HtmlNode>,
 }
+
+/// Stores metadata about a registered component function.
+///
+/// Contains the Props type name and the list of field names declared
+/// in the Props struct, used for attribute filtering in dynamic tags.
+#[derive(Clone, Debug)]
+pub(crate) struct ComponentInfo {
+    /// The Props type name (e.g., "PrimaryButtonProps").
+    pub(crate) props_type: String,
+    /// The field names declared in the Props struct.
+    pub(crate) props_fields: Vec<String>,
+}
