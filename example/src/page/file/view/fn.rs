@@ -88,7 +88,6 @@ pub(crate) fn page_file_upload() -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: "file-upload"
                         class: c_form_label()
                         "Select file(s)"
                     }
@@ -97,10 +96,15 @@ pub(crate) fn page_file_upload() -> VirtualNode {
                         name: "file_upload"
                         r#type: "file"
                         autocomplete: "off"
-                        class: c_file_upload_input()
+                        class: c_file_upload_input_hidden()
                         accept: state.get_accept()
                         multiple: state.get_multiple()
                         onchange: file_upload_on_change(state)
+                    }
+                    primary_button {
+                        label: "Choose File"
+                        onclick: file_upload_on_select()
+                        "Choose File"
                     }
                 }
                 div {

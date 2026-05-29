@@ -1787,6 +1787,18 @@ class! {
         cursor: "pointer";
     }
 
+    pub(crate) c_file_upload_input_hidden {
+        position: "absolute";
+        width: "1px";
+        height: "1px";
+        padding: "0";
+        margin: "-1px";
+        overflow: "hidden";
+        clip: "rect(0, 0, 0, 0)";
+        white-space: "nowrap";
+        border: "0";
+    }
+
     pub(crate) c_file_upload_options {
         margin: "12px 0";
         padding: "12px 0";

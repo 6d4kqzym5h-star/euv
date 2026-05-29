@@ -73,6 +73,21 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Ev
     }))
 }
 
+/// Creates a click event handler that programmatically triggers the hidden file input.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler for the custom file button.
+pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        let document: Document = window().unwrap().document().unwrap();
+        if let Some(input) = document.get_element_by_id("file-upload")
+            && let Ok(html_input) = input.dyn_into::<HtmlInputElement>() {
+                html_input.click();
+            }
+    }))
+}
+
 /// Creates a click event handler that clears all selected files.
 ///
 /// # Arguments

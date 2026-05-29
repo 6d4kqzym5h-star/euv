@@ -38,7 +38,7 @@ where
 pub(crate) fn is_boolean_property(name: &str) -> bool {
     matches!(
         name,
-        ATTR_CHECKED | ATTR_DISABLED | ATTR_SELECTED | ATTR_READONLY
+        ATTR_CHECKED | ATTR_DISABLED | ATTR_SELECTED | ATTR_READONLY | ATTR_MULTIPLE
     )
 }
 
@@ -111,6 +111,16 @@ pub(crate) fn remove_dom_attribute_or_property(element: &Element, name: &str) {
             return;
         }
     }
+    if name == ATTR_MULTIPLE {
+        if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
+            input.set_multiple(false);
+            return;
+        }
+        if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
+            select.set_multiple(false);
+            return;
+        }
+    }
     let _ = element.remove_attribute(name);
 }
 
@@ -179,6 +189,16 @@ pub(crate) fn set_dom_attribute_or_property(element: &Element, name: &str, value
         }
         if let Some(textarea) = element.dyn_ref::<HtmlTextAreaElement>() {
             textarea.set_read_only(value == BOOL_TRUE);
+            return;
+        }
+    }
+    if name == ATTR_MULTIPLE {
+        if let Some(input) = element.dyn_ref::<HtmlInputElement>() {
+            input.set_multiple(value == BOOL_TRUE);
+            return;
+        }
+        if let Some(select) = element.dyn_ref::<HtmlSelectElement>() {
+            select.set_multiple(value == BOOL_TRUE);
             return;
         }
     }

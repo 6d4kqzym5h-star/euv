@@ -16,6 +16,9 @@ pub(crate) const ATTR_SELECTED: &str = "selected";
 /// The DOM attribute name for the `readonly` property on input/textarea elements.
 pub(crate) const ATTR_READONLY: &str = "readonly";
 
+/// The DOM attribute name for the `multiple` property on input/select elements.
+pub(crate) const ATTR_MULTIPLE: &str = "multiple";
+
 /// The string representation of boolean `true` used for DOM property comparisons.
 pub(crate) const BOOL_TRUE: &str = "true";
 
