@@ -1,3 +1,6 @@
+#[allow(unused_imports)]
+use super::*;
+
 /// The property name used to store the dispatch callback on the `window` object.
 ///
 /// This key is used by `ensure_dispatch_callback` to register a `Closure`

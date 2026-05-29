@@ -257,7 +257,7 @@ fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::TokenStream> {
     children
         .iter()
         .map(|child| {
-            let mut ts = proc_macro2::TokenStream::new();
+            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
             child.to_tokens(&mut ts);
             ts
         })
@@ -281,12 +281,12 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
     match children.len() {
         0 => quote! { ::euv::VirtualNode::Empty },
         1 => {
-            let mut ts = proc_macro2::TokenStream::new();
+            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
             children[0].to_tokens(&mut ts);
             ts
         }
         _ => {
-            let child_tokens = nodes_to_token_vec(children);
+            let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
             quote! { ::euv::VirtualNode::Fragment(vec![#(#child_tokens), *]) }
         }
     }
@@ -305,7 +305,7 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
 ///
 /// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
-    let child_tokens = nodes_to_token_vec(children);
+    let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
     quote! { vec![#(#child_tokens), *] }
 }
 
@@ -389,14 +389,14 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
-        let stripped_body = strip_braces_from_expr(body);
+        let stripped_body: &Expr = strip_braces_from_expr(body);
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                let stripped_cond = strip_braces_from_expr(cond);
+                let stripped_cond: &Expr = strip_braces_from_expr(cond);
                 if_chain.extend(quote! { if #stripped_cond { #stripped_body } });
             }
             (_, Some(cond)) => {
-                let stripped_cond = strip_braces_from_expr(cond);
+                let stripped_cond: &Expr = strip_braces_from_expr(cond);
                 if_chain.extend(quote! { else if #stripped_cond { #stripped_body } });
             }
             (_, None) => {
@@ -422,16 +422,16 @@ pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::Token
 pub(crate) fn build_html_if_chain(
     branches: &[(Option<Expr>, Vec<HtmlNode>)],
 ) -> proc_macro2::TokenStream {
-    let mut if_chain = proc_macro2::TokenStream::new();
+    let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     for (branch_index, (condition, body)) in branches.iter().enumerate() {
-        let body_expr = children_to_node_tokens(body);
+        let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                let stripped_cond = strip_braces_from_expr(cond);
+                let stripped_cond: &Expr = strip_braces_from_expr(cond);
                 if_chain.extend(quote! { if #stripped_cond { #body_expr } });
             }
             (_, Some(cond)) => {
-                let stripped_cond = strip_braces_from_expr(cond);
+                let stripped_cond: &Expr = strip_braces_from_expr(cond);
                 if_chain.extend(quote! { else if #stripped_cond { #body_expr } });
             }
             (_, None) => {

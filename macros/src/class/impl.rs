@@ -122,10 +122,11 @@ impl Parse for ClassInput {
                         }
                         continue;
                     }
-                    if lookup_pseudo_selector(&keyword_str).is_some() && forked.peek(Brace) {
+                    if let Some(selector) = lookup_pseudo_selector(&keyword_str)
+                        && forked.peek(Brace)
+                    {
                         content.parse::<Ident>()?;
-                        let selector: &'static str = lookup_pseudo_selector(&keyword_str)
-                            .expect("pseudo selector lookup should succeed after check");
+                        let selector: &'static str = selector;
                         let block_content;
                         braced!(block_content in content);
                         let mut block_properties: Vec<(String, ClassPropValue)> = Vec::new();
@@ -361,9 +362,9 @@ impl ToTokens for ClassDef {
                         css_string.push_str(CSS_DECL_TERMINATOR);
                     }
                     if has_extra {
-                        let pseudo_static =
+                        let pseudo_static: String =
                             pseudo_blocks_to_static_string(self.get_pseudo_blocks());
-                        let media_static = media_blocks_to_static_string(self.get_media_blocks());
+                        let media_static: String = media_blocks_to_static_string(self.get_media_blocks());
                         emit_once_lock_fn(
                             tokens,
                             OnceLockParams {

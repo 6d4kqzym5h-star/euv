@@ -155,7 +155,7 @@ impl ToTokens for CssVarDef {
                     let CssVarValue::Expr(expr) = value;
                     is_static_string_expr(expr)
                 });
-                let style_expr = if all_static {
+                let style_expr: proc_macro2::TokenStream = if all_static {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_vars() {
                         let CssVarValue::Expr(expr) = value;

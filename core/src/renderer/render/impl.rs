@@ -20,10 +20,10 @@ impl Renderer {
                 if let Some(element) = child.dyn_ref::<Element>() {
                     self.cleanup_dom_subtree(element);
                 }
-                self.get_root().remove_child(&child).unwrap();
+                let _ = self.get_root().remove_child(&child);
             }
             let dom_node: Node = self.create_dom_node(&new_unwrapped);
-            self.get_root().append_child(&dom_node).unwrap();
+            let _ = self.get_root().append_child(&dom_node);
         }
         self.set_current_tree(Some(new_unwrapped));
     }
@@ -42,10 +42,10 @@ impl Renderer {
             if let Some(element) = child.dyn_ref::<Element>() {
                 self.cleanup_dom_subtree(element);
             }
-            self.get_root().remove_child(&child).unwrap();
+            let _ = self.get_root().remove_child(&child);
         }
         let dom_node: Node = self.create_dom_node(&new_unwrapped);
-        self.get_root().append_child(&dom_node).unwrap();
+        let _ = self.get_root().append_child(&dom_node);
         self.set_current_tree(Some(new_unwrapped));
     }
 
@@ -63,19 +63,20 @@ impl Renderer {
             false
         };
         if is_element {
-            let element: Element = dom_child.unwrap().dyn_into::<Element>().unwrap();
-            self.patch_node(old_node, new_node, &element);
+            if let Some(dom_child) = dom_child
+                && let Ok(element) = dom_child.dyn_into::<Element>()
+            {
+                self.patch_node(old_node, new_node, &element);
+            }
         } else if let Some(dom_child) = dom_child {
             if let Some(element) = dom_child.dyn_ref::<Element>() {
                 self.cleanup_dom_subtree(element);
             }
             let new_dom_node: Node = self.create_dom_node(new_node);
-            self.get_root()
-                .replace_child(&new_dom_node, &dom_child)
-                .unwrap();
+            let _ = self.get_root().replace_child(&new_dom_node, &dom_child);
         } else {
             let new_dom_node: Node = self.create_dom_node(new_node);
-            self.get_root().append_child(&new_dom_node).unwrap();
+            let _ = self.get_root().append_child(&new_dom_node);
         }
     }
 
@@ -116,7 +117,7 @@ impl Renderer {
                     let new_dom_node: Node = self.create_dom_node(new_node);
                     if let Some(parent) = dom_element.parent_node() {
                         self.cleanup_dom_subtree(dom_element);
-                        parent.replace_child(&new_dom_node, dom_element).unwrap();
+                        let _ = parent.replace_child(&new_dom_node, dom_element);
                     }
                     return;
                 }
@@ -152,21 +153,21 @@ impl Renderer {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     self.cleanup_dom_subtree(dom_element);
-                    parent.replace_child(&new_dom_node, dom_element).unwrap();
+                    let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             (_, VirtualNode::Dynamic(_)) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     self.cleanup_dom_subtree(dom_element);
-                    parent.replace_child(&new_dom_node, dom_element).unwrap();
+                    let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             _ => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     self.cleanup_dom_subtree(dom_element);
-                    parent.replace_child(&new_dom_node, dom_element).unwrap();
+                    let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
         }
@@ -207,9 +208,6 @@ impl Renderer {
         for new_attr in new_attrs {
             match new_attr.get_value() {
                 AttributeValue::Event(handler) => {
-                    // Event handlers are always updated because closures cannot
-                    // be compared for identity; the PartialEq impl returns true
-                    // unconditionally which would skip handler replacement.
                     self.attach_event_listener(element, handler);
                 }
                 _ => {
@@ -470,7 +468,7 @@ impl Renderer {
         if new_len > old_len {
             for new_child in new_children.iter().skip(common_len) {
                 let new_dom_node: Node = self.create_dom_node(new_child);
-                parent.append_child(&new_dom_node).unwrap();
+                let _ = parent.append_child(&new_dom_node);
             }
         } else if old_len > new_len {
             for _ in common_len..old_len {
@@ -480,7 +478,7 @@ impl Renderer {
                     self.cleanup_dom_subtree(element);
                 }
                 if let Some(last_child) = parent.last_child() {
-                    parent.remove_child(&last_child).unwrap();
+                    let _ = parent.remove_child(&last_child);
                 }
             }
         }
@@ -496,11 +494,15 @@ impl Renderer {
     ///
     /// - `Node`- The created DOM node.
     ///
-    /// # Panics
-    ///
-    /// Panics if `window()` or `document()` is unavailable.
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
-        let document: Document = window().unwrap().document().unwrap();
+        let window_value: Window = match window() {
+            Some(w) => w,
+            None => return JsValue::UNDEFINED.into(),
+        };
+        let document: Document = match window_value.document() {
+            Some(d) => d,
+            None => return JsValue::UNDEFINED.into(),
+        };
         self.create_dom_node_with_document(node, &document)
     }
 
@@ -523,7 +525,10 @@ impl Renderer {
                 ..
             } => {
                 let element: Element = match tag {
-                    Tag::Element(name) => document.create_element(name).unwrap(),
+                    Tag::Element(name) => match document.create_element(name) {
+                        Ok(el) => el,
+                        Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
+                    },
                     Tag::Component(_) => {
                         let unwrapped: VirtualNode = self.unwrap_component(node);
                         return self.create_dom_node_with_document(&unwrapped, document);
@@ -592,7 +597,7 @@ impl Renderer {
                 }
                 for child in children {
                     let child_node: Node = self.create_dom_node_with_document(child, document);
-                    element.append_child(&child_node).unwrap();
+                    let _ = element.append_child(&child_node);
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
@@ -630,11 +635,14 @@ impl Renderer {
                 text.into()
             }
             VirtualNode::Fragment(children) => {
-                let fragment: Element = document.create_element(FRAGMENT_TAG).unwrap();
+                let fragment: Element = match document.create_element(FRAGMENT_TAG) {
+                    Ok(el) => el,
+                    Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
+                };
                 let _ = fragment.set_attribute(ATTR_STYLE, FRAGMENT_STYLE);
                 for child in children {
                     let child_node: Node = self.create_dom_node_with_document(child, document);
-                    fragment.append_child(&child_node).unwrap();
+                    let _ = fragment.append_child(&child_node);
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
@@ -653,13 +661,15 @@ impl Renderer {
                 fragment.into()
             }
             VirtualNode::Dynamic(dynamic_node) => {
-                let placeholder: Element =
-                    document.create_element(DYNAMIC_PLACEHOLDER_TAG).unwrap();
+                let placeholder: Element = match document.create_element(DYNAMIC_PLACEHOLDER_TAG) {
+                    Ok(el) => el,
+                    Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
+                };
                 let _ = placeholder.set_attribute(ATTR_STYLE, DISPLAY_CONTENTS_STYLE);
                 let dynamic_id: usize = Self::assign_dynamic_id(&placeholder);
                 let initial_dom: Node =
                     self.setup_dynamic_node(dynamic_node, dynamic_id, &placeholder, true);
-                placeholder.append_child(&initial_dom).unwrap();
+                let _ = placeholder.append_child(&initial_dom);
                 placeholder.into()
             }
             VirtualNode::Empty => document.create_text_node(EMPTY_STRING).into(),

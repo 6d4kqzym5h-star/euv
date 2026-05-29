@@ -12,32 +12,39 @@ use crate::*;
 /// - `&str` - A CSS selector string to locate the target element.
 /// - `FnOnce() -> VirtualNode + 'static` - A closure that returns the virtual DOM tree to render.
 ///
-/// # Panics
-///
-/// Panics if no global `window` or `document` exists, or if the selector does not match any element.
 pub fn mount<F>(selector: &str, render_fn: F)
 where
     F: FnOnce() -> VirtualNode,
 {
     init_event_delegation();
-    let window: Window = window().expect("no global window exists");
-    let document: Document = window.document().expect("should have a document");
+    let window: Window = match window() {
+        Some(w) => w,
+        None => return,
+    };
+    let document: Document = match window.document() {
+        Some(d) => d,
+        None => return,
+    };
     let target: Element = if selector == BODY_TAG {
-        document.body().expect("document should have a body").into()
+        match document.body() {
+            Some(body) => body.into(),
+            None => return,
+        }
     } else if let Some(id) = selector.strip_prefix(ID_SELECTOR_PREFIX) {
-        document
-            .get_element_by_id(id)
-            .unwrap_or_else(|| panic!("no element found with id '{}'", id))
+        match document.get_element_by_id(id) {
+            Some(el) => el,
+            None => return,
+        }
     } else if let Some(class) = selector.strip_prefix(CLASS_SELECTOR_PREFIX) {
-        document
-            .get_elements_by_class_name(class)
-            .item(0)
-            .unwrap_or_else(|| panic!("no element found with class '{}'", class))
+        match document.get_elements_by_class_name(class).item(0) {
+            Some(el) => el,
+            None => return,
+        }
     } else {
-        document
-            .get_elements_by_tag_name(selector)
-            .item(0)
-            .unwrap_or_else(|| panic!("no element found with tag '{}'", selector))
+        match document.get_elements_by_tag_name(selector).item(0) {
+            Some(el) => el,
+            None => return,
+        }
     };
     let mut renderer: Renderer = Renderer::new(target);
     let vnode: VirtualNode = render_fn();

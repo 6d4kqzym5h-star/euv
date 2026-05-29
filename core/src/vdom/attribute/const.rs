@@ -1,3 +1,6 @@
+#[allow(unused_imports)]
+use super::*;
+
 /// The DOM `id` attribute value for the shared `<style>` element used by euv.
 ///
 /// This ID is used to locate or create the `<style>` element in the document `<head>`

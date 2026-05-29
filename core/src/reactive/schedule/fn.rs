@@ -6,11 +6,11 @@ use crate::*;
 /// invokes `dispatch_signal_update_callbacks`, then stores it on the
 /// `window` object so it can be invoked via `requestAnimationFrame`.
 ///
-/// # Panics
-///
-/// Panics if `window()` returns `None`.
 fn ensure_dispatch_callback() {
-    let window_value: Window = window().unwrap();
+    let window_value: Window = match window() {
+        Some(w) => w,
+        None => return,
+    };
     let key: JsValue = JsValue::from_str(EUV_DISPATCH);
     if Reflect::get(&window_value, &key)
         .unwrap_or(JsValue::UNDEFINED)
@@ -49,7 +49,13 @@ pub fn schedule_signal_update() {
         return;
     }
     ensure_dispatch_callback();
-    let window_value: Window = window_option.unwrap();
+    let window_value: Window = match window_option {
+        Some(w) => w,
+        None => {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            return;
+        }
+    };
     let dispatch_fn: JsValue =
         Reflect::get(&window_value, &JsValue::from_str(EUV_DISPATCH)).unwrap_or(JsValue::UNDEFINED);
     if dispatch_fn.is_undefined() {
@@ -59,7 +65,6 @@ pub fn schedule_signal_update() {
     let raf_val: JsValue = Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
         .unwrap_or(JsValue::UNDEFINED);
     if raf_val.is_undefined() {
-        // Fallback to queueMicrotask if rAF is unavailable (e.g., Web Workers).
         let queue_microtask_val: JsValue =
             Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
                 .unwrap_or(JsValue::UNDEFINED);

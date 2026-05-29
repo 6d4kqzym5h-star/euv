@@ -59,9 +59,6 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
 ///
 /// - `String`- The event type name to listen for (e.g. `"click"`).
 ///
-/// # Panics
-///
-/// Panics if `window()` returns `None` or if `add_event_listener_with_callback_and_bool` fails.
 pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
     let already_delegated: bool = is_delegated_event(event_name);
     if already_delegated {
@@ -70,14 +67,15 @@ pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
     let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         dispatch_delegated_event(&event, event_name);
     }));
-    let window: Window = window().unwrap();
-    window
-        .add_event_listener_with_callback_and_bool(
-            event_name,
-            closure.as_ref().unchecked_ref(),
-            true,
-        )
-        .unwrap();
+    let window: Window = match window() {
+        Some(w) => w,
+        None => return,
+    };
+    let _ = window.add_event_listener_with_callback_and_bool(
+        event_name,
+        closure.as_ref().unchecked_ref(),
+        true,
+    );
     closure.forget();
     insert_delegated_event(event_name);
 }
