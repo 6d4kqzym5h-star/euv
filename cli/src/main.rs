@@ -152,7 +152,6 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     let www_route_prefix: String = args.www_dir.replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD);
     let addr: SocketAddr = SocketAddr::from(([127, 0, 0, 1], args.port));
     let server_url: String = format!("http://{addr}/{www_route_prefix}/{INDEX_HTML_FILE_NAME}");
-    print_banner(Action::Run, &server_url);
     let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
     let initial_html: String = match run_build_pipeline(&args, None).await {
@@ -161,9 +160,11 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
             log::error!("Initial build pipeline failed: {}", error);
             let import_path: String = resolve_import_path(&args);
             let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
-            generate_html(&www_absolute, &import_path, is_release).await?
+            let custom_html: Option<&Path> = args.index_html.as_deref();
+            generate_html(&www_absolute, &import_path, is_release, custom_html).await?
         }
     };
+    print_banner(Action::Run, &server_url);
     let (reload_tx, _): (
         broadcast::Sender<ReloadEvent>,
         broadcast::Receiver<ReloadEvent>,

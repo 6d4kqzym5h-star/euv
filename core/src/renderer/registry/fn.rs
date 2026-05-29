@@ -112,8 +112,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
     let mut iterations: usize = 0;
     const MAX_ITERATIONS: usize = 3;
     loop {
-        let registry: &mut HashMap<usize, SignalUpdateEntry> =
-            ensure_signal_update_registry_mut();
+        let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
         let dirty_keys: Vec<usize> = registry
             .iter()
             .filter_map(|(key, entry)| {
@@ -186,8 +185,11 @@ pub(crate) fn mark_all_slots_dirty() {
 /// - `usize`- The unique ID of the `DynamicNode`.
 /// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
 pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnMut()>) {
-    let entry: SignalUpdateEntry =
-        Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false, true)));
+    let entry: SignalUpdateEntry = Rc::new(RefCell::new(SignalUpdateSlot::new(
+        Some(callback),
+        false,
+        true,
+    )));
     ensure_signal_update_registry_mut().insert(dynamic_id, entry);
 }
 
@@ -201,8 +203,11 @@ pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnM
 /// - `usize`- The inner address of the attribute signal.
 /// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
 pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn FnMut()>) {
-    let entry: SignalUpdateEntry =
-        Rc::new(RefCell::new(SignalUpdateSlot::new(Some(callback), false, true)));
+    let entry: SignalUpdateEntry = Rc::new(RefCell::new(SignalUpdateSlot::new(
+        Some(callback),
+        false,
+        true,
+    )));
     ensure_signal_update_registry_mut().insert(signal_key, entry);
 }
 

@@ -178,8 +178,12 @@ impl ToTokens for CssVarDef {
                     quote! { [#(#css_string_parts), *].concat() }
                 };
                 emit_css_var_once_lock_fn(
-                    tokens, vis, &fn_name_token, &const_name_token,
-                    &class_name_str, &style_expr,
+                    tokens,
+                    vis,
+                    &fn_name_token,
+                    &const_name_token,
+                    &class_name_str,
+                    &style_expr,
                 );
             }
         }

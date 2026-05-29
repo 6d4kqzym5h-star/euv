@@ -222,6 +222,8 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {}", error);
     }
+    let out_dir: PathBuf = resolve_out_dir(args);
+    clean_out_dir(&out_dir).await;
     build_wasm(args).await?;
     log::info!("WASM build completed successfully");
     let pkg_dir: PathBuf = resolve_out_dir(args);
@@ -229,8 +231,35 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
-    generate_html(&www_dir, &import_path, is_release).await?;
+    let custom_html: Option<&Path> = args.index_html.as_deref();
+    generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(())
+}
+
+/// Cleans the output directory before a fresh build.
+///
+/// Removes all files and subdirectories within the output directory
+/// so that stale artifacts from previous builds do not remain.
+/// The directory itself is preserved (recreated if missing).
+///
+/// # Arguments
+///
+/// - `&Path` - The output directory to clean.
+pub(crate) async fn clean_out_dir(out_dir: &Path) {
+    let mut entries: ReadDir = match read_dir(out_dir).await {
+        Ok(dir) => dir,
+        Err(_) => return,
+    };
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        let path: PathBuf = entry.path();
+        if path.is_dir() {
+            if let Err(error) = tokio::fs::remove_dir_all(&path).await {
+                log::warn!("Failed to remove directory '{}': {}", path.display(), error);
+            }
+        } else if let Err(error) = remove_file(&path).await {
+            log::warn!("Failed to remove file '{}': {}", path.display(), error);
+        }
+    }
 }
 
 /// Removes unnecessary files from the wasm-pack output directory.
@@ -316,6 +345,8 @@ pub(crate) async fn run_build_pipeline(
     if let Err(error) = run_hyperlane_fmt().await {
         log::warn!("hyperlane-cli fmt error: {}", error);
     }
+    let out_dir: PathBuf = resolve_out_dir(args);
+    clean_out_dir(&out_dir).await;
     match build_wasm(args).await {
         Ok(()) => {
             log::info!("WASM build completed successfully");
@@ -333,7 +364,8 @@ pub(crate) async fn run_build_pipeline(
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
-    let html: String = generate_html(&www_dir, &import_path, is_release).await?;
+    let custom_html: Option<&Path> = args.index_html.as_deref();
+    let html: String = generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(html)
 }
 

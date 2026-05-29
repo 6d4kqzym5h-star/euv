@@ -1,28 +1,29 @@
 use crate::*;
 
+/// Parameters for `emit_once_lock_fn`.
+struct OnceLockParams<'a> {
+    vis: &'a Visibility,
+    fn_name_token: &'a proc_macro2::TokenStream,
+    const_name_token: &'a proc_macro2::TokenStream,
+    class_name_str: &'a str,
+    style_expr: &'a proc_macro2::TokenStream,
+    pseudo_expr: &'a proc_macro2::TokenStream,
+    media_expr: &'a proc_macro2::TokenStream,
+}
+
 /// Generates the `OnceLock`-based static function body for a no-param class.
 ///
 /// Shared by both the all-static and dynamic paths in `ClassDef::to_tokens`.
-///
-/// # Arguments
-///
-/// - `vis` - The visibility modifier.
-/// - `fn_name_token` - The function name token stream.
-/// - `const_name_token` - The `OnceLock` constant name token stream.
-/// - `class_name_str` - The class name string literal.
-/// - `style_expr` - Token stream that evaluates to the CSS style string.
-/// - `pseudo_expr` - Token stream that evaluates to `Vec<PseudoRule>`.
-/// - `media_expr` - Token stream that evaluates to `Vec<MediaRule>`.
-fn emit_once_lock_fn(
-    tokens: &mut proc_macro2::TokenStream,
-    vis: &Visibility,
-    fn_name_token: &proc_macro2::TokenStream,
-    const_name_token: &proc_macro2::TokenStream,
-    class_name_str: &str,
-    style_expr: &proc_macro2::TokenStream,
-    pseudo_expr: &proc_macro2::TokenStream,
-    media_expr: &proc_macro2::TokenStream,
-) {
+fn emit_once_lock_fn(tokens: &mut proc_macro2::TokenStream, p: OnceLockParams<'_>) {
+    let OnceLockParams {
+        vis,
+        fn_name_token,
+        const_name_token,
+        class_name_str,
+        style_expr,
+        pseudo_expr,
+        media_expr,
+    } = p;
     tokens.extend(quote! {
         #vis fn #fn_name_token() -> &'static ::euv::Css {
             static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
@@ -359,26 +360,36 @@ impl ToTokens for ClassDef {
                         css_string.push_str(&expr_to_string(expr));
                         css_string.push_str(CSS_DECL_TERMINATOR);
                     }
-                    let style_expr = if has_extra {
-                        let pseudo_static = pseudo_blocks_to_static_string(self.get_pseudo_blocks());
+                    if has_extra {
+                        let pseudo_static =
+                            pseudo_blocks_to_static_string(self.get_pseudo_blocks());
                         let media_static = media_blocks_to_static_string(self.get_media_blocks());
-                        let pseudo_expr_static = quote! { ::euv::Css::parse_pseudo_rules(#pseudo_static) };
-                        let media_expr_static = quote! { ::euv::Css::parse_media_rules(#media_static) };
                         emit_once_lock_fn(
-                            tokens, vis, &fn_name_token, &const_name_token,
-                            &class_name_str,
-                            &quote! { #css_string.to_string() },
-                            &pseudo_expr_static,
-                            &media_expr_static,
+                            tokens,
+                            OnceLockParams {
+                                vis,
+                                fn_name_token: &fn_name_token,
+                                const_name_token: &const_name_token,
+                                class_name_str: &class_name_str,
+                                style_expr: &quote! { #css_string.to_string() },
+                                pseudo_expr: &quote! { ::euv::Css::parse_pseudo_rules(#pseudo_static) },
+                                media_expr: &quote! { ::euv::Css::parse_media_rules(#media_static) },
+                            },
                         );
-                        return;
                     } else {
-                        quote! { #css_string.to_string() }
-                    };
-                    emit_once_lock_fn(
-                        tokens, vis, &fn_name_token, &const_name_token,
-                        &class_name_str, &style_expr, &pseudo_expr, &media_expr,
-                    );
+                        emit_once_lock_fn(
+                            tokens,
+                            OnceLockParams {
+                                vis,
+                                fn_name_token: &fn_name_token,
+                                const_name_token: &const_name_token,
+                                class_name_str: &class_name_str,
+                                style_expr: &quote! { #css_string.to_string() },
+                                pseudo_expr: &pseudo_expr,
+                                media_expr: &media_expr,
+                            },
+                        );
+                    }
                 } else {
                     let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
                         .get_extends()
@@ -398,10 +409,17 @@ impl ToTokens for ClassDef {
                         all_css_parts
                             .push(quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
                     }
-                    let style_expr = quote! { [#(#all_css_parts), *].concat() };
                     emit_once_lock_fn(
-                        tokens, vis, &fn_name_token, &const_name_token,
-                        &class_name_str, &style_expr, &pseudo_expr, &media_expr,
+                        tokens,
+                        OnceLockParams {
+                            vis,
+                            fn_name_token: &fn_name_token,
+                            const_name_token: &const_name_token,
+                            class_name_str: &class_name_str,
+                            style_expr: &quote! { [#(#all_css_parts), *].concat() },
+                            pseudo_expr: &pseudo_expr,
+                            media_expr: &media_expr,
+                        },
                     );
                 }
             }

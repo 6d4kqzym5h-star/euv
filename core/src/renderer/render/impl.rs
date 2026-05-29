@@ -205,36 +205,56 @@ impl Renderer {
             }
         }
         for new_attr in new_attrs {
-            let old_value: Option<&AttributeValue> =
-                old_map.get(new_attr.get_name().as_str()).copied();
-            let should_set: bool = match old_value {
-                Some(old_val) => old_val != new_attr.get_value(),
-                None => true,
-            };
-            if should_set {
-                match new_attr.get_value() {
-                    AttributeValue::Text(value) => {
-                        if value.is_empty() {
-                            remove_dom_attribute_or_property(element, new_attr.get_name());
-                        } else {
-                            set_dom_attribute_or_property(element, new_attr.get_name(), value);
+            match new_attr.get_value() {
+                AttributeValue::Event(handler) => {
+                    // Event handlers are always updated because closures cannot
+                    // be compared for identity; the PartialEq impl returns true
+                    // unconditionally which would skip handler replacement.
+                    self.attach_event_listener(element, handler);
+                }
+                _ => {
+                    let old_value: Option<&AttributeValue> =
+                        old_map.get(new_attr.get_name().as_str()).copied();
+                    let should_set: bool = match old_value {
+                        Some(old_val) => old_val != new_attr.get_value(),
+                        None => true,
+                    };
+                    if should_set {
+                        match new_attr.get_value() {
+                            AttributeValue::Text(value) => {
+                                if value.is_empty() {
+                                    remove_dom_attribute_or_property(element, new_attr.get_name());
+                                } else {
+                                    set_dom_attribute_or_property(
+                                        element,
+                                        new_attr.get_name(),
+                                        value,
+                                    );
+                                }
+                            }
+                            AttributeValue::Signal(signal) => {
+                                let value: String = signal.get();
+                                if value.is_empty() && !is_boolean_property(new_attr.get_name()) {
+                                    remove_dom_attribute_or_property(element, new_attr.get_name());
+                                } else {
+                                    set_dom_attribute_or_property(
+                                        element,
+                                        new_attr.get_name(),
+                                        &value,
+                                    );
+                                }
+                            }
+                            AttributeValue::Dynamic(_) => {}
+                            AttributeValue::Css(css) => {
+                                css.inject_style();
+                                set_dom_attribute_or_property(
+                                    element,
+                                    new_attr.get_name(),
+                                    css.get_name(),
+                                );
+                            }
+                            AttributeValue::Event(_) => unreachable!(),
                         }
-                    }
-                    AttributeValue::Signal(signal) => {
-                        let value: String = signal.get();
-                        if value.is_empty() && !is_boolean_property(new_attr.get_name()) {
-                            remove_dom_attribute_or_property(element, new_attr.get_name());
-                        } else {
-                            set_dom_attribute_or_property(element, new_attr.get_name(), &value);
-                        }
-                    }
-                    AttributeValue::Event(handler) => {
-                        self.attach_event_listener(element, handler);
-                    }
-                    AttributeValue::Dynamic(_) => {}
-                    AttributeValue::Css(css) => {
-                        css.inject_style();
-                        set_dom_attribute_or_property(element, new_attr.get_name(), css.get_name());
                     }
                 }
             }

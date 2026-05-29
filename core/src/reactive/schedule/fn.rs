@@ -56,9 +56,8 @@ pub fn schedule_signal_update() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
-    let raf_val: JsValue =
-        Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
-            .unwrap_or(JsValue::UNDEFINED);
+    let raf_val: JsValue = Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
+        .unwrap_or(JsValue::UNDEFINED);
     if raf_val.is_undefined() {
         // Fallback to queueMicrotask if rAF is unavailable (e.g., Web Workers).
         let queue_microtask_val: JsValue =
