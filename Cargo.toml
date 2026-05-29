@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.5.3"
+version = "0.5.5"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -131,10 +131,10 @@ wasm-opt = false
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = [
-  "-Oz",
-  "--enable-mutable-globals",
-  "--enable-bulk-memory",
-  "--enable-nontrapping-float-to-int",
+    "-Oz",
+    "--enable-mutable-globals",
+    "--enable-bulk-memory",
+    "--enable-nontrapping-float-to-int",
 ]
 
 [profile.dev]
