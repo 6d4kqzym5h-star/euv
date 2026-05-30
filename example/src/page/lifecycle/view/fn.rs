@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The lifecycle demo page virtual DOM tree.
-pub(crate) fn page_lifecycle() -> VirtualNode {
+#[component]
+pub(crate) fn page_lifecycle(props: PageLifecycleProps) -> VirtualNode {
+    let PageLifecycleProps = props;
     let state: UseLifecycle = use_lifecycle();
     watch!(state.get_render_count(), |render_count_value| {
         Console::log(&format!(

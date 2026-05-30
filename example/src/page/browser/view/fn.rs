@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The browser API demo page virtual DOM tree.
-pub(crate) fn page_browser() -> VirtualNode {
+#[component]
+pub(crate) fn page_browser(props: PageBrowserProps) -> VirtualNode {
+    let PageBrowserProps = props;
     let state: UseBrowserApi = use_browser_api();
     html! {
         div {

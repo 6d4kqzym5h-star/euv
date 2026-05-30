@@ -27,30 +27,25 @@ pub(crate) fn get_console_signal() -> Signal<Vec<ConsoleEntry>> {
 /// # Arguments
 ///
 /// - `Signal<Vec<ConsoleEntry>>` - The console log signal.
-/// - `Signal<String>` - The current filter level signal.
+/// - `Signal<LogFilter>` - The current filter level signal.
 ///
 /// # Returns
 ///
 /// - `Vec<(usize, ConsoleEntry)>` - The filtered and reversed entries with original indices.
 pub(crate) fn filter_console_entries(
     logs: Signal<Vec<ConsoleEntry>>,
-    filter: Signal<String>,
+    filter: Signal<LogFilter>,
 ) -> Vec<(usize, ConsoleEntry)> {
     let log_list: Vec<ConsoleEntry> = logs.get();
-    let filter_value: String = filter.get();
+    let filter_value: LogFilter = filter.get();
     log_list
         .iter()
         .enumerate()
-        .filter(|(_, entry): &(usize, &ConsoleEntry)| {
-            if filter_value == "all" {
-                return true;
-            }
-            match filter_value.as_str() {
-                "log" => entry.get_level() == LogLevel::Log,
-                "warn" => entry.get_level() == LogLevel::Warn,
-                "error" => entry.get_level() == LogLevel::Error,
-                _ => true,
-            }
+        .filter(|(_, entry): &(usize, &ConsoleEntry)| match filter_value {
+            LogFilter::All => true,
+            LogFilter::Log => entry.get_level() == LogLevel::Log,
+            LogFilter::Warn => entry.get_level() == LogLevel::Warn,
+            LogFilter::Error => entry.get_level() == LogLevel::Error,
         })
         .map(|(index, entry): (usize, &ConsoleEntry)| (index, entry.clone()))
         .collect::<Vec<(usize, ConsoleEntry)>>()
@@ -64,37 +59,22 @@ pub(crate) fn filter_console_entries(
 /// # Arguments
 ///
 /// - `LogLevel` - The log level of the entry.
-/// - `bool` - Whether this is the most recent entry.
 ///
 /// # Returns
 ///
 /// - `String` - The combined CSS class string.
-pub(crate) fn get_log_item_class(level: LogLevel, is_latest: bool) -> String {
+pub(crate) fn get_log_item_class(level: LogLevel) -> String {
     let base_name: &'static str = c_vconsole_log_item().get_name();
     let level_class: &'static str = match level {
-        LogLevel::Log => {
-            if is_latest {
-                c_vconsole_log_latest().get_name()
-            } else {
-                c_vconsole_log_item().get_name()
-            }
-        }
-        LogLevel::Warn => {
-            if is_latest {
-                c_vconsole_log_warn_latest().get_name()
-            } else {
-                c_vconsole_log_warn().get_name()
-            }
-        }
-        LogLevel::Error => {
-            if is_latest {
-                c_vconsole_log_error_latest().get_name()
-            } else {
-                c_vconsole_log_error().get_name()
-            }
-        }
+        LogLevel::Log => c_vconsole_log_latest().get_name(),
+        LogLevel::Warn => c_vconsole_log_warn().get_name(),
+        LogLevel::Error => c_vconsole_log_error().get_name(),
     };
-    format!("{} {}", base_name, level_class)
+    if level_class.is_empty() {
+        base_name.to_string()
+    } else {
+        format!("{base_name} {level_class}")
+    }
 }
 
 /// Returns the combined CSS class string for the level badge based on log level.

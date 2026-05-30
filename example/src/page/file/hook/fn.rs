@@ -174,7 +174,7 @@ pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> Option<Rc<dyn Fn(Even
                         data_transfer.types().get(index).as_string() == Some("Files".to_string())
                     })
                 })
-                .unwrap_or(false);
+                .unwrap_or_default();
             if has_files {
                 state
                     .get_status()

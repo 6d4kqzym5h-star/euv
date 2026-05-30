@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The signals demo page virtual DOM tree.
-pub(crate) fn page_signals() -> VirtualNode {
+#[component]
+pub(crate) fn page_signals(props: PageSignalsProps) -> VirtualNode {
+    let PageSignalsProps = props;
     let count: Signal<i32> = use_signal(|| 0);
     html! {
         div {

@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The event demo page virtual DOM tree.
-pub(crate) fn page_event() -> VirtualNode {
+#[component]
+pub(crate) fn page_event(props: PageEventProps) -> VirtualNode {
+    let PageEventProps = props;
     let last_key: Signal<String> = use_signal(|| "None".to_string());
     let last_key_code: Signal<String> = use_signal(|| "None".to_string());
     let last_key_up: Signal<String> = use_signal(|| "None".to_string());
@@ -613,7 +615,7 @@ pub(crate) fn page_event() -> VirtualNode {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let first: Option<Touch> = touches.get(0);
-                            let info: String = format!("Start: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or(0), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or(0));
+                            let info: String = format!("Start: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or_default(), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or_default());
                             touch_info.set(info);
                             Console::log(&format!("TouchStart: {} touches", touches.length()));
                         }
@@ -622,7 +624,7 @@ pub(crate) fn page_event() -> VirtualNode {
                         if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
                             let touches: TouchList = touch_event.touches();
                             let first: Option<Touch> = touches.get(0);
-                            let info: String = format!("Move: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or(0), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or(0));
+                            let info: String = format!("Move: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or_default(), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or_default());
                             touch_info.set(info);
                         }
                     }

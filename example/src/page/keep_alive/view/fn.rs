@@ -152,8 +152,6 @@ fn form_tab() -> VirtualNode {
                         { format!("Name: {} | Email: {} | Message: {}", name.get(), email.get(), message.get()) }
                     }
                 }
-            } else {
-                ""
             }
         }
     }
@@ -360,7 +358,9 @@ pub(crate) fn keep_alive_timer_on_reset(
 /// # Returns
 ///
 /// - `VirtualNode` - The keep-alive demo page virtual DOM tree.
-pub(crate) fn page_keep_alive() -> VirtualNode {
+#[component]
+pub(crate) fn page_keep_alive(props: PageKeepAliveProps) -> VirtualNode {
+    let PageKeepAliveProps = props;
     let tab: Signal<String> = use_signal(|| "counter".to_string());
     html! {
         div {

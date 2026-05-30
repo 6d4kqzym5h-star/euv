@@ -164,12 +164,12 @@ pub(crate) fn window_inner_size() -> (i32, i32) {
         .inner_width()
         .ok()
         .map(|value: JsValue| Number::from(value).value_of() as i32)
-        .unwrap_or(0);
+        .unwrap_or_default();
     let height: i32 = window
         .inner_height()
         .ok()
         .map(|value: JsValue| Number::from(value).value_of() as i32)
-        .unwrap_or(0);
+        .unwrap_or_default();
     (width, height)
 }
 
@@ -445,8 +445,13 @@ pub(crate) fn window_on_refresh_size(state: UseBrowserApi) -> Option<Rc<dyn Fn(E
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.log.
 pub(crate) fn console_on_log(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
-        let message: String = console_input.get();
-        Console::log(&message);
+        let raw: String = console_input.get();
+        let message: &str = if raw.is_empty() {
+            CONSOLE_LOG_DEFAULT_MESSAGE
+        } else {
+            &raw
+        };
+        Console::log(message);
     }))
 }
 
@@ -461,8 +466,13 @@ pub(crate) fn console_on_log(console_input: Signal<String>) -> Option<Rc<dyn Fn(
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.warn.
 pub(crate) fn console_on_warn(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
-        let message: String = console_input.get();
-        Console::warn(&message);
+        let raw: String = console_input.get();
+        let message: &str = if raw.is_empty() {
+            CONSOLE_WARN_DEFAULT_MESSAGE
+        } else {
+            &raw
+        };
+        Console::warn(message);
     }))
 }
 
@@ -477,7 +487,12 @@ pub(crate) fn console_on_warn(console_input: Signal<String>) -> Option<Rc<dyn Fn
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.error.
 pub(crate) fn console_on_error(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
-        let message: String = console_input.get();
-        Console::error(&message);
+        let raw: String = console_input.get();
+        let message: &str = if raw.is_empty() {
+            CONSOLE_ERROR_DEFAULT_MESSAGE
+        } else {
+            &raw
+        };
+        Console::error(message);
     }))
 }

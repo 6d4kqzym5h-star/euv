@@ -168,7 +168,7 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
-            let parsed: i32 = input.value().parse().unwrap_or(0);
+            let parsed: i32 = input.value().parse().unwrap_or_default();
             signal.set(parsed.clamp(0, 255));
         }
     }))

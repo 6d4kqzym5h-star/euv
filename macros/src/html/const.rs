@@ -56,3 +56,6 @@ pub(crate) const ERR_UNEXPECTED_TOKEN_IN_HTML: &str = "unexpected token in HTML"
 /// Error message when an unexpected token is encountered inside a dynamic component.
 pub(crate) const ERR_UNEXPECTED_TOKEN_IN_DYNAMIC_COMPONENT: &str =
     "unexpected token in dynamic component";
+
+/// Type name for `VirtualNode`, used to determine the else default value in component props if-chains.
+pub(crate) const TYPE_VIRTUAL_NODE: &str = "VirtualNode";

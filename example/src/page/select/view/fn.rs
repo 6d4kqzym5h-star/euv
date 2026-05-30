@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The select demo page virtual DOM tree.
-pub(crate) fn page_select() -> VirtualNode {
+#[component]
+pub(crate) fn page_select(props: PageSelectProps) -> VirtualNode {
+    let PageSelectProps = props;
     let state: UseSelect = use_select();
     html! {
         div {
@@ -147,8 +149,6 @@ pub(crate) fn page_select() -> VirtualNode {
                             option { value: "chicago" "Chicago" }
                         }
                     }
-                } else {
-                    ""
                 }
                 if { !state.get_selected_city().get().is_empty() } {
                     div {
@@ -159,8 +159,6 @@ pub(crate) fn page_select() -> VirtualNode {
                             { state.get_selected_city().get() }
                         }
                     }
-                } else {
-                    ""
                 }
             }
             my_card {
@@ -208,8 +206,6 @@ pub(crate) fn page_select() -> VirtualNode {
                         class: c_success_box()
                         state.get_feedback()
                     }
-                } else {
-                    ""
                 }
             }
         }

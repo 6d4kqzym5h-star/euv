@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The async demo page virtual DOM tree.
-pub(crate) fn page_async_demo() -> VirtualNode {
+#[component]
+pub(crate) fn page_async_demo(props: PageAsyncDemoProps) -> VirtualNode {
+    let PageAsyncDemoProps = props;
     let fetch: UseFetch = use_fetch();
     html! {
         div {

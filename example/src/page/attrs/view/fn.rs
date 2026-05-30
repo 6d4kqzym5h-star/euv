@@ -9,7 +9,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The custom attributes demo page virtual DOM tree.
-pub(crate) fn page_custom_attrs() -> VirtualNode {
+#[component]
+pub(crate) fn page_custom_attrs(props: PageCustomAttrsProps) -> VirtualNode {
+    let PageCustomAttrsProps = props;
     let dynamic_key: Signal<String> = use_signal(|| "data-custom".to_string());
     let dynamic_value: Signal<String> = use_signal(String::new);
     let static_key: String = STATIC_ATTR_KEY.to_string();
@@ -31,7 +33,7 @@ pub(crate) fn page_custom_attrs() -> VirtualNode {
                     }
                     p {
                         class: c_demo_text_muted()
-                        { format!("Attribute: {}=\"{}\"", STATIC_ATTR_KEY, STATIC_ATTR_VALUE) }
+                        format!("Attribute: {}=\"{}\"", STATIC_ATTR_KEY, STATIC_ATTR_VALUE)
                     }
                 }
             }

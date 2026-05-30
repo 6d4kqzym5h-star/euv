@@ -45,18 +45,50 @@ class! {
         }
     }
 
-    pub(crate) c_nav_logo {
+    pub(crate) c_logo_button {
         display: "flex";
-        width: "32px";
-        height: "32px";
         background: "linear-gradient(135deg, #4f46e5, #7c3aed)";
         border-radius: "8px";
         align-items: "center";
         justify-content: "center";
         color: "white";
         font-weight: "700";
-        font-size: "16px";
+        border: "none";
+        cursor: "pointer";
+        padding: "0";
+        line-height: "1";
         flex-shrink: "0";
+    }
+
+    pub(crate) c_logo_button_nav {
+        width: "32px";
+        height: "32px";
+        font-size: "16px";
+    }
+
+    pub(crate) c_logo_button_fab {
+        position: "fixed";
+        bottom: "20px";
+        right: "20px";
+        width: "48px";
+        height: "48px";
+        border-radius: "14px";
+        font-size: "18px";
+        z-index: "9999";
+        box-shadow: var!(shadow-console-button);
+        transition: "transform 0.2s ease, box-shadow 0.2s ease";
+        media("(max-width: 767px)" ) {
+            bottom: "16px";
+            right: "16px";
+            width: "44px";
+            height: "44px";
+            border-radius: "12px";
+        }
+    }
+
+    pub(crate) c_logo_button_fab_hover {
+        transform: "scale(1.08)";
+        box-shadow: "0 6px 20px rgba(99, 102, 241, 0.4)";
     }
 
     pub(crate) c_nav_section_label {
@@ -184,6 +216,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         gap: "8px";
+        min-width: "120px";
+        max-width: "200px";
         background: "#4f46e5";
         color: "white";
         border: "none";
@@ -199,10 +233,14 @@ class! {
         outline: "none";
         box-shadow: "0 1px 2px rgba(79, 70, 229, 0.2)";
         white-space: "nowrap";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
         media("(max-width: 767px)") {
             width: "100%";
+            max-width: "100%";
+            min-width: "0";
             padding: "12px 20px";
             font-size: "15px";
             border-radius: "10px";
@@ -216,12 +254,6 @@ class! {
         cursor: "not-allowed";
         opacity: "0.55";
         box-shadow: "none";
-        media("(max-width: 767px)") {
-            width: "100%";
-            padding: "12px 20px";
-            font-size: "15px";
-            border-radius: "10px";
-        }
     }
 
     pub(crate) c_modal_primary_button {
@@ -229,8 +261,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         gap: "8px";
-        flex: "1";
-        min-width: "0";
+        min-width: "120px";
+        max-width: "200px";
         background: "#4f46e5";
         color: "white";
         border: "none";
@@ -246,6 +278,8 @@ class! {
         outline: "none";
         box-shadow: "0 1px 2px rgba(79, 70, 229, 0.2)";
         white-space: "nowrap";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
     }
@@ -698,7 +732,8 @@ class! {
     }
 
     pub(crate) c_list_item_button {
-        width: "auto";
+        min-width: "0";
+        max-width: "120px";
         padding: "8px 16px";
         flex-shrink: "0";
     }
@@ -906,6 +941,7 @@ class! {
 
     pub(crate) c_modal_actions {
         display: "flex";
+        justify-content: "center";
         gap: "12px";
         margin-top: "20px";
     }
@@ -1237,43 +1273,6 @@ class! {
         color: "inherit";
         word-break: "break-all";
         font-family: "ui-monospace, monospace";
-    }
-
-    pub(crate) c_vconsole_button {
-        position: "fixed";
-        bottom: "20px";
-        right: "20px";
-        width: "48px";
-        height: "48px";
-        border-radius: "14px";
-        background: var!(bg-console-button);
-        color: var!(text-console-button-text);
-        border: "none";
-        cursor: "pointer";
-        font-size: "18px";
-        font-weight: "700";
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        z-index: "9999";
-        box-shadow: var!(shadow-console-button);
-        transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease";
-        padding: "0";
-        line-height: "1";
-        letter-spacing: "-0.02em";
-        media("(max-width: 767px)") {
-            bottom: "16px";
-            right: "16px";
-            width: "44px";
-            height: "44px";
-            border-radius: "12px";
-        }
-    }
-
-    pub(crate) c_vconsole_button_hover {
-        transform: "scale(1.08)";
-        background: var!(bg-console-button-hover);
-        box-shadow: "0 6px 20px rgba(99, 102, 241, 0.4)";
     }
 
     pub(crate) c_vconsole_badge {
@@ -1669,24 +1668,9 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "space-between";
-        padding: "16px 20px";
-        border-bottom: format!("1px solid {}", var!(border-subtle));
-    }
-
-    pub(crate) c_mobile_nav_drawer_close {
-        width: "32px";
-        height: "32px";
-        border-radius: "6px";
-        background: "transparent";
-        border: "none";
-        cursor: "pointer";
-        font-size: "18px";
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        color: var!(text-muted);
-        transition: "background 0.15s ease";
-        padding: "0";
+        padding: "0 16px";
+        height: "56px";
+        flex-shrink: "0";
     }
 
     pub(crate) c_mobile_app_root {

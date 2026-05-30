@@ -142,12 +142,15 @@ pub(crate) struct HtmlDynamicTag {
 
 /// Stores metadata about a registered component function.
 ///
-/// Contains the Props type name and the list of field names declared
-/// in the Props struct, used for attribute filtering in dynamic tags.
+/// Contains the Props type name, the list of field names, and a map of
+/// field name to type string declared in the Props struct, used for
+/// attribute filtering and type-aware code generation in dynamic tags.
 #[derive(Clone, Debug)]
 pub(crate) struct ComponentInfo {
     /// The Props type name (e.g., "PrimaryButtonProps").
     pub(crate) props_type: String,
     /// The field names declared in the Props struct.
     pub(crate) props_fields: Vec<String>,
+    /// Maps field name to its type string (e.g., "children" -> "VirtualNode").
+    pub(crate) props_field_types: HashMap<String, String>,
 }

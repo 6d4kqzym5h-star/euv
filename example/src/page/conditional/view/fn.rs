@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The conditional demo page virtual DOM tree.
-pub(crate) fn page_conditional() -> VirtualNode {
+#[component]
+pub(crate) fn page_conditional(props: PageConditionalProps) -> VirtualNode {
+    let PageConditionalProps = props;
     let show_details: Signal<bool> = use_signal(|| false);
     let user_type: Signal<String> = use_signal(|| "guest".to_string());
     let tab: Signal<String> = use_signal(|| "info".to_string());
@@ -36,8 +38,6 @@ pub(crate) fn page_conditional() -> VirtualNode {
                             "You can use this pattern for modals, accordions, and more."
                         }
                     }
-                } else {
-                    ""
                 }
             }
             my_card {

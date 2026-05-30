@@ -8,7 +8,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The observer demo page virtual DOM tree.
-pub(crate) fn page_observer() -> VirtualNode {
+#[component]
+pub(crate) fn page_observer(props: PageObserverProps) -> VirtualNode {
+    let PageObserverProps = props;
     use_intersection_observer("[data-observer-container]");
     html! {
         div {

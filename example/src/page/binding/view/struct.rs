@@ -40,3 +40,7 @@ pub(crate) struct CallbackInputProps {
     /// Optional callback when reset is requested.
     pub(crate) on_reset: Option<Rc<dyn Fn(Event)>>,
 }
+
+/// Props for the `page_component_binding` component.
+#[derive(Default)]
+pub(crate) struct PageComponentBindingProps;

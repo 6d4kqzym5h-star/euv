@@ -1,5 +1,28 @@
 use crate::*;
 
+/// Checks whether the next tokens after the current position form a `::` path separator.
+///
+/// This is used to distinguish between a single `:` (attribute key-value separator)
+/// and `::` (Rust path separator like `Enum::Variant`). When an `Ident` is followed
+/// by `::`, it should be treated as the start of a path expression rather than an
+/// attribute key.
+///
+/// # Arguments
+///
+/// - `&ParseStream` - The parse stream to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the next two tokens after the current position are `::`.
+pub(crate) fn is_double_colon(content: ParseStream) -> bool {
+    let forked: ParseBuffer<'_> = content.fork();
+    let _: Ident = match forked.parse() {
+        Ok(ident) => ident,
+        Err(_) => return false,
+    };
+    forked.peek(Token![::])
+}
+
 /// Sets the user-defined component registry for the current thread.
 ///
 /// # Arguments
@@ -47,6 +70,51 @@ pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
     }
 }
 
+/// Returns the props field names for a given component function name.
+///
+/// Used to determine whether a standalone identifier inside a component body
+/// should be treated as an attribute shorthand (e.g., `panel_open` → `panel_open: panel_open`).
+///
+/// # Arguments
+///
+/// - `&str`- The component function name.
+///
+/// # Returns
+///
+/// - `Option<&'static Vec<String>>`- The list of props field names if the component is found.
+pub(crate) fn get_user_fn_props_fields(name: &str) -> Option<&'static Vec<String>> {
+    unsafe {
+        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*ptr)
+            .assume_init_ref()
+            .get(name)
+            .map(|info: &ComponentInfo| &info.props_fields)
+    }
+}
+
+/// Returns the props field type map for a given component function name.
+///
+/// Maps field name → type string (e.g., `"children"` → `"VirtualNode"`).
+///
+/// # Arguments
+///
+/// - `&str`- The component function name.
+///
+/// # Returns
+///
+/// - `Option<&'static HashMap<String, String>>`- The field type map if the component is found.
+pub(crate) fn get_user_fn_props_field_types(
+    name: &str,
+) -> Option<&'static HashMap<String, String>> {
+    unsafe {
+        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*ptr)
+            .assume_init_ref()
+            .get(name)
+            .map(|info: &ComponentInfo| &info.props_field_types)
+    }
+}
+
 /// Parses the input tokens into a euv VNode expression.
 ///
 /// Supports zero, one, or multiple root-level HTML nodes:
@@ -91,14 +159,24 @@ pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
     };
     let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
     let mut global_props_fields_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut global_props_field_types_map: HashMap<String, HashMap<String, String>> = HashMap::new();
     let mut rs_files: Vec<PathBuf> = Vec::new();
     collect_rs_files(&src_dir, &mut rs_files);
     for path in &rs_files {
-        collect_props_structs_from_file(path, &mut global_props_fields_map);
+        collect_props_structs_from_file(
+            path,
+            &mut global_props_fields_map,
+            &mut global_props_field_types_map,
+        );
     }
     let mut fn_names: HashMap<String, ComponentInfo> = HashMap::new();
     for path in &rs_files {
-        scan_file_for_components_with_map(path, &global_props_fields_map, &mut fn_names);
+        scan_file_for_components_with_map(
+            path,
+            &global_props_fields_map,
+            &global_props_field_types_map,
+            &mut fn_names,
+        );
     }
     fn_names
 }
@@ -133,8 +211,13 @@ fn collect_rs_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
 /// # Arguments
 ///
 /// - `&PathBuf` - The file path to parse.
-/// - `&mut HashMap<String, ComponentInfo>` - The map to populate with function name → component metadata.
-fn collect_props_structs_from_file(path: &PathBuf, global_map: &mut HashMap<String, Vec<String>>) {
+/// - `&mut HashMap<String, Vec<String>>` - The map to populate with struct name → field names.
+/// - `&mut HashMap<String, HashMap<String, String>>` - The map to populate with struct name → field type map.
+fn collect_props_structs_from_file(
+    path: &PathBuf,
+    global_map: &mut HashMap<String, Vec<String>>,
+    global_type_map: &mut HashMap<String, HashMap<String, String>>,
+) {
     let content: String = match read_to_string(path) {
         Ok(data) => data,
         Err(_) => return,
@@ -147,11 +230,16 @@ fn collect_props_structs_from_file(path: &PathBuf, global_map: &mut HashMap<Stri
     for (struct_name, field_names) in file_map {
         global_map.insert(struct_name, field_names);
     }
+    let file_type_map: HashMap<String, HashMap<String, String>> = extract_props_struct_types(&file);
+    for (struct_name, field_types) in file_type_map {
+        global_type_map.insert(struct_name, field_types);
+    }
 }
 
 fn scan_file_for_components_with_map(
     path: &PathBuf,
     global_props_fields_map: &HashMap<String, Vec<String>>,
+    global_props_field_types_map: &HashMap<String, HashMap<String, String>>,
     fn_names: &mut HashMap<String, ComponentInfo>,
 ) {
     let content: String = match read_to_string(path) {
@@ -175,11 +263,16 @@ fn scan_file_for_components_with_map(
                     .get(&props_type)
                     .cloned()
                     .unwrap_or_default();
+                let props_field_types: HashMap<String, String> = global_props_field_types_map
+                    .get(&props_type)
+                    .cloned()
+                    .unwrap_or_default();
                 fn_names.insert(
                     fn_name,
                     ComponentInfo {
                         props_type,
                         props_fields,
+                        props_field_types,
                     },
                 );
             }
@@ -212,6 +305,57 @@ fn extract_props_structs(file: &File) -> HashMap<String, Vec<String>> {
         }
     }
     result
+}
+
+/// Extracts all struct definitions from a file and maps their names to field-type maps.
+///
+/// Each field's type is resolved to its last path segment (e.g., `VirtualNode`, `String`).
+///
+/// # Arguments
+///
+/// - `&File` - The parsed Rust source file.
+///
+/// # Returns
+///
+/// - `HashMap<String, HashMap<String, String>>` - Map of struct name → (field name → type string).
+fn extract_props_struct_types(file: &File) -> HashMap<String, HashMap<String, String>> {
+    let mut result: HashMap<String, HashMap<String, String>> = HashMap::new();
+    for item in &file.items {
+        if let Item::Struct(item_struct) = item {
+            let struct_name: String = item_struct.ident.to_string();
+            let mut field_types: HashMap<String, String> = HashMap::new();
+            for field in &item_struct.fields {
+                let Some(ident) = field.ident.as_ref() else {
+                    continue;
+                };
+                let type_str: String = extract_type_last_segment(&field.ty);
+                field_types.insert(ident.to_string(), type_str);
+            }
+            result.insert(struct_name, field_types);
+        }
+    }
+    result
+}
+
+/// Extracts the last segment identifier from a type path.
+///
+/// For example, `::euv::VirtualNode` → `"VirtualNode"`, `String` → `"String"`.
+/// Falls back to the full type string representation if the type is not a path.
+///
+/// # Arguments
+///
+/// - `&Type` - The syn type to extract from.
+///
+/// # Returns
+///
+/// - `String` - The last segment of the type path.
+fn extract_type_last_segment(ty: &Type) -> String {
+    if let Type::Path(type_path) = ty
+        && let Some(segment) = type_path.path.segments.last()
+    {
+        return segment.ident.to_string();
+    }
+    ty.to_token_stream().to_string().replace(' ', "")
 }
 
 /// Extracts the Props type name from the first parameter of a component function.
@@ -307,7 +451,10 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
             braced!(child_content in content);
             let expr: Expr = child_content.parse()?;
             children.push(HtmlNode::Dynamic(expr));
-        } else if (content.peek(Ident) || content.peek(LitStr)) && content.peek2(Colon) {
+        } else if (content.peek(Ident) || content.peek(LitStr))
+            && content.peek2(Colon)
+            && !is_double_colon(content)
+        {
             break;
         } else if content.peek(Ident) {
             if content.peek2(Brace) {
@@ -435,7 +582,10 @@ pub(crate) fn parse_dynamic_component_children(
             let key_str: String = key.to_string();
             let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
             attributes.push((HtmlAttrKey::Static(key), value));
-        } else if content.peek(Ident) && (content.peek2(Colon) || content.peek2(Token![-])) {
+        } else if content.peek(Ident)
+            && (content.peek2(Colon) || content.peek2(Token![-]))
+            && !is_double_colon(content)
+        {
             let key_string: String = parse_kebab_name(content)?;
             let key_clean: &str = key_string
                 .strip_prefix(RAW_IDENT_PREFIX)
@@ -597,12 +747,20 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 /// # Arguments
 ///
 /// - `&HtmlAttrIf` - The parsed attribute-level reactive conditional.
+/// - `proc_macro2::TokenStream` - The default else branch token stream, used when no explicit else branch exists.
 ///
 /// # Returns
 ///
 /// - `proc_macro2::TokenStream` - The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
-pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::TokenStream {
+pub(crate) fn attr_if_to_tokens(
+    html_attr_if: &HtmlAttrIf,
+    else_default: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    let has_else: bool = html_attr_if
+        .branches
+        .last()
+        .is_some_and(|(condition, _)| condition.is_none());
     for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
         let stripped_body: &Expr = strip_braces_from_expr(body);
         match (branch_index, condition) {
@@ -618,6 +776,9 @@ pub(crate) fn attr_if_to_tokens(html_attr_if: &HtmlAttrIf) -> proc_macro2::Token
                 if_chain.extend(quote! { else { #stripped_body } });
             }
         }
+    }
+    if !has_else {
+        if_chain.extend(quote! { else { #else_default } });
     }
     if_chain
 }
@@ -638,6 +799,9 @@ pub(crate) fn build_html_if_chain(
     branches: &[(Option<Expr>, Vec<HtmlNode>)],
 ) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    let has_else: bool = branches
+        .last()
+        .is_some_and(|(condition, _)| condition.is_none());
     for (branch_index, (condition, body)) in branches.iter().enumerate() {
         let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
         match (branch_index, condition) {
@@ -653,6 +817,9 @@ pub(crate) fn build_html_if_chain(
                 if_chain.extend(quote! { else { #body_expr } });
             }
         }
+    }
+    if !has_else {
+        if_chain.extend(quote! { else { ::euv::VirtualNode::Empty } });
     }
     if_chain
 }

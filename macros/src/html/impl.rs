@@ -324,7 +324,10 @@ impl Parse for HtmlElement {
                 let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
                 attributes.push((HtmlAttrKey::Static(key), value));
-            } else if content.peek(Ident) && (content.peek2(Colon) || content.peek2(Token![-])) {
+            } else if content.peek(Ident)
+                && (content.peek2(Colon) || content.peek2(Token![-]))
+                && !is_double_colon(&content)
+            {
                 let key_string: String = parse_kebab_name(&content)?;
                 let key_clean: &str = key_string
                     .strip_prefix(RAW_IDENT_PREFIX)
@@ -341,6 +344,20 @@ impl Parse for HtmlElement {
                 if content.peek2(Brace) {
                     let element: HtmlElement = content.parse()?;
                     children.push(HtmlNode::Element(element));
+                } else if is_ident_tag
+                    && is_user_fn(&tag_name)
+                    && !content.peek2(Paren)
+                    && get_user_fn_props_fields(&tag_name).is_some_and(|fields: &Vec<String>| {
+                        let forked: ParseBuffer<'_> = content.fork();
+                        forked
+                            .parse::<Ident>()
+                            .map(|ident: Ident| fields.contains(&ident.to_string()))
+                            .unwrap_or_default()
+                    })
+                {
+                    let key: Ident = content.parse()?;
+                    let value_expr: Expr = syn::parse_quote!(#key);
+                    attributes.push((HtmlAttrKey::Static(key), HtmlAttrValue::Expr(value_expr)));
                 } else {
                     let expr: Expr = content.parse()?;
                     children.push(HtmlNode::Expr(expr));
@@ -455,7 +472,8 @@ impl ToTokens for HtmlStylePropValue {
             HtmlStylePropValue::Literal(literal_value) => literal_value.to_tokens(tokens),
             HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlStylePropValue::If(html_attr_if) => {
-                let if_chain: proc_macro2::TokenStream = attr_if_to_tokens(html_attr_if);
+                let if_chain: proc_macro2::TokenStream =
+                    attr_if_to_tokens(html_attr_if, quote! { "" });
                 if_chain.to_tokens(tokens);
             }
         }
@@ -478,7 +496,8 @@ impl ToTokens for HtmlAttrValue {
         match self {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlAttrValue::If(html_attr_if) => {
-                let if_chain: proc_macro2::TokenStream = attr_if_to_tokens(html_attr_if);
+                let if_chain: proc_macro2::TokenStream =
+                    attr_if_to_tokens(html_attr_if, quote! { "" });
                 tokens.extend(quote! {
                     ::euv::AttributeValue::create_reactive_signal(move || ::euv::IntoReactiveString::into_reactive_string(#if_chain))
                 });
@@ -655,6 +674,7 @@ impl ToTokens for HtmlDynamicTag {
                 let props_ident: Ident = Ident::new(&component_info.props_type, proc_macro2::Span::call_site());
                 let fn_name_str: String = fn_name.clone();
                 let props_fields: &Vec<String> = &component_info.props_fields;
+                let props_field_types: &HashMap<String, String> = &component_info.props_field_types;
                 let prop_field_tokens: Vec<proc_macro2::TokenStream> = attributes
                     .iter()
                     .filter_map(|(key, value): &(HtmlAttrKey, HtmlAttrValue)| {
@@ -671,8 +691,12 @@ impl ToTokens for HtmlDynamicTag {
                                 quote! { #field_ident: #expr }
                             }
                             HtmlAttrValue::If(html_attr_if) => {
+                                let else_default: proc_macro2::TokenStream = match props_field_types.get(&key_string).map(|s: &String| s.as_str()) {
+                                    Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
+                                    _ => quote! { "" },
+                                };
                                 let if_chain: proc_macro2::TokenStream =
-                                    attr_if_to_tokens(html_attr_if);
+                                    attr_if_to_tokens(html_attr_if, else_default);
                                 quote! { #field_ident: #if_chain }
                             }
                             HtmlAttrValue::Style(props) => {
@@ -803,6 +827,10 @@ impl ToTokens for HtmlElement {
         if is_component {
             let props_type_name: &str = get_user_fn_props_type(&tag_name).unwrap_or("");
             let props_type_ident: Ident = Ident::new(props_type_name, tag_span);
+            let props_field_types: HashMap<String, String> =
+                get_user_fn_props_field_types(&tag_name)
+                    .cloned()
+                    .unwrap_or_default();
             let prop_field_tokens: Vec<proc_macro2::TokenStream> = self
                 .get_attributes()
                 .iter()
@@ -816,8 +844,16 @@ impl ToTokens for HtmlElement {
                             quote! { #field_ident: #expr }
                         }
                         HtmlAttrValue::If(html_attr_if) => {
+                            let key_string: String = key_ident.to_string();
+                            let else_default: proc_macro2::TokenStream = match props_field_types
+                                .get(&key_string)
+                                .map(|s: &String| s.as_str())
+                            {
+                                Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
+                                _ => quote! { "" },
+                            };
                             let if_chain: proc_macro2::TokenStream =
-                                attr_if_to_tokens(html_attr_if);
+                                attr_if_to_tokens(html_attr_if, else_default);
                             quote! { #field_ident: #if_chain }
                         }
                         HtmlAttrValue::Style(props) => {
@@ -850,12 +886,18 @@ impl ToTokens for HtmlElement {
                 .iter()
                 .chain(children_field_token.as_ref())
                 .collect();
-            tokens.extend(quote! {
-                #tag_ident(
-                    #[allow(clippy::needless_update)]
-                    #props_type_ident { #(#all_fields), *, ..Default::default() },
-                )
-            });
+            if all_fields.is_empty() {
+                tokens.extend(quote! {
+                    #tag_ident(#props_type_ident::default())
+                });
+            } else {
+                tokens.extend(quote! {
+                    #tag_ident(
+                        #[allow(clippy::needless_update)]
+                        #props_type_ident { #(#all_fields), *, ..Default::default() },
+                    )
+                });
+            }
         } else {
             let mut key_expr: Option<proc_macro2::TokenStream> = None;
             let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(HtmlAttrKey, HtmlAttrValue)| {

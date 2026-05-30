@@ -4,14 +4,18 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The reactive signal holding the current route.
-/// - `&str` - The display label for the navigation item.
-/// - `&str` - The target route path.
+/// - `NavItemProps` - The typed props containing route signal, label, and target.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The navigation item virtual DOM tree.
-pub(crate) fn nav_item(route_signal: Signal<String>, label: &str, target: &str) -> VirtualNode {
+#[component]
+pub(crate) fn nav_item(props: NavItemProps) -> VirtualNode {
+    let NavItemProps {
+        route_signal,
+        label,
+        target,
+    } = props;
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -29,20 +33,19 @@ pub(crate) fn nav_item(route_signal: Signal<String>, label: &str, target: &str) 
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The reactive signal holding the current route.
-/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
-/// - `&str` - The display label for the navigation item.
-/// - `&str` - The target route path.
+/// - `MobileNavItemProps` - The typed props containing route signal, drawer open signal, label, and target.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The mobile navigation item virtual DOM tree.
-fn mobile_nav_item(
-    route_signal: Signal<String>,
-    drawer_open: Signal<bool>,
-    label: &str,
-    target: &str,
-) -> VirtualNode {
+#[component]
+pub(crate) fn mobile_nav_item(props: MobileNavItemProps) -> VirtualNode {
+    let MobileNavItemProps {
+        route_signal,
+        drawer_open,
+        label,
+        target,
+    } = props;
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -64,33 +67,107 @@ fn mobile_nav_item(
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The reactive signal holding the current route.
+/// - `BuildDesktopNavItemsProps` - The typed props containing the route signal.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
-fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
+#[component]
+pub(crate) fn build_desktop_nav_items(props: BuildDesktopNavItemsProps) -> VirtualNode {
+    let BuildDesktopNavItemsProps { route_signal } = props;
     html! {
         div {
             class: c_nav_items_scroll()
-            { nav_item(route_signal, "Signals", "/signals") }
-            { nav_item(route_signal, "Event", "/event") }
-            { nav_item(route_signal, "List", "/list") }
-            { nav_item(route_signal, "Observer", "/observer") }
-            { nav_item(route_signal, "Conditional", "/conditional") }
-            { nav_item(route_signal, "Modal", "/modal") }
-            { nav_item(route_signal, "Select", "/select") }
-            { nav_item(route_signal, "Async", "/async") }
-            { nav_item(route_signal, "Form", "/form") }
-            { nav_item(route_signal, "File Upload", "/file-upload") }
-            { nav_item(route_signal, "Timer", "/timer") }
-            { nav_item(route_signal, "Animation", "/animation") }
-            { nav_item(route_signal, "Browser", "/browser") }
-            { nav_item(route_signal, "Lifecycle", "/lifecycle") }
-            { nav_item(route_signal, "Keep-Alive", "/keep-alive") }
-            { nav_item(route_signal, "Component Binding", "/component-binding") }
-            { nav_item(route_signal, "Custom Attrs", "/custom-attrs") }
-            { nav_item(route_signal, "Dynamic Component", "/dynamic-component") }
+            nav_item {
+                route_signal: route_signal
+                label: "Signals"
+                target: "/signals"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Event"
+                target: "/event"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "List"
+                target: "/list"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Observer"
+                target: "/observer"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Conditional"
+                target: "/conditional"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Modal"
+                target: "/modal"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Select"
+                target: "/select"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Async"
+                target: "/async"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Form"
+                target: "/form"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "File Upload"
+                target: "/file-upload"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Timer"
+                target: "/timer"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Animation"
+                target: "/animation"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Browser"
+                target: "/browser"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Lifecycle"
+                target: "/lifecycle"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Keep-Alive"
+                target: "/keep-alive"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Component Binding"
+                target: "/component-binding"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Custom Attrs"
+                target: "/custom-attrs"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Dynamic Component"
+                target: "/dynamic-component"
+            }
         }
     }
 }
@@ -101,33 +178,128 @@ fn build_desktop_nav_items(route_signal: Signal<String>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The reactive signal holding the current route.
-/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
+/// - `BuildMobileNavItemsProps` - The typed props containing route signal and drawer open signal.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
-fn build_mobile_nav_items(route_signal: Signal<String>, drawer_open: Signal<bool>) -> VirtualNode {
+#[component]
+pub(crate) fn build_mobile_nav_items(props: BuildMobileNavItemsProps) -> VirtualNode {
+    let BuildMobileNavItemsProps {
+        route_signal,
+        drawer_open,
+    } = props;
     html! {
         div {
             class: c_nav_items_scroll()
-            { mobile_nav_item(route_signal, drawer_open, "Signals", "/signals") }
-            { mobile_nav_item(route_signal, drawer_open, "Event", "/event") }
-            { mobile_nav_item(route_signal, drawer_open, "List", "/list") }
-            { mobile_nav_item(route_signal, drawer_open, "Observer", "/observer") }
-            { mobile_nav_item(route_signal, drawer_open, "Conditional", "/conditional") }
-            { mobile_nav_item(route_signal, drawer_open, "Modal", "/modal") }
-            { mobile_nav_item(route_signal, drawer_open, "Select", "/select") }
-            { mobile_nav_item(route_signal, drawer_open, "Async", "/async") }
-            { mobile_nav_item(route_signal, drawer_open, "Form", "/form") }
-            { mobile_nav_item(route_signal, drawer_open, "File Upload", "/file-upload") }
-            { mobile_nav_item(route_signal, drawer_open, "Timer", "/timer") }
-            { mobile_nav_item(route_signal, drawer_open, "Animation", "/animation") }
-            { mobile_nav_item(route_signal, drawer_open, "Browser", "/browser") }
-            { mobile_nav_item(route_signal, drawer_open, "Lifecycle", "/lifecycle") }
-            { mobile_nav_item(route_signal, drawer_open, "Keep-Alive", "/keep-alive") }
-            { mobile_nav_item(route_signal, drawer_open, "Component Binding", "/component-binding") }
-            { mobile_nav_item(route_signal, drawer_open, "Custom Attrs", "/custom-attrs") }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Signals"
+                target: "/signals"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Event"
+                target: "/event"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "List"
+                target: "/list"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Observer"
+                target: "/observer"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Conditional"
+                target: "/conditional"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Modal"
+                target: "/modal"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Select"
+                target: "/select"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Async"
+                target: "/async"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Form"
+                target: "/form"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "File Upload"
+                target: "/file-upload"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Timer"
+                target: "/timer"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Animation"
+                target: "/animation"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Browser"
+                target: "/browser"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Lifecycle"
+                target: "/lifecycle"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Keep-Alive"
+                target: "/keep-alive"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Component Binding"
+                target: "/component-binding"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Custom Attrs"
+                target: "/custom-attrs"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Dynamic Component"
+                target: "/dynamic-component"
+            }
         }
     }
 }
@@ -136,20 +308,19 @@ fn build_mobile_nav_items(route_signal: Signal<String>, drawer_open: Signal<bool
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The reactive signal holding the current route.
-/// - `Signal<String>` - The reactive signal holding the current theme.
-/// - `Signal<String>` - The reactive signal holding the root class name.
-/// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
+/// - `DesktopLayoutProps` - The typed props containing route, theme, root class, and panel signals.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The desktop application shell virtual DOM tree.
-fn desktop_layout(
-    route_signal: Signal<String>,
-    theme_signal: Signal<String>,
-    root_class_signal: Signal<String>,
-    panel_open: Signal<bool>,
-) -> VirtualNode {
+#[component]
+pub(crate) fn desktop_layout(props: DesktopLayoutProps) -> VirtualNode {
+    let DesktopLayoutProps {
+        route_signal,
+        theme_signal,
+        root_class_signal,
+        panel_open,
+    } = props;
     html! {
         div {
             class: root_class_signal
@@ -159,9 +330,8 @@ fn desktop_layout(
                     href: "https://github.com/euv-dev/euv"
                     target: "_blank"
                     class: c_nav_header()
-                    span {
-                        class: c_nav_logo()
-                        "E"
+                    logo_button {
+                        variant: LogoButtonVariant::Nav
                     }
                     span {
                         "Euv"
@@ -171,7 +341,9 @@ fn desktop_layout(
                     class: c_nav_section_label()
                     "Pages"
                 }
-                { build_desktop_nav_items(route_signal) }
+                build_desktop_nav_items {
+                    route_signal: route_signal
+                }
                 div {
                     class: c_nav_theme_toggle()
                     button {
@@ -193,29 +365,13 @@ fn desktop_layout(
             }
             main {
                 class: c_app_main()
-                match { route_signal.get().as_str() } {
-                    "/" | "/signals" => page_signals(),
-                    "/event" => page_event(),
-                    "/list" => page_list(),
-                    "/observer" => page_observer(),
-                    "/conditional" => page_conditional(),
-                    "/modal" => page_modal(),
-                    "/select" => page_select(),
-                    "/async" => page_async_demo(),
-                    "/form" => page_form(),
-                    "/file-upload" => page_file_upload(),
-                    "/timer" => page_timer(),
-                    "/animation" => page_animation(),
-                    "/browser" => page_browser(),
-                    "/lifecycle" => page_lifecycle(),
-                    "/keep-alive" => page_keep_alive(),
-                    "/component-binding" => page_component_binding(),
-                    "/custom-attrs" => page_custom_attrs(),
-                    "/dynamic-component" => page_dynamic_component(),
-                    _ => page_not_found()
+                page_router {
+                    route_signal
                 }
             }
-            { vconsole_panel(panel_open) }
+            vconsole_panel {
+                panel_open
+            }
         }
     }
 }
@@ -224,22 +380,20 @@ fn desktop_layout(
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The reactive signal holding the current route.
-/// - `Signal<String>` - The reactive signal holding the current theme.
-/// - `Signal<String>` - The reactive signal holding the root class name.
-/// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
-/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
+/// - `MobileLayoutProps` - The typed props containing route, theme, root class, panel, and drawer signals.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The mobile application shell virtual DOM tree.
-fn mobile_layout(
-    route_signal: Signal<String>,
-    theme_signal: Signal<String>,
-    root_class_signal: Signal<String>,
-    panel_open: Signal<bool>,
-    drawer_open: Signal<bool>,
-) -> VirtualNode {
+#[component]
+pub(crate) fn mobile_layout(props: MobileLayoutProps) -> VirtualNode {
+    let MobileLayoutProps {
+        route_signal,
+        theme_signal,
+        root_class_signal,
+        panel_open,
+        drawer_open,
+    } = props;
     html! {
         div {
             class: root_class_signal
@@ -252,9 +406,8 @@ fn mobile_layout(
                         onclick: use_toggle(drawer_open)
                         "☰"
                     }
-                    span {
-                        class: c_nav_logo()
-                        "E"
+                    logo_button {
+                        variant: LogoButtonVariant::Nav
                     }
                     span {
                         "euv"
@@ -272,29 +425,13 @@ fn mobile_layout(
             }
             main {
                 class: c_mobile_main()
-                match { route_signal.get().as_str() } {
-                    "/" | "/signals" => page_signals(),
-                    "/event" => page_event(),
-                    "/list" => page_list(),
-                    "/observer" => page_observer(),
-                    "/conditional" => page_conditional(),
-                    "/modal" => page_modal(),
-                    "/select" => page_select(),
-                    "/async" => page_async_demo(),
-                    "/form" => page_form(),
-                    "/file-upload" => page_file_upload(),
-                    "/timer" => page_timer(),
-                    "/animation" => page_animation(),
-                    "/browser" => page_browser(),
-                    "/lifecycle" => page_lifecycle(),
-                    "/keep-alive" => page_keep_alive(),
-                    "/component-binding" => page_component_binding(),
-                    "/custom-attrs" => page_custom_attrs(),
-                    "/dynamic-component" => page_dynamic_component(),
-                    _ => page_not_found()
+                page_router {
+                    route_signal
                 }
             }
-            { vconsole_panel(panel_open) }
+            vconsole_panel {
+                panel_open
+            }
             if { drawer_open.get() } {
                 div {
                     class: c_mobile_overlay()
@@ -306,20 +443,22 @@ fn mobile_layout(
                     class: c_mobile_nav_drawer()
                     div {
                         class: c_mobile_nav_drawer_header()
-                        a {
-                            href: "https://github.com/euv-dev/euv"
-                            target: "_blank"
-                            class: c_nav_header()
-                            span {
-                                class: c_nav_logo()
-                                "E"
+                        div {
+                            class: c_mobile_header_left()
+                            button {
+                                class: c_mobile_menu_button_active()
+                                onclick: use_toggle(drawer_open)
+                                "☰"
+                            }
+                            logo_button {
+                                variant: LogoButtonVariant::Nav
                             }
                             span {
-                                "Euv"
+                                "euv"
                             }
                         }
                         button {
-                            class: c_mobile_nav_drawer_close()
+                            class: c_mobile_menu_button()
                             onclick: move |_event: Event| {
                                 drawer_open.set(false);
                             }
@@ -330,7 +469,10 @@ fn mobile_layout(
                         class: c_nav_section_label()
                         "Pages"
                     }
-                    { build_mobile_nav_items(route_signal, drawer_open) }
+                    build_mobile_nav_items {
+                        route_signal: route_signal
+                        drawer_open: drawer_open
+                    }
                     div {
                         class: c_nav_theme_toggle()
                         button {
@@ -350,8 +492,6 @@ fn mobile_layout(
                         "Built with Euv & WASM"
                     }
                 }
-            } else {
-                ""
             }
         }
     }
@@ -373,14 +513,27 @@ pub(crate) fn app() -> VirtualNode {
     let mobile_signal: Signal<bool> = use_resize();
     let theme_state: ThemeState = use_theme(mobile_signal);
     let theme_signal: Signal<String> = theme_state.get_theme();
-    let root_class: Signal<String> = theme_state.get_root_class();
+    let root_class_signal: Signal<String> = theme_state.get_root_class();
     use_hash_change(route_signal);
+    use_scroll_to_top(route_signal);
     use_pop_state(panel_open);
+    use_scroll_drawer_to_active(drawer_open);
     html! {
         if { mobile_signal.get() } {
-            mobile_layout(route_signal, theme_signal, root_class, panel_open, drawer_open)
+            mobile_layout {
+                route_signal
+                theme_signal
+                root_class_signal
+                panel_open
+                drawer_open
+            }
         } else {
-            desktop_layout(route_signal, theme_signal, root_class, panel_open)
+            desktop_layout {
+                route_signal
+                theme_signal
+                root_class_signal
+                panel_open
+            }
         }
     }
 }

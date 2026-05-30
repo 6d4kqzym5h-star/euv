@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The list demo page virtual DOM tree.
-pub(crate) fn page_list() -> VirtualNode {
+#[component]
+pub(crate) fn page_list(props: PageListProps) -> VirtualNode {
+    let PageListProps = props;
     let state: UseTodoList = use_todo_list();
     html! {
         div {
@@ -37,8 +39,6 @@ pub(crate) fn page_list() -> VirtualNode {
                         class: c_field_error_text()
                         state.get_add_error()
                     }
-                } else {
-                    ""
                 }
                 ul {
                     class: c_list_ul()

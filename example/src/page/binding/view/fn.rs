@@ -409,7 +409,9 @@ pub(crate) fn color_mixer(
 /// # Returns
 ///
 /// - `VirtualNode` - The component binding demo page virtual DOM tree.
-pub(crate) fn page_component_binding() -> VirtualNode {
+#[component]
+pub(crate) fn page_component_binding(props: PageComponentBindingProps) -> VirtualNode {
+    let PageComponentBindingProps = props;
     let props_state: UsePropsDemo = use_props_demo();
     let two_way_state: UseTwoWayDemo = use_two_way_demo();
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();
@@ -456,8 +458,6 @@ pub(crate) fn page_component_binding() -> VirtualNode {
                         class: c_success_box()
                         props_state.get_child_response()
                     }
-                } else {
-                    ""
                 }
             }
             my_card {

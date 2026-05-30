@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The modal demo page virtual DOM tree.
-pub(crate) fn page_modal() -> VirtualNode {
+#[component]
+pub(crate) fn page_modal(props: PageModalProps) -> VirtualNode {
+    let PageModalProps = props;
     let state: UseModal = use_modal();
     html! {
         div {
@@ -39,8 +41,6 @@ pub(crate) fn page_modal() -> VirtualNode {
                         class: c_success_box()
                         state.get_confirm_result()
                     }
-                } else {
-                    ""
                 }
             }
             my_card {
@@ -59,8 +59,6 @@ pub(crate) fn page_modal() -> VirtualNode {
                         class: c_success_box()
                         state.get_modal_submitted()
                     }
-                } else {
-                    ""
                 }
             }
             if { state.get_show_basic().get() } {

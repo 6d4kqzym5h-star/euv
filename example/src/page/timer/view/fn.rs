@@ -20,7 +20,9 @@ fn format_time(total_seconds: i32) -> String {
 /// # Returns
 ///
 /// - `VirtualNode` - The timer demo page virtual DOM tree.
-pub(crate) fn page_timer() -> VirtualNode {
+#[component]
+pub(crate) fn page_timer(props: PageTimerProps) -> VirtualNode {
+    let PageTimerProps = props;
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
     let sw_handle: Signal<Option<IntervalHandle>> = stopwatch.get_handle();
@@ -123,8 +125,6 @@ pub(crate) fn page_timer() -> VirtualNode {
                         class: c_timer_done()
                         "⏰ Time's up!"
                     }
-                } else {
-                    ""
                 }
             }
         }

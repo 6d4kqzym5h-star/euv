@@ -1,5 +1,27 @@
 use crate::*;
 
+/// Watches the route signal and scrolls the `<main>` content container
+/// back to the top whenever the route changes.
+///
+/// On each route change, queries the document for the first `<main>`
+/// element and resets its `scrollTop` to zero. The sidebar scroll
+/// position is preserved natively since the `<nav>` element is never
+/// destroyed during route transitions.
+///
+/// # Arguments
+///
+/// - `Signal<String>` - The reactive signal holding the current route path.
+pub(crate) fn use_scroll_to_top(route_signal: Signal<String>) {
+    watch!(route_signal, |_route_value| {
+        let window_value: Window = window().expect("no global window exists");
+        let document_value: Document = window_value.document().expect("should have a document");
+        if let Some(main_element) = document_value.query_selector("main").ok().flatten() {
+            let html_element: HtmlElement = main_element.unchecked_into();
+            html_element.set_scroll_top(0);
+        }
+    });
+}
+
 /// Subscribes to browser `hashchange` events and updates the given signal.
 ///
 /// Registers a global event listener on `window` that reads the current
@@ -69,6 +91,73 @@ pub(crate) fn use_pop_state(panel_open: Signal<bool>) {
     closure.forget();
 }
 
+/// Watches the drawer open signal and scrolls the mobile navigation drawer
+/// to make the currently active navigation item visible when the drawer opens.
+///
+/// Uses nested `requestAnimationFrame` to defer the scroll until after the
+/// framework has completed its DOM update cycle. The first `requestAnimationFrame`
+/// fires after the framework's own `requestAnimationFrame`-based render pass,
+/// and the second one fires after the browser has laid out the new DOM.
+/// Locates the scrollable `c-nav-items-scroll` container and the active nav
+/// item within the drawer, then sets `scrollTop` so the active item appears
+/// near the vertical center of the container.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
+pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
+    watch!(drawer_open, |is_open| {
+        if !is_open {
+            return;
+        }
+        let outer_window: Window = window().expect("no global window exists");
+        let outer_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            let inner_window: Window = window().expect("no global window exists");
+            let inner_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                let window_value: Window = window().expect("no global window exists");
+                let document_value: Document =
+                    window_value.document().expect("should have a document");
+                let Some(drawer_nav) = document_value
+                    .query_selector(DRAWER_NAV_SELECTOR)
+                    .ok()
+                    .flatten()
+                else {
+                    return;
+                };
+                let Some(active_element) = drawer_nav
+                    .query_selector(ACTIVE_NAV_ITEM_SELECTOR)
+                    .ok()
+                    .flatten()
+                else {
+                    return;
+                };
+                let active_html_element: HtmlElement = active_element.unchecked_into();
+                let Some(scroll_container) = drawer_nav
+                    .query_selector(NAV_ITEMS_SCROLL_SELECTOR)
+                    .ok()
+                    .flatten()
+                else {
+                    return;
+                };
+                let scroll_html_element: HtmlElement = scroll_container.unchecked_into();
+                let active_rect: DomRect = active_html_element.get_bounding_client_rect();
+                let container_rect: DomRect = scroll_html_element.get_bounding_client_rect();
+                let offset_from_container_top: f64 = active_rect.top() - container_rect.top();
+                let current_scroll_top: i32 = scroll_html_element.scroll_top();
+                let container_height: f64 = container_rect.height();
+                let active_height: f64 = active_rect.height();
+                let target_scroll_top: f64 = current_scroll_top as f64 + offset_from_container_top
+                    - (container_height - active_height) / 2.0;
+                scroll_html_element.set_scroll_top(target_scroll_top.max(0.0) as i32);
+            }));
+            let _ = inner_window.request_animation_frame(inner_closure.as_ref().unchecked_ref());
+            inner_closure.forget();
+        }));
+        let _ = outer_window.request_animation_frame(outer_closure.as_ref().unchecked_ref());
+        outer_closure.forget();
+    });
+}
+
 /// Creates a reactive signal that tracks whether the viewport is in mobile mode
 /// and subscribes to browser `resize` events to keep it updated.
 ///
@@ -104,7 +193,7 @@ pub(crate) fn use_resize() -> Signal<bool> {
                 &debounce_callback,
                 RESIZE_DEBOUNCE_MILLIS,
             )
-            .unwrap_or(0);
+            .unwrap_or_default();
         timer_signal.set(Some(new_timer));
     }));
     let _ =

@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The form demo page virtual DOM tree.
-pub(crate) fn page_form() -> VirtualNode {
+#[component]
+pub(crate) fn page_form(props: PageFormProps) -> VirtualNode {
+    let PageFormProps = props;
     let form: UseForm = use_form();
     html! {
         div {
@@ -113,16 +115,12 @@ pub(crate) fn page_form() -> VirtualNode {
                         class: c_field_error_text()
                         form.get_agree_error()
                     }
-                } else {
-                    ""
                 }
                 if { !form.get_errors().get().is_empty() } {
                     div {
                         class: c_error_box()
                         form.get_errors()
                     }
-                } else {
-                    ""
                 }
                 primary_button {
                     label: "Submit"
@@ -134,8 +132,6 @@ pub(crate) fn page_form() -> VirtualNode {
                         class: c_success_box()
                         form.get_submitted()
                     }
-                } else {
-                    ""
                 }
             }
         }

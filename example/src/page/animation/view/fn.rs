@@ -5,7 +5,9 @@ use crate::*;
 /// # Returns
 ///
 /// - `VirtualNode` - The animation demo page virtual DOM tree.
-pub(crate) fn page_animation() -> VirtualNode {
+#[component]
+pub(crate) fn page_animation(props: PageAnimationProps) -> VirtualNode {
+    let PageAnimationProps = props;
     let box_visible: Signal<bool> = use_signal(|| false);
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);
@@ -34,8 +36,6 @@ pub(crate) fn page_animation() -> VirtualNode {
                         class: c_anim_fade_in()
                         "This element fades in and out with a smooth transition."
                     }
-                } else {
-                    ""
                 }
             }
             my_card {
