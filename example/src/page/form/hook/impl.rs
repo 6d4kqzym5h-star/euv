@@ -6,7 +6,7 @@ impl Default for UseForm {
     ///
     /// # Returns
     ///
-    /// - `Self`- A new `UseForm` with all signals initialized to defaults.
+    /// - `Self` - A new `UseForm` with all signals initialized to defaults.
     fn default() -> Self {
         Self {
             username: use_signal(String::new),

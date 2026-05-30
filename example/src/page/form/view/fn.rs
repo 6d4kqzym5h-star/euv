@@ -6,13 +6,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The form demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_form(props: PageFormProps) -> VirtualNode {
-    let PageFormProps = props;
+pub(crate) fn page_form(mut node: VirtualNode<PageFormProps>) -> VirtualNode {
+    let PageFormProps = node.try_take_props().unwrap_or_default();
     let form: UseForm = use_form();
     html! {
         div {
             class: c_page_container()
-            page_header("Form Demo", "Two-way binding and validation example.")
+            page_header {
+                title: "Form Demo"
+                subtitle: "Two-way binding and validation example."
+            }
             my_card {
                 title: "Registration Form"
                 div {

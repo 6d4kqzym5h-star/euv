@@ -90,11 +90,11 @@ pub fn schedule_signal_update() {
 ///
 /// # Arguments
 ///
-/// - `F`- The closure to execute with batched updates.
+/// - `FnOnce() -> R` - The closure to execute with batched updates.
 ///
 /// # Returns
 ///
-/// - `R`- The result of the closure execution.
+/// - `R` - The result of the closure execution.
 pub fn batch_updates<F, R>(callback: F) -> R
 where
     F: FnOnce() -> R,
@@ -115,13 +115,13 @@ where
 ///
 /// # Arguments
 ///
-/// - `Signal<String>`- The attribute signal to subscribe.
-/// - `F`- A closure that computes the current attribute value string.
+/// - `Signal<String>` - The attribute signal to subscribe.
+/// - `Fn() -> String + 'static` - A closure that computes the current attribute value string.
 pub(crate) fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
 where
     F: Fn() -> String + 'static,
 {
-    let signal_key: usize = attr_signal.get_inner_addr();
+    let signal_key: usize = attr_signal.get_inner();
     let callback: Box<dyn FnMut()> = Box::new(move || {
         let new_value: String = compute();
         attr_signal.set_silent(new_value);
@@ -137,11 +137,11 @@ where
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>`- The source boolean signal.
+/// - `Signal<bool>` - The source boolean signal.
 ///
 /// # Returns
 ///
-/// - `AttributeValue`- An `AttributeValue::Signal` wrapping the derived string signal.
+/// - `AttributeValue` - An `AttributeValue::Signal` wrapping the derived string signal.
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let initial: String = source.get().to_string();
     let string_signal: Signal<String> = Signal::create(initial);

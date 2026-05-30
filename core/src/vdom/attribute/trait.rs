@@ -31,14 +31,3 @@ pub(crate) trait IntoCallbackAttribute {
     /// for use as a component prop.
     fn into_callback_attribute(self) -> AttributeValue;
 }
-
-/// Trait for converting event-like values into `Option<NativeEventHandler>`.
-///
-/// Used by the `html!` macro when generating typed props for component event fields.
-/// Supports closures (`FnMut(Event) + 'static`), `NativeEventHandler`, and
-/// `Option<NativeEventHandler>` as input types, converting them all into
-/// `Option<NativeEventHandler>` for assignment to typed Props struct fields.
-pub trait IntoEventProp {
-    /// Converts this value into an `Option<NativeEventHandler>`.
-    fn into_event_prop(self) -> Option<NativeEventHandler>;
-}

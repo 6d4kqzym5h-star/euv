@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The lifecycle demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_lifecycle(props: PageLifecycleProps) -> VirtualNode {
-    let PageLifecycleProps = props;
+pub(crate) fn page_lifecycle(mut node: VirtualNode<PageLifecycleProps>) -> VirtualNode {
+    let PageLifecycleProps = node.try_take_props().unwrap_or_default();
     let state: UseLifecycle = use_lifecycle();
     watch!(state.get_render_count(), |render_count_value| {
         Console::log(&format!(
@@ -18,7 +18,10 @@ pub(crate) fn page_lifecycle(props: PageLifecycleProps) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header("Lifecycle", "Track component updates and lifecycle events.")
+            page_header {
+                title: "Lifecycle"
+                subtitle: "Track component updates and lifecycle events."
+            }
             my_card {
                 title: "Render Counter"
                 p {

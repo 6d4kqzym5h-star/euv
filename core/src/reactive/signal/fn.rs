@@ -15,7 +15,6 @@ use crate::*;
 /// # Returns
 ///
 /// - `&'static RefCell<SignalInner<T>>` - A reference to the signal's inner state.
-#[inline(always)]
 pub(crate) fn get_signal_inner_ref<T>(addr: usize) -> &'static RefCell<SignalInner<T>>
 where
     T: Clone + PartialEq + 'static,
@@ -36,9 +35,10 @@ where
 /// - `usize` - The inner pointer address of the signal.
 pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
     let inner_ref: &RefCell<SignalInner<String>> = get_signal_inner_ref(addr);
-    let mut inner: RefMut<SignalInner<String>> = inner_ref.borrow_mut();
-    inner.set_alive(false);
-    inner.get_mut_listeners().clear();
+    if let Ok(mut inner) = inner_ref.try_borrow_mut() {
+        inner.set_alive(false);
+        inner.get_mut_listeners().clear();
+    }
 }
 
 /// Ensures the signal inner registry is initialized and returns a mutable reference.

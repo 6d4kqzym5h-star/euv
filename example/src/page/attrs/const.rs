@@ -1,9 +1,3 @@
-/// The static attribute key for demonstrating compile-time known attribute names.
-pub(crate) const STATIC_ATTR_KEY: &str = "data-role";
-
-/// The static attribute value for demonstrating compile-time known attribute values.
-pub(crate) const STATIC_ATTR_VALUE: &str = "demo-static";
-
 /// The placeholder text for the dynamic attribute key input.
 pub(crate) const DYNAMIC_KEY_PLACEHOLDER: &str = "Enter attr key (e.g. data-custom)";
 

@@ -10,10 +10,13 @@ use crate::*;
 /// # Returns
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the tag name.
-pub(crate) fn tag_on_select(tag_name: Signal<String>, value: &str) -> Option<Rc<dyn Fn(Event)>> {
+pub(crate) fn tag_on_select(
+    try_get_tag_name: Signal<String>,
+    value: &str,
+) -> Option<Rc<dyn Fn(Event)>> {
     let value_owned: String = value.to_string();
     Some(Rc::new(move |_event: Event| {
-        tag_name.set(value_owned.clone());
+        try_get_tag_name.set(value_owned.clone());
     }))
 }
 

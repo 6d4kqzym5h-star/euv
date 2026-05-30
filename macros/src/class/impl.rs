@@ -6,11 +6,11 @@ impl Parse for ClassInput {
     ///
     /// # Arguments
     ///
-    /// - `ParseStream`- The syn parse stream to read from.
+    /// - `ParseStream` - The syn parse stream to read from.
     ///
     /// # Returns
     ///
-    /// - `syn::Result<Self>`- The parsed `ClassInput`, or a syntax error.
+    /// - `syn::Result<Self>` - The parsed `ClassInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut classes: Vec<ClassDef> = Vec::new();
         while !input.is_empty() {
@@ -220,7 +220,7 @@ impl ToTokens for ClassDef {
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let vis: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
@@ -426,7 +426,7 @@ impl ToTokens for ClassInput {
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         for class_def in self.get_classes() {
             class_def.to_tokens(tokens);

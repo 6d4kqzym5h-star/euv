@@ -6,13 +6,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The modal demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_modal(props: PageModalProps) -> VirtualNode {
-    let PageModalProps = props;
+pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
+    let PageModalProps = node.try_take_props().unwrap_or_default();
     let state: UseModal = use_modal();
     html! {
         div {
             class: c_page_container()
-            page_header("Modal Dialog", "Overlay dialogs with different content patterns.")
+            page_header {
+                title: "Modal Dialog"
+                subtitle: "Overlay dialogs with different content patterns."
+            }
             my_card {
                 title: "Basic Modal"
                 p {

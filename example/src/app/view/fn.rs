@@ -5,17 +5,18 @@ use crate::*;
 /// # Arguments
 ///
 /// - `NavItemProps` - The typed props containing route signal, label, and target.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The navigation item virtual DOM tree.
 #[component]
-pub(crate) fn nav_item(props: NavItemProps) -> VirtualNode {
+pub(crate) fn nav_item(mut node: VirtualNode<NavItemProps>) -> VirtualNode {
     let NavItemProps {
         route_signal,
         label,
         target,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -34,18 +35,19 @@ pub(crate) fn nav_item(props: NavItemProps) -> VirtualNode {
 /// # Arguments
 ///
 /// - `MobileNavItemProps` - The typed props containing route signal, drawer open signal, label, and target.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The mobile navigation item virtual DOM tree.
 #[component]
-pub(crate) fn mobile_nav_item(props: MobileNavItemProps) -> VirtualNode {
+pub(crate) fn mobile_nav_item(mut node: VirtualNode<MobileNavItemProps>) -> VirtualNode {
     let MobileNavItemProps {
         route_signal,
         drawer_open,
         label,
         target,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -68,13 +70,16 @@ pub(crate) fn mobile_nav_item(props: MobileNavItemProps) -> VirtualNode {
 /// # Arguments
 ///
 /// - `BuildDesktopNavItemsProps` - The typed props containing the route signal.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 #[component]
-pub(crate) fn build_desktop_nav_items(props: BuildDesktopNavItemsProps) -> VirtualNode {
-    let BuildDesktopNavItemsProps { route_signal } = props;
+pub(crate) fn build_desktop_nav_items(
+    mut node: VirtualNode<BuildDesktopNavItemsProps>,
+) -> VirtualNode {
+    let BuildDesktopNavItemsProps { route_signal } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: c_nav_items_scroll()
@@ -179,16 +184,19 @@ pub(crate) fn build_desktop_nav_items(props: BuildDesktopNavItemsProps) -> Virtu
 /// # Arguments
 ///
 /// - `BuildMobileNavItemsProps` - The typed props containing route signal and drawer open signal.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 #[component]
-pub(crate) fn build_mobile_nav_items(props: BuildMobileNavItemsProps) -> VirtualNode {
+pub(crate) fn build_mobile_nav_items(
+    mut node: VirtualNode<BuildMobileNavItemsProps>,
+) -> VirtualNode {
     let BuildMobileNavItemsProps {
         route_signal,
         drawer_open,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: c_nav_items_scroll()
@@ -309,18 +317,19 @@ pub(crate) fn build_mobile_nav_items(props: BuildMobileNavItemsProps) -> Virtual
 /// # Arguments
 ///
 /// - `DesktopLayoutProps` - The typed props containing route, theme, root class, and panel signals.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The desktop application shell virtual DOM tree.
 #[component]
-pub(crate) fn desktop_layout(props: DesktopLayoutProps) -> VirtualNode {
+pub(crate) fn desktop_layout(mut node: VirtualNode<DesktopLayoutProps>) -> VirtualNode {
     let DesktopLayoutProps {
         route_signal,
         theme_signal,
         root_class_signal,
         panel_open,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: root_class_signal
@@ -381,19 +390,20 @@ pub(crate) fn desktop_layout(props: DesktopLayoutProps) -> VirtualNode {
 /// # Arguments
 ///
 /// - `MobileLayoutProps` - The typed props containing route, theme, root class, panel, and drawer signals.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The mobile application shell virtual DOM tree.
 #[component]
-pub(crate) fn mobile_layout(props: MobileLayoutProps) -> VirtualNode {
+pub(crate) fn mobile_layout(mut node: VirtualNode<MobileLayoutProps>) -> VirtualNode {
     let MobileLayoutProps {
         route_signal,
         theme_signal,
         root_class_signal,
         panel_open,
         drawer_open,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: root_class_signal

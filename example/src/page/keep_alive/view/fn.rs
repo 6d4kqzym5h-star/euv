@@ -359,13 +359,16 @@ pub(crate) fn keep_alive_timer_on_reset(
 ///
 /// - `VirtualNode` - The keep-alive demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_keep_alive(props: PageKeepAliveProps) -> VirtualNode {
-    let PageKeepAliveProps = props;
+pub(crate) fn page_keep_alive(mut node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
+    let PageKeepAliveProps = node.try_take_props().unwrap_or_default();
     let tab: Signal<String> = use_signal(|| "counter".to_string());
     html! {
         div {
             class: c_page_container()
-            page_header("Keep-Alive", "Preserve component state across tab switches using CSS display toggling.")
+            page_header {
+                title: "Keep-Alive"
+                subtitle: "Preserve component state across tab switches using CSS display toggling."
+            }
             my_card {
                 title: "Tab Switching with State Preservation"
                 div {

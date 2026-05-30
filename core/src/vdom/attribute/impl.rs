@@ -182,7 +182,7 @@ impl PartialEq for AttributeValue {
         match (self, other) {
             (Self::Text(old_value), Self::Text(new_value)) => old_value == new_value,
             (Self::Signal(old_signal), Self::Signal(new_signal)) => {
-                if old_signal.get_inner_addr() == new_signal.get_inner_addr() {
+                if old_signal.get_inner() == new_signal.get_inner() {
                     return false;
                 }
                 old_signal.get() == new_signal.get()
@@ -248,8 +248,8 @@ impl Style {
     ///
     /// # Arguments
     ///
-    /// - `N` - The property name (snake_case will be converted to kebab-case).
-    /// - `V` - The property value.
+    /// - `AsRef<str>` - The property name (snake_case will be converted to kebab-case).
+    /// - `AsRef<str>` - The property value.
     ///
     /// # Returns
     ///

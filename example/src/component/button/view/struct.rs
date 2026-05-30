@@ -11,6 +11,4 @@ pub(crate) struct PrimaryButtonProps {
     pub(crate) onclick: Option<Rc<dyn Fn(Event)>>,
     /// Whether the button is disabled.
     pub(crate) disabled: bool,
-    /// The child content rendered inside the button.
-    pub(crate) children: VirtualNode,
 }

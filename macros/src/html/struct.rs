@@ -74,17 +74,10 @@ pub(crate) struct HtmlMatch {
     #[set(pub(crate))]
     pub(crate) scrutinee: Expr,
     /// The match arms: each arm has a pattern as a raw token stream and a body of HTML nodes.
-    ///
     #[get(pub(crate))]
     #[set(pub(crate))]
     pub(crate) arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)>,
 }
-
-/// A type alias for a list of HTML attribute key-value pairs.
-///
-/// Used throughout the `html!` macro parsing to represent parsed attributes
-/// in a more readable and maintainable form than the raw `Vec<(HtmlAttrKey, HtmlAttrValue)>`.
-pub(crate) type HtmlAttrs = Vec<(HtmlAttrKey, HtmlAttrValue)>;
 
 /// Represents an HTML element with a tag name, attributes, and children.
 ///

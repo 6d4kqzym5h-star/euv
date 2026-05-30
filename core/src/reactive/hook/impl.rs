@@ -18,7 +18,7 @@ impl HookContext {
     ///
     /// # Arguments
     ///
-    /// - `usize`- The index of the new match arm.
+    /// - `usize` - The index of the new match arm.
     pub fn set_arm_changed(&mut self, changed: usize) {
         let cleanups: Vec<Box<dyn FnOnce()>>;
         {

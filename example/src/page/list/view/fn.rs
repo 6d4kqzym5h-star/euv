@@ -6,13 +6,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The list demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_list(props: PageListProps) -> VirtualNode {
-    let PageListProps = props;
+pub(crate) fn page_list(mut node: VirtualNode<PageListProps>) -> VirtualNode {
+    let PageListProps = node.try_take_props().unwrap_or_default();
     let state: UseTodoList = use_todo_list();
     html! {
         div {
             class: c_page_container()
-            page_header("List Rendering", "Dynamic list with add and remove operations.")
+            page_header {
+                title: "List Rendering"
+                subtitle: "Dynamic list with add and remove operations."
+            }
             my_card {
                 title: "Todo List"
                 div {

@@ -4,20 +4,19 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `PrimaryButtonProps` - The typed props containing label, onclick, and disabled.
-/// - `Vec<VirtualNode>` - The children nodes.
+/// - `VirtualNode<PrimaryButtonProps>` - The props node containing label, onclick, and disabled.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn primary_button(props: PrimaryButtonProps) -> VirtualNode {
+pub(crate) fn primary_button(mut node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
     let PrimaryButtonProps {
         label,
         onclick: click_handler,
         disabled,
-        children,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
+    let children: VirtualNode = node.take_children();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
         other => other,
@@ -37,20 +36,19 @@ pub(crate) fn primary_button(props: PrimaryButtonProps) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `PrimaryButtonProps` - The typed props containing label, onclick, and disabled.
-/// - `Vec<VirtualNode>` - The children nodes.
+/// - `VirtualNode<PrimaryButtonProps>` - The props node containing label, onclick, and disabled.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn modal_primary_button(props: PrimaryButtonProps) -> VirtualNode {
+pub(crate) fn modal_primary_button(mut node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
     let PrimaryButtonProps {
         label,
         onclick: click_handler,
         disabled,
-        children,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
+    let children: VirtualNode = node.take_children();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
         other => other,

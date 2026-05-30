@@ -36,4 +36,4 @@ wasm-opt = [
 ]
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]

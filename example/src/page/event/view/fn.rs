@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The event demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_event(props: PageEventProps) -> VirtualNode {
-    let PageEventProps = props;
+pub(crate) fn page_event(mut node: VirtualNode<PageEventProps>) -> VirtualNode {
+    let PageEventProps = node.try_take_props().unwrap_or_default();
     let last_key: Signal<String> = use_signal(|| "None".to_string());
     let last_key_code: Signal<String> = use_signal(|| "None".to_string());
     let last_key_up: Signal<String> = use_signal(|| "None".to_string());
@@ -46,7 +46,10 @@ pub(crate) fn page_event(props: PageEventProps) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header("Event Handling", "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, and media events.")
+            page_header {
+                title: "Event Handling"
+                subtitle: "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, and media events."
+            }
             my_card {
                 title: "Keyboard Events"
                 input {

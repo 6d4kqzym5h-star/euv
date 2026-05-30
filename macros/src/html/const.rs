@@ -59,3 +59,6 @@ pub(crate) const ERR_UNEXPECTED_TOKEN_IN_DYNAMIC_COMPONENT: &str =
 
 /// Type name for `VirtualNode`, used to determine the else default value in component props if-chains.
 pub(crate) const TYPE_VIRTUAL_NODE: &str = "VirtualNode";
+
+/// Type name identifier for `VirtualNode`, used to detect `VirtualNode<T>` parameter types.
+pub(crate) const VIRTUAL_NODE_TYPE: &str = "VirtualNode";

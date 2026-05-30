@@ -11,14 +11,19 @@ use crate::*;
 ///
 /// - `VirtualNode` - The dynamic component demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_dynamic_component(props: PageDynamicComponentProps) -> VirtualNode {
-    let PageDynamicComponentProps = props;
-    let tag_name: Signal<String> = use_signal(|| DEFAULT_TAG_NAME.to_string());
+pub(crate) fn page_dynamic_component(
+    mut node: VirtualNode<PageDynamicComponentProps>,
+) -> VirtualNode {
+    let PageDynamicComponentProps = node.try_take_props().unwrap_or_default();
+    let tag_name_opt: Signal<String> = use_signal(|| DEFAULT_TAG_NAME.to_string());
     let content: Signal<String> = use_signal(|| "Hello, dynamic tag!".to_string());
     html! {
         div {
             class: c_page_container()
-            page_header("Dynamic Tag", "Switch tags at runtime using the {tag} { content } syntax.")
+            page_header {
+                title: "Dynamic Tag"
+                subtitle: "Switch tags at runtime using the {tag} { content } syntax."
+            }
             my_card {
                 title: "Tag Type Selection"
                 p {
@@ -29,22 +34,22 @@ pub(crate) fn page_dynamic_component(props: PageDynamicComponentProps) -> Virtua
                     class: c_dynamic_component_tab_bar()
                     primary_button {
                         label: TAG_OPTION_DIV_LABEL
-                        onclick: tag_on_select(tag_name, TAG_NAME_DIV)
+                        onclick: tag_on_select(tag_name_opt, TAG_NAME_DIV)
                         TAG_OPTION_DIV_LABEL
                     }
                     primary_button {
                         label: TAG_OPTION_SPAN_LABEL
-                        onclick: tag_on_select(tag_name, TAG_NAME_SPAN)
+                        onclick: tag_on_select(tag_name_opt, TAG_NAME_SPAN)
                         TAG_OPTION_SPAN_LABEL
                     }
                     primary_button {
                         label: TAG_OPTION_MY_CARD_LABEL
-                        onclick: tag_on_select(tag_name, TAG_NAME_MY_CARD)
+                        onclick: tag_on_select(tag_name_opt, TAG_NAME_MY_CARD)
                         TAG_OPTION_MY_CARD_LABEL
                     }
                     primary_button {
                         label: TAG_OPTION_BADGE_LABEL
-                        onclick: tag_on_select(tag_name, TAG_NAME_BADGE)
+                        onclick: tag_on_select(tag_name_opt, TAG_NAME_BADGE)
                         TAG_OPTION_BADGE_LABEL
                     }
                 }
@@ -74,11 +79,11 @@ pub(crate) fn page_dynamic_component(props: PageDynamicComponentProps) -> Virtua
                 title: "Result"
                 p {
                     class: c_demo_text_muted()
-                    { format!("Current tag: {}", tag_name.get()) }
+                    { format!("Current tag: {}", tag_name_opt.get()) }
                 }
                 div {
                     class: c_dynamic_component_panel()
-                    { tag_name.get() } {
+                    { tag_name_opt.get() } {
                         title: "Dynamic my_card"
                         onclick: badge_on_click("Dynamic Badge", LogLevel::Log)
                         { content.get() }

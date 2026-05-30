@@ -172,11 +172,11 @@ fn is_raw_prefix(chars: &[char], pos: usize) -> bool {
 ///
 /// # Arguments
 ///
-/// - `char`- The character to check.
+/// - `char` - The character to check.
 ///
 /// # Returns
 ///
-/// - `bool`- `true` if the character is alphanumeric or underscore.
+/// - `bool` - `true` if the character is alphanumeric or underscore.
 fn is_ident_char(character: char) -> bool {
     character.is_alphanumeric() || character == CHAR_UNDERSCORE
 }

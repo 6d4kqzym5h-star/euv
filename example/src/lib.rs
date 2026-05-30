@@ -12,6 +12,8 @@ mod theme;
 
 use {app::*, component::*, page::*, router::*, style::*, theme::*};
 
+use std::rc::Rc;
+
 use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *};
 
 use lombok_macros::*;

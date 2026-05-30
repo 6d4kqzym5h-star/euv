@@ -13,11 +13,11 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled child display element.
 #[component]
-pub(crate) fn child_display(props: ChildDisplayProps) -> VirtualNode {
+pub(crate) fn child_display(mut node: VirtualNode<ChildDisplayProps>) -> VirtualNode {
     let ChildDisplayProps {
         message,
         on_respond,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -51,13 +51,13 @@ pub(crate) fn child_display(props: ChildDisplayProps) -> VirtualNode {
 ///
 /// - `VirtualNode` - A styled limited counter element.
 #[component]
-pub(crate) fn limited_counter(props: LimitedCounterProps) -> VirtualNode {
+pub(crate) fn limited_counter(mut node: VirtualNode<LimitedCounterProps>) -> VirtualNode {
     let LimitedCounterProps {
         disabled,
         max_count,
         on_increment,
         on_reset,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -118,13 +118,13 @@ pub(crate) fn limited_counter(props: LimitedCounterProps) -> VirtualNode {
 ///
 /// - `VirtualNode` - A styled input with callback element.
 #[component]
-pub(crate) fn callback_input(props: CallbackInputProps) -> VirtualNode {
+pub(crate) fn callback_input(mut node: VirtualNode<CallbackInputProps>) -> VirtualNode {
     let CallbackInputProps {
         value,
         on_change,
         on_submit,
         on_reset,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -410,8 +410,10 @@ pub(crate) fn color_mixer(
 ///
 /// - `VirtualNode` - The component binding demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_component_binding(props: PageComponentBindingProps) -> VirtualNode {
-    let PageComponentBindingProps = props;
+pub(crate) fn page_component_binding(
+    mut node: VirtualNode<PageComponentBindingProps>,
+) -> VirtualNode {
+    let PageComponentBindingProps = node.try_take_props().unwrap_or_default();
     let props_state: UsePropsDemo = use_props_demo();
     let two_way_state: UseTwoWayDemo = use_two_way_demo();
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();
@@ -422,7 +424,10 @@ pub(crate) fn page_component_binding(props: PageComponentBindingProps) -> Virtua
     html! {
         div {
             class: c_page_container()
-            page_header("Component Binding", "Parent-child data passing, two-way binding, and cross-component reactive binding.")
+            page_header {
+                title: "Component Binding"
+                subtitle: "Parent-child data passing, two-way binding, and cross-component reactive binding."
+            }
             my_card {
                 title: "Props Down, Callback Up"
                 p {

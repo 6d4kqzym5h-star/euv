@@ -21,8 +21,8 @@ fn format_time(total_seconds: i32) -> String {
 ///
 /// - `VirtualNode` - The timer demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_timer(props: PageTimerProps) -> VirtualNode {
-    let PageTimerProps = props;
+pub(crate) fn page_timer(mut node: VirtualNode<PageTimerProps>) -> VirtualNode {
+    let PageTimerProps = node.try_take_props().unwrap_or_default();
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
     let sw_handle: Signal<Option<IntervalHandle>> = stopwatch.get_handle();
@@ -38,7 +38,10 @@ pub(crate) fn page_timer(props: PageTimerProps) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header("Timer", "Stopwatch and countdown timer with interval-based updates.")
+            page_header {
+                title: "Timer"
+                subtitle: "Stopwatch and countdown timer with interval-based updates."
+            }
             my_card {
                 title: "Stopwatch"
                 div {

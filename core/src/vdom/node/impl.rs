@@ -10,6 +10,66 @@ impl PartialEq for TextNode {
     }
 }
 
+/// Clones a `VirtualNode<T>` by deep-copying all fields.
+impl<T: Clone> Clone for VirtualNode<T> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Element {
+                tag,
+                attributes,
+                children,
+                key,
+                props,
+            } => Self::Element {
+                tag: tag.clone(),
+                attributes: attributes.clone(),
+                children: children.clone(),
+                key: key.clone(),
+                props: props.clone(),
+            },
+            Self::Text(text_node) => Self::Text(text_node.clone()),
+            Self::Fragment(children) => Self::Fragment(children.clone()),
+            Self::Dynamic(dynamic_node) => Self::Dynamic(dynamic_node.clone()),
+            Self::Empty => Self::Empty,
+        }
+    }
+}
+
+/// Debug formatting for `VirtualNode<T>`.
+///
+/// Skips `Dynamic` inner details and `props` for brevity.
+impl<T: std::fmt::Debug> std::fmt::Debug for VirtualNode<T> {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Element {
+                tag,
+                attributes,
+                children,
+                key,
+                props,
+            } => formatter
+                .debug_struct("Element")
+                .field("tag", tag)
+                .field("attributes", attributes)
+                .field("children", children)
+                .field("key", key)
+                .field("props", props)
+                .finish(),
+            Self::Text(text_node) => formatter.debug_tuple("Text").field(text_node).finish(),
+            Self::Fragment(children) => formatter.debug_tuple("Fragment").field(children).finish(),
+            Self::Dynamic(_) => formatter.debug_tuple("Dynamic").finish(),
+            Self::Empty => formatter.debug_tuple("Empty").finish(),
+        }
+    }
+}
+
+/// Default implementation returns `VirtualNode::Empty`.
+impl<T> Default for VirtualNode<T> {
+    fn default() -> Self {
+        Self::Empty
+    }
+}
+
 /// Visual equality comparison for virtual DOM nodes.
 ///
 /// Used by DynamicNode re-rendering to skip unnecessary DOM patches when
@@ -19,7 +79,7 @@ impl PartialEq for TextNode {
 /// Dynamic nodes manage their own subtree re-rendering, so two Dynamic
 /// variants are always considered equal — the inner renderer handles
 /// patching when the dynamic content actually changes.
-impl PartialEq for VirtualNode {
+impl<T: PartialEq> PartialEq for VirtualNode<T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,
@@ -28,12 +88,14 @@ impl PartialEq for VirtualNode {
                     tag: old_tag,
                     attributes: old_attrs,
                     children: old_children,
+                    props: old_props,
                     ..
                 },
                 VirtualNode::Element {
                     tag: new_tag,
                     attributes: new_attrs,
                     children: new_children,
+                    props: new_props,
                     ..
                 },
             ) => {
@@ -50,6 +112,7 @@ impl PartialEq for VirtualNode {
                             old_child == new_child
                         },
                     )
+                    && old_props == new_props
             }
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 old_children.len() == new_children.len()
@@ -111,7 +174,105 @@ impl DynamicNode {
 }
 
 /// Implementation of virtual node construction and property extraction.
-impl VirtualNode {
+impl<T> VirtualNode<T> {
+    /// Returns the tag name if this is an element or component node.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<String>` - The tag name, or `None` if not an element.
+    pub fn try_get_tag_name(&self) -> Option<String> {
+        match self {
+            Self::Element { tag, .. } => match tag {
+                Tag::Element(name) => Some(name.clone()),
+                Tag::Component(name) => Some(name.clone()),
+            },
+            _ => None,
+        }
+    }
+
+    /// Returns a reference to the children of this node, if it has any.
+    ///
+    /// Returns `Some` for `Element` and `Fragment` variants, `None` otherwise.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&Vec<VirtualNode>>` - The children, or `None`.
+    pub fn try_get_children(&self) -> Option<&Vec<VirtualNode>> {
+        match self {
+            Self::Element { children, .. } => Some(children),
+            Self::Fragment(children) => Some(children),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if this node has non-empty children.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - Whether this node has children.
+    pub fn has_children(&self) -> bool {
+        self.try_get_children()
+            .is_some_and(|children: &Vec<VirtualNode>| !children.is_empty())
+    }
+
+    /// Returns a reference to the props of this node, if it has any.
+    ///
+    /// Only `Element` variants with component tags carry props.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&T>` - The props reference, or `None`.
+    pub fn try_get_props(&self) -> Option<&T> {
+        match self {
+            Self::Element { props, .. } => props.as_deref(),
+            _ => None,
+        }
+    }
+
+    /// Takes the props out of this node, leaving `None` in its place.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<T>` - The props, or `None` if this node has no props.
+    pub fn try_take_props(&mut self) -> Option<T> {
+        match self {
+            Self::Element { props, .. } => props.take().map(|boxed: Box<T>| *boxed),
+            _ => None,
+        }
+    }
+
+    /// Takes the children out of this node, replacing them with an empty vector.
+    ///
+    /// Returns a `VirtualNode` (Fragment or single child) representation of the children.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode` - The children as a virtual node.
+    pub fn take_children(&mut self) -> VirtualNode {
+        match self {
+            Self::Element { children, .. } => {
+                let taken: Vec<VirtualNode> = take(children);
+                match taken.len() {
+                    0 => VirtualNode::Empty,
+                    1 => taken.into_iter().next().unwrap_or(VirtualNode::Empty),
+                    _ => VirtualNode::Fragment(taken),
+                }
+            }
+            Self::Fragment(children) => {
+                let taken: Vec<VirtualNode> = take(children);
+                match taken.len() {
+                    0 => VirtualNode::Empty,
+                    1 => taken.into_iter().next().unwrap_or(VirtualNode::Empty),
+                    _ => VirtualNode::Fragment(taken),
+                }
+            }
+            _ => VirtualNode::Empty,
+        }
+    }
+}
+
+/// Implementation of virtual node construction for `VirtualNode<()>`.
+impl VirtualNode<()> {
     /// Constructs a `Self::Dynamic` from a render closure with hook context management.
     ///
     /// # Arguments
@@ -164,229 +325,5 @@ impl VirtualNode {
             }))));
         let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
         Self::Dynamic(dynamic_node)
-    }
-
-    /// Creates a new element node with the given tag name.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The HTML tag name.
-    ///
-    /// # Returns
-    ///
-    /// - `Self`- A new element virtual node.
-    pub fn get_element_node(tag_name: &str) -> Self {
-        Self::Element {
-            tag: Tag::Element(tag_name.to_string()),
-            attributes: Vec::new(),
-            children: Vec::new(),
-            key: None,
-        }
-    }
-
-    /// Creates a new text node with the given content.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The text content.
-    ///
-    /// # Returns
-    ///
-    /// - `Self`- A new text virtual node.
-    pub fn get_text_node(content: &str) -> Self {
-        Self::Text(TextNode::new(content.to_string(), None))
-    }
-
-    /// Adds an attribute to this node if it is an element.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The attribute name.
-    /// - `AttributeValue`- The attribute value.
-    ///
-    /// # Returns
-    ///
-    /// - `Self`- This node with the attribute added.
-    pub fn with_attribute(mut self, name: &str, value: AttributeValue) -> Self {
-        if let Self::Element {
-            ref mut attributes, ..
-        } = self
-        {
-            attributes.push(AttributeEntry::new(name.to_string(), value));
-        }
-        self
-    }
-
-    /// Adds a child node to this node if it is an element.
-    ///
-    /// # Arguments
-    ///
-    /// - `VirtualNode`- The child node to add.
-    ///
-    /// # Returns
-    ///
-    /// - `Self`- This node with the child added.
-    pub fn with_child(mut self, child: VirtualNode) -> Self {
-        if let Self::Element {
-            ref mut children, ..
-        } = self
-        {
-            children.push(child);
-        }
-        self
-    }
-
-    /// Returns true if this node is a component node.
-    ///
-    /// # Returns
-    ///
-    /// - `bool`- `true` if this is a component element.
-    pub fn is_component(&self) -> bool {
-        matches!(
-            self,
-            Self::Element {
-                tag: Tag::Component(_),
-                ..
-            }
-        )
-    }
-
-    /// Returns the tag name if this is an element or component node.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<String>`- The tag name, or `None` if not an element.
-    pub fn tag_name(&self) -> Option<String> {
-        match self {
-            Self::Element { tag, .. } => match tag {
-                Tag::Element(name) => Some(name.clone()),
-                Tag::Component(name) => Some(name.clone()),
-            },
-            _ => None,
-        }
-    }
-
-    /// Extracts a string property from this node if it is an element with the named attribute.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The attribute name to look for.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<String>`- The attribute value as a string, or `None`.
-    pub fn try_get_prop(&self, name: &str) -> Option<String> {
-        if let Self::Element { attributes, .. } = self {
-            for attr in attributes {
-                if attr.get_name() == name {
-                    match attr.get_value() {
-                        AttributeValue::Text(value) => return Some(value.clone()),
-                        AttributeValue::Signal(signal) => return Some(signal.get()),
-                        AttributeValue::Dynamic(value) => return Some(value.clone()),
-                        _ => {}
-                    }
-                }
-            }
-        }
-        None
-    }
-
-    /// Extracts a typed property from this node by parsing the attribute value string.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The attribute name to look for.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<T>`- The parsed value, or `None` if not found or parsing fails.
-    pub fn try_get_typed_prop<T>(&self, name: &str) -> Option<T>
-    where
-        T: FromStr,
-    {
-        if let Self::Element { attributes, .. } = self {
-            for attr in attributes {
-                if attr.get_name() == name {
-                    let raw: String = match attr.get_value() {
-                        AttributeValue::Text(value) => value.clone(),
-                        AttributeValue::Signal(signal) => signal.get(),
-                        AttributeValue::Dynamic(value) => value.clone(),
-                        _ => continue,
-                    };
-                    return raw.parse::<T>().ok();
-                }
-            }
-        }
-        None
-    }
-
-    /// Extracts a signal property from this node if it is an element with the named attribute.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The attribute name to look for.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<Signal<String>>`- The signal, or `None` if not found.
-    pub fn try_get_signal_prop(&self, name: &str) -> Option<Signal<String>> {
-        if let Self::Element { attributes, .. } = self {
-            for attr in attributes {
-                if attr.get_name() == name
-                    && let AttributeValue::Signal(signal) = attr.get_value()
-                {
-                    return Some(*signal);
-                }
-            }
-        }
-        None
-    }
-
-    /// Returns a slice of the children if this node is an element.
-    ///
-    /// # Returns
-    ///
-    /// - `&[Self]`- The children slice, or an empty slice if not an element.
-    pub fn get_children(&self) -> &[Self] {
-        if let Self::Element { children, .. } = self {
-            children
-        } else {
-            &[]
-        }
-    }
-
-    /// Extracts text content from this node.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<String>`- The text content, or `None` if unavailable.
-    pub fn try_get_text(&self) -> Option<String> {
-        match self {
-            Self::Text(text_node) => Some(text_node.get_content().clone()),
-            Self::Element { children, .. } => children.first().and_then(Self::try_get_text),
-            _ => None,
-        }
-    }
-
-    /// Extracts an event handler from this node if it is an element with the named event attribute.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str`- The event attribute name to look for.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<NativeEventHandler>`- The handler, or `None` if not found.
-    pub fn try_get_event(&self, name: &str) -> Option<NativeEventHandler> {
-        if let Self::Element { attributes, .. } = self {
-            for attr in attributes {
-                if attr.get_name() == name
-                    && let AttributeValue::Event(handler) = attr.get_value()
-                {
-                    return Some(handler.clone());
-                }
-            }
-        }
-        None
     }
 }

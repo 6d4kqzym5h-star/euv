@@ -8,18 +8,16 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `LogoButtonProps` - The typed props containing variant, click handler, and children.
+/// - `LogoButtonProps` - The typed props containing variant, click handler.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled element with the "E" branding.
 #[component]
-pub(crate) fn logo_button(props: LogoButtonProps) -> VirtualNode {
-    let LogoButtonProps {
-        variant,
-        on_click,
-        children,
-    } = props;
+pub(crate) fn logo_button(mut node: VirtualNode<LogoButtonProps>) -> VirtualNode {
+    let LogoButtonProps { variant, on_click } = node.try_take_props().unwrap_or_default();
+    let children: VirtualNode = node.take_children();
     let class_name: String = match variant {
         LogoButtonVariant::Nav => format!(
             "{} {}",

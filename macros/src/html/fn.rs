@@ -27,7 +27,7 @@ pub(crate) fn is_double_colon(content: ParseStream) -> bool {
 ///
 /// # Arguments
 ///
-/// - `HashMap<String, ComponentInfo>`- The map of function names to component metadata.
+/// - `HashMap<String, ComponentInfo>` - The map of function names to component metadata.
 pub(crate) fn set_user_fn_names(names: HashMap<String, ComponentInfo>) {
     unsafe {
         let ptr: *mut MaybeUninit<HashMap<String, ComponentInfo>> = &raw mut USER_FN_NAMES;
@@ -39,11 +39,11 @@ pub(crate) fn set_user_fn_names(names: HashMap<String, ComponentInfo>) {
 ///
 /// # Arguments
 ///
-/// - `&str`- The name to check against the stored component registry.
+/// - `&str` - The name to check against the stored component registry.
 ///
 /// # Returns
 ///
-/// - `bool`- `true` if the name exists in the component registry, `false` otherwise.
+/// - `bool` - `true` if the name exists in the component registry, `false` otherwise.
 pub(crate) fn is_user_fn(name: &str) -> bool {
     unsafe {
         let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
@@ -55,11 +55,11 @@ pub(crate) fn is_user_fn(name: &str) -> bool {
 ///
 /// # Arguments
 ///
-/// - `&str`- The component function name.
+/// - `&str` - The component function name.
 ///
 /// # Returns
 ///
-/// - `Option<&'static str>`- The Props type name if found.
+/// - `Option<&'static str>` - The Props type name if found.
 pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
     unsafe {
         let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
@@ -77,11 +77,11 @@ pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
 ///
 /// # Arguments
 ///
-/// - `&str`- The component function name.
+/// - `&str` - The component function name.
 ///
 /// # Returns
 ///
-/// - `Option<&'static Vec<String>>`- The list of props field names if the component is found.
+/// - `Option<&'static Vec<String>>` - The list of props field names if the component is found.
 pub(crate) fn get_user_fn_props_fields(name: &str) -> Option<&'static Vec<String>> {
     unsafe {
         let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
@@ -98,11 +98,11 @@ pub(crate) fn get_user_fn_props_fields(name: &str) -> Option<&'static Vec<String
 ///
 /// # Arguments
 ///
-/// - `&str`- The component function name.
+/// - `&str` - The component function name.
 ///
 /// # Returns
 ///
-/// - `Option<&'static HashMap<String, String>>`- The field type map if the component is found.
+/// - `Option<&'static HashMap<String, String>>` - The field type map if the component is found.
 pub(crate) fn get_user_fn_props_field_types(
     name: &str,
 ) -> Option<&'static HashMap<String, String>> {
@@ -236,6 +236,15 @@ fn collect_props_structs_from_file(
     }
 }
 
+/// Scans a single `.rs` file for `#[component]`-annotated functions and records
+/// their metadata using the pre-collected props struct information.
+///
+/// # Arguments
+///
+/// - `&PathBuf` - The file path to scan.
+/// - `&HashMap<String, Vec<String>>` - The map of struct name → field names.
+/// - `&HashMap<String, HashMap<String, String>>` - The map of struct name → field type map.
+/// - `&mut HashMap<String, ComponentInfo>` - The map to populate with discovered component metadata.
 fn scan_file_for_components_with_map(
     path: &PathBuf,
     global_props_fields_map: &HashMap<String, Vec<String>>,
@@ -360,8 +369,10 @@ fn extract_type_last_segment(ty: &Type) -> String {
 
 /// Extracts the Props type name from the first parameter of a component function.
 ///
-/// Looks for the first parameter's type. If the type is a simple path (e.g., `PrimaryButtonProps`),
-/// returns its string representation. Falls back to an empty string if not found.
+/// Looks for the first parameter's type. If the type is `VirtualNode<T>`,
+/// extracts the generic argument `T` as the Props type name. Falls back to
+/// checking for a simple path type (e.g., `PrimaryButtonProps`) for backward
+/// compatibility. Returns an empty string if neither pattern matches.
 ///
 /// # Arguments
 ///
@@ -376,6 +387,17 @@ fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
         if let syn::FnArg::Typed(pat_type) = input {
             let ty: &Type = &pat_type.ty;
             if let Type::Path(type_path) = ty
+                && let Some(segment) = type_path.path.segments.last()
+                && segment.ident == VIRTUAL_NODE_TYPE
+            {
+                if let syn::PathArguments::AngleBracketed(args) = &segment.arguments
+                    && let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first()
+                    && let Type::Path(inner_path) = inner_ty
+                    && let Some(inner_segment) = inner_path.path.segments.last()
+                {
+                    return inner_segment.ident.to_string();
+                }
+            } else if let Type::Path(type_path) = ty
                 && let Some(segment) = type_path.path.segments.last()
             {
                 return segment.ident.to_string();
@@ -566,7 +588,7 @@ pub(crate) fn parse_dynamic_component_children(
             let key_expr: Expr = key_content.parse()?;
             content.parse::<Colon>()?;
             let value: HtmlAttrValue = parse_attr_value(content, "")?;
-            attributes.push((HtmlAttrKey::Dynamic(key_expr.to_token_stream()), value));
+            attributes.push((key_expr.to_token_stream(), value));
         } else if content.peek(Brace) {
             let child_content: ParseBuffer<'_>;
             braced!(child_content in content);
@@ -581,7 +603,7 @@ pub(crate) fn parse_dynamic_component_children(
             content.parse::<Colon>()?;
             let key_str: String = key.to_string();
             let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
-            attributes.push((HtmlAttrKey::Static(key), value));
+            attributes.push((key.to_token_stream(), value));
         } else if content.peek(Ident)
             && (content.peek2(Colon) || content.peek2(Token![-]))
             && !is_double_colon(content)
@@ -594,7 +616,7 @@ pub(crate) fn parse_dynamic_component_children(
             content.parse::<Colon>()?;
             let key_str: String = key.to_string();
             let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
-            attributes.push((HtmlAttrKey::Static(key), value));
+            attributes.push((key.to_token_stream(), value));
         } else if content.peek(LitStr) {
             let lit: LitStr = content.parse()?;
             children.push(HtmlNode::Text(lit.value()));
@@ -617,7 +639,14 @@ pub(crate) fn parse_dynamic_component_children(
 /// Converts a slice of `HtmlNode` children into a `Vec<proc_macro2::TokenStream>`.
 ///
 /// Shared helper used by both `children_to_node_tokens` and `children_to_tokens`.
-#[inline]
+///
+/// # Arguments
+///
+/// - `&[HtmlNode]` - The slice of HTML child nodes to convert.
+///
+/// # Returns
+///
+/// - `Vec<proc_macro2::TokenStream>` - The generated token stream representing a single `VirtualNode`.
 fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::TokenStream> {
     children
         .iter()
@@ -908,14 +937,13 @@ pub(crate) fn merge_same_key_attributes(attributes: HtmlAttrs) -> HtmlAttrs {
     let mut style_values: Vec<HtmlAttrValue> = Vec::new();
     let mut result: HtmlAttrs = Vec::new();
     for (key, value) in attributes {
-        match &key {
-            HtmlAttrKey::Static(key_ident) if key_ident == ATTR_KEY_CLASS => {
-                class_values.push(value);
-            }
-            HtmlAttrKey::Static(key_ident) if key_ident == ATTR_KEY_STYLE => {
-                style_values.push(value);
-            }
-            _ => result.push((key, value)),
+        let key_string: String = key.to_string().replace(' ', "");
+        if key_string == ATTR_KEY_CLASS {
+            class_values.push(value);
+        } else if key_string == ATTR_KEY_STYLE {
+            style_values.push(value);
+        } else {
+            result.push((key, value));
         }
     }
     let push_merged = |result: &mut HtmlAttrs,
@@ -925,11 +953,11 @@ pub(crate) fn merge_same_key_attributes(attributes: HtmlAttrs) -> HtmlAttrs {
         match values.len() {
             0 => {}
             1 => result.push((
-                HtmlAttrKey::Static(Ident::new(key_str, proc_macro2::Span::call_site())),
+                Ident::new(key_str, proc_macro2::Span::call_site()).to_token_stream(),
                 values.remove(0),
             )),
             _ => result.push((
-                HtmlAttrKey::Static(Ident::new(key_str, proc_macro2::Span::call_site())),
+                Ident::new(key_str, proc_macro2::Span::call_site()).to_token_stream(),
                 wrap(values),
             )),
         }

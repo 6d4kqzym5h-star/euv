@@ -7,13 +7,15 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&str` - The page title text.
-/// - `&str` - The page subtitle / description text.
+/// - `PageHeaderProps` - The typed props containing title and subtitle.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The page header virtual DOM tree.
-pub(crate) fn page_header(title: &str, subtitle: &str) -> VirtualNode {
+#[component]
+pub(crate) fn page_header(mut node: VirtualNode<PageHeaderProps>) -> VirtualNode {
+    let PageHeaderProps { title, subtitle } = node.try_take_props().unwrap_or_default();
     html! {
         div {
             class: c_page_header()

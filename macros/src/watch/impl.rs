@@ -11,11 +11,11 @@ impl Parse for WatchInput {
     ///
     /// # Arguments
     ///
-    /// - `ParseStream`- The syn parse stream to read from.
+    /// - `ParseStream` - The syn parse stream to read from.
     ///
     /// # Returns
     ///
-    /// - `syn::Result<Self>`- The parsed `WatchInput`, or a syntax error.
+    /// - `syn::Result<Self>` - The parsed `WatchInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut signals: Vec<Expr> = Vec::new();
         while !input.peek(Token![|]) {
@@ -81,7 +81,7 @@ impl ToTokens for WatchInput {
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let signals: Vec<Ident> = (0..self.get_signals().len())
             .map(|signal_index: usize| {

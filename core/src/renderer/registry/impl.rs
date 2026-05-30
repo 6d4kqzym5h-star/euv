@@ -16,7 +16,6 @@ impl From<usize> for &'static mut HandlerSlot {
     ///
     /// - The address is guaranteed to be a valid `HandlerSlot` instance
     ///   that was previously converted from a reference and is managed by the runtime.
-    #[inline(always)]
     fn from(address: usize) -> Self {
         unsafe { &mut *(address as *mut HandlerSlot) }
     }

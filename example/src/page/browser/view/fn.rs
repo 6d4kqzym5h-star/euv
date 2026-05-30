@@ -6,13 +6,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The browser API demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_browser(props: PageBrowserProps) -> VirtualNode {
-    let PageBrowserProps = props;
+pub(crate) fn page_browser(mut node: VirtualNode<PageBrowserProps>) -> VirtualNode {
+    let PageBrowserProps = node.try_take_props().unwrap_or_default();
     let state: UseBrowserApi = use_browser_api();
     html! {
         div {
             class: c_page_container()
-            page_header("Browser APIs", "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location.")
+            page_header {
+                title: "Browser APIs"
+                subtitle: "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location."
+            }
             my_card {
                 title: "localStorage"
                 p {

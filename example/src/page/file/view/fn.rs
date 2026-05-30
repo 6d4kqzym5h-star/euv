@@ -78,13 +78,16 @@ fn build_drop_zone(state: UseFileUpload) -> VirtualNode {
 ///
 /// - `VirtualNode` - The file upload demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_file_upload(props: PageFileUploadProps) -> VirtualNode {
-    let PageFileUploadProps = props;
+pub(crate) fn page_file_upload(mut node: VirtualNode<PageFileUploadProps>) -> VirtualNode {
+    let PageFileUploadProps = node.try_take_props().unwrap_or_default();
     let state: UseFileUpload = use_file_upload();
     html! {
         div {
             class: c_page_container()
-            page_header("File Upload", "File selection, drag-and-drop zone, and file list display.")
+            page_header {
+                title: "File Upload"
+                subtitle: "File selection, drag-and-drop zone, and file list display."
+            }
             my_card {
                 title: "File Input"
                 div {

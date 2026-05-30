@@ -9,13 +9,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The observer demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_observer(props: PageObserverProps) -> VirtualNode {
-    let PageObserverProps = props;
+pub(crate) fn page_observer(mut node: VirtualNode<PageObserverProps>) -> VirtualNode {
+    let PageObserverProps = node.try_take_props().unwrap_or_default();
     use_intersection_observer("[data-observer-container]");
     html! {
         div {
             class: c_page_container()
-            page_header("Observer", "IntersectionObserver API demo: detect when elements enter or leave the viewport.")
+            page_header {
+                title: "Observer"
+                subtitle: "IntersectionObserver API demo: detect when elements enter or leave the viewport."
+            }
             my_card {
                 title: "Intersection Observer"
                 p {

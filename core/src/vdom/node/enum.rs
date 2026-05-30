@@ -14,9 +14,10 @@ pub enum Tag {
 /// Represents a node in the virtual DOM tree.
 ///
 /// The core enum representing elements, text, fragments, and empty nodes.
-#[derive(Clone, CustomDebug, Default)]
-pub enum VirtualNode {
-    /// An element node with a tag, attributes, and children.
+/// The generic parameter `T` carries the component props type for component nodes.
+/// For non-component nodes, `T` defaults to `()`.
+pub enum VirtualNode<T = ()> {
+    /// An element node with a tag, attributes, children, and optional props.
     Element {
         /// The tag type of this element.
         tag: Tag,
@@ -26,15 +27,15 @@ pub enum VirtualNode {
         children: Vec<VirtualNode>,
         /// An optional key for diffing.
         key: Option<String>,
+        /// The component props, present only for component nodes.
+        props: Option<Box<T>>,
     },
     /// A text node containing string content and an optional reactive signal.
     Text(TextNode),
     /// A fragment of multiple nodes without a wrapper element.
     Fragment(Vec<VirtualNode>),
     /// A dynamic node that re-renders based on signal changes.
-    #[debug(skip)]
     Dynamic(DynamicNode),
     /// An empty placeholder node.
-    #[default]
     Empty,
 }

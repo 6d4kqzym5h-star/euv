@@ -6,11 +6,11 @@ impl Parse for CssVarInput {
     ///
     /// # Arguments
     ///
-    /// - `ParseStream`- The syn parse stream to read from.
+    /// - `ParseStream` - The syn parse stream to read from.
     ///
     /// # Returns
     ///
-    /// - `syn::Result<Self>`- The parsed `CssVarInput`, or a syntax error.
+    /// - `syn::Result<Self>` - The parsed `CssVarInput`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut defs: Vec<CssVarDef> = Vec::new();
         while !input.is_empty() {
@@ -77,7 +77,7 @@ impl ToTokens for CssVarDef {
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let vis: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
@@ -169,7 +169,7 @@ impl ToTokens for CssVarInput {
     ///
     /// # Arguments
     ///
-    /// - `&mut proc_macro2::TokenStream`- The target token stream to append to.
+    /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         for css_var_def in self.get_defs() {
             css_var_def.to_tokens(tokens);

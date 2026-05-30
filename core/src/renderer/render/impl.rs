@@ -9,7 +9,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `VirtualNode`- The new virtual DOM tree to render.
+    /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         let old_tree: Option<VirtualNode> = self.try_get_current_tree().clone();
@@ -35,7 +35,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `VirtualNode`- The new virtual DOM tree to render.
+    /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render_full_replace(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
         while let Some(child) = self.get_root().first_child() {
@@ -53,8 +53,8 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The old virtual node to patch from.
-    /// - `&VirtualNode`- The new virtual node to patch to.
+    /// - `&VirtualNode` - The old virtual node to patch from.
+    /// - `&VirtualNode` - The new virtual node to patch to.
     fn patch_root(&mut self, old_node: &VirtualNode, new_node: &VirtualNode) {
         let dom_child: Option<Node> = self.get_root().first_child();
         let is_element: bool = if let Some(ref dom_child) = dom_child {
@@ -84,9 +84,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The old virtual node.
-    /// - `&VirtualNode`- The new virtual node.
-    /// - `&Element`- The real DOM element to patch.
+    /// - `&VirtualNode` - The old virtual node.
+    /// - `&VirtualNode` - The new virtual node.
+    /// - `&Element` - The real DOM element to patch.
     fn patch_node(
         &mut self,
         old_node: &VirtualNode,
@@ -105,12 +105,14 @@ impl Renderer {
                     attributes: old_attrs,
                     children: old_children,
                     key: _old_key,
+                    ..
                 },
                 VirtualNode::Element {
                     tag: new_tag,
                     attributes: new_attrs,
                     children: new_children,
                     key: _new_key,
+                    ..
                 },
             ) => {
                 if old_tag != new_tag {
@@ -177,9 +179,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The DOM element whose attributes to patch.
-    /// - `&[AttributeEntry]`- The old attribute list.
-    /// - `&[AttributeEntry]`- The new attribute list.
+    /// - `&Element` - The DOM element whose attributes to patch.
+    /// - `&[AttributeEntry]` - The old attribute list.
+    /// - `&[AttributeEntry]` - The new attribute list.
     fn patch_attributes(
         &mut self,
         element: &Element,
@@ -263,12 +265,12 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The parent element.
-    /// - `u32`- The child index.
+    /// - `&Element` - The parent element.
+    /// - `u32` - The child index.
     ///
     /// # Returns
     ///
-    /// - `Option<Node>`- The child node at the given index, if it exists.
+    /// - `Option<Node>` - The child node at the given index, if it exists.
     fn get_child_node(parent: &Element, index: u32) -> Option<Node> {
         parent.child_nodes().get(index)
     }
@@ -283,9 +285,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The parent DOM element.
-    /// - `&[VirtualNode]`- The old children list.
-    /// - `&[VirtualNode]`- The new children list.
+    /// - `&Element` - The parent DOM element.
+    /// - `&[VirtualNode]` - The old children list.
+    /// - `&[VirtualNode]` - The new children list.
     fn patch_children(
         &mut self,
         parent: &Element,
@@ -307,11 +309,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The node to check.
+    /// - `&VirtualNode` - The node to check.
     ///
     /// # Returns
     ///
-    /// - `bool`- Whether the node has a key.
+    /// - `bool` - Whether the node has a key.
     fn node_has_key(node: &VirtualNode) -> bool {
         match node {
             VirtualNode::Element { key, .. } => key.is_some(),
@@ -323,11 +325,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The node to extract the key from.
+    /// - `&VirtualNode` - The node to extract the key from.
     ///
     /// # Returns
     ///
-    /// - `Option<&str>`- The key string, if present.
+    /// - `Option<&str>` - The key string, if present.
     fn get_node_key(node: &VirtualNode) -> Option<&str> {
         match node {
             VirtualNode::Element { key, .. } => key.as_deref(),
@@ -348,9 +350,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The parent DOM element.
-    /// - `&[VirtualNode]`- The old children list.
-    /// - `&[VirtualNode]`- The new children list.
+    /// - `&Element` - The parent DOM element.
+    /// - `&[VirtualNode]` - The old children list.
+    /// - `&[VirtualNode]` - The new children list.
     fn patch_children_keyed(
         &mut self,
         parent: &Element,
@@ -430,9 +432,9 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The parent DOM element.
-    /// - `&[VirtualNode]`- The old children list.
-    /// - `&[VirtualNode]`- The new children list.
+    /// - `&Element` - The parent DOM element.
+    /// - `&[VirtualNode]` - The old children list.
+    /// - `&[VirtualNode]` - The new children list.
     fn patch_children_positional(
         &mut self,
         parent: &Element,
@@ -488,11 +490,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The virtual node to materialize.
+    /// - `&VirtualNode` - The virtual node to materialize.
     ///
     /// # Returns
     ///
-    /// - `Node`- The created DOM node.
+    /// - `Node` - The created DOM node.
     ///
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
         let window_value: Window = match window() {
@@ -510,12 +512,12 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The virtual node to materialize.
-    /// - `&Document`- The document reference for creating DOM elements.
+    /// - `&VirtualNode` - The virtual node to materialize.
+    /// - `&Document` - The document reference for creating DOM elements.
     ///
     /// # Returns
     ///
-    /// - `Node`- The created DOM node.
+    /// - `Node` - The created DOM node.
     fn create_dom_node_with_document(&mut self, node: &VirtualNode, document: &Document) -> Node {
         match node {
             VirtualNode::Element {
@@ -550,7 +552,7 @@ impl Renderer {
                                     &initial_value,
                                 );
                             }
-                            let signal_addr: usize = signal.get_inner_addr();
+                            let signal_addr: usize = signal.get_inner();
                             let existing_addrs: String = element
                                 .get_attribute(DATA_EUV_SIGNAL_ADDRS)
                                 .unwrap_or_default();
@@ -601,7 +603,7 @@ impl Renderer {
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
-                        let signal_addr: usize = signal.get_inner_addr();
+                        let signal_addr: usize = signal.get_inner();
                         let existing_addrs: String = element
                             .get_attribute(DATA_EUV_SIGNAL_ADDRS)
                             .unwrap_or_default();
@@ -646,7 +648,7 @@ impl Renderer {
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
-                        let signal_addr: usize = signal.get_inner_addr();
+                        let signal_addr: usize = signal.get_inner();
                         let existing_addrs: String = fragment
                             .get_attribute(DATA_EUV_SIGNAL_ADDRS)
                             .unwrap_or_default();
@@ -681,14 +683,14 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&DynamicNode`- The dynamic node to set up.
-    /// - `usize`- The unique dynamic ID assigned to the placeholder.
-    /// - `&Element`- The placeholder DOM element.
-    /// - `bool`- Whether to skip rendering if the output is unchanged.
+    /// - `&DynamicNode` - The dynamic node to set up.
+    /// - `usize` - The unique dynamic ID assigned to the placeholder.
+    /// - `&Element` - The placeholder DOM element.
+    /// - `bool` - Whether to skip rendering if the output is unchanged.
     ///
     /// # Returns
     ///
-    /// - `Node`- The initial rendered DOM node.
+    /// - `Node` - The initial rendered DOM node.
     fn setup_dynamic_node(
         &mut self,
         dynamic_node: &DynamicNode,
@@ -746,12 +748,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The virtual node to unwrap.
+    /// - `&VirtualNode` - The virtual node to unwrap.
     ///
     /// # Returns
     ///
-    /// - `VirtualNode`- The unwrapped virtual node with all components expanded.
-    #[allow(clippy::only_used_in_recursion)]
+    /// - `VirtualNode` - The unwrapped virtual node with all components expanded.
     fn unwrap_component(&self, node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -770,6 +771,7 @@ impl Renderer {
                 attributes,
                 children,
                 key,
+                ..
             } => {
                 if !children.iter().any(Self::subtree_has_component) {
                     return node.clone();
@@ -783,6 +785,7 @@ impl Renderer {
                     attributes: attributes.clone(),
                     children: unwrapped_children,
                     key: key.clone(),
+                    props: None,
                 }
             }
             VirtualNode::Fragment(children) => {
@@ -803,11 +806,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The virtual node to unwrap.
+    /// - `&VirtualNode` - The virtual node to unwrap.
     ///
     /// # Returns
     ///
-    /// - `VirtualNode`- The unwrapped virtual node with all components expanded.
+    /// - `VirtualNode` - The unwrapped virtual node with all components expanded.
     fn unwrap_component_static(node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
@@ -826,6 +829,7 @@ impl Renderer {
                 attributes,
                 children,
                 key,
+                ..
             } => {
                 if !children.iter().any(Self::subtree_has_component) {
                     return node.clone();
@@ -837,6 +841,7 @@ impl Renderer {
                     attributes: attributes.clone(),
                     children: unwrapped_children,
                     key: key.clone(),
+                    props: None,
                 }
             }
             VirtualNode::Fragment(children) => {
@@ -856,11 +861,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The virtual node to check.
+    /// - `&VirtualNode` - The virtual node to check.
     ///
     /// # Returns
     ///
-    /// - `bool`- `true` if the subtree contains a component node.
+    /// - `bool` - `true` if the subtree contains a component node.
     fn subtree_has_component(node: &VirtualNode) -> bool {
         match node {
             VirtualNode::Element {
@@ -884,12 +889,12 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode`- The old virtual node.
-    /// - `&VirtualNode`- The new virtual node.
+    /// - `&VirtualNode` - The old virtual node.
+    /// - `&VirtualNode` - The new virtual node.
     ///
     /// # Returns
     ///
-    /// - `bool`- `true` if the two nodes produce the same visual output.
+    /// - `bool` - `true` if the two nodes produce the same visual output.
     fn visual_eq(old_node: &VirtualNode, new_node: &VirtualNode) -> bool {
         match (old_node, new_node) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,
@@ -939,11 +944,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The placeholder DOM element.
+    /// - `&Element` - The placeholder DOM element.
     ///
     /// # Returns
     ///
-    /// - `usize`- The assigned dynamic ID.
+    /// - `usize` - The assigned dynamic ID.
     fn assign_dynamic_id(placeholder: &Element) -> usize {
         let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
         let _ = placeholder.set_attribute(DATA_EUV_DYNAMIC_ID, &dynamic_id.to_string());
@@ -957,8 +962,7 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The DOM element to clean up.
-    #[allow(clippy::only_used_in_recursion)]
+    /// - `&Element` - The DOM element to clean up.
     fn cleanup_dom_subtree(&self, element: &Element) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
@@ -992,8 +996,8 @@ impl Renderer {
     ///
     /// # Arguments
     ///
-    /// - `&Element`- The DOM element to attach the handler to.
-    /// - `&NativeEventHandler`- The event handler to register.
+    /// - `&Element` - The DOM element to attach the handler to.
+    /// - `&NativeEventHandler` - The event handler to register.
     fn attach_event_listener(&self, element: &Element, handler: &NativeEventHandler) {
         let euv_id: usize = match element.get_attribute(DATA_EUV_ID) {
             Some(id_str) => id_str

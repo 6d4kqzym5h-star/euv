@@ -43,19 +43,6 @@ pub(crate) enum HtmlNode {
     DynamicTag(HtmlDynamicTag),
 }
 
-/// Represents the key side of an HTML attribute.
-///
-/// Supports two forms:
-/// - `Static`: A compile-time identifier key (e.g., `class`, `onclick`, `"data-id"`).
-/// - `Dynamic`: A runtime expression wrapped in braces (e.g., `{key_var}`) that evaluates to a string.
-#[derive(Clone, Debug)]
-pub(crate) enum HtmlAttrKey {
-    /// A static attribute key known at compile time.
-    Static(Ident),
-    /// A dynamic expression that evaluates to an attribute key string at runtime.
-    Dynamic(proc_macro2::TokenStream),
-}
-
 /// Represents the value side of an attribute.
 ///
 /// Supports plain expressions, style objects, reactive conditionals,

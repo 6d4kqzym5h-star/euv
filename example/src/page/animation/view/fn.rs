@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The animation demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_animation(props: PageAnimationProps) -> VirtualNode {
-    let PageAnimationProps = props;
+pub(crate) fn page_animation(mut node: VirtualNode<PageAnimationProps>) -> VirtualNode {
+    let PageAnimationProps = node.try_take_props().unwrap_or_default();
     let box_visible: Signal<bool> = use_signal(|| false);
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);
@@ -23,7 +23,10 @@ pub(crate) fn page_animation(props: PageAnimationProps) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header("Animation", "CSS transitions, keyframe animations, and reactive style changes.")
+            page_header {
+                title: "Animation"
+                subtitle: "CSS transitions, keyframe animations, and reactive style changes."
+            }
             my_card {
                 title: "Fade In / Out"
                 primary_button {

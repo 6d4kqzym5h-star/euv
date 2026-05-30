@@ -5,16 +5,15 @@ use crate::*;
 /// # Arguments
 ///
 /// - `MyCardProps` - The typed props containing title.
-/// - `Vec<VirtualNode>` - The children nodes.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled card element.
 #[component]
-pub(crate) fn my_card(props: MyCardProps) -> VirtualNode {
-    let MyCardProps {
-        title, children, ..
-    } = props;
+pub(crate) fn my_card(mut node: VirtualNode<MyCardProps>) -> VirtualNode {
+    let MyCardProps { title, .. } = node.try_take_props().unwrap_or_default();
+    let children: VirtualNode = node.take_children();
     html! {
         div {
             class: c_card()

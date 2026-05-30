@@ -6,13 +6,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The select demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_select(props: PageSelectProps) -> VirtualNode {
-    let PageSelectProps = props;
+pub(crate) fn page_select(mut node: VirtualNode<PageSelectProps>) -> VirtualNode {
+    let PageSelectProps = node.try_take_props().unwrap_or_default();
     let state: UseSelect = use_select();
     html! {
         div {
             class: c_page_container()
-            page_header("Select & Textarea", "Dropdown selection, cascading selects, and textarea binding.")
+            page_header {
+                title: "Select & Textarea"
+                subtitle: "Dropdown selection, cascading selects, and textarea binding."
+            }
             my_card {
                 title: "Simple Select"
                 div {

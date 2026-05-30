@@ -10,13 +10,14 @@ use crate::*;
 /// # Arguments
 ///
 /// - `VconsolePanelProps` - The typed props containing the panel visibility signal.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The vConsole panel virtual DOM tree.
 #[component]
-pub(crate) fn vconsole_panel(props: VconsolePanelProps) -> VirtualNode {
-    let VconsolePanelProps { panel_open } = props;
+pub(crate) fn vconsole_panel(mut node: VirtualNode<VconsolePanelProps>) -> VirtualNode {
+    let VconsolePanelProps { panel_open } = node.try_take_props().unwrap_or_default();
     let console_signal: Signal<Vec<ConsoleEntry>> = get_console_signal();
     let log_count: usize = console_signal.get().len();
     html! {
@@ -40,16 +41,17 @@ pub(crate) fn vconsole_panel(props: VconsolePanelProps) -> VirtualNode {
 /// # Arguments
 ///
 /// - `VconsoleFabProps` - The typed props containing panel visibility signal and log count.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The floating action button virtual DOM tree.
 #[component]
-pub(crate) fn vconsole_fab(props: VconsoleFabProps) -> VirtualNode {
+pub(crate) fn vconsole_fab(mut node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
     let VconsoleFabProps {
         panel_open,
         log_count,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     let is_open: bool = panel_open.get();
     if is_open {
         return html! {
@@ -93,17 +95,18 @@ pub(crate) fn vconsole_fab(props: VconsoleFabProps) -> VirtualNode {
 /// # Arguments
 ///
 /// - `VconsoleDrawerProps` - The typed props containing console signal, panel visibility signal, and log count.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The drawer panel virtual DOM tree.
 #[component]
-pub(crate) fn vconsole_drawer(props: VconsoleDrawerProps) -> VirtualNode {
+pub(crate) fn vconsole_drawer(mut node: VirtualNode<VconsoleDrawerProps>) -> VirtualNode {
     let VconsoleDrawerProps {
         console_signal,
         panel_open,
         log_count,
-    } = props;
+    } = node.try_take_props().unwrap_or_default();
     let filter_signal: Signal<LogFilter> = use_signal(|| LogFilter::All);
     let is_open: bool = panel_open.get();
     let overlay_class: String = if is_open {

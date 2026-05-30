@@ -13,8 +13,8 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&Event`- The native DOM event being dispatched.
-/// - `&str`- The name of the event type being delegated.
+/// - `&Event` - The native DOM event being dispatched.
+/// - `&str` - The name of the event type being delegated.
 fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
     let target: EventTarget = match event.target() {
         Some(t) => t,
@@ -57,7 +57,7 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
 ///
 /// # Arguments
 ///
-/// - `String`- The event type name to listen for (e.g. `"click"`).
+/// - `String` - The event type name to listen for (e.g. `"click"`).
 ///
 pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
     let already_delegated: bool = is_delegated_event(event_name);
@@ -180,8 +180,8 @@ pub(crate) fn mark_all_slots_dirty() {
 ///
 /// # Arguments
 ///
-/// - `usize`- The unique ID of the `DynamicNode`.
-/// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
+/// - `usize` - The unique ID of the `DynamicNode`.
+/// - `Box<dyn FnMut()>` - The callback to invoke on signal updates.
 pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnMut()>) {
     let entry: SignalUpdateEntry = Rc::new(RefCell::new(SignalUpdateSlot::new(
         Some(callback),
@@ -198,8 +198,8 @@ pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnM
 ///
 /// # Arguments
 ///
-/// - `usize`- The inner address of the attribute signal.
-/// - `Box<dyn FnMut()>`- The callback to invoke on signal updates.
+/// - `usize` - The inner address of the attribute signal.
+/// - `Box<dyn FnMut()>` - The callback to invoke on signal updates.
 pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn FnMut()>) {
     let entry: SignalUpdateEntry = Rc::new(RefCell::new(SignalUpdateSlot::new(
         Some(callback),
@@ -216,8 +216,8 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
 ///
 /// # Arguments
 ///
-/// - `usize`- The euv ID of the DOM element.
-/// - `&str`- The event name of the handler to remove.
+/// - `usize` - The euv ID of the DOM element.
+/// - `&str` - The event name of the handler to remove.
 pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &'static str) {
     let key: (usize, &'static str) = (_euv_id, event_name);
     ensure_handler_registry_mut().remove(&key);
@@ -230,7 +230,7 @@ pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &'static str) {
 ///
 /// # Arguments
 ///
-/// - `usize`- The euv ID of the DOM element being removed.
+/// - `usize` - The euv ID of the DOM element being removed.
 pub(crate) fn cleanup_element_handlers(euv_id: usize) {
     let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
     let keys_to_remove: Vec<(usize, &'static str)> = registry_ref
@@ -251,7 +251,7 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
 ///
 /// # Arguments
 ///
-/// - `usize`- The unique ID of the `DynamicNode` being removed.
+/// - `usize` - The unique ID of the `DynamicNode` being removed.
 pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
     if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id) {
         let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
@@ -294,11 +294,11 @@ pub(crate) fn ensure_handler_registry_mut() -> &'static mut HandlerRegistryMap {
 ///
 /// # Arguments
 ///
-/// - `&str`- The event name to check.
+/// - `&str` - The event name to check.
 ///
 /// # Returns
 ///
-/// - `bool`- Whether the event is already delegated.
+/// - `bool` - Whether the event is already delegated.
 #[allow(static_mut_refs)]
 pub(crate) fn is_delegated_event(event_name: &str) -> bool {
     unsafe {
@@ -316,7 +316,7 @@ pub(crate) fn is_delegated_event(event_name: &str) -> bool {
 ///
 /// # Arguments
 ///
-/// - `&'static str`- The event name to insert.
+/// - `&'static str` - The event name to insert.
 #[allow(static_mut_refs)]
 pub(crate) fn insert_delegated_event(event_name: &'static str) {
     unsafe {

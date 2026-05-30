@@ -6,13 +6,16 @@ use crate::*;
 ///
 /// - `VirtualNode` - The async demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_async_demo(props: PageAsyncDemoProps) -> VirtualNode {
-    let PageAsyncDemoProps = props;
+pub(crate) fn page_async_demo(mut node: VirtualNode<PageAsyncDemoProps>) -> VirtualNode {
+    let PageAsyncDemoProps = node.try_take_props().unwrap_or_default();
     let fetch: UseFetch = use_fetch();
     html! {
         div {
             class: c_page_container()
-            page_header("Async Data", "Simulating network requests with loading states.")
+            page_header {
+                title: "Async Data"
+                subtitle: "Simulating network requests with loading states."
+            }
             my_card {
                 title: "Fetch Data"
                 p {

@@ -10,6 +10,4 @@ pub(crate) struct LogoButtonProps {
     pub(crate) variant: LogoButtonVariant,
     /// Optional click event handler.
     pub(crate) on_click: Option<Rc<dyn Fn(Event)>>,
-    /// The child content rendered inside the button (e.g. badge overlay).
-    pub(crate) children: VirtualNode,
 }

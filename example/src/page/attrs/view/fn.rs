@@ -10,32 +10,18 @@ use crate::*;
 ///
 /// - `VirtualNode` - The custom attributes demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_custom_attrs(props: PageCustomAttrsProps) -> VirtualNode {
-    let PageCustomAttrsProps = props;
+pub(crate) fn page_custom_attrs(mut node: VirtualNode<PageCustomAttrsProps>) -> VirtualNode {
+    let PageCustomAttrsProps = node.try_take_props().unwrap_or_default();
     let dynamic_key: Signal<String> = use_signal(|| "data-custom".to_string());
     let dynamic_value: Signal<String> = use_signal(String::new);
-    let static_key: String = STATIC_ATTR_KEY.to_string();
-    let static_value: String = STATIC_ATTR_VALUE.to_string();
     let class_prop_key: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_KEY.to_string());
     let class_prop_value: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_VALUE.to_string());
     html! {
         div {
             class: c_page_container()
-            page_header("Custom Attributes", "Static and dynamic attribute keys and values.")
-            my_card {
-                title: "HTML Static Attribute (Constant Key & Value)"
-                div {
-                    { static_key }: static_value
-                    class: c_custom_attrs_demo()
-                    p {
-                        class: c_demo_text()
-                        "This div uses a static attribute key and value from constants."
-                    }
-                    p {
-                        class: c_demo_text_muted()
-                        format!("Attribute: {}=\"{}\"", STATIC_ATTR_KEY, STATIC_ATTR_VALUE)
-                    }
-                }
+            page_header {
+                title: "Custom Attributes"
+                subtitle: "Static and dynamic attribute keys and values."
             }
             my_card {
                 title: "HTML Dynamic Attribute (Variable Key & Value)"

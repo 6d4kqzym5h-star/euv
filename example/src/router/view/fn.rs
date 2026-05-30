@@ -73,8 +73,8 @@ pub(crate) fn is_mobile() -> bool {
 ///
 /// - `VirtualNode` - The virtual DOM tree of the matched page.
 #[component]
-pub(crate) fn page_router(props: PageRouterProps) -> VirtualNode {
-    let PageRouterProps { route_signal } = props;
+pub(crate) fn page_router(mut node: VirtualNode<PageRouterProps>) -> VirtualNode {
+    let PageRouterProps { route_signal } = node.try_take_props().unwrap_or_default();
     html! {
         match { route_signal.get().as_str() } {
             "/" | "/signals" => {

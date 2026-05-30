@@ -5,18 +5,15 @@ use crate::*;
 /// # Arguments
 ///
 /// - `MyModalProps` - The typed props containing title and onclick (close handler).
-/// - `Vec<VirtualNode>` - The children nodes.
+/// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A modal overlay element.
 #[component]
-pub(crate) fn my_modal(props: MyModalProps) -> VirtualNode {
-    let MyModalProps {
-        title,
-        onclick,
-        children,
-    } = props;
+pub(crate) fn my_modal(mut node: VirtualNode<MyModalProps>) -> VirtualNode {
+    let MyModalProps { title, onclick } = node.try_take_props().unwrap_or_default();
+    let children: VirtualNode = node.take_children();
     html! {
         div {
             class: c_modal_overlay()

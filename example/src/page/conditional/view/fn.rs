@@ -6,15 +6,18 @@ use crate::*;
 ///
 /// - `VirtualNode` - The conditional demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_conditional(props: PageConditionalProps) -> VirtualNode {
-    let PageConditionalProps = props;
+pub(crate) fn page_conditional(mut node: VirtualNode<PageConditionalProps>) -> VirtualNode {
+    let PageConditionalProps = node.try_take_props().unwrap_or_default();
     let show_details: Signal<bool> = use_signal(|| false);
     let user_type: Signal<String> = use_signal(|| "guest".to_string());
     let tab: Signal<String> = use_signal(|| "info".to_string());
     html! {
         div {
             class: c_page_container()
-            page_header("Conditional Rendering", "Toggle visibility and switch between views.")
+            page_header {
+                title: "Conditional Rendering"
+                subtitle: "Toggle visibility and switch between views."
+            }
             my_card {
                 title: "Toggle Content"
                 primary_button {
