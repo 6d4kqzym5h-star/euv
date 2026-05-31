@@ -1,3 +1,3 @@
 /// Props for the `page_dynamic_component` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageDynamicComponentProps;

@@ -17,9 +17,10 @@ mod observer;
 mod select;
 mod signals;
 mod timer;
+mod virtual_list;
 
 pub(crate) use {
     animation::*, r#async::*, attrs::*, binding::*, browser::*, conditional::*, dynamic::*,
     event::*, file::*, form::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*,
-    observer::*, select::*, signals::*, timer::*,
+    observer::*, select::*, signals::*, timer::*, virtual_list::*,
 };

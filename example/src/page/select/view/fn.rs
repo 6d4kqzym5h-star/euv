@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The select demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_select(mut node: VirtualNode<PageSelectProps>) -> VirtualNode {
-    let PageSelectProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
+    let PageSelectProps = node.try_get_props().unwrap_or_default();
     let state: UseSelect = use_select();
     html! {
         div {
@@ -188,8 +188,6 @@ pub(crate) fn page_select(mut node: VirtualNode<PageSelectProps>) -> VirtualNode
                             class: c_field_error_text()
                             state.get_textarea_error()
                         }
-                    } else {
-                        ""
                     }
                 }
                 div {

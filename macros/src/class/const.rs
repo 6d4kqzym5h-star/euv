@@ -267,3 +267,9 @@ pub(crate) const PSEUDO_SPELLING_ERROR: &str = "::spelling-error";
 
 /// The CSS pseudo element selector for `::grammar-error`.
 pub(crate) const PSEUDO_GRAMMAR_ERROR: &str = "::grammar-error";
+
+/// The hyphen string used for replacing underscores in kebab-case conversion.
+pub(crate) const STR_HYPHEN: &str = "-";
+
+/// The closing brace character used to terminate CSS rule blocks.
+pub(crate) const CHAR_CSS_RULE_CLOSE: char = '}';

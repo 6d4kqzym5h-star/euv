@@ -53,8 +53,8 @@ pub(crate) fn parse_class_prop_key(input: ParseStream) -> syn::Result<ClassPropK
 /// - `proc_macro2::TokenStream` - Token stream that evaluates to a `String`.
 pub(crate) fn class_prop_key_to_tokens(key: &ClassPropKey) -> proc_macro2::TokenStream {
     match key {
-        ClassPropKey::Static(s) => {
-            quote! { #s.to_string() }
+        ClassPropKey::Static(static_key) => {
+            quote! { #static_key.to_string() }
         }
         ClassPropKey::Dynamic(expr) => {
             quote! { (#expr).to_string() }
@@ -190,9 +190,9 @@ pub(crate) fn is_static_string_expr(tokens: &proc_macro2::TokenStream) -> bool {
 pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
     let mut result: String = String::new();
     for token in tokens.clone() {
-        if let proc_macro2::TokenTree::Literal(lit) = token {
+        if let proc_macro2::TokenTree::Literal(literal) = token {
             let literal_token_stream: proc_macro2::TokenStream =
-                proc_macro2::TokenTree::Literal(lit).into();
+                proc_macro2::TokenTree::Literal(literal).into();
             if let Ok(literal_string) = parse2::<LitStr>(literal_token_stream) {
                 result.push_str(&literal_string.value());
             }
@@ -305,7 +305,7 @@ pub(crate) fn pseudo_blocks_to_static_string(pseudo_blocks: &[PseudoBlock]) -> S
             result.push_str(&expr_to_string(expr));
             result.push_str(CSS_DECL_TERMINATOR);
         }
-        result.push('}');
+        result.push(CHAR_CSS_RULE_CLOSE);
     }
     result
 }
@@ -335,7 +335,7 @@ pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> Stri
             result.push_str(&expr_to_string(expr));
             result.push_str(CSS_DECL_TERMINATOR);
         }
-        result.push('}');
+        result.push(CHAR_CSS_RULE_CLOSE);
     }
     result
 }
@@ -348,18 +348,21 @@ pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> Stri
 ///
 /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
 /// - `OnceLockParams` - The parameters for the OnceLock function generation.
-pub(crate) fn emit_once_lock_fn(tokens: &mut proc_macro2::TokenStream, p: OnceLockParams<'_>) {
+pub(crate) fn emit_once_lock_fn(
+    tokens: &mut proc_macro2::TokenStream,
+    once_lock_params: OnceLockParams<'_>,
+) {
     let OnceLockParams {
-        vis,
+        visibility,
         fn_name_token,
         const_name_token,
         class_name_str,
         style_expr,
         pseudo_expr,
         media_expr,
-    } = p;
+    } = once_lock_params;
     tokens.extend(quote! {
-        #vis fn #fn_name_token() -> &'static ::euv::Css {
+        #visibility fn #fn_name_token() -> &'static ::euv::Css {
             static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
             #const_name_token.get_or_init(|| {
                 let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #pseudo_expr, #media_expr);

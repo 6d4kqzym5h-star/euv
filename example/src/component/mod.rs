@@ -6,8 +6,9 @@ mod logo_button;
 mod modal;
 mod page_header;
 mod vconsole;
+mod virtual_list;
 
 pub(crate) use {
     badge::*, button::*, card::*, form_input::*, logo_button::*, modal::*, page_header::*,
-    vconsole::*,
+    vconsole::*, virtual_list::*,
 };

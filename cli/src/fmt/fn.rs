@@ -818,9 +818,9 @@ fn skip_spaces_on_same_line(chars: &[char], mut pos: usize, len: usize) -> usize
 ///
 /// - `bool` - Whether the identifier is preceded by `r#`.
 fn is_raw_ident_before(result: &str, ident: &str) -> bool {
-    let trimmed: &str = result.trim_end();
-    let search_target: String = format!("{RAW_IDENT_PREFIX}{ident}");
-    trimmed.ends_with(&search_target)
+    result
+        .trim_end()
+        .ends_with(&format!("{RAW_IDENT_PREFIX}{ident}"))
 }
 
 /// Finds the identifier immediately before the current position in the result string.
@@ -913,7 +913,10 @@ pub(crate) async fn format_dir(path: &Path, mode: FmtMode) -> Result<()> {
         match mode {
             FmtMode::Check => {
                 if changed {
-                    bail!("{} needs formatting.", path.display());
+                    return Err(EuvError::Message(format!(
+                        "{} needs formatting.",
+                        path.display()
+                    )));
                 }
                 log::info!("{} is properly formatted.", path.display());
             }
@@ -941,17 +944,17 @@ pub(crate) async fn format_dir(path: &Path, mode: FmtMode) -> Result<()> {
                 }
             }
             Err(error) => {
-                log::warn!("Failed to format {}: {}", entry.display(), error);
+                log::warn!("Failed to format {}: {error}", entry.display());
             }
         }
     }
     match mode {
         FmtMode::Check => {
             if changed_count > 0 {
-                bail!(
+                return Err(EuvError::Message(format!(
                     "{} file(s) need formatting. Run `euv fmt` to fix.",
                     changed_count
-                );
+                )));
             }
             log::info!("All {} file(s) are properly formatted.", unchanged_count);
         }
@@ -979,15 +982,24 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
     let mut result: Vec<PathBuf> = Vec::new();
     let mut stack: Vec<PathBuf> = vec![path.to_path_buf()];
     while let Some(dir) = stack.pop() {
-        let mut entries: tokio::fs::ReadDir =
-            tokio::fs::read_dir(&dir)
+        let mut entries: ReadDir =
+            read_dir(&dir)
                 .await
-                .map_err(|error: io::Error| {
-                    anyhow!("Failed to read directory '{}': {}", dir.display(), error)
+                .map_err(|error: io::Error| EuvError::IoPath {
+                    message: String::from("Failed to read directory"),
+                    path: dir.clone(),
+                    error,
                 })?;
-        while let Some(entry) = entries.next_entry().await.map_err(|error: io::Error| {
-            anyhow!("Failed to read entry in '{}': {}", dir.display(), error)
-        })? {
+        while let Some(entry) =
+            entries
+                .next_entry()
+                .await
+                .map_err(|error: io::Error| EuvError::IoPath {
+                    message: String::from("Failed to read entry in directory"),
+                    path: dir.clone(),
+                    error,
+                })?
+        {
             let entry_path: PathBuf = entry.path();
             if entry_path.is_dir() {
                 let file_name: String = entry_path
@@ -1020,17 +1032,24 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
 ///
 /// - `Result<bool>` - Whether the file was changed.
 async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
-    let content: String = tokio::fs::read_to_string(path)
-        .await
-        .map_err(|error: io::Error| anyhow!("Failed to read '{}': {}", path.display(), error))?;
+    let content: String =
+        read_to_string(path)
+            .await
+            .map_err(|error: io::Error| EuvError::IoPath {
+                message: String::from("Failed to read"),
+                path: path.to_path_buf(),
+                error,
+            })?;
     let fmt_result: FmtResult = format_source(&content);
     if fmt_result.changed {
         match mode {
             FmtMode::Write => {
-                tokio::fs::write(path, &fmt_result.output)
+                write(path, &fmt_result.output)
                     .await
-                    .map_err(|error: io::Error| {
-                        anyhow!("Failed to write '{}': {}", path.display(), error)
+                    .map_err(|error: io::Error| EuvError::IoPath {
+                        message: String::from("Failed to write"),
+                        path: path.to_path_buf(),
+                        error,
                     })?;
                 log::info!("Formatted: {}", path.display());
             }

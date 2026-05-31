@@ -1,3 +1,3 @@
 /// Props for the `page_observer` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageObserverProps;

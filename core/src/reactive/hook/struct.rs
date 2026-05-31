@@ -45,3 +45,15 @@ pub struct HookContext {
     #[set(pub(crate))]
     pub(crate) inner: Rc<RefCell<HookContextInner>>,
 }
+
+/// A handle to a browser interval timer created by `use_interval`.
+///
+/// Stores the numeric interval ID returned by `window.setInterval` so the
+/// timer can be cancelled later via `clear_interval`.
+#[derive(Clone, Copy, Data, New)]
+pub struct IntervalHandle {
+    /// The interval ID assigned by the browser.
+    #[get(pub, type(copy))]
+    #[set(pub)]
+    pub interval_id: i32,
+}

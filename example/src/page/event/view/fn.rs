@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The event demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_event(mut node: VirtualNode<PageEventProps>) -> VirtualNode {
-    let PageEventProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
+    let PageEventProps = node.try_get_props().unwrap_or_default();
     let last_key: Signal<String> = use_signal(|| "None".to_string());
     let last_key_code: Signal<String> = use_signal(|| "None".to_string());
     let last_key_up: Signal<String> = use_signal(|| "None".to_string());

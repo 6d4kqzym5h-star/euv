@@ -1,3 +1,3 @@
 /// Props for the `page_form` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageFormProps;

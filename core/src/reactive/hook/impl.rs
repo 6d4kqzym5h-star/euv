@@ -7,7 +7,9 @@ impl HookContext {
     /// Sets the internal hook index back to zero so that subsequent
     /// `use_signal` calls start indexing from the beginning of the hook list.
     pub fn reset_hook_index(&mut self) {
-        self.get_inner().borrow_mut().set_hook_index(0);
+        if let Ok(mut inner) = self.get_inner().try_borrow_mut() {
+            inner.set_hook_index(0);
+        }
     }
 
     /// Notifies the hook context that a match arm is being entered.
@@ -22,7 +24,9 @@ impl HookContext {
     pub fn set_arm_changed(&mut self, changed: usize) {
         let cleanups: Vec<Box<dyn FnOnce()>>;
         {
-            let mut inner: RefMut<HookContextInner> = self.get_inner().borrow_mut();
+            let Ok(mut inner) = self.get_inner().try_borrow_mut() else {
+                return;
+            };
             if inner.get_arm_changed() == changed {
                 drop(inner);
                 self.reset_hook_index();
@@ -64,5 +68,39 @@ impl Clone for HookContext {
 impl Default for HookContext {
     fn default() -> Self {
         Self::new(Rc::new(RefCell::new(HookContextInner::default())))
+    }
+}
+
+/// Implementation of interval handle lifecycle management.
+impl IntervalHandle {
+    /// Cancels the associated browser interval timer.
+    ///
+    /// Calls `window.clearInterval` with the stored interval ID.
+    /// After calling this method the interval callback will no longer fire.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `window()` is unavailable on the current platform.
+    pub fn clear(&self) {
+        if let Some(cleanup_window) = web_sys::window() {
+            cleanup_window.clear_interval_with_handle(self.get_interval_id());
+        }
+    }
+}
+
+/// Compares interval handles by their interval ID.
+impl PartialEq for IntervalHandle {
+    /// Compares two interval handles for equality by their interval IDs.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The first interval handle.
+    /// - `&Self` - The second interval handle.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if both handles have the same interval ID.
+    fn eq(&self, other: &Self) -> bool {
+        self.get_interval_id() == other.get_interval_id()
     }
 }

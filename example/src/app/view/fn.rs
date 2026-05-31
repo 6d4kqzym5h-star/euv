@@ -11,12 +11,12 @@ use crate::*;
 ///
 /// - `VirtualNode` - The navigation item virtual DOM tree.
 #[component]
-pub(crate) fn nav_item(mut node: VirtualNode<NavItemProps>) -> VirtualNode {
+pub(crate) fn nav_item(node: VirtualNode<NavItemProps>) -> VirtualNode {
     let NavItemProps {
         route_signal,
         label,
         target,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -41,13 +41,13 @@ pub(crate) fn nav_item(mut node: VirtualNode<NavItemProps>) -> VirtualNode {
 ///
 /// - `VirtualNode` - The mobile navigation item virtual DOM tree.
 #[component]
-pub(crate) fn mobile_nav_item(mut node: VirtualNode<MobileNavItemProps>) -> VirtualNode {
+pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualNode {
     let MobileNavItemProps {
         route_signal,
         drawer_open,
         label,
         target,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -76,10 +76,8 @@ pub(crate) fn mobile_nav_item(mut node: VirtualNode<MobileNavItemProps>) -> Virt
 ///
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 #[component]
-pub(crate) fn build_desktop_nav_items(
-    mut node: VirtualNode<BuildDesktopNavItemsProps>,
-) -> VirtualNode {
-    let BuildDesktopNavItemsProps { route_signal } = node.try_take_props().unwrap_or_default();
+pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProps>) -> VirtualNode {
+    let BuildDesktopNavItemsProps { route_signal } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_nav_items_scroll()
@@ -172,6 +170,11 @@ pub(crate) fn build_desktop_nav_items(
                 route_signal: route_signal
                 label: "Dynamic Component"
                 target: "/dynamic-component"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Virtual List"
+                target: "/virtual-list"
             }
         }
     }
@@ -190,13 +193,11 @@ pub(crate) fn build_desktop_nav_items(
 ///
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 #[component]
-pub(crate) fn build_mobile_nav_items(
-    mut node: VirtualNode<BuildMobileNavItemsProps>,
-) -> VirtualNode {
+pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>) -> VirtualNode {
     let BuildMobileNavItemsProps {
         route_signal,
         drawer_open,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_nav_items_scroll()
@@ -308,6 +309,12 @@ pub(crate) fn build_mobile_nav_items(
                 label: "Dynamic Component"
                 target: "/dynamic-component"
             }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Virtual List"
+                target: "/virtual-list"
+            }
         }
     }
 }
@@ -323,13 +330,13 @@ pub(crate) fn build_mobile_nav_items(
 ///
 /// - `VirtualNode` - The desktop application shell virtual DOM tree.
 #[component]
-pub(crate) fn desktop_layout(mut node: VirtualNode<DesktopLayoutProps>) -> VirtualNode {
+pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNode {
     let DesktopLayoutProps {
         route_signal,
         theme_signal,
         root_class_signal,
         panel_open,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: root_class_signal
@@ -343,6 +350,7 @@ pub(crate) fn desktop_layout(mut node: VirtualNode<DesktopLayoutProps>) -> Virtu
                         variant: LogoButtonVariant::Nav
                     }
                     span {
+                        class: c_nav_brand_title()
                         "Euv"
                     }
                 }
@@ -396,14 +404,14 @@ pub(crate) fn desktop_layout(mut node: VirtualNode<DesktopLayoutProps>) -> Virtu
 ///
 /// - `VirtualNode` - The mobile application shell virtual DOM tree.
 #[component]
-pub(crate) fn mobile_layout(mut node: VirtualNode<MobileLayoutProps>) -> VirtualNode {
+pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode {
     let MobileLayoutProps {
         route_signal,
         theme_signal,
         root_class_signal,
         panel_open,
         drawer_open,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: root_class_signal
@@ -420,7 +428,8 @@ pub(crate) fn mobile_layout(mut node: VirtualNode<MobileLayoutProps>) -> Virtual
                         variant: LogoButtonVariant::Nav
                     }
                     span {
-                        "euv"
+                        class: c_nav_brand_title()
+                        "Euv"
                     }
                 }
                 button {
@@ -464,7 +473,8 @@ pub(crate) fn mobile_layout(mut node: VirtualNode<MobileLayoutProps>) -> Virtual
                                 variant: LogoButtonVariant::Nav
                             }
                             span {
-                                "euv"
+                                class: c_nav_brand_title()
+                                "Euv"
                             }
                         }
                         button {

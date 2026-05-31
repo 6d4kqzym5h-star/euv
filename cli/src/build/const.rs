@@ -40,21 +40,6 @@ pub(crate) const PKG_DIR_NAME: &str = "pkg";
 /// The JavaScript file extension.
 pub(crate) const JS_EXTENSION: &str = ".js";
 
-/// The CLI command name for hyperlane-cli.
-pub(crate) const HYPERLANE_CLI_COMMAND: &str = "hyperlane-cli";
-
-/// The version flag for CLI tools.
-pub(crate) const VERSION_ARG: &str = "--version";
-
-/// The format subcommand for hyperlane-cli.
-pub(crate) const FMT_SUBCOMMAND: &str = "fmt";
-
-/// The CLI command name for cargo.
-pub(crate) const CARGO_COMMAND: &str = "cargo";
-
-/// The install subcommand for cargo.
-pub(crate) const CARGO_INSTALL_SUBCOMMAND: &str = "install";
-
 /// The source directory name within a Cargo project.
 pub(crate) const SRC_DIR_NAME: &str = "src";
 
@@ -63,18 +48,6 @@ pub(crate) const GITIGNORE_FILE_NAME: &str = ".gitignore";
 
 /// The name of the Cargo manifest file.
 pub(crate) const CARGO_TOML_FILE_NAME: &str = "Cargo.toml";
-
-/// The TypeScript declaration file extension.
-pub(crate) const D_TS_EXTENSION: &str = "d.ts";
-
-/// The npm package manifest file name.
-pub(crate) const PACKAGE_JSON_FILE_NAME: &str = "package.json";
-
-/// The npm README file name.
-pub(crate) const README_FILE_NAME: &str = "README.md";
-
-/// The npm LICENSE file name.
-pub(crate) const LICENSE_FILE_NAME: &str = "LICENSE";
 
 /// The index HTML file name.
 pub(crate) const INDEX_HTML_FILE_NAME: &str = "index.html";
@@ -85,11 +58,36 @@ pub(crate) const RELATIVE_PATH_PREFIX: &str = "./";
 /// The path separator used for joining path components.
 pub(crate) const PATH_SEPARATOR: &str = "/";
 
+/// The wasm-pack flag for development builds.
+pub(crate) const DEV_FLAG: &str = "--dev";
+
+/// The wasm-pack flag for profiling builds.
+pub(crate) const PROFILING_FLAG: &str = "--profiling";
+
+/// The euv-specific argument names that should not be forwarded to wasm-pack.
+pub(crate) const EUV_ARGS: &[&str] = &[
+    "--crate-path",
+    "-c",
+    "--port",
+    "-p",
+    "--www-dir",
+    "--index-html",
+];
+
+/// The double-dash separator used to distinguish euv args from wasm-pack args.
+pub(crate) const DOUBLE_DASH: &str = "--";
+
 /// The `run` action name used in banner display.
 pub(crate) const ACTION_RUN: &str = "run";
 
 /// The `build` action name used in banner display.
 pub(crate) const ACTION_BUILD: &str = "build";
+
+/// The environment variable name for setting the minimum stack size of rustc threads.
+pub(crate) const RUST_MIN_STACK_ENV: &str = "RUST_MIN_STACK";
+
+/// The minimum stack size in bytes for rustc threads (16 MiB).
+pub(crate) const RUST_MIN_STACK_VALUE: &str = "16777216";
 
 /// The `index.html` template for the development profile.
 ///

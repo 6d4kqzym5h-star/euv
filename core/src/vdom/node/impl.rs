@@ -143,33 +143,25 @@ impl Default for DynamicNode {
 /// Clones a `DynamicNode` by cloning the shared references.
 impl Clone for DynamicNode {
     fn clone(&self) -> Self {
-        let cloned: Self = Self::new(
+        Self::new(
             self.get_render_fn().clone(),
             self.get_hook_context().clone(),
-        );
-        cloned
+        )
     }
 }
 
 /// Implementation of dynamic node accessor methods.
 impl DynamicNode {
-    /// Returns the hook context for this dynamic node.
-    ///
-    /// # Returns
-    ///
-    /// - `HookContext` - The hook context.
-    pub(crate) fn get_hook_context_value(&self) -> HookContext {
-        self.get_hook_context().clone()
-    }
-
     /// Invokes the render closure and returns the produced virtual node.
     ///
     /// # Returns
     ///
     /// - `Self` - The virtual node produced by the render closure.
     pub fn render(&self) -> VirtualNode {
-        let mut inner: RefMut<RenderFnInner> = self.get_render_fn().borrow_mut();
-        (inner.get_mut_render_fn())()
+        self.get_render_fn()
+            .try_borrow_mut()
+            .map(|mut inner: RefMut<RenderFnInner>| (inner.get_mut_render_fn())())
+            .unwrap_or_default()
     }
 }
 
@@ -215,58 +207,38 @@ impl<T> VirtualNode<T> {
             .is_some_and(|children: &Vec<VirtualNode>| !children.is_empty())
     }
 
-    /// Returns a reference to the props of this node, if it has any.
-    ///
-    /// Only `Element` variants with component tags carry props.
+    /// Clones the props of this node.
     ///
     /// # Returns
     ///
-    /// - `Option<&T>` - The props reference, or `None`.
-    pub fn try_get_props(&self) -> Option<&T> {
+    /// - `Option<T>` - The cloned props, or `None` if this node has no props.
+    pub fn try_get_props(&self) -> Option<T>
+    where
+        T: Clone,
+    {
         match self {
-            Self::Element { props, .. } => props.as_deref(),
+            Self::Element { props, .. } => props.as_deref().cloned(),
             _ => None,
         }
     }
 
-    /// Takes the props out of this node, leaving `None` in its place.
+    /// Returns the children of this node as a virtual node.
     ///
-    /// # Returns
-    ///
-    /// - `Option<T>` - The props, or `None` if this node has no props.
-    pub fn try_take_props(&mut self) -> Option<T> {
-        match self {
-            Self::Element { props, .. } => props.take().map(|boxed: Box<T>| *boxed),
-            _ => None,
-        }
-    }
-
-    /// Takes the children out of this node, replacing them with an empty vector.
-    ///
-    /// Returns a `VirtualNode` (Fragment or single child) representation of the children.
+    /// Returns `VirtualNode::Empty` when there are no children, a single child
+    /// when there is exactly one, or `VirtualNode::Fragment` when there are
+    /// multiple children.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - The children as a virtual node.
-    pub fn take_children(&mut self) -> VirtualNode {
-        match self {
-            Self::Element { children, .. } => {
-                let taken: Vec<VirtualNode> = take(children);
-                match taken.len() {
-                    0 => VirtualNode::Empty,
-                    1 => taken.into_iter().next().unwrap_or(VirtualNode::Empty),
-                    _ => VirtualNode::Fragment(taken),
-                }
-            }
-            Self::Fragment(children) => {
-                let taken: Vec<VirtualNode> = take(children);
-                match taken.len() {
-                    0 => VirtualNode::Empty,
-                    1 => taken.into_iter().next().unwrap_or(VirtualNode::Empty),
-                    _ => VirtualNode::Fragment(taken),
-                }
-            }
-            _ => VirtualNode::Empty,
+    pub fn try_get_child_node(&self) -> VirtualNode {
+        match self.try_get_children() {
+            Some(children) => match children.len() {
+                0 => VirtualNode::Empty,
+                1 => children.first().cloned().unwrap_or_default(),
+                _ => VirtualNode::Fragment(children.clone()),
+            },
+            None => VirtualNode::Empty,
         }
     }
 }
@@ -295,8 +267,7 @@ impl VirtualNode<()> {
                 hook_context_for_closure.reset_hook_index();
                 render_fn()
             }))));
-        let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
-        Self::Dynamic(dynamic_node)
+        Self::Dynamic(DynamicNode::new(inner, hook_context))
     }
 
     /// Constructs a `Self::Dynamic` for match expressions where arm hook
@@ -323,7 +294,6 @@ impl VirtualNode<()> {
                 hook_context_for_closure.reset_hook_index();
                 render_fn(&mut hook_context_for_closure)
             }))));
-        let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
-        Self::Dynamic(dynamic_node)
+        Self::Dynamic(DynamicNode::new(inner, hook_context))
     }
 }

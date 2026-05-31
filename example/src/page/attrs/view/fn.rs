@@ -10,8 +10,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The custom attributes demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_custom_attrs(mut node: VirtualNode<PageCustomAttrsProps>) -> VirtualNode {
-    let PageCustomAttrsProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> VirtualNode {
+    let PageCustomAttrsProps = node.try_get_props().unwrap_or_default();
     let dynamic_key: Signal<String> = use_signal(|| "data-custom".to_string());
     let dynamic_value: Signal<String> = use_signal(String::new);
     let class_prop_key: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_KEY.to_string());

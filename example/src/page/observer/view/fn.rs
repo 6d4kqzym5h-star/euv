@@ -9,8 +9,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The observer demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_observer(mut node: VirtualNode<PageObserverProps>) -> VirtualNode {
-    let PageObserverProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode {
+    let PageObserverProps = node.try_get_props().unwrap_or_default();
     use_intersection_observer("[data-observer-container]");
     html! {
         div {
@@ -31,7 +31,7 @@ pub(crate) fn page_observer(mut node: VirtualNode<PageObserverProps>) -> Virtual
                 }
                 ul {
                     class: c_list_ul()
-                    data_observer_container: "true"
+                    data-observer-container: "true"
                     for index in { 0..20 } {
                         li {
                             key: index.to_string()
@@ -39,7 +39,7 @@ pub(crate) fn page_observer(mut node: VirtualNode<PageObserverProps>) -> Virtual
                             data_index: index.to_string()
                             span {
                                 class: c_list_item_text()
-                                { format!("Observed Item {}", index + 1) }
+                                format!("Observed Item {}", index + 1)
                             }
                         }
                     }

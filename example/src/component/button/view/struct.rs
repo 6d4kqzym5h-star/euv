@@ -3,7 +3,7 @@ use crate::*;
 /// Props for the `primary_button` component.
 ///
 /// Defines the strongly-typed interface for the primary button.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PrimaryButtonProps {
     /// The button label text, used as fallback when no children are provided.
     pub(crate) label: &'static str,

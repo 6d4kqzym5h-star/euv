@@ -78,8 +78,8 @@ fn build_drop_zone(state: UseFileUpload) -> VirtualNode {
 ///
 /// - `VirtualNode` - The file upload demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_file_upload(mut node: VirtualNode<PageFileUploadProps>) -> VirtualNode {
-    let PageFileUploadProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> VirtualNode {
+    let PageFileUploadProps = node.try_get_props().unwrap_or_default();
     let state: UseFileUpload = use_file_upload();
     html! {
         div {

@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The modal demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
-    let PageModalProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
+    let PageModalProps = node.try_get_props().unwrap_or_default();
     let state: UseModal = use_modal();
     html! {
         div {
@@ -77,8 +77,6 @@ pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
                         "Modals are useful for displaying focused content that requires user attention."
                     }
                 }
-            } else {
-                ""
             }
             if { state.get_show_confirm().get() } {
                 my_modal {
@@ -97,13 +95,11 @@ pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
                         }
                         modal_primary_button {
                             label: "Cancel"
-                            onclick: use_toggle(state.get_show_confirm())
+                            onclick: modal_on_cancel_confirm(state)
                             "Cancel"
                         }
                     }
                 }
-            } else {
-                ""
             }
             if { state.get_show_form().get() } {
                 my_modal {
@@ -131,8 +127,6 @@ pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
                                 class: c_field_error_text()
                                 state.get_name_error()
                             }
-                        } else {
-                            ""
                         }
                     }
                     div {
@@ -157,8 +151,6 @@ pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
                                 class: c_field_error_text()
                                 state.get_email_error()
                             }
-                        } else {
-                            ""
                         }
                     }
                     if { !state.get_modal_error().get().is_empty() } {
@@ -166,8 +158,6 @@ pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
                             class: c_error_box()
                             state.get_modal_error()
                         }
-                    } else {
-                        ""
                     }
                     div {
                         class: c_modal_actions()
@@ -178,13 +168,11 @@ pub(crate) fn page_modal(mut node: VirtualNode<PageModalProps>) -> VirtualNode {
                         }
                         modal_primary_button {
                             label: "Cancel"
-                            onclick: use_toggle(state.get_show_form())
+                            onclick: modal_on_cancel_form(state)
                             "Cancel"
                         }
                     }
                 }
-            } else {
-                ""
             }
         }
     }

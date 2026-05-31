@@ -3,7 +3,7 @@ use crate::*;
 /// Props for the `child_display` component.
 ///
 /// Demonstrates strongly-typed props with `String` message and optional callback.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct ChildDisplayProps {
     /// The message text passed from parent to child.
     pub(crate) message: Signal<String>,
@@ -14,7 +14,7 @@ pub(crate) struct ChildDisplayProps {
 /// Props for the `limited_counter` component.
 ///
 /// Demonstrates strongly-typed non-String props (`bool`, `i32`) and custom callbacks.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct LimitedCounterProps {
     /// Whether the increment button is disabled.
     pub(crate) disabled: bool,
@@ -29,7 +29,7 @@ pub(crate) struct LimitedCounterProps {
 /// Props for the `callback_input` component.
 ///
 /// Demonstrates strongly-typed custom callback props with reactive value binding.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct CallbackInputProps {
     /// The reactive value signal bound to the input element.
     pub(crate) value: Signal<String>,
@@ -42,5 +42,5 @@ pub(crate) struct CallbackInputProps {
 }
 
 /// Props for the `page_component_binding` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageComponentBindingProps;

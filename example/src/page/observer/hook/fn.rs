@@ -8,6 +8,9 @@ use crate::*;
 /// Only the container element itself is observed (not individual children)
 /// to avoid O(N) performance overhead with large lists.
 ///
+/// The observer is automatically disconnected when the hook context is cleared
+/// (i.e., when the component unmounts or a `match` arm switches).
+///
 /// # Arguments
 ///
 /// - `&str` - A CSS selector string to identify the elements to observe.
@@ -34,7 +37,7 @@ fn bind_observer(selector: &str) {
                 let target: Element = intersection_entry.target();
                 let tag_name: String = target.tag_name();
                 let intersection_ratio: f64 = intersection_entry.intersection_ratio();
-                let data_index: Option<String> = target.get_attribute("data-index");
+                let data_index: Option<String> = target.get_attribute("data_index");
                 match data_index {
                     Some(index_value) => {
                         Console::log(&format!(
@@ -43,7 +46,7 @@ fn bind_observer(selector: &str) {
                         ));
                     }
                     None => {
-                        let children: NodeList = target.query_selector_all("[data-index]").unwrap();
+                        let children: NodeList = target.query_selector_all("[data_index]").unwrap();
                         let total_count: u32 = children.length();
                         let estimated_visible: u32 =
                             (intersection_ratio * total_count as f64).ceil() as u32;
@@ -109,6 +112,9 @@ fn schedule_bind_observer(selector: String) {
 /// A guard flag (`window.__euv_observer_listener`) ensures the initial
 /// `requestAnimationFrame` is only registered once.
 ///
+/// The observer is automatically disconnected when the hook context is cleared
+/// (i.e., when the component unmounts or a `match` arm switches).
+///
 /// # Arguments
 ///
 /// - `&str` - A CSS selector string to identify the container element to observe.
@@ -123,4 +129,22 @@ pub(crate) fn use_intersection_observer(selector: &str) {
         let _ = Reflect::set(&window_value, &listener_key, &JsValue::TRUE);
         schedule_bind_observer(init_selector);
     }
+    use_cleanup(move || {
+        let window_value: Window = match window() {
+            Some(window_instance) => window_instance,
+            None => return,
+        };
+        let observer_key: JsValue = JsValue::from_str("__euv_observer_instance");
+        let listener_key: JsValue = JsValue::from_str("__euv_observer_listener");
+        if let Some(observer) = Reflect::get(&window_value, &observer_key)
+            .ok()
+            .and_then(|value: JsValue| value.dyn_into::<IntersectionObserver>().ok())
+        {
+            observer.disconnect();
+        }
+        let _ = Reflect::set(&window_value, &observer_key, &JsValue::UNDEFINED);
+        let _ = Reflect::set(&window_value, &listener_key, &JsValue::UNDEFINED);
+        let pending_key: JsValue = JsValue::from_str("__euv_observer_pending");
+        let _ = Reflect::set(&window_value, &pending_key, &JsValue::UNDEFINED);
+    });
 }

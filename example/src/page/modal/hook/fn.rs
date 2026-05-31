@@ -111,6 +111,24 @@ pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     }))
 }
 
+/// Creates a click event handler that cancels the confirm action and closes the confirm modal.
+///
+/// # Arguments
+///
+/// - `UseModal` - The modal state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to cancel the confirm action.
+pub(crate) fn modal_on_cancel_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        state
+            .get_confirm_result()
+            .set("Action cancelled!".to_string());
+        state.get_show_confirm().set(false);
+    }))
+}
+
 /// Creates an input event handler that updates the modal name and validates it.
 ///
 /// # Arguments
@@ -184,5 +202,23 @@ pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
         } else {
             state.get_modal_error().set(validation_errors.join("; "));
         }
+    }))
+}
+
+/// Creates a click event handler that cancels the form modal and shows a cancellation message.
+///
+/// # Arguments
+///
+/// - `UseModal` - The modal state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to cancel the form modal.
+pub(crate) fn modal_on_cancel_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        state
+            .get_modal_submitted()
+            .set("Form cancelled!".to_string());
+        state.get_show_form().set(false);
     }))
 }

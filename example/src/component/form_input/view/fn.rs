@@ -11,14 +11,14 @@ use crate::*;
 ///
 /// - `VirtualNode` - A labeled input element.
 #[component]
-pub(crate) fn form_input(mut node: VirtualNode<FormInputProps>) -> VirtualNode {
+pub(crate) fn form_input(node: VirtualNode<FormInputProps>) -> VirtualNode {
     let FormInputProps {
         id,
         label: label_string,
         placeholder,
         value,
         autocomplete,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_form_input_wrapper()

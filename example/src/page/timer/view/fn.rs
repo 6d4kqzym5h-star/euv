@@ -21,17 +21,15 @@ fn format_time(total_seconds: i32) -> String {
 ///
 /// - `VirtualNode` - The timer demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_timer(mut node: VirtualNode<PageTimerProps>) -> VirtualNode {
-    let PageTimerProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
+    let PageTimerProps = node.try_get_props().unwrap_or_default();
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
-    let sw_handle: Signal<Option<IntervalHandle>> = stopwatch.get_handle();
-    let cd_handle: Signal<Option<IntervalHandle>> = countdown.get_handle();
     use_cleanup(move || {
-        if let Some(handle) = sw_handle.get() {
+        if let Some(handle) = stopwatch.get_handle().get() {
             handle.clear();
         }
-        if let Some(handle) = cd_handle.get() {
+        if let Some(handle) = countdown.get_handle().get() {
             handle.clear();
         }
     });

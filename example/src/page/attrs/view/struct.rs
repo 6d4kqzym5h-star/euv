@@ -1,3 +1,3 @@
 /// Props for the `page_custom_attrs` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageCustomAttrsProps;

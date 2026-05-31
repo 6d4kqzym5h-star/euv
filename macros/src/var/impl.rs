@@ -23,10 +23,10 @@ impl Parse for CssVarInput {
                 while !param_content.is_empty() {
                     let param_name: Ident = param_content.parse()?;
                     param_content.parse::<Token![:]>()?;
-                    let ty: Type = param_content.parse()?;
+                    let param_type: Type = param_content.parse()?;
                     param_list.push(CssVarParam {
                         name: param_name,
-                        ty,
+                        param_type,
                     });
                     if param_content.peek(Token![,]) {
                         param_content.parse::<Token![,]>()?;
@@ -79,7 +79,7 @@ impl ToTokens for CssVarDef {
     ///
     /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let vis: &Visibility = self.get_visibility();
+        let visibility: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
         let class_name_str: String = name.to_string();
         match self.try_get_params() {
@@ -88,8 +88,8 @@ impl ToTokens for CssVarDef {
                     .iter()
                     .map(|param: &CssVarParam| {
                         let param_name: &Ident = param.get_name();
-                        let ty: &Type = param.get_ty();
-                        quote! { #param_name: #ty }
+                        let param_type: &Type = param.get_param_type();
+                        quote! { #param_name: #param_type }
                     })
                     .collect();
                 let param_names: Vec<&Ident> = params
@@ -105,11 +105,10 @@ impl ToTokens for CssVarDef {
                         }
                     })
                     .collect();
-                let str_hyphen: &str = STR_HYPHEN;
-                let name_format: String = format!("{{}}{str_hyphen}{{}}");
+                let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
                 tokens.extend(quote! {
-                    #vis fn #name(#(#param_defs), *) -> ::euv::Css {
-                        let css: ::euv::Css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#str_hyphen)), [#(#css_string_parts), *].concat(), vec![], vec![]);
+                        #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
+                        let css: ::euv::Css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)), [#(#css_string_parts), *].concat(), vec![], vec![]);
                         css.inject_style();
                         css
                     }
@@ -152,7 +151,7 @@ impl ToTokens for CssVarDef {
                 };
                 emit_css_var_once_lock_fn(
                     tokens,
-                    vis,
+                    visibility,
                     &fn_name_token,
                     &const_name_token,
                     &class_name_str,
@@ -171,8 +170,8 @@ impl ToTokens for CssVarInput {
     ///
     /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        for css_var_def in self.get_defs() {
-            css_var_def.to_tokens(tokens);
-        }
+        self.get_defs()
+            .iter()
+            .for_each(|css_var_def: &CssVarDef| css_var_def.to_tokens(tokens));
     }
 }

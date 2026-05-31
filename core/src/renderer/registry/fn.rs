@@ -17,7 +17,7 @@ use crate::*;
 /// - `&str` - The name of the event type being delegated.
 fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
     let target: EventTarget = match event.target() {
-        Some(t) => t,
+        Some(event_target) => event_target,
         None => return,
     };
     let mut current: Option<Element> = target.dyn_ref::<Element>().cloned().or_else(|| {
@@ -29,19 +29,17 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
     while let Some(element) = current {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
-        {
-            let key: (usize, &'static str) = (euv_id, event_name);
-            let found: Option<NativeEventHandler> = {
-                let registry: &HandlerRegistryMap = ensure_handler_registry();
-                registry.get(&key).and_then(|entry: &HandlerEntry| {
-                    let slot: Ref<HandlerSlot> = entry.borrow();
-                    slot.try_get_handler().as_ref().cloned()
+            && let Some(active_handler) = ensure_handler_registry()
+                .get(&(euv_id, event_name))
+                .and_then(|entry: &HandlerEntry| {
+                    entry
+                        .try_borrow()
+                        .ok()
+                        .and_then(|slot: Ref<HandlerSlot>| slot.try_get_handler().as_ref().cloned())
                 })
-            };
-            if let Some(active_handler) = found {
-                active_handler.handle(event.clone());
-                return;
-            }
+        {
+            active_handler.handle(event.clone());
+            return;
         }
         current = element.parent_element();
     }
@@ -57,18 +55,16 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
 ///
 /// # Arguments
 ///
-/// - `String` - The event type name to listen for (e.g. `"click"`).
-///
+/// - `&'static str` - The event type name to listen for (e.g. `"click"`).
 pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
-    let already_delegated: bool = is_delegated_event(event_name);
-    if already_delegated {
+    if is_delegated_event(event_name) {
         return;
     }
     let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         dispatch_delegated_event(&event, event_name);
     }));
     let window: Window = match window() {
-        Some(w) => w,
+        Some(window_instance) => window_instance,
         None => return,
     };
     let _ = window.add_event_listener_with_callback_and_bool(
@@ -78,17 +74,6 @@ pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
     );
     closure.forget();
     insert_delegated_event(event_name);
-}
-
-/// One-time initialization of global event delegation.
-///
-/// Iterates over all `DELEGATABLE_EVENT_NAMES`
-/// and calls `ensure_delegated_listener` for each one, registering
-/// capturing-phase listeners on `window`.
-pub(crate) fn init_event_delegation() {
-    for event_name_str in DELEGATABLE_EVENT_NAMES {
-        ensure_delegated_listener(event_name_str);
-    }
 }
 
 /// Invokes all active callbacks in the signal update registry.
@@ -114,7 +99,9 @@ pub(crate) fn dispatch_signal_update_callbacks() {
         let dirty_keys: Vec<usize> = registry
             .iter()
             .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
-                let slot: Ref<SignalUpdateSlot> = entry.borrow();
+                let Ok(slot) = entry.try_borrow() else {
+                    return None;
+                };
                 if slot.get_dirty() && !slot.get_removed() {
                     Some(*key)
                 } else {
@@ -127,11 +114,13 @@ pub(crate) fn dispatch_signal_update_callbacks() {
         }
         for key in dirty_keys {
             let entry: SignalUpdateEntry = match ensure_signal_update_registry_mut().remove(&key) {
-                Some(e) => e,
+                Some(removed_entry) => removed_entry,
                 None => continue,
             };
             let callback: Option<Box<dyn FnMut()>> = {
-                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+                let Ok(mut slot) = entry.try_borrow_mut() else {
+                    continue;
+                };
                 if slot.get_removed() {
                     continue;
                 }
@@ -140,14 +129,20 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             };
             if let Some(mut callback) = callback {
                 callback();
-                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
-                if !slot.get_removed() {
+                if let Ok(mut slot) = entry.try_borrow_mut()
+                    && !slot.get_removed()
+                {
                     slot.set_callback(Some(callback));
                 }
             }
-            if !entry.borrow().get_removed() {
-                ensure_signal_update_registry_mut().insert(key, entry);
+            if entry
+                .try_borrow()
+                .map(|slot: Ref<SignalUpdateSlot>| slot.get_removed())
+                .unwrap_or(true)
+            {
+                continue;
             }
+            ensure_signal_update_registry_mut().insert(key, entry);
         }
         iterations += 1;
         if iterations >= MAX_ITERATIONS {
@@ -165,7 +160,9 @@ pub(crate) fn dispatch_signal_update_callbacks() {
 pub(crate) fn mark_all_slots_dirty() {
     let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
     for entry in registry.values() {
-        let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+        let Ok(mut slot) = entry.try_borrow_mut() else {
+            continue;
+        };
         if !slot.get_removed() {
             slot.set_dirty(true);
         }
@@ -209,20 +206,6 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
     ensure_signal_update_registry_mut().insert(signal_key, entry);
 }
 
-/// Removes a single handler entry identified by its element ID and event name.
-///
-/// Looks up the `(_euv_id, event_name)` key in `HANDLER_REGISTRY` and
-/// removes it if present.
-///
-/// # Arguments
-///
-/// - `usize` - The euv ID of the DOM element.
-/// - `&str` - The event name of the handler to remove.
-pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &'static str) {
-    let key: (usize, &'static str) = (_euv_id, event_name);
-    ensure_handler_registry_mut().remove(&key);
-}
-
 /// Cleans up all handler entries associated with a DOM element.
 ///
 /// Collects all registry keys whose element ID matches `euv_id` and
@@ -253,8 +236,9 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
 ///
 /// - `usize` - The unique ID of the `DynamicNode` being removed.
 pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
-    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id) {
-        let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id)
+        && let Ok(mut slot) = entry.try_borrow_mut()
+    {
         slot.set_removed(true);
         slot.set_callback(None);
     }
@@ -358,4 +342,103 @@ fn ensure_signal_update_registry_mut() -> &'static mut HashMap<usize, SignalUpda
             .as_mut()
             .unwrap_unchecked()
     }
+}
+
+/// Ensures the window event proxy registry is initialized and returns a mutable reference.
+///
+/// SAFETY: Must only be called from the main thread (WASM single-threaded context).
+#[allow(static_mut_refs)]
+pub(crate) fn ensure_window_event_registry_mut() -> &'static mut WindowEventRegistryMap {
+    unsafe {
+        if (*WINDOW_EVENT_REGISTRY.get_0().get()).is_none() {
+            (*WINDOW_EVENT_REGISTRY.get_0().get()) = Some(HashMap::new());
+        }
+        (*WINDOW_EVENT_REGISTRY.get_0().get())
+            .as_mut()
+            .unwrap_unchecked()
+    }
+}
+
+/// Registers a callback for a window-level event using the proxy pattern.
+///
+/// Ensures a single `window.addEventListener` listener exists for the given
+/// event name. The proxy listener dispatches to all registered callbacks
+/// for that event. Returns a unique handler ID that can be used to unregister
+/// the callback later via `unregister_window_event_handler`.
+///
+/// # Arguments
+///
+/// - `&str` - The event name to listen for (e.g., "hashchange", "popstate", "resize").
+/// - `Box<dyn FnMut()>` - The callback to invoke when the event fires.
+///
+/// # Returns
+///
+/// - `usize` - A unique handler ID for later unregistration.
+pub(crate) fn register_window_event_handler<F>(event_name: &str, callback: F) -> usize
+where
+    F: FnMut() + 'static,
+{
+    let handler_id: usize = NEXT_WINDOW_HANDLER_ID.fetch_add(1, Ordering::Relaxed);
+    let entry: WindowEventHandlerEntry = (
+        handler_id,
+        Rc::new(RefCell::new(Box::new(callback) as Box<dyn FnMut()>)),
+    );
+    let registry: &mut WindowEventRegistryMap = ensure_window_event_registry_mut();
+    let is_new_event: bool = !registry.contains_key(event_name);
+    registry
+        .entry(event_name.to_string())
+        .or_default()
+        .push(entry);
+    if is_new_event {
+        ensure_window_event_listener(event_name);
+    }
+    handler_id
+}
+
+/// Unregisters a window event handler by its event name and handler ID.
+///
+/// Removes the callback entry from the proxy registry. The shared
+/// `window.addEventListener` listener is NOT removed even if no handlers
+/// remain, because removing and re-adding listeners is more expensive
+/// than keeping an empty dispatch loop.
+///
+/// # Arguments
+///
+/// - `&str` - The event name the handler was registered for.
+/// - `usize` - The handler ID returned by `register_window_event_handler`.
+pub(crate) fn unregister_window_event_handler(event_name: &str, handler_id: usize) {
+    let registry: &mut WindowEventRegistryMap = ensure_window_event_registry_mut();
+    if let Some(handlers) = registry.get_mut(event_name) {
+        handlers.retain(|(id, _): &WindowEventHandlerEntry| *id != handler_id);
+    }
+}
+
+/// Ensures a single `window.addEventListener` listener is registered
+/// for the given event name that dispatches to all registered callbacks.
+///
+/// Creates a `Closure` that looks up all handlers for the event name in
+/// `WINDOW_EVENT_REGISTRY` and invokes each one. The closure is forgotten
+/// after registration so it lives for the lifetime of the application.
+///
+/// # Arguments
+///
+/// - `&str` - The event name to create a proxy listener for.
+fn ensure_window_event_listener(event_name: &str) {
+    let event_name_owned: String = event_name.to_string();
+    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let registry: &WindowEventRegistryMap = ensure_window_event_registry_mut();
+        if let Some(handlers) = registry.get(&event_name_owned) {
+            for (_handler_id, callback_rc) in handlers {
+                if let Ok(mut callback_ref) = callback_rc.try_borrow_mut() {
+                    callback_ref();
+                }
+            }
+        }
+    }));
+    let window: Window = match window() {
+        Some(window_instance) => window_instance,
+        None => return,
+    };
+    let _ = window.add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref());
+    closure.forget();
 }

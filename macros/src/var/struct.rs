@@ -13,7 +13,7 @@ pub(crate) struct CssVarParam {
     /// The explicit type annotation for this parameter (e.g., `&str`).
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) ty: Type,
+    pub(crate) param_type: Type,
 }
 
 /// A single CSS variables block definition parsed from the `css_vars!` macro.

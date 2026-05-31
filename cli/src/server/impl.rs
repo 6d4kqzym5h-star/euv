@@ -201,7 +201,7 @@ impl ServerHook for ReloadRoute {
             None => {
                 ctx.get_mut_response()
                     .set_status_code(500)
-                    .set_body("server not ready");
+                    .set_body(ERROR_SERVER_NOT_READY);
                 return Status::Continue;
             }
         };

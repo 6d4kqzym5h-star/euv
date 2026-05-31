@@ -1,17 +1,5 @@
 use crate::*;
 
-/// A handle to a browser interval timer created by `use_interval`.
-///
-/// Stores the numeric interval ID returned by `window.setInterval` so the
-/// timer can be cancelled later via `clear_interval`.
-#[derive(Clone, Copy, Data, New)]
-pub(crate) struct IntervalHandle {
-    /// The interval ID assigned by the browser.
-    #[get(pub(crate), type(copy))]
-    #[set(pub(crate))]
-    pub(crate) interval_id: i32,
-}
-
 /// Reactive state for a stopwatch feature.
 ///
 /// Contains only `Copy` signal fields so the struct can be freely

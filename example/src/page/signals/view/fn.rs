@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The signals demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_signals(mut node: VirtualNode<PageSignalsProps>) -> VirtualNode {
-    let PageSignalsProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_signals(node: VirtualNode<PageSignalsProps>) -> VirtualNode {
+    let PageSignalsProps = node.try_get_props().unwrap_or_default();
     let count: Signal<i32> = use_signal(|| 0);
     html! {
         div {

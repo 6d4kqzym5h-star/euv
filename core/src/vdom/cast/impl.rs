@@ -79,10 +79,10 @@ where
     ///
     /// - `VirtualNode` - A dynamic virtual node wrapping this closure.
     fn into_node(self) -> VirtualNode {
-        let render_inner: Rc<RefCell<RenderFnInner>> =
+        let render_fn_inner: Rc<RefCell<RenderFnInner>> =
             Rc::new(RefCell::new(RenderFnInner::new(Box::new(self))));
         VirtualNode::Dynamic(DynamicNode::new(
-            render_inner,
+            render_fn_inner,
             crate::reactive::create_hook_context(),
         ))
     }
@@ -183,8 +183,7 @@ where
         self.replace_subscribe({
             let source: Signal<T> = *self;
             move || {
-                let new_value: String = source.get().to_string();
-                string_signal_clone.set_silent(new_value);
+                string_signal_clone.set_silent(source.get().to_string());
             }
         });
         VirtualNode::Text(TextNode::new(initial, Some(string_signal)))

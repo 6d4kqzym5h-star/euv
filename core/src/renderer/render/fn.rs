@@ -16,13 +16,12 @@ pub fn mount<F>(selector: &str, render_fn: F)
 where
     F: FnOnce() -> VirtualNode,
 {
-    init_event_delegation();
     let window: Window = match window() {
-        Some(w) => w,
+        Some(window_instance) => window_instance,
         None => return,
     };
     let document: Document = match window.document() {
-        Some(d) => d,
+        Some(document_instance) => document_instance,
         None => return,
     };
     let target: Element = if selector == BODY_TAG {
@@ -32,21 +31,19 @@ where
         }
     } else if let Some(id) = selector.strip_prefix(ID_SELECTOR_PREFIX) {
         match document.get_element_by_id(id) {
-            Some(el) => el,
+            Some(element) => element,
             None => return,
         }
     } else if let Some(class) = selector.strip_prefix(CLASS_SELECTOR_PREFIX) {
         match document.get_elements_by_class_name(class).item(0) {
-            Some(el) => el,
+            Some(element) => element,
             None => return,
         }
     } else {
         match document.get_elements_by_tag_name(selector).item(0) {
-            Some(el) => el,
+            Some(element) => element,
             None => return,
         }
     };
-    let mut renderer: Renderer = Renderer::new(target);
-    let vnode: VirtualNode = render_fn();
-    renderer.render(vnode);
+    Renderer::new(target).render(render_fn());
 }

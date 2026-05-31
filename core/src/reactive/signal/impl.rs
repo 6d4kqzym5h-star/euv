@@ -118,11 +118,12 @@ where
         }
         inner.set_value(value);
         swap(inner.get_mut_listeners(), &mut listeners);
-        for listener in listeners.iter_mut() {
+        drop(inner);
+        for mut listener in listeners {
             listener();
-        }
-        if let Ok(mut inner) = inner_ref.try_borrow_mut() {
-            swap(inner.get_mut_listeners(), &mut listeners);
+            if let Ok(mut inner) = inner_ref.try_borrow_mut() {
+                inner.get_mut_listeners().push(listener);
+            }
         }
         true
     }

@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.5.7"
+version = "0.5.8"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -29,19 +29,20 @@ log = "0.4.30"
 quote = "1.0.45"
 ignore = "0.4.25"
 js-sys = "0.3.99"
-which = "8.0.2"
-anyhow = "1.0.102"
+if-addrs = "0.15.0"
 hyperlane = "21.2.6"
 serde_json = "1.0.150"
 proc-macro2 = "1.0.106"
 wasm-bindgen = "0.2.122"
 color-output = "10.0.3"
+hyperlane-cli = "0.1.17"
 lombok-macros = "2.0.28"
 wasm-bindgen-test = "0.3.72"
 wasm-bindgen-futures = "0.4.72"
 console_error_panic_hook = "0.1.7"
 clap = { version = "4.6.1", features = ["derive"] }
 serde = { version = "1.0.228", features = ["derive"] }
+qrcode = { version = "0.14.1", default-features = false }
 syn = { version = "2.0.117", features = ["full", "extra-traits"] }
 notify = { version = "8.2.0", default-features = false, features = [
     "macos_fsevent",
@@ -108,7 +109,6 @@ web-sys = { version = "0.3.99", features = [
     "Window",
 ] }
 
-
 [dependencies]
 euv-core = { workspace = true }
 euv-macros = { workspace = true }
@@ -155,6 +155,3 @@ panic = "unwind"
 debug = false
 codegen-units = 1
 strip = true
-
-[profile.release.package.euv-cli]
-strip = "none"

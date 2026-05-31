@@ -73,8 +73,8 @@ pub(crate) fn is_mobile() -> bool {
 ///
 /// - `VirtualNode` - The virtual DOM tree of the matched page.
 #[component]
-pub(crate) fn page_router(mut node: VirtualNode<PageRouterProps>) -> VirtualNode {
-    let PageRouterProps { route_signal } = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
+    let PageRouterProps { route_signal } = node.try_get_props().unwrap_or_default();
     html! {
         match { route_signal.get().as_str() } {
             "/" | "/signals" => {
@@ -130,6 +130,9 @@ pub(crate) fn page_router(mut node: VirtualNode<PageRouterProps>) -> VirtualNode
             }
             "/dynamic-component" => {
                 page_dynamic_component {}
+            }
+            "/virtual-list" => {
+                page_virtual_list {}
             }
             _ => {
                 page_not_found {}

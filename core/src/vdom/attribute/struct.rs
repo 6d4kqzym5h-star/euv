@@ -1,23 +1,5 @@
 use crate::*;
 
-/// Represents a CSS style property.
-///
-/// A single key-value pair representing a CSS declaration.
-#[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
-pub(crate) struct StyleProperty {
-    /// The CSS property name (e.g., "margin", "padding").
-    name: String,
-    /// The CSS property value.
-    value: String,
-}
-
-/// A collection of CSS style properties that can be converted to a style string.
-#[derive(Clone, Data, Debug, Eq, New, PartialEq)]
-pub struct Style {
-    /// The list of style properties.
-    properties: Vec<StyleProperty>,
-}
-
 /// Represents a single attribute on a virtual DOM node.
 ///
 /// Combines an attribute name with its corresponding value.

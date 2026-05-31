@@ -45,6 +45,13 @@ class! {
         }
     }
 
+    pub(crate) c_nav_brand_title {
+        font-size: "18px";
+        font-weight: "700";
+        color: var!(text-primary);
+        letter-spacing: "-0.02em";
+    }
+
     pub(crate) c_logo_button {
         display: "flex";
         background: "linear-gradient(135deg, #4f46e5, #7c3aed)";
@@ -1061,21 +1068,22 @@ class! {
         height: "12px";
         background: var!(bg-progress);
         border-radius: "999px";
-        margin: "16px 0 8px 0";
+        margin: "16px 0";
         overflow: "hidden";
     }
 
-    pub(crate) c_progress_bar {
+    pub(crate) c_progress_bar_running {
         height: "100%";
         border-radius: "999px";
-        transition: "width 0.05s linear";
+        background: "#4f46e5";
+        animation: "euv-progress 1.6s ease-in-out forwards";
     }
 
-    pub(crate) c_progress_text {
-        text-align: "center";
-        font-size: "14px";
-        color: "inherit";
-        font-weight: "500";
+    pub(crate) c_progress_bar_stopped {
+        height: "100%";
+        border-radius: "999px";
+        background: "#4f46e5";
+        width: "0%";
     }
 
     pub(crate) c_anim_color_box {
@@ -1615,6 +1623,7 @@ class! {
         border: "none";
         cursor: "pointer";
         font-size: "22px";
+        font-weight: "700";
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -1631,6 +1640,7 @@ class! {
         border: "none";
         cursor: "pointer";
         font-size: "22px";
+        font-weight: "700";
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -2093,5 +2103,113 @@ class! {
         color: "#059669";
         font-weight: "500";
         font-size: "14px";
+    }
+
+    pub(crate) c_virtual_list_status {
+        display: "flex";
+        gap: "24px";
+        padding: "12px 0";
+        margin-bottom: "12px";
+        border-bottom: format!("1px solid {}", var!(border-subtle));
+        flex-wrap: "wrap";
+        media("(max-width: 767px)") {
+            gap: "12px";
+        }
+    }
+
+    pub(crate) c_page_container_wide {
+        margin: "0 auto";
+        display: "flex";
+        flex-direction: "column";
+        height: "100%";
+    }
+
+    pub(crate) c_virtual_list_status_item {
+        font-size: "14px";
+        color: "inherit";
+    }
+
+    pub(crate) c_virtual_list_status_value {
+        font-weight: "700";
+        color: "#4f46e5";
+        font-family: "ui-monospace, monospace";
+    }
+
+    pub(crate) c_virtual_list_container {
+        flex: "1";
+        min-height: "0";
+        overflow-y: "auto";
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: "8px";
+        background: var!(bg-input);
+    }
+
+    pub(crate) c_virtual_list_card {
+        background: var!(bg-card);
+        border-radius: "12px";
+        padding: "24px";
+        margin: "16px 0";
+        box-shadow: var!(shadow-card);
+        border: format!("1px solid {}", var!(border-card));
+        color: var!(text-card);
+        transition: "box-shadow 0.2s ease, background 0.4s ease, border-color 0.4s ease, color 0.4s ease";
+        display: "flex";
+        flex-direction: "column";
+        flex: "1";
+        min-height: "0";
+        media("(max-width: 767px)") {
+            padding: "16px";
+            margin: "12px 0";
+            border-radius: "10px";
+        }
+    }
+
+    pub(crate) c_virtual_list_row_even {
+        display: "flex";
+        align-items: "center";
+        padding: "0 16px";
+        gap: "16px";
+        border-bottom: format!("1px solid {}", var!(border-subtle));
+        background: var!(bg-list-even);
+    }
+
+    pub(crate) c_virtual_list_row_odd {
+        display: "flex";
+        align-items: "center";
+        padding: "0 16px";
+        gap: "16px";
+        border-bottom: format!("1px solid {}", var!(border-subtle));
+        background: var!(bg-list-odd);
+    }
+
+    pub(crate) c_virtual_list_row_index {
+        min-width: "48px";
+        font-size: "12px";
+        font-weight: "600";
+        color: "#4f46e5";
+        font-family: "ui-monospace, monospace";
+        flex-shrink: "0";
+    }
+
+    pub(crate) c_virtual_list_row_label {
+        font-size: "14px";
+        font-weight: "500";
+        color: "inherit";
+        min-width: "120px";
+        flex-shrink: "0";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
+    }
+
+    pub(crate) c_virtual_list_row_description {
+        font-size: "13px";
+        color: "inherit";
+        opacity: "0.6";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
+        flex: "1";
+        min-width: "0";
     }
 }

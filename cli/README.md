@@ -22,9 +22,11 @@
 cargo install euv-cli
 ```
 
+> After installation, the CLI binary is named `euv`.
+
 ## Usage
 
-The CLI uses the pattern `euv-cli <action>` where:
+The CLI uses the pattern `euv <action>` where:
 
 - **Action**: `run` (build + start server), `build` (build only), or `fmt` (format euv macros)
 
@@ -34,16 +36,19 @@ All `wasm-pack build` arguments are transparently forwarded after `--`.
 
 ```shell
 # Build and start dev server with hot-reload
-euv-cli run -- --target web --out-name euv
+euv run --dev -- --target web --out-name euv
 
 # Build and start dev server with custom crate path and port
-euv-cli run --crate-path ./example --port 80 -- --target web --out-name euv
+euv run --dev --crate-path ./example --port 80 -- --target web --out-name euv
 
 # Release build with dev server
-euv-cli run --crate-path ./example -- --release --target web --out-name euv
+euv run --release --crate-path ./example -- --target web --out-name euv
 
 # Use a custom static assets directory instead of the default "www"
-euv-cli run --www-dir www -- --target web --out-name euv
+euv run --release --www-dir www -- --target web --out-name euv
+
+# Use a custom index.html template
+euv run --dev --index-html ./template.html -- --target web --out-name euv
 ```
 
 ### Fmt (format euv macros)
@@ -52,16 +57,16 @@ Format euv macro invocations (`html!`, `class!`, `css_vars!`, `watch!`) in Rust 
 
 ```shell
 # Format all .rs files in the current directory (recursive)
-euv-cli fmt
+euv fmt
 
 # Format all .rs files in a specific directory
-euv-cli fmt --path ./src
+euv fmt --path ./src
 
 # Format a single file
-euv-cli fmt --path src/main.rs
+euv fmt --path src/main.rs
 
 # Check if formatting is needed without modifying files
-euv-cli fmt --check
+euv fmt --check
 
 # Check a specific path
 euv fmt --path ./src --check
@@ -86,13 +91,16 @@ euv fmt --path ./src --check
 
 ```shell
 # Dev build
-euv-cli build -- --target web --out-name euv
+euv build --dev -- --target web --out-name euv
 
 # Release build
-euv-cli build -- --release --target web --out-name euv
+euv build --release -- --target web --out-name euv
 
 # Build with custom crate path and static directory
-euv-cli build --crate-path ./example --www-dir www -- --release --target web --out-dir www/pkg --out-name euv
+euv build --release --crate-path ./example --www-dir www -- --target web --out-dir www/pkg --out-name euv
+
+# Build with a custom index.html template
+euv build --dev --index-html ./template.html -- --target web --out-name euv
 ```
 
 ### Via Cargo
@@ -100,18 +108,18 @@ euv-cli build --crate-path ./example --www-dir www -- --release --target web --o
 #### Run (build + dev server)
 
 ```shell
-cargo run -p euv-cli -- run --crate-path ./example --port 80 -- --target web --out-dir www/pkg --out-name euv
+cargo run -p euv-cli -- run --dev --crate-path ./example --port 80 -- --target web --out-dir www/pkg --out-name euv
 ```
 
 ```shell
 # Custom static directory
-cargo run -p euv-cli -- run --crate-path ./example --www-dir www -- --target web --out-name euv
+cargo run -p euv-cli -- run --dev --crate-path ./example --www-dir www -- --target web --out-name euv
 ```
 
 #### Build (build only)
 
 ```shell
-cargo run -p euv-cli -- build --crate-path ./example -- --release --target web --out-dir www/pkg --out-name euv
+cargo run -p euv-cli -- build --release --crate-path ./example -- --target web --out-dir www/pkg --out-name euv
 ```
 
 #### Fmt (format euv macros)
@@ -133,6 +141,10 @@ cargo run -p euv-cli -- fmt --check --path ./example
 | `--crate-path` | `-c`  | `.`     | Path to the Rust crate containing the WASM application                       |
 | `--port`       | `-p`  | `80`    | Port for the development server                                              |
 | `--www-dir`    |       | `www`   | Directory name for static assets and generated HTML (relative to crate-path) |
+| `--index-html` |       |         | Path to a custom index.html template file                                    |
+| `--dev`        |       |         | Create a development build (default if no mode specified)                    |
+| `--release`    |       |         | Create a release build with optimizations                                    |
+| `--profiling`  |       |         | Create a profiling build with optimizations and debug info                   |
 
 ### How `--www-dir` Works
 
@@ -163,9 +175,6 @@ All `wasm-pack build` flags are forwarded as-is. Common options:
 | `--target`          | Target environment: bundler, nodejs, web, no-modules, deno |
 | `--out-dir`         | Output directory with a relative path                      |
 | `--out-name`        | Output file names, defaults to package name                |
-| `--dev`             | Create a development build                                 |
-| `--release`         | Create a release build                                     |
-| `--profiling`       | Create a profiling build                                   |
 | `--scope`           | The npm scope to use in package.json                       |
 | `--mode`            | Steps to be run: no-install, normal, force                 |
 | `--no-typescript`   | Disable TypeScript declaration file generation             |

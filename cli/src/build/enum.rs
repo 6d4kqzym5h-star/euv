@@ -12,6 +12,22 @@ pub enum Action {
     Build,
 }
 
+/// The build mode for wasm-pack compilation.
+///
+/// - `Dev` — development build with debug info and no optimizations
+/// - `Release` — release build with optimizations and no debug info
+/// - `Profiling` — profiling build with optimizations and debug info
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum BuildMode {
+    /// Development build (default).
+    #[default]
+    Dev,
+    /// Release build with optimizations.
+    Release,
+    /// Profiling build with optimizations and debug info.
+    Profiling,
+}
+
 /// The action to perform.
 ///
 /// - `run` — build and start the development server

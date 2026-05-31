@@ -71,3 +71,17 @@ pub(crate) struct SignalUpdateRegistryCell(
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HashMap<usize, SignalUpdateEntry>>>,
 );
+
+/// A `Sync` wrapper for single-threaded global `WindowEventRegistryMap` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct WindowEventRegistryCell(
+    /// Interior-mutable storage for the window event handler registry.
+    #[get(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<Option<WindowEventRegistryMap>>,
+);

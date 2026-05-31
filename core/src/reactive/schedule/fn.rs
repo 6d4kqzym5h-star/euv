@@ -8,7 +8,7 @@ use crate::*;
 ///
 fn ensure_dispatch_callback() {
     let window_value: Window = match window() {
-        Some(w) => w,
+        Some(window_instance) => window_instance,
         None => return,
     };
     let key: JsValue = JsValue::from_str(EUV_DISPATCH);
@@ -50,7 +50,7 @@ pub fn schedule_signal_update() {
     }
     ensure_dispatch_callback();
     let window_value: Window = match window_option {
-        Some(w) => w,
+        Some(window_instance) => window_instance,
         None => {
             SCHEDULED.store(false, Ordering::Relaxed);
             return;
@@ -62,22 +62,23 @@ pub fn schedule_signal_update() {
         SCHEDULED.store(false, Ordering::Relaxed);
         return;
     }
-    let raf_val: JsValue = Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
-        .unwrap_or(JsValue::UNDEFINED);
-    if raf_val.is_undefined() {
-        let queue_microtask_val: JsValue =
+    let request_animation_frame_value: JsValue =
+        Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
+            .unwrap_or(JsValue::UNDEFINED);
+    if request_animation_frame_value.is_undefined() {
+        let queue_microtask_value: JsValue =
             Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
                 .unwrap_or(JsValue::UNDEFINED);
-        if queue_microtask_val.is_undefined() {
+        if queue_microtask_value.is_undefined() {
             SCHEDULED.store(false, Ordering::Relaxed);
             return;
         }
-        let queue_microtask: Function = queue_microtask_val.into();
+        let queue_microtask: Function = queue_microtask_value.into();
         let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
         return;
     }
-    let raf: Function = raf_val.into();
-    let _ = raf.call1(&JsValue::NULL, &dispatch_fn);
+    let request_animation_frame: Function = request_animation_frame_value.into();
+    let _ = request_animation_frame.call1(&JsValue::NULL, &dispatch_fn);
 }
 
 /// Batches signal updates within a closure, deferring DOM synchronization until completion.
@@ -121,12 +122,12 @@ pub(crate) fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
 where
     F: Fn() -> String + 'static,
 {
-    let signal_key: usize = attr_signal.get_inner();
-    let callback: Box<dyn FnMut()> = Box::new(move || {
-        let new_value: String = compute();
-        attr_signal.set_silent(new_value);
-    });
-    register_attr_signal_listener(signal_key, callback);
+    register_attr_signal_listener(
+        attr_signal.get_inner(),
+        Box::new(move || {
+            attr_signal.set_silent(compute());
+        }),
+    );
 }
 
 /// Converts a bool signal into a reactive `Signal<String>` attribute value.
@@ -143,14 +144,12 @@ where
 ///
 /// - `AttributeValue` - An `AttributeValue::Signal` wrapping the derived string signal.
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
-    let initial: String = source.get().to_string();
-    let string_signal: Signal<String> = Signal::create(initial);
+    let string_signal: Signal<String> = Signal::create(source.get().to_string());
     let string_signal_clone: Signal<String> = string_signal;
     source.replace_subscribe({
         let source_inner: Signal<bool> = source;
         move || {
-            let new_value: String = source_inner.get().to_string();
-            string_signal_clone.set_silent(new_value);
+            string_signal_clone.set_silent(source_inner.get().to_string());
         }
     });
     AttributeValue::Signal(string_signal)

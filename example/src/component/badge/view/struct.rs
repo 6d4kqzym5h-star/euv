@@ -3,7 +3,7 @@ use crate::*;
 /// Props for the `my_badge` component.
 ///
 /// Defines the strongly-typed interface for the badge status indicator.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct MyBadgeProps {
     /// The badge background/border color.
     pub(crate) color: &'static str,

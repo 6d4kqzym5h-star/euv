@@ -10,6 +10,18 @@ pub(crate) const RUST_FILE_EXTENSION: &str = "rs";
 /// Attribute name for marking component functions.
 pub(crate) const COMPONENT_ATTR: &str = "component";
 
+/// File name for the component registry cache stored in the target directory.
+pub(crate) const REGISTRY_CACHE_FILE_NAME: &str = "euv_component_registry_cache";
+
+/// Environment variable name for the Cargo output directory.
+pub(crate) const ENV_OUT_DIR: &str = "OUT_DIR";
+
+/// The semicolon character used as a fingerprint separator.
+pub(crate) const CHAR_SEMICOLON: char = ';';
+
+/// The newline character used as the fingerprint/data separator in the cache file.
+pub(crate) const CHAR_NEWLINE: char = '\n';
+
 /// Attribute key name for CSS class bindings.
 pub(crate) const ATTR_KEY_CLASS: &str = "class";
 
@@ -25,23 +37,17 @@ pub(crate) const EVENT_ATTR_PREFIX: &str = "on";
 /// The Rust raw identifier prefix.
 pub(crate) const RAW_IDENT_PREFIX: &str = "r#";
 
-/// The hyphen character used in kebab-case names and CSS property conversion.
+/// The hyphen character used in kebab-case tag names.
 pub(crate) const CHAR_HYPHEN: char = '-';
-
-/// The hyphen string used for replacing underscores in kebab-case conversion.
-pub(crate) const STR_HYPHEN: &str = "-";
-
-/// The underscore character, part of Rust identifiers.
-pub(crate) const CHAR_UNDERSCORE: char = '_';
-
-/// The underscore string used for replacing hyphens in Rust identifier conversion.
-pub(crate) const STR_UNDERSCORE: &str = "_";
 
 /// The space character used in CSS string formatting.
 pub(crate) const CHAR_SPACE: char = ' ';
 
 /// The CSS declaration terminator character.
 pub(crate) const CHAR_CSS_DECL_TERMINATOR: char = ';';
+
+/// The double quote character used for string literal token detection.
+pub(crate) const CHAR_DOUBLE_QUOTE: char = '"';
 
 /// Error message when HTML root content is not a valid element or expression.
 pub(crate) const ERR_EXPECTED_ELEMENT: &str =
@@ -62,3 +68,9 @@ pub(crate) const TYPE_VIRTUAL_NODE: &str = "VirtualNode";
 
 /// Type name identifier for `VirtualNode`, used to detect `VirtualNode<T>` parameter types.
 pub(crate) const VIRTUAL_NODE_TYPE: &str = "VirtualNode";
+
+/// Attribute key name for the `key` binding used for element identity in keyed updates.
+pub(crate) const ATTR_KEY_KEY: &str = "key";
+
+/// Empty string constant used as default placeholder for unset attribute values.
+pub(crate) const STR_EMPTY: &str = "";

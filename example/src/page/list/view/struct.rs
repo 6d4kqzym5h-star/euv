@@ -1,3 +1,3 @@
 /// Props for the `page_list` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageListProps;

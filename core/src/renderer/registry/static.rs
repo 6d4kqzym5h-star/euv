@@ -20,3 +20,10 @@ pub(crate) static mut DELEGATED_EVENTS: DelegatedEventsCell =
 /// Global signal update callback registry, mapping keys to SignalUpdateEntry.
 pub(crate) static mut SIGNAL_UPDATE_REGISTRY: SignalUpdateRegistryCell =
     SignalUpdateRegistryCell(UnsafeCell::new(None));
+
+/// Global auto-incrementing ID counter for window event handler entries.
+pub(crate) static NEXT_WINDOW_HANDLER_ID: AtomicUsize = AtomicUsize::new(0);
+
+/// Global window event proxy registry, mapping event names to handler lists.
+pub(crate) static mut WINDOW_EVENT_REGISTRY: WindowEventRegistryCell =
+    WindowEventRegistryCell(UnsafeCell::new(None));

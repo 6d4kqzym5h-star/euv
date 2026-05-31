@@ -11,7 +11,7 @@ impl Renderer {
     ///
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
-        let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
+        let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
         let old_tree: Option<VirtualNode> = self.try_get_current_tree().clone();
         if let Some(old_vnode) = old_tree {
             self.patch_root(&old_vnode, &new_unwrapped);
@@ -37,7 +37,7 @@ impl Renderer {
     ///
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render_full_replace(&mut self, vnode: VirtualNode) {
-        let new_unwrapped: VirtualNode = self.unwrap_component(&vnode);
+        let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
         while let Some(child) = self.get_root().first_child() {
             if let Some(element) = child.dyn_ref::<Element>() {
                 self.cleanup_dom_subtree(element);
@@ -132,7 +132,7 @@ impl Renderer {
             (VirtualNode::Dynamic(old_dynamic), VirtualNode::Dynamic(new_dynamic)) => {
                 let old_rendered: VirtualNode = old_dynamic.render();
                 let new_rendered: VirtualNode = new_dynamic.render();
-                let new_unwrapped: VirtualNode = self.unwrap_component(&new_rendered);
+                let new_unwrapped: VirtualNode = Self::unwrap_component(&new_rendered);
                 if !Self::visual_eq(&old_rendered, &new_unwrapped) {
                     while let Some(child) = dom_element.first_child() {
                         if let Some(child_element) = child.dyn_ref::<Element>() {
@@ -202,9 +202,9 @@ impl Renderer {
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
                 {
-                    cleanup_event_handler(euv_id, handler.get_event_name());
+                    ensure_handler_registry_mut().remove(&(euv_id, handler.get_event_name()));
                 }
-                remove_dom_attribute_or_property(element, old_attr.get_name());
+                element.remove_attribute_or_property(old_attr.get_name());
             }
         }
         for new_attr in new_attrs {
@@ -223,35 +223,24 @@ impl Renderer {
                         match new_attr.get_value() {
                             AttributeValue::Text(value) => {
                                 if value.is_empty() {
-                                    remove_dom_attribute_or_property(element, new_attr.get_name());
+                                    element.remove_attribute_or_property(new_attr.get_name());
                                 } else {
-                                    set_dom_attribute_or_property(
-                                        element,
-                                        new_attr.get_name(),
-                                        value,
-                                    );
+                                    element.set_attribute_or_property(new_attr.get_name(), value);
                                 }
                             }
                             AttributeValue::Signal(signal) => {
                                 let value: String = signal.get();
                                 if value.is_empty() && !is_boolean_property(new_attr.get_name()) {
-                                    remove_dom_attribute_or_property(element, new_attr.get_name());
+                                    element.remove_attribute_or_property(new_attr.get_name());
                                 } else {
-                                    set_dom_attribute_or_property(
-                                        element,
-                                        new_attr.get_name(),
-                                        &value,
-                                    );
+                                    element.set_attribute_or_property(new_attr.get_name(), &value);
                                 }
                             }
                             AttributeValue::Dynamic(_) => {}
                             AttributeValue::Css(css) => {
                                 css.inject_style();
-                                set_dom_attribute_or_property(
-                                    element,
-                                    new_attr.get_name(),
-                                    css.get_name(),
-                                );
+                                element
+                                    .set_attribute_or_property(new_attr.get_name(), css.get_name());
                             }
                             AttributeValue::Event(_) => unreachable!(),
                         }
@@ -498,11 +487,11 @@ impl Renderer {
     ///
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
         let window_value: Window = match window() {
-            Some(w) => w,
+            Some(window_instance) => window_instance,
             None => return JsValue::UNDEFINED.into(),
         };
         let document: Document = match window_value.document() {
-            Some(d) => d,
+            Some(document_instance) => document_instance,
             None => return JsValue::UNDEFINED.into(),
         };
         self.create_dom_node_with_document(node, &document)
@@ -528,11 +517,11 @@ impl Renderer {
             } => {
                 let element: Element = match tag {
                     Tag::Element(name) => match document.create_element(name) {
-                        Ok(el) => el,
+                        Ok(created_element) => created_element,
                         Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
                     },
                     Tag::Component(_) => {
-                        let unwrapped: VirtualNode = self.unwrap_component(node);
+                        let unwrapped: VirtualNode = Self::unwrap_component(node);
                         return self.create_dom_node_with_document(&unwrapped, document);
                     }
                 };
@@ -540,46 +529,29 @@ impl Renderer {
                     match attr.get_value() {
                         AttributeValue::Text(value) => {
                             if !value.is_empty() || is_boolean_property(attr.get_name()) {
-                                set_dom_attribute_or_property(&element, attr.get_name(), value);
+                                element.set_attribute_or_property(attr.get_name(), value);
                             }
                         }
                         AttributeValue::Signal(signal) => {
                             let initial_value: String = signal.get();
                             if !initial_value.is_empty() || is_boolean_property(attr.get_name()) {
-                                set_dom_attribute_or_property(
-                                    &element,
-                                    attr.get_name(),
-                                    &initial_value,
-                                );
+                                element.set_attribute_or_property(attr.get_name(), &initial_value);
                             }
-                            let signal_addr: usize = signal.get_inner();
-                            let existing_addrs: String = element
-                                .get_attribute(DATA_EUV_SIGNAL_ADDRS)
-                                .unwrap_or_default();
-                            let updated_addrs: String = if existing_addrs.is_empty() {
-                                signal_addr.to_string()
-                            } else {
-                                format!("{existing_addrs}{SIGNAL_ADDRS_SEPARATOR}{signal_addr}")
-                            };
-                            let _ = element.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated_addrs);
+                            element.track_signal_addr(signal.get_inner());
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
                             let signal_for_sub: Signal<String> = *signal;
-                            let sub_signal: Signal<String> = signal_for_sub;
+                            let subscribe_signal: Signal<String> = signal_for_sub;
                             signal_for_sub.replace_subscribe(move || {
                                 if !is_node_connected(&element_clone) {
-                                    sub_signal.clear_listeners();
+                                    subscribe_signal.clear_listeners();
                                     return;
                                 }
-                                let new_value: String = sub_signal.get();
+                                let new_value: String = subscribe_signal.get();
                                 if new_value.is_empty() && !is_boolean_property(&attr_name) {
-                                    remove_dom_attribute_or_property(&element_clone, &attr_name);
+                                    element_clone.remove_attribute_or_property(&attr_name);
                                 } else {
-                                    set_dom_attribute_or_property(
-                                        &element_clone,
-                                        &attr_name,
-                                        &new_value,
-                                    );
+                                    element_clone.set_attribute_or_property(&attr_name, &new_value);
                                 }
                             });
                         }
@@ -589,11 +561,7 @@ impl Renderer {
                         AttributeValue::Dynamic(_) => {}
                         AttributeValue::Css(css) => {
                             css.inject_style();
-                            set_dom_attribute_or_property(
-                                &element,
-                                attr.get_name(),
-                                css.get_name(),
-                            );
+                            element.set_attribute_or_property(attr.get_name(), css.get_name());
                         }
                     }
                 }
@@ -603,16 +571,7 @@ impl Renderer {
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
-                        let signal_addr: usize = signal.get_inner();
-                        let existing_addrs: String = element
-                            .get_attribute(DATA_EUV_SIGNAL_ADDRS)
-                            .unwrap_or_default();
-                        let updated_addrs: String = if existing_addrs.is_empty() {
-                            signal_addr.to_string()
-                        } else {
-                            format!("{existing_addrs}{SIGNAL_ADDRS_SEPARATOR}{signal_addr}")
-                        };
-                        let _ = element.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated_addrs);
+                        element.track_signal_addr(signal.get_inner());
                     }
                 }
                 element.into()
@@ -622,14 +581,14 @@ impl Renderer {
                 if let Some(signal) = text_node.try_get_signal() {
                     let text_clone: Text = text.clone();
                     let signal_clone: Signal<String> = *signal;
-                    let sub_signal: Signal<String> = signal_clone;
+                    let subscribe_signal: Signal<String> = signal_clone;
                     signal_clone.replace_subscribe({
                         move || {
                             if !is_node_connected(&text_clone) {
-                                sub_signal.clear_listeners();
+                                subscribe_signal.clear_listeners();
                                 return;
                             }
-                            let new_value: String = sub_signal.get();
+                            let new_value: String = subscribe_signal.get();
                             text_clone.set_text_content(Some(&new_value));
                         }
                     });
@@ -638,7 +597,7 @@ impl Renderer {
             }
             VirtualNode::Fragment(children) => {
                 let fragment: Element = match document.create_element(FRAGMENT_TAG) {
-                    Ok(el) => el,
+                    Ok(created_element) => created_element,
                     Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
                 };
                 let _ = fragment.set_attribute(ATTR_STYLE, FRAGMENT_STYLE);
@@ -648,23 +607,14 @@ impl Renderer {
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
-                        let signal_addr: usize = signal.get_inner();
-                        let existing_addrs: String = fragment
-                            .get_attribute(DATA_EUV_SIGNAL_ADDRS)
-                            .unwrap_or_default();
-                        let updated_addrs: String = if existing_addrs.is_empty() {
-                            signal_addr.to_string()
-                        } else {
-                            format!("{existing_addrs}{SIGNAL_ADDRS_SEPARATOR}{signal_addr}")
-                        };
-                        let _ = fragment.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated_addrs);
+                        fragment.track_signal_addr(signal.get_inner());
                     }
                 }
                 fragment.into()
             }
             VirtualNode::Dynamic(dynamic_node) => {
                 let placeholder: Element = match document.create_element(DYNAMIC_PLACEHOLDER_TAG) {
-                    Ok(el) => el,
+                    Ok(created_element) => created_element,
                     Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
                 };
                 let _ = placeholder.set_attribute(ATTR_STYLE, DISPLAY_CONTENTS_STYLE);
@@ -698,46 +648,64 @@ impl Renderer {
         placeholder: &Element,
         skip_equal: bool,
     ) -> Node {
-        let mut hook_context: HookContext = dynamic_node.get_hook_context_value();
+        let mut hook_context: HookContext = dynamic_node.get_hook_context().clone();
         hook_context.reset_hook_index();
         let initial_vnode: VirtualNode =
             with_hook_context(hook_context.clone(), || dynamic_node.render());
-        let initial_unwrapped: VirtualNode = self.unwrap_component(&initial_vnode);
+        let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
         let render_fn: Rc<RefCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
         let placeholder_clone: Element = placeholder.clone();
         let mut renderer_for_sub: Self = Self::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
         let renderer_rc: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
-        let initial_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
+        let initial_arm: usize = hook_context
+            .get_inner()
+            .try_borrow()
+            .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
+            .unwrap_or(0);
         let last_arm: Rc<RefCell<usize>> = Rc::new(RefCell::new(initial_arm));
         let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
             hook_context.reset_hook_index();
-            let prev_arm: usize = *last_arm.borrow();
+            let prev_arm: usize = last_arm
+                .try_borrow()
+                .map(|arm: Ref<usize>| *arm)
+                .unwrap_or(0);
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
-                let mut inner: RefMut<RenderFnInner> = render_fn.borrow_mut();
+                let Ok(mut inner) = render_fn.try_borrow_mut() else {
+                    return VirtualNode::Empty;
+                };
                 (inner.get_mut_render_fn())()
             });
-            let current_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
+            let current_arm: usize = hook_context
+                .get_inner()
+                .try_borrow()
+                .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
+                .unwrap_or(0);
             let arm_switched: bool = prev_arm != current_arm;
-            *last_arm.borrow_mut() = current_arm;
-            if skip_equal && !arm_switched {
-                let renderer_ref: Ref<Renderer> = renderer_rc.borrow();
-                if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
-                    let new_unwrapped: VirtualNode = Self::unwrap_component_static(&new_vnode);
-                    if Self::visual_eq(old_vnode, &new_unwrapped) {
-                        return;
-                    }
+            if let Ok(mut arm) = last_arm.try_borrow_mut() {
+                *arm = current_arm;
+            }
+            if skip_equal
+                && !arm_switched
+                && let Ok(renderer_borrow_ref) = renderer_rc.try_borrow()
+                && let Some(old_vnode) = renderer_borrow_ref.try_get_current_tree()
+            {
+                let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
+                if Self::visual_eq(old_vnode, &new_unwrapped) {
+                    return;
                 }
             }
-            let mut renderer_mut: RefMut<Renderer> = renderer_rc.borrow_mut();
+            let Ok(mut renderer_borrow_mut) = renderer_rc.try_borrow_mut() else {
+                return;
+            };
             if arm_switched {
-                renderer_mut.render_full_replace(new_vnode);
+                renderer_borrow_mut.render_full_replace(new_vnode);
             } else {
-                renderer_mut.render(new_vnode);
+                renderer_borrow_mut.render(new_vnode);
             }
         });
         register_dynamic_listener(dynamic_id, callback);
@@ -753,7 +721,7 @@ impl Renderer {
     /// # Returns
     ///
     /// - `VirtualNode` - The unwrapped virtual node with all components expanded.
-    fn unwrap_component(&self, node: &VirtualNode) -> VirtualNode {
+    fn unwrap_component(node: &VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
                 tag: Tag::Component(_),
@@ -761,65 +729,7 @@ impl Renderer {
                 ..
             } => {
                 if children.len() == 1 {
-                    self.unwrap_component(&children[0])
-                } else {
-                    VirtualNode::Fragment(children.clone())
-                }
-            }
-            VirtualNode::Element {
-                tag,
-                attributes,
-                children,
-                key,
-                ..
-            } => {
-                if !children.iter().any(Self::subtree_has_component) {
-                    return node.clone();
-                }
-                let unwrapped_children: Vec<VirtualNode> = children
-                    .iter()
-                    .map(|child: &VirtualNode| self.unwrap_component(child))
-                    .collect();
-                VirtualNode::Element {
-                    tag: tag.clone(),
-                    attributes: attributes.clone(),
-                    children: unwrapped_children,
-                    key: key.clone(),
-                    props: None,
-                }
-            }
-            VirtualNode::Fragment(children) => {
-                if !children.iter().any(Self::subtree_has_component) {
-                    return node.clone();
-                }
-                let unwrapped_children: Vec<VirtualNode> = children
-                    .iter()
-                    .map(|child: &VirtualNode| self.unwrap_component(child))
-                    .collect();
-                VirtualNode::Fragment(unwrapped_children)
-            }
-            other => other.clone(),
-        }
-    }
-
-    /// Static version of `unwrap_component`.
-    ///
-    /// # Arguments
-    ///
-    /// - `&VirtualNode` - The virtual node to unwrap.
-    ///
-    /// # Returns
-    ///
-    /// - `VirtualNode` - The unwrapped virtual node with all components expanded.
-    fn unwrap_component_static(node: &VirtualNode) -> VirtualNode {
-        match node {
-            VirtualNode::Element {
-                tag: Tag::Component(_),
-                children,
-                ..
-            } => {
-                if children.len() == 1 {
-                    Self::unwrap_component_static(&children[0])
+                    Self::unwrap_component(&children[0])
                 } else {
                     VirtualNode::Fragment(children.clone())
                 }
@@ -835,7 +745,7 @@ impl Renderer {
                     return node.clone();
                 }
                 let unwrapped_children: Vec<VirtualNode> =
-                    children.iter().map(Self::unwrap_component_static).collect();
+                    children.iter().map(Self::unwrap_component).collect();
                 VirtualNode::Element {
                     tag: tag.clone(),
                     attributes: attributes.clone(),
@@ -849,7 +759,7 @@ impl Renderer {
                     return node.clone();
                 }
                 let unwrapped_children: Vec<VirtualNode> =
-                    children.iter().map(Self::unwrap_component_static).collect();
+                    children.iter().map(Self::unwrap_component).collect();
                 VirtualNode::Fragment(unwrapped_children)
             }
             other => other.clone(),
@@ -975,11 +885,10 @@ impl Renderer {
             cleanup_dynamic_node(dynamic_id);
         }
         if let Some(signal_addrs_str) = element.get_attribute(DATA_EUV_SIGNAL_ADDRS) {
-            for addr_str in signal_addrs_str.split(CHAR_SIGNAL_ADDRS_SEPARATOR) {
-                if let Ok(addr) = addr_str.parse::<usize>() {
-                    clear_signal_listeners_by_addr(addr);
-                }
-            }
+            signal_addrs_str
+                .split(CHAR_SIGNAL_ADDRS_SEPARATOR)
+                .filter_map(|addr_str: &str| addr_str.parse::<usize>().ok())
+                .for_each(clear_signal_listeners_by_addr);
         }
         let child_nodes: NodeList = element.child_nodes();
         let length: u32 = child_nodes.length();
@@ -1013,15 +922,13 @@ impl Renderer {
                 new_id
             }
         };
-        let event_name: &'static str = handler.get_event_name();
-        if !DELEGATABLE_EVENT_NAMES.contains(&event_name) {
-            ensure_delegated_listener(event_name);
-        }
-        let key: (usize, &'static str) = (euv_id, event_name);
+        ensure_delegated_listener(handler.get_event_name());
+        let key: (usize, &'static str) = (euv_id, handler.get_event_name());
         let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
         if let Some(existing_entry) = registry_ref.get(&key) {
-            let mut slot: RefMut<HandlerSlot> = existing_entry.borrow_mut();
-            slot.set_handler(Some(handler.clone()));
+            if let Ok(mut slot) = existing_entry.try_borrow_mut() {
+                slot.set_handler(Some(handler.clone()));
+            }
         } else {
             let handler_slot: HandlerEntry =
                 Rc::new(RefCell::new(HandlerSlot::new(Some(handler.clone()))));

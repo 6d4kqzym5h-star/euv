@@ -1,5 +1,119 @@
 use crate::*;
 
+/// Checks whether `wasm_pack_args` already contains a build mode flag.
+///
+/// Returns `true` if any of `--dev`, `--release`, or `--profiling`
+/// is present in the arguments list.
+///
+/// # Arguments
+///
+/// - `&[String]` - The wasm-pack arguments to search.
+///
+/// # Returns
+///
+/// - `bool` - Whether a build mode flag is already present.
+pub(crate) fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
+    wasm_pack_args
+        .iter()
+        .any(|arg: &String| arg == DEV_FLAG || arg == RELEASE_FLAG || arg == PROFILING_FLAG)
+}
+
+/// Filters out euv-specific arguments from the wasm-pack arguments.
+///
+/// If `wasm_pack_args` contains `--`, only arguments after the last `--`
+/// are kept (they are the genuine wasm-pack passthrough args), and everything
+/// before it (which would be euv args mistakenly collected by clap) is discarded.
+/// If there is no `--`, the list is returned as-is after removing known euv flags.
+///
+/// # Arguments
+///
+/// - `&[String]` - The raw wasm-pack arguments to filter.
+///
+/// # Returns
+///
+/// - `Vec<String>` - The filtered arguments safe for wasm-pack.
+pub(crate) fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
+    if let Some(position) = wasm_pack_args
+        .iter()
+        .rposition(|arg: &String| arg == DOUBLE_DASH)
+    {
+        wasm_pack_args[position + 1..].to_vec()
+    } else {
+        let mut filtered: Vec<String> = Vec::new();
+        let mut skip_next: bool = false;
+        for arg in wasm_pack_args {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
+            if EUV_ARGS.contains(&arg.as_str()) {
+                if arg.contains('=') {
+                    continue;
+                }
+                skip_next = true;
+                continue;
+            }
+            filtered.push(arg.clone());
+        }
+        filtered
+    }
+}
+
+/// Resolves the build mode from CLI arguments.
+///
+/// First checks the explicit `--dev`, `--release`, and `--profiling` flags on `ModeArgs`.
+/// If none of those are set, inspects `wasm_pack_args` for any build mode flag
+/// that may have been forwarded by the user.
+/// Defaults to `BuildMode::Dev` if no build mode flag is found anywhere.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing the build mode flags and wasm_pack_args.
+///
+/// # Returns
+///
+/// - `BuildMode` - The resolved build mode.
+pub(crate) fn resolve_build_mode(args: &ModeArgs) -> BuildMode {
+    if args.profiling {
+        BuildMode::Profiling
+    } else if args.release {
+        BuildMode::Release
+    } else if args.dev {
+        BuildMode::Dev
+    } else if args
+        .wasm_pack_args
+        .iter()
+        .any(|arg: &String| arg == PROFILING_FLAG)
+    {
+        BuildMode::Profiling
+    } else if args
+        .wasm_pack_args
+        .iter()
+        .any(|arg: &String| arg == RELEASE_FLAG)
+    {
+        BuildMode::Release
+    } else {
+        BuildMode::Dev
+    }
+}
+
+/// Converts a `BuildMode` to the corresponding wasm-pack flag string.
+///
+/// # Arguments
+///
+/// - `BuildMode` - The build mode to convert.
+///
+/// # Returns
+///
+/// - `&'static str` - The wasm-pack command-line flag.
+pub(crate) fn build_mode_to_flag(build_mode: BuildMode) -> &'static str {
+    match build_mode {
+        BuildMode::Dev => DEV_FLAG,
+        BuildMode::Release => RELEASE_FLAG,
+        BuildMode::Profiling => PROFILING_FLAG,
+    }
+}
+
 /// Builds a `Gitignore` matcher from the `.gitignore` file at the given root path.
 ///
 /// # Arguments
@@ -14,7 +128,7 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
     let mut builder: GitignoreBuilder = GitignoreBuilder::new(root);
     let gitignore_exists: bool = metadata(&gitignore_path).await.is_ok();
     if gitignore_exists && let Some(error) = builder.add(&gitignore_path) {
-        log::warn!("Failed to load .gitignore: {}", error);
+        log::warn!("Failed to load .gitignore: {error}");
     }
     match builder.build() {
         Ok(gitignore) => {
@@ -24,7 +138,7 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
             gitignore
         }
         Err(error) => {
-            log::warn!("Failed to build gitignore matcher: {}", error);
+            log::warn!("Failed to build gitignore matcher: {error}");
             GitignoreBuilder::new(root)
                 .build()
                 .unwrap_or_else(|_error: ignore::Error| Gitignore::empty())
@@ -99,14 +213,13 @@ pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
         out_name
     } else {
         let cargo_toml_path: PathBuf = args.crate_path.join(CARGO_TOML_FILE_NAME);
-        let crate_name: String = read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
+        read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
             args.crate_path
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .to_string()
-        });
-        crate_name.replace('-', "_")
+        })
     };
     format!("{name}{JS_EXTENSION}")
 }
@@ -162,20 +275,15 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
     let relative: PathBuf = match out_dir_absolute.strip_prefix(&www_absolute) {
         Ok(rel) => rel.to_path_buf(),
-        Err(_) => out_dir_absolute.clone(),
+        Err(_) => out_dir_absolute,
     };
-    let mut components: Vec<String> = Vec::new();
-    for component in relative.components() {
-        match component {
-            Component::CurDir => {}
-            Component::Normal(os_str) => {
-                if let Some(s) = os_str.to_str() {
-                    components.push(s.to_string());
-                }
-            }
-            _ => {}
-        }
-    }
+    let mut components: Vec<String> = relative
+        .components()
+        .filter_map(|component: Component| match component {
+            Component::Normal(os_str) => os_str.to_str().map(|s: &str| s.to_string()),
+            _ => None,
+        })
+        .collect();
     components.push(out_name);
     format!("{RELATIVE_PATH_PREFIX}{}", components.join(PATH_SEPARATOR))
 }
@@ -195,9 +303,10 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
 ///
 /// - `PathBuf` - The resolved output directory (absolute if crate_path is joined).
 pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
-    let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
-    let out_dir: String = extract_out_dir(&args.wasm_pack_args).unwrap_or(default_out_dir);
-    let out_dir_path: PathBuf = PathBuf::from(out_dir);
+    let out_dir_path: PathBuf = PathBuf::from(
+        extract_out_dir(&args.wasm_pack_args)
+            .unwrap_or_else(|| format!("{}/{PKG_DIR_NAME}", args.www_dir)),
+    );
     if out_dir_path.is_absolute() {
         out_dir_path
     } else {
@@ -205,10 +314,11 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
     }
 }
 
-/// Executes a build-only pipeline: formats euv macros, builds WASM and removes unnecessary files.
+/// Executes a build-only pipeline: formats euv macros, cleans output directory,
+/// builds WASM, and generates HTML.
 ///
-/// Unlike `run_build_pipeline`, this skips reload notifications
-/// — only the essential WASM build artifacts are kept.
+/// Unlike `run_build_pipeline`, this cleans the output directory before building
+/// and skips reload notifications — only the essential WASM build artifacts are kept.
 ///
 /// # Arguments
 ///
@@ -220,17 +330,15 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
-        log::warn!("euv fmt error: {}", error);
+        log::warn!("euv fmt error: {error}");
     }
     let out_dir: PathBuf = resolve_out_dir(args);
     clean_out_dir(&out_dir).await;
     build_wasm(args).await?;
     log::info!("WASM build completed successfully");
-    let pkg_dir: PathBuf = resolve_out_dir(args);
-    clean_pkg_dir(&pkg_dir).await;
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
-    let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+    let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
     let custom_html: Option<&Path> = args.index_html.as_deref();
     generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(())
@@ -253,78 +361,19 @@ pub(crate) async fn clean_out_dir(out_dir: &Path) {
     while let Ok(Some(entry)) = entries.next_entry().await {
         let path: PathBuf = entry.path();
         if path.is_dir() {
-            if let Err(error) = tokio::fs::remove_dir_all(&path).await {
-                log::warn!("Failed to remove directory '{}': {}", path.display(), error);
+            if let Err(error) = remove_dir_all(&path).await {
+                log::warn!("Failed to remove directory '{}': {error}", path.display());
             }
         } else if let Err(error) = remove_file(&path).await {
-            log::warn!("Failed to remove file '{}': {}", path.display(), error);
+            log::warn!("Failed to remove file '{}': {error}", path.display());
         }
     }
 }
 
-/// Removes unnecessary files from the wasm-pack output directory.
-///
-/// Keeps only the files required for runtime: `.js` and `.wasm`.
-/// Removes TypeScript declarations (`.d.ts`), package metadata
-/// (`package.json`, `README.md`, `LICENSE`), and `.gitignore`.
-///
-/// # Arguments
-///
-/// - `&Path` - The pkg output directory to clean.
-pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
-    let unnecessary_extensions: &[&str] = &[D_TS_EXTENSION];
-    let unnecessary_names: &[&str] = &[
-        PACKAGE_JSON_FILE_NAME,
-        README_FILE_NAME,
-        LICENSE_FILE_NAME,
-        GITIGNORE_FILE_NAME,
-    ];
-    let mut read_dir: ReadDir = match read_dir(pkg_dir).await {
-        Ok(dir) => dir,
-        Err(_) => {
-            log::warn!("pkg directory not found: {}", pkg_dir.display());
-            return;
-        }
-    };
-    while let Ok(Some(entry)) = read_dir.next_entry().await {
-        let path: PathBuf = entry.path();
-        let file_name: String = path
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-        let extension: String = path
-            .extension()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-        let full_extension: String = if path
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .ends_with(D_TS_EXTENSION)
-        {
-            D_TS_EXTENSION.to_string()
-        } else {
-            extension
-        };
-        let should_remove: bool = unnecessary_names.contains(&file_name.as_str())
-            || unnecessary_extensions.contains(&full_extension.as_str());
-        if should_remove {
-            match remove_file(&path).await {
-                Ok(()) => {
-                    log::info!("Removed unnecessary file: {}", file_name);
-                }
-                Err(error) => {
-                    log::warn!("Failed to remove {}: {}", file_name, error);
-                }
-            }
-        }
-    }
-}
-
-/// Executes a full build pipeline: euv fmt,
-/// build WASM, notify reload channel, and generate updated HTML.
+/// Executes a full build pipeline: euv fmt, build wasm, generate HTML.
+/// After the serial pipeline completes, hyperlane-cli fmt is spawned in the
+/// background so it does not block the caller.
+/// Notifies the reload channel on build success or failure.
 ///
 /// # Arguments
 ///
@@ -340,13 +389,8 @@ pub(crate) async fn run_build_pipeline(
 ) -> Result<String> {
     let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
-        log::warn!("euv fmt error: {}", error);
+        log::warn!("euv fmt error: {error}");
     }
-    if let Err(error) = run_hyperlane_fmt().await {
-        log::warn!("hyperlane-cli fmt error: {}", error);
-    }
-    let out_dir: PathBuf = resolve_out_dir(args);
-    clean_out_dir(&out_dir).await;
     match build_wasm(args).await {
         Ok(()) => {
             log::info!("WASM build completed successfully");
@@ -355,7 +399,7 @@ pub(crate) async fn run_build_pipeline(
             }
         }
         Err(error) => {
-            log::error!("WASM build failed: {}", error);
+            log::error!("WASM build failed: {error}");
             if let Some(sender) = reload_tx {
                 let _ = sender.send(ReloadEvent::Error(error.to_string()));
             }
@@ -363,9 +407,14 @@ pub(crate) async fn run_build_pipeline(
     }
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
-    let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+    let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
     let custom_html: Option<&Path> = args.index_html.as_deref();
     let html: String = generate_html(&www_dir, &import_path, is_release, custom_html).await?;
+    spawn(async move {
+        if let Err(error) = run_hyperlane_fmt().await {
+            log::warn!("hyperlane-cli fmt error: {error}");
+        }
+    });
     Ok(html)
 }
 
@@ -398,7 +447,7 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
     let gitignore: Gitignore = build_gitignore(&crate_path).await;
     let (tx, mut rx): (Sender<Event>, Receiver<Event>) = channel(32);
     let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
-        move |result: Result<Event, notify::Error>| {
+        move |result: std::result::Result<Event, notify::Error>| {
             if let Ok(event) = result {
                 let _ = tx.blocking_send(event);
             }
@@ -439,7 +488,7 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
                     *content = html;
                 }
                 Err(error) => {
-                    log::error!("Build pipeline error: {}", error);
+                    log::error!("Build pipeline error: {error}");
                 }
             }
             let mut building: MutexGuard<bool> = state_for_build.is_building.lock().await;
@@ -464,17 +513,24 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 ///
 /// - `Result<()>` - Indicates success or failure of the wasm-pack build.
 pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
+    let build_mode: BuildMode = resolve_build_mode(args);
+    let build_mode_flag: &str = build_mode_to_flag(build_mode);
+    let filtered_args: Vec<String> = filter_euv_args(&args.wasm_pack_args);
+    let has_existing_build_mode: bool = has_build_mode_flag(&filtered_args);
     let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
     let mut command: Command = Command::new(WASM_PACK_COMMAND);
+    command.arg(WASM_PACK_BUILD_SUBCOMMAND);
+    if !has_existing_build_mode {
+        command.arg(build_mode_flag);
+    }
     command
-        .arg(WASM_PACK_BUILD_SUBCOMMAND)
-        .args(&args.wasm_pack_args);
-    let has_out_dir: bool = extract_out_dir(&args.wasm_pack_args).is_some();
+        .args(&filtered_args)
+        .env(RUST_MIN_STACK_ENV, RUST_MIN_STACK_VALUE);
+    let has_out_dir: bool = extract_out_dir(&filtered_args).is_some();
     if !has_out_dir {
         command.arg(OUT_DIR_ARG).arg(&default_out_dir);
     }
-    let has_target: bool = args
-        .wasm_pack_args
+    let has_target: bool = filtered_args
         .iter()
         .any(|arg: &String| arg == TARGET_ARG || arg.starts_with(&format!("{TARGET_ARG}=")));
     if !has_target {
@@ -482,44 +538,58 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     }
     command.current_dir(&args.crate_path);
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let display_args: Vec<String> = args
-        .wasm_pack_args
-        .iter()
-        .cloned()
-        .chain(if has_out_dir {
-            Vec::new()
-        } else {
-            vec![OUT_DIR_ARG.to_string(), default_out_dir]
-        })
-        .chain(if has_target {
-            Vec::new()
-        } else {
-            vec![TARGET_ARG.to_string(), TARGET_WEB.to_string()]
-        })
-        .collect();
+    let display_args: Vec<String> = (if has_existing_build_mode {
+        filtered_args.to_vec()
+    } else {
+        std::iter::once(build_mode_flag.to_string())
+            .chain(filtered_args.iter().cloned())
+            .collect::<Vec<String>>()
+    })
+    .into_iter()
+    .chain(if has_out_dir {
+        Vec::new()
+    } else {
+        vec![OUT_DIR_ARG.to_string(), default_out_dir.clone()]
+    })
+    .chain(if has_target {
+        Vec::new()
+    } else {
+        vec![TARGET_ARG.to_string(), TARGET_WEB.to_string()]
+    })
+    .collect();
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
     create_dir_all(&out_dir_absolute)
         .await
-        .map_err(|error: std::io::Error| {
-            anyhow!(
-                "Failed to create output directory '{}': {}",
-                out_dir_absolute.display(),
-                error
-            )
+        .map_err(|error: std::io::Error| EuvError::IoPath {
+            message: String::from("Failed to create output directory"),
+            path: out_dir_absolute.clone(),
+            error,
         })?;
     log::info!(
-        "Running: {} {} {} ...",
-        WASM_PACK_COMMAND,
-        WASM_PACK_BUILD_SUBCOMMAND,
+        "Running: {WASM_PACK_COMMAND} {WASM_PACK_BUILD_SUBCOMMAND} {} ...",
         display_args.join(" ")
     );
     let output: Output = command
         .output()
         .await
-        .map_err(|error: std::io::Error| anyhow!("Failed to execute wasm-pack: {}", error))?;
-    if !output.status.success() {
-        let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
-        bail!("wasm-pack build failed:\n{}", stderr);
+        .map_err(|error: std::io::Error| EuvError::Io {
+            message: String::from("Failed to execute wasm-pack"),
+            error,
+        })?;
+    let stdout: String = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
+    for line in stdout.lines().filter(|line: &&str| !line.is_empty()) {
+        log::info!("{line}");
+    }
+    if output.status.success() {
+        for line in stderr.lines().filter(|line: &&str| !line.is_empty()) {
+            log::info!("{line}");
+        }
+    } else {
+        for line in stderr.lines().filter(|line: &&str| !line.is_empty()) {
+            log::error!("{line}");
+        }
+        return Err(EuvError::Message(String::from("wasm-pack build failed")));
     }
     Ok(())
 }
@@ -539,51 +609,83 @@ pub(crate) fn print_banner(action: Action) {
     log::info!(".gitignore can exclude unwanted file change events from triggering rebuilds");
 }
 
-/// Runs `hyperlane-cli fmt` to format the Rust source files.
-/// If `hyperlane-cli` is not installed, automatically installs it via `cargo install`.
+/// Enumerates all network interface IP addresses and prints each server URL
+/// along with its corresponding QR code to the console.
+///
+/// Includes both loopback (127.0.0.1) and all private/public IPv4 addresses
+/// bound to the host's network interfaces. Each address produces one URL line
+/// followed by a Unicode QR code rendered with half-block characters,
+/// where every line carries the standard log prefix (timestamp + level).
+///
+/// # Arguments
+///
+/// - `u16` - The port number the server is listening on.
+/// - `&str` - The www route prefix (e.g. "www").
+/// - `&str` - The index HTML file name (e.g. "index.html").
+pub(crate) fn print_server_urls(port: u16, www_route_prefix: &str, index_html_file_name: &str) {
+    let mut addresses: Vec<std::net::IpAddr> = Vec::new();
+    match if_addrs::get_if_addrs() {
+        Ok(interfaces) => {
+            for interface in interfaces {
+                let ip: std::net::IpAddr = interface.addr.ip();
+                if !addresses.contains(&ip) {
+                    addresses.push(ip);
+                }
+            }
+        }
+        Err(error) => {
+            log::warn!("Failed to enumerate network interfaces: {error}");
+        }
+    }
+    if addresses.is_empty() {
+        addresses.push(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
+    }
+    for ip in addresses {
+        let host: String = match ip {
+            std::net::IpAddr::V6(_) => format!("[{ip}]"),
+            std::net::IpAddr::V4(_) => format!("{ip}"),
+        };
+        let url: String =
+            format!("{HTTP_SCHEME}://{host}:{port}/{www_route_prefix}/{index_html_file_name}");
+        log::info!("Server: {url}");
+        match qrcode::QrCode::new(url.as_str()) {
+            Ok(code) => {
+                let string: String = code
+                    .render::<qrcode::render::unicode::Dense1x2>()
+                    .quiet_zone(false)
+                    .build();
+                for line in string.lines() {
+                    log::info!("{line}");
+                }
+            }
+            Err(error) => {
+                log::warn!("Failed to generate QR code: {error}");
+            }
+        }
+    }
+}
+
+/// Executes `hyperlane-cli fmt` via the library API to format Rust source files.
 ///
 /// # Returns
 ///
 /// - `Result<()>` - Indicates success or failure of the formatting operation.
 pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
-    let which_output: Output = Command::new(HYPERLANE_CLI_COMMAND)
-        .arg(VERSION_ARG)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
+    let args: hyperlane_cli::Args = hyperlane_cli::Args {
+        command: hyperlane_cli::CommandType::Fmt,
+        check: false,
+        manifest_path: None,
+        bump_type: None,
+        max_retries: 0,
+        project_name: None,
+        template_type: None,
+        model_sub_type: None,
+        component_name: None,
+    };
+    hyperlane_cli::execute_fmt(&args)
         .await
-        .map_err(|error: std::io::Error| {
-            anyhow!("Failed to check hyperlane-cli availability: {}", error)
-        })?;
-    if !which_output.status.success() {
-        log::info!("hyperlane-cli not found, installing via cargo install...");
-        let install_output: Output = Command::new(CARGO_COMMAND)
-            .args([CARGO_INSTALL_SUBCOMMAND, HYPERLANE_CLI_COMMAND])
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .output()
-            .await
-            .map_err(|error: std::io::Error| {
-                anyhow!("Failed to execute cargo install hyperlane-cli: {}", error)
-            })?;
-        if !install_output.status.success() {
-            let stderr: String = String::from_utf8_lossy(&install_output.stderr).to_string();
-            bail!("cargo install hyperlane-cli failed:\n{}", stderr);
-        }
-        log::info!("hyperlane-cli installed successfully");
-    }
-    let fmt_output: Output = Command::new(HYPERLANE_CLI_COMMAND)
-        .arg(FMT_SUBCOMMAND)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .output()
-        .await
-        .map_err(|error: std::io::Error| {
-            anyhow!("Failed to execute hyperlane-cli fmt: {}", error)
-        })?;
-    if !fmt_output.status.success() {
-        let stderr: String = String::from_utf8_lossy(&fmt_output.stderr).to_string();
-        bail!("hyperlane-cli fmt failed:\n{}", stderr);
-    }
-    Ok(())
+        .map_err(|error: std::io::Error| EuvError::Io {
+            message: String::from("hyperlane-cli fmt error"),
+            error,
+        })
 }

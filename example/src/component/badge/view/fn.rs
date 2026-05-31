@@ -14,13 +14,13 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled span badge element.
 #[component]
-pub(crate) fn my_badge(mut node: VirtualNode<MyBadgeProps>) -> VirtualNode {
+pub(crate) fn my_badge(node: VirtualNode<MyBadgeProps>) -> VirtualNode {
     let MyBadgeProps {
         color,
         text,
         outline,
         on_click,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     if outline {
         html! {
             span {
