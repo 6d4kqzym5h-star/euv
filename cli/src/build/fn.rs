@@ -315,10 +315,10 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 }
 
 /// Executes a build-only pipeline: formats euv macros, cleans output directory,
-/// builds WASM, and removes unnecessary files.
+/// builds WASM, and generates HTML.
 ///
-/// Unlike `run_build_pipeline`, this skips reload notifications
-/// — only the essential WASM build artifacts are kept.
+/// Unlike `run_build_pipeline`, this cleans the output directory before building
+/// and skips reload notifications — only the essential WASM build artifacts are kept.
 ///
 /// # Arguments
 ///
@@ -361,7 +361,7 @@ pub(crate) async fn clean_out_dir(out_dir: &Path) {
     while let Ok(Some(entry)) = entries.next_entry().await {
         let path: PathBuf = entry.path();
         if path.is_dir() {
-            if let Err(error) = tokio::fs::remove_dir_all(&path).await {
+            if let Err(error) = remove_dir_all(&path).await {
                 log::warn!("Failed to remove directory '{}': {error}", path.display());
             }
         } else if let Err(error) = remove_file(&path).await {
@@ -370,7 +370,7 @@ pub(crate) async fn clean_out_dir(out_dir: &Path) {
     }
 }
 
-/// Executes a full build pipeline: euv fmt, clean, build wasm, generate HTML.
+/// Executes a full build pipeline: euv fmt, build wasm, generate HTML.
 /// After the serial pipeline completes, hyperlane-cli fmt is spawned in the
 /// background so it does not block the caller.
 /// Notifies the reload channel on build success or failure.
@@ -388,11 +388,9 @@ pub(crate) async fn run_build_pipeline(
     reload_tx: Option<&broadcast::Sender<ReloadEvent>>,
 ) -> Result<String> {
     let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
-    let out_dir: PathBuf = resolve_out_dir(args);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {error}");
     }
-    clean_out_dir(&out_dir).await;
     match build_wasm(args).await {
         Ok(()) => {
             log::info!("WASM build completed successfully");

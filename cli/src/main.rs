@@ -31,7 +31,10 @@ use {
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
     serde::Serialize,
     tokio::{
-        fs::{ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, remove_file, write},
+        fs::{
+            ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, read_to_string,
+            remove_dir_all, remove_file, write,
+        },
         process::Command,
         spawn,
         sync::{

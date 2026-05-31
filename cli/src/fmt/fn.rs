@@ -982,8 +982,8 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
     let mut result: Vec<PathBuf> = Vec::new();
     let mut stack: Vec<PathBuf> = vec![path.to_path_buf()];
     while let Some(dir) = stack.pop() {
-        let mut entries: tokio::fs::ReadDir =
-            tokio::fs::read_dir(&dir)
+        let mut entries: ReadDir =
+            read_dir(&dir)
                 .await
                 .map_err(|error: io::Error| EuvError::IoPath {
                     message: String::from("Failed to read directory"),
@@ -1032,18 +1032,19 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
 ///
 /// - `Result<bool>` - Whether the file was changed.
 async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
-    let content: String = tokio::fs::read_to_string(path)
-        .await
-        .map_err(|error: io::Error| EuvError::IoPath {
-            message: String::from("Failed to read"),
-            path: path.to_path_buf(),
-            error,
-        })?;
+    let content: String =
+        read_to_string(path)
+            .await
+            .map_err(|error: io::Error| EuvError::IoPath {
+                message: String::from("Failed to read"),
+                path: path.to_path_buf(),
+                error,
+            })?;
     let fmt_result: FmtResult = format_source(&content);
     if fmt_result.changed {
         match mode {
             FmtMode::Write => {
-                tokio::fs::write(path, &fmt_result.output)
+                write(path, &fmt_result.output)
                     .await
                     .map_err(|error: io::Error| EuvError::IoPath {
                         message: String::from("Failed to write"),
