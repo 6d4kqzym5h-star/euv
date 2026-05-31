@@ -42,21 +42,27 @@ pub(crate) fn virtual_list_on_scroll(state: UseVirtualList) -> Option<Rc<dyn Fn(
 ///
 /// # Returns
 ///
-/// - `(usize, usize)` - A tuple of (start_index, end_index) for the visible range.
+/// - `(usize, usize, usize, usize)` - A tuple of (visible_start, visible_end, render_start, render_end).
+///   visible_start/visible_end represent the actual visible range without overscan.
+///   render_start/render_end represent the rendering range including overscan.
 pub(crate) fn compute_visible_range(
     scroll_offset: i32,
     viewport_height: i32,
     total_count: usize,
     item_height: i32,
     overscan_count: usize,
-) -> (usize, usize) {
-    let start_index: usize = (scroll_offset / item_height).max(0) as usize;
+) -> (usize, usize, usize, usize) {
+    let visible_start: usize = (scroll_offset / item_height).max(0) as usize;
     let visible_count: usize = if viewport_height > 0 {
-        (viewport_height / item_height) as usize + 1
+        let viewport_bottom: i32 = scroll_offset + viewport_height;
+        let visible_end: usize =
+            ((viewport_bottom + item_height - 1) / item_height).max(0) as usize;
+        visible_end - visible_start
     } else {
-        20
+        VIRTUAL_LIST_DEFAULT_VISIBLE_COUNT
     };
-    let overscanned_start: usize = start_index.saturating_sub(overscan_count);
-    let overscanned_end: usize = (start_index + visible_count + overscan_count).min(total_count);
-    (overscanned_start, overscanned_end)
+    let visible_end: usize = (visible_start + visible_count).min(total_count);
+    let render_start: usize = visible_start.saturating_sub(overscan_count);
+    let render_end: usize = (visible_end + overscan_count).min(total_count);
+    (visible_start, visible_end, render_start, render_end)
 }

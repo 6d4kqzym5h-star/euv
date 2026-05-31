@@ -15,16 +15,17 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
     let state: UseVirtualList = use_virtual_list();
     let scroll_offset: i32 = state.get_scroll_offset().get();
     let viewport_height: i32 = state.get_viewport_height().get();
-    let (start_index, end_index): (usize, usize) = compute_visible_range(
-        scroll_offset,
-        viewport_height,
-        VIRTUAL_LIST_TOTAL_COUNT,
-        VIRTUAL_LIST_ITEM_HEIGHT,
-        VIRTUAL_LIST_OVERSCAN_COUNT,
-    );
+    let (visible_start, visible_end, render_start, render_end): (usize, usize, usize, usize) =
+        compute_visible_range(
+            scroll_offset,
+            viewport_height,
+            VIRTUAL_LIST_TOTAL_COUNT,
+            VIRTUAL_LIST_ITEM_HEIGHT,
+            VIRTUAL_LIST_OVERSCAN_COUNT,
+        );
     let total_height: i32 = VIRTUAL_LIST_TOTAL_COUNT as i32 * VIRTUAL_LIST_ITEM_HEIGHT;
-    let top_padding: i32 = start_index as i32 * VIRTUAL_LIST_ITEM_HEIGHT;
-    let visible_count: usize = end_index - start_index;
+    let top_padding: i32 = render_start as i32 * VIRTUAL_LIST_ITEM_HEIGHT;
+    let visible_count: usize = visible_end - visible_start;
     html! {
         div {
             class: c_page_container_wide()
@@ -61,7 +62,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         "Range: "
                         span {
                             class: c_virtual_list_status_value()
-                            format!("{start_index}-{end_index}")
+                            format!("{visible_start}-{}", visible_end.saturating_sub(1))
                         }
                     }
                 }
@@ -73,7 +74,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         style: format!("position: relative; height: {total_height}px;")
                         div {
                             style: format!("position: absolute; top: {top_padding}px; left: 0; right: 0;")
-                            for index in { start_index..end_index } {
+                            for index in { render_start..render_end } {
                                 div {
                                     key: index.to_string()
                                     class: if { index % 2 == 0 } { c_virtual_list_row_even() } else { c_virtual_list_row_odd() }
