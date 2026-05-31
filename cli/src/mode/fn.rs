@@ -10,6 +10,7 @@ use crate::*;
 ///
 /// - `Result<()>` - Indicates success or failure.
 pub(crate) async fn build_mode(mut args: ModeArgs) -> Result<()> {
+    reconcile_args(&mut args);
     args.crate_path =
         std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| EuvError::IoPath {
             message: String::from("Invalid crate-path"),
@@ -68,6 +69,7 @@ pub(crate) async fn fmt_mode(args: FmtArgs) -> Result<()> {
 ///
 /// - `Result<()>` - Indicates success or failure.
 pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
+    reconcile_args(&mut args);
     args.crate_path =
         std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| EuvError::IoPath {
             message: String::from("Invalid crate-path"),

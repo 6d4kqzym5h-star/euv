@@ -64,15 +64,36 @@ pub(crate) const DEV_FLAG: &str = "--dev";
 /// The wasm-pack flag for profiling builds.
 pub(crate) const PROFILING_FLAG: &str = "--profiling";
 
+/// The euv-specific argument for specifying the crate path.
+pub(crate) const CRATE_PATH_ARG: &str = "--crate-path";
+
+/// The short form of the crate-path argument.
+pub(crate) const CRATE_PATH_ARG_SHORT: &str = "-c";
+
+/// The euv-specific argument for specifying the server port.
+pub(crate) const PORT_ARG: &str = "--port";
+
+/// The short form of the port argument.
+pub(crate) const PORT_ARG_SHORT: &str = "-p";
+
+/// The euv-specific argument for specifying the www directory.
+pub(crate) const WWW_DIR_ARG: &str = "--www-dir";
+
+/// The euv-specific argument for specifying a custom index.html template.
+pub(crate) const INDEX_HTML_ARG: &str = "--index-html";
+
+/// The euv-specific argument for removing the .gitignore file from the output directory.
+pub(crate) const NO_GITIGNORE_ARG: &str = "--no-gitignore";
+
 /// The euv-specific argument names that should not be forwarded to wasm-pack.
 pub(crate) const EUV_ARGS: &[&str] = &[
-    "--crate-path",
-    "-c",
-    "--port",
-    "-p",
-    "--www-dir",
-    "--index-html",
-    "--no-gitignore",
+    CRATE_PATH_ARG,
+    CRATE_PATH_ARG_SHORT,
+    PORT_ARG,
+    PORT_ARG_SHORT,
+    WWW_DIR_ARG,
+    INDEX_HTML_ARG,
+    NO_GITIGNORE_ARG,
 ];
 
 /// The double-dash separator used to distinguish euv args from wasm-pack args.

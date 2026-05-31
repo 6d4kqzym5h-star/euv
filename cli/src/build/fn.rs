@@ -20,10 +20,10 @@ pub(crate) fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
 
 /// Filters out euv-specific arguments from the wasm-pack arguments.
 ///
-/// If `wasm_pack_args` contains `--`, only arguments after the last `--`
-/// are kept (they are the genuine wasm-pack passthrough args), and everything
-/// before it (which would be euv args mistakenly collected by clap) is discarded.
-/// If there is no `--`, the list is returned as-is after removing known euv flags.
+/// First locates the genuine passthrough arguments by taking everything
+/// after the last `--` separator (or the full list if no `--` is present).
+/// Then removes all known euv-specific flags and their values so that
+/// only wasm-pack-compatible arguments remain.
 ///
 /// # Arguments
 ///
@@ -33,29 +33,132 @@ pub(crate) fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
 ///
 /// - `Vec<String>` - The filtered arguments safe for wasm-pack.
 pub(crate) fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
-    if let Some(position) = wasm_pack_args
+    let raw_args: &[String] = if let Some(position) = wasm_pack_args
         .iter()
         .rposition(|arg: &String| arg == DOUBLE_DASH)
     {
-        wasm_pack_args[position + 1..].to_vec()
+        &wasm_pack_args[position + 1..]
     } else {
-        let mut filtered: Vec<String> = Vec::new();
-        let mut skip_next: bool = false;
-        for arg in wasm_pack_args {
-            if skip_next {
-                skip_next = false;
-                continue;
-            }
-            if EUV_ARGS.contains(&arg.as_str()) {
-                if arg.contains('=') {
-                    continue;
-                }
-                skip_next = true;
-                continue;
-            }
-            filtered.push(arg.clone());
+        wasm_pack_args
+    };
+    let mut filtered: Vec<String> = Vec::new();
+    let mut skip_next: bool = false;
+    for arg in raw_args {
+        if skip_next {
+            skip_next = false;
+            continue;
         }
-        filtered
+        if EUV_ARGS.contains(&arg.as_str()) {
+            if arg.contains('=') {
+                continue;
+            }
+            skip_next = true;
+            continue;
+        }
+        filtered.push(arg.clone());
+    }
+    filtered
+}
+
+/// Reconciles euv-specific arguments that may have been collected into
+/// `wasm_pack_args` (e.g. when placed after `--`) back into the
+/// corresponding `ModeArgs` fields.
+///
+/// Because clap's `trailing_var_arg` collects all unrecognized arguments
+/// into `wasm_pack_args`, any euv flag placed after `--` is not parsed
+/// by clap into its dedicated field. This function scans `wasm_pack_args`
+/// for known euv flags and overwrites the `ModeArgs` fields so that the
+/// rest of the codebase can rely on the typed accessors regardless of
+/// argument order.
+///
+/// # Arguments
+///
+/// - `&mut ModeArgs` - The CLI arguments to reconcile in-place.
+pub(crate) fn reconcile_args(args: &mut ModeArgs) {
+    let wasm_pack_args: Vec<String> = args.get_wasm_pack_args().clone();
+    let mut crate_path: Option<PathBuf> = None;
+    let mut port: Option<u16> = None;
+    let mut www_dir: Option<String> = None;
+    let mut index_html: Option<Option<PathBuf>> = None;
+    let mut no_gitignore: Option<bool> = None;
+    let mut dev: Option<bool> = None;
+    let mut release: Option<bool> = None;
+    let mut profiling: Option<bool> = None;
+    let mut iter: std::slice::Iter<String> = wasm_pack_args.iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            CRATE_PATH_ARG | CRATE_PATH_ARG_SHORT => {
+                if let Some(value) = iter.next() {
+                    crate_path = Some(PathBuf::from(value));
+                }
+            }
+            PORT_ARG | PORT_ARG_SHORT => {
+                if let Some(value) = iter.next()
+                    && let Ok(parsed_port) = value.parse::<u16>()
+                {
+                    port = Some(parsed_port);
+                }
+            }
+            WWW_DIR_ARG => {
+                if let Some(value) = iter.next() {
+                    www_dir = Some(value.clone());
+                }
+            }
+            INDEX_HTML_ARG => {
+                if let Some(value) = iter.next() {
+                    index_html = Some(Some(PathBuf::from(value)));
+                }
+            }
+            NO_GITIGNORE_ARG => {
+                no_gitignore = Some(true);
+            }
+            DEV_FLAG => {
+                dev = Some(true);
+            }
+            RELEASE_FLAG => {
+                release = Some(true);
+            }
+            PROFILING_FLAG => {
+                profiling = Some(true);
+            }
+            other => {
+                if let Some(value) = other.strip_prefix(&format!("{CRATE_PATH_ARG}=")) {
+                    crate_path = Some(PathBuf::from(value));
+                } else if let Some(value) = other.strip_prefix(&format!("{PORT_ARG}=")) {
+                    if let Ok(parsed_port) = value.parse::<u16>() {
+                        port = Some(parsed_port);
+                    }
+                } else if let Some(value) = other.strip_prefix(&format!("{WWW_DIR_ARG}=")) {
+                    www_dir = Some(value.to_string());
+                } else if let Some(value) = other.strip_prefix(&format!("{INDEX_HTML_ARG}=")) {
+                    index_html = Some(Some(PathBuf::from(value)));
+                }
+            }
+        }
+    }
+    if let Some(value) = crate_path {
+        args.set_crate_path(value);
+    }
+    if let Some(value) = port {
+        args.set_port(value);
+    }
+    if let Some(value) = www_dir {
+        args.set_www_dir(value);
+    }
+    if let Some(value) = index_html {
+        args.set_index_html(value);
+    }
+    if let Some(value) = no_gitignore {
+        args.set_no_gitignore(value);
+    }
+    if let Some(value) = dev {
+        args.set_dev(value);
+    }
+    if let Some(value) = release {
+        args.set_release(value);
+    }
+    if let Some(value) = profiling {
+        args.set_profiling(value);
     }
 }
 
