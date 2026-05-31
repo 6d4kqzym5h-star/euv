@@ -336,8 +336,6 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     clean_out_dir(&out_dir).await;
     build_wasm(args).await?;
     log::info!("WASM build completed successfully");
-    let pkg_dir: PathBuf = resolve_out_dir(args);
-    clean_pkg_dir(&pkg_dir).await;
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
@@ -361,33 +359,6 @@ pub(crate) async fn clean_out_dir(out_dir: &Path) {
         Err(_) => return,
     };
     while let Ok(Some(entry)) = entries.next_entry().await {
-        let path: PathBuf = entry.path();
-        if path.is_dir() {
-            if let Err(error) = tokio::fs::remove_dir_all(&path).await {
-                log::warn!("Failed to remove directory '{}': {error}", path.display());
-            }
-        } else if let Err(error) = remove_file(&path).await {
-            log::warn!("Failed to remove file '{}': {error}", path.display());
-        }
-    }
-}
-
-/// Removes all files and subdirectories from the wasm-pack output directory.
-///
-/// The directory itself is preserved (recreated if missing).
-///
-/// # Arguments
-///
-/// - `&Path` - The pkg output directory to clean.
-pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
-    let mut read_dir: ReadDir = match read_dir(pkg_dir).await {
-        Ok(dir) => dir,
-        Err(_) => {
-            log::warn!("pkg directory not found: {}", pkg_dir.display());
-            return;
-        }
-    };
-    while let Ok(Some(entry)) = read_dir.next_entry().await {
         let path: PathBuf = entry.path();
         if path.is_dir() {
             if let Err(error) = tokio::fs::remove_dir_all(&path).await {
