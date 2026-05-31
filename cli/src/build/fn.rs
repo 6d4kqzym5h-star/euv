@@ -74,20 +74,20 @@ pub(crate) fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
 ///
 /// - `BuildMode` - The resolved build mode.
 pub(crate) fn resolve_build_mode(args: &ModeArgs) -> BuildMode {
-    if args.profiling {
+    if args.get_profiling() {
         BuildMode::Profiling
-    } else if args.release {
+    } else if args.get_release() {
         BuildMode::Release
-    } else if args.dev {
+    } else if args.get_dev() {
         BuildMode::Dev
     } else if args
-        .wasm_pack_args
+        .get_wasm_pack_args()
         .iter()
         .any(|arg: &String| arg == PROFILING_FLAG)
     {
         BuildMode::Profiling
     } else if args
-        .wasm_pack_args
+        .get_wasm_pack_args()
         .iter()
         .any(|arg: &String| arg == RELEASE_FLAG)
     {
@@ -209,12 +209,12 @@ fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
 ///
 /// - `String` - The resolved JS filename with `.js` extension (e.g. `euv_example.js`).
 pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
-    let name: String = if let Some(out_name) = extract_out_name(&args.wasm_pack_args) {
+    let name: String = if let Some(out_name) = extract_out_name(args.get_wasm_pack_args()) {
         out_name
     } else {
-        let cargo_toml_path: PathBuf = args.crate_path.join(CARGO_TOML_FILE_NAME);
+        let cargo_toml_path: PathBuf = args.get_crate_path().join(CARGO_TOML_FILE_NAME);
         read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
-            args.crate_path
+            args.get_crate_path()
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
@@ -271,7 +271,7 @@ fn read_crate_name_from_toml(path: &Path) -> Option<String> {
 /// - `String` - The resolved JS import path relative to the www directory.
 pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
     let out_name: String = resolve_out_name(args);
-    let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
+    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
     let relative: PathBuf = match out_dir_absolute.strip_prefix(&www_absolute) {
         Ok(rel) => rel.to_path_buf(),
@@ -304,13 +304,13 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
 /// - `PathBuf` - The resolved output directory (absolute if crate_path is joined).
 pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
     let out_dir_path: PathBuf = PathBuf::from(
-        extract_out_dir(&args.wasm_pack_args)
-            .unwrap_or_else(|| format!("{}/{PKG_DIR_NAME}", args.www_dir)),
+        extract_out_dir(args.get_wasm_pack_args())
+            .unwrap_or_else(|| format!("{}/{PKG_DIR_NAME}", args.get_www_dir())),
     );
     if out_dir_path.is_absolute() {
         out_dir_path
     } else {
-        args.crate_path.join(&out_dir_path)
+        args.get_crate_path().join(&out_dir_path)
     }
 }
 
@@ -328,7 +328,7 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 ///
 /// - `Result<()>` - Indicates success or failure of the build.
 pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
-    let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
+    let src_path: PathBuf = args.get_crate_path().join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {error}");
     }
@@ -339,7 +339,7 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
-    let custom_html: Option<&Path> = args.index_html.as_deref();
+    let custom_html: &Option<PathBuf> = args.try_get_index_html();
     generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(())
 }
@@ -387,7 +387,7 @@ pub(crate) async fn run_build_pipeline(
     args: &ModeArgs,
     reload_tx: Option<&broadcast::Sender<ReloadEvent>>,
 ) -> Result<String> {
-    let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
+    let src_path: PathBuf = args.get_crate_path().join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {error}");
     }
@@ -408,7 +408,7 @@ pub(crate) async fn run_build_pipeline(
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
     let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
-    let custom_html: Option<&Path> = args.index_html.as_deref();
+    let custom_html: &Option<PathBuf> = args.try_get_index_html();
     let html: String = generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     spawn(async move {
         if let Err(error) = run_hyperlane_fmt().await {
@@ -428,7 +428,7 @@ pub(crate) async fn run_build_pipeline(
 ///
 /// - `PathBuf` - The resolved www directory.
 async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
-    let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
+    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
     resolve_www_dir(&www_absolute).await
 }
 
@@ -442,7 +442,7 @@ async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
 ///
 /// - `Result<()>` - Indicates success or failure of the file watcher.
 pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
-    let crate_path: PathBuf = state.args.crate_path.clone();
+    let crate_path: PathBuf = state.get_args().get_crate_path().clone();
     let src_path: PathBuf = crate_path.join(SRC_DIR_NAME);
     let gitignore: Gitignore = build_gitignore(&crate_path).await;
     let (tx, mut rx): (Sender<Event>, Receiver<Event>) = channel(32);
@@ -515,9 +515,9 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     let build_mode: BuildMode = resolve_build_mode(args);
     let build_mode_flag: &str = build_mode_to_flag(build_mode);
-    let filtered_args: Vec<String> = filter_euv_args(&args.wasm_pack_args);
+    let filtered_args: Vec<String> = filter_euv_args(args.get_wasm_pack_args());
     let has_existing_build_mode: bool = has_build_mode_flag(&filtered_args);
-    let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
+    let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.get_www_dir());
     let mut command: Command = Command::new(WASM_PACK_COMMAND);
     command.arg(WASM_PACK_BUILD_SUBCOMMAND);
     if !has_existing_build_mode {
@@ -536,7 +536,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     if !has_target {
         command.arg(TARGET_ARG).arg(TARGET_WEB);
     }
-    command.current_dir(&args.crate_path);
+    command.current_dir(args.get_crate_path());
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     let display_args: Vec<String> = (if has_existing_build_mode {
         filtered_args.to_vec()
@@ -578,6 +578,14 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
         })?;
     let stdout: String = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
+    if args.get_no_gitignore() {
+        let gitignore_path: PathBuf = out_dir_absolute.join(GITIGNORE_FILE_NAME);
+        if gitignore_path.exists()
+            && let Err(error) = remove_file(&gitignore_path).await
+        {
+            log::warn!("Failed to remove '{}': {error}", gitignore_path.display());
+        }
+    }
     for line in stdout.lines().filter(|line: &&str| !line.is_empty()) {
         log::info!("{line}");
     }
@@ -605,8 +613,10 @@ pub(crate) fn print_banner(action: Action) {
         Action::Run => ACTION_RUN,
         Action::Build => ACTION_BUILD,
     };
-    log::info!("Mode: {}", action_name);
-    log::info!(".gitignore can exclude unwanted file change events from triggering rebuilds");
+    log::info!("Mode: {action_name}");
+    log::info!(
+        "Use .gitignore to filter file change events; pass --no-gitignore to remove .gitignore from output"
+    );
 }
 
 /// Enumerates all network interface IP addresses and prints each server URL

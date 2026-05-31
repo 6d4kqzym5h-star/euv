@@ -8,6 +8,7 @@ pub(crate) struct NativeEventCallbackInner {
     /// The boxed callback closure.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) callback: Box<dyn FnMut(Event)>,
 }
@@ -18,12 +19,14 @@ pub(crate) struct NativeEventCallbackInner {
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
-    #[get(type(copy))]
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) event_name: &'static str,
     /// Shared reference to the heap-allocated callback closure inner state.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) callback: Rc<RefCell<NativeEventCallbackInner>>,
 }

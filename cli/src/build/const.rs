@@ -72,6 +72,7 @@ pub(crate) const EUV_ARGS: &[&str] = &[
     "-p",
     "--www-dir",
     "--index-html",
+    "--no-gitignore",
 ];
 
 /// The double-dash separator used to distinguish euv args from wasm-pack args.

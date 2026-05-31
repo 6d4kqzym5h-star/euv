@@ -45,7 +45,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         "Total: "
                         span {
                             class: c_virtual_list_status_value()
-                            { VIRTUAL_LIST_TOTAL_COUNT.to_string() }
+                            VIRTUAL_LIST_TOTAL_COUNT.to_string()
                         }
                     }
                     span {
@@ -53,7 +53,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         "Visible: "
                         span {
                             class: c_virtual_list_status_value()
-                            { visible_count.to_string() }
+                            visible_count.to_string()
                         }
                     }
                     span {
@@ -61,7 +61,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         "Range: "
                         span {
                             class: c_virtual_list_status_value()
-                            { format!("{start_index}-{end_index}") }
+                            format!("{start_index}-{end_index}")
                         }
                     }
                 }
@@ -80,15 +80,15 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                                     style: format!("height: {}px; box-sizing: border-box;", VIRTUAL_LIST_ITEM_HEIGHT)
                                     span {
                                         class: c_virtual_list_row_index()
-                                        { index.to_string() }
+                                        index.to_string()
                                     }
                                     span {
                                         class: c_virtual_list_row_label()
-                                        { format!("Item #{index}") }
+                                        format!("Item #{index}")
                                     }
                                     span {
                                         class: c_virtual_list_row_description()
-                                        { format!("Description for item {index}") }
+                                        format!("Description for item {index}")
                                     }
                                 }
                             }

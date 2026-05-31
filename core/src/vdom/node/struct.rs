@@ -8,6 +8,7 @@ pub(crate) struct RenderFnInner {
     /// The boxed render closure.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) render_fn: Box<dyn FnMut() -> VirtualNode>,
 }
@@ -19,11 +20,13 @@ pub(crate) struct RenderFnInner {
 pub struct TextNode {
     /// The text content.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) content: String,
     /// An optional signal that drives reactive text updates.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) signal: Option<Signal<String>>,
 }
@@ -41,11 +44,13 @@ pub struct DynamicNode {
     /// Shared reference to the heap-allocated render closure inner state.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) render_fn: Rc<RefCell<RenderFnInner>>,
     /// Persistent hook context for this dynamic node, storing signal
     /// state and other hook values across render cycles.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hook_context: HookContext,
 }

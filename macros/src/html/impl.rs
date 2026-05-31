@@ -624,10 +624,10 @@ impl ToTokens for HtmlDynamicTag {
             .iter()
             .map(|(fn_name, component_info): (&String, &ComponentInfo)| {
                 let fn_ident: Ident = Ident::new(fn_name, proc_macro2::Span::call_site());
-                let props_ident: Ident = Ident::new(&component_info.props_type, proc_macro2::Span::call_site());
+                let props_ident: Ident = Ident::new(component_info.get_props_type(), proc_macro2::Span::call_site());
                 let fn_name_str: String = fn_name.clone();
-                let props_fields: &Vec<String> = &component_info.props_fields;
-                let props_field_types: &HashMap<String, String> = &component_info.props_field_types;
+                let props_fields: &Vec<String> = component_info.get_props_fields();
+                let props_field_types: &HashMap<String, String> = component_info.get_props_field_types();
                 let prop_field_tokens: Vec<proc_macro2::TokenStream> = attributes
                     .iter()
                     .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {

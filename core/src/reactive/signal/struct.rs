@@ -11,11 +11,13 @@ where
     /// The current value of the signal.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) value: T,
     /// Callbacks to invoke when the value changes.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) listeners: Vec<Box<dyn FnMut()>>,
     /// Whether this signal is still active. Set to `false` by `clear_listeners()`
@@ -23,6 +25,7 @@ where
     /// listener invocation, no `schedule_signal_update()`), ensuring stale
     /// closures like orphaned `setInterval` handlers become harmless.
     #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) alive: bool,
 }
@@ -43,12 +46,14 @@ where
     /// Address of the heap-allocated inner state.
     #[debug(skip)]
     #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: usize,
     /// Marker for the generic type parameter (uses fn pointer to be `Copy`
     /// regardless of `T`).
     #[debug(skip)]
     #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) _marker: std::marker::PhantomData<fn() -> T>,
 }
@@ -67,6 +72,7 @@ where
     /// Interior-mutable storage for an optional signal handle.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }
@@ -81,6 +87,7 @@ where
 pub(crate) struct SignalInnerRegistryCell(
     /// Interior-mutable storage for the signal inner registry.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HashMap<usize, Rc<dyn Any>>>>,
 );

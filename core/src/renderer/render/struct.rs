@@ -9,11 +9,13 @@ pub(crate) struct Renderer {
     /// The root DOM element.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) root: Element,
     /// The current virtual DOM tree.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     #[new(skip)]
     pub(crate) current_tree: Option<VirtualNode>,

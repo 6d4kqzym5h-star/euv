@@ -11,14 +11,17 @@ pub(crate) struct HookContextInner {
     /// Storage for hook state values (signals, etc.).
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
     /// The match arm index from the last render.
     #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) arm_changed: usize,
     /// Current hook index, incremented on each hook call and reset per render.
     #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hook_index: usize,
     /// Cleanup closures registered by hooks (e.g., `use_signal`) that must
@@ -26,6 +29,7 @@ pub(crate) struct HookContextInner {
     /// switch.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) cleanups: Vec<Box<dyn FnOnce()>>,
 }
@@ -42,6 +46,7 @@ pub struct HookContext {
     /// Shared reference to the heap-allocated hook context inner state.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: Rc<RefCell<HookContextInner>>,
 }
@@ -54,6 +59,7 @@ pub struct HookContext {
 pub struct IntervalHandle {
     /// The interval ID assigned by the browser.
     #[get(pub, type(copy))]
-    #[set(pub)]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     pub interval_id: i32,
 }

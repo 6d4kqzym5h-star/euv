@@ -8,10 +8,12 @@ use crate::*;
 pub(crate) struct ClassParam {
     /// The parameter name identifier.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: Ident,
     /// The explicit type annotation for this parameter (e.g., `&str`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) param_type: Type,
 }
@@ -24,10 +26,12 @@ pub(crate) struct ClassParam {
 pub(crate) struct PseudoBlock {
     /// The pseudo selector string (e.g., ":hover", ":focus", "::before").
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) selector: String,
     /// The style properties inside this pseudo block.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
 }
@@ -39,10 +43,12 @@ pub(crate) struct PseudoBlock {
 pub(crate) struct MediaBlock {
     /// The media query condition string (e.g., "(max-width: 767px)").
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) query: String,
     /// The style properties inside this media block.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
 }
@@ -54,10 +60,12 @@ pub(crate) struct MediaBlock {
 pub(crate) struct ClassExtend {
     /// The parent class name identifier.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: Ident,
     /// The arguments passed to the parent class function (as raw token streams).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) args: Vec<proc_macro2::TokenStream>,
 }
@@ -70,30 +78,37 @@ pub(crate) struct ClassExtend {
 pub(crate) struct ClassDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) visibility: Visibility,
     /// The class name identifier.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: Ident,
     /// Optional parameter list for a parameterized class.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) params: Option<Vec<ClassParam>>,
     /// Parent classes to inherit properties from (e.g., `c_primary_button(1)`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) extends: Vec<ClassExtend>,
     /// The style properties for this class.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
     /// The pseudo-class and pseudo-element blocks for this class.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) pseudo_blocks: Vec<PseudoBlock>,
     /// The media query blocks for this class.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) media_blocks: Vec<MediaBlock>,
 }
@@ -103,6 +118,7 @@ pub(crate) struct ClassDef {
 pub(crate) struct ClassInput {
     /// The list of class definitions.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) classes: Vec<ClassDef>,
 }
@@ -111,6 +127,16 @@ pub(crate) struct ClassInput {
 ///
 /// Bundles the values needed to generate a `OnceLock`-based static function body
 /// for a no-param class definition.
+///
+/// # Fields
+///
+/// - `visibility`: The visibility modifier for the generated function.
+/// - `fn_name_token`: The function name token stream.
+/// - `const_name_token`: The `OnceLock` constant name token stream.
+/// - `class_name_str`: The class name as a string literal.
+/// - `style_expr`: Token stream that evaluates to the CSS style string.
+/// - `pseudo_expr`: Token stream that evaluates to the pseudo rules vector.
+/// - `media_expr`: Token stream that evaluates to the media rules vector.
 pub(crate) struct OnceLockParams<'a> {
     /// The visibility modifier for the generated function.
     pub(crate) visibility: &'a Visibility,

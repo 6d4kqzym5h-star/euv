@@ -11,6 +11,7 @@ use crate::*;
 pub(crate) struct HtmlRoot {
     /// The top-level nodes parsed from the macro input.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) children: Vec<HtmlNode>,
 }
@@ -26,14 +27,17 @@ pub(crate) struct HtmlRoot {
 pub(crate) struct HtmlFor {
     /// The binding pattern for loop variables (e.g., `item` or `(index, item)`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) pattern: proc_macro2::TokenStream,
     /// The iterable expression (from the braces after `in`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) iterable: Expr,
     /// The HTML nodes rendered for each iteration.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) body: Vec<HtmlNode>,
 }
@@ -47,6 +51,7 @@ pub(crate) struct HtmlIf {
     ///
     /// The last entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) branches: Vec<(Option<Expr>, Vec<HtmlNode>)>,
 }
@@ -60,6 +65,7 @@ pub(crate) struct HtmlAttrIf {
     ///
     /// The last entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) branches: Vec<(Option<Expr>, Expr)>,
 }
@@ -71,10 +77,12 @@ pub(crate) struct HtmlAttrIf {
 pub(crate) struct HtmlMatch {
     /// The expression to match against (from the braces after `match`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) scrutinee: Expr,
     /// The match arms: each arm has a pattern as a raw token stream and a body of HTML nodes.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)>,
 }
@@ -86,25 +94,30 @@ pub(crate) struct HtmlMatch {
 pub(crate) struct HtmlElement {
     /// The tag identifier (used for function calls on Ident tags).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) tag: Ident,
     /// The actual tag name string, which may differ from the identifier
     /// when using string literal tags for custom HTML5 elements.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) tag_name: String,
     /// Whether the tag was parsed from an identifier (not a string literal).
     /// Ident tags are treated as function calls; string literal tags produce
     /// native HTML elements directly.
     #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) is_ident_tag: bool,
     /// The attributes of this element.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) attributes: HtmlAttrs,
     /// The child nodes.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) children: Vec<HtmlNode>,
 }
@@ -121,14 +134,17 @@ pub(crate) struct HtmlElement {
 pub(crate) struct HtmlDynamicTag {
     /// The expression that evaluates to a tag name string.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) tag_expr: Expr,
     /// The attributes passed to the dynamic element.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) attributes: HtmlAttrs,
     /// The child nodes of the dynamic element.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) children: Vec<HtmlNode>,
 }
@@ -138,12 +154,27 @@ pub(crate) struct HtmlDynamicTag {
 /// Contains the Props type name, the list of field names, and a map of
 /// field name to type string declared in the Props struct, used for
 /// attribute filtering and type-aware code generation in dynamic tags.
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+///
+/// # Fields
+///
+/// - `props_type`: The Props type name (e.g., "PrimaryButtonProps").
+/// - `props_fields`: The field names declared in the Props struct.
+/// - `props_field_types`: Maps field name to its type string (e.g., "children" -> "VirtualNode").
+#[derive(Clone, Data, Debug, New, serde::Deserialize, serde::Serialize)]
 pub(crate) struct ComponentInfo {
     /// The Props type name (e.g., "PrimaryButtonProps").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) props_type: String,
     /// The field names declared in the Props struct.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) props_fields: Vec<String>,
     /// Maps field name to its type string (e.g., "children" -> "VirtualNode").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     pub(crate) props_field_types: HashMap<String, String>,
 }

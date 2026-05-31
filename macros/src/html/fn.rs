@@ -82,7 +82,7 @@ pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
         (*pointer)
             .assume_init_ref()
             .get(name)
-            .map(|info: &ComponentInfo| info.props_type.as_str())
+            .map(|info: &ComponentInfo| info.get_props_type().as_str())
     }
 }
 
@@ -104,7 +104,7 @@ pub(crate) fn get_user_fn_props_fields(name: &str) -> Option<&'static Vec<String
         (*pointer)
             .assume_init_ref()
             .get(name)
-            .map(|info: &ComponentInfo| &info.props_fields)
+            .map(|info: &ComponentInfo| info.get_props_fields())
     }
 }
 
@@ -127,7 +127,7 @@ pub(crate) fn get_user_fn_props_field_types(
         (*pointer)
             .assume_init_ref()
             .get(name)
-            .map(|info: &ComponentInfo| &info.props_field_types)
+            .map(|info: &ComponentInfo| info.get_props_field_types())
     }
 }
 

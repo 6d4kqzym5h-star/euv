@@ -91,7 +91,7 @@ pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
             log::error!("Initial build pipeline failed: {error}");
             let import_path: String = resolve_import_path(&args);
             let is_release: bool = resolve_build_mode(&args) == BuildMode::Release;
-            let custom_html: Option<&Path> = args.index_html.as_deref();
+            let custom_html: &Option<PathBuf> = args.try_get_index_html();
             generate_html(&www_absolute, &import_path, is_release, custom_html).await?
         }
     };

@@ -6,10 +6,13 @@ use crate::*;
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: String,
     /// The value of the attribute.
     #[debug(skip)]
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) value: AttributeValue,
 }
@@ -24,9 +27,15 @@ pub struct PseudoRule {
     /// The CSS pseudo selector suffix appended to the class name
     /// (e.g., ":hover", ":focus", ":active", ":disabled", "::before", "::after",
     /// ":first-child", ":last-child", ":nth-child(2n)", etc.).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     selector: String,
     /// The CSS style declarations for this pseudo rule
     /// (e.g., "background: rgba(79, 70, 229, 0.04); color: #4f46e5;").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     style: String,
 }
 
@@ -38,13 +47,23 @@ pub struct PseudoRule {
 #[derive(Clone, Data, Debug, Default, New)]
 pub struct Css {
     /// The CSS class name used in the DOM.
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     name: String,
     /// The CSS style declarations (e.g., "max-width: 800px; margin: 0 auto;").
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     style: String,
     /// The pseudo-class and pseudo-element rules for this class
     /// (e.g., ":hover", ":focus", ":active", "::before", etc.).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     pseudo_rules: Vec<PseudoRule>,
     /// The media query rules for this class.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     media_rules: Vec<MediaRule>,
 }
 
@@ -56,9 +75,15 @@ pub struct Css {
 #[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct MediaRule {
     /// The media query condition string (e.g., "(max-width: 767px)").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     query: String,
     /// The CSS style declarations inside this media rule
     /// (e.g., "font-size: 14px; padding: 8px;").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     style: String,
 }
 
@@ -77,6 +102,7 @@ pub struct MediaRule {
 pub struct EventAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: T,
 }
@@ -96,6 +122,7 @@ pub struct EventAdapter<T> {
 pub struct AttrValueAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: T,
 }
@@ -110,6 +137,7 @@ pub struct AttrValueAdapter<T> {
 pub(crate) struct InjectedClassesCell(
     /// Interior-mutable storage for the injected classes set.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HashSet<String>>>,
 );

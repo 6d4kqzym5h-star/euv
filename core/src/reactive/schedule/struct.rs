@@ -10,6 +10,7 @@ use crate::*;
 pub(crate) struct CurrentHookContextCell(
     /// Interior-mutable storage for the current hook context.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HookContextRc>>,
 );

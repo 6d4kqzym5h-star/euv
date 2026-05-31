@@ -8,10 +8,12 @@ use crate::*;
 pub(crate) struct CssVarParam {
     /// The parameter name identifier.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: Ident,
     /// The explicit type annotation for this parameter (e.g., `&str`).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) param_type: Type,
 }
@@ -23,18 +25,22 @@ pub(crate) struct CssVarParam {
 pub(crate) struct CssVarDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) visibility: Visibility,
     /// The CSS variables block name identifier.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: Ident,
     /// Optional parameter list for a parameterized CSS variables block.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) params: Option<Vec<CssVarParam>>,
     /// The CSS variable definitions (CSS key with -- prefix, value).
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) vars: Vec<(String, CssVarValue)>,
 }
@@ -44,6 +50,7 @@ pub(crate) struct CssVarDef {
 pub(crate) struct CssVarInput {
     /// The list of CSS variable block definitions.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) defs: Vec<CssVarDef>,
 }

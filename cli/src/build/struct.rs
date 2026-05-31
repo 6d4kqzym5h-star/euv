@@ -11,45 +11,74 @@ use crate::*;
 pub struct Cli {
     /// The mode to run in: run (build + server), build (build only), or fmt (format)
     #[command(subcommand)]
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
     pub command: Mode,
 }
 
 /// euv-specific arguments combined with wasm-pack passthrough.
 ///
-/// Only `--crate-path`, `--port`, `--www-dir`, `--index-html`, and `--dev`/`--release`/`--profiling`
+/// Only `--crate-path`, `--port`, `--www-dir`, `--index-html`, `--no-gitignore`, and `--dev`/`--release`/`--profiling`
 /// belong to euv; everything in `wasm_pack_args` is forwarded to `wasm-pack build` as-is.
 #[derive(Clone, Data, Debug, Parser)]
 pub struct ModeArgs {
     /// Path to the Rust crate containing the WASM application
     #[arg(short, long, default_value = ".")]
-    pub crate_path: PathBuf,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) crate_path: PathBuf,
     /// Port for the development server
     #[arg(short, long, default_value_t = 80)]
-    #[get(type(copy))]
-    pub port: u16,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) port: u16,
     /// Directory name for static assets and generated HTML (relative to crate-path)
     #[arg(long, default_value = "www")]
-    pub www_dir: String,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) www_dir: String,
     /// Path to a custom index.html template file.
     /// When specified, uses this file instead of the built-in template.
     /// The placeholders `__IMPORT_PATH__` and `__RELOAD_ROUTE__` will be replaced.
     #[arg(long)]
-    pub index_html: Option<PathBuf>,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) index_html: Option<PathBuf>,
     /// Create a development build. Enable debug info, and disable optimizations
     #[arg(long)]
-    #[get(type(copy))]
-    pub dev: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) dev: bool,
     /// Create a release build. Enable optimizations and disable debug info
     #[arg(long)]
-    #[get(type(copy))]
-    pub release: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) release: bool,
     /// Create a profiling build. Enable optimizations and debug info
     #[arg(long)]
-    #[get(type(copy))]
-    pub profiling: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) profiling: bool,
+    /// Remove the .gitignore file from the output directory after building
+    #[arg(long)]
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) no_gitignore: bool,
     /// Arguments transparently forwarded to `wasm-pack build`
     #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-    pub wasm_pack_args: Vec<String>,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) wasm_pack_args: Vec<String>,
 }
 
 /// Arguments for the `fmt` subcommand.
@@ -60,9 +89,14 @@ pub struct ModeArgs {
 pub struct FmtArgs {
     /// Path to the directory or file to format
     #[arg(short, long, default_value = ".")]
-    pub path: PathBuf,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) path: PathBuf,
     /// Check if formatting is needed without modifying files
     #[arg(long, default_value_t = false)]
-    #[get(type(copy))]
-    pub check: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) check: bool,
 }

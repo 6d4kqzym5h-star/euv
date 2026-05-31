@@ -6,6 +6,7 @@ pub(crate) struct HandlerSlot {
     /// The optional event handler stored in this slot.
     #[debug(skip)]
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) handler: Option<NativeEventHandler>,
 }
@@ -19,13 +20,15 @@ pub(crate) struct SignalUpdateSlot {
     #[set(pub(crate))]
     pub(crate) callback: Option<Box<dyn FnMut()>>,
     /// Whether this slot has been marked for removal.
-    #[get(type(copy))]
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) removed: bool,
     /// Whether this slot has pending changes that need dispatching.
     /// Only dirty slots are invoked during dispatch, avoiding O(N)
     /// broadcast to all dynamic nodes when only one signal changed.
-    #[get(type(copy))]
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) dirty: bool,
 }
@@ -40,6 +43,7 @@ pub(crate) struct SignalUpdateSlot {
 pub(crate) struct HandlerRegistryCell(
     /// Interior-mutable storage for the handler registry.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HandlerRegistryMap>>,
 );
@@ -54,6 +58,7 @@ pub(crate) struct HandlerRegistryCell(
 pub(crate) struct DelegatedEventsCell(
     /// Interior-mutable storage for the delegated events set.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HashSet<&'static str>>>,
 );
@@ -68,6 +73,7 @@ pub(crate) struct DelegatedEventsCell(
 pub(crate) struct SignalUpdateRegistryCell(
     /// Interior-mutable storage for the signal update registry.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HashMap<usize, SignalUpdateEntry>>>,
 );
@@ -82,6 +88,7 @@ pub(crate) struct SignalUpdateRegistryCell(
 pub(crate) struct WindowEventRegistryCell(
     /// Interior-mutable storage for the window event handler registry.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<WindowEventRegistryMap>>,
 );

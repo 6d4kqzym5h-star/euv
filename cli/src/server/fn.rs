@@ -44,7 +44,7 @@ pub(crate) async fn generate_html(
     www_dir: &Path,
     import_path: &str,
     is_release: bool,
-    custom_index_html: Option<&Path>,
+    custom_index_html: &Option<PathBuf>,
 ) -> Result<String> {
     let template_content: String = if let Some(custom_path) = custom_index_html {
         let bytes: Vec<u8> =

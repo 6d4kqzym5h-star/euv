@@ -7,14 +7,17 @@ use crate::*;
 pub(crate) struct WatchInput {
     /// The signal expressions to watch.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) signals: Vec<Expr>,
     /// The parameter names of the closure.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) param_names: Vec<Ident>,
     /// The closure body statements.
     #[get(pub(crate))]
+    #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) body: Vec<syn::Stmt>,
 }
