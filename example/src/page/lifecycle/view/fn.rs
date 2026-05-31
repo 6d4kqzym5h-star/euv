@@ -47,7 +47,10 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                         div {
                             key: index.to_string()
                             class: c_log_item()
-                            style: { color: if { index == 0 } { "#059669".to_string() } else { "#6b7280".to_string() }; font-weight: if { index == 0 } { "600".to_string() } else { "400".to_string() }; }
+                            style: {
+                                color: "#6b7280";
+                                font-weight: "400";
+                            }
                             log.clone()
                         }
                     }

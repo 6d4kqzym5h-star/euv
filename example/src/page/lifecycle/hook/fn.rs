@@ -6,10 +6,7 @@ use crate::*;
 ///
 /// - `UseLifecycle` - The lifecycle state.
 pub(crate) fn use_lifecycle() -> UseLifecycle {
-    UseLifecycle::new(
-        use_signal(|| 1),
-        use_signal(|| vec!["Component mounted".to_string()]),
-    )
+    UseLifecycle::new(use_signal(|| 0), use_signal(std::vec::Vec::new))
 }
 
 /// Creates a click event handler that increments the render count and logs the update.
@@ -24,9 +21,10 @@ pub(crate) fn use_lifecycle() -> UseLifecycle {
 pub(crate) fn lifecycle_on_trigger(state: UseLifecycle) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
         let current: i32 = state.get_render_count().get();
-        state.get_render_count().set(current + 1);
+        let next: i32 = current + 1;
+        state.get_render_count().set(next);
         let mut current_logs: Vec<String> = state.get_logs().get();
-        current_logs.push(format!("Updated: render count = {}", current + 1));
+        current_logs.push(format!("Updated: render count = {}", next));
         state.get_logs().set(current_logs);
     }))
 }

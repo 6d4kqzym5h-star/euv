@@ -746,8 +746,6 @@ class! {
     }
 
     pub(crate) c_log_container {
-        max-height: "320px";
-        overflow-y: "auto";
         background: var!(bg-console);
         padding: "16px";
         border-radius: "8px";

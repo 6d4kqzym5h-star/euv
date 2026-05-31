@@ -89,6 +89,13 @@ pub fn schedule_signal_update() {
 /// during the closure execution, allowing multiple signal mutations
 /// to be applied before triggering a single DOM update cycle.
 ///
+/// When the outermost `batch_updates` call completes (i.e., the previous
+/// suppress flag was `false`), a single `schedule_signal_update()` is
+/// invoked to ensure that any signal mutations performed inside the
+/// closure are reflected in the DOM. This is critical for `watch!`
+/// initialisation, where `Console::log` calls mutate the console signal
+/// inside the batched block and must still trigger DynamicNode re-renders.
+///
 /// # Arguments
 ///
 /// - `FnOnce() -> R` - The closure to execute with batched updates.
@@ -100,10 +107,15 @@ pub fn batch_updates<F, R>(callback: F) -> R
 where
     F: FnOnce() -> R,
 {
-    let previous: bool = SUPPRESS_SCHEDULE.load(Ordering::Relaxed);
+    let was_outermost: bool = !SUPPRESS_SCHEDULE.load(Ordering::Relaxed);
     SUPPRESS_SCHEDULE.store(true, Ordering::Relaxed);
     let result: R = callback();
-    SUPPRESS_SCHEDULE.store(previous, Ordering::Relaxed);
+    if was_outermost {
+        SUPPRESS_SCHEDULE.store(false, Ordering::Relaxed);
+        schedule_signal_update();
+    } else {
+        SUPPRESS_SCHEDULE.store(false, Ordering::Relaxed);
+    }
     result
 }
 

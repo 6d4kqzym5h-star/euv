@@ -19,16 +19,14 @@ use crate::*;
 pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNode {
     let VconsolePanelProps { panel_open } = node.try_get_props().unwrap_or_default();
     let console_signal: Signal<Vec<ConsoleEntry>> = get_console_signal();
-    let log_count: usize = console_signal.get().len();
     html! {
         vconsole_fab {
             panel_open: panel_open
-            log_count: log_count
+            console_signal: console_signal
         }
         vconsole_drawer {
             console_signal: console_signal
             panel_open: panel_open
-            log_count: log_count
         }
     }
 }
@@ -50,7 +48,7 @@ pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNo
 pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
     let VconsoleFabProps {
         panel_open,
-        log_count,
+        console_signal,
     } = node.try_get_props().unwrap_or_default();
     let is_open: bool = panel_open.get();
     if is_open {
@@ -64,19 +62,14 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
         push_state_on_open();
         panel_open.set(true);
     }));
-    if log_count > 0 {
-        let badge_display: String = if log_count > 99 {
-            "99+".to_string()
-        } else {
-            log_count.to_string()
-        };
+    if !console_signal.get().is_empty() {
         html! {
             logo_button {
                 variant: LogoButtonVariant::Fab
                 on_click: fab_on_click
                 span {
                     class: c_vconsole_badge()
-                    badge_display
+                    if { console_signal.get().len() > 99 } { "99+" } else { console_signal.get().len().to_string() }
                 }
             }
         }
@@ -105,7 +98,6 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
     let VconsoleDrawerProps {
         console_signal,
         panel_open,
-        log_count,
     } = node.try_get_props().unwrap_or_default();
     let filter_signal: Signal<LogFilter> = use_signal(|| LogFilter::All);
     let is_open: bool = panel_open.get();
@@ -148,7 +140,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                         "Console"
                         span {
                             class: c_vconsole_count()
-                            format!(" ({log_count})")
+                            format!(" ({})", console_signal.get().len())
                         }
                     }
                     div {

@@ -16,8 +16,8 @@ pub(crate) struct VconsolePanelProps {
 pub(crate) struct VconsoleFabProps {
     /// The reactive signal controlling panel visibility.
     pub(crate) panel_open: Signal<bool>,
-    /// The current number of log entries.
-    pub(crate) log_count: usize,
+    /// The reactive signal holding the console log entries.
+    pub(crate) console_signal: Signal<Vec<ConsoleEntry>>,
 }
 
 /// Props for the `vconsole_drawer` component.
@@ -29,6 +29,4 @@ pub(crate) struct VconsoleDrawerProps {
     pub(crate) console_signal: Signal<Vec<ConsoleEntry>>,
     /// The reactive signal controlling panel visibility.
     pub(crate) panel_open: Signal<bool>,
-    /// The current number of log entries.
-    pub(crate) log_count: usize,
 }

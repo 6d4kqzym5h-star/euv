@@ -35,20 +35,23 @@ All `wasm-pack build` arguments are transparently forwarded after `--`.
 ### Run (build + dev server)
 
 ```shell
-# Build and start dev server with hot-reload
-euv run --dev -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+# Dev build with dev server
+euv run --dev --crate-path ./example --port 80 --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
 
-# Build and start dev server with custom crate path and port
-euv run --dev --crate-path ./example --port 80 -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
-
+```shell
 # Release build with dev server
-euv run --release --crate-path ./example -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+euv run --release --crate-path ./example --port 80 --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
 
-# Use a custom static assets directory instead of the default "www"
-euv run --release --www-dir www -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+```shell
+# Dev build for local development
+euv run --dev --crate-path ./example --port 80 --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
 
-# Use a custom index.html template
-euv run --dev --index-html ./template.html -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+```shell
+# Release build for local development
+euv run --release --crate-path ./example --port 80 --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
 ```
 
 ### Fmt (format euv macros)
@@ -91,16 +94,22 @@ euv fmt --path ./src --check
 
 ```shell
 # Dev build
-euv build --dev -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+euv build --dev --crate-path ./example --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
 
+```shell
 # Release build
-euv build --release -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+euv build --release --crate-path ./example --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
 
-# Build with custom crate path and static directory
+```shell
+# Dev build for local development
+euv build --dev --crate-path ./example --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
+
+```shell
+# Release build for local development
 euv build --release --crate-path ./example --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
-
-# Build with a custom index.html template
-euv build --dev --index-html ./template.html -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
 ```
 
 ### Via Cargo
@@ -108,18 +117,37 @@ euv build --dev --index-html ./template.html -- --target web --out-name euv --no
 #### Run (build + dev server)
 
 ```shell
-cargo run -p euv-cli -- run --dev --crate-path ./example --port 80 -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+cargo run -p euv-cli -- run --dev --crate-path ./example --port 80 --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
 ```
 
 ```shell
-# Custom static directory
-cargo run -p euv-cli -- run --dev --crate-path ./example --www-dir www -- --target web --out-name euv --no-typescript --no-pack --no-gitignore
+cargo run -p euv-cli -- run --release --crate-path ./example --port 80 --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
+
+```shell
+cargo run -p euv-cli -- run --dev --crate-path ./example --port 80 --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
+
+```shell
+cargo run -p euv-cli -- run --release --crate-path ./example --port 80 --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
 ```
 
 #### Build (build only)
 
 ```shell
-cargo run -p euv-cli -- build --release --crate-path ./example -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+cargo run -p euv-cli -- build --dev --crate-path ./example --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
+
+```shell
+cargo run -p euv-cli -- build --release --crate-path ./example --www-dir www --index-html ./template.html -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
+
+```shell
+cargo run -p euv-cli -- build --dev --crate-path ./example --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
+```
+
+```shell
+cargo run -p euv-cli -- build --release --crate-path ./example --www-dir www -- --target web --out-dir www/pkg --out-name euv --no-typescript --no-pack --no-gitignore
 ```
 
 #### Fmt (format euv macros)
