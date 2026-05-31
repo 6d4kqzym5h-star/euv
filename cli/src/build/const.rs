@@ -40,21 +40,6 @@ pub(crate) const PKG_DIR_NAME: &str = "pkg";
 /// The JavaScript file extension.
 pub(crate) const JS_EXTENSION: &str = ".js";
 
-/// The CLI command name for hyperlane-cli.
-pub(crate) const HYPERLANE_CLI_COMMAND: &str = "hyperlane-cli";
-
-/// The version flag for CLI tools.
-pub(crate) const VERSION_ARG: &str = "--version";
-
-/// The format subcommand for hyperlane-cli.
-pub(crate) const FMT_SUBCOMMAND: &str = "fmt";
-
-/// The CLI command name for cargo.
-pub(crate) const CARGO_COMMAND: &str = "cargo";
-
-/// The install subcommand for cargo.
-pub(crate) const CARGO_INSTALL_SUBCOMMAND: &str = "install";
-
 /// The source directory name within a Cargo project.
 pub(crate) const SRC_DIR_NAME: &str = "src";
 
@@ -63,18 +48,6 @@ pub(crate) const GITIGNORE_FILE_NAME: &str = ".gitignore";
 
 /// The name of the Cargo manifest file.
 pub(crate) const CARGO_TOML_FILE_NAME: &str = "Cargo.toml";
-
-/// The TypeScript declaration file extension.
-pub(crate) const D_TS_EXTENSION: &str = "d.ts";
-
-/// The npm package manifest file name.
-pub(crate) const PACKAGE_JSON_FILE_NAME: &str = "package.json";
-
-/// The npm README file name.
-pub(crate) const README_FILE_NAME: &str = "README.md";
-
-/// The npm LICENSE file name.
-pub(crate) const LICENSE_FILE_NAME: &str = "LICENSE";
 
 /// The index HTML file name.
 pub(crate) const INDEX_HTML_FILE_NAME: &str = "index.html";

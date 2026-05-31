@@ -71,16 +71,7 @@ impl Parse for HtmlNode {
             braced!(_first_brace in forked);
             let second_brace: ParseBuffer<'_>;
             braced!(second_brace in forked);
-            let is_dynamic_tag: bool = second_brace.is_empty()
-                || (second_brace.peek(Ident)
-                    && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
-                || second_brace.peek(Token![if])
-                || second_brace.peek(Token![match])
-                || second_brace.peek(Token![for])
-                || second_brace.peek(LitStr)
-                || (second_brace.peek(Brace) && second_brace.peek2(Colon))
-                || (second_brace.peek(Brace) && second_brace.peek2(Brace));
-            if is_dynamic_tag {
+            if is_dynamic_tag_pattern(&second_brace, input) {
                 let tag_content: ParseBuffer<'_>;
                 braced!(tag_content in input);
                 let tag_expr: Expr = tag_content.parse()?;
@@ -270,16 +261,7 @@ impl Parse for HtmlElement {
                 braced!(_first_brace in forked);
                 let second_brace: ParseBuffer<'_>;
                 braced!(second_brace in forked);
-                let is_dynamic_tag: bool = second_brace.is_empty()
-                    || (second_brace.peek(Ident)
-                        && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
-                    || second_brace.peek(Token![if])
-                    || second_brace.peek(Token![match])
-                    || second_brace.peek(Token![for])
-                    || second_brace.peek(LitStr)
-                    || (second_brace.peek(Brace) && second_brace.peek2(Colon))
-                    || (second_brace.peek(Brace) && second_brace.peek2(Brace));
-                if is_dynamic_tag {
+                if is_dynamic_tag_pattern(&second_brace, &content) {
                     let tag_content: ParseBuffer<'_>;
                     braced!(tag_content in content);
                     let tag_expr: Expr = tag_content.parse()?;

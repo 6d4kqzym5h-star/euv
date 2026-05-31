@@ -13,6 +13,15 @@ pub(crate) const COMPONENT_ATTR: &str = "component";
 /// File name for the component registry cache stored in the target directory.
 pub(crate) const REGISTRY_CACHE_FILE_NAME: &str = "euv_component_registry_cache";
 
+/// Environment variable name for the Cargo output directory.
+pub(crate) const ENV_OUT_DIR: &str = "OUT_DIR";
+
+/// The semicolon character used as a fingerprint separator.
+pub(crate) const CHAR_SEMICOLON: char = ';';
+
+/// The newline character used as the fingerprint/data separator in the cache file.
+pub(crate) const CHAR_NEWLINE: char = '\n';
+
 /// Attribute key name for CSS class bindings.
 pub(crate) const ATTR_KEY_CLASS: &str = "class";
 

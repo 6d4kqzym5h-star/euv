@@ -162,6 +162,10 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 
 /// Loads the component registry by scanning the project source for `#[component]` annotations.
 ///
+/// Uses a file-based cache in the `OUT_DIR` directory to avoid re-scanning and
+/// re-parsing all source files on every `html!` macro invocation. The cache is
+/// invalidated when the set of source files or their modification times change.
+///
 /// Recursively scans `.rs` files under `CARGO_MANIFEST_DIR/src/` and extracts
 /// function names and their Props type names from annotated functions.
 ///
@@ -169,41 +173,189 @@ pub fn parse_html(input: TokenStream) -> TokenStream {
 ///
 /// - `HashMap<String, ComponentInfo>` - Map of component function names to component metadata.
 pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
-    let Some(manifest_dir) = env::var(CARGO_MANIFEST_DIR).ok() else {
+    let Ok(manifest_dir) = env::var(CARGO_MANIFEST_DIR) else {
         return HashMap::new();
     };
-    let mut global_props_fields_map: HashMap<String, Vec<String>> = HashMap::new();
-    let mut global_props_field_types_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+    let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
     let mut rust_source_files: Vec<PathBuf> = Vec::new();
-    collect_rs_files(
-        &PathBuf::from(&manifest_dir).join(SRC_DIR),
-        &mut rust_source_files,
-    );
-    rust_source_files.iter().for_each(|path: &PathBuf| {
-        collect_props_structs_from_file(
-            path,
-            &mut global_props_fields_map,
-            &mut global_props_field_types_map,
-        );
-    });
-    let mut fn_names: HashMap<String, ComponentInfo> = HashMap::new();
-    rust_source_files.iter().for_each(|path: &PathBuf| {
-        scan_file_for_components_with_map(
-            path,
-            &global_props_fields_map,
-            &global_props_field_types_map,
-            &mut fn_names,
-        );
-    });
-    fn_names
+    collect_rs_files(&src_dir, &mut rust_source_files);
+    let fingerprint: String = compute_fingerprint(&rust_source_files);
+    if let Ok(out_dir) = env::var(ENV_OUT_DIR) {
+        let cache_path: PathBuf = PathBuf::from(out_dir).join(REGISTRY_CACHE_FILE_NAME);
+        if let Some(cached) = try_load_cache(&cache_path, &fingerprint) {
+            return cached;
+        }
+        let registry: HashMap<String, ComponentInfo> =
+            build_registry_from_files(&rust_source_files);
+        try_save_cache(&cache_path, &fingerprint, &registry);
+        registry
+    } else {
+        build_registry_from_files(&rust_source_files)
+    }
 }
 
-/// Recursively scans a directory for `.rs` files and extracts component function names.
+/// Computes a fingerprint string from the sorted list of source file paths
+/// and their modification timestamps. Used to determine whether the cache
+/// is still valid or needs to be rebuilt.
+///
+/// # Arguments
+///
+/// - `&[PathBuf]` - The sorted list of source file paths.
+///
+/// # Returns
+///
+/// - `String` - The computed fingerprint string.
+fn compute_fingerprint(files: &[PathBuf]) -> String {
+    let mut fingerprint: String = String::new();
+    let mut sorted_files: Vec<&PathBuf> = files.iter().collect();
+    sorted_files.sort();
+    for path in sorted_files {
+        fingerprint.push_str(&path.to_string_lossy());
+        fingerprint.push(CHAR_SEMICOLON);
+        if let Ok(metadata) = std::fs::metadata(path)
+            && let Ok(modified) = metadata.modified()
+            && let Ok(duration) = modified.duration_since(std::time::UNIX_EPOCH)
+        {
+            fingerprint.push_str(&duration.as_millis().to_string());
+        }
+        fingerprint.push(CHAR_SEMICOLON);
+    }
+    fingerprint
+}
+
+/// Attempts to load a cached component registry from the given cache path.
+///
+/// Returns `Some(registry)` if the cache exists and the stored fingerprint
+/// matches the current fingerprint, indicating the cache is still valid.
+/// Returns `None` if the cache does not exist, cannot be read, or is stale.
+///
+/// # Arguments
+///
+/// - `&PathBuf` - The path to the cache file.
+/// - `&str` - The current fingerprint to validate against.
+///
+/// # Returns
+///
+/// - `Option<HashMap<String, ComponentInfo>>` - The cached registry if valid, or `None`.
+fn try_load_cache(
+    cache_path: &PathBuf,
+    current_fingerprint: &str,
+) -> Option<HashMap<String, ComponentInfo>> {
+    let content: String = read_to_string(cache_path).ok()?;
+    let (stored_fingerprint, data) = content.split_once(CHAR_NEWLINE)?;
+    if stored_fingerprint != current_fingerprint {
+        return None;
+    }
+    serde_json::from_str(data).ok()
+}
+
+/// Attempts to save the component registry to the given cache path,
+/// along with the current fingerprint for future validation.
+///
+/// Silently ignores errors since caching is optional.
+///
+/// # Arguments
+///
+/// - `&PathBuf` - The path to the cache file.
+/// - `&str` - The current fingerprint string.
+/// - `&HashMap<String, ComponentInfo>` - The registry to cache.
+fn try_save_cache(
+    cache_path: &PathBuf,
+    fingerprint: &str,
+    registry: &HashMap<String, ComponentInfo>,
+) {
+    if let Ok(data) = serde_json::to_string(registry) {
+        let content: String = format!("{fingerprint}{CHAR_NEWLINE}{data}");
+        let _ = std::fs::write(cache_path, content);
+    }
+}
+
+/// Builds the component registry by parsing all source files in a single pass.
+///
+/// Each file is read and parsed exactly once, extracting both struct definitions
+/// (for Props field information) and component function annotations simultaneously.
+///
+/// # Arguments
+///
+/// - `&[PathBuf]` - The list of source file paths to parse.
+///
+/// # Returns
+///
+/// - `HashMap<String, ComponentInfo>` - Map of component function names to component metadata.
+fn build_registry_from_files(files: &[PathBuf]) -> HashMap<String, ComponentInfo> {
+    let mut global_props_fields_map: HashMap<String, Vec<String>> = HashMap::new();
+    let mut global_props_field_types_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+    let mut component_entries: Vec<(String, String)> = Vec::new();
+    for path in files {
+        let Ok(content) = read_to_string(path) else {
+            continue;
+        };
+        let Ok(file) = parse_file(&content) else {
+            continue;
+        };
+        global_props_fields_map.extend(extract_props_structs(&file));
+        global_props_field_types_map.extend(extract_props_struct_types(&file));
+        extract_component_entries(&file, &mut component_entries);
+    }
+    component_entries
+        .into_iter()
+        .map(|(fn_name, props_type): (String, String)| {
+            let props_fields: Vec<String> = global_props_fields_map
+                .get(&props_type)
+                .cloned()
+                .unwrap_or_default();
+            let props_field_types: HashMap<String, String> = global_props_field_types_map
+                .get(&props_type)
+                .cloned()
+                .unwrap_or_default();
+            (
+                fn_name,
+                ComponentInfo {
+                    props_type,
+                    props_fields,
+                    props_field_types,
+                },
+            )
+        })
+        .collect()
+}
+
+/// Extracts component function entries from a parsed file.
+///
+/// Collects (function_name, props_type) pairs for functions annotated with `#[component]`.
+///
+/// # Arguments
+///
+/// - `&File` - The parsed Rust source file.
+/// - `&mut Vec<(String, String)>` - The vector to populate with (fn_name, props_type) pairs.
+fn extract_component_entries(file: &File, entries: &mut Vec<(String, String)>) {
+    file.items
+        .iter()
+        .filter_map(|item: &Item| {
+            let Item::Fn(item_fn) = item else {
+                return None;
+            };
+            item_fn
+                .attrs
+                .iter()
+                .any(|attr: &Attribute| attr.path().is_ident(COMPONENT_ATTR))
+                .then(|| {
+                    let fn_name: String = item_fn.sig.ident.to_string();
+                    let props_type: String = extract_props_type_from_fn(item_fn);
+                    (fn_name, props_type)
+                })
+        })
+        .for_each(|entry: (String, String)| {
+            entries.push(entry);
+        });
+}
+
+/// Recursively scans a directory for `.rs` files and collects their paths.
 ///
 /// # Arguments
 ///
 /// - `&PathBuf` - The directory to scan.
-/// - `&mut HashMap<String, ComponentInfo>` - The map to populate with discovered component metadata.
+/// - `&mut Vec<PathBuf>` - The vector to populate with discovered file paths.
 fn collect_rs_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
     let Ok(entries) = read_dir(dir) else {
         return;
@@ -219,86 +371,6 @@ fn collect_rs_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
             files.push(path);
         }
     }
-}
-
-/// Parses a single `.rs` file and extracts function names annotated with `#[component]`,
-/// along with their first parameter's type name (the Props type) and the Props struct field names.
-///
-/// # Arguments
-///
-/// - `&PathBuf` - The file path to parse.
-/// - `&mut HashMap<String, Vec<String>>` - The map to populate with struct name → field names.
-/// - `&mut HashMap<String, HashMap<String, String>>` - The map to populate with struct name → field type map.
-fn collect_props_structs_from_file(
-    path: &PathBuf,
-    global_map: &mut HashMap<String, Vec<String>>,
-    global_type_map: &mut HashMap<String, HashMap<String, String>>,
-) {
-    let Ok(content) = read_to_string(path) else {
-        return;
-    };
-    let Ok(file) = parse_file(&content) else {
-        return;
-    };
-    global_map.extend(extract_props_structs(&file));
-    global_type_map.extend(extract_props_struct_types(&file));
-}
-
-/// Scans a single `.rs` file for `#[component]`-annotated functions and records
-/// their metadata using the pre-collected props struct information.
-///
-/// # Arguments
-///
-/// - `&PathBuf` - The file path to scan.
-/// - `&HashMap<String, Vec<String>>` - The map of struct name → field names.
-/// - `&HashMap<String, HashMap<String, String>>` - The map of struct name → field type map.
-/// - `&mut HashMap<String, ComponentInfo>` - The map to populate with discovered component metadata.
-fn scan_file_for_components_with_map(
-    path: &PathBuf,
-    global_props_fields_map: &HashMap<String, Vec<String>>,
-    global_props_field_types_map: &HashMap<String, HashMap<String, String>>,
-    fn_names: &mut HashMap<String, ComponentInfo>,
-) {
-    let Ok(content) = read_to_string(path) else {
-        return;
-    };
-    let Ok(file) = parse_file(&content) else {
-        return;
-    };
-    file.items
-        .iter()
-        .filter_map(|item: &Item| {
-            let Item::Fn(item_fn) = item else {
-                return None;
-            };
-            item_fn
-                .attrs
-                .iter()
-                .any(|attr: &Attribute| attr.path().is_ident(COMPONENT_ATTR))
-                .then(|| {
-                    let fn_name: String = item_fn.sig.ident.to_string();
-                    let props_type: String = extract_props_type_from_fn(item_fn);
-                    let props_fields: Vec<String> = global_props_fields_map
-                        .get(&props_type)
-                        .cloned()
-                        .unwrap_or_default();
-                    let props_field_types: HashMap<String, String> = global_props_field_types_map
-                        .get(&props_type)
-                        .cloned()
-                        .unwrap_or_default();
-                    (
-                        fn_name,
-                        ComponentInfo {
-                            props_type,
-                            props_fields,
-                            props_field_types,
-                        },
-                    )
-                })
-        })
-        .for_each(|(fn_name, component_info): (String, ComponentInfo)| {
-            fn_names.insert(fn_name, component_info);
-        });
 }
 
 /// Extracts all struct definitions from a file and maps their names to field name lists.
@@ -429,6 +501,37 @@ fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
     String::new()
 }
 
+/// Checks whether a double-brace pattern `{{ ... }}` represents a dynamic tag
+/// rather than a simple braced expression.
+///
+/// A dynamic tag is detected when the second brace group contains:
+/// - Empty content, or
+/// - An identifier followed by `:` or `-` (attribute pattern), or
+/// - Keywords `if`, `match`, `for`, or
+/// - A string literal, or
+/// - A braced expression followed by `:` (dynamic key), or
+/// - Another double brace (nested dynamic tag).
+///
+/// # Arguments
+///
+/// - `&ParseBuffer` - The parse buffer of the second brace group.
+/// - `&ParseStream` - The outer parse stream (for `peek2` checks).
+///
+/// # Returns
+///
+/// - `bool` - `true` if the pattern is a dynamic tag.
+pub(crate) fn is_dynamic_tag_pattern(second_brace: ParseStream, outer: ParseStream) -> bool {
+    second_brace.is_empty()
+        || (second_brace.peek(Ident)
+            && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
+        || second_brace.peek(Token![if])
+        || second_brace.peek(Token![match])
+        || second_brace.peek(Token![for])
+        || second_brace.peek(LitStr)
+        || (second_brace.peek(Brace) && outer.peek2(Colon))
+        || (second_brace.peek(Brace) && second_brace.peek2(Brace))
+}
+
 /// Parses a stream of tokens into a list of HTML child nodes.
 ///
 /// # Arguments
@@ -447,16 +550,7 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
             braced!(_first_brace in forked);
             let second_brace: ParseBuffer<'_>;
             braced!(second_brace in forked);
-            let is_dynamic_tag: bool = second_brace.is_empty()
-                || (second_brace.peek(Ident)
-                    && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
-                || second_brace.peek(Token![if])
-                || second_brace.peek(Token![match])
-                || second_brace.peek(Token![for])
-                || second_brace.peek(LitStr)
-                || (second_brace.peek(Brace) && content.peek2(Colon))
-                || (second_brace.peek(Brace) && second_brace.peek2(Brace));
-            if is_dynamic_tag {
+            if is_dynamic_tag_pattern(&second_brace, content) {
                 let tag_content: ParseBuffer<'_>;
                 braced!(tag_content in content);
                 let tag_expr: Expr = tag_content.parse()?;
@@ -567,16 +661,7 @@ pub(crate) fn parse_dynamic_component_children(
             braced!(_first_brace in forked);
             let second_brace: ParseBuffer<'_>;
             braced!(second_brace in forked);
-            let is_dynamic_tag: bool = second_brace.is_empty()
-                || (second_brace.peek(Ident)
-                    && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
-                || second_brace.peek(Token![if])
-                || second_brace.peek(Token![match])
-                || second_brace.peek(Token![for])
-                || second_brace.peek(LitStr)
-                || (second_brace.peek(Brace) && second_brace.peek2(Colon))
-                || (second_brace.peek(Brace) && second_brace.peek2(Brace));
-            if is_dynamic_tag {
+            if is_dynamic_tag_pattern(&second_brace, content) {
                 let tag_content: ParseBuffer<'_>;
                 braced!(tag_content in content);
                 let tag_expr: Expr = tag_content.parse()?;

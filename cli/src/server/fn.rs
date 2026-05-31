@@ -10,9 +10,9 @@ use crate::*;
 ///
 /// - `Result<()>` - Indicates success or failure of the initialization.
 pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
-    APP_STATE
-        .set(state)
-        .map_err(|_: Arc<AppState>| anyhow!("Global state already initialized"))
+    APP_STATE.set(state).map_err(|_: Arc<AppState>| {
+        EuvError::Message(String::from("Global state already initialized"))
+    })
 }
 
 /// Retrieves the global application state.
@@ -47,14 +47,18 @@ pub(crate) async fn generate_html(
     custom_index_html: Option<&Path>,
 ) -> Result<String> {
     let template_content: String = if let Some(custom_path) = custom_index_html {
-        let bytes: Vec<u8> = read(custom_path).await.map_err(|error: io::Error| {
-            anyhow!(
-                "Failed to read custom index.html '{}': {error}",
-                custom_path.display()
-            )
-        })?;
-        String::from_utf8(bytes)
-            .map_err(|error| anyhow!("Custom index.html is not valid UTF-8: {error}"))?
+        let bytes: Vec<u8> =
+            read(custom_path)
+                .await
+                .map_err(|error: io::Error| EuvError::IoPath {
+                    message: String::from("Failed to read custom index.html"),
+                    path: custom_path.to_path_buf(),
+                    error,
+                })?;
+        String::from_utf8(bytes).map_err(|error: std::string::FromUtf8Error| EuvError::Utf8 {
+            message: String::from("Custom index.html is not valid UTF-8"),
+            error,
+        })?
     } else if is_release {
         INDEX_HTML_RELEASE.to_string()
     } else {
@@ -66,10 +70,16 @@ pub(crate) async fn generate_html(
     let index_path: PathBuf = www_dir.join(INDEX_HTML_FILE_NAME);
     create_dir_all(www_dir)
         .await
-        .map_err(|error: io::Error| anyhow!("Failed to create static directory: {error}"))?;
+        .map_err(|error: io::Error| EuvError::Io {
+            message: String::from("Failed to create static directory"),
+            error,
+        })?;
     write(&index_path, &html)
         .await
-        .map_err(|error: io::Error| anyhow!("Failed to write index.html: {error}"))?;
+        .map_err(|error: io::Error| EuvError::Io {
+            message: String::from("Failed to write index.html"),
+            error,
+        })?;
     Ok(html)
 }
 

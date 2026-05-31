@@ -45,6 +45,13 @@ class! {
         }
     }
 
+    pub(crate) c_nav_brand_title {
+        font-size: "18px";
+        font-weight: "700";
+        color: var!(text-primary);
+        letter-spacing: "-0.02em";
+    }
+
     pub(crate) c_logo_button {
         display: "flex";
         background: "linear-gradient(135deg, #4f46e5, #7c3aed)";
@@ -1616,6 +1623,7 @@ class! {
         border: "none";
         cursor: "pointer";
         font-size: "22px";
+        font-weight: "700";
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -1632,6 +1640,7 @@ class! {
         border: "none";
         cursor: "pointer";
         font-size: "22px";
+        font-weight: "700";
         display: "flex";
         align-items: "center";
         justify-content: "center";

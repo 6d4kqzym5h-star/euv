@@ -350,6 +350,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                         variant: LogoButtonVariant::Nav
                     }
                     span {
+                        class: c_nav_brand_title()
                         "Euv"
                     }
                 }
@@ -427,7 +428,8 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         variant: LogoButtonVariant::Nav
                     }
                     span {
-                        "euv"
+                        class: c_nav_brand_title()
+                        "Euv"
                     }
                 }
                 button {
@@ -471,7 +473,8 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                                 variant: LogoButtonVariant::Nav
                             }
                             span {
-                                "euv"
+                                class: c_nav_brand_title()
+                                "Euv"
                             }
                         }
                         button {

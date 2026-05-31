@@ -913,7 +913,10 @@ pub(crate) async fn format_dir(path: &Path, mode: FmtMode) -> Result<()> {
         match mode {
             FmtMode::Check => {
                 if changed {
-                    bail!("{} needs formatting.", path.display());
+                    return Err(EuvError::Message(format!(
+                        "{} needs formatting.",
+                        path.display()
+                    )));
                 }
                 log::info!("{} is properly formatted.", path.display());
             }
@@ -948,10 +951,10 @@ pub(crate) async fn format_dir(path: &Path, mode: FmtMode) -> Result<()> {
     match mode {
         FmtMode::Check => {
             if changed_count > 0 {
-                bail!(
+                return Err(EuvError::Message(format!(
                     "{} file(s) need formatting. Run `euv fmt` to fix.",
                     changed_count
-                );
+                )));
             }
             log::info!("All {} file(s) are properly formatted.", unchanged_count);
         }
@@ -982,12 +985,21 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
         let mut entries: tokio::fs::ReadDir =
             tokio::fs::read_dir(&dir)
                 .await
-                .map_err(|error: io::Error| {
-                    anyhow!("Failed to read directory '{}': {error}", dir.display())
+                .map_err(|error: io::Error| EuvError::IoPath {
+                    message: String::from("Failed to read directory"),
+                    path: dir.clone(),
+                    error,
                 })?;
-        while let Some(entry) = entries.next_entry().await.map_err(|error: io::Error| {
-            anyhow!("Failed to read entry in '{}': {error}", dir.display())
-        })? {
+        while let Some(entry) =
+            entries
+                .next_entry()
+                .await
+                .map_err(|error: io::Error| EuvError::IoPath {
+                    message: String::from("Failed to read entry in directory"),
+                    path: dir.clone(),
+                    error,
+                })?
+        {
             let entry_path: PathBuf = entry.path();
             if entry_path.is_dir() {
                 let file_name: String = entry_path
@@ -1022,15 +1034,21 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
 async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
     let content: String = tokio::fs::read_to_string(path)
         .await
-        .map_err(|error: io::Error| anyhow!("Failed to read '{}': {error}", path.display()))?;
+        .map_err(|error: io::Error| EuvError::IoPath {
+            message: String::from("Failed to read"),
+            path: path.to_path_buf(),
+            error,
+        })?;
     let fmt_result: FmtResult = format_source(&content);
     if fmt_result.changed {
         match mode {
             FmtMode::Write => {
                 tokio::fs::write(path, &fmt_result.output)
                     .await
-                    .map_err(|error: io::Error| {
-                        anyhow!("Failed to write '{}': {error}", path.display())
+                    .map_err(|error: io::Error| EuvError::IoPath {
+                        message: String::from("Failed to write"),
+                        path: path.to_path_buf(),
+                        error,
                     })?;
                 log::info!("Formatted: {}", path.display());
             }
