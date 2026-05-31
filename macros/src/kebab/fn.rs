@@ -54,8 +54,8 @@ pub(crate) fn parse_ident_segment(input: ParseStream) -> syn::Result<String> {
 /// - `syn::Result<String>` - The reconstructed kebab-case name string.
 pub(crate) fn parse_kebab_name(input: ParseStream) -> syn::Result<String> {
     if input.peek(LitStr) {
-        let lit: LitStr = input.parse()?;
-        return Ok(lit.value());
+        let literal_string: LitStr = input.parse()?;
+        return Ok(literal_string.value());
     }
     let mut name: String = String::new();
     while input.peek(Token![-]) {

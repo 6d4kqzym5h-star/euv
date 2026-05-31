@@ -3,7 +3,7 @@ use crate::*;
 /// Props for the `my_modal` component.
 ///
 /// Defines the strongly-typed interface for the modal dialog.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct MyModalProps {
     /// The modal title text.
     pub(crate) title: &'static str,

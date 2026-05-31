@@ -122,3 +122,101 @@ where
     inner.get_mut_cleanups().push(Box::new(cleanup));
     inner.get_mut_hooks().push(Box::new(()));
 }
+
+/// Registers a `window.addEventListener` callback using event delegation,
+/// automatically removed when the hook context is cleared.
+///
+/// Uses the global window event proxy registry so that only one
+/// `window.addEventListener` call is made per event name regardless of
+/// how many components listen to the same event. On cleanup, only the
+/// handler entry is removed from the proxy registry; the shared window
+/// listener remains active for other consumers.
+///
+/// The event listener is only registered once on the first render.
+/// On subsequent re-renders at the same hook index, this is a no-op.
+///
+/// # Arguments
+///
+/// - `&str` - The event name to listen for (e.g., "hashchange", "popstate", "resize").
+/// - `FnMut() + 'static` - The callback to invoke when the event fires.
+pub fn use_window_event<F>(event_name: &str, callback: F)
+where
+    F: FnMut() + 'static,
+{
+    let hook_context: HookContext = get_current_hook_context();
+    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let index: usize = inner.get_hook_index();
+    inner.set_hook_index(index + 1);
+    if index < inner.get_hooks().len() {
+        return;
+    }
+    let event_name_owned: String = event_name.to_string();
+    let handler_id: usize = register_window_event_handler(event_name, callback);
+    inner.get_mut_cleanups().push(Box::new(move || {
+        unregister_window_event_handler(&event_name_owned, handler_id);
+    }));
+    inner.get_mut_hooks().push(Box::new(()));
+}
+
+/// Creates a recurring interval that invokes the given closure at the
+/// specified period, returning an `IntervalHandle` that is automatically
+/// cleared when the hook context is cleared (i.e., when the component
+/// unmounts or a `match` arm switches).
+///
+/// Unlike calling `set_interval_with_callback_and_timeout_and_arguments_0`
+/// + `Closure::forget()` manually, this hook ensures the interval is
+///   properly cleaned up, preventing memory leaks and stale callbacks.
+///
+/// The interval is only created once on the first render.
+/// On subsequent re-renders at the same hook index, the existing handle
+/// is returned unchanged.
+///
+/// # Arguments
+///
+/// - `i32` - The interval period in milliseconds.
+/// - `FnMut() + 'static` - The closure to invoke on each interval tick.
+///
+/// # Returns
+///
+/// - `IntervalHandle` - A handle that can be used to cancel the interval early.
+///
+/// # Panics
+///
+/// Panics if `window()` is unavailable on the current platform.
+pub fn use_interval<F>(millis: i32, callback: F) -> IntervalHandle
+where
+    F: FnMut() + 'static,
+{
+    let hook_context: HookContext = get_current_hook_context();
+    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let index: usize = inner.get_hook_index();
+    inner.set_hook_index(index + 1);
+    if index < inner.get_hooks().len()
+        && let Some(existing) = inner.get_hooks()[index].downcast_ref::<IntervalHandle>()
+    {
+        return *existing;
+    }
+    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(callback));
+    let window: Window = window().expect("no global window exists");
+    let interval_id: i32 = window
+        .set_interval_with_callback_and_timeout_and_arguments_0(
+            closure.as_ref().unchecked_ref(),
+            millis,
+        )
+        .expect("failed to set interval");
+    closure.forget();
+    let handle: IntervalHandle = IntervalHandle::new(interval_id);
+    let cleanup_id: i32 = interval_id;
+    inner.get_mut_cleanups().push(Box::new(move || {
+        let Some(cleanup_window) = web_sys::window() else {
+            return;
+        };
+        cleanup_window.clear_interval_with_handle(cleanup_id);
+    }));
+    if index < inner.get_hooks().len() {
+        inner.get_mut_hooks()[index] = Box::new(handle);
+    } else {
+        inner.get_mut_hooks().push(Box::new(handle));
+    }
+    handle
+}

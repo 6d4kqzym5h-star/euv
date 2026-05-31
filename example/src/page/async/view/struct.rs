@@ -1,3 +1,3 @@
 /// Props for the `page_async_demo` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageAsyncDemoProps;

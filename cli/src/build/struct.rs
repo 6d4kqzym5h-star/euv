@@ -16,9 +16,9 @@ pub struct Cli {
 
 /// euv-specific arguments combined with wasm-pack passthrough.
 ///
-/// Only `--crate-path`, `--port`, `--www-dir`, and `--index-html` belong to euv;
-/// everything in `wasm_pack_args` is forwarded to `wasm-pack build` as-is.
-#[derive(Clone, Data, Debug, New, Parser)]
+/// Only `--crate-path`, `--port`, `--www-dir`, `--index-html`, and `--dev`/`--release`/`--profiling`
+/// belong to euv; everything in `wasm_pack_args` is forwarded to `wasm-pack build` as-is.
+#[derive(Clone, Data, Debug, Parser)]
 pub struct ModeArgs {
     /// Path to the Rust crate containing the WASM application
     #[arg(short, long, default_value = ".")]
@@ -35,6 +35,18 @@ pub struct ModeArgs {
     /// The placeholders `__IMPORT_PATH__` and `__RELOAD_ROUTE__` will be replaced.
     #[arg(long)]
     pub index_html: Option<PathBuf>,
+    /// Create a development build. Enable debug info, and disable optimizations
+    #[arg(long)]
+    #[get(type(copy))]
+    pub dev: bool,
+    /// Create a release build. Enable optimizations and disable debug info
+    #[arg(long)]
+    #[get(type(copy))]
+    pub release: bool,
+    /// Create a profiling build. Enable optimizations and debug info
+    #[arg(long)]
+    #[get(type(copy))]
+    pub profiling: bool,
     /// Arguments transparently forwarded to `wasm-pack build`
     #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
     pub wasm_pack_args: Vec<String>,

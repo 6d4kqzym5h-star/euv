@@ -1,7 +1,7 @@
 /// Props for the `form_input` component.
 ///
 /// Defines the strongly-typed interface for the labeled input field.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct FormInputProps {
     /// The unique identifier for the input element.
     pub(crate) id: &'static str,

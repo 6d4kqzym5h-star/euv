@@ -1,3 +1,3 @@
 /// Props for the `page_not_found` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageNotFoundProps;

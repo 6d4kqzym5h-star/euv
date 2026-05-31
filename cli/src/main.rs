@@ -86,10 +86,10 @@ async fn build_mode(mut args: ModeArgs) -> Result<()> {
         )
     })?;
     let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
-    if crate_path_str.starts_with(r"\\?\") {
+    if crate_path_str.starts_with(WINDOWS_UNC_PREFIX) {
         args.crate_path = PathBuf::from(
             crate_path_str
-                .strip_prefix(r"\\?\")
+                .strip_prefix(WINDOWS_UNC_PREFIX)
                 .unwrap_or(&crate_path_str),
         );
     }
@@ -141,16 +141,17 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
         )
     })?;
     let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
-    if crate_path_str.starts_with(r"\\?\") {
+    if crate_path_str.starts_with(WINDOWS_UNC_PREFIX) {
         args.crate_path = PathBuf::from(
             crate_path_str
-                .strip_prefix(r"\\?\")
+                .strip_prefix(WINDOWS_UNC_PREFIX)
                 .unwrap_or(&crate_path_str),
         );
     }
     let www_route_prefix: String = args.www_dir.replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD);
     let addr: SocketAddr = SocketAddr::from(([127, 0, 0, 1], args.port));
-    let server_url: String = format!("http://{addr}/{www_route_prefix}/{INDEX_HTML_FILE_NAME}");
+    let server_url: String =
+        format!("{HTTP_SCHEME}://{addr}/{www_route_prefix}/{INDEX_HTML_FILE_NAME}");
     let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
     let initial_html: String = match run_build_pipeline(&args, None).await {
@@ -158,7 +159,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
         Err(error) => {
             log::error!("Initial build pipeline failed: {error}");
             let import_path: String = resolve_import_path(&args);
-            let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+            let is_release: bool = resolve_build_mode(&args) == BuildMode::Release;
             let custom_html: Option<&Path> = args.index_html.as_deref();
             generate_html(&www_absolute, &import_path, is_release, custom_html).await?
         }

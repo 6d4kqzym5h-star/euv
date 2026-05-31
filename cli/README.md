@@ -34,16 +34,16 @@ All `wasm-pack build` arguments are transparently forwarded after `--`.
 
 ```shell
 # Build and start dev server with hot-reload
-euv-cli run -- --target web --out-name euv
+euv-cli run --dev -- --target web --out-name euv
 
 # Build and start dev server with custom crate path and port
-euv-cli run --crate-path ./example --port 80 -- --target web --out-name euv
+euv-cli run --dev --crate-path ./example --port 80 -- --target web --out-name euv
 
 # Release build with dev server
-euv-cli run --crate-path ./example -- --release --target web --out-name euv
+euv-cli run --release --crate-path ./example -- --target web --out-name euv
 
 # Use a custom static assets directory instead of the default "www"
-euv-cli run --www-dir www -- --target web --out-name euv
+euv-cli run --release --www-dir www -- --target web --out-name euv
 ```
 
 ### Fmt (format euv macros)
@@ -86,13 +86,13 @@ euv fmt --path ./src --check
 
 ```shell
 # Dev build
-euv-cli build -- --target web --out-name euv
+euv-cli build --dev -- --target web --out-name euv
 
 # Release build
-euv-cli build -- --release --target web --out-name euv
+euv-cli build --release -- --target web --out-name euv
 
 # Build with custom crate path and static directory
-euv-cli build --crate-path ./example --www-dir www -- --release --target web --out-dir www/pkg --out-name euv
+euv-cli build --release --crate-path ./example --www-dir www -- --target web --out-dir www/pkg --out-name euv
 ```
 
 ### Via Cargo
@@ -100,18 +100,18 @@ euv-cli build --crate-path ./example --www-dir www -- --release --target web --o
 #### Run (build + dev server)
 
 ```shell
-cargo run -p euv-cli -- run --crate-path ./example --port 80 -- --target web --out-dir www/pkg --out-name euv
+cargo run -p euv-cli -- run --dev --crate-path ./example --port 80 -- --target web --out-dir www/pkg --out-name euv
 ```
 
 ```shell
 # Custom static directory
-cargo run -p euv-cli -- run --crate-path ./example --www-dir www -- --target web --out-name euv
+cargo run -p euv-cli -- run --dev --crate-path ./example --www-dir www -- --target web --out-name euv
 ```
 
 #### Build (build only)
 
 ```shell
-cargo run -p euv-cli -- build --crate-path ./example -- --release --target web --out-dir www/pkg --out-name euv
+cargo run -p euv-cli -- build --release --crate-path ./example -- --target web --out-dir www/pkg --out-name euv
 ```
 
 #### Fmt (format euv macros)
@@ -133,6 +133,9 @@ cargo run -p euv-cli -- fmt --check --path ./example
 | `--crate-path` | `-c`  | `.`     | Path to the Rust crate containing the WASM application                       |
 | `--port`       | `-p`  | `80`    | Port for the development server                                              |
 | `--www-dir`    |       | `www`   | Directory name for static assets and generated HTML (relative to crate-path) |
+| `--dev`        |       |         | Create a development build (default if no mode specified)                    |
+| `--release`    |       |         | Create a release build with optimizations                                    |
+| `--profiling`  |       |         | Create a profiling build with optimizations and debug info                   |
 
 ### How `--www-dir` Works
 
@@ -163,9 +166,6 @@ All `wasm-pack build` flags are forwarded as-is. Common options:
 | `--target`          | Target environment: bundler, nodejs, web, no-modules, deno |
 | `--out-dir`         | Output directory with a relative path                      |
 | `--out-name`        | Output file names, defaults to package name                |
-| `--dev`             | Create a development build                                 |
-| `--release`         | Create a release build                                     |
-| `--profiling`       | Create a profiling build                                   |
 | `--scope`           | The npm scope to use in package.json                       |
 | `--mode`            | Steps to be run: no-install, normal, force                 |
 | `--no-typescript`   | Disable TypeScript declaration file generation             |

@@ -11,9 +11,9 @@ use crate::*;
 ///
 /// - `VirtualNode` - A modal overlay element.
 #[component]
-pub(crate) fn my_modal(mut node: VirtualNode<MyModalProps>) -> VirtualNode {
-    let MyModalProps { title, onclick } = node.try_take_props().unwrap_or_default();
-    let children: VirtualNode = node.take_children();
+pub(crate) fn my_modal(node: VirtualNode<MyModalProps>) -> VirtualNode {
+    let MyModalProps { title, onclick } = node.try_get_props().unwrap_or_default();
+    let children: VirtualNode = node.try_get_child_node();
     html! {
         div {
             class: c_modal_overlay()

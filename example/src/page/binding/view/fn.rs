@@ -13,11 +13,11 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled child display element.
 #[component]
-pub(crate) fn child_display(mut node: VirtualNode<ChildDisplayProps>) -> VirtualNode {
+pub(crate) fn child_display(node: VirtualNode<ChildDisplayProps>) -> VirtualNode {
     let ChildDisplayProps {
         message,
         on_respond,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -51,13 +51,13 @@ pub(crate) fn child_display(mut node: VirtualNode<ChildDisplayProps>) -> Virtual
 ///
 /// - `VirtualNode` - A styled limited counter element.
 #[component]
-pub(crate) fn limited_counter(mut node: VirtualNode<LimitedCounterProps>) -> VirtualNode {
+pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> VirtualNode {
     let LimitedCounterProps {
         disabled,
         max_count,
         on_increment,
         on_reset,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -118,13 +118,13 @@ pub(crate) fn limited_counter(mut node: VirtualNode<LimitedCounterProps>) -> Vir
 ///
 /// - `VirtualNode` - A styled input with callback element.
 #[component]
-pub(crate) fn callback_input(mut node: VirtualNode<CallbackInputProps>) -> VirtualNode {
+pub(crate) fn callback_input(node: VirtualNode<CallbackInputProps>) -> VirtualNode {
     let CallbackInputProps {
         value,
         on_change,
         on_submit,
         on_reset,
-    } = node.try_take_props().unwrap_or_default();
+    } = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -410,10 +410,8 @@ pub(crate) fn color_mixer(
 ///
 /// - `VirtualNode` - The component binding demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_component_binding(
-    mut node: VirtualNode<PageComponentBindingProps>,
-) -> VirtualNode {
-    let PageComponentBindingProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps>) -> VirtualNode {
+    let PageComponentBindingProps = node.try_get_props().unwrap_or_default();
     let props_state: UsePropsDemo = use_props_demo();
     let two_way_state: UseTwoWayDemo = use_two_way_demo();
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();

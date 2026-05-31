@@ -23,10 +23,10 @@ impl Parse for ClassInput {
                 while !param_content.is_empty() {
                     let param_name: Ident = param_content.parse()?;
                     param_content.parse::<Token![:]>()?;
-                    let ty: Type = param_content.parse()?;
+                    let param_type: Type = param_content.parse()?;
                     param_list.push(ClassParam {
                         name: param_name,
-                        ty,
+                        param_type,
                     });
                     if param_content.peek(Token![,]) {
                         param_content.parse::<Token![,]>()?;
@@ -123,10 +123,7 @@ impl Parse for ClassInput {
                             parenthesized!(paren_content in content);
                             let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
                             let arg_str: String = arg_tokens.to_string().replace(CHAR_SPACE, "");
-                            let selector: String = format!(
-                                ":{keyword_kebab}({arg_str})",
-                                keyword_kebab = keyword_str.replace(CHAR_UNDERSCORE, STR_HYPHEN)
-                            );
+                            let selector: String = format!(":{keyword_str}({arg_str})");
                             let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
                             let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> =
@@ -165,7 +162,7 @@ impl Parse for ClassInput {
                                 _ => query_expr
                                     .to_token_stream()
                                     .to_string()
-                                    .replace(CHAR_SPACE, ""),
+                                    .replace(CHAR_SPACE, STR_EMPTY),
                             };
                             let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
@@ -222,7 +219,7 @@ impl ToTokens for ClassDef {
     ///
     /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let vis: &Visibility = self.get_visibility();
+        let visibility: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
         let class_name_str: String = name.to_string();
         let has_extra: bool =
@@ -234,8 +231,8 @@ impl ToTokens for ClassDef {
                     .iter()
                     .map(|param: &ClassParam| {
                         let param_name: &Ident = param.get_name();
-                        let ty: &Type = param.get_ty();
-                        quote! { #param_name: #ty }
+                        let param_type: &Type = param.get_param_type();
+                        quote! { #param_name: #param_type }
                     })
                     .collect();
                 let param_names: Vec<&Ident> = params
@@ -263,9 +260,8 @@ impl ToTokens for ClassDef {
                 let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
                     quote! { #class_name_str.to_string() }
                 } else {
-                    let str_hyphen: &str = STR_HYPHEN;
-                    let name_format: String = format!("{{}}{str_hyphen}{{}}");
-                    quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#str_hyphen)) }
+                    let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
+                    quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)) }
                 };
                 if has_extra {
                     let pseudo_expr: proc_macro2::TokenStream =
@@ -275,13 +271,13 @@ impl ToTokens for ClassDef {
                         media_blocks_to_tokens(self.get_media_blocks())
                             .unwrap_or_else(|| quote! { vec![] });
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs), *) -> ::euv::Css {
+                        #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
                             ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #pseudo_expr, #media_expr)
                         }
                     });
                 } else {
                     tokens.extend(quote! {
-                        #vis fn #name(#(#param_defs), *) -> ::euv::Css {
+                        #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
                             ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), vec![], vec![])
                         }
                     });
@@ -359,7 +355,7 @@ impl ToTokens for ClassDef {
                         emit_once_lock_fn(
                             tokens,
                             OnceLockParams {
-                                vis,
+                                visibility,
                                 fn_name_token: &fn_name_token,
                                 const_name_token: &const_name_token,
                                 class_name_str: &class_name_str,
@@ -372,7 +368,7 @@ impl ToTokens for ClassDef {
                         emit_once_lock_fn(
                             tokens,
                             OnceLockParams {
-                                vis,
+                                visibility,
                                 fn_name_token: &fn_name_token,
                                 const_name_token: &const_name_token,
                                 class_name_str: &class_name_str,
@@ -405,7 +401,7 @@ impl ToTokens for ClassDef {
                     emit_once_lock_fn(
                         tokens,
                         OnceLockParams {
-                            vis,
+                            visibility,
                             fn_name_token: &fn_name_token,
                             const_name_token: &const_name_token,
                             class_name_str: &class_name_str,

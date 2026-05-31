@@ -25,17 +25,8 @@ pub(crate) const EVENT_ATTR_PREFIX: &str = "on";
 /// The Rust raw identifier prefix.
 pub(crate) const RAW_IDENT_PREFIX: &str = "r#";
 
-/// The hyphen character used in kebab-case names and CSS property conversion.
+/// The hyphen character used in kebab-case tag names.
 pub(crate) const CHAR_HYPHEN: char = '-';
-
-/// The hyphen string used for replacing underscores in kebab-case conversion.
-pub(crate) const STR_HYPHEN: &str = "-";
-
-/// The underscore character, part of Rust identifiers.
-pub(crate) const CHAR_UNDERSCORE: char = '_';
-
-/// The underscore string used for replacing hyphens in Rust identifier conversion.
-pub(crate) const STR_UNDERSCORE: &str = "_";
 
 /// The space character used in CSS string formatting.
 pub(crate) const CHAR_SPACE: char = ' ';
@@ -62,3 +53,9 @@ pub(crate) const TYPE_VIRTUAL_NODE: &str = "VirtualNode";
 
 /// Type name identifier for `VirtualNode`, used to detect `VirtualNode<T>` parameter types.
 pub(crate) const VIRTUAL_NODE_TYPE: &str = "VirtualNode";
+
+/// Attribute key name for the `key` binding used for element identity in keyed updates.
+pub(crate) const ATTR_KEY_KEY: &str = "key";
+
+/// Empty string constant used as default placeholder for unset attribute values.
+pub(crate) const STR_EMPTY: &str = "";

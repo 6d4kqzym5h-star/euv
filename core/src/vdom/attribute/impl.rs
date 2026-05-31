@@ -239,93 +239,6 @@ impl PartialEq for Css {
     }
 }
 
-/// Implementation of style CSS serialization.
-impl Style {
-    /// Adds a style property.
-    ///
-    /// Property names are automatically converted from snake_case to kebab-case
-    /// (e.g., `flex_direction` becomes `flex-direction`).
-    ///
-    /// # Arguments
-    ///
-    /// - `AsRef<str>` - The property name (snake_case will be converted to kebab-case).
-    /// - `AsRef<str>` - The property value.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - This style with the property added.
-    pub fn property<N, V>(mut self, name: N, value: V) -> Self
-    where
-        N: AsRef<str>,
-        V: AsRef<str>,
-    {
-        self.get_mut_properties().push(StyleProperty::new(
-            name.as_ref().replace(CHAR_UNDERSCORE, STR_HYPHEN),
-            value.as_ref().to_string(),
-        ));
-        self
-    }
-
-    /// Converts the style to a CSS string.
-    ///
-    /// # Returns
-    ///
-    /// - `String` - The CSS string representation.
-    pub fn to_css_string(&self) -> String {
-        self.get_properties()
-            .iter()
-            .map(|style: &StyleProperty| {
-                format!(
-                    "{name}{CSS_PROP_SEPARATOR}{value}{CHAR_CSS_DECL_TERMINATOR}",
-                    name = style.get_name(),
-                    value = style.get_value()
-                )
-            })
-            .collect::<Vec<String>>()
-            .join(" ")
-    }
-
-    /// Builds a CSS style string from an array of key-value pairs.
-    ///
-    /// This function is used by the `html!` macro to convert static `style:`
-    /// attributes into a CSS string without allocating intermediate `Style`
-    /// and `Vec<StyleProperty>` objects. Keys are converted from snake_case
-    /// to kebab-case automatically.
-    ///
-    /// # Arguments
-    ///
-    /// - `&[(&str, &str)]` - An array of CSS property name-value pairs.
-    ///
-    /// # Returns
-    ///
-    /// - `String` - The CSS string (e.g., `"margin: 0 auto; max-width: 800px;"`).
-    pub fn create_style_string(props: &[(&str, &str)]) -> String {
-        let mut result: String = String::new();
-        for (key, value) in props {
-            if !result.is_empty() {
-                result.push(CHAR_SPACE);
-            }
-            result.push_str(&key.replace(CHAR_UNDERSCORE, STR_HYPHEN));
-            result.push_str(CSS_PROP_SEPARATOR);
-            result.push_str(value);
-            result.push(CHAR_CSS_DECL_TERMINATOR);
-        }
-        result
-    }
-}
-
-/// Provides a default empty style.
-impl Default for Style {
-    /// Returns a default `Self` with no properties.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - An empty style.
-    fn default() -> Self {
-        Self::new(Vec::new())
-    }
-}
-
 /// Implementation of Css construction and style injection.
 impl Css {
     /// Parses pseudo-class/pseudo-element rules from a compact serialization string.
@@ -429,7 +342,7 @@ impl Css {
             return;
         }
         let class_rule: String = format!(
-            "{CHAR_CSS_CLASS_PREFIX}{} {{ {} }}",
+            "{CHAR_CSS_CLASS_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
             self.get_name(),
             self.get_style()
         );
@@ -437,23 +350,23 @@ impl Css {
         for pseudo_rule in self.get_pseudo_rules() {
             if !pseudo_rule.get_style().is_empty() {
                 let pseudo_rule_str: String = format!(
-                    "{CHAR_CSS_CLASS_PREFIX}{}{} {{ {} }}",
+                    "{CHAR_CSS_CLASS_PREFIX}{}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
                     self.get_name(),
                     pseudo_rule.get_selector(),
                     pseudo_rule.get_style()
                 );
-                css_text = format!("{css_text}\n{pseudo_rule_str}");
+                css_text = format!("{css_text}{CHAR_CSS_RULE_SEPARATOR}{pseudo_rule_str}");
             }
         }
         for media_rule in self.get_media_rules() {
             if !media_rule.get_query().is_empty() {
                 let media_rule_str: String = format!(
-                    "@media {} {{ {CHAR_CSS_CLASS_PREFIX}{} {{ {} }} }}",
+                    "{CSS_MEDIA_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{CHAR_CSS_CLASS_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}{CSS_RULE_CLOSE_FORMAT}",
                     media_rule.get_query(),
                     self.get_name(),
                     media_rule.get_style()
                 );
-                css_text = format!("{css_text}\n{media_rule_str}");
+                css_text = format!("{css_text}{CHAR_CSS_RULE_SEPARATOR}{media_rule_str}");
             }
         }
         Self::append_css(&css_text);
@@ -488,26 +401,26 @@ impl Css {
     fn append_css(css_text: &str) {
         let style_id: &str = EUV_CSS_INJECTED_ID;
         let window_value: Window = match window() {
-            Some(w) => w,
+            Some(window_instance) => window_instance,
             None => return,
         };
         let document: Document = match window_value.document() {
-            Some(d) => d,
+            Some(document_instance) => document_instance,
             None => return,
         };
         let style_element: HtmlStyleElement = match document.get_element_by_id(style_id) {
             Some(existing_element) => match existing_element.dyn_into::<HtmlStyleElement>() {
-                Ok(el) => el,
+                Ok(element) => element,
                 Err(_err) => return,
             },
             None => {
                 let created: Element = match document.create_element(STYLE_TAG) {
-                    Ok(el) => el,
+                    Ok(element) => element,
                     Err(_err) => return,
                 };
                 let style_element_from_id: HtmlStyleElement =
                     match created.dyn_into::<HtmlStyleElement>() {
-                        Ok(el) => el,
+                        Ok(element) => element,
                         Err(_err) => return,
                     };
                 style_element_from_id.set_id(style_id);
@@ -521,6 +434,58 @@ impl Css {
             let text_node: Text = document.create_text_node(css_text);
             let _ = style_element.append_child(&text_node);
         }
+    }
+
+    /// Builds a CSS style string from an array of key-value pairs.
+    ///
+    /// This function is used by the `html!` macro to convert static `style:`
+    /// attributes into a CSS string without allocating intermediate objects.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[(&str, &str)]` - An array of CSS property name-value pairs.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The CSS string (e.g., `"margin: 0 auto; max-width: 800px;"`).
+    pub fn create_style_string(props: &[(&str, &str)]) -> String {
+        let mut result: String = String::new();
+        for (key, value) in props {
+            if !result.is_empty() {
+                result.push(CHAR_SPACE);
+            }
+            result.push_str(key);
+            result.push_str(CSS_PROP_SEPARATOR);
+            result.push_str(value);
+            result.push(CHAR_CSS_DECL_TERMINATOR);
+        }
+        result
+    }
+
+    /// Builds a CSS style string from owned key-value pairs.
+    ///
+    /// Used by the `html!` macro for reactive style attributes (with `if`
+    /// conditions) where values are computed at runtime.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[(String, String)]` - An array of owned CSS property name-value pairs.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The CSS string (e.g., `"margin: 0 auto; max-width: 800px;"`).
+    pub fn create_style_string_owned(props: &[(String, String)]) -> String {
+        let mut result: String = String::new();
+        for (key, value) in props {
+            if !result.is_empty() {
+                result.push(CHAR_SPACE);
+            }
+            result.push_str(key);
+            result.push_str(CSS_PROP_SEPARATOR);
+            result.push_str(value);
+            result.push(CHAR_CSS_DECL_TERMINATOR);
+        }
+        result
     }
 
     /// Injects CSS text into the shared `<style>` element in the DOM.

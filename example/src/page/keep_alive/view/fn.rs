@@ -359,8 +359,8 @@ pub(crate) fn keep_alive_timer_on_reset(
 ///
 /// - `VirtualNode` - The keep-alive demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_keep_alive(mut node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
-    let PageKeepAliveProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
+    let PageKeepAliveProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<String> = use_signal(|| "counter".to_string());
     html! {
         div {

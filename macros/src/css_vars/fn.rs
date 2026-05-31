@@ -12,14 +12,14 @@ use crate::*;
 /// - `&proc_macro2::TokenStream` - Token stream that evaluates to the CSS style string.
 pub(crate) fn emit_css_var_once_lock_fn(
     tokens: &mut proc_macro2::TokenStream,
-    vis: &Visibility,
+    visibility: &Visibility,
     fn_name_token: &proc_macro2::TokenStream,
     const_name_token: &proc_macro2::TokenStream,
     class_name_str: &str,
     style_expr: &proc_macro2::TokenStream,
 ) {
     tokens.extend(quote! {
-        #vis fn #fn_name_token() -> &'static ::euv::Css {
+        #visibility fn #fn_name_token() -> &'static ::euv::Css {
             static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
             #const_name_token.get_or_init(|| {
                 let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, vec![], vec![]);

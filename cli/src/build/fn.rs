@@ -1,5 +1,119 @@
 use crate::*;
 
+/// Checks whether `wasm_pack_args` already contains a build mode flag.
+///
+/// Returns `true` if any of `--dev`, `--release`, or `--profiling`
+/// is present in the arguments list.
+///
+/// # Arguments
+///
+/// - `&[String]` - The wasm-pack arguments to search.
+///
+/// # Returns
+///
+/// - `bool` - Whether a build mode flag is already present.
+pub(crate) fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
+    wasm_pack_args
+        .iter()
+        .any(|arg: &String| arg == DEV_FLAG || arg == RELEASE_FLAG || arg == PROFILING_FLAG)
+}
+
+/// Filters out euv-specific arguments from the wasm-pack arguments.
+///
+/// If `wasm_pack_args` contains `--`, only arguments after the last `--`
+/// are kept (they are the genuine wasm-pack passthrough args), and everything
+/// before it (which would be euv args mistakenly collected by clap) is discarded.
+/// If there is no `--`, the list is returned as-is after removing known euv flags.
+///
+/// # Arguments
+///
+/// - `&[String]` - The raw wasm-pack arguments to filter.
+///
+/// # Returns
+///
+/// - `Vec<String>` - The filtered arguments safe for wasm-pack.
+pub(crate) fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
+    if let Some(position) = wasm_pack_args
+        .iter()
+        .rposition(|arg: &String| arg == DOUBLE_DASH)
+    {
+        wasm_pack_args[position + 1..].to_vec()
+    } else {
+        let mut filtered: Vec<String> = Vec::new();
+        let mut skip_next: bool = false;
+        for arg in wasm_pack_args {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
+            if EUV_ARGS.contains(&arg.as_str()) {
+                if arg.contains('=') {
+                    continue;
+                }
+                skip_next = true;
+                continue;
+            }
+            filtered.push(arg.clone());
+        }
+        filtered
+    }
+}
+
+/// Resolves the build mode from CLI arguments.
+///
+/// First checks the explicit `--dev`, `--release`, and `--profiling` flags on `ModeArgs`.
+/// If none of those are set, inspects `wasm_pack_args` for any build mode flag
+/// that may have been forwarded by the user.
+/// Defaults to `BuildMode::Dev` if no build mode flag is found anywhere.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing the build mode flags and wasm_pack_args.
+///
+/// # Returns
+///
+/// - `BuildMode` - The resolved build mode.
+pub(crate) fn resolve_build_mode(args: &ModeArgs) -> BuildMode {
+    if args.profiling {
+        BuildMode::Profiling
+    } else if args.release {
+        BuildMode::Release
+    } else if args.dev {
+        BuildMode::Dev
+    } else if args
+        .wasm_pack_args
+        .iter()
+        .any(|arg: &String| arg == PROFILING_FLAG)
+    {
+        BuildMode::Profiling
+    } else if args
+        .wasm_pack_args
+        .iter()
+        .any(|arg: &String| arg == RELEASE_FLAG)
+    {
+        BuildMode::Release
+    } else {
+        BuildMode::Dev
+    }
+}
+
+/// Converts a `BuildMode` to the corresponding wasm-pack flag string.
+///
+/// # Arguments
+///
+/// - `BuildMode` - The build mode to convert.
+///
+/// # Returns
+///
+/// - `&'static str` - The wasm-pack command-line flag.
+pub(crate) fn build_mode_to_flag(build_mode: BuildMode) -> &'static str {
+    match build_mode {
+        BuildMode::Dev => DEV_FLAG,
+        BuildMode::Release => RELEASE_FLAG,
+        BuildMode::Profiling => PROFILING_FLAG,
+    }
+}
+
 /// Builds a `Gitignore` matcher from the `.gitignore` file at the given root path.
 ///
 /// # Arguments
@@ -99,14 +213,13 @@ pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
         out_name
     } else {
         let cargo_toml_path: PathBuf = args.crate_path.join(CARGO_TOML_FILE_NAME);
-        let crate_name: String = read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
+        read_crate_name_from_toml(&cargo_toml_path).unwrap_or_else(|| {
             args.crate_path
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .to_string()
-        });
-        crate_name.replace('-', "_")
+        })
     };
     format!("{name}{JS_EXTENSION}")
 }
@@ -230,7 +343,7 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     clean_pkg_dir(&pkg_dir).await;
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
-    let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+    let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
     let custom_html: Option<&Path> = args.index_html.as_deref();
     generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(())
@@ -363,7 +476,7 @@ pub(crate) async fn run_build_pipeline(
     }
     let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
     let import_path: String = resolve_import_path(args);
-    let is_release: bool = args.wasm_pack_args.contains(&RELEASE_FLAG.to_string());
+    let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
     let custom_html: Option<&Path> = args.index_html.as_deref();
     let html: String = generate_html(&www_dir, &import_path, is_release, custom_html).await?;
     Ok(html)
@@ -464,17 +577,24 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 ///
 /// - `Result<()>` - Indicates success or failure of the wasm-pack build.
 pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
+    let build_mode: BuildMode = resolve_build_mode(args);
+    let build_mode_flag: &str = build_mode_to_flag(build_mode);
+    let filtered_args: Vec<String> = filter_euv_args(&args.wasm_pack_args);
+    let has_existing_build_mode: bool = has_build_mode_flag(&filtered_args);
     let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
     let mut command: Command = Command::new(WASM_PACK_COMMAND);
+    command.arg(WASM_PACK_BUILD_SUBCOMMAND);
+    if !has_existing_build_mode {
+        command.arg(build_mode_flag);
+    }
     command
-        .arg(WASM_PACK_BUILD_SUBCOMMAND)
-        .args(&args.wasm_pack_args);
-    let has_out_dir: bool = extract_out_dir(&args.wasm_pack_args).is_some();
+        .args(&filtered_args)
+        .env(RUST_MIN_STACK_ENV, RUST_MIN_STACK_VALUE);
+    let has_out_dir: bool = extract_out_dir(&filtered_args).is_some();
     if !has_out_dir {
         command.arg(OUT_DIR_ARG).arg(&default_out_dir);
     }
-    let has_target: bool = args
-        .wasm_pack_args
+    let has_target: bool = filtered_args
         .iter()
         .any(|arg: &String| arg == TARGET_ARG || arg.starts_with(&format!("{TARGET_ARG}=")));
     if !has_target {
@@ -482,21 +602,25 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     }
     command.current_dir(&args.crate_path);
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let display_args: Vec<String> = args
-        .wasm_pack_args
-        .iter()
-        .cloned()
-        .chain(if has_out_dir {
-            Vec::new()
-        } else {
-            vec![OUT_DIR_ARG.to_string(), default_out_dir]
-        })
-        .chain(if has_target {
-            Vec::new()
-        } else {
-            vec![TARGET_ARG.to_string(), TARGET_WEB.to_string()]
-        })
-        .collect();
+    let display_args: Vec<String> = (if has_existing_build_mode {
+        filtered_args.to_vec()
+    } else {
+        std::iter::once(build_mode_flag.to_string())
+            .chain(filtered_args.iter().cloned())
+            .collect::<Vec<String>>()
+    })
+    .into_iter()
+    .chain(if has_out_dir {
+        Vec::new()
+    } else {
+        vec![OUT_DIR_ARG.to_string(), default_out_dir.clone()]
+    })
+    .chain(if has_target {
+        Vec::new()
+    } else {
+        vec![TARGET_ARG.to_string(), TARGET_WEB.to_string()]
+    })
+    .collect();
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
     create_dir_all(&out_dir_absolute)
         .await
@@ -508,9 +632,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
             )
         })?;
     log::info!(
-        "Running: {} {} {} ...",
-        WASM_PACK_COMMAND,
-        WASM_PACK_BUILD_SUBCOMMAND,
+        "Running: {WASM_PACK_COMMAND} {WASM_PACK_BUILD_SUBCOMMAND} {} ...",
         display_args.join(" ")
     );
     let output: Output = command
@@ -553,7 +675,7 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
         .output()
         .await
         .map_err(|error: std::io::Error| {
-            anyhow!("Failed to check hyperlane-cli availability: {}", error)
+            anyhow!("Failed to check hyperlane-cli availability: {error}")
         })?;
     if !which_output.status.success() {
         log::info!("hyperlane-cli not found, installing via cargo install...");
@@ -574,16 +696,15 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
     }
     let fmt_output: Output = Command::new(HYPERLANE_CLI_COMMAND)
         .arg(FMT_SUBCOMMAND)
+        .env(RUST_MIN_STACK_ENV, RUST_MIN_STACK_VALUE)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
         .await
-        .map_err(|error: std::io::Error| {
-            anyhow!("Failed to execute hyperlane-cli fmt: {}", error)
-        })?;
+        .map_err(|error: std::io::Error| anyhow!("Failed to execute hyperlane-cli fmt: {error}"))?;
     if !fmt_output.status.success() {
         let stderr: String = String::from_utf8_lossy(&fmt_output.stderr).to_string();
-        bail!("hyperlane-cli fmt failed:\n{}", stderr);
+        bail!("hyperlane-cli fmt failed:\n{stderr}");
     }
     Ok(())
 }

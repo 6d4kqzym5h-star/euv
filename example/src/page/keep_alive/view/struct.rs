@@ -1,3 +1,3 @@
 /// Props for the `page_keep_alive` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageKeepAliveProps;

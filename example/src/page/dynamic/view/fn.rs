@@ -11,10 +11,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The dynamic component demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_dynamic_component(
-    mut node: VirtualNode<PageDynamicComponentProps>,
-) -> VirtualNode {
-    let PageDynamicComponentProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps>) -> VirtualNode {
+    let PageDynamicComponentProps = node.try_get_props().unwrap_or_default();
     let tag_name_opt: Signal<String> = use_signal(|| DEFAULT_TAG_NAME.to_string());
     let content: Signal<String> = use_signal(|| "Hello, dynamic tag!".to_string());
     html! {

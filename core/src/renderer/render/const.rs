@@ -44,6 +44,3 @@ pub(crate) const CLASS_SELECTOR_PREFIX: &str = ".";
 
 /// The HTML `body` tag name, used as a default mount target.
 pub(crate) const BODY_TAG: &str = "body";
-
-/// The comma separator used for joining signal addresses in DOM attributes.
-pub(crate) const SIGNAL_ADDRS_SEPARATOR: &str = ",";

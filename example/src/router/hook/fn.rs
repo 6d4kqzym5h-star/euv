@@ -26,20 +26,16 @@ pub(crate) fn use_scroll_to_top(route_signal: Signal<String>) {
 ///
 /// Registers a global event listener on `window` that reads the current
 /// route on every hash change and writes it into the provided signal.
-/// The closure is leaked via `Closure::forget` so it persists for the
-/// entire application lifetime.
+/// The listener is automatically removed when the hook context is cleared.
 ///
 /// # Arguments
 ///
 /// - `Signal<String>` - The reactive signal that holds the current route and will be updated on each hash change.
 pub(crate) fn use_hash_change(route_signal: Signal<String>) {
-    let window: Window = window().expect("no global window exists");
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+    use_window_event("hashchange", move || {
         let new_route: String = current_route();
         route_signal.set(new_route);
-    }));
-    let _ = window.add_event_listener_with_callback("hashchange", closure.as_ref().unchecked_ref());
-    closure.forget();
+    });
 }
 
 /// Pushes a new entry onto the browser history stack.
@@ -73,22 +69,18 @@ pub(crate) fn back_on_close() {
 /// the panel (the consumed history entry is already gone). If the panel is
 /// closed, the event propagates normally.
 ///
-/// The closure is leaked via `Closure::forget` so it persists for the
-/// entire application lifetime.
+/// The listener is automatically removed when the hook context is cleared.
 ///
 /// # Arguments
 ///
 /// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
 pub(crate) fn use_pop_state(panel_open: Signal<bool>) {
-    let window: Window = window().expect("no global window exists");
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+    use_window_event("popstate", move || {
         let is_open: bool = panel_open.get();
         if is_open {
             panel_open.set(false);
         }
-    }));
-    let _ = window.add_event_listener_with_callback("popstate", closure.as_ref().unchecked_ref());
-    closure.forget();
+    });
 }
 
 /// Watches the drawer open signal and scrolls the mobile navigation drawer
@@ -161,10 +153,9 @@ pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
 /// Creates a reactive signal that tracks whether the viewport is in mobile mode
 /// and subscribes to browser `resize` events to keep it updated.
 ///
-/// The resize handler is debounced by `RESIZE_DEBOUNCE_MILLIS` (150ms) to avoid
+/// The resize handler is debounced by `RESIZE_DEBOUNCE_MILLIS` (16ms) to avoid
 /// excessive recomputation during continuous resize operations.
-/// The closures are leaked via `Closure::forget` so they persist for the
-/// entire application lifetime.
+/// The listener is automatically removed when the hook context is cleared.
 ///
 /// # Returns
 ///
@@ -172,9 +163,6 @@ pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
 pub(crate) fn use_resize() -> Signal<bool> {
     let mobile_signal: Signal<bool> = use_signal(is_mobile);
     let timer_signal: Signal<Option<i32>> = use_signal(|| None);
-    let debounce_window: Window = window().expect("no global window exists");
-    let timeout_window: Window = debounce_window.clone();
-    let resize_window: Window = debounce_window.clone();
     let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let mobile: bool = is_mobile();
         mobile_signal.set(mobile);
@@ -183,10 +171,12 @@ pub(crate) fn use_resize() -> Signal<bool> {
         .as_ref()
         .unchecked_ref::<Function>()
         .clone();
-    let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+    debounce_closure.forget();
+    let timeout_window: Window = window().expect("no global window exists");
+    use_window_event("resize", move || {
         let old_timer: Option<i32> = timer_signal.get();
         if let Some(timer_id) = old_timer {
-            debounce_window.clear_timeout_with_handle(timer_id);
+            timeout_window.clear_timeout_with_handle(timer_id);
         }
         let new_timer: i32 = timeout_window
             .set_timeout_with_callback_and_timeout_and_arguments_0(
@@ -195,10 +185,6 @@ pub(crate) fn use_resize() -> Signal<bool> {
             )
             .unwrap_or_default();
         timer_signal.set(Some(new_timer));
-    }));
-    let _ =
-        resize_window.add_event_listener_with_callback("resize", closure.as_ref().unchecked_ref());
-    closure.forget();
-    debounce_closure.forget();
+    });
     mobile_signal
 }

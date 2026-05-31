@@ -1,3 +1,3 @@
 /// Props for the `page_conditional` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageConditionalProps;

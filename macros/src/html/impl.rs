@@ -51,8 +51,8 @@ impl Parse for HtmlNode {
             return Ok(HtmlNode::Element(element));
         }
         if input.peek(LitStr) {
-            let lit: LitStr = input.parse()?;
-            return Ok(HtmlNode::Text(lit.value()));
+            let literal_string: LitStr = input.parse()?;
+            return Ok(HtmlNode::Text(literal_string.value()));
         }
         if input.peek(Token![if]) {
             let html_if: HtmlIf = input.parse()?;
@@ -244,10 +244,7 @@ impl Parse for HtmlElement {
         let (tag, tag_name, is_ident_tag): (Ident, String, bool) = if input.peek(LitStr) {
             let literal: LitStr = input.parse()?;
             let tag_name: String = literal.value();
-            let tag: Ident = Ident::new(
-                &tag_name.replace(CHAR_HYPHEN, STR_UNDERSCORE),
-                literal.span(),
-            );
+            let tag: Ident = Ident::new(&tag_name, literal.span());
             (tag, tag_name, false)
         } else {
             let tag: Ident = input.parse()?;
@@ -307,7 +304,7 @@ impl Parse for HtmlElement {
                 braced!(key_content in content);
                 let key_expr: Expr = key_content.parse()?;
                 content.parse::<Colon>()?;
-                let value: HtmlAttrValue = parse_attr_value(&content, "")?;
+                let value: HtmlAttrValue = parse_attr_value(&content, STR_EMPTY)?;
                 attributes.push((key_expr.to_token_stream(), value));
             } else if content.peek(Brace) {
                 let child_content: ParseBuffer<'_>;
@@ -338,8 +335,8 @@ impl Parse for HtmlElement {
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
                 attributes.push((key.to_token_stream(), value));
             } else if content.peek(LitStr) {
-                let lit: LitStr = content.parse()?;
-                children.push(HtmlNode::Text(lit.value()));
+                let literal_string: LitStr = content.parse()?;
+                children.push(HtmlNode::Text(literal_string.value()));
             } else if content.peek(Ident) {
                 if content.peek2(Brace) {
                     let element: HtmlElement = content.parse()?;
@@ -473,7 +470,7 @@ impl ToTokens for HtmlStylePropValue {
             HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlStylePropValue::If(html_attr_if) => {
                 let if_chain: proc_macro2::TokenStream =
-                    attr_if_to_tokens(html_attr_if, quote! { "" });
+                    attr_if_to_tokens(html_attr_if, quote! { #STR_EMPTY });
                 if_chain.to_tokens(tokens);
             }
         }
@@ -497,7 +494,7 @@ impl ToTokens for HtmlAttrValue {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlAttrValue::If(html_attr_if) => {
                 let if_chain: proc_macro2::TokenStream =
-                    attr_if_to_tokens(html_attr_if, quote! { "" });
+                    attr_if_to_tokens(html_attr_if, quote! { #STR_EMPTY });
                 tokens.extend(quote! {
                     ::euv::AttributeValue::create_reactive_signal(move || ::euv::IntoReactiveString::into_reactive_string(#if_chain))
                 });
@@ -518,11 +515,11 @@ impl ToTokens for HtmlAttrValue {
                     let prop_tokens: Vec<proc_macro2::TokenStream> = props
                         .iter()
                         .map(|(key, value): &(String, HtmlStylePropValue)| {
-                            quote! { .property(#key, #value) }
+                            quote! { (#key.to_string(), ::euv::IntoReactiveString::into_reactive_string(#value)) }
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::AttributeValue::create_reactive_signal(move || ::euv::Style::default()#(#prop_tokens)*.to_css_string())
+                        ::euv::AttributeValue::create_reactive_signal(move || ::euv::Css::create_style_string_owned(&[#(#prop_tokens), *]))
                     });
                 } else if all_literal {
                     let mut css_string: String = String::new();
@@ -530,7 +527,7 @@ impl ToTokens for HtmlAttrValue {
                         if !css_string.is_empty() {
                             css_string.push(CHAR_SPACE);
                         }
-                        css_string.push_str(&key.replace(CHAR_UNDERSCORE, STR_HYPHEN));
+                        css_string.push_str(key);
                         css_string.push_str(CSS_PROP_SEPARATOR);
                         if let HtmlStylePropValue::Literal(literal_value) = value {
                             css_string.push_str(literal_value);
@@ -541,14 +538,14 @@ impl ToTokens for HtmlAttrValue {
                         #css_string.to_string()
                     });
                 } else {
-                    let kv_tokens: Vec<proc_macro2::TokenStream> = props
+                    let key_value_tokens: Vec<proc_macro2::TokenStream> = props
                         .iter()
                         .map(|(key, value): &(String, HtmlStylePropValue)| {
                             quote! { (#key, #value) }
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::Style::create_style_string(&[#(#kv_tokens), *])
+                        ::euv::Css::create_style_string(&[#(#key_value_tokens), *])
                     });
                 }
             }
@@ -597,16 +594,10 @@ impl ToTokens for HtmlDynamicTag {
         let attr_tokens: Vec<proc_macro2::TokenStream> = attributes
             .iter()
             .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = key.to_string().replace(' ', "");
-                let is_event: bool = key_string.starts_with(EVENT_ATTR_PREFIX);
-                let raw_key: String = if is_event {
-                    key_string.clone()
-                } else {
-                    key_string.replace(CHAR_UNDERSCORE, STR_HYPHEN)
-                };
-                let attr_name_str: String = raw_key
+                let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
+                let attr_name_str: String = key_string
                     .strip_prefix(RAW_IDENT_PREFIX)
-                    .unwrap_or(&raw_key)
+                    .unwrap_or(&key_string)
                     .to_string();
                 let attr_name_token: proc_macro2::TokenStream =
                     quote! { #attr_name_str.to_string() };
@@ -660,7 +651,7 @@ impl ToTokens for HtmlDynamicTag {
                 token_stream
             })
             .collect();
-        let component_registry: HashMap<String, ComponentInfo> = load_component_registry();
+        let component_registry: HashMap<String, ComponentInfo> = get_loaded_component_registry();
         let component_match_arms: Vec<proc_macro2::TokenStream> = component_registry
             .iter()
             .map(|(fn_name, component_info): (&String, &ComponentInfo)| {
@@ -672,7 +663,7 @@ impl ToTokens for HtmlDynamicTag {
                 let prop_field_tokens: Vec<proc_macro2::TokenStream> = attributes
                     .iter()
                     .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                        let key_string: String = key.to_string().replace(' ', "");
+                        let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
                         if !props_fields.contains(&key_string) {
                             return None;
                         }
@@ -684,7 +675,7 @@ impl ToTokens for HtmlDynamicTag {
                             HtmlAttrValue::If(html_attr_if) => {
                                 let else_default: proc_macro2::TokenStream = match props_field_types.get(&key_string).map(|s: &String| s.as_str()) {
                                     Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
-                                    _ => quote! { "" },
+                                    _ => quote! { #STR_EMPTY },
                                 };
                                 let if_chain: proc_macro2::TokenStream =
                                     attr_if_to_tokens(html_attr_if, else_default);
@@ -717,7 +708,7 @@ impl ToTokens for HtmlDynamicTag {
                     .iter()
                     .enumerate()
                     .filter(|(_, (key, _)): &(usize, &(proc_macro2::TokenStream, HtmlAttrValue))| {
-                        let key_string: String = key.to_string().replace(' ', "");
+                        let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
                         key_string == ATTR_KEY_CLASS
                             || key_string == ATTR_KEY_STYLE
                             || key_string.starts_with(EVENT_ATTR_PREFIX)
@@ -819,7 +810,7 @@ impl ToTokens for HtmlElement {
             quote_spanned!(tag_span=> #tag_name.to_string());
         let is_component: bool = self.get_is_ident_tag() && is_user_fn(&tag_name);
         if is_component {
-            let props_type_name: &str = get_user_fn_props_type(&tag_name).unwrap_or("");
+            let props_type_name: &str = get_user_fn_props_type(&tag_name).unwrap_or(STR_EMPTY);
             let props_type_ident: Ident = Ident::new(props_type_name, tag_span);
             let props_field_types: HashMap<String, String> =
                 get_user_fn_props_field_types(&tag_name)
@@ -829,7 +820,7 @@ impl ToTokens for HtmlElement {
                 .get_attributes()
                 .iter()
                 .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                    let key_string: String = key.to_string().replace(' ', "");
+                    let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
                     let field_ident: Ident =
                         Ident::new(&key_string, proc_macro2::Span::call_site());
                     match value {
@@ -842,7 +833,7 @@ impl ToTokens for HtmlElement {
                                 .map(|s: &String| s.as_str())
                             {
                                 Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
-                                _ => quote! { "" },
+                                _ => quote! { #STR_EMPTY },
                             };
                             let if_chain: proc_macro2::TokenStream =
                                 attr_if_to_tokens(html_attr_if, else_default);
@@ -897,16 +888,10 @@ impl ToTokens for HtmlElement {
         } else {
             let mut key_expr: Option<proc_macro2::TokenStream> = None;
             let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = key.to_string().replace(' ', "");
-                let is_event: bool = key_string.starts_with(EVENT_ATTR_PREFIX);
-                let raw_key: String = if is_event {
-                    key_string.clone()
-                } else {
-                    key_string.replace(CHAR_UNDERSCORE, STR_HYPHEN)
-                };
-                let attr_name_str: String = raw_key.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&raw_key).to_string();
+                let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
+                let attr_name_str: String = key_string.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&key_string).to_string();
                 let attr_name_token: proc_macro2::TokenStream = quote! { #attr_name_str.to_string() };
-                if key_string == "key" {
+                if key_string == ATTR_KEY_KEY {
                     if let HtmlAttrValue::Expr(expr) = value {
                         key_expr = Some(quote! { Some(::euv::IntoReactiveString::into_reactive_string(#expr)) });
                     }

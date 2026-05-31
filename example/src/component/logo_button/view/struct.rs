@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Defines the strongly-typed interface for a branded logo button
 /// that renders the "E" letter with a gradient background.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct LogoButtonProps {
     /// The display variant controlling size and positioning.
     pub(crate) variant: LogoButtonVariant,

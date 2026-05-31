@@ -6,20 +6,14 @@ use crate::*;
 ///
 /// - `VirtualNode` - The animation demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_animation(mut node: VirtualNode<PageAnimationProps>) -> VirtualNode {
-    let PageAnimationProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNode {
+    let PageAnimationProps = node.try_get_props().unwrap_or_default();
     let box_visible: Signal<bool> = use_signal(|| false);
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);
     let progress: UseProgress = use_progress();
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
-    let progress_handle: Signal<Option<IntervalHandle>> = progress.get_handle();
-    use_cleanup(move || {
-        if let Some(handle) = progress_handle.get() {
-            handle.clear();
-        }
-    });
     html! {
         div {
             class: c_page_container()
@@ -86,7 +80,12 @@ pub(crate) fn page_animation(mut node: VirtualNode<PageAnimationProps>) -> Virtu
                         "Reset"
                     }
                 }
-                { build_progress_bar(progress.get_value()) }
+                div {
+                    class: c_progress_container()
+                    div {
+                        class: if { progress.get_running().get() } { c_progress_bar_running() } else { c_progress_bar_stopped() }
+                    }
+                }
             }
             my_card {
                 title: "Color Cycle"
@@ -102,32 +101,6 @@ pub(crate) fn page_animation(mut node: VirtualNode<PageAnimationProps>) -> Virtu
                     "Click me to shrink!"
                 }
             }
-        }
-    }
-}
-
-/// Builds a reactive progress bar section that updates when the signal changes.
-///
-/// # Arguments
-///
-/// - `Signal<i32>` - The progress value signal (0-100).
-///
-/// # Returns
-///
-/// - `VirtualNode` - A fragment containing the progress bar and percentage text.
-fn build_progress_bar(progress_value: Signal<i32>) -> VirtualNode {
-    html! {
-        div {
-            class: c_progress_container()
-            div {
-                class: c_progress_bar()
-                style: { width: format!("{}%", progress_value.get()); background: if { progress_value.get() >= 100 } { "#059669".to_string() } else { "#4f46e5".to_string() }; }
-            }
-        }
-        p {
-            class: c_progress_text()
-            progress_value
-            "%"
         }
     }
 }

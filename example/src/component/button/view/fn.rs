@@ -10,13 +10,13 @@ use crate::*;
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn primary_button(mut node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
+pub(crate) fn primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
     let PrimaryButtonProps {
         label,
         onclick: click_handler,
         disabled,
-    } = node.try_take_props().unwrap_or_default();
-    let children: VirtualNode = node.take_children();
+    } = node.try_get_props().unwrap_or_default();
+    let children: VirtualNode = node.try_get_child_node();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
         other => other,
@@ -42,13 +42,13 @@ pub(crate) fn primary_button(mut node: VirtualNode<PrimaryButtonProps>) -> Virtu
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn modal_primary_button(mut node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
+pub(crate) fn modal_primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
     let PrimaryButtonProps {
         label,
         onclick: click_handler,
         disabled,
-    } = node.try_take_props().unwrap_or_default();
-    let children: VirtualNode = node.take_children();
+    } = node.try_get_props().unwrap_or_default();
+    let children: VirtualNode = node.try_get_child_node();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
         other => other,

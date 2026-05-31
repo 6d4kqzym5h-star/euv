@@ -42,11 +42,22 @@ pub(crate) const CHAR_CSS_RULE_CLOSE: char = '}';
 /// The CSS class selector prefix character.
 pub(crate) const CHAR_CSS_CLASS_PREFIX: char = '.';
 
-/// The hyphen string used for replacing underscores in kebab-case conversion.
-pub(crate) const STR_HYPHEN: &str = "-";
+/// The CSS rule open brace format string used when injecting style rules into the DOM.
+///
+/// Used by `Css::inject_style` to format CSS class rules and pseudo-class rules
+/// as `.class-name { style }` or `.class-name:hover { style }`.
+pub(crate) const CSS_RULE_OPEN_FORMAT: &str = " { ";
 
-/// The underscore character used in CSS property name conversion.
-pub(crate) const CHAR_UNDERSCORE: char = '_';
+/// The CSS rule close brace format string used when injecting style rules into the DOM.
+///
+/// Used by `Css::inject_style` to close the declaration block of a CSS rule.
+pub(crate) const CSS_RULE_CLOSE_FORMAT: &str = " }";
+
+/// The newline character used as a separator between CSS rules in injected style text.
+///
+/// Each rule (class rule, pseudo rule, or media rule) is separated by a newline
+/// when appended to the shared `<style>` element.
+pub(crate) const CHAR_CSS_RULE_SEPARATOR: char = '\n';
 
 /// The signal addresses separator character.
 pub(crate) const CHAR_SIGNAL_ADDRS_SEPARATOR: char = ',';

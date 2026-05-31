@@ -85,11 +85,36 @@ pub(crate) const RELATIVE_PATH_PREFIX: &str = "./";
 /// The path separator used for joining path components.
 pub(crate) const PATH_SEPARATOR: &str = "/";
 
+/// The wasm-pack flag for development builds.
+pub(crate) const DEV_FLAG: &str = "--dev";
+
+/// The wasm-pack flag for profiling builds.
+pub(crate) const PROFILING_FLAG: &str = "--profiling";
+
+/// The euv-specific argument names that should not be forwarded to wasm-pack.
+pub(crate) const EUV_ARGS: &[&str] = &[
+    "--crate-path",
+    "-c",
+    "--port",
+    "-p",
+    "--www-dir",
+    "--index-html",
+];
+
+/// The double-dash separator used to distinguish euv args from wasm-pack args.
+pub(crate) const DOUBLE_DASH: &str = "--";
+
 /// The `run` action name used in banner display.
 pub(crate) const ACTION_RUN: &str = "run";
 
 /// The `build` action name used in banner display.
 pub(crate) const ACTION_BUILD: &str = "build";
+
+/// The environment variable name for setting the minimum stack size of rustc threads.
+pub(crate) const RUST_MIN_STACK_ENV: &str = "RUST_MIN_STACK";
+
+/// The minimum stack size in bytes for rustc threads (16 MiB).
+pub(crate) const RUST_MIN_STACK_VALUE: &str = "16777216";
 
 /// The `index.html` template for the development profile.
 ///

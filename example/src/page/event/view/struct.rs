@@ -1,3 +1,3 @@
 /// Props for the `page_event` component.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageEventProps;

@@ -2,7 +2,7 @@
 ///
 /// Defines the strongly-typed interface for a standard page header
 /// with a title and subtitle.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct PageHeaderProps {
     /// The page title text displayed in the heading.
     pub(crate) title: &'static str,

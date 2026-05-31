@@ -1,18 +1,17 @@
 use crate::*;
 
-/// Creates progress bar state signals wrapped in a `UseProgress` struct.
+/// Creates progress bar state with a running signal.
 ///
 /// # Returns
 ///
-/// - `UseProgress` - The progress state containing value, running, and handle signals.
+/// - `UseProgress` - The progress state containing a running signal.
 pub(crate) fn use_progress() -> UseProgress {
-    UseProgress::new(use_signal(|| 0), use_signal(|| false), use_signal(|| None))
+    UseProgress::new(use_signal(|| false))
 }
 
 /// Creates a click event handler that starts the progress bar animation.
 ///
-/// Resets the progress value to 0, sets running to true, and starts a
-/// 30ms interval that increments the progress until it reaches 100.
+/// Sets running to true to trigger the CSS animation.
 ///
 /// # Arguments
 ///
@@ -23,31 +22,13 @@ pub(crate) fn use_progress() -> UseProgress {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to start the progress bar.
 pub(crate) fn progress_on_start(state: UseProgress) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
-        state.get_value().set(0);
         state.get_running().set(true);
-        let handle_opt: Option<IntervalHandle> = state.get_handle().get();
-        if let Some(existing_handle) = handle_opt {
-            existing_handle.clear();
-        }
-        let value_signal: Signal<i32> = state.get_value();
-        let running_signal: Signal<bool> = state.get_running();
-        let handle_signal: Signal<Option<IntervalHandle>> = state.get_handle();
-        let new_handle: IntervalHandle = use_interval(16, move || {
-            if running_signal.get() {
-                let current: i32 = value_signal.get();
-                if current < 100 {
-                    let next: i32 = (current + 2).min(100);
-                    value_signal.set(next);
-                } else {
-                    running_signal.set(false);
-                }
-            }
-        });
-        handle_signal.set(Some(new_handle));
     }))
 }
 
 /// Creates a click event handler that resets the progress bar.
+///
+/// Sets running to false to remove the CSS animation and reset the bar.
 ///
 /// # Arguments
 ///
@@ -59,12 +40,6 @@ pub(crate) fn progress_on_start(state: UseProgress) -> Option<Rc<dyn Fn(Event)>>
 pub(crate) fn progress_on_reset(state: UseProgress) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
         state.get_running().set(false);
-        let handle_opt: Option<IntervalHandle> = state.get_handle().get();
-        if let Some(existing_handle) = handle_opt {
-            existing_handle.clear();
-        }
-        state.get_handle().set(None);
-        state.get_value().set(0);
     }))
 }
 

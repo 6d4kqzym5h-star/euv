@@ -30,8 +30,24 @@ pub(crate) fn is_double_colon(content: ParseStream) -> bool {
 /// - `HashMap<String, ComponentInfo>` - The map of function names to component metadata.
 pub(crate) fn set_user_fn_names(names: HashMap<String, ComponentInfo>) {
     unsafe {
-        let ptr: *mut MaybeUninit<HashMap<String, ComponentInfo>> = &raw mut USER_FN_NAMES;
-        (*ptr).write(names);
+        let pointer: *mut MaybeUninit<HashMap<String, ComponentInfo>> = &raw mut USER_FN_NAMES;
+        (*pointer).write(names);
+    }
+}
+
+/// Returns the already-loaded component registry without re-scanning the file system.
+///
+/// This is used by `HtmlDynamicTag::to_tokens` to avoid calling `load_component_registry`
+/// again, since the registry has already been populated by `parse_html` before
+/// token generation begins.
+///
+/// # Returns
+///
+/// - `HashMap<String, ComponentInfo>` - The loaded component registry.
+pub(crate) fn get_loaded_component_registry() -> HashMap<String, ComponentInfo> {
+    unsafe {
+        let pointer: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*pointer).assume_init_ref().clone()
     }
 }
 
@@ -46,8 +62,8 @@ pub(crate) fn set_user_fn_names(names: HashMap<String, ComponentInfo>) {
 /// - `bool` - `true` if the name exists in the component registry, `false` otherwise.
 pub(crate) fn is_user_fn(name: &str) -> bool {
     unsafe {
-        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
-        (*ptr).assume_init_ref().contains_key(name)
+        let pointer: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*pointer).assume_init_ref().contains_key(name)
     }
 }
 
@@ -62,8 +78,8 @@ pub(crate) fn is_user_fn(name: &str) -> bool {
 /// - `Option<&'static str>` - The Props type name if found.
 pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
     unsafe {
-        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
-        (*ptr)
+        let pointer: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*pointer)
             .assume_init_ref()
             .get(name)
             .map(|info: &ComponentInfo| info.props_type.as_str())
@@ -84,8 +100,8 @@ pub(crate) fn get_user_fn_props_type(name: &str) -> Option<&'static str> {
 /// - `Option<&'static Vec<String>>` - The list of props field names if the component is found.
 pub(crate) fn get_user_fn_props_fields(name: &str) -> Option<&'static Vec<String>> {
     unsafe {
-        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
-        (*ptr)
+        let pointer: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*pointer)
             .assume_init_ref()
             .get(name)
             .map(|info: &ComponentInfo| &info.props_fields)
@@ -107,8 +123,8 @@ pub(crate) fn get_user_fn_props_field_types(
     name: &str,
 ) -> Option<&'static HashMap<String, String>> {
     unsafe {
-        let ptr: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
-        (*ptr)
+        let pointer: *const MaybeUninit<HashMap<String, ComponentInfo>> = &raw const USER_FN_NAMES;
+        (*pointer)
             .assume_init_ref()
             .get(name)
             .map(|info: &ComponentInfo| &info.props_field_types)
@@ -160,9 +176,9 @@ pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
     let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
     let mut global_props_fields_map: HashMap<String, Vec<String>> = HashMap::new();
     let mut global_props_field_types_map: HashMap<String, HashMap<String, String>> = HashMap::new();
-    let mut rs_files: Vec<PathBuf> = Vec::new();
-    collect_rs_files(&src_dir, &mut rs_files);
-    for path in &rs_files {
+    let mut rust_source_files: Vec<PathBuf> = Vec::new();
+    collect_rs_files(&src_dir, &mut rust_source_files);
+    for path in &rust_source_files {
         collect_props_structs_from_file(
             path,
             &mut global_props_fields_map,
@@ -170,7 +186,7 @@ pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
         );
     }
     let mut fn_names: HashMap<String, ComponentInfo> = HashMap::new();
-    for path in &rs_files {
+    for path in &rust_source_files {
         scan_file_for_components_with_map(
             path,
             &global_props_fields_map,
@@ -358,13 +374,16 @@ fn extract_props_struct_types(file: &File) -> HashMap<String, HashMap<String, St
 /// # Returns
 ///
 /// - `String` - The last segment of the type path.
-fn extract_type_last_segment(ty: &Type) -> String {
-    if let Type::Path(type_path) = ty
+fn extract_type_last_segment(param_type: &Type) -> String {
+    if let Type::Path(type_path) = param_type
         && let Some(segment) = type_path.path.segments.last()
     {
         return segment.ident.to_string();
     }
-    ty.to_token_stream().to_string().replace(' ', "")
+    param_type
+        .to_token_stream()
+        .to_string()
+        .replace(CHAR_SPACE, STR_EMPTY)
 }
 
 /// Extracts the Props type name from the first parameter of a component function.
@@ -385,19 +404,19 @@ fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
     let inputs: &syn::punctuated::Punctuated<syn::FnArg, Token![,]> = &item_fn.sig.inputs;
     for input in inputs {
         if let syn::FnArg::Typed(pat_type) = input {
-            let ty: &Type = &pat_type.ty;
-            if let Type::Path(type_path) = ty
+            let param_type: &Type = &pat_type.ty;
+            if let Type::Path(type_path) = param_type
                 && let Some(segment) = type_path.path.segments.last()
                 && segment.ident == VIRTUAL_NODE_TYPE
             {
                 if let syn::PathArguments::AngleBracketed(args) = &segment.arguments
-                    && let Some(syn::GenericArgument::Type(inner_ty)) = args.args.first()
-                    && let Type::Path(inner_path) = inner_ty
+                    && let Some(syn::GenericArgument::Type(inner_param_type)) = args.args.first()
+                    && let Type::Path(inner_path) = inner_param_type
                     && let Some(inner_segment) = inner_path.path.segments.last()
                 {
                     return inner_segment.ident.to_string();
                 }
-            } else if let Type::Path(type_path) = ty
+            } else if let Type::Path(type_path) = param_type
                 && let Some(segment) = type_path.path.segments.last()
             {
                 return segment.ident.to_string();
@@ -457,8 +476,8 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
             let element: HtmlElement = content.parse()?;
             children.push(HtmlNode::Element(element));
         } else if content.peek(LitStr) {
-            let lit: LitStr = content.parse()?;
-            children.push(HtmlNode::Text(lit.value()));
+            let literal_string: LitStr = content.parse()?;
+            children.push(HtmlNode::Text(literal_string.value()));
         } else if content.peek(Token![if]) {
             let html_if: HtmlIf = content.parse()?;
             children.push(HtmlNode::If(html_if));
@@ -587,7 +606,7 @@ pub(crate) fn parse_dynamic_component_children(
             braced!(key_content in content);
             let key_expr: Expr = key_content.parse()?;
             content.parse::<Colon>()?;
-            let value: HtmlAttrValue = parse_attr_value(content, "")?;
+            let value: HtmlAttrValue = parse_attr_value(content, STR_EMPTY)?;
             attributes.push((key_expr.to_token_stream(), value));
         } else if content.peek(Brace) {
             let child_content: ParseBuffer<'_>;
@@ -618,8 +637,8 @@ pub(crate) fn parse_dynamic_component_children(
             let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
             attributes.push((key.to_token_stream(), value));
         } else if content.peek(LitStr) {
-            let lit: LitStr = content.parse()?;
-            children.push(HtmlNode::Text(lit.value()));
+            let literal_string: LitStr = content.parse()?;
+            children.push(HtmlNode::Text(literal_string.value()));
         } else if content.peek(Ident) {
             if content.peek2(Brace) {
                 let element: HtmlElement = content.parse()?;
@@ -675,9 +694,9 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
     match children.len() {
         0 => quote! { ::euv::VirtualNode::Empty },
         1 => {
-            let mut ts: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-            children[0].to_tokens(&mut ts);
-            ts
+            let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+            children[0].to_tokens(&mut token_stream);
+            token_stream
         }
         _ => {
             let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
@@ -886,8 +905,8 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
                     let html_attr_if: HtmlAttrIf = parse_attr_if(&style_content)?;
                     HtmlStylePropValue::If(html_attr_if)
                 } else if style_content.peek(LitStr) {
-                    let lit: LitStr = style_content.parse()?;
-                    HtmlStylePropValue::Literal(lit.value())
+                    let literal_string: LitStr = style_content.parse()?;
+                    HtmlStylePropValue::Literal(literal_string.value())
                 } else if style_content.peek(Brace) {
                     let expr_content: ParseBuffer<'_>;
                     braced!(expr_content in style_content);
@@ -937,7 +956,7 @@ pub(crate) fn merge_same_key_attributes(attributes: HtmlAttrs) -> HtmlAttrs {
     let mut style_values: Vec<HtmlAttrValue> = Vec::new();
     let mut result: HtmlAttrs = Vec::new();
     for (key, value) in attributes {
-        let key_string: String = key.to_string().replace(' ', "");
+        let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
         if key_string == ATTR_KEY_CLASS {
             class_values.push(value);
         } else if key_string == ATTR_KEY_STYLE {
@@ -1001,9 +1020,8 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
         HtmlAttrValue::Expr(expr) => {
             if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                 if is_component {
-                    let callback_name: String = key_str.replace(CHAR_UNDERSCORE, STR_HYPHEN);
                     quote! {
-                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#callback_name)
+                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#key_str)
                     }
                 } else {
                     quote! {

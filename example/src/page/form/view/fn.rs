@@ -6,8 +6,8 @@ use crate::*;
 ///
 /// - `VirtualNode` - The form demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_form(mut node: VirtualNode<PageFormProps>) -> VirtualNode {
-    let PageFormProps = node.try_take_props().unwrap_or_default();
+pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
+    let PageFormProps = node.try_get_props().unwrap_or_default();
     let form: UseForm = use_form();
     html! {
         div {
@@ -40,8 +40,6 @@ pub(crate) fn page_form(mut node: VirtualNode<PageFormProps>) -> VirtualNode {
                             class: c_field_error_text()
                             form.get_username_error()
                         }
-                    } else {
-                        ""
                     }
                 }
                 div {
@@ -66,8 +64,6 @@ pub(crate) fn page_form(mut node: VirtualNode<PageFormProps>) -> VirtualNode {
                             class: c_field_error_text()
                             form.get_email_error()
                         }
-                    } else {
-                        ""
                     }
                 }
                 div {
@@ -92,8 +88,6 @@ pub(crate) fn page_form(mut node: VirtualNode<PageFormProps>) -> VirtualNode {
                             class: c_field_error_text()
                             form.get_password_error()
                         }
-                    } else {
-                        ""
                     }
                 }
                 div {

@@ -11,3 +11,16 @@ pub(crate) type SignalUpdateEntry = Rc<RefCell<SignalUpdateSlot>>;
 /// Uses `&'static str` for event names to avoid allocation on every dispatch lookup.
 /// Known event names are compile-time constants; custom names are leaked once via `as_str()`.
 pub(crate) type HandlerRegistryMap = HashMap<(usize, &'static str), HandlerEntry>;
+
+/// Type alias for a single window event handler entry in the proxy registry.
+///
+/// Each entry holds a unique handler ID and a shared mutable callback.
+/// The ID allows targeted removal during cleanup without disrupting other handlers.
+pub(crate) type WindowEventHandlerEntry = (usize, Rc<RefCell<Box<dyn FnMut()>>>);
+
+/// Type alias for the window event proxy registry map.
+///
+/// Maps event names to a list of handler entries. All handlers for the same
+/// event name share a single `window.addEventListener` listener (the proxy),
+/// which iterates this list and invokes each callback on every event.
+pub(crate) type WindowEventRegistryMap = HashMap<String, Vec<WindowEventHandlerEntry>>;

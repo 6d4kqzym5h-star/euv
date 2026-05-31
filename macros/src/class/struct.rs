@@ -13,7 +13,7 @@ pub(crate) struct ClassParam {
     /// The explicit type annotation for this parameter (e.g., `&str`).
     #[get(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) ty: Type,
+    pub(crate) param_type: Type,
 }
 
 /// A pseudo-class or pseudo-element block parsed from the `class!` macro.
@@ -113,7 +113,7 @@ pub(crate) struct ClassInput {
 /// for a no-param class definition.
 pub(crate) struct OnceLockParams<'a> {
     /// The visibility modifier for the generated function.
-    pub(crate) vis: &'a Visibility,
+    pub(crate) visibility: &'a Visibility,
     /// The function name token stream.
     pub(crate) fn_name_token: &'a proc_macro2::TokenStream,
     /// The `OnceLock` constant name token stream.

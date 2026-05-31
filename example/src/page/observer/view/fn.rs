@@ -9,9 +9,9 @@ use crate::*;
 ///
 /// - `VirtualNode` - The observer demo page virtual DOM tree.
 #[component]
-pub(crate) fn page_observer(mut node: VirtualNode<PageObserverProps>) -> VirtualNode {
-    let PageObserverProps = node.try_take_props().unwrap_or_default();
-    use_intersection_observer("[data-observer-container]");
+pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode {
+    let PageObserverProps = node.try_get_props().unwrap_or_default();
+    use_intersection_observer("[data_observer_container]");
     html! {
         div {
             class: c_page_container()
