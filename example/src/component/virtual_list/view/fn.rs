@@ -14,9 +14,7 @@ use crate::*;
 /// - `Option<Rc<dyn Fn(Event)>>` - A scroll handler for the virtual list container.
 pub(crate) fn virtual_list_on_scroll(state: UseVirtualList) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
-        let window_value: Window = window().expect("no global window exists");
-        let document_value: Document = window_value.document().expect("should have a document");
-        if let Some(container) = document_value.get_element_by_id(VIRTUAL_LIST_CONTAINER_ID) {
+        if let Some(container) = virtual_list_container() {
             let html_element: HtmlElement = container.unchecked_into();
             state.get_scroll_offset().set(html_element.scroll_top());
             state
@@ -24,6 +22,59 @@ pub(crate) fn virtual_list_on_scroll(state: UseVirtualList) -> Option<Rc<dyn Fn(
                 .set(html_element.client_height());
         }
     }))
+}
+
+/// Reads the container `clientHeight` and writes it to the viewport height signal.
+///
+/// Should only be called when the DOM is already present (e.g. inside a resize
+/// callback or after the first paint). For initial mount use
+/// `virtual_list_schedule_measure` instead.
+///
+/// # Arguments
+///
+/// - `UseVirtualList` - The virtual list state.
+pub(crate) fn virtual_list_update_viewport_height(state: UseVirtualList) {
+    if let Some(container) = virtual_list_container() {
+        let html_element: HtmlElement = container.unchecked_into();
+        state
+            .get_viewport_height()
+            .set(html_element.client_height());
+    }
+}
+
+/// Schedules a viewport height measurement on the next animation frame.
+///
+/// Defers the measurement via `requestAnimationFrame` so the DOM has been
+/// fully rendered before reading `clientHeight`. This is necessary on initial
+/// mount because the component render function executes before the DOM nodes
+/// are inserted. After the signal update, a re-render is automatically
+/// triggered to correct the visible range.
+///
+/// # Arguments
+///
+/// - `UseVirtualList` - The virtual list state.
+pub(crate) fn virtual_list_schedule_measure(state: UseVirtualList) {
+    let callback: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        virtual_list_update_viewport_height(state);
+    }));
+    window()
+        .expect("no global window exists")
+        .request_animation_frame(callback.as_ref().unchecked_ref())
+        .expect("failed to request animation frame");
+    callback.forget();
+}
+
+/// Returns the virtual list container element by its id.
+///
+/// # Returns
+///
+/// - `Option<Element>` - The container element, if found in the document.
+fn virtual_list_container() -> Option<Element> {
+    window()
+        .expect("no global window exists")
+        .document()
+        .expect("should have a document")
+        .get_element_by_id(VIRTUAL_LIST_CONTAINER_ID)
 }
 
 /// Computes the range of visible item indices for the virtual list.

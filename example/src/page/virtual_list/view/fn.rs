@@ -13,6 +13,10 @@ use crate::*;
 pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> VirtualNode {
     let PageVirtualListProps = node.try_get_props().unwrap_or_default();
     let state: UseVirtualList = use_virtual_list();
+    virtual_list_schedule_measure(state);
+    use_window_event("resize", move || {
+        virtual_list_update_viewport_height(state);
+    });
     let scroll_offset: i32 = state.get_scroll_offset().get();
     let viewport_height: i32 = state.get_viewport_height().get();
     let (visible_start, visible_end, render_start, render_end): (usize, usize, usize, usize) =

@@ -366,10 +366,8 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                     button {
                         class: c_nav_theme_button()
                         onclick: toggle_theme(theme_signal)
-                        if { theme_signal.get() == THEME_DARK } {
-                            "☀"
-                        } else {
-                            "🌙"
+                        div {
+                            class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
                         }
                     }
                 }
@@ -433,12 +431,10 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     }
                 }
                 button {
-                    class: c_mobile_menu_button()
+                    class: c_mobile_theme_button()
                     onclick: toggle_theme(theme_signal)
-                    if { theme_signal.get() == THEME_DARK } {
-                        "☀"
-                    } else {
-                        "🌙"
+                    div {
+                        class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
                     }
                 }
             }
@@ -498,10 +494,8 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         button {
                             class: c_nav_theme_button()
                             onclick: toggle_theme(theme_signal)
-                            if { theme_signal.get() == THEME_DARK } {
-                                "☀"
-                            } else {
-                                "🌙"
+                            div {
+                                class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
                             }
                         }
                     }

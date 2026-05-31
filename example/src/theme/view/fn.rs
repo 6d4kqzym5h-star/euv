@@ -71,6 +71,11 @@ css_vars! {
         shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.08)";
         bg-console-close-hover: "rgba(239, 68, 68, 0.08)";
         text-console-close-hover: "#ef4444";
+        gap-page-header: "12px";
+        gap-page-title: "4px";
+        padding-main-top: "20px";
+        gap-card: "12px";
+        gap-card-mobile: "8px";
     }
 
     pub(crate) c_theme_dark {
@@ -143,5 +148,10 @@ css_vars! {
         shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.5)";
         bg-console-close-hover: "rgba(239, 68, 68, 0.15)";
         text-console-close-hover: "#f87171";
+        gap-page-header: "12px";
+        gap-page-title: "4px";
+        padding-main-top: "20px";
+        gap-card: "12px";
+        gap-card-mobile: "8px";
     }
 }
