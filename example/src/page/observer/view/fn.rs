@@ -11,7 +11,7 @@ use crate::*;
 #[component]
 pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode {
     let PageObserverProps = node.try_get_props().unwrap_or_default();
-    use_intersection_observer("[data_observer_container]");
+    use_intersection_observer("[data-observer-container]");
     html! {
         div {
             class: c_page_container()
@@ -31,7 +31,7 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
                 }
                 ul {
                     class: c_list_ul()
-                    data_observer_container: "true"
+                    data-observer-container: "true"
                     for index in { 0..20 } {
                         li {
                             key: index.to_string()
@@ -39,7 +39,7 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
                             data_index: index.to_string()
                             span {
                                 class: c_list_item_text()
-                                { format!("Observed Item {}", index + 1) }
+                                format!("Observed Item {}", index + 1)
                             }
                         }
                     }

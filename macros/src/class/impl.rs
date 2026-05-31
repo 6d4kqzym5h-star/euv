@@ -122,8 +122,10 @@ impl Parse for ClassInput {
                             let paren_content: ParseBuffer<'_>;
                             parenthesized!(paren_content in content);
                             let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
-                            let arg_str: String = arg_tokens.to_string().replace(CHAR_SPACE, "");
-                            let selector: String = format!(":{keyword_str}({arg_str})");
+                            let selector: String = format!(
+                                ":{keyword_str}({})",
+                                arg_tokens.to_string().replace(CHAR_SPACE, "")
+                            );
                             let block_content: ParseBuffer<'_>;
                             braced!(block_content in content);
                             let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> =
@@ -424,8 +426,8 @@ impl ToTokens for ClassInput {
     ///
     /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        for class_def in self.get_classes() {
-            class_def.to_tokens(tokens);
-        }
+        self.get_classes()
+            .iter()
+            .for_each(|class_def: &ClassDef| class_def.to_tokens(tokens));
     }
 }

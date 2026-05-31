@@ -28,7 +28,8 @@ impl NativeEventHandler {
     ///
     /// - `Event` - The event to pass to the callback.
     pub fn handle(&self, event: Event) {
-        let mut inner: RefMut<NativeEventCallbackInner> = self.get_callback().borrow_mut();
-        (inner.get_mut_callback())(event);
+        if let Ok(mut inner) = self.get_callback().try_borrow_mut() {
+            (inner.get_mut_callback())(event);
+        }
     }
 }

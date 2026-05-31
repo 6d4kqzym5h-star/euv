@@ -76,7 +76,9 @@ where
     F: FnOnce() -> T,
 {
     let hook_context: HookContext = get_current_hook_context();
-    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
+        return Signal::create(init());
+    };
     let index: usize = inner.get_hook_index();
     inner.set_hook_index(index + 1);
     if index < inner.get_hooks().len()
@@ -113,7 +115,9 @@ where
     F: FnOnce() + 'static,
 {
     let hook_context: HookContext = get_current_hook_context();
-    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
+        return;
+    };
     let index: usize = inner.get_hook_index();
     inner.set_hook_index(index + 1);
     if index < inner.get_hooks().len() {
@@ -144,7 +148,9 @@ where
     F: FnMut() + 'static,
 {
     let hook_context: HookContext = get_current_hook_context();
-    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
+        return;
+    };
     let index: usize = inner.get_hook_index();
     inner.set_hook_index(index + 1);
     if index < inner.get_hooks().len() {
@@ -188,7 +194,9 @@ where
     F: FnMut() + 'static,
 {
     let hook_context: HookContext = get_current_hook_context();
-    let mut inner: RefMut<HookContextInner> = hook_context.get_inner().borrow_mut();
+    let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
+        return IntervalHandle::new(0);
+    };
     let index: usize = inner.get_hook_index();
     inner.set_hook_index(index + 1);
     if index < inner.get_hooks().len()
@@ -206,12 +214,11 @@ where
         .expect("failed to set interval");
     closure.forget();
     let handle: IntervalHandle = IntervalHandle::new(interval_id);
-    let cleanup_id: i32 = interval_id;
     inner.get_mut_cleanups().push(Box::new(move || {
         let Some(cleanup_window) = web_sys::window() else {
             return;
         };
-        cleanup_window.clear_interval_with_handle(cleanup_id);
+        cleanup_window.clear_interval_with_handle(interval_id);
     }));
     if index < inner.get_hooks().len() {
         inner.get_mut_hooks()[index] = Box::new(handle);

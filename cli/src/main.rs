@@ -80,9 +80,8 @@ async fn main() -> Result<()> {
 async fn build_mode(mut args: ModeArgs) -> Result<()> {
     args.crate_path = std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| {
         anyhow!(
-            "Invalid crate-path '{}': {}",
-            args.crate_path.display(),
-            error
+            "Invalid crate-path '{}': {error}",
+            args.crate_path.display()
         )
     })?;
     let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
@@ -113,7 +112,7 @@ async fn fmt_mode(args: FmtArgs) -> Result<()> {
         args.path.clone()
     } else {
         std::env::current_dir()
-            .map_err(|error: io::Error| anyhow!("Failed to get current directory: {}", error))?
+            .map_err(|error: io::Error| anyhow!("Failed to get current directory: {error}"))?
             .join(&args.path)
     };
     let mode: FmtMode = if args.check {
@@ -137,7 +136,7 @@ async fn run_mode(mut args: ModeArgs) -> Result<()> {
     args.crate_path = std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| {
         anyhow!(
             "Invalid crate-path '{}': {error}",
-            args.crate_path.display(),
+            args.crate_path.display()
         )
     })?;
     let crate_path_str: String = args.crate_path.to_string_lossy().to_string();

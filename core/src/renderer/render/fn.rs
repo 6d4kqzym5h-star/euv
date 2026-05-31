@@ -45,7 +45,5 @@ where
             None => return,
         }
     };
-    let mut renderer: Renderer = Renderer::new(target);
-    let vnode: VirtualNode = render_fn();
-    renderer.render(vnode);
+    Renderer::new(target).render(render_fn());
 }

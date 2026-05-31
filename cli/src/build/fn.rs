@@ -128,7 +128,7 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
     let mut builder: GitignoreBuilder = GitignoreBuilder::new(root);
     let gitignore_exists: bool = metadata(&gitignore_path).await.is_ok();
     if gitignore_exists && let Some(error) = builder.add(&gitignore_path) {
-        log::warn!("Failed to load .gitignore: {}", error);
+        log::warn!("Failed to load .gitignore: {error}");
     }
     match builder.build() {
         Ok(gitignore) => {
@@ -138,7 +138,7 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
             gitignore
         }
         Err(error) => {
-            log::warn!("Failed to build gitignore matcher: {}", error);
+            log::warn!("Failed to build gitignore matcher: {error}");
             GitignoreBuilder::new(root)
                 .build()
                 .unwrap_or_else(|_error: ignore::Error| Gitignore::empty())
@@ -275,20 +275,15 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
     let relative: PathBuf = match out_dir_absolute.strip_prefix(&www_absolute) {
         Ok(rel) => rel.to_path_buf(),
-        Err(_) => out_dir_absolute.clone(),
+        Err(_) => out_dir_absolute,
     };
-    let mut components: Vec<String> = Vec::new();
-    for component in relative.components() {
-        match component {
-            Component::CurDir => {}
-            Component::Normal(os_str) => {
-                if let Some(s) = os_str.to_str() {
-                    components.push(s.to_string());
-                }
-            }
-            _ => {}
-        }
-    }
+    let mut components: Vec<String> = relative
+        .components()
+        .filter_map(|component: Component| match component {
+            Component::Normal(os_str) => os_str.to_str().map(|s: &str| s.to_string()),
+            _ => None,
+        })
+        .collect();
     components.push(out_name);
     format!("{RELATIVE_PATH_PREFIX}{}", components.join(PATH_SEPARATOR))
 }
@@ -308,9 +303,10 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
 ///
 /// - `PathBuf` - The resolved output directory (absolute if crate_path is joined).
 pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
-    let default_out_dir: String = format!("{}/{PKG_DIR_NAME}", args.www_dir);
-    let out_dir: String = extract_out_dir(&args.wasm_pack_args).unwrap_or(default_out_dir);
-    let out_dir_path: PathBuf = PathBuf::from(out_dir);
+    let out_dir_path: PathBuf = PathBuf::from(
+        extract_out_dir(&args.wasm_pack_args)
+            .unwrap_or_else(|| format!("{}/{PKG_DIR_NAME}", args.www_dir)),
+    );
     if out_dir_path.is_absolute() {
         out_dir_path
     } else {
@@ -333,7 +329,7 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
     let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
-        log::warn!("euv fmt error: {}", error);
+        log::warn!("euv fmt error: {error}");
     }
     let out_dir: PathBuf = resolve_out_dir(args);
     clean_out_dir(&out_dir).await;
@@ -367,10 +363,10 @@ pub(crate) async fn clean_out_dir(out_dir: &Path) {
         let path: PathBuf = entry.path();
         if path.is_dir() {
             if let Err(error) = tokio::fs::remove_dir_all(&path).await {
-                log::warn!("Failed to remove directory '{}': {}", path.display(), error);
+                log::warn!("Failed to remove directory '{}': {error}", path.display());
             }
         } else if let Err(error) = remove_file(&path).await {
-            log::warn!("Failed to remove file '{}': {}", path.display(), error);
+            log::warn!("Failed to remove file '{}': {error}", path.display());
         }
     }
 }
@@ -406,11 +402,6 @@ pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
             .unwrap_or_default()
             .to_string_lossy()
             .to_string();
-        let extension: String = path
-            .extension()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
         let full_extension: String = if path
             .file_name()
             .unwrap_or_default()
@@ -419,17 +410,20 @@ pub(crate) async fn clean_pkg_dir(pkg_dir: &Path) {
         {
             D_TS_EXTENSION.to_string()
         } else {
-            extension
+            path.extension()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
         };
-        let should_remove: bool = unnecessary_names.contains(&file_name.as_str())
-            || unnecessary_extensions.contains(&full_extension.as_str());
-        if should_remove {
+        if unnecessary_names.contains(&file_name.as_str())
+            || unnecessary_extensions.contains(&full_extension.as_str())
+        {
             match remove_file(&path).await {
                 Ok(()) => {
                     log::info!("Removed unnecessary file: {}", file_name);
                 }
                 Err(error) => {
-                    log::warn!("Failed to remove {}: {}", file_name, error);
+                    log::warn!("Failed to remove {file_name}: {error}");
                 }
             }
         }
@@ -453,10 +447,10 @@ pub(crate) async fn run_build_pipeline(
 ) -> Result<String> {
     let src_path: PathBuf = args.crate_path.join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
-        log::warn!("euv fmt error: {}", error);
+        log::warn!("euv fmt error: {error}");
     }
     if let Err(error) = run_hyperlane_fmt().await {
-        log::warn!("hyperlane-cli fmt error: {}", error);
+        log::warn!("hyperlane-cli fmt error: {error}");
     }
     let out_dir: PathBuf = resolve_out_dir(args);
     clean_out_dir(&out_dir).await;
@@ -468,7 +462,7 @@ pub(crate) async fn run_build_pipeline(
             }
         }
         Err(error) => {
-            log::error!("WASM build failed: {}", error);
+            log::error!("WASM build failed: {error}");
             if let Some(sender) = reload_tx {
                 let _ = sender.send(ReloadEvent::Error(error.to_string()));
             }
@@ -552,7 +546,7 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
                     *content = html;
                 }
                 Err(error) => {
-                    log::error!("Build pipeline error: {}", error);
+                    log::error!("Build pipeline error: {error}");
                 }
             }
             let mut building: MutexGuard<bool> = state_for_build.is_building.lock().await;
@@ -638,7 +632,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
     let output: Output = command
         .output()
         .await
-        .map_err(|error: std::io::Error| anyhow!("Failed to execute wasm-pack: {}", error))?;
+        .map_err(|error: std::io::Error| anyhow!("Failed to execute wasm-pack: {error}"))?;
     if !output.status.success() {
         let stderr: String = String::from_utf8_lossy(&output.stderr).to_string();
         bail!("wasm-pack build failed:\n{}", stderr);
@@ -686,7 +680,7 @@ pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
             .output()
             .await
             .map_err(|error: std::io::Error| {
-                anyhow!("Failed to execute cargo install hyperlane-cli: {}", error)
+                anyhow!("Failed to execute cargo install hyperlane-cli: {error}")
             })?;
         if !install_output.status.success() {
             let stderr: String = String::from_utf8_lossy(&install_output.stderr).to_string();

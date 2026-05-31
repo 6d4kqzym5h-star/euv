@@ -86,7 +86,7 @@ impl ToTokens for WatchInput {
         let signals: Vec<Ident> = (0..self.get_signals().len())
             .map(|signal_index: usize| {
                 Ident::new(
-                    &format!("{WATCH_SIGNAL_PREFIX}{}", signal_index),
+                    &format!("{WATCH_SIGNAL_PREFIX}{signal_index}"),
                     Span::call_site(),
                 )
             })

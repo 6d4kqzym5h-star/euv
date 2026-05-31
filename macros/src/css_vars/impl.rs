@@ -170,8 +170,8 @@ impl ToTokens for CssVarInput {
     ///
     /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        for css_var_def in self.get_defs() {
-            css_var_def.to_tokens(tokens);
-        }
+        self.get_defs()
+            .iter()
+            .for_each(|css_var_def: &CssVarDef| css_var_def.to_tokens(tokens));
     }
 }

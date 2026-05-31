@@ -34,6 +34,9 @@ pub(crate) const CHAR_SPACE: char = ' ';
 /// The CSS declaration terminator character.
 pub(crate) const CHAR_CSS_DECL_TERMINATOR: char = ';';
 
+/// The double quote character used for string literal token detection.
+pub(crate) const CHAR_DOUBLE_QUOTE: char = '"';
+
 /// Error message when HTML root content is not a valid element or expression.
 pub(crate) const ERR_EXPECTED_ELEMENT: &str =
     "expected an element, string literal, if, match, for, or expression";

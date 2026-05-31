@@ -18,7 +18,7 @@ use std::{
     collections::HashMap,
     env,
     ffi::OsStr,
-    fs::{ReadDir, read_dir, read_to_string},
+    fs::{read_dir, read_to_string},
     iter::Peekable,
     mem::MaybeUninit,
     path::PathBuf,

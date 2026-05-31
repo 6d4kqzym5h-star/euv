@@ -29,8 +29,7 @@ impl ToTokens for HtmlRoot {
     ///
     /// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let node_tokens: proc_macro2::TokenStream = children_to_node_tokens(self.get_children());
-        tokens.extend(node_tokens);
+        tokens.extend(children_to_node_tokens(self.get_children()));
     }
 }
 
@@ -315,25 +314,24 @@ impl Parse for HtmlElement {
                 let element: HtmlElement = content.parse()?;
                 children.push(HtmlNode::Element(element));
             } else if content.peek(LitStr) && content.peek2(Colon) {
-                let literal_string: LitStr = content.parse()?;
-                let key: Ident = Ident::new(&literal_string.value(), literal_string.span());
+                let key_literal: LitStr = content.parse()?;
+                let key_str: String = key_literal.value();
                 content.parse::<Colon>()?;
-                let key_str: String = key.to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
-                attributes.push((key.to_token_stream(), value));
+                attributes.push((key_literal.to_token_stream(), value));
             } else if content.peek(Ident)
                 && (content.peek2(Colon) || content.peek2(Token![-]))
                 && !is_double_colon(&content)
             {
                 let key_string: String = parse_kebab_name(&content)?;
-                let key_clean: &str = key_string
-                    .strip_prefix(RAW_IDENT_PREFIX)
-                    .unwrap_or(&key_string);
-                let key: Ident = Ident::new(key_clean, content.span());
+                let key_literal: LitStr = LitStr::new(&key_string, content.span());
                 content.parse::<Colon>()?;
-                let key_str: String = key.to_string();
+                let key_str: String = key_string
+                    .strip_prefix(RAW_IDENT_PREFIX)
+                    .unwrap_or(&key_string)
+                    .to_string();
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
-                attributes.push((key.to_token_stream(), value));
+                attributes.push((key_literal.to_token_stream(), value))
             } else if content.peek(LitStr) {
                 let literal_string: LitStr = content.parse()?;
                 children.push(HtmlNode::Text(literal_string.value()));
@@ -594,13 +592,8 @@ impl ToTokens for HtmlDynamicTag {
         let attr_tokens: Vec<proc_macro2::TokenStream> = attributes
             .iter()
             .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
-                let attr_name_str: String = key_string
-                    .strip_prefix(RAW_IDENT_PREFIX)
-                    .unwrap_or(&key_string)
-                    .to_string();
-                let attr_name_token: proc_macro2::TokenStream =
-                    quote! { #attr_name_str.to_string() };
+                let key_string: String = extract_attr_key_string(key);
+                let attr_name_token: proc_macro2::TokenStream = quote! { #key_string.to_string() };
                 let value_tokens: proc_macro2::TokenStream = match value {
                     HtmlAttrValue::Style(props) => {
                         let has_if: bool =
@@ -643,14 +636,7 @@ impl ToTokens for HtmlDynamicTag {
                 }
             })
             .collect();
-        let child_tokens: Vec<proc_macro2::TokenStream> = children
-            .iter()
-            .map(|child: &HtmlNode| {
-                let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                child.to_tokens(&mut token_stream);
-                token_stream
-            })
-            .collect();
+        let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
         let component_registry: HashMap<String, ComponentInfo> = get_loaded_component_registry();
         let component_match_arms: Vec<proc_macro2::TokenStream> = component_registry
             .iter()
@@ -663,7 +649,7 @@ impl ToTokens for HtmlDynamicTag {
                 let prop_field_tokens: Vec<proc_macro2::TokenStream> = attributes
                     .iter()
                     .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                        let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
+                        let key_string: String = extract_attr_key_string(key);
                         if !props_fields.contains(&key_string) {
                             return None;
                         }
@@ -708,7 +694,7 @@ impl ToTokens for HtmlDynamicTag {
                     .iter()
                     .enumerate()
                     .filter(|(_, (key, _)): &(usize, &(proc_macro2::TokenStream, HtmlAttrValue))| {
-                        let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
+                        let key_string: String = extract_attr_key_string(key);
                         key_string == ATTR_KEY_CLASS
                             || key_string == ATTR_KEY_STYLE
                             || key_string.starts_with(EVENT_ATTR_PREFIX)
@@ -723,14 +709,7 @@ impl ToTokens for HtmlDynamicTag {
                         #props_ident { #(#all_prop_fields), *, ..Default::default() }
                     }
                 };
-                let dyn_child_tokens: Vec<proc_macro2::TokenStream> = children
-                    .iter()
-                    .map(|child: &HtmlNode| {
-                        let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-                        child.to_tokens(&mut token_stream);
-                        token_stream
-                    })
-                    .collect();
+                let dyn_child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
                 let component_call_tokens: proc_macro2::TokenStream = if has_children_field {
                     quote! { #fn_ident(::euv::VirtualNode::Element {
                         tag: ::euv::Tag::Component(#fn_name_str.to_string()),
@@ -820,7 +799,7 @@ impl ToTokens for HtmlElement {
                 .get_attributes()
                 .iter()
                 .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                    let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
+                    let key_string: String = extract_attr_key_string(key);
                     let field_ident: Ident =
                         Ident::new(&key_string, proc_macro2::Span::call_site());
                     match value {
@@ -858,16 +837,7 @@ impl ToTokens for HtmlElement {
                 })
                 .collect();
             let children: &[HtmlNode] = self.get_children();
-            let _children_token: proc_macro2::TokenStream = children_to_node_tokens(children);
-            let child_tokens: Vec<proc_macro2::TokenStream> = children
-                .iter()
-                .map(|child: &HtmlNode| {
-                    let mut token_stream: proc_macro2::TokenStream =
-                        proc_macro2::TokenStream::new();
-                    child.to_tokens(&mut token_stream);
-                    token_stream
-                })
-                .collect();
+            let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
             let props_init_tokens: proc_macro2::TokenStream = if prop_field_tokens.is_empty() {
                 quote! { #props_type_ident::default() }
             } else {
@@ -888,9 +858,8 @@ impl ToTokens for HtmlElement {
         } else {
             let mut key_expr: Option<proc_macro2::TokenStream> = None;
             let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
-                let attr_name_str: String = key_string.strip_prefix(RAW_IDENT_PREFIX).unwrap_or(&key_string).to_string();
-                let attr_name_token: proc_macro2::TokenStream = quote! { #attr_name_str.to_string() };
+                let key_string: String = extract_attr_key_string(key);
+                let attr_name_token: proc_macro2::TokenStream = quote! { #key_string.to_string() };
                 if key_string == ATTR_KEY_KEY {
                     if let HtmlAttrValue::Expr(expr) = value {
                         key_expr = Some(quote! { Some(::euv::IntoReactiveString::into_reactive_string(#expr)) });
@@ -934,16 +903,8 @@ impl ToTokens for HtmlElement {
                 })
             }).collect();
             let key_token: proc_macro2::TokenStream = key_expr.unwrap_or_else(|| quote! { None });
-            let child_tokens: Vec<proc_macro2::TokenStream> = self
-                .get_children()
-                .iter()
-                .map(|child: &HtmlNode| {
-                    let mut token_stream: proc_macro2::TokenStream =
-                        proc_macro2::TokenStream::new();
-                    child.to_tokens(&mut token_stream);
-                    token_stream
-                })
-                .collect();
+            let child_tokens: Vec<proc_macro2::TokenStream> =
+                nodes_to_token_vec(self.get_children());
             tokens.extend(quote! {
                 ::euv::VirtualNode::Element {
                     tag: ::euv::Tag::Element(#tag_literal),

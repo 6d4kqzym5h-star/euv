@@ -49,13 +49,12 @@ pub(crate) async fn generate_html(
     let template_content: String = if let Some(custom_path) = custom_index_html {
         let bytes: Vec<u8> = read(custom_path).await.map_err(|error: io::Error| {
             anyhow!(
-                "Failed to read custom index.html '{}': {}",
-                custom_path.display(),
-                error
+                "Failed to read custom index.html '{}': {error}",
+                custom_path.display()
             )
         })?;
         String::from_utf8(bytes)
-            .map_err(|error| anyhow!("Custom index.html is not valid UTF-8: {}", error))?
+            .map_err(|error| anyhow!("Custom index.html is not valid UTF-8: {error}"))?
     } else if is_release {
         INDEX_HTML_RELEASE.to_string()
     } else {
@@ -67,10 +66,10 @@ pub(crate) async fn generate_html(
     let index_path: PathBuf = www_dir.join(INDEX_HTML_FILE_NAME);
     create_dir_all(www_dir)
         .await
-        .map_err(|error: io::Error| anyhow!("Failed to create static directory: {}", error))?;
+        .map_err(|error: io::Error| anyhow!("Failed to create static directory: {error}"))?;
     write(&index_path, &html)
         .await
-        .map_err(|error: io::Error| anyhow!("Failed to write index.html: {}", error))?;
+        .map_err(|error: io::Error| anyhow!("Failed to write index.html: {error}"))?;
     Ok(html)
 }
 

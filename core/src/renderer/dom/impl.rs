@@ -184,10 +184,9 @@ impl ElementExt for Element {
     }
 
     fn track_signal_addr(&self, addr: usize) {
-        let existing: String = self
+        let mut updated: String = self
             .get_attribute(DATA_EUV_SIGNAL_ADDRS)
             .unwrap_or_default();
-        let mut updated: String = existing;
         if !updated.is_empty() {
             updated.push(CHAR_SIGNAL_ADDRS_SEPARATOR);
         }

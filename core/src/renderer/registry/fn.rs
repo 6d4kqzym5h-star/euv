@@ -29,19 +29,17 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
     while let Some(element) = current {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
-        {
-            let key: (usize, &'static str) = (euv_id, event_name);
-            let found: Option<NativeEventHandler> = {
-                let registry: &HandlerRegistryMap = ensure_handler_registry();
-                registry.get(&key).and_then(|entry: &HandlerEntry| {
-                    let slot: Ref<HandlerSlot> = entry.borrow();
-                    slot.try_get_handler().as_ref().cloned()
+            && let Some(active_handler) = ensure_handler_registry()
+                .get(&(euv_id, event_name))
+                .and_then(|entry: &HandlerEntry| {
+                    entry
+                        .try_borrow()
+                        .ok()
+                        .and_then(|slot: Ref<HandlerSlot>| slot.try_get_handler().as_ref().cloned())
                 })
-            };
-            if let Some(active_handler) = found {
-                active_handler.handle(event.clone());
-                return;
-            }
+        {
+            active_handler.handle(event.clone());
+            return;
         }
         current = element.parent_element();
     }
@@ -59,8 +57,7 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
 ///
 /// - `&'static str` - The event type name to listen for (e.g. `"click"`).
 pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
-    let already_delegated: bool = is_delegated_event(event_name);
-    if already_delegated {
+    if is_delegated_event(event_name) {
         return;
     }
     let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
@@ -102,7 +99,9 @@ pub(crate) fn dispatch_signal_update_callbacks() {
         let dirty_keys: Vec<usize> = registry
             .iter()
             .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
-                let slot: Ref<SignalUpdateSlot> = entry.borrow();
+                let Ok(slot) = entry.try_borrow() else {
+                    return None;
+                };
                 if slot.get_dirty() && !slot.get_removed() {
                     Some(*key)
                 } else {
@@ -119,7 +118,9 @@ pub(crate) fn dispatch_signal_update_callbacks() {
                 None => continue,
             };
             let callback: Option<Box<dyn FnMut()>> = {
-                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+                let Ok(mut slot) = entry.try_borrow_mut() else {
+                    continue;
+                };
                 if slot.get_removed() {
                     continue;
                 }
@@ -128,14 +129,20 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             };
             if let Some(mut callback) = callback {
                 callback();
-                let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
-                if !slot.get_removed() {
+                if let Ok(mut slot) = entry.try_borrow_mut()
+                    && !slot.get_removed()
+                {
                     slot.set_callback(Some(callback));
                 }
             }
-            if !entry.borrow().get_removed() {
-                ensure_signal_update_registry_mut().insert(key, entry);
+            if entry
+                .try_borrow()
+                .map(|slot: Ref<SignalUpdateSlot>| slot.get_removed())
+                .unwrap_or(true)
+            {
+                continue;
             }
+            ensure_signal_update_registry_mut().insert(key, entry);
         }
         iterations += 1;
         if iterations >= MAX_ITERATIONS {
@@ -153,7 +160,9 @@ pub(crate) fn dispatch_signal_update_callbacks() {
 pub(crate) fn mark_all_slots_dirty() {
     let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
     for entry in registry.values() {
-        let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+        let Ok(mut slot) = entry.try_borrow_mut() else {
+            continue;
+        };
         if !slot.get_removed() {
             slot.set_dirty(true);
         }
@@ -197,20 +206,6 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
     ensure_signal_update_registry_mut().insert(signal_key, entry);
 }
 
-/// Removes a single handler entry identified by its element ID and event name.
-///
-/// Looks up the `(_euv_id, event_name)` key in `HANDLER_REGISTRY` and
-/// removes it if present.
-///
-/// # Arguments
-///
-/// - `usize` - The euv ID of the DOM element.
-/// - `&str` - The event name of the handler to remove.
-pub(crate) fn cleanup_event_handler(_euv_id: usize, event_name: &'static str) {
-    let key: (usize, &'static str) = (_euv_id, event_name);
-    ensure_handler_registry_mut().remove(&key);
-}
-
 /// Cleans up all handler entries associated with a DOM element.
 ///
 /// Collects all registry keys whose element ID matches `euv_id` and
@@ -241,8 +236,9 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
 ///
 /// - `usize` - The unique ID of the `DynamicNode` being removed.
 pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
-    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id) {
-        let mut slot: RefMut<SignalUpdateSlot> = entry.borrow_mut();
+    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id)
+        && let Ok(mut slot) = entry.try_borrow_mut()
+    {
         slot.set_removed(true);
         slot.set_callback(None);
     }
@@ -433,8 +429,9 @@ fn ensure_window_event_listener(event_name: &str) {
         let registry: &WindowEventRegistryMap = ensure_window_event_registry_mut();
         if let Some(handlers) = registry.get(&event_name_owned) {
             for (_handler_id, callback_rc) in handlers {
-                let mut callback_ref: RefMut<Box<dyn FnMut()>> = callback_rc.borrow_mut();
-                callback_ref();
+                if let Ok(mut callback_ref) = callback_rc.try_borrow_mut() {
+                    callback_ref();
+                }
             }
         }
     }));

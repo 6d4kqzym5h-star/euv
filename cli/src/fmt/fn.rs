@@ -818,9 +818,9 @@ fn skip_spaces_on_same_line(chars: &[char], mut pos: usize, len: usize) -> usize
 ///
 /// - `bool` - Whether the identifier is preceded by `r#`.
 fn is_raw_ident_before(result: &str, ident: &str) -> bool {
-    let trimmed: &str = result.trim_end();
-    let search_target: String = format!("{RAW_IDENT_PREFIX}{ident}");
-    trimmed.ends_with(&search_target)
+    result
+        .trim_end()
+        .ends_with(&format!("{RAW_IDENT_PREFIX}{ident}"))
 }
 
 /// Finds the identifier immediately before the current position in the result string.
@@ -941,7 +941,7 @@ pub(crate) async fn format_dir(path: &Path, mode: FmtMode) -> Result<()> {
                 }
             }
             Err(error) => {
-                log::warn!("Failed to format {}: {}", entry.display(), error);
+                log::warn!("Failed to format {}: {error}", entry.display());
             }
         }
     }
@@ -983,10 +983,10 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
             tokio::fs::read_dir(&dir)
                 .await
                 .map_err(|error: io::Error| {
-                    anyhow!("Failed to read directory '{}': {}", dir.display(), error)
+                    anyhow!("Failed to read directory '{}': {error}", dir.display())
                 })?;
         while let Some(entry) = entries.next_entry().await.map_err(|error: io::Error| {
-            anyhow!("Failed to read entry in '{}': {}", dir.display(), error)
+            anyhow!("Failed to read entry in '{}': {error}", dir.display())
         })? {
             let entry_path: PathBuf = entry.path();
             if entry_path.is_dir() {
@@ -1022,7 +1022,7 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>> {
 async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
     let content: String = tokio::fs::read_to_string(path)
         .await
-        .map_err(|error: io::Error| anyhow!("Failed to read '{}': {}", path.display(), error))?;
+        .map_err(|error: io::Error| anyhow!("Failed to read '{}': {error}", path.display()))?;
     let fmt_result: FmtResult = format_source(&content);
     if fmt_result.changed {
         match mode {
@@ -1030,7 +1030,7 @@ async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
                 tokio::fs::write(path, &fmt_result.output)
                     .await
                     .map_err(|error: io::Error| {
-                        anyhow!("Failed to write '{}': {}", path.display(), error)
+                        anyhow!("Failed to write '{}': {error}", path.display())
                     })?;
                 log::info!("Formatted: {}", path.display());
             }

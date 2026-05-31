@@ -202,7 +202,7 @@ impl Renderer {
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
                 {
-                    cleanup_event_handler(euv_id, handler.get_event_name());
+                    ensure_handler_registry_mut().remove(&(euv_id, handler.get_event_name()));
                 }
                 element.remove_attribute_or_property(old_attr.get_name());
             }
@@ -537,8 +537,7 @@ impl Renderer {
                             if !initial_value.is_empty() || is_boolean_property(attr.get_name()) {
                                 element.set_attribute_or_property(attr.get_name(), &initial_value);
                             }
-                            let signal_addr: usize = signal.get_inner();
-                            element.track_signal_addr(signal_addr);
+                            element.track_signal_addr(signal.get_inner());
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
                             let signal_for_sub: Signal<String> = *signal;
@@ -572,8 +571,7 @@ impl Renderer {
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
-                        let signal_addr: usize = signal.get_inner();
-                        element.track_signal_addr(signal_addr);
+                        element.track_signal_addr(signal.get_inner());
                     }
                 }
                 element.into()
@@ -609,8 +607,7 @@ impl Renderer {
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
                     {
-                        let signal_addr: usize = signal.get_inner();
-                        fragment.track_signal_addr(signal_addr);
+                        fragment.track_signal_addr(signal.get_inner());
                     }
                 }
                 fragment.into()
@@ -662,31 +659,49 @@ impl Renderer {
         let mut renderer_for_sub: Self = Self::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
         let renderer_rc: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
-        let initial_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
+        let initial_arm: usize = hook_context
+            .get_inner()
+            .try_borrow()
+            .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
+            .unwrap_or(0);
         let last_arm: Rc<RefCell<usize>> = Rc::new(RefCell::new(initial_arm));
         let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
             hook_context.reset_hook_index();
-            let prev_arm: usize = *last_arm.borrow();
+            let prev_arm: usize = last_arm
+                .try_borrow()
+                .map(|arm: Ref<usize>| *arm)
+                .unwrap_or(0);
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
-                let mut inner: RefMut<RenderFnInner> = render_fn.borrow_mut();
+                let Ok(mut inner) = render_fn.try_borrow_mut() else {
+                    return VirtualNode::Empty;
+                };
                 (inner.get_mut_render_fn())()
             });
-            let current_arm: usize = hook_context.get_inner().borrow().get_arm_changed();
+            let current_arm: usize = hook_context
+                .get_inner()
+                .try_borrow()
+                .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
+                .unwrap_or(0);
             let arm_switched: bool = prev_arm != current_arm;
-            *last_arm.borrow_mut() = current_arm;
-            if skip_equal && !arm_switched {
-                let renderer_borrow_ref: Ref<Renderer> = renderer_rc.borrow();
-                if let Some(old_vnode) = renderer_borrow_ref.try_get_current_tree() {
-                    let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
-                    if Self::visual_eq(old_vnode, &new_unwrapped) {
-                        return;
-                    }
+            if let Ok(mut arm) = last_arm.try_borrow_mut() {
+                *arm = current_arm;
+            }
+            if skip_equal
+                && !arm_switched
+                && let Ok(renderer_borrow_ref) = renderer_rc.try_borrow()
+                && let Some(old_vnode) = renderer_borrow_ref.try_get_current_tree()
+            {
+                let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
+                if Self::visual_eq(old_vnode, &new_unwrapped) {
+                    return;
                 }
             }
-            let mut renderer_borrow_mut: RefMut<Renderer> = renderer_rc.borrow_mut();
+            let Ok(mut renderer_borrow_mut) = renderer_rc.try_borrow_mut() else {
+                return;
+            };
             if arm_switched {
                 renderer_borrow_mut.render_full_replace(new_vnode);
             } else {
@@ -870,11 +885,10 @@ impl Renderer {
             cleanup_dynamic_node(dynamic_id);
         }
         if let Some(signal_addrs_str) = element.get_attribute(DATA_EUV_SIGNAL_ADDRS) {
-            for addr_str in signal_addrs_str.split(CHAR_SIGNAL_ADDRS_SEPARATOR) {
-                if let Ok(addr) = addr_str.parse::<usize>() {
-                    clear_signal_listeners_by_addr(addr);
-                }
-            }
+            signal_addrs_str
+                .split(CHAR_SIGNAL_ADDRS_SEPARATOR)
+                .filter_map(|addr_str: &str| addr_str.parse::<usize>().ok())
+                .for_each(clear_signal_listeners_by_addr);
         }
         let child_nodes: NodeList = element.child_nodes();
         let length: u32 = child_nodes.length();
@@ -908,13 +922,13 @@ impl Renderer {
                 new_id
             }
         };
-        let event_name: &'static str = handler.get_event_name();
-        ensure_delegated_listener(event_name);
-        let key: (usize, &'static str) = (euv_id, event_name);
+        ensure_delegated_listener(handler.get_event_name());
+        let key: (usize, &'static str) = (euv_id, handler.get_event_name());
         let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
         if let Some(existing_entry) = registry_ref.get(&key) {
-            let mut slot: RefMut<HandlerSlot> = existing_entry.borrow_mut();
-            slot.set_handler(Some(handler.clone()));
+            if let Ok(mut slot) = existing_entry.try_borrow_mut() {
+                slot.set_handler(Some(handler.clone()));
+            }
         } else {
             let handler_slot: HandlerEntry =
                 Rc::new(RefCell::new(HandlerSlot::new(Some(handler.clone()))));

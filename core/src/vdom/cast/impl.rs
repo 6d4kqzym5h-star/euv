@@ -183,8 +183,7 @@ where
         self.replace_subscribe({
             let source: Signal<T> = *self;
             move || {
-                let new_value: String = source.get().to_string();
-                string_signal_clone.set_silent(new_value);
+                string_signal_clone.set_silent(source.get().to_string());
             }
         });
         VirtualNode::Text(TextNode::new(initial, Some(string_signal)))

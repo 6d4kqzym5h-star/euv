@@ -143,11 +143,10 @@ impl Default for DynamicNode {
 /// Clones a `DynamicNode` by cloning the shared references.
 impl Clone for DynamicNode {
     fn clone(&self) -> Self {
-        let cloned: Self = Self::new(
+        Self::new(
             self.get_render_fn().clone(),
             self.get_hook_context().clone(),
-        );
-        cloned
+        )
     }
 }
 
@@ -159,8 +158,10 @@ impl DynamicNode {
     ///
     /// - `Self` - The virtual node produced by the render closure.
     pub fn render(&self) -> VirtualNode {
-        let mut inner: RefMut<RenderFnInner> = self.get_render_fn().borrow_mut();
-        (inner.get_mut_render_fn())()
+        self.get_render_fn()
+            .try_borrow_mut()
+            .map(|mut inner: RefMut<RenderFnInner>| (inner.get_mut_render_fn())())
+            .unwrap_or_default()
     }
 }
 
@@ -266,8 +267,7 @@ impl VirtualNode<()> {
                 hook_context_for_closure.reset_hook_index();
                 render_fn()
             }))));
-        let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
-        Self::Dynamic(dynamic_node)
+        Self::Dynamic(DynamicNode::new(inner, hook_context))
     }
 
     /// Constructs a `Self::Dynamic` for match expressions where arm hook
@@ -294,7 +294,6 @@ impl VirtualNode<()> {
                 hook_context_for_closure.reset_hook_index();
                 render_fn(&mut hook_context_for_closure)
             }))));
-        let dynamic_node: DynamicNode = DynamicNode::new(inner, hook_context);
-        Self::Dynamic(dynamic_node)
+        Self::Dynamic(DynamicNode::new(inner, hook_context))
     }
 }
