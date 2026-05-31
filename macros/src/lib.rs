@@ -6,13 +6,12 @@
 //! reactive side effects, and the `component` attribute macro.
 
 mod class;
-mod css_vars;
 mod html;
 mod kebab;
 mod var;
 mod watch;
 
-pub(crate) use {class::*, css_vars::*, html::*, kebab::*, watch::*};
+pub(crate) use {class::*, html::*, kebab::*, var::*, watch::*};
 
 use std::{
     collections::HashMap,
@@ -127,7 +126,7 @@ pub fn watch(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn css_vars(input: TokenStream) -> TokenStream {
-    css_vars::parse_css_vars(input)
+    var::parse_css_vars(input)
 }
 
 /// The `var!` macro for referencing CSS custom properties defined via `css_vars!`.
