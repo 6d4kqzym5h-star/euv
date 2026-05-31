@@ -10,6 +10,9 @@ pub(crate) const RUST_FILE_EXTENSION: &str = "rs";
 /// Attribute name for marking component functions.
 pub(crate) const COMPONENT_ATTR: &str = "component";
 
+/// File name for the component registry cache stored in the target directory.
+pub(crate) const REGISTRY_CACHE_FILE_NAME: &str = "euv_component_registry_cache";
+
 /// Attribute key name for CSS class bindings.
 pub(crate) const ATTR_KEY_CLASS: &str = "class";
 
