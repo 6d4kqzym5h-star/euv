@@ -28,7 +28,7 @@ class! {
 
     pub(crate) c_nav_header {
         padding: "20px 20px 16px 20px";
-        margin: "0";
+        margin: "0px";
         border-bottom: format!("1px solid {}", var!(border-subtle));
         font-size: "18px";
         font-weight: "700";
@@ -62,7 +62,7 @@ class! {
         font-weight: "700";
         border: "none";
         cursor: "pointer";
-        padding: "0";
+        padding: "0px";
         line-height: "1";
         flex-shrink: "0";
     }
@@ -95,12 +95,12 @@ class! {
 
     pub(crate) c_logo_button_fab_hover {
         transform: "scale(1.08)";
-        box-shadow: "0 6px 20px rgba(99, 102, 241, 0.4)";
+        box-shadow: "0px 6px 20px rgba(99, 102, 241, 0.4)";
     }
 
     pub(crate) c_nav_section_label {
         padding: "10px 20px 4px 20px";
-        margin: "0";
+        margin: "0px";
         font-size: "11px";
         font-weight: "600";
         color: var!(text-muted);
@@ -123,7 +123,7 @@ class! {
     pub(crate) c_nav_theme_button {
         width: "100%";
         height: "36px";
-        padding: "0";
+        padding: "0px";
         border-radius: "8px";
         cursor: "pointer";
         outline: "none";
@@ -150,7 +150,7 @@ class! {
         background-repeat: "no-repeat";
         background-position: "center";
         background-size: "20px 20px";
-        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23fbbf24' stroke='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E\")";
+        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23fbbf24' stroke='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z'/%3E%3C/svg%3E\")";
     }
 
     pub(crate) c_nav_footer {
@@ -166,7 +166,7 @@ class! {
 
     pub(crate) c_app_main {
         flex: "1";
-        width: "0";
+        width: "0px";
         padding: format!("{} 40px", var!(padding-main-top));
         background: var!(bg-primary);
         overflow-y: "auto";
@@ -178,7 +178,7 @@ class! {
 
     pub(crate) c_page_container {
         max-width: "800px";
-        margin: "0 auto";
+        margin: "0px auto";
     }
 
     pub(crate) c_page_header {
@@ -210,7 +210,7 @@ class! {
         background: var!(bg-card);
         border-radius: "12px";
         padding: "20px";
-        margin-top: "0";
+        margin-top: "0px";
         margin-bottom: var!(gap-card);
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
@@ -224,7 +224,7 @@ class! {
     }
 
     pub(crate) c_card_title {
-        margin-top: "0";
+        margin-top: "0px";
         margin-bottom: "12px";
         color: "inherit";
         font-size: "18px";
@@ -258,7 +258,7 @@ class! {
         line-height: "1.4";
         transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease";
         outline: "none";
-        box-shadow: "0 1px 2px rgba(79, 70, 229, 0.2)";
+        box-shadow: "0px 1px 2px rgba(79, 70, 229, 0.2)";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -267,7 +267,7 @@ class! {
         media("(max-width: 767px)") {
             width: "100%";
             max-width: "100%";
-            min-width: "0";
+            min-width: "0px";
             padding: "12px 20px";
             font-size: "15px";
             border-radius: "10px";
@@ -303,7 +303,7 @@ class! {
         line-height: "1.4";
         transition: "background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease";
         outline: "none";
-        box-shadow: "0 1px 2px rgba(79, 70, 229, 0.2)";
+        box-shadow: "0px 1px 2px rgba(79, 70, 229, 0.2)";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -372,7 +372,7 @@ class! {
     }
 
     pub(crate) c_form_input_wrapper {
-        margin: "4px 0";
+        margin: "4px 0px";
     }
 
     pub(crate) c_form_label {
@@ -421,14 +421,14 @@ class! {
     }
 
     pub(crate) c_form_checkbox_row {
-        margin: "12px 0";
+        margin: "12px 0px";
         display: "flex";
         align-items: "center";
         gap: "10px";
     }
 
     pub(crate) c_error_box {
-        margin: "12px 0";
+        margin: "12px 0px";
         padding: "12px 16px";
         background: var!(bg-error);
         color: var!(text-error);
@@ -485,7 +485,7 @@ class! {
     pub(crate) c_form_grid {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: "0 20px";
+        gap: "0px 20px";
         media("(max-width: 767px)") {
             grid-template-columns: "1fr";
         }
@@ -588,7 +588,7 @@ class! {
     pub(crate) c_data_pre {
         color: var!(text-success);
         font-size: "13px";
-        margin: "0";
+        margin: "0px";
         white-space: "pre-wrap";
         word-break: "break-all";
         font-family: "ui-monospace, monospace";
@@ -610,7 +610,7 @@ class! {
     }
 
     pub(crate) c_toggle_title {
-        margin-top: "0";
+        margin-top: "0px";
         color: "#4f46e5";
         font-size: "15px";
     }
@@ -668,7 +668,7 @@ class! {
     }
 
     pub(crate) c_tab_content {
-        padding: "4px 0";
+        padding: "4px 0px";
     }
 
     pub(crate) c_tab_text {
@@ -706,7 +706,7 @@ class! {
 
     pub(crate) c_list_input {
         flex: "1";
-        min-width: "0";
+        min-width: "0px";
         padding: "8px 12px";
         border: format!("1px solid {}", var!(border-input));
         border-radius: "6px";
@@ -720,8 +720,8 @@ class! {
 
     pub(crate) c_list_ul {
         list-style: "none";
-        padding: "0";
-        margin: "0";
+        padding: "0px";
+        margin: "0px";
     }
 
     pub(crate) c_list_item_even {
@@ -750,7 +750,7 @@ class! {
 
     pub(crate) c_list_item_text {
         flex: "1";
-        min-width: "0";
+        min-width: "0px";
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
@@ -759,7 +759,7 @@ class! {
     }
 
     pub(crate) c_list_item_button {
-        min-width: "0";
+        min-width: "0px";
         max-width: "120px";
         padding: "8px 16px";
         flex-shrink: "0";
@@ -767,17 +767,17 @@ class! {
 
     pub(crate) c_log_container {
         background: var!(bg-console);
-        padding: "16px";
+        padding: "0px";
         border-radius: "8px";
         font-family: "ui-monospace, monospace";
         font-size: "13px";
         line-height: "1.5";
-        margin-top: "0";
+        margin-top: "0px";
         color: var!(text-console);
     }
 
     pub(crate) c_log_item {
-        padding: "6px 0";
+        padding: "6px 0px";
         border-bottom: format!("1px solid {}", var!(border-console));
         font-size: "13px";
         color: var!(text-console);
@@ -787,7 +787,7 @@ class! {
         text-align: "center";
         padding: "80px 20px";
         max-width: "480px";
-        margin: "0 auto";
+        margin: "0px auto";
         media("(max-width: 767px)") {
             padding: "40px 20px";
         }
@@ -869,7 +869,7 @@ class! {
     pub(crate) c_timer_display {
         text-align: "center";
         padding: "20px";
-        margin: "12px 0";
+        margin: "12px 0px";
         border-radius: "12px";
         border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
@@ -909,8 +909,8 @@ class! {
 
     pub(crate) c_modal_overlay {
         position: "fixed";
-        top: "0";
-        left: "0";
+        top: "0px";
+        left: "0px";
         width: "100%";
         height: "100%";
         background: "rgba(0, 0, 0, 0.5)";
@@ -928,7 +928,7 @@ class! {
     pub(crate) c_modal_content {
         background: var!(bg-modal);
         border-radius: "16px";
-        padding: "0";
+        padding: "0px";
         max-width: "480px";
         width: "90%";
         box-shadow: var!(shadow-modal);
@@ -953,7 +953,7 @@ class! {
     }
 
     pub(crate) c_modal_title {
-        margin: "0";
+        margin: "0px";
         font-size: "18px";
         font-weight: "600";
         color: "inherit";
@@ -968,7 +968,7 @@ class! {
         display: "flex";
         justify-content: "center";
         gap: "12px";
-        margin: "16px 0";
+        margin: "16px 0px";
     }
 
     pub(crate) c_select_input {
@@ -1031,7 +1031,7 @@ class! {
         display: "flex";
         justify-content: "center";
         align-items: "center";
-        margin: "16px 0";
+        margin: "16px 0px";
         min-height: "80px";
     }
 
@@ -1057,7 +1057,7 @@ class! {
         display: "flex";
         justify-content: "center";
         align-items: "center";
-        margin: "16px 0";
+        margin: "16px 0px";
         min-height: "80px";
     }
 
@@ -1086,7 +1086,7 @@ class! {
         height: "12px";
         background: var!(bg-progress);
         border-radius: "999px";
-        margin: "16px 0";
+        margin: "16px 0px";
         overflow: "hidden";
     }
 
@@ -1105,7 +1105,7 @@ class! {
     }
 
     pub(crate) c_anim_color_box {
-        margin: "12px 0";
+        margin: "12px 0px";
         padding: "20px";
         border-radius: "12px";
         color: "white";
@@ -1233,7 +1233,7 @@ class! {
     pub(crate) c_browser_api_row {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: "0 20px";
+        gap: "0px 20px";
         margin-bottom: "12px";
         media("(max-width: 767px)") {
             grid-template-columns: "1fr";
@@ -1244,7 +1244,7 @@ class! {
         display: "flex";
         gap: "10px";
         flex-wrap: "wrap";
-        margin: "12px 0";
+        margin: "12px 0px";
     }
 
     pub(crate) c_browser_result_box {
@@ -1315,18 +1315,18 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        padding: "0 4px";
+        padding: "0px 4px";
         line-height: "1";
-        box-shadow: "0 2px 6px rgba(239, 68, 68, 0.3)";
+        box-shadow: "0px 2px 6px rgba(239, 68, 68, 0.3)";
         pointer-events: "none";
     }
 
     pub(crate) c_vconsole_overlay {
         position: "fixed";
-        top: "0";
-        left: "0";
-        right: "0";
-        bottom: "0";
+        top: "0px";
+        left: "0px";
+        right: "0px";
+        bottom: "0px";
         z-index: "10000";
         background: "rgba(0, 0, 0, 0.15)";
         transition: "opacity 0.25s ease";
@@ -1339,16 +1339,16 @@ class! {
 
     pub(crate) c_vconsole_panel {
         position: "fixed";
-        bottom: "0";
-        left: "0";
-        right: "0";
+        bottom: "0px";
+        left: "0px";
+        right: "0px";
         height: "60vh";
         background: var!(bg-console);
         z-index: "10001";
         display: "flex";
         flex-direction: "column";
         border-top: format!("3px solid {}", var!(border-console-accent));
-        border-radius: "16px 16px 0 0";
+        border-radius: "16px 16px 0px 0px";
         box-shadow: var!(shadow-console-panel);
         transition: "transform 0.25s ease";
         overflow: "hidden";
@@ -1376,7 +1376,7 @@ class! {
         color: var!(text-console-title);
         font-size: "15px";
         font-weight: "600";
-        margin: "0";
+        margin: "0px";
         letter-spacing: "0.03em";
         display: "flex";
         align-items: "center";
@@ -1445,7 +1445,7 @@ class! {
     }
 
     pub(crate) c_vconsole_log_item {
-        padding: "4px 0";
+        padding: "4px 0px";
         border-bottom: format!("1px solid {}", var!(border-console));
         color: var!(text-console);
         font-size: "13px";
@@ -1479,7 +1479,7 @@ class! {
         color: var!(text-console-empty);
         font-size: "13px";
         text-align: "center";
-        padding: "40px 0";
+        padding: "40px 0px";
     }
 
     pub(crate) c_vconsole_count {
@@ -1618,12 +1618,12 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "space-between";
-        padding: "0 16px";
+        padding: "0px 16px";
         height: "56px";
         background: var!(bg-nav);
         flex-shrink: "0";
         position: "sticky";
-        top: "0";
+        top: "0px";
         z-index: "100";
     }
 
@@ -1647,7 +1647,7 @@ class! {
         justify-content: "center";
         color: var!(text-primary);
         transition: "background 0.15s ease";
-        padding: "0";
+        padding: "0px";
     }
 
     pub(crate) c_mobile_theme_button {
@@ -1661,7 +1661,7 @@ class! {
         align-items: "center";
         justify-content: "center";
         transition: "all 0.3s ease";
-        padding: "0";
+        padding: "0px";
     }
 
     pub(crate) c_mobile_menu_button_active {
@@ -1678,13 +1678,13 @@ class! {
         justify-content: "center";
         color: "#4f46e5";
         transition: "background 0.15s ease";
-        padding: "0";
+        padding: "0px";
     }
 
     pub(crate) c_mobile_overlay {
         position: "fixed";
-        top: "0";
-        left: "0";
+        top: "0px";
+        left: "0px";
         width: "100%";
         height: "100%";
         background: "rgba(0, 0, 0, 0.4)";
@@ -1694,8 +1694,8 @@ class! {
 
     pub(crate) c_mobile_nav_drawer {
         position: "fixed";
-        top: "0";
-        left: "0";
+        top: "0px";
+        left: "0px";
         width: "280px";
         height: "100%";
         background: var!(bg-nav);
@@ -1703,14 +1703,14 @@ class! {
         display: "flex";
         flex-direction: "column";
         animation: "euv-slide-left 0.25s ease";
-        box-shadow: "4px 0 20px rgba(0, 0, 0, 0.15)";
+        box-shadow: "4px 0px 20px rgba(0, 0, 0, 0.15)";
     }
 
     pub(crate) c_mobile_nav_drawer_header {
         display: "flex";
         align-items: "center";
         justify-content: "space-between";
-        padding: "0 16px";
+        padding: "0px 16px";
         height: "56px";
         flex-shrink: "0";
     }
@@ -1741,11 +1741,11 @@ class! {
     }
 
     pub(crate) c_keep_alive_tab_panel {
-        padding: "4px 0";
+        padding: "4px 0px";
     }
 
     pub(crate) c_keep_alive_panel_title {
-        margin-top: "0";
+        margin-top: "0px";
         color: "#4f46e5";
         font-size: "15px";
         margin-bottom: "8px";
@@ -1761,7 +1761,7 @@ class! {
         display: "flex";
         justify-content: "center";
         align-items: "center";
-        margin: "20px 0";
+        margin: "20px 0px";
     }
 
     pub(crate) c_keep_alive_counter_value {
@@ -1798,7 +1798,7 @@ class! {
         font-size: "13px";
         font-weight: "600";
         color: "#4f46e5";
-        margin: "0 0 4px 0";
+        margin: "0px 0px 4px 0px";
     }
 
     pub(crate) c_file_upload_input {
@@ -1817,17 +1817,17 @@ class! {
         position: "absolute";
         width: "1px";
         height: "1px";
-        padding: "0";
+        padding: "0px";
         margin: "-1px";
         overflow: "hidden";
         clip: "rect(0, 0, 0, 0)";
         white-space: "nowrap";
-        border: "0";
+        border: "0px";
     }
 
     pub(crate) c_file_upload_options {
-        margin: "12px 0";
-        padding: "12px 0";
+        margin: "12px 0px";
+        padding: "12px 0px";
         border-top: format!("1px solid {}", var!(border-subtle));
         border-bottom: format!("1px solid {}", var!(border-subtle));
     }
@@ -1839,7 +1839,7 @@ class! {
         padding: "8px 12px";
         border-radius: "6px";
         background: var!(bg-input);
-        margin: "6px 0";
+        margin: "6px 0px";
         font-size: "14px";
         color: "inherit";
     }
@@ -1886,14 +1886,14 @@ class! {
         font-size: "16px";
         font-weight: "500";
         color: "inherit";
-        margin: "0 0 6px 0";
+        margin: "0px 0px 6px 0px";
     }
 
     pub(crate) c_file_upload_drop_hint {
         font-size: "13px";
         color: "inherit";
         opacity: "0.5";
-        margin: "0";
+        margin: "0px";
     }
 
     pub(crate) c_form_input_error {
@@ -2014,7 +2014,7 @@ class! {
         font-size: "18px";
         font-weight: "700";
         color: "white";
-        text-shadow: "0 1px 3px rgba(0, 0, 0, 0.5)";
+        text-shadow: "0px 1px 3px rgba(0, 0, 0, 0.5)";
         letter-spacing: "0.02em";
     }
 
@@ -2111,7 +2111,7 @@ class! {
     }
 
     pub(crate) c_dynamic_component_panel_title {
-        margin: "0 0 12px 0";
+        margin: "0px 0px 12px 0px";
         font-size: "16px";
         font-weight: "600";
         color: var!(text-primary);
@@ -2140,7 +2140,7 @@ class! {
     pub(crate) c_virtual_list_status {
         display: "flex";
         gap: "24px";
-        padding: "12px 0";
+        padding: "12px 0px";
         margin-bottom: "12px";
         border-bottom: format!("1px solid {}", var!(border-subtle));
         flex-wrap: "wrap";
@@ -2150,7 +2150,7 @@ class! {
     }
 
     pub(crate) c_page_container_wide {
-        margin: "0 auto";
+        margin: "0px auto";
         display: "flex";
         flex-direction: "column";
         height: "100%";
@@ -2169,7 +2169,7 @@ class! {
 
     pub(crate) c_virtual_list_container {
         flex: "1";
-        min-height: "0";
+        min-height: "0px";
         overflow-y: "auto";
         border: format!("1px solid {}", var!(border-input));
         border-radius: "8px";
@@ -2180,7 +2180,7 @@ class! {
         background: var!(bg-card);
         border-radius: "12px";
         padding: "20px";
-        margin-top: "0";
+        margin-top: "0px";
         margin-bottom: var!(gap-card);
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
@@ -2189,7 +2189,7 @@ class! {
         display: "flex";
         flex-direction: "column";
         flex: "1";
-        min-height: "0";
+        min-height: "0px";
         media("(max-width: 767px)") {
             padding: "16px";
             margin-bottom: var!(gap-card-mobile);
@@ -2200,7 +2200,7 @@ class! {
     pub(crate) c_virtual_list_row_even {
         display: "flex";
         align-items: "center";
-        padding: "0 16px";
+        padding: "0px 16px";
         gap: "16px";
         border-bottom: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-list-even);
@@ -2209,7 +2209,7 @@ class! {
     pub(crate) c_virtual_list_row_odd {
         display: "flex";
         align-items: "center";
-        padding: "0 16px";
+        padding: "0px 16px";
         gap: "16px";
         border-bottom: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-list-odd);
@@ -2243,6 +2243,6 @@ class! {
         text-overflow: "ellipsis";
         white-space: "nowrap";
         flex: "1";
-        min-width: "0";
+        min-width: "0px";
     }
 }
