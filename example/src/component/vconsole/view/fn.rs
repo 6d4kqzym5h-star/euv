@@ -207,25 +207,23 @@ fn build_vconsole_log_nodes(
     logs: Signal<Vec<ConsoleEntry>>,
     filter: Signal<LogFilter>,
 ) -> VirtualNode {
-    let filtered: Vec<(usize, ConsoleEntry)> = filter_console_entries(logs, filter);
-    if filtered.is_empty() {
-        return html! {
+    html! {
+        if { filter_console_entries(logs, filter).is_empty() } {
             div {
                 class: c_vconsole_empty()
                 "No logs yet."
             }
-        };
-    }
-    html! {
-        for (index, entry) in {&filtered} {
-            div {
-                key: index.to_string()
-                class: get_log_item_class(entry.get_level())
-                span {
-                    class: get_badge_class(entry.get_level())
-                    get_log_level_badge(entry.get_level())
+        } else {
+            for (index, entry) in { &filter_console_entries(logs, filter) } {
+                div {
+                    key: index.to_string()
+                    class: get_log_item_class(entry.get_level())
+                    span {
+                        class: get_badge_class(entry.get_level())
+                        get_log_level_badge(entry.get_level())
+                    }
+                    entry.get_message().clone()
                 }
-                entry.get_message().clone()
             }
         }
     }

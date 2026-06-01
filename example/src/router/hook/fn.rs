@@ -12,7 +12,7 @@ use crate::*;
 ///
 /// - `Signal<String>` - The reactive signal holding the current route path.
 pub(crate) fn use_scroll_to_top(route_signal: Signal<String>) {
-    watch!(route_signal, |_route_value| {
+    watch!(route_signal, |_: String| {
         let window_value: Window = window().expect("no global window exists");
         let document_value: Document = window_value.document().expect("should have a document");
         if let Some(main_element) = document_value.query_selector("main").ok().flatten() {
@@ -98,7 +98,7 @@ pub(crate) fn use_pop_state(panel_open: Signal<bool>) {
 ///
 /// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
 pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
-    watch!(drawer_open, |is_open| {
+    watch!(drawer_open, |is_open: bool| {
         if !is_open {
             return;
         }

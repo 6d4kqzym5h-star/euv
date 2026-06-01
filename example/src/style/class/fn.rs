@@ -767,7 +767,7 @@ class! {
 
     pub(crate) c_log_container {
         background: var!(bg-console);
-        padding: "0px";
+        padding: "0px 6px";
         border-radius: "8px";
         font-family: "ui-monospace, monospace";
         font-size: "13px";

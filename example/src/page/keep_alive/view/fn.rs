@@ -171,7 +171,7 @@ fn timer_tab() -> VirtualNode {
     let running: Signal<bool> = use_signal(|| false);
     let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
     keep_alive_cleanup(handle);
-    watch!(running, |is_running| {
+    watch!(running, |is_running: bool| {
         if is_running {
             let elapsed_signal: Signal<i32> = elapsed;
             let handle_signal: Signal<Option<IntervalHandle>> = handle;

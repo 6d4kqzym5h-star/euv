@@ -3,15 +3,17 @@
 //! Procedural macros for the euv UI framework, including the `html!` macro
 //! for declarative UI syntax, the `class!` macro for CSS class definitions,
 //! the `css_vars!` macro for CSS custom properties, the `watch!` macro for
-//! reactive side effects, and the `component` attribute macro.
+//! reactive side effects, the `computed!` macro for reactive computed signals,
+//! and the `component` attribute macro.
 
 mod class;
+mod computed;
 mod html;
 mod kebab;
 mod var;
 mod watch;
 
-pub(crate) use {class::*, html::*, kebab::*, var::*, watch::*};
+pub(crate) use {class::*, computed::*, html::*, kebab::*, var::*, watch::*};
 
 use std::{
     collections::HashMap,
@@ -55,7 +57,7 @@ use {
 /// ```
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
-    html::parse_html(input)
+    parse_html(input)
 }
 
 /// The `class!` macro for defining CSS classes with style properties.
@@ -80,7 +82,7 @@ pub fn html(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn class(input: TokenStream) -> TokenStream {
-    class::parse_class(input)
+    parse_class(input)
 }
 
 /// The `watch!` macro for creating reactive side effects.
@@ -93,18 +95,46 @@ pub fn class(input: TokenStream) -> TokenStream {
 ///
 /// The number of signal expressions must match the number of closure parameters.
 /// Each closure parameter receives the current value (via `.get()`) of the
-/// corresponding signal.
+/// corresponding signal. Parameter types are optional and can be annotated
+/// after a colon.
 ///
 /// ```ignore
 /// let count = use_signal(|| 0_i32);
 /// let name = use_signal(|| String::from("euv"));
-/// watch!(count, name, |count_val, name_val| {
+/// watch!(count, name, |count_val: i32, name_val: String| {
 ///     web_sys::console::log_1(&format!("count={}, name={}", count_val, name_val).into());
 /// });
 /// ```
 #[proc_macro]
 pub fn watch(input: TokenStream) -> TokenStream {
-    watch::parse_watch(input)
+    parse_watch(input)
+}
+
+/// The `computed!` macro for creating reactive computed signals.
+///
+/// Watches one or more signals and derives a new signal whose value is
+/// automatically computed from the closure return value whenever any input
+/// signal changes. The closure must return a value of the specified return type.
+///
+/// The number of signal expressions must match the number of closure parameters.
+/// Each closure parameter receives the current value (via `.get()`) of the
+/// corresponding signal. Parameter types are optional and can be annotated
+/// after a colon. The return type must be specified after `->`.
+///
+/// The result signal is created via `use_signal` and updated via `set_silent`
+/// to avoid cascading re-renders. The initial value is computed immediately
+/// during first render.
+///
+/// ```ignore
+/// let first_name = use_signal(|| String::from("John"));
+/// let last_name = use_signal(|| String::from("Doe"));
+/// let full_name: Signal<String> = computed!(first_name, last_name, |first: String, last: String| -> String {
+///     format!("{} {}", first, last)
+/// });
+/// ```
+#[proc_macro]
+pub fn computed(input: TokenStream) -> TokenStream {
+    parse_computed(input)
 }
 
 /// The `css_vars!` macro for defining CSS custom properties.
@@ -126,7 +156,7 @@ pub fn watch(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn css_vars(input: TokenStream) -> TokenStream {
-    var::parse_css_vars(input)
+    parse_css_vars(input)
 }
 
 /// The `var!` macro for referencing CSS custom properties defined via `css_vars!`.
@@ -149,7 +179,7 @@ pub fn css_vars(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn var(input: TokenStream) -> TokenStream {
-    var::parse_var(input)
+    parse_var(input)
 }
 
 /// The `component` attribute macro for marking component functions.

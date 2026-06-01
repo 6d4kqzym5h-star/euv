@@ -9,7 +9,9 @@ use crate::*;
 pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNode {
     let PageLifecycleProps = node.try_get_props().unwrap_or_default();
     let state: UseLifecycle = use_lifecycle();
-    watch!(state.get_render_count(), |render_count_value| {
+    let render_count: Signal<i32> = state.get_render_count();
+    let logs: Signal<Vec<String>> = state.get_logs();
+    watch!(render_count, |render_count_value: i32| {
         Console::log(&format!(
             "watch! render count changed: {}",
             render_count_value
@@ -29,7 +31,7 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                     "This page has been rendered "
                     span {
                         class: c_counter_value()
-                        state.get_render_count()
+                        render_count
                     }
                     " times."
                 }
@@ -43,7 +45,7 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                 title: "Event Log"
                 div {
                     class: c_log_container()
-                    for (index, log) in { state.get_logs().get().iter().enumerate() } {
+                    for (index, log) in { logs.get().iter().enumerate() } {
                         div {
                             key: index.to_string()
                             class: c_log_item()

@@ -92,25 +92,30 @@ pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
     let green: Signal<i32> = state.get_green();
     let blue: Signal<i32> = state.get_blue();
     let hex_color: Signal<String> = state.get_hex_color();
-    watch!(celsius, |celsius_value| {
+    watch!(celsius, |celsius_value: f64| {
         let new_fahrenheit: f64 = celsius_value * 9.0 / 5.0 + 32.0;
         let rounded: f64 = (new_fahrenheit * 100.0).round() / 100.0;
         fahrenheit.set_untracked(rounded);
     });
-    watch!(fahrenheit, |fahrenheit_value| {
+    watch!(fahrenheit, |fahrenheit_value: f64| {
         let new_celsius: f64 = (fahrenheit_value - 32.0) * 5.0 / 9.0;
         let rounded: f64 = (new_celsius * 100.0).round() / 100.0;
         celsius.set_untracked(rounded);
     });
-    watch!(red, green, blue, |red_value, green_value, blue_value| {
-        let clamped_red: i32 = red_value.clamp(0, 255);
-        let clamped_green: i32 = green_value.clamp(0, 255);
-        let clamped_blue: i32 = blue_value.clamp(0, 255);
-        hex_color.set_untracked(format!(
-            "#{:02x}{:02x}{:02x}",
-            clamped_red, clamped_green, clamped_blue
-        ));
-    });
+    watch!(
+        red,
+        green,
+        blue,
+        |red_value: i32, green_value: i32, blue_value: i32| {
+            let clamped_red: i32 = red_value.clamp(0, 255);
+            let clamped_green: i32 = green_value.clamp(0, 255);
+            let clamped_blue: i32 = blue_value.clamp(0, 255);
+            hex_color.set_untracked(format!(
+                "#{:02x}{:02x}{:02x}",
+                clamped_red, clamped_green, clamped_blue
+            ));
+        }
+    );
     state
 }
 

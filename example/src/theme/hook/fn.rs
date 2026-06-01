@@ -28,7 +28,7 @@ pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
             theme_class = theme_class_name(THEME_LIGHT)
         )
     });
-    watch!(mobile_signal, theme, |mobile, theme_value| {
+    watch!(mobile_signal, theme, |mobile: bool, theme_value: String| {
         let root: &'static str = if mobile {
             c_mobile_app_root().get_name()
         } else {
