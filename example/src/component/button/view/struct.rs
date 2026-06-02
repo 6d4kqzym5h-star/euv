@@ -10,5 +10,5 @@ pub(crate) struct PrimaryButtonProps {
     /// Optional click event handler.
     pub(crate) onclick: Option<Rc<dyn Fn(Event)>>,
     /// Whether the button is disabled.
-    pub(crate) disabled: bool,
+    pub(crate) disabled: Signal<bool>,
 }

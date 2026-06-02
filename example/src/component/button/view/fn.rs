@@ -23,7 +23,7 @@ pub(crate) fn primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNo
     };
     html! {
         button {
-            class: if { disabled } { c_primary_button_disabled() } else { c_primary_button() }
+            class: if { disabled.get() } { c_primary_button_disabled() } else { c_primary_button() }
             onclick: click_handler
             content
         }
@@ -55,7 +55,7 @@ pub(crate) fn modal_primary_button(node: VirtualNode<PrimaryButtonProps>) -> Vir
     };
     html! {
         button {
-            class: if { disabled } { c_modal_primary_button_disabled() } else { c_modal_primary_button() }
+            class: if { disabled.get() } { c_modal_primary_button_disabled() } else { c_modal_primary_button() }
             onclick: click_handler
             content
         }

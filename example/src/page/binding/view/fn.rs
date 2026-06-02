@@ -70,12 +70,12 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                 "Props received: disabled="
                 span {
                     class: c_binding_typed_prop_value()
-                    { disabled.to_string() }
+                    { disabled.get().to_string() }
                 }
                 ", max_count="
                 span {
                     class: c_binding_typed_prop_value()
-                    { max_count.to_string() }
+                    { max_count.get().to_string() }
                 }
             }
             div {
@@ -93,7 +93,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                     "Reset"
                 }
             }
-            if { disabled } {
+            if { disabled.get() } {
                 p {
                     class: c_binding_typed_warning()
                     "Counter is disabled!"
@@ -509,8 +509,8 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     }
                 }
                 limited_counter {
-                    disabled: typed_state.get_disabled().get()
-                    max_count: typed_state.get_max_count().get()
+                    disabled: typed_state.get_disabled()
+                    max_count: typed_state.get_max_count()
                     on_increment: typed_props_on_increment(typed_state.get_current_count(), typed_state.get_max_count(), typed_state.get_disabled())
                     on_reset: typed_props_on_reset_count(typed_state.get_current_count(), typed_state.get_disabled())
                 }
