@@ -47,7 +47,7 @@ where
 /// tracked in a global registry to prevent premature deallocation. The `Copy`
 /// semantics are safe because only the pointer address is copied — the actual
 /// `Rc` reference is held by the registry for the lifetime of the program.
-#[derive(CustomDebug, Data, Default, Eq, New, PartialEq)]
+#[derive(CustomDebug, Data, Eq, New, PartialEq)]
 pub struct Signal<T>
 where
     T: Clone + PartialEq + 'static,

@@ -229,6 +229,24 @@ where
     }
 }
 
+/// Provides a safe default for `Signal<T>` by creating a valid signal
+/// initialized with `T::default()`.
+///
+/// This prevents the creation of invalid signals with `inner = 0` (null
+/// pointer), which would cause a panic when `.get()` is called.
+///
+/// # Returns
+///
+/// - `Self`: A valid signal initialized with `T::default()`.
+impl<T> Default for Signal<T>
+where
+    T: Clone + Default + PartialEq + 'static,
+{
+    fn default() -> Self {
+        Self::create(T::default())
+    }
+}
+
 /// Clones the signal, sharing the same inner state.
 ///
 /// Since `Signal` is `Copy`, this simply returns `*self`.
