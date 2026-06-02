@@ -102,15 +102,15 @@ where
     /// dependent dynamic node list, and marks it as inactive.
     /// If the inner `RefCell` is already borrowed, this is a no-op.
     ///
-    /// Also removes the signal from the global `SIGNAL_INNER_REGISTRY`
-    /// to release memory for non-resident signals that are no longer needed.
+    /// NOTE: Does NOT remove from `SIGNAL_INNER_REGISTRY`. The registry
+    /// must keep the `Rc` alive because `Signal` is `Copy` and other copies
+    /// may still hold the raw address. Removing would cause use-after-free.
     pub(crate) fn clear_listeners(&self) {
         if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
             inner.set_alive(false);
             inner.get_mut_listeners().clear();
             inner.get_mut_dependents().clear();
         }
-        signal_inner_registry_mut().remove(&self.get_inner());
     }
 
     /// Core implementation of value update and listener notification.

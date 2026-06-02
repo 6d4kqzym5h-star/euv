@@ -420,14 +420,13 @@ impl ToTokens for HtmlNode {
                 let iterable: &Expr = html_for.get_iterable();
                 let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
                 tokens.extend(quote! {
-                    ::euv::VirtualNode::create_dynamic_with_context(move |__euv_hook_context: &mut ::euv::HookContext| {
+                    {
                         let mut __euv_for_nodes: Vec<::euv::VirtualNode> = Vec::new();
                         for #pattern in #iterable {
-                            __euv_hook_context.reset_hook_index();
                             __euv_for_nodes.extend(#body_tokens);
                         }
                         ::euv::VirtualNode::Fragment(__euv_for_nodes)
-                    })
+                    }
                 });
             }
             HtmlNode::DynamicTag(dynamic_tag) => {

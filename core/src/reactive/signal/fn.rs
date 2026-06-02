@@ -30,9 +30,13 @@ where
 /// only handles that type. If the address does not correspond to a
 /// `Signal<String>`, this is a no-op.
 ///
-/// Also clears the dependents list and removes the signal from the global
-/// `SIGNAL_INNER_REGISTRY` to prevent memory leaks from non-resident
-/// signals that are no longer connected to any DOM element.
+/// Also clears the dependents list to stop precise dirty marking for
+/// dynamic nodes that depended on this signal.
+///
+/// NOTE: Does NOT remove from `SIGNAL_INNER_REGISTRY`. The registry
+/// keeps the `Rc` alive so that any `Signal` copies (which are `Copy`
+/// and only store a raw `usize` address) remain valid. Removing from
+/// the registry would free the heap allocation and cause use-after-free.
 ///
 /// # Arguments
 ///
@@ -44,8 +48,6 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
         inner.get_mut_listeners().clear();
         inner.get_mut_dependents().clear();
     }
-    // Remove from the global registry to release the Rc and allow deallocation.
-    signal_inner_registry_mut().remove(&addr);
 }
 
 /// Ensures the signal inner registry is initialized and returns a mutable reference.

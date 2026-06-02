@@ -34,6 +34,10 @@ pub(crate) fn use_scroll_to_top(route_signal: Signal<String>) {
 pub(crate) fn use_hash_change(route_signal: Signal<String>) {
     use_window_event("hashchange", move || {
         let new_route: String = current_route();
+        web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!(
+            "[euv-debug] hashchange fired, new_route={}",
+            new_route
+        )));
         route_signal.set(new_route);
     });
 }

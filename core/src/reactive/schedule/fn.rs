@@ -1,39 +1,55 @@
 use crate::*;
 
-/// Ensures the `window.__euv_dispatch` callback is registered.
-///
-/// Creates a `Closure` that resets the `SCHEDULED` flag and directly
-/// invokes `dispatch_signal_update_callbacks`, then stores it on the
-/// `window` object so it can be invoked via `requestAnimationFrame`.
-///
-fn ensure_dispatch_callback() {
-    let window_value: Window = match window() {
-        Some(window_instance) => window_instance,
-        None => return,
-    };
-    let key: JsValue = JsValue::from_str(EUV_DISPATCH);
-    if Reflect::get(&window_value, &key)
-        .unwrap_or(JsValue::UNDEFINED)
-        .is_undefined()
-    {
-        let closure: closure::Closure<dyn FnMut()> = closure::Closure::wrap(Box::new(|| {
+thread_local! {
+    /// The persistent dispatch `Closure`, kept alive for the lifetime of the
+    /// program so it can be handed to `setTimeout` repeatedly.
+    ///
+    /// The closure resets the `SCHEDULED` flag and then runs the queued signal
+    /// update callbacks. Resetting `SCHEDULED` here is what allows the next
+    /// `schedule_signal_update_targeted` call to schedule a fresh dispatch; if
+    /// this never ran, the flag would stay `true` forever and every reactive
+    /// update would be silently dropped.
+    static DISPATCH_CLOSURE: closure::Closure<dyn FnMut()> =
+        closure::Closure::wrap(Box::new(|| {
             SCHEDULED.store(false, Ordering::Relaxed);
             dispatch_signal_update_callbacks();
-        }));
-        let _ = Reflect::set(&window_value, &key, closure.as_ref());
-        closure.forget();
-    }
+        }) as Box<dyn FnMut()>);
 }
 
-/// Schedules a deferred signal update event via `requestAnimationFrame`.
+/// Invokes `callback` with a reference to the persistent dispatch `Function`.
+///
+/// The dispatch closure is created once per thread and stored in
+/// `DISPATCH_CLOSURE`. This helper exposes it as a `&Function` so it can be
+/// passed to the various browser scheduling APIs (`setTimeout`,
+/// `queueMicrotask`, `requestAnimationFrame`) without recreating the closure
+/// on every schedule.
+///
+/// # Arguments
+///
+/// - `FnOnce(&Function) -> R` - Receives the dispatch function reference.
+///
+/// # Returns
+///
+/// - `R` - The value returned by `callback`.
+fn with_dispatch_function<F, R>(callback: F) -> R
+where
+    F: FnOnce(&Function) -> R,
+{
+    DISPATCH_CLOSURE.with(|dispatch_closure| {
+        let dispatch_function: &Function = dispatch_closure.as_ref().unchecked_ref::<Function>();
+        callback(dispatch_function)
+    })
+}
+
+/// Schedules a deferred signal update event.
 ///
 /// If a schedule is already pending (`SCHEDULED` is true) or updates
 /// are suppressed (`SUPPRESS_SCHEDULE` is true), this is a no-op.
-/// Otherwise, sets `SCHEDULED` to true and queues the
-/// `window.__euv_dispatch` callback via `requestAnimationFrame` on WASM
-/// targets. This ensures that no matter how many signal updates occur
-/// within a single animation frame, only one dispatch cycle runs,
-/// preventing CPU spikes during rapid input events (e.g., slider dragging).
+/// Otherwise, sets `SCHEDULED` to true and queues the dispatch callback
+/// (preferring `queueMicrotask`) on WASM targets. This ensures that no
+/// matter how many signal updates occur within a single task, only one
+/// dispatch cycle runs, preventing CPU spikes during rapid input events
+/// (e.g., slider dragging).
 ///
 /// On non-WASM targets, resets `SCHEDULED` immediately since there is
 /// no event loop to schedule on.
@@ -69,42 +85,61 @@ pub fn schedule_signal_update_targeted(dependents: &[usize]) {
         return;
     }
     SCHEDULED.store(true, Ordering::Relaxed);
-    let window_option: Option<Window> = window();
-    if window_option.is_none() {
-        SCHEDULED.store(false, Ordering::Relaxed);
-        return;
-    }
-    ensure_dispatch_callback();
-    let window_value: Window = match window_option {
+    let window_value: Window = match window() {
         Some(window_instance) => window_instance,
         None => {
             SCHEDULED.store(false, Ordering::Relaxed);
             return;
         }
     };
-    let dispatch_fn: JsValue =
-        Reflect::get(&window_value, &JsValue::from_str(EUV_DISPATCH)).unwrap_or(JsValue::UNDEFINED);
-    if dispatch_fn.is_undefined() {
-        SCHEDULED.store(false, Ordering::Relaxed);
-        return;
-    }
-    let request_animation_frame_value: JsValue =
-        Reflect::get(&window_value, &JsValue::from_str(REQUEST_ANIMATION_FRAME))
-            .unwrap_or(JsValue::UNDEFINED);
-    if request_animation_frame_value.is_undefined() {
+    // Schedule exactly ONE dispatch, preferring `queueMicrotask`.
+    //
+    // A microtask drains at the end of the current task, *independently* of the
+    // timer queue. This matters because timer-based scheduling
+    // (`requestAnimationFrame`, and even `setTimeout`) is throttled or fully
+    // paused by browsers while the document is hidden (background tab,
+    // prerender, headless automation). When the scheduled callback never fires,
+    // the dispatch never resets the `SCHEDULED` flag, so it stays `true`
+    // forever and every subsequent signal update short-circuits — reactive
+    // updates silently stop applying. Using a microtask guarantees the dispatch
+    // runs regardless of document visibility while still coalescing all
+    // synchronous `set` calls within the current task into a single dispatch
+    // (they are deduplicated by the `SCHEDULED` guard above).
+    let queued_microtask: bool = with_dispatch_function(|dispatch_function| {
         let queue_microtask_value: JsValue =
             Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
                 .unwrap_or(JsValue::UNDEFINED);
-        if queue_microtask_value.is_undefined() {
-            SCHEDULED.store(false, Ordering::Relaxed);
-            return;
-        }
-        let queue_microtask: Function = queue_microtask_value.into();
-        let _ = queue_microtask.call1(&JsValue::NULL, &dispatch_fn);
+        matches!(
+            queue_microtask_value.dyn_into::<Function>(),
+            Ok(queue_microtask) if queue_microtask.call1(&window_value, dispatch_function).is_ok()
+        )
+    });
+    if queued_microtask {
         return;
     }
-    let request_animation_frame: Function = request_animation_frame_value.into();
-    let _ = request_animation_frame.call1(&JsValue::NULL, &dispatch_fn);
+    // Fallback: `setTimeout(dispatch, 0)` when `queueMicrotask` is unavailable.
+    //
+    // The typed `web_sys` binding is used instead of `Reflect`/`call`, which
+    // guarantees the dispatch `Function` (kept alive in `DISPATCH_CLOSURE`) is
+    // passed and invoked correctly, with `this` bound to the `window`.
+    let scheduled: bool = with_dispatch_function(|dispatch_function| {
+        window_value
+            .set_timeout_with_callback_and_timeout_and_arguments_0(dispatch_function, 0)
+            .is_ok()
+    });
+    if scheduled {
+        return;
+    }
+    // Last resort: `requestAnimationFrame` (may be throttled while hidden).
+    let requested_frame: bool = with_dispatch_function(|dispatch_function| {
+        window_value
+            .request_animation_frame(dispatch_function)
+            .is_ok()
+    });
+    if requested_frame {
+        return;
+    }
+    SCHEDULED.store(false, Ordering::Relaxed);
 }
 
 /// Batches signal updates within a closure, deferring DOM synchronization until completion.
@@ -184,7 +219,7 @@ where
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let string_signal: Signal<String> = Signal::create(source.get().to_string());
     let string_signal_clone: Signal<String> = string_signal;
-    source.replace_subscribe({
+    source.subscribe({
         let source_inner: Signal<bool> = source;
         move || {
             string_signal_clone.set_silent(source_inner.get().to_string());

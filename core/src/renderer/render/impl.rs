@@ -129,27 +129,15 @@ impl Renderer {
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 self.patch_children(dom_element, old_children, new_children);
             }
-            (VirtualNode::Dynamic(old_dynamic), VirtualNode::Dynamic(new_dynamic)) => {
-                let old_rendered: VirtualNode = old_dynamic.render();
-                let new_rendered: VirtualNode = new_dynamic.render();
-                let new_unwrapped: VirtualNode = Self::unwrap_component(&new_rendered);
-                if !Self::visual_eq(&old_rendered, &new_unwrapped) {
-                    while let Some(child) = dom_element.first_child() {
-                        if let Some(child_element) = child.dyn_ref::<Element>() {
-                            self.cleanup_dom_subtree(child_element);
-                        }
-                        let _ = dom_element.remove_child(&child);
-                    }
-                    if let Some(dynamic_id_str) = dom_element.get_attribute(DATA_EUV_DYNAMIC_ID)
-                        && let Ok(dynamic_id) = dynamic_id_str.parse::<usize>()
-                    {
-                        cleanup_dynamic_node(dynamic_id);
-                    }
-                    let dynamic_id: usize = Self::assign_dynamic_id(dom_element);
-                    let initial_dom: Node =
-                        self.setup_dynamic_node(new_dynamic, dynamic_id, dom_element, true);
-                    let _ = dom_element.append_child(&initial_dom);
-                }
+            (VirtualNode::Dynamic(_old_dynamic), VirtualNode::Dynamic(_new_dynamic)) => {
+                // Dynamic nodes are self-updating via their registered callbacks
+                // in the signal update registry. When a parent re-renders and
+                // produces a new VirtualNode::Dynamic in the same position, the
+                // existing dynamic node already has its callback registered and
+                // will update itself when its dependencies change. Calling
+                // .render() here would have side effects (mutating shared hook
+                // context, running cleanups) that interfere with the dynamic
+                // node's own update cycle.
             }
             (VirtualNode::Dynamic(_), _) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
@@ -348,68 +336,82 @@ impl Renderer {
         old_children: &[VirtualNode],
         new_children: &[VirtualNode],
     ) {
-        let mut old_key_map: HashMap<&str, usize> = HashMap::with_capacity(old_children.len());
-        for (index, old_child) in old_children.iter().enumerate() {
-            if let Some(key) = Self::get_node_key(old_child) {
-                old_key_map.insert(key, index);
-            }
-        }
-        let mut reused_indices: HashSet<usize> = HashSet::with_capacity(new_children.len());
         let child_nodes: NodeList = parent.child_nodes();
         let dom_child_count: u32 = child_nodes.length();
+        // Build old key → (vnode index, DOM node) map
+        let mut old_key_to_node: HashMap<&str, (usize, Node)> =
+            HashMap::with_capacity(old_children.len());
+        for (index, old_child) in old_children.iter().enumerate() {
+            if let Some(key) = Self::get_node_key(old_child) {
+                let dom_index: u32 = index as u32;
+                if dom_index < dom_child_count {
+                    if let Some(node) = child_nodes.get(dom_index) {
+                        old_key_to_node.insert(key, (index, node));
+                    }
+                }
+            }
+        }
+        // Determine which keys are reused
+        let mut new_key_set: HashSet<&str> = HashSet::with_capacity(new_children.len());
+        for new_child in new_children.iter() {
+            if let Some(key) = Self::get_node_key(new_child) {
+                new_key_set.insert(key);
+            }
+        }
+        // Remove old nodes whose keys are not in the new list
+        for (index, old_child) in old_children.iter().enumerate() {
+            if let Some(key) = Self::get_node_key(old_child) {
+                if !new_key_set.contains(key) {
+                    if let Some((_old_index, dom_node)) = old_key_to_node.remove(key) {
+                        if let Some(element) = dom_node.dyn_ref::<Element>() {
+                            self.cleanup_dom_subtree(element);
+                        }
+                        let _ = parent.remove_child(&dom_node);
+                    }
+                }
+            } else {
+                // No key: remove by index
+                let dom_index: u32 = index as u32;
+                if dom_index < dom_child_count {
+                    if let Some(dom_node) = child_nodes.get(dom_index) {
+                        if let Some(element) = dom_node.dyn_ref::<Element>() {
+                            self.cleanup_dom_subtree(element);
+                        }
+                        let _ = parent.remove_child(&dom_node);
+                    }
+                }
+            }
+        }
+        // Now process new children: reuse existing nodes or create new ones
         for (new_index, new_child) in new_children.iter().enumerate() {
             let new_key: &str = Self::get_node_key(new_child).unwrap_or_default();
-            if let Some(&old_index) = old_key_map.get(new_key) {
-                reused_indices.insert(old_index);
-                let old_child: &VirtualNode = &old_children[old_index];
-                let mapped_dom_index: u32 = old_index as u32;
-                if mapped_dom_index < dom_child_count
-                    && let Some(dom_node) = child_nodes.get(mapped_dom_index)
-                    && let Some(element) = dom_node.dyn_ref::<Element>()
-                {
+            if let Some((old_vnode_index, dom_node)) = old_key_to_node.remove(new_key) {
+                // Reuse existing DOM node: patch it
+                let old_child: &VirtualNode = &old_children[old_vnode_index];
+                if let Some(element) = dom_node.dyn_ref::<Element>() {
                     self.patch_node(old_child, new_child, element);
                 }
-                let current_dom_index: u32 = new_index as u32;
-                if mapped_dom_index != current_dom_index
-                    && current_dom_index < dom_child_count
-                    && let Some(dom_node) = child_nodes.get(mapped_dom_index)
-                {
-                    if let Some(reference_node) = child_nodes.get(current_dom_index) {
+                // Move to correct position if needed
+                let current_children: NodeList = parent.child_nodes();
+                let target_index: u32 = new_index as u32;
+                let current_at_target: Option<Node> = current_children.get(target_index);
+                if current_at_target.as_ref() != Some(&dom_node) {
+                    if let Some(reference_node) = current_at_target {
                         let _ = parent.insert_before(&dom_node, Some(&reference_node));
                     } else {
                         let _ = parent.append_child(&dom_node);
                     }
                 }
             } else {
+                // Create new DOM node and insert at the correct position
                 let new_dom_node: Node = self.create_dom_node(new_child);
-                if (new_index as u32) < dom_child_count
-                    && let Some(reference_node) = child_nodes.get(new_index as u32)
-                {
+                let current_children: NodeList = parent.child_nodes();
+                let target_index: u32 = new_index as u32;
+                if let Some(reference_node) = current_children.get(target_index) {
                     let _ = parent.insert_before(&new_dom_node, Some(&reference_node));
                 } else {
                     let _ = parent.append_child(&new_dom_node);
                 }
-            }
-        }
-        let mut indices_to_remove: Vec<usize> = Vec::new();
-        for (index, old_child) in old_children.iter().enumerate() {
-            if !reused_indices.contains(&index) {
-                indices_to_remove.push(index);
-            }
-            let _ = old_child;
-        }
-        indices_to_remove.sort_unstable_by(|left_index: &usize, right_index: &usize| {
-            right_index.cmp(left_index)
-        });
-        for old_index in indices_to_remove {
-            let mapped_dom_index: u32 = old_index as u32;
-            if mapped_dom_index < parent.child_nodes().length()
-                && let Some(dom_node) = parent.child_nodes().get(mapped_dom_index)
-            {
-                if let Some(element) = dom_node.dyn_ref::<Element>() {
-                    self.cleanup_dom_subtree(element);
-                }
-                let _ = parent.remove_child(&dom_node);
             }
         }
     }
@@ -582,7 +584,7 @@ impl Renderer {
                     let text_clone: Text = text.clone();
                     let signal_clone: Signal<String> = *signal;
                     let subscribe_signal: Signal<String> = signal_clone;
-                    signal_clone.replace_subscribe({
+                    signal_clone.subscribe({
                         move || {
                             if !is_node_connected(&text_clone) {
                                 subscribe_signal.clear_listeners();

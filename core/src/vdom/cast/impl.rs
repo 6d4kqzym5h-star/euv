@@ -177,16 +177,13 @@ where
     ///
     /// - `VirtualNode` - A text virtual node with reactive signal binding.
     fn as_reactive_text(&self) -> VirtualNode {
-        let initial: String = self.get().to_string();
-        let string_signal: Signal<String> = Signal::create(initial.clone());
+        let source: Signal<T> = *self;
+        let string_signal: Signal<String> = Signal::create(source.get().to_string());
         let string_signal_clone: Signal<String> = string_signal;
-        self.replace_subscribe({
-            let source: Signal<T> = *self;
-            move || {
-                string_signal_clone.set_silent(source.get().to_string());
-            }
+        source.subscribe(move || {
+            string_signal_clone.set_silent(source.get().to_string());
         });
-        VirtualNode::Text(TextNode::new(initial, Some(string_signal)))
+        VirtualNode::Text(TextNode::new(string_signal.get(), Some(string_signal)))
     }
 }
 
