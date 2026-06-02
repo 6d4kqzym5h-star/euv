@@ -480,7 +480,11 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         primary_button {
                             label: "Toggle Disabled"
                             onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
-                            { if typed_state.get_disabled().get() { "Enable" } else { "Disable" } }
+                            if { typed_state.get_disabled().get() } {
+                                "Enable"
+                            } else {
+                                "Disable"
+                            }
                         }
                         div {
                             class: c_binding_typed_prop_group()
