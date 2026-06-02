@@ -129,16 +129,7 @@ impl Renderer {
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 self.patch_children(dom_element, old_children, new_children);
             }
-            (VirtualNode::Dynamic(_old_dynamic), VirtualNode::Dynamic(_new_dynamic)) => {
-                // Dynamic nodes are self-updating via their registered callbacks
-                // in the signal update registry. When a parent re-renders and
-                // produces a new VirtualNode::Dynamic in the same position, the
-                // existing dynamic node already has its callback registered and
-                // will update itself when its dependencies change. Calling
-                // .render() here would have side effects (mutating shared hook
-                // context, running cleanups) that interfere with the dynamic
-                // node's own update cycle.
-            }
+            (VirtualNode::Dynamic(_old_dynamic), VirtualNode::Dynamic(_new_dynamic)) => {}
             (VirtualNode::Dynamic(_), _) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
@@ -338,60 +329,53 @@ impl Renderer {
     ) {
         let child_nodes: NodeList = parent.child_nodes();
         let dom_child_count: u32 = child_nodes.length();
-        // Build old key → (vnode index, DOM node) map
         let mut old_key_to_node: HashMap<&str, (usize, Node)> =
             HashMap::with_capacity(old_children.len());
         for (index, old_child) in old_children.iter().enumerate() {
             if let Some(key) = Self::get_node_key(old_child) {
                 let dom_index: u32 = index as u32;
-                if dom_index < dom_child_count {
-                    if let Some(node) = child_nodes.get(dom_index) {
-                        old_key_to_node.insert(key, (index, node));
-                    }
+                if dom_index < dom_child_count
+                    && let Some(node) = child_nodes.get(dom_index)
+                {
+                    old_key_to_node.insert(key, (index, node));
                 }
             }
         }
-        // Determine which keys are reused
         let mut new_key_set: HashSet<&str> = HashSet::with_capacity(new_children.len());
         for new_child in new_children.iter() {
             if let Some(key) = Self::get_node_key(new_child) {
                 new_key_set.insert(key);
             }
         }
-        // Remove old nodes whose keys are not in the new list
         for (index, old_child) in old_children.iter().enumerate() {
             if let Some(key) = Self::get_node_key(old_child) {
-                if !new_key_set.contains(key) {
-                    if let Some((_old_index, dom_node)) = old_key_to_node.remove(key) {
-                        if let Some(element) = dom_node.dyn_ref::<Element>() {
-                            self.cleanup_dom_subtree(element);
-                        }
-                        let _ = parent.remove_child(&dom_node);
+                if !new_key_set.contains(key)
+                    && let Some((_old_index, dom_node)) = old_key_to_node.remove(key)
+                {
+                    if let Some(element) = dom_node.dyn_ref::<Element>() {
+                        self.cleanup_dom_subtree(element);
                     }
+                    let _ = parent.remove_child(&dom_node);
                 }
             } else {
-                // No key: remove by index
                 let dom_index: u32 = index as u32;
-                if dom_index < dom_child_count {
-                    if let Some(dom_node) = child_nodes.get(dom_index) {
-                        if let Some(element) = dom_node.dyn_ref::<Element>() {
-                            self.cleanup_dom_subtree(element);
-                        }
-                        let _ = parent.remove_child(&dom_node);
+                if dom_index < dom_child_count
+                    && let Some(dom_node) = child_nodes.get(dom_index)
+                {
+                    if let Some(element) = dom_node.dyn_ref::<Element>() {
+                        self.cleanup_dom_subtree(element);
                     }
+                    let _ = parent.remove_child(&dom_node);
                 }
             }
         }
-        // Now process new children: reuse existing nodes or create new ones
         for (new_index, new_child) in new_children.iter().enumerate() {
             let new_key: &str = Self::get_node_key(new_child).unwrap_or_default();
             if let Some((old_vnode_index, dom_node)) = old_key_to_node.remove(new_key) {
-                // Reuse existing DOM node: patch it
                 let old_child: &VirtualNode = &old_children[old_vnode_index];
                 if let Some(element) = dom_node.dyn_ref::<Element>() {
                     self.patch_node(old_child, new_child, element);
                 }
-                // Move to correct position if needed
                 let current_children: NodeList = parent.child_nodes();
                 let target_index: u32 = new_index as u32;
                 let current_at_target: Option<Node> = current_children.get(target_index);
@@ -403,7 +387,6 @@ impl Renderer {
                     }
                 }
             } else {
-                // Create new DOM node and insert at the correct position
                 let new_dom_node: Node = self.create_dom_node(new_child);
                 let current_children: NodeList = parent.child_nodes();
                 let target_index: u32 = new_index as u32;
@@ -656,7 +639,6 @@ impl Renderer {
     ) -> Node {
         let mut hook_context: HookContext = dynamic_node.get_hook_context().clone();
         hook_context.reset_hook_index();
-        // Enable dependency tracking for the initial render
         CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
         let initial_vnode: VirtualNode =
             with_hook_context(hook_context.clone(), || dynamic_node.render());
@@ -683,7 +665,6 @@ impl Renderer {
                 .try_borrow()
                 .map(|arm: Ref<usize>| *arm)
                 .unwrap_or(0);
-            // Enable dependency tracking during re-render to capture new dependencies
             CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
                 let Ok(mut inner) = render_fn.try_borrow_mut() else {

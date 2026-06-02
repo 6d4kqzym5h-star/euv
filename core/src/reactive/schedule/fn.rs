@@ -92,19 +92,6 @@ pub fn schedule_signal_update_targeted(dependents: &[usize]) {
             return;
         }
     };
-    // Schedule exactly ONE dispatch, preferring `queueMicrotask`.
-    //
-    // A microtask drains at the end of the current task, *independently* of the
-    // timer queue. This matters because timer-based scheduling
-    // (`requestAnimationFrame`, and even `setTimeout`) is throttled or fully
-    // paused by browsers while the document is hidden (background tab,
-    // prerender, headless automation). When the scheduled callback never fires,
-    // the dispatch never resets the `SCHEDULED` flag, so it stays `true`
-    // forever and every subsequent signal update short-circuits — reactive
-    // updates silently stop applying. Using a microtask guarantees the dispatch
-    // runs regardless of document visibility while still coalescing all
-    // synchronous `set` calls within the current task into a single dispatch
-    // (they are deduplicated by the `SCHEDULED` guard above).
     let queued_microtask: bool = with_dispatch_function(|dispatch_function| {
         let queue_microtask_value: JsValue =
             Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
@@ -117,11 +104,6 @@ pub fn schedule_signal_update_targeted(dependents: &[usize]) {
     if queued_microtask {
         return;
     }
-    // Fallback: `setTimeout(dispatch, 0)` when `queueMicrotask` is unavailable.
-    //
-    // The typed `web_sys` binding is used instead of `Reflect`/`call`, which
-    // guarantees the dispatch `Function` (kept alive in `DISPATCH_CLOSURE`) is
-    // passed and invoked correctly, with `this` bound to the `window`.
     let scheduled: bool = with_dispatch_function(|dispatch_function| {
         window_value
             .set_timeout_with_callback_and_timeout_and_arguments_0(dispatch_function, 0)
@@ -130,7 +112,6 @@ pub fn schedule_signal_update_targeted(dependents: &[usize]) {
     if scheduled {
         return;
     }
-    // Last resort: `requestAnimationFrame` (may be throttled while hidden).
     let requested_frame: bool = with_dispatch_function(|dispatch_function| {
         window_value
             .request_animation_frame(dispatch_function)

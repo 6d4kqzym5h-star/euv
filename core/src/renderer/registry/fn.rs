@@ -158,7 +158,6 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             break;
         }
     }
-    // Sweep removed entries to prevent memory leaks from dead DynamicNode slots.
     sweep_removed_signal_update_entries();
     SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
 }
@@ -169,8 +168,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
 ///
 /// Called after each dispatch cycle completes to clean up stale entries.
 fn sweep_removed_signal_update_entries() {
-    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
-    registry.retain(|_key, entry| {
+    ensure_signal_update_registry_mut().retain(|_key, entry| {
         entry
             .try_borrow()
             .map(|slot: Ref<SignalUpdateSlot>| !slot.get_removed())
