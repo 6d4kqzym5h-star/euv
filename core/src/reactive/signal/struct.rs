@@ -43,16 +43,17 @@ where
 ///
 /// Allows reading, writing, and subscribing to changes.
 /// Implements `Clone` and `Copy` for ergonomic use; all copies share the same
-/// underlying state. The inner state is heap-allocated via `Rc<RefCell<>>` and
-/// tracked in a global registry to prevent premature deallocation. The `Copy`
-/// semantics are safe because only the pointer address is copied — the actual
-/// `Rc` reference is held by the registry for the lifetime of the program.
+/// underlying state. The inner state is heap-allocated via `Box` and accessed
+/// through a raw pointer stored as a `usize`. The allocation is tracked in a
+/// global registry for lifecycle management. The `Copy` semantics are safe
+/// because only the pointer address is copied — the actual heap allocation
+/// is owned by the registry.
 #[derive(CustomDebug, Data, Eq, New, PartialEq)]
 pub struct Signal<T>
 where
     T: Clone + PartialEq + 'static,
 {
-    /// Address of the heap-allocated inner state.
+    /// Address of the heap-allocated inner state (`*mut SignalInner<T>`).
     #[debug(skip)]
     #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]
@@ -86,6 +87,34 @@ where
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }
 
+/// An entry in the signal inner registry.
+///
+/// Stores the raw pointer and a type-erased drop function so that the
+/// allocation can be correctly freed without knowing the concrete `T`.
+pub(crate) struct SignalRegistryEntry {
+    /// The raw pointer to the `SignalInner<T>` allocation (as `*mut ()`).
+    pub(crate) ptr: *mut (),
+    /// A function that drops the `Box<SignalInner<T>>` when called with `ptr`.
+    pub(crate) drop_fn: unsafe fn(*mut ()),
+}
+
+impl SignalRegistryEntry {
+    /// Creates a new registry entry.
+    pub(crate) fn new(ptr: *mut (), drop_fn: unsafe fn(*mut ())) -> Self {
+        Self { ptr, drop_fn }
+    }
+
+    /// Returns the raw pointer.
+    pub(crate) fn get_ptr(&self) -> *mut () {
+        self.ptr
+    }
+
+    /// Returns the drop function.
+    pub(crate) fn get_drop_fn(&self) -> unsafe fn(*mut ()) {
+        self.drop_fn
+    }
+}
+
 /// A `Sync` wrapper for single-threaded global `HashMap` access.
 ///
 /// SAFETY: This type is only safe to use in single-threaded contexts
@@ -98,5 +127,5 @@ pub(crate) struct SignalInnerRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashMap<usize, Rc<dyn Any>>>>,
+    pub(crate) UnsafeCell<Option<HashMap<usize, SignalRegistryEntry>>>,
 );

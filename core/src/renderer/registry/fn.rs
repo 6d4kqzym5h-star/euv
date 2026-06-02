@@ -32,10 +32,8 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
             && let Some(active_handler) = ensure_handler_registry()
                 .get(&(euv_id, event_name))
                 .and_then(|entry: &HandlerEntry| {
-                    entry
-                        .try_borrow()
-                        .ok()
-                        .and_then(|slot: Ref<HandlerSlot>| slot.try_get_handler().as_ref().cloned())
+                    let slot: &HandlerSlot = unsafe { &**entry };
+                    slot.try_get_handler().as_ref().cloned()
                 })
         {
             active_handler.handle(event.clone());
@@ -79,9 +77,8 @@ pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
 /// Invokes all active callbacks in the signal update registry.
 ///
 /// Guards against re-entrant dispatch with `SIGNAL_UPDATE_DISPATCHING`.
-/// Drains the registry into a local Vec, invokes each callback, and
-/// re-inserts survivors (non-removed entries) back into the registry.
-/// This avoids per-key HashMap lookups and a separate keys Vec allocation.
+/// Iterates dirty slots, takes their callbacks, invokes them, and puts
+/// them back. Uses direct pointer access for zero-overhead slot manipulation.
 ///
 /// After completing one pass, checks whether new entries were added during
 /// callback execution (e.g., by IntersectionObserver or async callbacks).
@@ -103,9 +100,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
         let dirty_keys: Vec<usize> = registry
             .iter()
             .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
-                let Ok(slot) = entry.try_borrow() else {
-                    return None;
-                };
+                let slot: &SignalUpdateSlot = unsafe { &**entry };
                 if slot.get_dirty() && !slot.get_removed() {
                     Some(*key)
                 } else {
@@ -121,34 +116,37 @@ pub(crate) fn dispatch_signal_update_callbacks() {
                 Some(removed_entry) => removed_entry,
                 None => continue,
             };
-            let callback: Option<Box<dyn FnMut()>> = {
-                let Ok(mut slot) = entry.try_borrow_mut() else {
-                    continue;
-                };
-                if slot.get_removed() {
-                    continue;
+            let slot: &mut SignalUpdateSlot = unsafe { &mut *entry };
+            if slot.get_removed() {
+                // Free the allocation since it's removed.
+                unsafe {
+                    let _ = Box::from_raw(entry);
                 }
-                slot.set_dirty(false);
-                slot.get_mut_callback().take()
-            };
+                continue;
+            }
+            slot.set_dirty(false);
+            let callback: Option<Box<dyn FnMut()>> = slot.get_mut_callback().take();
             if let Some(mut callback) = callback {
                 callback();
-                if let Ok(mut slot) = entry.try_borrow_mut()
-                    && !slot.get_removed()
-                {
+                let slot: &mut SignalUpdateSlot = unsafe { &mut *entry };
+                if !slot.get_removed() {
                     slot.set_callback(Some(callback));
                 }
             }
-            if entry
-                .try_borrow()
-                .map(|slot: Ref<SignalUpdateSlot>| slot.get_removed())
-                .unwrap_or(true)
-            {
+            let slot: &SignalUpdateSlot = unsafe { &*entry };
+            if slot.get_removed() {
+                unsafe {
+                    let _ = Box::from_raw(entry);
+                }
                 continue;
             }
             let registry: &mut HashMap<usize, SignalUpdateEntry> =
                 ensure_signal_update_registry_mut();
             if registry.contains_key(&key) {
+                // Another entry was inserted for this key during callback; free ours.
+                unsafe {
+                    let _ = Box::from_raw(entry);
+                }
                 continue;
             }
             registry.insert(key, entry);
@@ -169,10 +167,15 @@ pub(crate) fn dispatch_signal_update_callbacks() {
 /// Called after each dispatch cycle completes to clean up stale entries.
 fn sweep_removed_signal_update_entries() {
     ensure_signal_update_registry_mut().retain(|_key, entry| {
-        entry
-            .try_borrow()
-            .map(|slot: Ref<SignalUpdateSlot>| !slot.get_removed())
-            .unwrap_or(true)
+        let slot: &SignalUpdateSlot = unsafe { &**entry };
+        if slot.get_removed() {
+            unsafe {
+                let _ = Box::from_raw(*entry);
+            }
+            false
+        } else {
+            true
+        }
     });
 }
 
@@ -185,9 +188,7 @@ fn sweep_removed_signal_update_entries() {
 pub(crate) fn mark_all_slots_dirty() {
     let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
     for entry in registry.values() {
-        let Ok(mut slot) = entry.try_borrow_mut() else {
-            continue;
-        };
+        let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
         if !slot.get_removed() {
             slot.set_dirty(true);
         }
@@ -207,9 +208,7 @@ pub(crate) fn mark_slots_dirty_targeted(dynamic_ids: &[usize]) {
     let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
     for dynamic_id in dynamic_ids {
         if let Some(entry) = registry.get(dynamic_id) {
-            let Ok(mut slot) = entry.try_borrow_mut() else {
-                continue;
-            };
+            let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
             if !slot.get_removed() {
                 slot.set_dirty(true);
             }
@@ -219,45 +218,47 @@ pub(crate) fn mark_slots_dirty_targeted(dynamic_ids: &[usize]) {
 
 /// Registers a signal update callback for a DynamicNode placeholder.
 ///
-/// On WASM targets, ensures the signal update listener is active first.
-/// Then inserts the callback into `SIGNAL_UPDATE_REGISTRY` keyed by
-/// `dynamic_id`, wrapped in a `SignalUpdateSlot`.
+/// Allocates a `SignalUpdateSlot` on the heap and inserts the raw pointer
+/// into `SIGNAL_UPDATE_REGISTRY` keyed by `dynamic_id`.
 ///
 /// # Arguments
 ///
 /// - `usize` - The unique ID of the `DynamicNode`.
 /// - `Box<dyn FnMut()>` - The callback to invoke on signal updates.
 pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnMut()>) {
-    let entry: SignalUpdateEntry = Rc::new(RefCell::new(SignalUpdateSlot::new(
-        Some(callback),
-        false,
-        true,
-    )));
-    ensure_signal_update_registry_mut().insert(dynamic_id, entry);
+    let slot: Box<SignalUpdateSlot> = Box::new(SignalUpdateSlot::new(Some(callback), false, true));
+    let entry: SignalUpdateEntry = Box::into_raw(slot);
+    // If there's an existing entry for this key, free it first.
+    if let Some(old_entry) = ensure_signal_update_registry_mut().insert(dynamic_id, entry) {
+        unsafe {
+            let _ = Box::from_raw(old_entry);
+        }
+    }
 }
 
 /// Registers a signal update callback for an attribute signal.
 ///
-/// Inserts the callback into `SIGNAL_UPDATE_REGISTRY` keyed by
-/// `signal_key` (the signal's inner address), wrapped in a `SignalUpdateSlot`.
+/// Allocates a `SignalUpdateSlot` on the heap and inserts the raw pointer
+/// into `SIGNAL_UPDATE_REGISTRY` keyed by `signal_key` (the signal's inner address).
 ///
 /// # Arguments
 ///
 /// - `usize` - The inner address of the attribute signal.
 /// - `Box<dyn FnMut()>` - The callback to invoke on signal updates.
 pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn FnMut()>) {
-    let entry: SignalUpdateEntry = Rc::new(RefCell::new(SignalUpdateSlot::new(
-        Some(callback),
-        false,
-        true,
-    )));
-    ensure_signal_update_registry_mut().insert(signal_key, entry);
+    let slot: Box<SignalUpdateSlot> = Box::new(SignalUpdateSlot::new(Some(callback), false, true));
+    let entry: SignalUpdateEntry = Box::into_raw(slot);
+    if let Some(old_entry) = ensure_signal_update_registry_mut().insert(signal_key, entry) {
+        unsafe {
+            let _ = Box::from_raw(old_entry);
+        }
+    }
 }
 
 /// Cleans up all handler entries associated with a DOM element.
 ///
 /// Collects all registry keys whose element ID matches `euv_id` and
-/// removes them from `HANDLER_REGISTRY`.
+/// removes them from `HANDLER_REGISTRY`, freeing the heap allocations.
 ///
 /// # Arguments
 ///
@@ -270,23 +271,44 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
         .copied()
         .collect();
     for key in keys_to_remove {
-        registry_ref.remove(&key);
+        if let Some(entry) = registry_ref.remove(&key) {
+            unsafe {
+                let _ = Box::from_raw(entry);
+            }
+        }
     }
 }
 
 /// Cleans up all resources associated with a DynamicNode when its
 /// placeholder element is removed from the DOM.
 ///
-/// On WASM targets, marks the `SignalUpdateSlot` as removed and
-/// clears its callback so it will not be invoked in future dispatches.
+/// Marks the `SignalUpdateSlot` as removed and clears its callback so it
+/// will not be invoked in future dispatches.
 ///
 /// # Arguments
 ///
 /// - `usize` - The unique ID of the `DynamicNode` being removed.
 pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
-    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id)
-        && let Ok(mut slot) = entry.try_borrow_mut()
-    {
+    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id) {
+        let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
+        slot.set_removed(true);
+        slot.set_callback(None);
+    }
+}
+
+/// Removes the signal update slot for an attribute signal from the registry.
+///
+/// Attribute signals are registered with the signal's inner address as key
+/// (via `register_attr_signal_listener`). This function marks the slot as
+/// removed and clears its callback, mirroring `cleanup_dynamic_node` but
+/// for attribute-level signals. The entry will be swept on the next dispatch.
+///
+/// # Arguments
+///
+/// - `usize` - The inner pointer address of the attribute signal.
+pub(crate) fn cleanup_attr_signal_update_slot(addr: usize) {
+    if let Some(entry) = ensure_signal_update_registry().get(&addr) {
+        let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
         slot.set_removed(true);
         slot.set_callback(None);
     }
@@ -417,7 +439,7 @@ pub(crate) fn ensure_window_event_registry_mut() -> &'static mut WindowEventRegi
 /// # Arguments
 ///
 /// - `&str` - The event name to listen for (e.g., "hashchange", "popstate", "resize").
-/// - `Box<dyn FnMut()>` - The callback to invoke when the event fires.
+/// - `FnMut() + 'static` - The callback to invoke when the event fires.
 ///
 /// # Returns
 ///
@@ -427,10 +449,8 @@ where
     F: FnMut() + 'static,
 {
     let handler_id: usize = NEXT_WINDOW_HANDLER_ID.fetch_add(1, Ordering::Relaxed);
-    let entry: WindowEventHandlerEntry = (
-        handler_id,
-        Rc::new(RefCell::new(Box::new(callback) as Box<dyn FnMut()>)),
-    );
+    let boxed: Box<Box<dyn FnMut()>> = Box::new(Box::new(callback) as Box<dyn FnMut()>);
+    let entry: WindowEventHandlerEntry = (handler_id, Box::into_raw(boxed));
     let registry: &mut WindowEventRegistryMap = ensure_window_event_registry_mut();
     let is_new_event: bool = !registry.contains_key(event_name);
     registry
@@ -445,10 +465,10 @@ where
 
 /// Unregisters a window event handler by its event name and handler ID.
 ///
-/// Removes the callback entry from the proxy registry. The shared
-/// `window.addEventListener` listener is NOT removed even if no handlers
-/// remain, because removing and re-adding listeners is more expensive
-/// than keeping an empty dispatch loop.
+/// Removes the callback entry from the proxy registry and frees the
+/// heap allocation. The shared `window.addEventListener` listener is NOT
+/// removed even if no handlers remain, because removing and re-adding
+/// listeners is more expensive than keeping an empty dispatch loop.
 ///
 /// # Arguments
 ///
@@ -457,7 +477,16 @@ where
 pub(crate) fn unregister_window_event_handler(event_name: &str, handler_id: usize) {
     let registry: &mut WindowEventRegistryMap = ensure_window_event_registry_mut();
     if let Some(handlers) = registry.get_mut(event_name) {
-        handlers.retain(|(id, _): &WindowEventHandlerEntry| *id != handler_id);
+        handlers.retain(|(id, ptr): &WindowEventHandlerEntry| {
+            if *id == handler_id {
+                unsafe {
+                    let _ = Box::from_raw(*ptr);
+                }
+                false
+            } else {
+                true
+            }
+        });
     }
 }
 
@@ -476,10 +505,9 @@ fn ensure_window_event_listener(event_name: &str) {
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let registry: &WindowEventRegistryMap = ensure_window_event_registry_mut();
         if let Some(handlers) = registry.get(&event_name_owned) {
-            for (_handler_id, callback_rc) in handlers {
-                if let Ok(mut callback_ref) = callback_rc.try_borrow_mut() {
-                    callback_ref();
-                }
+            for (_handler_id, callback_ptr) in handlers {
+                let callback: &mut Box<dyn FnMut()> = unsafe { &mut **callback_ptr };
+                callback();
             }
         }
     }));

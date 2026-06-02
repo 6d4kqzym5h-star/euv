@@ -79,8 +79,8 @@ where
     ///
     /// - `VirtualNode` - A dynamic virtual node wrapping this closure.
     fn into_node(self) -> VirtualNode {
-        let render_fn_inner: Rc<RefCell<RenderFnInner>> =
-            Rc::new(RefCell::new(RenderFnInner::new(Box::new(self))));
+        let render_fn_inner: Rc<UnsafeCell<RenderFnInner>> =
+            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(self))));
         VirtualNode::Dynamic(DynamicNode::new(
             render_fn_inner,
             crate::reactive::create_hook_context(),

@@ -1,21 +1,11 @@
 use crate::*;
 
-/// Inner storage for a native event callback closure.
-///
-/// Boxes a `dyn FnMut(Event)` so it can be stored behind `Rc<RefCell<>>`.
-#[derive(CustomDebug, Data, New)]
-pub(crate) struct NativeEventCallbackInner {
-    /// The boxed callback closure.
-    #[debug(skip)]
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) callback: Box<dyn FnMut(Event)>,
-}
-
 /// A wrapper around an event callback.
 ///
-/// Stores the event name and a shared reference to the heap-allocated callback closure.
+/// Stores the event name and a shared reference to the callback closure.
+/// Uses `Rc<UnsafeCell<>>` instead of `Rc<RefCell<>>` to avoid runtime
+/// borrow checking overhead in the single-threaded WASM context.
+/// The `Rc` provides automatic memory management (freed when last reference drops).
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
@@ -23,10 +13,12 @@ pub struct NativeEventHandler {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) event_name: &'static str,
-    /// Shared reference to the heap-allocated callback closure inner state.
+    /// Shared reference to the callback closure.
+    /// `UnsafeCell` allows mutable access without RefCell overhead.
+    /// Safety: only accessed from the main thread in WASM single-threaded context.
     #[debug(skip)]
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) callback: Rc<RefCell<NativeEventCallbackInner>>,
+    pub(crate) callback: Rc<UnsafeCell<Box<dyn FnMut(Event)>>>,
 }

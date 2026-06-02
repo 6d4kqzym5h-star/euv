@@ -12,7 +12,7 @@ pub use {event::*, reactive::*, renderer::*, vdom::*};
 
 use std::{
     any::Any,
-    cell::{Ref, RefCell, RefMut, UnsafeCell},
+    cell::{Ref, RefCell, UnsafeCell},
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     mem::{swap, take},

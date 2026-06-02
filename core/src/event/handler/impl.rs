@@ -16,20 +16,23 @@ impl NativeEventHandler {
     where
         F: FnMut(Event) + 'static,
     {
-        let callback_inner: Rc<RefCell<NativeEventCallbackInner>> = Rc::new(RefCell::new(
-            NativeEventCallbackInner::new(Box::new(callback)),
-        ));
-        Self::new(event_name, callback_inner)
+        let callback: Rc<UnsafeCell<Box<dyn FnMut(Event)>>> =
+            Rc::new(UnsafeCell::new(Box::new(callback)));
+        Self::new(event_name, callback)
     }
 
     /// Invokes the underlying callback with the given event.
+    ///
+    /// # Safety
+    ///
+    /// Must only be called from the main thread. Guaranteed in WASM
+    /// single-threaded context. No concurrent access is possible.
     ///
     /// # Arguments
     ///
     /// - `Event` - The event to pass to the callback.
     pub fn handle(&self, event: Event) {
-        if let Ok(mut inner) = self.get_callback().try_borrow_mut() {
-            (inner.get_mut_callback())(event);
-        }
+        let callback: &mut Box<dyn FnMut(Event)> = unsafe { &mut *self.get_callback().get() };
+        callback(event);
     }
 }

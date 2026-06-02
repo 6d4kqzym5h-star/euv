@@ -132,21 +132,11 @@ impl<T: PartialEq> PartialEq for VirtualNode<T> {
 /// Provides a default empty dynamic node with a no-op render function.
 impl Default for DynamicNode {
     fn default() -> Self {
-        let render_fn_inner: Rc<RefCell<RenderFnInner>> =
-            Rc::new(RefCell::new(RenderFnInner::new(Box::new(|| {
+        let render_fn_inner: Rc<UnsafeCell<RenderFnInner>> =
+            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(|| {
                 VirtualNode::Empty
             }))));
         Self::new(render_fn_inner, HookContext::default())
-    }
-}
-
-/// Clones a `DynamicNode` by cloning the shared references.
-impl Clone for DynamicNode {
-    fn clone(&self) -> Self {
-        Self::new(
-            self.get_render_fn().clone(),
-            self.get_hook_context().clone(),
-        )
     }
 }
 
@@ -154,14 +144,17 @@ impl Clone for DynamicNode {
 impl DynamicNode {
     /// Invokes the render closure and returns the produced virtual node.
     ///
+    /// # Safety
+    ///
+    /// Must only be called from the main thread. Guaranteed in WASM
+    /// single-threaded context. No concurrent access is possible.
+    ///
     /// # Returns
     ///
-    /// - `Self` - The virtual node produced by the render closure.
+    /// - `VirtualNode` - The virtual node produced by the render closure.
     pub fn render(&self) -> VirtualNode {
-        self.get_render_fn()
-            .try_borrow_mut()
-            .map(|mut inner: RefMut<RenderFnInner>| (inner.get_mut_render_fn())())
-            .unwrap_or_default()
+        let inner: &mut RenderFnInner = unsafe { &mut *self.get_render_fn().get() };
+        (inner.get_mut_render_fn())()
     }
 }
 
@@ -262,8 +255,8 @@ impl VirtualNode<()> {
     {
         let hook_context: HookContext = create_hook_context();
         let mut hook_context_for_closure: HookContext = hook_context.clone();
-        let inner: Rc<RefCell<RenderFnInner>> =
-            Rc::new(RefCell::new(RenderFnInner::new(Box::new(move || {
+        let inner: Rc<UnsafeCell<RenderFnInner>> =
+            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(move || {
                 hook_context_for_closure.reset_hook_index();
                 render_fn()
             }))));
@@ -289,8 +282,8 @@ impl VirtualNode<()> {
     {
         let hook_context: HookContext = create_hook_context();
         let mut hook_context_for_closure: HookContext = hook_context.clone();
-        let inner: Rc<RefCell<RenderFnInner>> =
-            Rc::new(RefCell::new(RenderFnInner::new(Box::new(move || {
+        let inner: Rc<UnsafeCell<RenderFnInner>> =
+            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(move || {
                 hook_context_for_closure.reset_hook_index();
                 render_fn(&mut hook_context_for_closure)
             }))));

@@ -1,10 +1,18 @@
 use crate::*;
 
 /// Type alias for the handler registry value.
-pub(crate) type HandlerEntry = Rc<RefCell<HandlerSlot>>;
+///
+/// Stores a raw pointer to a heap-allocated `HandlerSlot`. The allocation
+/// is owned by the registry and freed during cleanup. Direct pointer access
+/// avoids `Rc<RefCell<>>` overhead in the event dispatch hot path.
+pub(crate) type HandlerEntry = *mut HandlerSlot;
 
 /// Type alias for the signal update registry value.
-pub(crate) type SignalUpdateEntry = Rc<RefCell<SignalUpdateSlot>>;
+///
+/// Stores a raw pointer to a heap-allocated `SignalUpdateSlot`. The allocation
+/// is owned by the registry and freed during cleanup or sweep. Direct pointer
+/// access avoids `Rc<RefCell<>>` overhead in the signal dispatch hot path.
+pub(crate) type SignalUpdateEntry = *mut SignalUpdateSlot;
 
 /// Type alias for the handler registry map.
 ///
@@ -14,9 +22,10 @@ pub(crate) type HandlerRegistryMap = HashMap<(usize, &'static str), HandlerEntry
 
 /// Type alias for a single window event handler entry in the proxy registry.
 ///
-/// Each entry holds a unique handler ID and a shared mutable callback.
-/// The ID allows targeted removal during cleanup without disrupting other handlers.
-pub(crate) type WindowEventHandlerEntry = (usize, Rc<RefCell<Box<dyn FnMut()>>>);
+/// Each entry holds a unique handler ID and a raw pointer to a heap-allocated
+/// callback. The ID allows targeted removal during cleanup without disrupting
+/// other handlers.
+pub(crate) type WindowEventHandlerEntry = (usize, *mut Box<dyn FnMut()>);
 
 /// Type alias for the window event proxy registry map.
 ///

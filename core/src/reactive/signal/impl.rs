@@ -7,6 +7,10 @@ where
 {
     /// Creates a new `Signal` with the given initial value.
     ///
+    /// Allocates `SignalInner<T>` on the heap via `Box`, stores the raw pointer
+    /// address, and registers it in the global registry with a type-erased drop
+    /// function for correct deallocation.
+    ///
     /// # Arguments
     ///
     /// - `T` - The initial value of the signal.
@@ -15,32 +19,40 @@ where
     ///
     /// - `Self` - A handle to the newly created reactive signal.
     pub fn create(value: T) -> Self {
-        let signal_inner: Rc<RefCell<SignalInner<T>>> =
-            Rc::new(RefCell::new(SignalInner::new(value, Vec::new(), true)));
-        let addr: usize = Rc::as_ptr(&signal_inner) as usize;
-        signal_inner_registry_mut().insert(addr, signal_inner as Rc<dyn Any>);
+        let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(value, Vec::new(), true));
+        let ptr: *mut SignalInner<T> = Box::into_raw(boxed);
+        let addr: usize = ptr as usize;
+        let entry: SignalRegistryEntry =
+            SignalRegistryEntry::new(ptr as *mut (), drop_signal_inner::<T>);
+        signal_inner_registry_mut().insert(addr, entry);
         let mut signal: Self = Self::new(0, std::marker::PhantomData);
         signal.set_inner(addr);
         signal
     }
 
-    /// Returns a reference to the inner `RefCell` for this signal.
+    /// Returns a mutable reference to the inner state for this signal.
+    ///
+    /// SAFETY: Valid in single-threaded WASM. The pointer is kept alive by
+    /// the global registry and is only freed during explicit cleanup.
     ///
     /// # Returns
     ///
-    /// - `&'static RefCell<SignalInner<T>>` - A reference to the inner state.
-    fn inner_ref(&self) -> &'static RefCell<SignalInner<T>> {
+    /// - `&'static mut SignalInner<T>` - A mutable reference to the inner state.
+    #[inline(always)]
+    fn inner_ref(&self) -> &'static mut SignalInner<T> {
         get_signal_inner_ref(self.get_inner())
     }
 
     /// Returns the current value of the signal.
     ///
-    /// Uses `try_borrow` to avoid panicking when the inner `RefCell` is
-    /// already mutably borrowed (e.g., during a `set()` notification cycle).
-    /// In that case, falls back to an unsafe direct read of the value,
-    /// which is safe in single-threaded WASM contexts because the value
-    /// itself is not being mutated at the point of read (only the `RefCell`
-    /// borrow flag is contested).
+    /// Directly reads the value from the heap-allocated inner state via raw
+    /// pointer dereference. No runtime borrow checking overhead.
+    ///
+    /// If the signal has been marked inactive (`alive == false`), returns the
+    /// last stored value without registering tracking dependencies. This
+    /// ensures that stale async callbacks (e.g., orphaned `setInterval`)
+    /// holding a `Signal` copy can still call `.get()` safely without
+    /// triggering side effects or panics.
     ///
     /// If a tracking context is active (i.e., a DynamicNode is being rendered),
     /// automatically registers the current dynamic node as a dependent of
@@ -50,21 +62,18 @@ where
     ///
     /// - `T` - The current value of the signal.
     pub fn get(&self) -> T {
+        let inner: &mut SignalInner<T> = self.inner_ref();
+        if !inner.get_alive() {
+            return inner.get_value().clone();
+        }
         let tracking_id: usize = CURRENT_TRACKING_DYNAMIC_ID.load(Ordering::Relaxed);
         if tracking_id != usize::MAX {
             self.add_dependent(tracking_id);
         }
-        let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
-        let Ok(inner) = inner_ref.try_borrow() else {
-            return unsafe { (*inner_ref.as_ptr()).get_value().clone() };
-        };
         inner.get_value().clone()
     }
 
     /// Subscribes a callback to be invoked when the signal changes.
-    ///
-    /// If the inner `RefCell` is already borrowed, this is a no-op to avoid
-    /// panicking during re-entrant signal updates.
     ///
     /// # Arguments
     ///
@@ -73,16 +82,15 @@ where
     where
         F: FnMut() + 'static,
     {
-        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
-            inner.get_mut_listeners().push(Box::new(callback));
-        }
+        self.inner_ref()
+            .get_mut_listeners()
+            .push(Box::new(callback));
     }
 
     /// Replaces all listeners with a single new callback.
     ///
     /// Unlike `subscribe`, which appends a listener, this method clears any
-    /// existing listeners first and then adds the new one. If the inner
-    /// `RefCell` is already borrowed, this is a no-op.
+    /// existing listeners first and then adds the new one.
     ///
     /// # Arguments
     ///
@@ -91,39 +99,33 @@ where
     where
         F: FnMut() + 'static,
     {
-        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
-            let listeners: &mut Vec<Box<dyn FnMut()>> = inner.get_mut_listeners();
-            listeners.clear();
-            listeners.push(Box::new(callback));
-        }
+        let listeners: &mut Vec<Box<dyn FnMut()>> = self.inner_ref().get_mut_listeners();
+        listeners.clear();
+        listeners.push(Box::new(callback));
     }
 
     /// Removes all subscribed listeners from this signal, clears its
-    /// dependent dynamic node list, and marks it as inactive.
-    /// If the inner `RefCell` is already borrowed, this is a no-op.
-    ///
-    /// NOTE: Does NOT remove from `SIGNAL_INNER_REGISTRY`. The registry
-    /// must keep the `Rc` alive because `Signal` is `Copy` and other copies
-    /// may still hold the raw address. Removing would cause use-after-free.
+    /// dependent dynamic node list, marks it as inactive, and frees the
+    /// heap allocation via the global registry.
     pub(crate) fn clear_listeners(&self) {
-        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
-            inner.set_alive(false);
-            inner.get_mut_listeners().clear();
-            inner.get_mut_dependents().clear();
-        }
+        let inner: &mut SignalInner<T> = self.inner_ref();
+        inner.set_alive(false);
+        inner.get_mut_listeners().clear();
+        inner.get_mut_dependents().clear();
+        free_signal_inner(self.get_inner());
     }
 
     /// Core implementation of value update and listener notification.
     ///
     /// Returns `true` if the value was updated and listeners were notified.
-    /// Returns `false` if the inner `RefCell` is already mutably borrowed
-    /// (re-entrant access), the signal is inactive, or the value is unchanged.
+    /// Returns `false` if the signal is inactive or the value is unchanged.
+    ///
+    /// Uses a swap-out pattern for listeners: moves all listeners into a local
+    /// `Vec`, drops the mutable reference to inner state, then invokes each
+    /// listener. After invocation, listeners are moved back. This prevents
+    /// issues with re-entrant access during listener callbacks.
     fn update_and_notify(&self, value: T) -> bool {
-        let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
-        let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
-        let Ok(mut inner) = inner_ref.try_borrow_mut() else {
-            return false;
-        };
+        let inner: &mut SignalInner<T> = self.inner_ref();
         if !inner.get_alive() {
             return false;
         }
@@ -131,13 +133,16 @@ where
             return false;
         }
         inner.set_value(value);
+        let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         swap(inner.get_mut_listeners(), &mut listeners);
-        drop(inner);
-        for mut listener in listeners {
+        for listener in listeners.iter_mut() {
             listener();
-            if let Ok(mut inner) = inner_ref.try_borrow_mut() {
-                inner.get_mut_listeners().push(listener);
-            }
+        }
+        // Move listeners back. Re-read inner_ref in case the pointer is still
+        // valid (signal not freed during listener execution).
+        let inner: &mut SignalInner<T> = self.inner_ref();
+        if inner.get_alive() {
+            swap(inner.get_mut_listeners(), &mut listeners);
         }
         true
     }
@@ -152,11 +157,9 @@ where
     ///
     /// - `usize` - The dynamic node ID to register as a dependent.
     pub(crate) fn add_dependent(&self, dynamic_id: usize) {
-        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
-            let deps: &mut Vec<usize> = inner.get_mut_dependents();
-            if !deps.contains(&dynamic_id) {
-                deps.push(dynamic_id);
-            }
+        let deps: &mut Vec<usize> = self.inner_ref().get_mut_dependents();
+        if !deps.contains(&dynamic_id) {
+            deps.push(dynamic_id);
         }
     }
 
@@ -170,9 +173,9 @@ where
     /// - `usize` - The dynamic node ID to remove.
     #[allow(dead_code)]
     pub(crate) fn remove_dependent(&self, dynamic_id: usize) {
-        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
-            inner.get_mut_dependents().retain(|id| *id != dynamic_id);
-        }
+        self.inner_ref()
+            .get_mut_dependents()
+            .retain(|id| *id != dynamic_id);
     }
 
     /// Returns the list of dependent dynamic node IDs for this signal.
@@ -181,11 +184,7 @@ where
     ///
     /// - `Vec<usize>` - Clone of the dependents list.
     pub(crate) fn get_dependents(&self) -> Vec<usize> {
-        if let Ok(inner) = self.inner_ref().try_borrow() {
-            inner.get_dependents().clone()
-        } else {
-            Vec::new()
-        }
+        self.inner_ref().get_dependents().clone()
     }
 
     /// Sets the value of the signal and notifies listeners.
@@ -216,16 +215,19 @@ where
     /// Sets the value of the signal without notifying listeners or scheduling
     /// a DOM update. This is useful for breaking circular watch dependencies
     /// where two signals watch each other and would otherwise recurse infinitely.
-    /// If the inner `RefCell` is already borrowed, this is a no-op.
+    ///
+    /// If the signal has been marked inactive (`alive == false`), this is a
+    /// no-op, consistent with `set()` behavior for dead signals.
     ///
     /// # Arguments
     ///
     /// - `T` - The new value to assign to the signal.
     pub fn set_untracked(&self, value: T) {
-        let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
-        if let Ok(mut inner) = inner_ref.try_borrow_mut() {
-            inner.set_value(value);
+        let inner: &mut SignalInner<T> = self.inner_ref();
+        if !inner.get_alive() {
+            return;
         }
+        inner.set_value(value);
     }
 }
 
@@ -266,7 +268,7 @@ where
 /// Copies the signal, sharing the same inner state.
 ///
 /// Safe because only the inner address (a `usize`) is copied;
-/// the actual `Rc` reference is held by the global signal registry.
+/// the actual heap allocation is owned by the global signal registry.
 impl<T> Copy for Signal<T> where T: Clone + PartialEq + 'static {}
 
 /// Marks `SignalCell` as `Sync` for single-threaded WASM contexts.

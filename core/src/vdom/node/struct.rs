@@ -2,7 +2,7 @@ use crate::*;
 
 /// Inner storage for a dynamic node render closure.
 ///
-/// Boxes a `dyn FnMut() -> VirtualNode` so it can be stored behind `Rc<RefCell<>>`.
+/// Boxes a `dyn FnMut() -> VirtualNode` so it can be stored behind `Rc<UnsafeCell<>>`.
 #[derive(CustomDebug, Data, New)]
 pub(crate) struct RenderFnInner {
     /// The boxed render closure.
@@ -39,14 +39,22 @@ pub struct TextNode {
 /// Contains a `HookContext` that persists hook state (like `use_signal`) across
 /// re-renders, ensuring that signal values are not reset when the render function
 /// is called again.
-#[derive(CustomDebug, Data, New)]
+///
+/// Uses `Rc<UnsafeCell<>>` instead of `Rc<RefCell<>>` to avoid runtime borrow
+/// checking overhead. Safety is guaranteed by the single-threaded WASM context.
+/// The `Rc` provides automatic memory management — the render closure is freed
+/// when the last reference (either in the VirtualNode tree or the signal update
+/// callback) is dropped.
+#[derive(Clone, CustomDebug, Data, New)]
 pub struct DynamicNode {
     /// Shared reference to the heap-allocated render closure inner state.
+    /// `Rc` ensures automatic deallocation; `UnsafeCell` allows mutable access
+    /// without RefCell overhead.
     #[debug(skip)]
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) render_fn: Rc<RefCell<RenderFnInner>>,
+    pub(crate) render_fn: Rc<UnsafeCell<RenderFnInner>>,
     /// Persistent hook context for this dynamic node, storing signal
     /// state and other hook values across render cycles.
     #[get(pub(crate))]

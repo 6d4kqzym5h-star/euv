@@ -1,5 +1,40 @@
 use crate::*;
 
+/// A RAII wrapper around a raw pointer that frees the allocation on drop.
+///
+/// Used to ensure heap allocations captured by closures are properly freed
+/// when the closure is dropped (e.g., when a DynamicNode is cleaned up).
+///
+/// # Safety
+///
+/// The pointer must have been allocated via `Box::into_raw`. Only one
+/// `OwnedPtr` should exist per allocation (no aliasing ownership).
+struct OwnedPtr<T> {
+    ptr: *mut T,
+}
+
+impl<T> OwnedPtr<T> {
+    /// Creates a new `OwnedPtr` from a `Box::into_raw` pointer.
+    fn new(ptr: *mut T) -> Self {
+        Self { ptr }
+    }
+
+    /// Returns the raw pointer for direct access.
+    fn get(&self) -> *mut T {
+        self.ptr
+    }
+}
+
+impl<T> Drop for OwnedPtr<T> {
+    fn drop(&mut self) {
+        if !self.ptr.is_null() {
+            unsafe {
+                let _ = Box::from_raw(self.ptr);
+            }
+        }
+    }
+}
+
 /// Implementation of the virtual DOM renderer.
 impl Renderer {
     /// Renders the given virtual DOM tree into the real DOM.
@@ -645,31 +680,28 @@ impl Renderer {
         CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
-        let render_fn: Rc<RefCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
+        let render_fn_rc: Rc<UnsafeCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
         let placeholder_clone: Element = placeholder.clone();
         let mut renderer_for_sub: Self = Self::new(placeholder_clone.clone());
         renderer_for_sub.set_current_tree(Some(initial_unwrapped));
-        let renderer_rc: Rc<RefCell<Renderer>> = Rc::new(RefCell::new(renderer_for_sub));
+        // Wrap heap allocations in OwnedPtr so they are freed when the closure drops.
+        let renderer_owned: OwnedPtr<Renderer> =
+            OwnedPtr::new(Box::into_raw(Box::new(renderer_for_sub)));
         let initial_arm: usize = hook_context
             .get_inner()
             .try_borrow()
             .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
             .unwrap_or(0);
-        let last_arm: Rc<RefCell<usize>> = Rc::new(RefCell::new(initial_arm));
+        let last_arm_owned: OwnedPtr<usize> = OwnedPtr::new(Box::into_raw(Box::new(initial_arm)));
         let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
             hook_context.reset_hook_index();
-            let prev_arm: usize = last_arm
-                .try_borrow()
-                .map(|arm: Ref<usize>| *arm)
-                .unwrap_or(0);
+            let prev_arm: usize = unsafe { *last_arm_owned.get() };
             CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
-                let Ok(mut inner) = render_fn.try_borrow_mut() else {
-                    return VirtualNode::Empty;
-                };
+                let inner: &mut RenderFnInner = unsafe { &mut *render_fn_rc.get() };
                 (inner.get_mut_render_fn())()
             });
             CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
@@ -679,26 +711,23 @@ impl Renderer {
                 .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
                 .unwrap_or(0);
             let arm_switched: bool = prev_arm != current_arm;
-            if let Ok(mut arm) = last_arm.try_borrow_mut() {
-                *arm = current_arm;
+            unsafe {
+                *last_arm_owned.get() = current_arm;
             }
-            if skip_equal
-                && !arm_switched
-                && let Ok(renderer_borrow_ref) = renderer_rc.try_borrow()
-                && let Some(old_vnode) = renderer_borrow_ref.try_get_current_tree()
-            {
-                let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
-                if Self::visual_eq(old_vnode, &new_unwrapped) {
-                    return;
+            if skip_equal && !arm_switched {
+                let renderer_ref: &Renderer = unsafe { &*renderer_owned.get() };
+                if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
+                    let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
+                    if Self::visual_eq(old_vnode, &new_unwrapped) {
+                        return;
+                    }
                 }
             }
-            let Ok(mut renderer_borrow_mut) = renderer_rc.try_borrow_mut() else {
-                return;
-            };
+            let renderer_mut: &mut Renderer = unsafe { &mut *renderer_owned.get() };
             if arm_switched {
-                renderer_borrow_mut.render_full_replace(new_vnode);
+                renderer_mut.render_full_replace(new_vnode);
             } else {
-                renderer_borrow_mut.render(new_vnode);
+                renderer_mut.render(new_vnode);
             }
         });
         register_dynamic_listener(dynamic_id, callback);
@@ -919,12 +948,11 @@ impl Renderer {
         let key: (usize, &'static str) = (euv_id, handler.get_event_name());
         let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
         if let Some(existing_entry) = registry_ref.get(&key) {
-            if let Ok(mut slot) = existing_entry.try_borrow_mut() {
-                slot.set_handler(Some(handler.clone()));
-            }
+            let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
+            slot.set_handler(Some(handler.clone()));
         } else {
             let handler_slot: HandlerEntry =
-                Rc::new(RefCell::new(HandlerSlot::new(Some(handler.clone()))));
+                Box::into_raw(Box::new(HandlerSlot::new(Some(handler.clone()))));
             registry_ref.insert(key, handler_slot);
         }
     }
