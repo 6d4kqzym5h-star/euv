@@ -107,12 +107,42 @@ where
     /// Removes all subscribed listeners from this signal, clears its
     /// dependent dynamic node list, marks it as inactive, and frees the
     /// heap allocation via the global registry.
+    ///
+    /// # Safety
+    ///
+    /// This frees the underlying `SignalInner` allocation. It MUST NOT be
+    /// called from within a listener invoked by `update_and_notify`, because
+    /// that method re-borrows `self.inner_ref()` after running listeners; if
+    /// the allocation were freed during listener execution, the subsequent
+    /// re-borrow would be a use-after-free. For DOM-bound subscribe closures
+    /// that need to detach when their node is removed, use
+    /// [`Self::deactivate`] instead, which only marks the signal inactive
+    /// without freeing memory.
     pub(crate) fn clear_listeners(&self) {
         let inner: &mut SignalInner<T> = self.inner_ref();
         inner.set_alive(false);
         inner.get_mut_listeners().clear();
         inner.get_mut_dependents().clear();
         free_signal_inner(self.get_inner());
+    }
+
+    /// Detaches this signal from the reactive system without freeing memory.
+    ///
+    /// Marks the signal inactive and clears its listeners and dependents, but
+    /// intentionally keeps the heap allocation alive. This is the safe
+    /// counterpart to [`Self::clear_listeners`] for use inside subscribe
+    /// closures that run during `update_and_notify`: freeing the allocation
+    /// there would invalidate the pointer that `update_and_notify` re-borrows
+    /// after the listener loop, causing a use-after-free panic.
+    ///
+    /// The allocation remains valid until it is reclaimed through the normal
+    /// cleanup path (or the page unloads), mirroring the contract documented
+    /// on `clear_signal_listeners_by_addr`.
+    pub(crate) fn deactivate(&self) {
+        let inner: &mut SignalInner<T> = self.inner_ref();
+        inner.set_alive(false);
+        inner.get_mut_listeners().clear();
+        inner.get_mut_dependents().clear();
     }
 
     /// Core implementation of value update and listener notification.
@@ -138,8 +168,18 @@ where
         for listener in listeners.iter_mut() {
             listener();
         }
-        // Move listeners back. Re-read inner_ref in case the pointer is still
-        // valid (signal not freed during listener execution).
+        // Move listeners back, but ONLY if the signal's allocation still exists.
+        //
+        // A listener may have freed this signal's `SignalInner` during its
+        // execution (e.g. a DOM-bound subscribe closure that detached because
+        // its node was removed mid-dispatch). If that happened, the address is
+        // no longer in the registry and re-borrowing `self.inner_ref()` would
+        // dereference a dangling pointer (use-after-free). We therefore probe
+        // the registry first and skip the swap-back entirely if the signal is
+        // gone.
+        if !is_signal_inner_alive(self.get_inner()) {
+            return true;
+        }
         let inner: &mut SignalInner<T> = self.inner_ref();
         if inner.get_alive() {
             swap(inner.get_mut_listeners(), &mut listeners);

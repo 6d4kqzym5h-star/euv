@@ -65,6 +65,25 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
     cleanup_attr_signal_update_slot(addr);
 }
 
+/// Returns whether the signal allocation at `addr` is still present in the
+/// global registry (i.e. has not been freed via `free_signal_inner`).
+///
+/// Used by `update_and_notify` to avoid re-borrowing a `SignalInner` pointer
+/// after running listeners, since a listener may have freed the allocation
+/// during its execution. Probing the registry is the only safe way to detect
+/// this, because the raw address itself carries no liveness information.
+///
+/// # Arguments
+///
+/// - `usize` - The inner pointer address of the signal.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the allocation is still registered (safe to deref).
+pub(crate) fn is_signal_inner_alive(addr: usize) -> bool {
+    signal_inner_registry_mut().contains_key(&addr)
+}
+
 /// Frees the heap allocation for a signal and removes it from the registry.
 ///
 /// Calls the type-erased drop function stored in the registry entry to

@@ -564,7 +564,16 @@ impl Renderer {
                             let subscribe_signal: Signal<String> = signal_for_sub;
                             signal_for_sub.replace_subscribe(move || {
                                 if !is_node_connected(&element_clone) {
-                                    subscribe_signal.clear_listeners();
+                                    // Use `deactivate` (not `clear_listeners`)
+                                    // here: this closure runs from inside
+                                    // `update_and_notify`'s listener loop, which
+                                    // re-borrows the signal's `SignalInner`
+                                    // afterwards. Freeing the allocation now
+                                    // would cause a use-after-free when the list
+                                    // is mutated while the owning subtree is
+                                    // being torn down (e.g. removing a list item
+                                    // and then switching routes).
+                                    subscribe_signal.deactivate();
                                     return;
                                 }
                                 let new_value: String = subscribe_signal.get();
@@ -605,7 +614,13 @@ impl Renderer {
                     signal_clone.subscribe({
                         move || {
                             if !is_node_connected(&text_clone) {
-                                subscribe_signal.clear_listeners();
+                                // See the attribute-signal branch above: this
+                                // closure is invoked from within
+                                // `update_and_notify`, so it must only mark the
+                                // signal inactive and must NOT free it, or the
+                                // surrounding listener loop would re-borrow a
+                                // dangling pointer.
+                                subscribe_signal.deactivate();
                                 return;
                             }
                             let new_value: String = subscribe_signal.get();
