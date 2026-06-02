@@ -142,7 +142,12 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             {
                 continue;
             }
-            ensure_signal_update_registry_mut().insert(key, entry);
+            let registry: &mut HashMap<usize, SignalUpdateEntry> =
+                ensure_signal_update_registry_mut();
+            if registry.contains_key(&key) {
+                continue;
+            }
+            registry.insert(key, entry);
         }
         iterations += 1;
         if iterations >= MAX_ITERATIONS {
