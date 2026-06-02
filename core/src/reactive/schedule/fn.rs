@@ -38,11 +38,37 @@ fn ensure_dispatch_callback() {
 /// On non-WASM targets, resets `SCHEDULED` immediately since there is
 /// no event loop to schedule on.
 pub fn schedule_signal_update() {
-    if SCHEDULED.load(Ordering::Relaxed) || SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
+    schedule_signal_update_targeted(&[]);
+}
+
+/// Schedules a deferred signal update with precise dirty marking.
+///
+/// If `dependents` is non-empty, only those dynamic node IDs are marked
+/// dirty. If `dependents` is empty, falls back to marking all slots dirty
+/// (for backwards compatibility with `batch_updates` and other callers
+/// that don't track dependencies).
+///
+/// # Arguments
+///
+/// - `&[usize]` - Dynamic node IDs to mark dirty. Empty slice means mark all.
+pub fn schedule_signal_update_targeted(dependents: &[usize]) {
+    if SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
+        if !dependents.is_empty() {
+            mark_slots_dirty_targeted(dependents);
+        } else {
+            mark_all_slots_dirty();
+        }
+        return;
+    }
+    if !dependents.is_empty() {
+        mark_slots_dirty_targeted(dependents);
+    } else {
+        mark_all_slots_dirty();
+    }
+    if SCHEDULED.load(Ordering::Relaxed) {
         return;
     }
     SCHEDULED.store(true, Ordering::Relaxed);
-    mark_all_slots_dirty();
     let window_option: Option<Window> = window();
     if window_option.is_none() {
         SCHEDULED.store(false, Ordering::Relaxed);

@@ -631,6 +631,10 @@ impl Renderer {
     /// Initializes a DynamicNode: runs the initial render, creates a sub-renderer,
     /// and registers the re-render callback in the signal update registry.
     ///
+    /// Sets up dependency tracking so that signals accessed during the render
+    /// function automatically register this dynamic node as a dependent,
+    /// enabling precise dirty marking on subsequent signal changes.
+    ///
     /// # Arguments
     ///
     /// - `&DynamicNode` - The dynamic node to set up.
@@ -650,8 +654,11 @@ impl Renderer {
     ) -> Node {
         let mut hook_context: HookContext = dynamic_node.get_hook_context().clone();
         hook_context.reset_hook_index();
+        // Enable dependency tracking for the initial render
+        CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
         let initial_vnode: VirtualNode =
             with_hook_context(hook_context.clone(), || dynamic_node.render());
+        CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
         let render_fn: Rc<RefCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
@@ -674,12 +681,15 @@ impl Renderer {
                 .try_borrow()
                 .map(|arm: Ref<usize>| *arm)
                 .unwrap_or(0);
+            // Enable dependency tracking during re-render to capture new dependencies
+            CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
                 let Ok(mut inner) = render_fn.try_borrow_mut() else {
                     return VirtualNode::Empty;
                 };
                 (inner.get_mut_render_fn())()
             });
+            CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
             let current_arm: usize = hook_context
                 .get_inner()
                 .try_borrow()

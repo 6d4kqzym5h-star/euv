@@ -42,10 +42,18 @@ where
     /// itself is not being mutated at the point of read (only the `RefCell`
     /// borrow flag is contested).
     ///
+    /// If a tracking context is active (i.e., a DynamicNode is being rendered),
+    /// automatically registers the current dynamic node as a dependent of
+    /// this signal for precise reactive updates.
+    ///
     /// # Returns
     ///
     /// - `T` - The current value of the signal.
     pub fn get(&self) -> T {
+        let tracking_id: usize = CURRENT_TRACKING_DYNAMIC_ID.load(Ordering::Relaxed);
+        if tracking_id != usize::MAX {
+            self.add_dependent(tracking_id);
+        }
         let inner_ref: &RefCell<SignalInner<T>> = self.inner_ref();
         let Ok(inner) = inner_ref.try_borrow() else {
             return unsafe { (*inner_ref.as_ptr()).get_value().clone() };
@@ -90,13 +98,19 @@ where
         }
     }
 
-    /// Removes all subscribed listeners from this signal and marks it as
-    /// inactive. If the inner `RefCell` is already borrowed, this is a no-op.
+    /// Removes all subscribed listeners from this signal, clears its
+    /// dependent dynamic node list, and marks it as inactive.
+    /// If the inner `RefCell` is already borrowed, this is a no-op.
+    ///
+    /// Also removes the signal from the global `SIGNAL_INNER_REGISTRY`
+    /// to release memory for non-resident signals that are no longer needed.
     pub(crate) fn clear_listeners(&self) {
         if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
             inner.set_alive(false);
             inner.get_mut_listeners().clear();
+            inner.get_mut_dependents().clear();
         }
+        signal_inner_registry_mut().remove(&self.get_inner());
     }
 
     /// Core implementation of value update and listener notification.
@@ -128,14 +142,64 @@ where
         true
     }
 
+    /// Registers a dynamic node ID as a dependent of this signal.
+    ///
+    /// When this signal changes, only its registered dependents will be
+    /// marked dirty for re-rendering, enabling precise updates instead
+    /// of broadcasting to all dynamic nodes.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The dynamic node ID to register as a dependent.
+    pub(crate) fn add_dependent(&self, dynamic_id: usize) {
+        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
+            let deps: &mut Vec<usize> = inner.get_mut_dependents();
+            if !deps.contains(&dynamic_id) {
+                deps.push(dynamic_id);
+            }
+        }
+    }
+
+    /// Removes a dynamic node ID from the dependents list of this signal.
+    ///
+    /// Called during cleanup when a dynamic node is removed from the DOM
+    /// and its dependency relationships need to be severed.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The dynamic node ID to remove.
+    #[allow(dead_code)]
+    pub(crate) fn remove_dependent(&self, dynamic_id: usize) {
+        if let Ok(mut inner) = self.inner_ref().try_borrow_mut() {
+            inner.get_mut_dependents().retain(|id| *id != dynamic_id);
+        }
+    }
+
+    /// Returns the list of dependent dynamic node IDs for this signal.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<usize>` - Clone of the dependents list.
+    pub(crate) fn get_dependents(&self) -> Vec<usize> {
+        if let Ok(inner) = self.inner_ref().try_borrow() {
+            inner.get_dependents().clone()
+        } else {
+            Vec::new()
+        }
+    }
+
     /// Sets the value of the signal and notifies listeners.
+    ///
+    /// Uses precise dirty marking: only dynamic nodes that depend on
+    /// this signal are marked dirty, avoiding full broadcast.
     ///
     /// # Arguments
     ///
     /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
         if self.update_and_notify(value) {
-            schedule_signal_update();
+            let dependents: Vec<usize> = self.get_dependents();
+            schedule_signal_update_targeted(&dependents);
         }
     }
 

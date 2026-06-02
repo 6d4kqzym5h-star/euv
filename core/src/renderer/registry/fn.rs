@@ -87,6 +87,10 @@ pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
 /// callback execution (e.g., by IntersectionObserver or async callbacks).
 /// If so, performs additional passes until the registry stabilizes, up to
 /// a maximum iteration limit to prevent infinite loops.
+///
+/// After all dispatch passes complete, sweeps the registry to remove entries
+/// that have been marked as `removed`, preventing memory leaks from
+/// accumulated dead DynamicNode entries.
 pub(crate) fn dispatch_signal_update_callbacks() {
     if SIGNAL_UPDATE_DISPATCHING.load(Ordering::Relaxed) {
         return;
@@ -154,14 +158,32 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             break;
         }
     }
+    // Sweep removed entries to prevent memory leaks from dead DynamicNode slots.
+    sweep_removed_signal_update_entries();
     SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
+}
+
+/// Removes all entries from the signal update registry that have been marked
+/// as `removed`. This prevents unbounded memory growth from accumulated
+/// dead DynamicNode entries that are no longer connected to the DOM.
+///
+/// Called after each dispatch cycle completes to clean up stale entries.
+fn sweep_removed_signal_update_entries() {
+    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
+    registry.retain(|_key, entry| {
+        entry
+            .try_borrow()
+            .map(|slot: Ref<SignalUpdateSlot>| !slot.get_removed())
+            .unwrap_or(true)
+    });
 }
 
 /// Marks all non-removed slots in the signal update registry as dirty.
 ///
 /// Called by `schedule_signal_update` to indicate that at least one signal
 /// has changed and all dynamic nodes need to check for updates on the next
-/// dispatch cycle.
+/// dispatch cycle. This is the fallback when no dependency tracking info
+/// is available (e.g., during `batch_updates`).
 pub(crate) fn mark_all_slots_dirty() {
     let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
     for entry in registry.values() {
@@ -170,6 +192,29 @@ pub(crate) fn mark_all_slots_dirty() {
         };
         if !slot.get_removed() {
             slot.set_dirty(true);
+        }
+    }
+}
+
+/// Marks only the specified dynamic node slots as dirty.
+///
+/// This enables precise reactive updates: when a signal changes, only
+/// the dynamic nodes that actually depend on that signal are scheduled
+/// for re-rendering, avoiding O(N) full broadcast to all dynamic nodes.
+///
+/// # Arguments
+///
+/// - `&[usize]` - The dynamic node IDs to mark as dirty.
+pub(crate) fn mark_slots_dirty_targeted(dynamic_ids: &[usize]) {
+    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
+    for dynamic_id in dynamic_ids {
+        if let Some(entry) = registry.get(dynamic_id) {
+            let Ok(mut slot) = entry.try_borrow_mut() else {
+                continue;
+            };
+            if !slot.get_removed() {
+                slot.set_dirty(true);
+            }
         }
     }
 }

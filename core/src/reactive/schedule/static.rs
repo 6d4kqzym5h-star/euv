@@ -15,3 +15,12 @@ pub(crate) static SUPPRESS_SCHEDULE: AtomicBool = AtomicBool::new(false);
 /// SAFETY: Must only be accessed from the main thread (WASM single-threaded context).
 pub(crate) static mut CURRENT_HOOK_CONTEXT: CurrentHookContextCell =
     CurrentHookContextCell(UnsafeCell::new(None));
+
+/// The dynamic node ID currently being rendered/set up.
+///
+/// When a DynamicNode is being initialized or re-rendered, this is set to
+/// the dynamic_id so that any signal `get()` calls during that render
+/// can register the dependency. `usize::MAX` means "no tracking active".
+///
+/// SAFETY: Must only be accessed from the main thread (WASM single-threaded context).
+pub(crate) static CURRENT_TRACKING_DYNAMIC_ID: AtomicUsize = AtomicUsize::new(usize::MAX);

@@ -28,6 +28,15 @@ where
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) alive: bool,
+    /// IDs of dynamic nodes that depend on this signal for precise dirty marking.
+    /// When this signal changes, only these dynamic nodes are marked dirty
+    /// instead of broadcasting to all registered dynamic nodes.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    #[new(skip)]
+    pub(crate) dependents: Vec<usize>,
 }
 
 /// A reactive signal handle.
