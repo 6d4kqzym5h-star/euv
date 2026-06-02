@@ -1527,7 +1527,7 @@ class! {
         bottom: "0px";
         left: "0px";
         right: "0px";
-        height: "60vh";
+        height: "66vh";
         background: var!(bg-console);
         z-index: "10001";
         display: "flex";
