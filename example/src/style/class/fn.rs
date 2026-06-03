@@ -2297,7 +2297,10 @@ class! {
         padding: format!("{} 0px", var!(space-md));
         margin-bottom: var!(space-md);
         border-bottom: format!("1px solid {}", var!(border-subtle));
-        flex-wrap: "wrap";
+        flex-wrap: "nowrap";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
         media("(max-width: 767px)") {
             gap: var!(space-md);
         }
@@ -2306,6 +2309,10 @@ class! {
     pub(crate) c_virtual_list_status_item {
         font-size: var!(font-base);
         color: "inherit";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
+        min-width: "0px";
     }
 
     pub(crate) c_virtual_list_status_value {
