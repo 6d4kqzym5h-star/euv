@@ -1,4 +1,3 @@
-mod r#const;
 mod view;
 
-pub(crate) use {r#const::*, view::*};
+pub(crate) use view::*;
