@@ -55,111 +55,125 @@ css_vars! {
         mobile-header-height: "56px";
 
         // ─── Surface Colors ───
-        bg-primary: "#f8f9fb";
+        // Elevation: primary(0) < nav(1) = card(2) < input inset
+        // Clean warm-neutral palette
+        bg-primary: "#f7f8fa";
         bg-nav: "#ffffff";
         bg-card: "#ffffff";
         bg-modal: "#ffffff";
-        bg-input: "#fafbfc";
-        bg-overlay: "rgba(0, 0, 0, 0.5)";
+        bg-input: "#f3f4f6";
+        bg-overlay: "rgba(0, 0, 0, 0.45)";
 
         // ─── Text Colors ───
-        text-primary: "#1a1a2e";
+        // Clear hierarchy: primary > secondary > muted
+        text-primary: "#111827";
         text-secondary: "#4b5563";
         text-muted: "#9ca3af";
         text-nav-item: "#6b7280";
-        text-card: "#1a1a2e";
+        text-card: "#111827";
         text-on-accent: "#ffffff";
 
         // ─── Brand / Accent ───
+        // Indigo family: consistent hue across light/dark
         accent: "#4f46e5";
         accent-hover: "#4338ca";
-        accent-subtle: "rgba(79, 70, 229, 0.08)";
-        accent-muted: "rgba(79, 70, 229, 0.04)";
-        accent-gradient: "linear-gradient(135deg, #4f46e5, #7c3aed)";
+        accent-subtle: "rgba(79, 70, 229, 0.06)";
+        accent-muted: "rgba(79, 70, 229, 0.03)";
+        accent-gradient: "linear-gradient(135deg, #4f46e5, #6366f1)";
+        accent-disabled: "#a5a5cc";
+        accent-border: "rgba(79, 70, 229, 0.30)";
+
+        // ─── Semantic Colors (non-status) ───
+        text-danger: "#dc2626";
+        text-positive: "#059669";
+        border-interactive: "rgba(79, 70, 229, 0.35)";
 
         // ─── Border Colors ───
+        // Layered: subtle < card < nav = input (increasing visibility)
         border-nav: "#e5e7eb";
-        border-subtle: "#f0f0f0";
-        border-card: "#f0f0f0";
-        border-card-title: "#f0f0f0";
-        border-input: "#e5e7eb";
-        border-accent-light: "#e0e7ff";
+        border-subtle: "#f0f1f3";
+        border-card: "#e8e9ec";
+        border-card-title: "#ecedf0";
+        border-input: "#d1d5db";
+        border-accent-light: "rgba(79, 70, 229, 0.15)";
 
         // ─── Shadows ───
-        shadow-card: "0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)";
-        shadow-modal: "0 20px 60px rgba(0,0,0,0.3)";
-        shadow-float: "0 4px 14px rgba(79, 70, 229, 0.35)";
-        shadow-drawer: "4px 0px 20px rgba(0, 0, 0, 0.15)";
+        shadow-card: "0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03)";
+        shadow-modal: "0 20px 60px rgba(0,0,0,0.2)";
+        shadow-float: "0 4px 14px rgba(79, 70, 229, 0.25)";
+        shadow-drawer: "4px 0px 20px rgba(0, 0, 0, 0.1)";
+        shadow-accent-sm: "0px 1px 2px rgba(79, 70, 229, 0.2)";
+        shadow-accent-lg: "0px 6px 20px rgba(79, 70, 229, 0.35)";
 
         // ─── Theme Toggle ───
         bg-theme-button: "#f3f4f6";
-        text-theme-button: "#1a1a2e";
+        text-theme-button: "#111827";
         border-theme-button: "#e5e7eb";
 
         // ─── Status: Error ───
-        bg-error: "#fef2f2";
-        text-error: "#991b1b";
-        border-error: "#fecaca";
-        bg-error-icon: "#fca5a5";
+        bg-error: "rgba(239, 68, 68, 0.06)";
+        text-error: "#dc2626";
+        border-error: "rgba(239, 68, 68, 0.20)";
+        bg-error-icon: "rgba(239, 68, 68, 0.15)";
 
         // ─── Status: Success ───
-        bg-success: "#f0fdf4";
-        text-success: "#166534";
-        border-success: "#bbf7d0";
+        bg-success: "rgba(34, 197, 94, 0.06)";
+        text-success: "#16a34a";
+        border-success: "rgba(34, 197, 94, 0.20)";
 
         // ─── Status: Warning ───
-        bg-warning: "#fef3c7";
-        text-warning: "#92400e";
-        border-warning: "#fde68a";
+        bg-warning: "rgba(245, 158, 11, 0.08)";
+        text-warning: "#d97706";
+        border-warning: "rgba(245, 158, 11, 0.25)";
 
         // ─── Status: Info ───
-        text-info: "#075985";
-        border-info: "#bae6fd";
+        text-info: "#0284c7";
+        border-info: "rgba(14, 165, 233, 0.20)";
 
         // ─── Status: Pink ───
-        text-pink: "#9d174d";
-        border-pink: "#f9a8d4";
+        text-pink: "#db2777";
+        border-pink: "rgba(236, 72, 153, 0.20)";
 
         // ─── Loading ───
-        bg-loading: "#eef2ff";
-        border-loading: "#c7d2fe";
-        text-loading-title: "#3730a3";
+        bg-loading: "rgba(79, 70, 229, 0.05)";
+        border-loading: "rgba(79, 70, 229, 0.15)";
+        text-loading-title: "#4338ca";
         bg-progress: "#e5e7eb";
 
         // ─── List ───
-        bg-list-even: "#fafbfc";
+        bg-list-even: "#f9fafb";
         bg-list-odd: "#ffffff";
 
         // ─── Console / VConsole ───
         bg-console: "#ffffff";
-        bg-console-header: "#eef0f6";
-        bg-console-filter: "#eaecf4";
-        border-console: "#dde0ea";
-        text-console: "#2c3048";
+        bg-console-header: "#f9fafb";
+        bg-console-filter: "#f3f4f6";
+        border-console: "#e5e7eb";
+        text-console: "#1f2937";
         text-console-title: "#4f46e5";
-        border-console-button: "#cdd1de";
-        text-console-button: "#5b6078";
+        border-console-button: "#d1d5db";
+        text-console-button: "#4b5563";
         text-console-log-latest: "#059669";
-        text-console-warn: "#b45309";
-        text-console-warn-latest: "#d97706";
+        text-console-warn: "#d97706";
+        text-console-warn-latest: "#b45309";
         text-console-error: "#dc2626";
-        text-console-error-latest: "#ef4444";
+        text-console-error-latest: "#b91c1c";
         text-console-empty: "#9ca3af";
         bg-console-badge: "#ef4444";
-        bg-console-badge-log: "rgba(5, 150, 105, 0.1)";
-        bg-console-badge-warn: "rgba(217, 119, 6, 0.1)";
-        bg-console-badge-error: "rgba(239, 68, 68, 0.1)";
+        bg-console-badge-log: "rgba(5, 150, 105, 0.08)";
+        bg-console-badge-warn: "rgba(217, 119, 6, 0.08)";
+        bg-console-badge-error: "rgba(239, 68, 68, 0.08)";
         border-console-accent: "#4f46e5";
         text-console-filter-active: "#4f46e5";
         border-console-filter-active: "#4f46e5";
-        bg-console-filter-active: "rgba(79, 70, 229, 0.08)";
+        bg-console-filter-active: "rgba(79, 70, 229, 0.06)";
         bg-console-button: "#4f46e5";
         text-console-button-text: "white";
-        shadow-console-button: "0 4px 14px rgba(79, 70, 229, 0.35)";
+        shadow-console-button: "0 4px 14px rgba(79, 70, 229, 0.25)";
         bg-console-button-hover: "#4338ca";
-        shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.08)";
-        bg-console-close-hover: "rgba(239, 68, 68, 0.08)";
-        text-console-close-hover: "#ef4444";
+        shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.06)";
+        bg-console-close-hover: "rgba(239, 68, 68, 0.06)";
+        text-console-close-hover: "#dc2626";
     }
 
     pub(crate) c_theme_dark {
@@ -216,110 +230,124 @@ css_vars! {
         mobile-header-height: "56px";
 
         // ─── Surface Colors ───
-        bg-primary: "#0f0f1a";
-        bg-nav: "#16162a";
-        bg-card: "#1e1e36";
-        bg-modal: "#1e1e36";
-        bg-input: "#252540";
-        bg-overlay: "rgba(0, 0, 0, 0.6)";
+        // Elevation: primary(0) < nav(1) < card(2) < input(3)
+        // Using neutral-cool base with subtle blue undertone
+        bg-primary: "#111118";
+        bg-nav: "#18181f";
+        bg-card: "#1f1f28";
+        bg-modal: "#1f1f28";
+        bg-input: "#26262f";
+        bg-overlay: "rgba(0, 0, 0, 0.65)";
 
         // ─── Text Colors ───
-        text-primary: "#e0e0e0";
-        text-secondary: "#b0b0c0";
-        text-muted: "#6b7280";
-        text-nav-item: "#9ca3af";
-        text-card: "#e0e0e0";
+        // High contrast: primary ≥ 13:1, secondary ≥ 7:1, muted ≥ 4.5:1
+        text-primary: "#ececf0";
+        text-secondary: "#a0a0b0";
+        text-muted: "#6c6c7a";
+        text-nav-item: "#8e8e9e";
+        text-card: "#ececf0";
         text-on-accent: "#ffffff";
 
         // ─── Brand / Accent ───
+        // Indigo family: consistent hue, adjusted lightness for dark bg
         accent: "#818cf8";
-        accent-hover: "#a5b4fc";
-        accent-subtle: "rgba(129, 140, 248, 0.12)";
-        accent-muted: "rgba(129, 140, 248, 0.06)";
-        accent-gradient: "linear-gradient(135deg, #6366f1, #8b5cf6)";
+        accent-hover: "#6366f1";
+        accent-subtle: "rgba(129, 140, 248, 0.10)";
+        accent-muted: "rgba(129, 140, 248, 0.05)";
+        accent-gradient: "linear-gradient(135deg, #6366f1, #818cf8)";
+        accent-disabled: "#4a4a6a";
+        accent-border: "rgba(129, 140, 248, 0.30)";
+
+        // ─── Semantic Colors (non-status) ───
+        text-danger: "#f87171";
+        text-positive: "#6ee7b7";
+        border-interactive: "rgba(129, 140, 248, 0.35)";
 
         // ─── Border Colors ───
-        border-nav: "#2d2d4a";
-        border-subtle: "#2d2d4a";
-        border-card: "#2d2d4a";
-        border-card-title: "#2d2d4a";
-        border-input: "#3d3d5a";
-        border-accent-light: "#3d3d5a";
+        // Layered: subtle < card < nav < input (increasing visibility)
+        border-nav: "#2a2a35";
+        border-subtle: "#232330";
+        border-card: "#28283a";
+        border-card-title: "#2e2e3c";
+        border-input: "#363645";
+        border-accent-light: "rgba(129, 140, 248, 0.20)";
 
         // ─── Shadows ───
-        shadow-card: "0 1px 3px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15)";
-        shadow-modal: "0 20px 60px rgba(0,0,0,0.5)";
-        shadow-float: "0 4px 14px rgba(124, 58, 237, 0.3)";
-        shadow-drawer: "4px 0px 20px rgba(0, 0, 0, 0.4)";
+        shadow-card: "0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2)";
+        shadow-modal: "0 20px 60px rgba(0,0,0,0.6)";
+        shadow-float: "0 4px 14px rgba(99, 102, 241, 0.25)";
+        shadow-drawer: "4px 0px 20px rgba(0, 0, 0, 0.5)";
+        shadow-accent-sm: "0px 1px 2px rgba(99, 102, 241, 0.25)";
+        shadow-accent-lg: "0px 6px 20px rgba(99, 102, 241, 0.4)";
 
         // ─── Theme Toggle ───
-        bg-theme-button: "#2d2d4a";
+        bg-theme-button: "#26262f";
         text-theme-button: "#fbbf24";
-        border-theme-button: "#3d3d5a";
+        border-theme-button: "#363645";
 
         // ─── Status: Error ───
-        bg-error: "#451a1a";
+        bg-error: "rgba(239, 68, 68, 0.08)";
         text-error: "#fca5a5";
-        border-error: "#7f1d1d";
-        bg-error-icon: "#7f1d1d";
+        border-error: "rgba(239, 68, 68, 0.25)";
+        bg-error-icon: "rgba(239, 68, 68, 0.20)";
 
         // ─── Status: Success ───
-        bg-success: "#052e16";
+        bg-success: "rgba(34, 197, 94, 0.08)";
         text-success: "#86efac";
-        border-success: "#166534";
+        border-success: "rgba(34, 197, 94, 0.25)";
 
         // ─── Status: Warning ───
-        bg-warning: "#451a03";
-        text-warning: "#fbbf24";
-        border-warning: "#92400e";
+        bg-warning: "rgba(245, 158, 11, 0.08)";
+        text-warning: "#fcd34d";
+        border-warning: "rgba(245, 158, 11, 0.25)";
 
         // ─── Status: Info ───
         text-info: "#7dd3fc";
-        border-info: "#075985";
+        border-info: "rgba(56, 189, 248, 0.25)";
 
         // ─── Status: Pink ───
         text-pink: "#f9a8d4";
-        border-pink: "#9d174d";
+        border-pink: "rgba(236, 72, 153, 0.25)";
 
         // ─── Loading ───
-        bg-loading: "#1e1b4b";
-        border-loading: "#312e81";
+        bg-loading: "rgba(99, 102, 241, 0.08)";
+        border-loading: "rgba(99, 102, 241, 0.20)";
         text-loading-title: "#a5b4fc";
-        bg-progress: "#3d3d5a";
+        bg-progress: "#2a2a35";
 
         // ─── List ───
-        bg-list-even: "#252540";
-        bg-list-odd: "#1e1e36";
+        bg-list-even: "#1a1a22";
+        bg-list-odd: "#1f1f28";
 
         // ─── Console / VConsole ───
-        bg-console: "#0a0a18";
-        bg-console-header: "#08081a";
-        bg-console-filter: "#060616";
-        border-console: "#1e1e3a";
-        text-console: "#9a9ab0";
-        text-console-title: "#c4b5fd";
-        border-console-button: "#2d2d4a";
-        text-console-button: "#8a8aa0";
+        bg-console: "#111118";
+        bg-console-header: "#18181f";
+        bg-console-filter: "#141420";
+        border-console: "#28283a";
+        text-console: "#b0b0be";
+        text-console-title: "#a5b4fc";
+        border-console-button: "#2a2a35";
+        text-console-button: "#8e8e9e";
         text-console-log-latest: "#6ee7b7";
         text-console-warn: "#fbbf24";
         text-console-warn-latest: "#fcd34d";
         text-console-error: "#f87171";
         text-console-error-latest: "#fca5a5";
-        text-console-empty: "#52525b";
+        text-console-empty: "#4a4a58";
         bg-console-badge: "#dc2626";
-        bg-console-badge-log: "rgba(110, 231, 183, 0.15)";
-        bg-console-badge-warn: "rgba(251, 191, 36, 0.15)";
-        bg-console-badge-error: "rgba(248, 113, 113, 0.15)";
-        border-console-accent: "#a78bfa";
-        text-console-filter-active: "#c4b5fd";
-        border-console-filter-active: "#a78bfa";
-        bg-console-filter-active: "rgba(196, 181, 253, 0.15)";
-        bg-console-button: "#7c3aed";
+        bg-console-badge-log: "rgba(110, 231, 183, 0.12)";
+        bg-console-badge-warn: "rgba(251, 191, 36, 0.12)";
+        bg-console-badge-error: "rgba(248, 113, 113, 0.12)";
+        border-console-accent: "#818cf8";
+        text-console-filter-active: "#a5b4fc";
+        border-console-filter-active: "#818cf8";
+        bg-console-filter-active: "rgba(129, 140, 248, 0.12)";
+        bg-console-button: "#6366f1";
         text-console-button-text: "white";
-        shadow-console-button: "0 4px 14px rgba(124, 58, 237, 0.3)";
-        bg-console-button-hover: "#8b5cf6";
-        shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.5)";
-        bg-console-close-hover: "rgba(239, 68, 68, 0.15)";
+        shadow-console-button: "0 4px 14px rgba(99, 102, 241, 0.25)";
+        bg-console-button-hover: "#818cf8";
+        shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.4)";
+        bg-console-close-hover: "rgba(239, 68, 68, 0.12)";
         text-console-close-hover: "#f87171";
     }
 }

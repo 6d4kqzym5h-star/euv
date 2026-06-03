@@ -118,7 +118,7 @@ class! {
 
     pub(crate) c_logo_button_fab_hover {
         transform: "scale(1.08)";
-        box-shadow: "0px 6px 20px rgba(99, 102, 241, 0.4)";
+        box-shadow: var!(shadow-accent-lg);
     }
 
     pub(crate) c_nav_section_label {
@@ -332,7 +332,7 @@ class! {
         line-height: "1.4";
         transition: format!("background {} {}, box-shadow {} {}, transform 0.1s ease", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
-        box-shadow: format!("0px 1px 2px rgba(79, 70, 229, 0.2)");
+        box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -351,7 +351,7 @@ class! {
 
     pub(crate) c_primary_button_disabled {
         c_primary_button();
-        background: "#9b9bd4";
+        background: var!(accent-disabled);
         cursor: "not-allowed";
         opacity: "0.55";
         box-shadow: "none";
@@ -377,7 +377,7 @@ class! {
         line-height: "1.4";
         transition: format!("background {} {}, box-shadow {} {}, transform 0.1s ease", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
-        box-shadow: format!("0px 1px 2px rgba(79, 70, 229, 0.2)");
+        box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -387,7 +387,7 @@ class! {
 
     pub(crate) c_modal_primary_button_disabled {
         c_modal_primary_button();
-        background: "#9b9bd4";
+        background: var!(accent-disabled);
         cursor: "not-allowed";
         opacity: "0.55";
         box-shadow: "none";
@@ -1139,11 +1139,11 @@ class! {
         min-height: "120px";
         padding: var!(space-xl);
         border-radius: var!(radius-md);
-        border: "2px dashed #8b5cf6";
+        border: format!("2px dashed {}", var!(accent));
         text-align: "center";
         touch-action: "none";
         user-select: "none";
-        color: "#5b21b6";
+        color: var!(accent);
     }
 
     pub(crate) c_event_form_area {
@@ -1366,7 +1366,7 @@ class! {
         font-size: var!("font-5xl");
         animation: "euv-pulse 1.5s ease-in-out infinite";
         display: "inline-block";
-        color: "#dc2626";
+        color: var!(text-danger);
         media("(max-width: 767px)") {
             font-size: var!("font-4xl");
         }
@@ -1376,7 +1376,7 @@ class! {
         font-size: var!("font-5xl");
         display: "inline-block";
         opacity: "0.4";
-        color: "#dc2626";
+        color: var!(text-danger);
         media("(max-width: 767px)") {
             font-size: var!("font-4xl");
         }
@@ -2210,12 +2210,12 @@ class! {
     pub(crate) c_binding_typed_warning {
         font-size: "13px";
         font-weight: "500";
-        color: "#dc2626";
+        color: var!(text-error);
         margin-top: "10px";
         padding: format!("{} 10px", var!(space-sm));
         border-radius: var!(radius-sm);
-        background: "rgba(220, 38, 38, 0.08)";
-        border: "1px solid rgba(220, 38, 38, 0.2)";
+        background: var!(bg-error);
+        border: format!("1px solid {}", var!(border-error));
         margin-bottom: "0px";
     }
 
@@ -2271,7 +2271,7 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border-radius: var!(radius-sm);
         background: var!(accent-subtle);
-        border: format!("1px solid rgba(79, 70, 229, 0.3)");
+        border: format!("1px solid {}", var!(accent-border));
         color: var!(accent);
         font-weight: "500";
         font-size: var!(font-base);
@@ -2280,9 +2280,9 @@ class! {
     pub(crate) c_dynamic_component_inline_alt {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border-radius: var!(radius-sm);
-        background: "rgba(16, 185, 129, 0.1)";
-        border: "1px solid rgba(16, 185, 129, 0.3)";
-        color: "#059669";
+        background: var!(bg-success);
+        border: format!("1px solid {}", var!(border-success));
+        color: var!(text-positive);
         font-weight: "500";
         font-size: var!(font-base);
     }
@@ -2297,7 +2297,10 @@ class! {
         padding: format!("{} 0px", var!(space-md));
         margin-bottom: var!(space-md);
         border-bottom: format!("1px solid {}", var!(border-subtle));
-        flex-wrap: "wrap";
+        flex-wrap: "nowrap";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
         media("(max-width: 767px)") {
             gap: var!(space-md);
         }
@@ -2306,6 +2309,10 @@ class! {
     pub(crate) c_virtual_list_status_item {
         font-size: var!(font-base);
         color: "inherit";
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
+        min-width: "0px";
     }
 
     pub(crate) c_virtual_list_status_value {
