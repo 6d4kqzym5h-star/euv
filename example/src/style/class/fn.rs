@@ -285,7 +285,7 @@ class! {
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
-        transition: format!("box-shadow {} {}, background {} {}, border-color {} {}, color {} {}", var!(duration-normal), var!(ease-out), var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
+        transition: format!("box-shadow {} {}", var!(duration-normal), var!(ease-out));
         media("(max-width: 767px)") {
             padding: var!(space-lg);
             margin-bottom: var!(gap-card-mobile);
@@ -330,7 +330,7 @@ class! {
         letter-spacing: "0.02em";
         text-align: "center";
         line-height: "1.4";
-        transition: format!("background {} {}, box-shadow {} {}, transform 0.1s ease", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("box-shadow {} {}, transform 0.1s ease", var!(duration-fast), var!(ease-out));
         outline: "none";
         box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
@@ -375,7 +375,7 @@ class! {
         letter-spacing: "0.02em";
         text-align: "center";
         line-height: "1.4";
-        transition: format!("background {} {}, box-shadow {} {}, transform 0.1s ease", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("box-shadow {} {}, transform 0.1s ease", var!(duration-fast), var!(ease-out));
         outline: "none";
         box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
@@ -2339,7 +2339,7 @@ class! {
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
-        transition: format!("box-shadow {} {}, background {} {}, border-color {} {}, color {} {}", var!(duration-normal), var!(ease-out), var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
+        transition: format!("box-shadow {} {}", var!(duration-normal), var!(ease-out));
         display: "flex";
         flex-direction: "column";
         flex: "1";

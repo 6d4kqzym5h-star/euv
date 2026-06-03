@@ -13,14 +13,6 @@ use crate::*;
 /// Panics if `window()` or `document()` is unavailable on the current platform.
 pub(crate) fn inject_app_global_css() {
     let global: &str = "html, body, #app { height: 100%; margin: 0; padding: 0; overflow: hidden; } * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }";
-    // During a theme switch we temporarily add the `euv-theme-switching` class
-    // to the root element. This rule disables every transition (and animation)
-    // for all descendants so the colour change applies instantly in a single
-    // paint, instead of having hundreds of list rows / buttons each run their
-    // own 0.4s colour transition simultaneously (which causes dropped frames /
-    // jank on the list page). The class is removed on the next animation frame,
-    // restoring normal interaction transitions (hover, click, etc.).
-    let theme_switching: &str = ".euv-theme-switching, .euv-theme-switching *, .euv-theme-switching *::before, .euv-theme-switching *::after { transition: none !important; animation: none !important; }";
     let keyframes: &str = concat!(
         "@keyframes euv-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } ",
         "@keyframes euv-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } } ",
@@ -33,6 +25,5 @@ pub(crate) fn inject_app_global_css() {
         "@keyframes euv-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }",
     );
     Css::inject_css(global);
-    Css::inject_css(theme_switching);
     Css::inject_css(keyframes);
 }
