@@ -883,6 +883,32 @@ class! {
         }
     }
 
+    pub(crate) c_tab_item_active {
+        padding: "10px 20px";
+        cursor: "pointer";
+        border-bottom: format!("2px solid {}", var!(accent));
+        color: var!(accent);
+        background: var!(accent-subtle);
+        border-radius: "6px 6px 0px 0px";
+        font-size: "14px";
+        font-weight: "500";
+    }
+
+    pub(crate) c_tab_item_inactive {
+        padding: "10px 20px";
+        cursor: "pointer";
+        border-bottom: "2px solid transparent";
+        color: "inherit";
+        background: "transparent";
+        border-radius: "6px 6px 0px 0px";
+        font-size: "14px";
+        font-weight: "500";
+        hover {
+            background: var!(accent-muted);
+            color: var!(accent);
+        }
+    }
+
     pub(crate) c_tab_content {
         padding: format!("{} 0px", var!(space-xs));
     }

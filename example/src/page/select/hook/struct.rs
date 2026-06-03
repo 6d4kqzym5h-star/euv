@@ -12,6 +12,9 @@ pub(crate) struct UseSelect {
     /// The selected city value.
     #[get(type(copy))]
     pub(crate) selected_city: Signal<String>,
+    /// The available city options for the selected country.
+    #[get(type(copy))]
+    pub(crate) cities: Signal<Vec<(String, String)>>,
     /// The feedback result message.
     #[get(type(copy))]
     pub(crate) feedback: Signal<String>,

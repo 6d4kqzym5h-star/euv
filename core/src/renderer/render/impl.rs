@@ -244,7 +244,7 @@ impl Renderer {
                             }
                             AttributeValue::Signal(signal) => {
                                 let value: String = signal.get();
-                                if value.is_empty() && !is_boolean_property(new_attr.get_name()) {
+                                if value.is_empty() {
                                     element.remove_attribute_or_property(new_attr.get_name());
                                 } else {
                                     element.set_attribute_or_property(new_attr.get_name(), &value);
@@ -545,16 +545,25 @@ impl Renderer {
                         return self.create_dom_node_with_document(&unwrapped, document);
                     }
                 };
+                for child in children {
+                    let child_node: Node = self.create_dom_node_with_document(child, document);
+                    let _ = element.append_child(&child_node);
+                    if let VirtualNode::Text(text_node) = child
+                        && let Some(signal) = text_node.try_get_signal()
+                    {
+                        element.track_signal_addr(signal.get_inner());
+                    }
+                }
                 for attr in attributes {
                     match attr.get_value() {
                         AttributeValue::Text(value) => {
-                            if !value.is_empty() || is_boolean_property(attr.get_name()) {
+                            if !value.is_empty() {
                                 element.set_attribute_or_property(attr.get_name(), value);
                             }
                         }
                         AttributeValue::Signal(signal) => {
                             let initial_value: String = signal.get();
-                            if !initial_value.is_empty() || is_boolean_property(attr.get_name()) {
+                            if !initial_value.is_empty() {
                                 element.set_attribute_or_property(attr.get_name(), &initial_value);
                             }
                             element.track_signal_addr(signal.get_inner());
@@ -577,7 +586,7 @@ impl Renderer {
                                     return;
                                 }
                                 let new_value: String = subscribe_signal.get();
-                                if new_value.is_empty() && !is_boolean_property(&attr_name) {
+                                if new_value.is_empty() {
                                     element_clone.remove_attribute_or_property(&attr_name);
                                 } else {
                                     element_clone.set_attribute_or_property(&attr_name, &new_value);
@@ -592,15 +601,6 @@ impl Renderer {
                             css.inject_style();
                             element.set_attribute_or_property(attr.get_name(), css.get_name());
                         }
-                    }
-                }
-                for child in children {
-                    let child_node: Node = self.create_dom_node_with_document(child, document);
-                    let _ = element.append_child(&child_node);
-                    if let VirtualNode::Text(text_node) = child
-                        && let Some(signal) = text_node.try_get_signal()
-                    {
-                        element.track_signal_addr(signal.get_inner());
                     }
                 }
                 element.into()

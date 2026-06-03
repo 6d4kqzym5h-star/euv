@@ -98,17 +98,17 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_tab_bar()
                     div {
-                        style: { padding: "10px 20px"; cursor: "pointer"; border-bottom: { if { tab.get() == "info" } { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() } }; color: { if { tab.get() == "info" } { "#4f46e5".to_string() } else { "inherit".to_string() } }; background: { if { tab.get() == "info" } { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() } }; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500"; }
+                        class: if { tab.get() == "info" } { c_tab_item_active() } else { c_tab_item_inactive() }
                         onclick: tab_on_select(tab, "info")
                         "Info"
                     }
                     div {
-                        style: { padding: "10px 20px"; cursor: "pointer"; border-bottom: { if { tab.get() == "settings" } { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() } }; color: { if { tab.get() == "settings" } { "#4f46e5".to_string() } else { "inherit".to_string() } }; background: { if { tab.get() == "settings" } { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() } }; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500"; }
+                        class: if { tab.get() == "settings" } { c_tab_item_active() } else { c_tab_item_inactive() }
                         onclick: tab_on_select(tab, "settings")
                         "Settings"
                     }
                     div {
-                        style: { padding: "10px 20px"; cursor: "pointer"; border-bottom: { if { tab.get() == "about" } { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() } }; color: { if { tab.get() == "about" } { "#4f46e5".to_string() } else { "inherit".to_string() } }; background: { if { tab.get() == "about" } { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() } }; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500"; }
+                        class: if { tab.get() == "about" } { c_tab_item_active() } else { c_tab_item_inactive() }
                         onclick: tab_on_select(tab, "about")
                         "About"
                     }

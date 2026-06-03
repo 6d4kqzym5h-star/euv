@@ -92,7 +92,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         }
                     }
                 }
-                if { state.get_selected_country().get() == "china" } {
+                if { !state.get_selected_country().get().is_empty() } {
                     div {
                         class: c_form_input_wrapper()
                         label {
@@ -105,51 +105,14 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                             name: SELECT_CITY_NAME
                             autocomplete: SELECT_AUTOCOMPLETE_OFF
                             class: c_select_input()
+                            value: state.get_selected_city()
                             onchange: on_change_value(state.get_selected_city())
-                            option { value: "none" "-- Select City --" }
-                            option { value: "beijing" "Beijing" }
-                            option { value: "shanghai" "Shanghai" }
-                            option { value: "guangzhou" "Guangzhou" }
-                        }
-                    }
-                } else if { state.get_selected_country().get() == "japan" } {
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            r#for: SELECT_CITY_ID
-                            class: c_form_label()
-                            "City"
-                        }
-                        select {
-                            id: SELECT_CITY_ID
-                            name: SELECT_CITY_NAME
-                            autocomplete: SELECT_AUTOCOMPLETE_OFF
-                            class: c_select_input()
-                            onchange: on_change_value(state.get_selected_city())
-                            option { value: "none" "-- Select City --" }
-                            option { value: "tokyo" "Tokyo" }
-                            option { value: "osaka" "Osaka" }
-                            option { value: "kyoto" "Kyoto" }
-                        }
-                    }
-                } else if { state.get_selected_country().get() == "usa" } {
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            r#for: SELECT_CITY_ID
-                            class: c_form_label()
-                            "City"
-                        }
-                        select {
-                            id: SELECT_CITY_ID
-                            name: SELECT_CITY_NAME
-                            autocomplete: SELECT_AUTOCOMPLETE_OFF
-                            class: c_select_input()
-                            onchange: on_change_value(state.get_selected_city())
-                            option { value: "none" "-- Select City --" }
-                            option { value: "new-york" "New York" }
-                            option { value: "los-angeles" "Los Angeles" }
-                            option { value: "chicago" "Chicago" }
+                            for (value, label) in { state.get_cities().get().iter() } {
+                                option {
+                                    value: value.clone()
+                                    label.clone()
+                                }
+                            }
                         }
                     }
                 }
@@ -159,7 +122,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         "You selected: "
                         span {
                             class: c_event_highlight()
-                            { state.get_selected_city().get() }
+                            state.get_selected_city().get()
                         }
                     }
                 }

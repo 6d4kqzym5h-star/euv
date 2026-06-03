@@ -1,5 +1,39 @@
 use crate::*;
 
+/// Returns the city options for the given country code.
+///
+/// # Arguments
+///
+/// - `&str` - The country code.
+///
+/// # Returns
+///
+/// - `Vec<(String, String)>` - A list of (value, label) pairs for the cities.
+pub(crate) fn get_cities_by_country(country: &str) -> Vec<(String, String)> {
+    let empty_city: (String, String) = (String::new(), "-- Select City --".to_string());
+    match country {
+        "china" => vec![
+            empty_city.clone(),
+            ("beijing".to_string(), "Beijing".to_string()),
+            ("shanghai".to_string(), "Shanghai".to_string()),
+            ("guangzhou".to_string(), "Guangzhou".to_string()),
+        ],
+        "japan" => vec![
+            empty_city.clone(),
+            ("tokyo".to_string(), "Tokyo".to_string()),
+            ("osaka".to_string(), "Osaka".to_string()),
+            ("kyoto".to_string(), "Kyoto".to_string()),
+        ],
+        "usa" => vec![
+            empty_city,
+            ("new-york".to_string(), "New York".to_string()),
+            ("los-angeles".to_string(), "Los Angeles".to_string()),
+            ("chicago".to_string(), "Chicago".to_string()),
+        ],
+        _ => Vec::new(),
+    }
+}
+
 /// Creates select demo state signals wrapped in a `UseSelect` struct.
 ///
 /// # Returns
@@ -10,6 +44,7 @@ pub(crate) fn use_select() -> UseSelect {
         use_signal(|| "apple".to_string()),
         use_signal(String::new),
         use_signal(String::new),
+        use_signal(Vec::new),
         use_signal(String::new),
         use_signal(String::new),
         use_signal(String::new),
@@ -36,7 +71,8 @@ pub(crate) fn validate_select_textarea(state: UseSelect) {
     }
 }
 
-/// Creates a change event handler that updates the country and resets the city.
+/// Creates a change event handler that updates the country, resets the city,
+/// and refreshes the city options list.
 ///
 /// # Arguments
 ///
@@ -48,10 +84,14 @@ pub(crate) fn validate_select_textarea(state: UseSelect) {
 pub(crate) fn select_on_country_change(state: UseSelect) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
-            && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>()
+            && let Ok(country_select) = target.clone().dyn_into::<HtmlSelectElement>()
         {
-            state.get_selected_country().set(select.value());
+            let country_value: String = country_select.value();
+            state.get_selected_country().set(country_value.clone());
             state.get_selected_city().set(String::new());
+            state
+                .get_cities()
+                .set(get_cities_by_country(&country_value));
         }
     }))
 }

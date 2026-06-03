@@ -374,17 +374,17 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                 div {
                     class: c_keep_alive_tab_bar()
                     div {
-                        style: { padding: "10px 20px"; cursor: "pointer"; border-bottom: { if { tab.get() == "counter" } { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() } }; color: { if { tab.get() == "counter" } { "#4f46e5".to_string() } else { "inherit".to_string() } }; background: { if { tab.get() == "counter" } { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() } }; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500"; }
+                        class: if { tab.get() == "counter" } { c_tab_item_active() } else { c_tab_item_inactive() }
                         onclick: keep_alive_tab_on_select(tab, "counter")
                         "Counter"
                     }
                     div {
-                        style: { padding: "10px 20px"; cursor: "pointer"; border-bottom: { if { tab.get() == "form" } { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() } }; color: { if { tab.get() == "form" } { "#4f46e5".to_string() } else { "inherit".to_string() } }; background: { if { tab.get() == "form" } { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() } }; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500"; }
+                        class: if { tab.get() == "form" } { c_tab_item_active() } else { c_tab_item_inactive() }
                         onclick: keep_alive_tab_on_select(tab, "form")
                         "Form"
                     }
                     div {
-                        style: { padding: "10px 20px"; cursor: "pointer"; border-bottom: { if { tab.get() == "timer" } { "2px solid #4f46e5".to_string() } else { "2px solid transparent".to_string() } }; color: { if { tab.get() == "timer" } { "#4f46e5".to_string() } else { "inherit".to_string() } }; background: { if { tab.get() == "timer" } { "rgba(79, 70, 229, 0.08)".to_string() } else { "transparent".to_string() } }; border-radius: "6px 6px 0 0"; font-size: "14px"; font-weight: "500"; }
+                        class: if { tab.get() == "timer" } { c_tab_item_active() } else { c_tab_item_inactive() }
                         onclick: keep_alive_tab_on_select(tab, "timer")
                         "Timer"
                     }

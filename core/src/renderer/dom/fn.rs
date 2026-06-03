@@ -24,20 +24,3 @@ where
         Err(_) => false,
     }
 }
-
-/// Returns true if the given attribute name is a boolean attribute that
-/// requires DOM property-based manipulation instead of HTML attribute strings.
-///
-/// # Arguments
-///
-/// - `&str` - The attribute name to check.
-///
-/// # Returns
-///
-/// - `bool` - `true` if the attribute is a boolean property, `false` otherwise.
-pub(crate) fn is_boolean_property(name: &str) -> bool {
-    matches!(
-        name,
-        ATTR_CHECKED | ATTR_DISABLED | ATTR_SELECTED | ATTR_READONLY | ATTR_MULTIPLE
-    )
-}
