@@ -39,7 +39,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                 }
                 if { !state.get_add_error().get().is_empty() } {
                     p {
-                        class: c_field_error_text()
+                        class: c_list_error_text()
                         state.get_add_error()
                     }
                 }

@@ -916,6 +916,14 @@ class! {
         color: var!(text-primary);
     }
 
+    pub(crate) c_list_error_text {
+        color: var!(text-error);
+        font-size: "13px";
+        margin-top: var!(space-xs);
+        margin-bottom: var!(space-sm);
+        padding-left: var!(space-lg);
+    }
+
     pub(crate) c_list_ul {
         list-style: "none";
         padding: "0px";
