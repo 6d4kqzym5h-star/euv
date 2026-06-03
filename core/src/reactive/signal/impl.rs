@@ -104,40 +104,26 @@ where
         listeners.push(Box::new(callback));
     }
 
-    /// Removes all subscribed listeners from this signal, clears its
-    /// dependent dynamic node list, marks it as inactive, and frees the
-    /// heap allocation via the global registry.
-    ///
-    /// # Safety
-    ///
-    /// This frees the underlying `SignalInner` allocation. It MUST NOT be
-    /// called from within a listener invoked by `update_and_notify`, because
-    /// that method re-borrows `self.inner_ref()` after running listeners; if
-    /// the allocation were freed during listener execution, the subsequent
-    /// re-borrow would be a use-after-free. For DOM-bound subscribe closures
-    /// that need to detach when their node is removed, use
-    /// [`Self::deactivate`] instead, which only marks the signal inactive
-    /// without freeing memory.
-    pub(crate) fn clear_listeners(&self) {
-        let inner: &mut SignalInner<T> = self.inner_ref();
-        inner.set_alive(false);
-        inner.get_mut_listeners().clear();
-        inner.get_mut_dependents().clear();
-        free_signal_inner(self.get_inner());
-    }
-
     /// Detaches this signal from the reactive system without freeing memory.
     ///
     /// Marks the signal inactive and clears its listeners and dependents, but
-    /// intentionally keeps the heap allocation alive. This is the safe
-    /// counterpart to [`Self::clear_listeners`] for use inside subscribe
-    /// closures that run during `update_and_notify`: freeing the allocation
-    /// there would invalidate the pointer that `update_and_notify` re-borrows
-    /// after the listener loop, causing a use-after-free panic.
+    /// intentionally keeps the heap allocation alive.
     ///
-    /// The allocation remains valid until it is reclaimed through the normal
-    /// cleanup path (or the page unloads), mirroring the contract documented
-    /// on `clear_signal_listeners_by_addr`.
+    /// This is the only supported teardown path for a signal, and is used by
+    /// both DOM-bound subscribe closures (when their node is removed) and the
+    /// `use_signal` hook cleanup (when a component unmounts or a `match` arm
+    /// switches). Freeing the allocation is deliberately never done at these
+    /// points because `Signal<T>` is `Copy` (just a `usize` address): async
+    /// callbacks (`spawn_local` futures, `setTimeout` / `setInterval`
+    /// closures, Promise continuations) may still hold copies of the signal,
+    /// and freeing would turn their later `.get()` / `.set()` calls into a
+    /// use-after-free. Deactivating instead makes those stale calls safe
+    /// no-ops.
+    ///
+    /// The allocation remains valid until the page unloads. For SPAs this is
+    /// acceptable; a long-lived app could add a periodic sweep that frees
+    /// `alive == false` entries once no async references remain. This mirrors
+    /// the contract documented on `clear_signal_listeners_by_addr`.
     pub(crate) fn deactivate(&self) {
         let inner: &mut SignalInner<T> = self.inner_ref();
         inner.set_alive(false);
@@ -170,19 +156,34 @@ where
         }
         // Move listeners back, but ONLY if the signal's allocation still exists.
         //
-        // A listener may have freed this signal's `SignalInner` during its
-        // execution (e.g. a DOM-bound subscribe closure that detached because
-        // its node was removed mid-dispatch). If that happened, the address is
-        // no longer in the registry and re-borrowing `self.inner_ref()` would
-        // dereference a dangling pointer (use-after-free). We therefore probe
-        // the registry first and skip the swap-back entirely if the signal is
-        // gone.
+        // A listener may have detached this signal during its execution (e.g.
+        // a DOM-bound subscribe closure that called `deactivate` because its
+        // node was removed mid-dispatch). Although no current teardown path
+        // frees the allocation, we still probe the registry before re-borrowing
+        // `self.inner_ref()` so that a future GC sweep — or any code that does
+        // free — cannot turn this re-borrow into a use-after-free. If the
+        // signal is gone, skip the restore entirely.
         if !is_signal_inner_alive(self.get_inner()) {
             return true;
         }
         let inner: &mut SignalInner<T> = self.inner_ref();
         if inner.get_alive() {
-            swap(inner.get_mut_listeners(), &mut listeners);
+            // Restore listeners by *prepending* the originals ahead of any
+            // listeners that were registered while we were iterating.
+            //
+            // A listener may itself call `subscribe` on this same signal,
+            // appending to `inner.listeners` (which is currently the empty Vec
+            // we swapped in). A plain `swap` back would discard those
+            // newly-registered listeners. Instead we splice the originals in
+            // front of the new ones so that both sets survive and the original
+            // ordering is preserved.
+            let new_listeners: &mut Vec<Box<dyn FnMut()>> = inner.get_mut_listeners();
+            if new_listeners.is_empty() {
+                swap(new_listeners, &mut listeners);
+            } else {
+                listeners.append(new_listeners);
+                swap(new_listeners, &mut listeners);
+            }
         }
         true
     }

@@ -20,5 +20,5 @@ pub struct NativeEventHandler {
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) callback: Rc<UnsafeCell<Box<dyn FnMut(Event)>>>,
+    pub(crate) callback: SharedEventCallback,
 }

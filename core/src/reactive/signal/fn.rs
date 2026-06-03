@@ -89,9 +89,23 @@ pub(crate) fn is_signal_inner_alive(addr: usize) -> bool {
 /// Calls the type-erased drop function stored in the registry entry to
 /// correctly reconstruct and drop the `Box<SignalInner<T>>`.
 ///
+/// # Safety
+///
+/// After this call the signal's address becomes dangling. Because `Signal<T>`
+/// is `Copy`, the caller MUST guarantee that no other live handle or async
+/// callback (`spawn_local` future, `setTimeout` / `setInterval` closure,
+/// Promise continuation, DOM-bound subscribe closure) still holds a copy of
+/// this address; otherwise their later `.get()` / `.set()` calls would be a
+/// use-after-free. None of the framework's current teardown paths can prove
+/// this, so they all use [`Signal::deactivate`] /
+/// [`clear_signal_listeners_by_addr`] instead. This function is therefore
+/// retained only as a building block for a future GC sweep that can establish
+/// the no-live-reference invariant globally.
+///
 /// # Arguments
 ///
 /// - `usize` - The inner pointer address of the signal.
+#[allow(dead_code)]
 pub(crate) fn free_signal_inner(addr: usize) {
     if let Some(entry) = signal_inner_registry_mut().remove(&addr) {
         unsafe { (entry.get_drop_fn())(entry.get_ptr()) };

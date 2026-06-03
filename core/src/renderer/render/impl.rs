@@ -53,7 +53,7 @@ impl Renderer {
         } else {
             while let Some(child) = self.get_root().first_child() {
                 if let Some(element) = child.dyn_ref::<Element>() {
-                    self.cleanup_dom_subtree(element);
+                    Self::cleanup_dom_subtree(element);
                 }
                 let _ = self.get_root().remove_child(&child);
             }
@@ -75,7 +75,7 @@ impl Renderer {
         let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
         while let Some(child) = self.get_root().first_child() {
             if let Some(element) = child.dyn_ref::<Element>() {
-                self.cleanup_dom_subtree(element);
+                Self::cleanup_dom_subtree(element);
             }
             let _ = self.get_root().remove_child(&child);
         }
@@ -105,7 +105,7 @@ impl Renderer {
             }
         } else if let Some(dom_child) = dom_child {
             if let Some(element) = dom_child.dyn_ref::<Element>() {
-                self.cleanup_dom_subtree(element);
+                Self::cleanup_dom_subtree(element);
             }
             let new_dom_node: Node = self.create_dom_node(new_node);
             let _ = self.get_root().replace_child(&new_dom_node, &dom_child);
@@ -153,7 +153,7 @@ impl Renderer {
                 if old_tag != new_tag {
                     let new_dom_node: Node = self.create_dom_node(new_node);
                     if let Some(parent) = dom_element.parent_node() {
-                        self.cleanup_dom_subtree(dom_element);
+                        Self::cleanup_dom_subtree(dom_element);
                         let _ = parent.replace_child(&new_dom_node, dom_element);
                     }
                     return;
@@ -168,21 +168,21 @@ impl Renderer {
             (VirtualNode::Dynamic(_), _) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
-                    self.cleanup_dom_subtree(dom_element);
+                    Self::cleanup_dom_subtree(dom_element);
                     let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             (_, VirtualNode::Dynamic(_)) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
-                    self.cleanup_dom_subtree(dom_element);
+                    Self::cleanup_dom_subtree(dom_element);
                     let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             _ => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
-                    self.cleanup_dom_subtree(dom_element);
+                    Self::cleanup_dom_subtree(dom_element);
                     let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
@@ -388,7 +388,7 @@ impl Renderer {
                     && let Some((_old_index, dom_node)) = old_key_to_node.remove(key)
                 {
                     if let Some(element) = dom_node.dyn_ref::<Element>() {
-                        self.cleanup_dom_subtree(element);
+                        Self::cleanup_dom_subtree(element);
                     }
                     let _ = parent.remove_child(&dom_node);
                 }
@@ -398,7 +398,7 @@ impl Renderer {
                     && let Some(dom_node) = child_nodes.get(dom_index)
                 {
                     if let Some(element) = dom_node.dyn_ref::<Element>() {
-                        self.cleanup_dom_subtree(element);
+                        Self::cleanup_dom_subtree(element);
                     }
                     let _ = parent.remove_child(&dom_node);
                 }
@@ -469,7 +469,7 @@ impl Renderer {
                     let new_dom_node: Node = self.create_dom_node(new_child);
                     if let Some(parent_node) = dom_child.parent_node() {
                         if let Some(child_element) = dom_child.dyn_ref::<Element>() {
-                            self.cleanup_dom_subtree(child_element);
+                            Self::cleanup_dom_subtree(child_element);
                         }
                         let _ = parent_node.replace_child(&new_dom_node, &dom_child);
                     }
@@ -486,7 +486,7 @@ impl Renderer {
                 if let Some(last_child) = parent.last_child()
                     && let Some(element) = last_child.dyn_ref::<Element>()
                 {
-                    self.cleanup_dom_subtree(element);
+                    Self::cleanup_dom_subtree(element);
                 }
                 if let Some(last_child) = parent.last_child() {
                     let _ = parent.remove_child(&last_child);
@@ -910,7 +910,7 @@ impl Renderer {
     /// # Arguments
     ///
     /// - `&Element` - The DOM element to clean up.
-    fn cleanup_dom_subtree(&self, element: &Element) {
+    fn cleanup_dom_subtree(element: &Element) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
         {
@@ -933,7 +933,7 @@ impl Renderer {
             if let Some(child) = child_nodes.get(child_index)
                 && let Some(child_element) = child.dyn_ref::<Element>()
             {
-                self.cleanup_dom_subtree(child_element);
+                Self::cleanup_dom_subtree(child_element);
             }
         }
     }

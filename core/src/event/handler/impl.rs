@@ -16,8 +16,7 @@ impl NativeEventHandler {
     where
         F: FnMut(Event) + 'static,
     {
-        let callback: Rc<UnsafeCell<Box<dyn FnMut(Event)>>> =
-            Rc::new(UnsafeCell::new(Box::new(callback)));
+        let callback: SharedEventCallback = Rc::new(UnsafeCell::new(Box::new(callback)));
         Self::new(event_name, callback)
     }
 

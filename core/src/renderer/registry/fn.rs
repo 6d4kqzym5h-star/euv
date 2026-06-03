@@ -503,12 +503,35 @@ pub(crate) fn unregister_window_event_handler(event_name: &str, handler_id: usiz
 fn ensure_window_event_listener(event_name: &str) {
     let event_name_owned: String = event_name.to_string();
     let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let registry: &WindowEventRegistryMap = ensure_window_event_registry_mut();
-        if let Some(handlers) = registry.get(&event_name_owned) {
-            for (_handler_id, callback_ptr) in handlers {
-                let callback: &mut Box<dyn FnMut()> = unsafe { &mut **callback_ptr };
-                callback();
-            }
+        // Snapshot the handler IDs before invoking any callback.
+        //
+        // A callback may, while running, register or unregister handlers for
+        // this same event name (e.g. a route change tears down the old page's
+        // hooks and `unregister_window_event_handler` frees an entry, or a new
+        // page's `use_window_event` pushes one). Mutating the `Vec` mid-iteration
+        // would either invalidate references into it or free a `*mut Box<dyn FnMut()>`
+        // that we are about to dereference (use-after-free). By snapshotting the
+        // IDs and re-looking-up each handler immediately before calling it, we
+        // skip any handler that was removed during dispatch and never touch a
+        // freed allocation or a reallocated buffer.
+        let handler_ids: Vec<usize> =
+            match ensure_window_event_registry_mut().get(&event_name_owned) {
+                Some(handlers) => handlers.iter().map(|(id, _ptr)| *id).collect(),
+                None => return,
+            };
+        for handler_id in handler_ids {
+            let callback_ptr: *mut Box<dyn FnMut()> =
+                match ensure_window_event_registry_mut().get(&event_name_owned) {
+                    Some(handlers) => {
+                        match handlers.iter().find(|(id, _ptr)| *id == handler_id) {
+                            Some((_id, ptr)) => *ptr,
+                            None => continue,
+                        }
+                    }
+                    None => return,
+                };
+            let callback: &mut Box<dyn FnMut()> = unsafe { &mut *callback_ptr };
+            callback();
         }
     }));
     let window: Window = match window() {

@@ -87,9 +87,24 @@ where
         return *existing;
     }
     let signal: Signal<T> = Signal::create(init());
+    // Use `deactivate` on teardown — never free the allocation here.
+    //
+    // `Signal<T>` is `Copy` (just a `usize` address), so async callbacks
+    // spawned from this component — `spawn_local` futures, `setTimeout` /
+    // `setInterval` closures, Promise continuations — may still hold copies
+    // of this signal after the hook context is torn down (e.g. a `match` arm
+    // switch or a route change). Deallocating the `SignalInner` here would
+    // turn any still-pending async callback's later `.get()` / `.set()` into
+    // a dereference of a dangling pointer (use-after-free).
+    //
+    // `deactivate` marks the signal inactive and drops its listeners /
+    // dependents but keeps the allocation alive, so stale async callbacks
+    // become safe no-ops. This mirrors the contract documented on
+    // `clear_signal_listeners_by_addr`, which the DOM cleanup path already
+    // follows for the same reason.
     inner
         .get_mut_cleanups()
-        .push(Box::new(move || signal.clear_listeners()));
+        .push(Box::new(move || signal.deactivate()));
     if index < inner.get_hooks().len() {
         inner.get_mut_hooks()[index] = Box::new(signal);
     } else {
