@@ -904,10 +904,13 @@ class! {
 
     pub(crate) c_list_input_error {
         flex: "1";
-        padding: "10px 14px";
+        min-width: "0px";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
         border: format!("1px solid {}", var!(text-error));
-        border-radius: var!(radius-md);
+        border-radius: var!(radius-sm);
         font-size: var!(font-base);
+        line-height: "1.4";
+        box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
