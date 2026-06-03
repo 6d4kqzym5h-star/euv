@@ -711,7 +711,12 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
 ///
 /// - `Action` - The action to perform (run or build).
 pub(crate) fn print_banner(action: Action) {
-    log::info!("euv v{}", env!("CARGO_PKG_VERSION"));
+    let version: &str = env!("CARGO_PKG_VERSION");
+    if version.is_empty() {
+        log::warn!("Failed to parse version from root Cargo.toml");
+    } else {
+        log::info!("euv v{version}");
+    }
     let action_name: &str = match action {
         Action::Run => ACTION_RUN,
         Action::Build => ACTION_BUILD,

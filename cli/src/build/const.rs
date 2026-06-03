@@ -121,19 +121,45 @@ pub(crate) const RUST_MIN_STACK_VALUE: &str = "16777216";
 ///
 /// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
 pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>euv</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="description"
+      content="A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and HTML macros for WebAssembly."
+    />
+    <meta
+      name="keywords"
+      content="rust, webassembly, wasm, ui-framework, virtual-dom, reactive, declarative-ui, euv"
+    />
+    <meta property="og:title" content="euv" />
+    <meta
+      property="og:description"
+      content="A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and HTML macros for WebAssembly."
+    />
+    <meta property="og:type" content="website" />
+    <title>Euv</title>
+    <style>
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      canvas {
+        image-rendering: auto;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
   </body>
   <script type="module">
-    import init, { main } from '__IMPORT_PATH__';
+    import init, { main } from './pkg/euv.js';
     await init();
     main();
   </script>
@@ -141,7 +167,7 @@ pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
     (function () {
       async function connect() {
         try {
-          const res = await fetch('__RELOAD_ROUTE__');
+          const res = await fetch('/__euv_reload');
           const data = await res.json();
           if (data.type === 'Reload') {
             location.reload();
@@ -151,7 +177,7 @@ pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
           } else {
             setTimeout(connect, 1000);
           }
-        } catch (e) {
+        } catch (_) {
           setTimeout(connect, 2000);
         }
       }
@@ -167,19 +193,45 @@ pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
 /// Used when building for release to produce a clean, static entry point.
 /// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
 pub(crate) const INDEX_HTML_RELEASE: &str = r#"<!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>euv</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="description"
+      content="A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and HTML macros for WebAssembly."
+    />
+    <meta
+      name="keywords"
+      content="rust, webassembly, wasm, ui-framework, virtual-dom, reactive, declarative-ui, euv"
+    />
+    <meta property="og:title" content="euv" />
+    <meta
+      property="og:description"
+      content="A declarative, cross-platform UI framework for Rust with virtual DOM, reactive signals, and HTML macros for WebAssembly."
+    />
+    <meta property="og:type" content="website" />
+    <title>Euv</title>
+    <style>
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      canvas {
+        image-rendering: auto;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
   </body>
   <script type="module">
-    import init, { main } from '__IMPORT_PATH__';
+    import init, { main } from './pkg/euv.js';
     await init();
     main();
   </script>

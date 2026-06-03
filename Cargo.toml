@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.5.23"
+version = "0.5.24"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -26,7 +26,9 @@ euv-macros = { path = "macros", version = "0.5.23" }
 euv-example = { path = "example", version = "0.5.23" }
 
 log = "0.4.31"
+toml = "0.9.8"
 quote = "1.0.45"
+chrono = "0.4.44"
 ignore = "0.4.25"
 js-sys = "0.3.99"
 if-addrs = "0.15.0"

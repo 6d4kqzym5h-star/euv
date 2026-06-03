@@ -24,6 +24,10 @@ exclude = [
 euv = { workspace = true }
 lombok-macros = { workspace = true }
 
+[build-dependencies]
+toml = { workspace = true }
+chrono = { workspace = true }
+
 [package.metadata.wasm-pack.profile.dev]
 wasm-opt = false
 

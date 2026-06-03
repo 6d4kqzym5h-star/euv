@@ -77,7 +77,10 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
     let PageRouterProps { route_signal } = node.try_get_props().unwrap_or_default();
     html! {
         match { route_signal.get().as_str() } {
-            "/" | "/signals" => {
+            "/" => {
+                page_home {}
+            }
+            "/signals" => {
                 page_signals {}
             }
             "/event" => {

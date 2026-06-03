@@ -83,6 +83,11 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             class: c_nav_items_scroll()
             nav_item {
                 route_signal: route_signal
+                label: "Home"
+                target: "/"
+            }
+            nav_item {
+                route_signal: route_signal
                 label: "Signals"
                 target: "/signals"
             }
@@ -201,6 +206,12 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
     html! {
         div {
             class: c_nav_items_scroll()
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Home"
+                target: "/"
+            }
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open

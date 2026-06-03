@@ -655,6 +655,42 @@ class! {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // Home Page
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_text_ellipsis {
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
+    }
+
+    pub(crate) c_info_row {
+        display: "flex";
+        align-items: "center";
+        gap: var!(space-md);
+        padding: format!("{} 0", var!(space-sm));
+        overflow: "hidden";
+    }
+
+    pub(crate) c_info_label {
+        font-size: var!(font-base);
+        font-weight: "600";
+        color: var!(text-secondary);
+        min-width: "80px";
+        flex-shrink: "0";
+    }
+
+    pub(crate) c_info_value {
+        c_text_ellipsis();
+        font-size: var!(font-lg);
+        font-weight: "700";
+        color: var!(accent);
+        font-family: "ui-monospace, monospace";
+        min-width: "0px";
+        flex: "1";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // Custom Attrs Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1292,7 +1328,7 @@ class! {
         justify-content: "space-between";
         align-items: "center";
         padding: format!("{} {}", var!(space-lg), var!(space-xl));
-        border-bottom: format!("1px solid {}", var!(border-subtle));
+        border-bottom: format!("1px solid {}", var!(border-card-title));
     }
 
     pub(crate) c_modal_title {
