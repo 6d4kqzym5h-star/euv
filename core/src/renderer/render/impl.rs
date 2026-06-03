@@ -236,19 +236,11 @@ impl Renderer {
                     if should_set {
                         match new_attr.get_value() {
                             AttributeValue::Text(value) => {
-                                if value.is_empty() {
-                                    element.remove_attribute_or_property(new_attr.get_name());
-                                } else {
-                                    element.set_attribute_or_property(new_attr.get_name(), value);
-                                }
+                                element.set_attribute_or_property(new_attr.get_name(), value);
                             }
                             AttributeValue::Signal(signal) => {
                                 let value: String = signal.get();
-                                if value.is_empty() {
-                                    element.remove_attribute_or_property(new_attr.get_name());
-                                } else {
-                                    element.set_attribute_or_property(new_attr.get_name(), &value);
-                                }
+                                element.set_attribute_or_property(new_attr.get_name(), &value);
                             }
                             AttributeValue::Dynamic(_) => {}
                             AttributeValue::Css(css) => {
@@ -557,15 +549,11 @@ impl Renderer {
                 for attr in attributes {
                     match attr.get_value() {
                         AttributeValue::Text(value) => {
-                            if !value.is_empty() {
-                                element.set_attribute_or_property(attr.get_name(), value);
-                            }
+                            element.set_attribute_or_property(attr.get_name(), value);
                         }
                         AttributeValue::Signal(signal) => {
                             let initial_value: String = signal.get();
-                            if !initial_value.is_empty() {
-                                element.set_attribute_or_property(attr.get_name(), &initial_value);
-                            }
+                            element.set_attribute_or_property(attr.get_name(), &initial_value);
                             element.track_signal_addr(signal.get_inner());
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
@@ -586,11 +574,7 @@ impl Renderer {
                                     return;
                                 }
                                 let new_value: String = subscribe_signal.get();
-                                if new_value.is_empty() {
-                                    element_clone.remove_attribute_or_property(&attr_name);
-                                } else {
-                                    element_clone.set_attribute_or_property(&attr_name, &new_value);
-                                }
+                                element_clone.set_attribute_or_property(&attr_name, &new_value);
                             });
                         }
                         AttributeValue::Event(handler) => {
