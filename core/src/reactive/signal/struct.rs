@@ -66,7 +66,7 @@ where
     #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) _marker: std::marker::PhantomData<fn() -> T>,
+    pub(crate) _marker: PhantomData<fn() -> T>,
 }
 
 /// A `Sync` wrapper for single-threaded global `Signal` access.
@@ -88,35 +88,7 @@ where
     pub(crate) inner: UnsafeCell<Option<Signal<T>>>,
 }
 
-/// An entry in the signal inner registry.
-///
-/// Stores the raw pointer and a type-erased drop function so that the
-/// allocation can be correctly freed without knowing the concrete `T`.
-pub(crate) struct SignalRegistryEntry {
-    /// The raw pointer to the `SignalInner<T>` allocation (as `*mut ()`).
-    pub(crate) ptr: *mut (),
-    /// A function that drops the `Box<SignalInner<T>>` when called with `ptr`.
-    pub(crate) drop_fn: unsafe fn(*mut ()),
-}
-
-impl SignalRegistryEntry {
-    /// Creates a new registry entry.
-    pub(crate) fn new(ptr: *mut (), drop_fn: unsafe fn(*mut ())) -> Self {
-        Self { ptr, drop_fn }
-    }
-
-    /// Returns the raw pointer.
-    pub(crate) fn get_ptr(&self) -> *mut () {
-        self.ptr
-    }
-
-    /// Returns the drop function.
-    pub(crate) fn get_drop_fn(&self) -> unsafe fn(*mut ()) {
-        self.drop_fn
-    }
-}
-
-/// A `Sync` wrapper for single-threaded global `HashMap` access.
+/// A `Sync` wrapper for single-threaded global `HashSet` access.
 ///
 /// SAFETY: This type is only safe to use in single-threaded contexts
 /// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
@@ -128,5 +100,5 @@ pub(crate) struct SignalInnerRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashMap<usize, SignalRegistryEntry>>>,
+    pub(crate) UnsafeCell<Option<HashSet<usize>>>,
 );

@@ -15,7 +15,6 @@ use crate::*;
 /// # Returns
 ///
 /// - `&'static mut SignalInner<T>` - A mutable reference to the signal's inner state.
-#[inline(always)]
 pub(crate) fn get_signal_inner_ref<T>(addr: usize) -> &'static mut SignalInner<T>
 where
     T: Clone + PartialEq + 'static,
@@ -57,7 +56,7 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
     inner.set_alive(false);
     inner.get_mut_listeners().clear();
     inner.get_mut_dependents().clear();
-    // Do NOT call free_signal_inner(addr) — the memory must remain valid
+    // Do NOT free signal inner — the memory must remain valid
     // for any async callbacks that still hold a copy of this signal address.
     // Remove the attribute signal's update slot from the signal update registry.
     // Attribute signals are registered with the signal address as key (not a
@@ -66,7 +65,7 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
 }
 
 /// Returns whether the signal allocation at `addr` is still present in the
-/// global registry (i.e. has not been freed via `free_signal_inner`).
+/// global registry (i.e. has not been freed signal inner).
 ///
 /// Used by `update_and_notify` to avoid re-borrowing a `SignalInner` pointer
 /// after running listeners, since a listener may have freed the allocation
@@ -81,50 +80,7 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
 ///
 /// - `bool` - `true` if the allocation is still registered (safe to deref).
 pub(crate) fn is_signal_inner_alive(addr: usize) -> bool {
-    signal_inner_registry_mut().contains_key(&addr)
-}
-
-/// Frees the heap allocation for a signal and removes it from the registry.
-///
-/// Calls the type-erased drop function stored in the registry entry to
-/// correctly reconstruct and drop the `Box<SignalInner<T>>`.
-///
-/// # Safety
-///
-/// After this call the signal's address becomes dangling. Because `Signal<T>`
-/// is `Copy`, the caller MUST guarantee that no other live handle or async
-/// callback (`spawn_local` future, `setTimeout` / `setInterval` closure,
-/// Promise continuation, DOM-bound subscribe closure) still holds a copy of
-/// this address; otherwise their later `.get()` / `.set()` calls would be a
-/// use-after-free. None of the framework's current teardown paths can prove
-/// this, so they all use [`Signal::deactivate`] /
-/// [`clear_signal_listeners_by_addr`] instead. This function is therefore
-/// retained only as a building block for a future GC sweep that can establish
-/// the no-live-reference invariant globally.
-///
-/// # Arguments
-///
-/// - `usize` - The inner pointer address of the signal.
-#[allow(dead_code)]
-pub(crate) fn free_signal_inner(addr: usize) {
-    if let Some(entry) = signal_inner_registry_mut().remove(&addr) {
-        unsafe { (entry.get_drop_fn())(entry.get_ptr()) };
-    }
-}
-
-/// Type-erased drop function for `SignalInner<T>`.
-///
-/// Reconstructs the `Box<SignalInner<T>>` from the raw pointer and drops it,
-/// freeing the heap allocation.
-///
-/// # Safety
-///
-/// The pointer must have been created by `Box::into_raw(Box::new(SignalInner<T>))`
-/// and must not have been freed previously.
-pub(crate) unsafe fn drop_signal_inner<T: Clone + PartialEq + 'static>(ptr: *mut ()) {
-    unsafe {
-        let _ = Box::from_raw(ptr as *mut SignalInner<T>);
-    }
+    signal_inner_registry_mut().contains(&addr)
 }
 
 /// Ensures the signal inner registry is initialized and returns a mutable reference.
@@ -133,26 +89,15 @@ pub(crate) unsafe fn drop_signal_inner<T: Clone + PartialEq + 'static>(ptr: *mut
 ///
 /// # Returns
 ///
-/// - `&'static mut HashMap<usize, SignalRegistryEntry>`: A mutable reference to the signal inner registry.
+/// - `&'static mut HashSet<usize>`: A mutable reference to the signal inner registry.
 #[allow(static_mut_refs)]
-fn ensure_signal_inner_registry_mut() -> &'static mut HashMap<usize, SignalRegistryEntry> {
+pub(crate) fn signal_inner_registry_mut() -> &'static mut HashSet<usize> {
     unsafe {
         if (*SIGNAL_INNER_REGISTRY.get_0().get()).is_none() {
-            (*SIGNAL_INNER_REGISTRY.get_0().get()) = Some(HashMap::new());
+            (*SIGNAL_INNER_REGISTRY.get_0().get()) = Some(HashSet::new());
         }
         (*SIGNAL_INNER_REGISTRY.get_0().get())
             .as_mut()
             .unwrap_unchecked()
     }
-}
-
-/// Returns a mutable reference to the signal inner registry.
-///
-/// SAFETY: Must only be called from the main thread (WASM single-threaded context).
-///
-/// # Returns
-///
-/// - `&'static mut HashMap<usize, SignalRegistryEntry>`: A mutable reference to the signal inner registry.
-pub(crate) fn signal_inner_registry_mut() -> &'static mut HashMap<usize, SignalRegistryEntry> {
-    ensure_signal_inner_registry_mut()
 }

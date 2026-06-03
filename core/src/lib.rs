@@ -15,6 +15,7 @@ use std::{
     cell::{Ref, RefCell, UnsafeCell},
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
+    marker::PhantomData,
     mem::{swap, take},
     num::ParseIntError,
     rc::Rc,
