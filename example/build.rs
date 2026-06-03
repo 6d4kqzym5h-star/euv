@@ -12,7 +12,6 @@ fn main() {
     let state_file_path: PathBuf = PathBuf::from(&manifest_dir).join(BUILD_STATE_FILE_NAME);
     let state_file_path_display: std::path::Display<'_> = state_file_path.display();
     println!("cargo:rerun-if-changed={state_file_path_display}");
-    let _ = fs::remove_file(&state_file_path);
     let toml_path: PathBuf = PathBuf::from(&manifest_dir).join("Cargo.toml");
     let toml_content: String = read_to_string(&toml_path).expect("Failed to read Cargo.toml");
     let toml_table: Table = toml_content
