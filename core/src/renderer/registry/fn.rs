@@ -522,12 +522,10 @@ fn ensure_window_event_listener(event_name: &str) {
         for handler_id in handler_ids {
             let callback_ptr: *mut Box<dyn FnMut()> =
                 match ensure_window_event_registry_mut().get(&event_name_owned) {
-                    Some(handlers) => {
-                        match handlers.iter().find(|(id, _ptr)| *id == handler_id) {
-                            Some((_id, ptr)) => *ptr,
-                            None => continue,
-                        }
-                    }
+                    Some(handlers) => match handlers.iter().find(|(id, _ptr)| *id == handler_id) {
+                        Some((_id, ptr)) => *ptr,
+                        None => continue,
+                    },
                     None => return,
                 };
             let callback: &mut Box<dyn FnMut()> = unsafe { &mut *callback_ptr };
