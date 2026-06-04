@@ -22,8 +22,8 @@ where
     unsafe { &mut *(addr as *mut SignalInner<T>) }
 }
 
-/// Clears all listeners on a signal identified by its inner pointer address
-/// and marks it as inactive.
+/// Clears DOM-binding listeners on a signal identified by its inner pointer
+/// address, without deactivating the signal itself.
 ///
 /// This function is used during DOM cleanup (`cleanup_dom_subtree`) to
 /// release signal listeners that reference DOM elements being removed.
@@ -31,33 +31,25 @@ where
 /// only handles that type. If the address does not correspond to a
 /// `Signal<String>`, this is a no-op.
 ///
-/// Also clears the dependents list to stop precise dirty marking for
-/// dynamic nodes that depended on this signal.
+/// Importantly, this does NOT set `alive = false` or clear `dependents`.
+/// A signal may be shared across multiple DOM bindings and DynamicNodes
+/// (e.g., a user-created signal used as both a `value:` attribute on a
+/// conditionally-rendered element AND as a dependency of another
+/// DynamicNode's render function). Deactivating the signal here would
+/// permanently break all other dependents — subsequent `set()` calls
+/// would be no-ops and `get()` would skip dependency tracking.
 ///
-/// The heap allocation is intentionally NOT freed here. Because `Signal<T>`
-/// is `Copy` (just a `usize` address), async callbacks (e.g., `setInterval`,
-/// `setTimeout`, Promises) may still hold copies of the address after the
-/// owning DOM subtree is removed. If we freed the memory, those callbacks
-/// would dereference a dangling pointer (use-after-free / UB).
-///
-/// Instead, we only mark `alive = false`:
-/// - `set()` / `update_and_notify()` check `alive` and become no-ops.
-/// - `get()` still returns the last stored value safely (memory is intact).
-/// - The memory remains allocated until the page is unloaded. For SPAs this
-///   is acceptable; for long-lived apps a periodic GC pass can sweep all
-///   `alive == false` entries from the registry once no async references
-///   remain.
+/// The listeners are cleared to prevent stale callbacks from referencing
+/// removed DOM elements. The signal remains fully functional for future
+/// `set()` / `get()` calls and dependent DynamicNodes continue to receive
+/// updates.
 ///
 /// # Arguments
 ///
 /// - `usize` - The inner pointer address of the signal.
 pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
     let inner: &mut SignalInner<String> = get_signal_inner_ref(addr);
-    inner.set_alive(false);
     inner.get_mut_listeners().clear();
-    inner.get_mut_dependents().clear();
-    // Do NOT free signal inner — the memory must remain valid
-    // for any async callbacks that still hold a copy of this signal address.
     // Remove the attribute signal's update slot from the signal update registry.
     // Attribute signals are registered with the signal address as key (not a
     // dynamic_id), so they are not covered by `cleanup_dynamic_node`.
