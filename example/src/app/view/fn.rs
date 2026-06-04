@@ -16,7 +16,7 @@ pub(crate) fn nav_item(node: VirtualNode<NavItemProps>) -> VirtualNode {
         route_signal,
         label,
         target,
-    } = node.try_get_props().unwrap_or_default();
+    }: NavItemProps = node.try_get_props().unwrap_or_default();
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -47,7 +47,7 @@ pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualN
         drawer_open,
         label,
         target,
-    } = node.try_get_props().unwrap_or_default();
+    }: MobileNavItemProps = node.try_get_props().unwrap_or_default();
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
@@ -77,7 +77,8 @@ pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualN
 /// - `VirtualNode` - The scrollable nav items container virtual DOM tree.
 #[component]
 pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProps>) -> VirtualNode {
-    let BuildDesktopNavItemsProps { route_signal } = node.try_get_props().unwrap_or_default();
+    let BuildDesktopNavItemsProps { route_signal }: BuildDesktopNavItemsProps =
+        node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_nav_items_scroll()
@@ -202,7 +203,7 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
     let BuildMobileNavItemsProps {
         route_signal,
         drawer_open,
-    } = node.try_get_props().unwrap_or_default();
+    }: BuildMobileNavItemsProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_nav_items_scroll()
@@ -347,7 +348,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
         theme_signal,
         root_class_signal,
         panel_open,
-    } = node.try_get_props().unwrap_or_default();
+    }: DesktopLayoutProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: root_class_signal
@@ -420,7 +421,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
         root_class_signal,
         panel_open,
         drawer_open,
-    } = node.try_get_props().unwrap_or_default();
+    }: MobileLayoutProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: root_class_signal

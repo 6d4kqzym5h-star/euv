@@ -15,7 +15,7 @@ pub(crate) fn primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNo
         label,
         onclick: click_handler,
         disabled,
-    } = node.try_get_props().unwrap_or_default();
+    }: PrimaryButtonProps = node.try_get_props().unwrap_or_default();
     let children: VirtualNode = node.try_get_child_node();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
@@ -47,7 +47,7 @@ pub(crate) fn modal_primary_button(node: VirtualNode<PrimaryButtonProps>) -> Vir
         label,
         onclick: click_handler,
         disabled,
-    } = node.try_get_props().unwrap_or_default();
+    }: PrimaryButtonProps = node.try_get_props().unwrap_or_default();
     let children: VirtualNode = node.try_get_child_node();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),

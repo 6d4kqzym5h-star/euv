@@ -30,7 +30,7 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
         {
-            let handler_found = ensure_handler_registry()
+            let handler_found: Option<NativeEventHandler> = ensure_handler_registry()
                 .get(&(euv_id, event_name))
                 .and_then(|entry: &HandlerEntry| {
                     let slot: &HandlerSlot = unsafe { &**entry };

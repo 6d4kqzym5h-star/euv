@@ -20,7 +20,7 @@ pub(crate) fn my_badge(node: VirtualNode<MyBadgeProps>) -> VirtualNode {
         text,
         outline,
         on_click,
-    } = node.try_get_props().unwrap_or_default();
+    }: MyBadgeProps = node.try_get_props().unwrap_or_default();
     if outline {
         html! {
             span {

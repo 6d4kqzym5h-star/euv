@@ -15,7 +15,8 @@ use crate::*;
 /// - `VirtualNode` - The page header virtual DOM tree.
 #[component]
 pub(crate) fn page_header(node: VirtualNode<PageHeaderProps>) -> VirtualNode {
-    let PageHeaderProps { title, subtitle } = node.try_get_props().unwrap_or_default();
+    let PageHeaderProps { title, subtitle }: PageHeaderProps =
+        node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_page_header()

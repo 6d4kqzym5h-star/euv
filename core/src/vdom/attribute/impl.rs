@@ -53,7 +53,7 @@ impl AttributeValue {
             .any(|value: &Self| matches!(value, Self::Signal(_)));
         if has_signal {
             let owned_values: Vec<Self> = values.to_vec();
-            let compute = move || {
+            let compute: Box<dyn Fn() -> String> = Box::new(move || {
                 owned_values
                     .iter()
                     .filter_map(|value: &Self| match value {
@@ -68,7 +68,7 @@ impl AttributeValue {
                     .filter(|segment: &String| !segment.is_empty())
                     .collect::<Vec<String>>()
                     .join(&CHAR_SPACE.to_string())
-            };
+            });
             let attr_signal: Signal<String> = Signal::create(compute());
             subscribe_attr_signal(attr_signal, compute);
             Self::Signal(attr_signal)
@@ -110,7 +110,7 @@ impl AttributeValue {
             .any(|value: &Self| matches!(value, Self::Signal(_)));
         if has_signal {
             let owned_values: Vec<Self> = values.to_vec();
-            let compute = move || {
+            let compute: Box<dyn Fn() -> String> = Box::new(move || {
                 owned_values
                     .iter()
                     .filter_map(|value: &Self| match value {
@@ -121,7 +121,7 @@ impl AttributeValue {
                     .filter(|segment: &String| !segment.is_empty())
                     .collect::<Vec<String>>()
                     .join(&CHAR_SPACE.to_string())
-            };
+            });
             let attr_signal: Signal<String> = Signal::create(compute());
             subscribe_attr_signal(attr_signal, compute);
             Self::Signal(attr_signal)

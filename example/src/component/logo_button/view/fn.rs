@@ -16,7 +16,8 @@ use crate::*;
 /// - `VirtualNode` - A styled element with the "E" branding.
 #[component]
 pub(crate) fn logo_button(node: VirtualNode<LogoButtonProps>) -> VirtualNode {
-    let LogoButtonProps { variant, on_click } = node.try_get_props().unwrap_or_default();
+    let LogoButtonProps { variant, on_click }: LogoButtonProps =
+        node.try_get_props().unwrap_or_default();
     let children: VirtualNode = node.try_get_child_node();
     let class_name: String = match variant {
         LogoButtonVariant::Nav => format!(

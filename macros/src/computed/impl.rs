@@ -116,7 +116,7 @@ impl ToTokens for ComputedInput {
                     param, param_type,
                 ) {
                     (Some(name), Some(ty)) => quote! { let #name: #ty = #signal.get(); },
-                    (Some(name), None) => quote! { let #name = #signal.get(); },
+                    (Some(name), None) => quote! { let #name: _ = #signal.get(); },
                     (None, Some(ty)) => quote! { let _: #ty = #signal.get(); },
                     (None, None) => quote! { let _ = #signal.get(); },
                 },
@@ -135,7 +135,7 @@ impl ToTokens for ComputedInput {
             })
             .collect();
         tokens.extend(quote! {{
-            #(let #signals = #signal_exprs;)*
+            #(let #signals: ::euv::Signal<_> = #signal_exprs;)*
             let #result_ident: ::euv::Signal<#return_type> = ::euv::use_signal(|| {
                 #(#all_gets)*
                 { #(#body)* }

@@ -120,7 +120,7 @@ impl ToTokens for WatchInput {
                     param, param_type,
                 ) {
                     (Some(name), Some(ty)) => quote! { let #name: #ty = #signal.get(); },
-                    (Some(name), None) => quote! { let #name = #signal.get(); },
+                    (Some(name), None) => quote! { let #name: _ = #signal.get(); },
                     (None, Some(ty)) => quote! { let _: #ty = #signal.get(); },
                     (None, None) => quote! { let _ = #signal.get(); },
                 },
@@ -139,7 +139,7 @@ impl ToTokens for WatchInput {
             })
             .collect();
         tokens.extend(quote! {{
-            #(let #signals = #signal_exprs;)*
+            #(let #signals: ::euv::Signal<_> = #signal_exprs;)*
             let __euv_watch_subscribed: ::euv::Signal<bool> = ::euv::use_signal(|| false);
             if !__euv_watch_subscribed.get() {
                 let __euv_watch_fire_addr: usize = Box::leak(Box::new(Box::new(move || {

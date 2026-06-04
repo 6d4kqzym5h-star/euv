@@ -17,7 +17,7 @@ pub(crate) fn child_display(node: VirtualNode<ChildDisplayProps>) -> VirtualNode
     let ChildDisplayProps {
         message,
         on_respond,
-    } = node.try_get_props().unwrap_or_default();
+    }: ChildDisplayProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -57,7 +57,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
         max_count,
         on_increment,
         on_reset,
-    } = node.try_get_props().unwrap_or_default();
+    }: LimitedCounterProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -124,7 +124,7 @@ pub(crate) fn callback_input(node: VirtualNode<CallbackInputProps>) -> VirtualNo
         on_change,
         on_submit,
         on_reset,
-    } = node.try_get_props().unwrap_or_default();
+    }: CallbackInputProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_binding_child_box()
@@ -411,7 +411,8 @@ pub(crate) fn color_mixer(
 /// - `VirtualNode` - The component binding demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps>) -> VirtualNode {
-    let PageComponentBindingProps = node.try_get_props().unwrap_or_default();
+    let PageComponentBindingProps: PageComponentBindingProps =
+        node.try_get_props().unwrap_or_default();
     let props_state: UsePropsDemo = use_props_demo();
     let two_way_state: UseTwoWayDemo = use_two_way_demo();
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();

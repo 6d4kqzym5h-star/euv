@@ -18,7 +18,7 @@ pub(crate) fn form_input(node: VirtualNode<FormInputProps>) -> VirtualNode {
         placeholder,
         value,
         autocomplete,
-    } = node.try_get_props().unwrap_or_default();
+    }: FormInputProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_form_input_wrapper()

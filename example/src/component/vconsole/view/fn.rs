@@ -17,7 +17,8 @@ use crate::*;
 /// - `VirtualNode` - The vConsole panel virtual DOM tree.
 #[component]
 pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNode {
-    let VconsolePanelProps { panel_open } = node.try_get_props().unwrap_or_default();
+    let VconsolePanelProps { panel_open }: VconsolePanelProps =
+        node.try_get_props().unwrap_or_default();
     let console_signal: Signal<Vec<ConsoleEntry>> = get_console_signal();
     html! {
         vconsole_fab {
@@ -49,7 +50,7 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
     let VconsoleFabProps {
         panel_open,
         console_signal,
-    } = node.try_get_props().unwrap_or_default();
+    }: VconsoleFabProps = node.try_get_props().unwrap_or_default();
     let is_open: bool = panel_open.get();
     if is_open {
         return html! {
@@ -98,7 +99,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
     let VconsoleDrawerProps {
         console_signal,
         panel_open,
-    } = node.try_get_props().unwrap_or_default();
+    }: VconsoleDrawerProps = node.try_get_props().unwrap_or_default();
     let filter_signal: Signal<LogFilter> = use_signal(|| LogFilter::All);
     let is_open: bool = panel_open.get();
     let overlay_class: String = if is_open {

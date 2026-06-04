@@ -12,7 +12,7 @@ use crate::*;
 /// - `VirtualNode` - A styled card element.
 #[component]
 pub(crate) fn my_card(node: VirtualNode<MyCardProps>) -> VirtualNode {
-    let MyCardProps { title, .. } = node.try_get_props().unwrap_or_default();
+    let MyCardProps { title, .. }: MyCardProps = node.try_get_props().unwrap_or_default();
     let children: VirtualNode = node.try_get_child_node();
     html! {
         div {

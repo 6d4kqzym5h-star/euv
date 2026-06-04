@@ -289,12 +289,12 @@ impl EventAdapter<Option<Rc<dyn Fn(Event)>>> {
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
     pub fn into_attribute(self, event_name: &'static str) -> AttributeValue {
         match self.into_inner() {
-            Some(callback) => {
-                let wrapper = move |event: Event| {
+            Some(callback) => AttributeValue::Event(NativeEventHandler::create(
+                event_name,
+                move |event: Event| {
                     callback(event);
-                };
-                AttributeValue::Event(NativeEventHandler::create(event_name, wrapper))
-            }
+                },
+            )),
             None => AttributeValue::Text(String::new()),
         }
     }
