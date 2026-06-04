@@ -22,9 +22,9 @@ pub(crate) const FRAGMENT_TAG: &str = "slot";
 /// style so the placeholder is invisible in the rendered output.
 pub(crate) const DYNAMIC_PLACEHOLDER_TAG: &str = "div";
 
-/// The inline style value used to make placeholder elements invisible.
+/// The inline style value used to make dynamic node placeholder elements invisible.
 ///
-/// Applied to fragment and dynamic node placeholder elements so they
+/// Applied to dynamic node placeholder elements so they
 /// don't affect the visual layout of the page.
 pub(crate) const DISPLAY_CONTENTS_STYLE: &str = "display: contents;";
 

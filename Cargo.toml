@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.5.27"
+version = "0.5.28"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -25,10 +25,10 @@ euv-core = { path = "core", version = "0.5.24" }
 euv-macros = { path = "macros", version = "0.5.24" }
 euv-example = { path = "example", version = "0.5.24" }
 
-log = "0.4.31"
+log = "0.4.32"
 toml = "0.9.12"
 quote = "1.0.45"
-chrono = "0.4.44"
+chrono = "0.4.45"
 ignore = "0.4.25"
 js-sys = "0.3.99"
 if-addrs = "0.15.0"
@@ -64,8 +64,10 @@ web-sys = { version = "0.3.99", features = [
     "Clipboard",
     "ClipboardEvent",
     "console",
+    "CssStyleDeclaration",
     "DataTransfer",
     "Document",
+    "DocumentFragment",
     "DomRect",
     "DragEvent",
     "Element",
@@ -83,6 +85,7 @@ web-sys = { version = "0.3.99", features = [
     "HtmlElement",
     "HtmlFormElement",
     "HtmlHeadElement",
+    "HtmlImageElement",
     "HtmlInputElement",
     "HtmlMediaElement",
     "HtmlOptionElement",

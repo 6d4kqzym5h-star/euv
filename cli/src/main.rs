@@ -29,6 +29,7 @@ use {
     ignore::gitignore::{Gitignore, GitignoreBuilder},
     lombok_macros::*,
     notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
+    qrcode::{QrCode, render::unicode::Dense1x2},
     serde::Serialize,
     tokio::{
         fs::{

@@ -105,7 +105,9 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
     }
 }
 
-/// Returns a color string based on the animation color index.
+/// Returns a CSS variable reference string based on the animation color index.
+///
+/// Uses theme-aware CSS variables so colors adapt to light/dark mode.
 ///
 /// # Arguments
 ///
@@ -113,19 +115,19 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
 ///
 /// # Returns
 ///
-/// - `String` - The CSS color string.
-fn get_anim_color(index: i32) -> String {
-    let colors: Vec<String> = vec![
-        "#4f46e5".to_string(),
-        "#059669".to_string(),
-        "#d97706".to_string(),
-        "#dc2626".to_string(),
-        "#7c3aed".to_string(),
+/// - `&'static str` - The CSS variable reference string.
+fn get_anim_color(index: i32) -> &'static str {
+    let colors: Vec<&'static str> = vec![
+        "var(--accent)",
+        "var(--color-success)",
+        "var(--color-warning)",
+        "var(--color-error)",
+        "var(--color-purple)",
     ];
     let safe_index: usize = if index >= 0 && (index as usize) < colors.len() {
         index as usize
     } else {
         0
     };
-    colors[safe_index].clone()
+    colors[safe_index]
 }

@@ -18,12 +18,13 @@ exclude = [
   "img",
   "**/*.log",
   "www",
-  ".euv_build_state"
+  ".euv_build_state",
 ]
 
 [dependencies]
 euv = { workspace = true }
 lombok-macros = { workspace = true }
+qrcode = { workspace = true, features = ["svg"] }
 
 [build-dependencies]
 toml = { workspace = true }

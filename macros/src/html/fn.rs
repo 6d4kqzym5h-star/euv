@@ -809,6 +809,53 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStr
     quote! { vec![#(#child_tokens), *] }
 }
 
+/// Generates a token stream that builds a `Vec<VirtualNode>` with `For` loops
+/// expanded inline via `.extend()` instead of being wrapped in `VirtualNode::Fragment`.
+///
+/// This is critical for elements like `<select>` where intermediate wrapper elements
+/// (such as `<slot>` used by `VirtualNode::Fragment`) are invalid HTML and cause
+/// browser rendering issues. By flattening `For` loop outputs directly into the
+/// parent's children list, option elements appear as direct children of `<select>`.
+///
+/// # Arguments
+///
+/// - `&[HtmlNode]` - The slice of HTML child nodes to convert.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
+pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
+    let mut parts: Vec<proc_macro2::TokenStream> = Vec::new();
+    for child in children {
+        match child {
+            HtmlNode::For(html_for) => {
+                let pattern: &proc_macro2::TokenStream = html_for.get_pattern();
+                let iterable: &Expr = html_for.get_iterable();
+                let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
+                parts.push(quote! {
+                    for #pattern in #iterable {
+                        __euv_element_children.extend(#body_tokens);
+                    }
+                });
+            }
+            _ => {
+                let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+                child.to_tokens(&mut token_stream);
+                parts.push(quote! {
+                    __euv_element_children.push(#token_stream);
+                });
+            }
+        }
+    }
+    quote! {
+        {
+            let mut __euv_element_children: Vec<::euv::VirtualNode> = Vec::new();
+            #(#parts)*
+            __euv_element_children
+        }
+    }
+}
+
 /// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.
 ///
 /// Unlike `HtmlIf` (which contains HTML child nodes), each branch body here is a Rust expression.

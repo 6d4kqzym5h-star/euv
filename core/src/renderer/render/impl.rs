@@ -158,8 +158,8 @@ impl Renderer {
                     }
                     return;
                 }
-                self.patch_attributes(dom_element, old_attrs, new_attrs);
                 self.patch_children(dom_element, old_children, new_children);
+                self.patch_attributes(dom_element, old_attrs, new_attrs);
             }
             (VirtualNode::Fragment(old_children), VirtualNode::Fragment(new_children)) => {
                 self.patch_children(dom_element, old_children, new_children);

@@ -13,7 +13,7 @@ pub(crate) fn use_fetch() -> UseFetch {
     )
 }
 
-/// Creates a click event handler that fetches data from httpbin.org.
+/// Creates a click event handler that fetches data from ltpp.vip.
 ///
 /// Sets loading to true, clears error and data, then spawns an async
 /// task that performs the HTTP fetch and updates the state signals.
@@ -35,23 +35,20 @@ pub(crate) fn fetch_on_fetch(state: UseFetch) -> Option<Rc<dyn Fn(Event)>> {
         let loading_signal: Signal<bool> = state.get_loading();
         spawn_local(async move {
             let window: Window = window().expect("no global window exists");
-            let promise: Promise = window.fetch_with_str("https://httpbin.org/get");
+            let promise: Promise = window.fetch_with_str("https://ltpp.vip/log/info");
             let future: JsFuture = JsFuture::from(promise);
             match future.await {
                 Ok(response) => {
                     let response_value: Response = response.dyn_into().unwrap();
-                    let json_promise: Promise = response_value.json().unwrap();
-                    let json_future: JsFuture = JsFuture::from(json_promise);
-                    match json_future.await {
-                        Ok(json) => {
-                            let json_string: String = JSON::stringify(&json)
-                                .unwrap()
-                                .as_string()
-                                .unwrap_or_default();
-                            data_signal.set(json_string);
+                    let text_promise: Promise = response_value.text().unwrap();
+                    let text_future: JsFuture = JsFuture::from(text_promise);
+                    match text_future.await {
+                        Ok(text) => {
+                            let text_string: String = text.as_string().unwrap_or_default();
+                            data_signal.set(text_string);
                         }
                         Err(_) => {
-                            error_signal.set("Failed to parse JSON".to_string());
+                            error_signal.set("Failed to read response text".to_string());
                         }
                     }
                 }

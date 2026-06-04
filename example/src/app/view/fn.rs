@@ -182,6 +182,11 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
                 label: "Virtual List"
                 target: "/virtual-list"
             }
+            nav_item {
+                route_signal: route_signal
+                label: "Multimedia"
+                target: "/multimedia"
+            }
         }
     }
 }
@@ -327,6 +332,12 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
                 label: "Virtual List"
                 target: "/virtual-list"
             }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Multimedia"
+                target: "/multimedia"
+            }
         }
     }
 }
@@ -355,7 +366,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
             nav {
                 class: c_app_nav()
                 a {
-                    href: "https://github.com/euv-dev/euv"
+                    href: GITHUB_URL
                     target: "_blank"
                     class: c_nav_header()
                     logo_button {
@@ -363,7 +374,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                     }
                     span {
                         class: c_nav_brand_title()
-                        "Euv"
+                        BRAND_NAME
                     }
                 }
                 p {
@@ -384,10 +395,10 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                     }
                 }
                 a {
-                    href: "https://github.com/euv-dev/euv"
+                    href: GITHUB_URL
                     target: "_blank"
                     class: c_nav_footer()
-                    "Built with Euv & WASM"
+                    format!("Built with {} & WASM", BRAND_NAME)
                 }
             }
             main {
@@ -427,21 +438,26 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
             class: root_class_signal
             header {
                 class: c_mobile_header()
-                div {
-                    class: c_mobile_header_left()
-                    button {
-                        class: if { drawer_open.get() } { c_mobile_menu_button_active() } else { c_mobile_menu_button() }
-                        onclick: use_toggle(drawer_open)
-                        "☰"
+                    div {
+                        class: c_mobile_header_left()
+                        button {
+                            class: if { drawer_open.get() } { c_mobile_menu_button_active() } else { c_mobile_menu_button() }
+                            onclick: use_toggle(drawer_open)
+                            "☰"
+                        }
+                        a {
+                            href: GITHUB_URL
+                            target: "_blank"
+                            class: c_mobile_header_logo()
+                            logo_button {
+                                variant: LogoButtonVariant::Nav
+                            }
+                            span {
+                                class: c_nav_brand_title()
+                                BRAND_NAME
+                            }
+                        }
                     }
-                    logo_button {
-                        variant: LogoButtonVariant::Nav
-                    }
-                    span {
-                        class: c_nav_brand_title()
-                        "Euv"
-                    }
-                }
                 button {
                     class: c_mobile_theme_button()
                     onclick: toggle_theme(theme_signal)
@@ -477,12 +493,17 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                                 onclick: use_toggle(drawer_open)
                                 "☰"
                             }
-                            logo_button {
-                                variant: LogoButtonVariant::Nav
-                            }
-                            span {
-                                class: c_nav_brand_title()
-                                "Euv"
+                            a {
+                                href: GITHUB_URL
+                                target: "_blank"
+                                class: c_mobile_header_logo()
+                                logo_button {
+                                    variant: LogoButtonVariant::Nav
+                                }
+                                span {
+                                    class: c_nav_brand_title()
+                                    BRAND_NAME
+                                }
                             }
                         }
                         button {
@@ -512,10 +533,10 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         }
                     }
                     a {
-                        href: "https://github.com/euv-dev/euv"
+                        href: GITHUB_URL
                         target: "_blank"
                         class: c_nav_footer()
-                        "Built with Euv & WASM"
+                        format!("Built with {} & WASM", BRAND_NAME)
                     }
                 }
             }

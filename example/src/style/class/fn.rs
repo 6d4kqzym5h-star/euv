@@ -27,6 +27,7 @@ class! {
         background: var!(bg-primary);
         color: var!(text-primary);
         line-height: "1.6";
+        padding-top: "env(safe-area-inset-top, 0px)";
         transition: format!("background {} {}, color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
     }
 
@@ -98,7 +99,7 @@ class! {
 
     pub(crate) c_logo_button_fab {
         position: "fixed";
-        bottom: var!(space-xl);
+        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
         right: var!(space-xl);
         width: "48px";
         height: "48px";
@@ -108,7 +109,7 @@ class! {
         box-shadow: var!(shadow-console-button);
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         media("(max-width: 767px)") {
-            bottom: var!(space-lg);
+            bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
             right: var!(space-lg);
             width: "44px";
             height: "44px";
@@ -281,21 +282,21 @@ class! {
         border-radius: var!(radius-lg);
         padding: var!(space-xl);
         margin-top: "0px";
-        margin-bottom: var!(gap-card);
+        margin-bottom: var!(gap-section);
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
         transition: format!("box-shadow {} {}", var!(duration-normal), var!(ease-out));
         media("(max-width: 767px)") {
             padding: var!(space-lg);
-            margin-bottom: var!(gap-card-mobile);
+            margin-bottom: var!(gap-section-mobile);
             border-radius: "10px";
         }
     }
 
     pub(crate) c_card_title {
         margin-top: "0px";
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
         color: "inherit";
         font-size: var!(font-xl);
         font-weight: "600";
@@ -456,7 +457,7 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_form_input_wrapper {
-        margin: format!("{} 0px", var!(space-xs));
+        margin: format!("{} 0px", var!(gap-element));
     }
 
     pub(crate) c_form_label {
@@ -522,16 +523,16 @@ class! {
     }
 
     pub(crate) c_form_checkbox_row {
-        margin: format!("{} 0px", var!(space-md));
+        margin: format!("{} 0px", var!(gap-component));
         display: "flex";
         align-items: "center";
-        gap: format!("{}", var!(space-md));
+        gap: var!(gap-element);
     }
 
     pub(crate) c_form_grid {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: format!("0px {}", var!(space-xl));
+        gap: format!("0px {}", var!(gap-component));
         media("(max-width: 767px)") {
             grid-template-columns: "1fr";
         }
@@ -595,7 +596,7 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_error_box {
-        margin: format!("{} 0px", var!(space-md));
+        margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-error);
         color: var!(text-error);
@@ -605,7 +606,7 @@ class! {
     }
 
     pub(crate) c_success_box {
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-success);
         color: var!(text-success);
@@ -621,7 +622,7 @@ class! {
     pub(crate) c_counter_row {
         display: "flex";
         align-items: "center";
-        gap: var!(space-xl);
+        gap: var!(gap-component);
         flex-wrap: "wrap";
     }
 
@@ -642,13 +643,13 @@ class! {
 
     pub(crate) c_badge_row {
         display: "flex";
-        gap: format!("{}", var!(space-md));
+        gap: var!(gap-inline);
         flex-wrap: "wrap";
         align-items: "center";
     }
 
     pub(crate) c_badge_hint {
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
         color: "inherit";
         opacity: "0.7";
         font-size: var!(font-base);
@@ -690,6 +691,46 @@ class! {
         flex: "1";
     }
 
+    pub(crate) c_info_link {
+        c_text_ellipsis();
+        font-size: var!(font-lg);
+        font-weight: "700";
+        color: var!(accent);
+        font-family: "ui-monospace, monospace";
+        min-width: "0px";
+        flex: "1";
+        text-decoration: "none";
+        transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Multimedia Page
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_multimedia_image_section {
+        display: "flex";
+        justify-content: "center";
+        align-items: "center";
+        padding: format!("{} 0", var!(space-lg));
+    }
+
+    pub(crate) c_multimedia_qr_code {
+        width: "200px";
+        height: "200px";
+        object-fit: "contain";
+        border-radius: var!(radius-lg);
+        pointer-events: "none";
+    }
+
+    pub(crate) c_multimedia_url_text {
+        text-align: "center";
+        font-size: var!(font-sm);
+        color: "inherit";
+        opacity: "0.6";
+        font-family: "ui-monospace, monospace";
+        word-break: "break-all";
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Custom Attrs Demo
     // ═══════════════════════════════════════════════════════════════════════════
@@ -703,7 +744,7 @@ class! {
 
     pub(crate) c_demo_text {
         color: "inherit";
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
     }
 
     pub(crate) c_demo_text_muted {
@@ -719,12 +760,12 @@ class! {
     pub(crate) c_loading_container {
         display: "flex";
         align-items: "center";
-        gap: var!(space-lg);
+        gap: var!(gap-component);
         padding: var!(space-xl);
         background: var!(bg-loading);
         border-radius: "10px";
         border: format!("1px solid {}", var!(border-loading));
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         transition: format!("background {} {}, border-color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
     }
 
@@ -758,8 +799,8 @@ class! {
     pub(crate) c_error_container {
         display: "flex";
         align-items: "center";
-        gap: var!(space-md);
-        margin-top: var!(space-md);
+        gap: var!(gap-element);
+        margin-top: var!(gap-component);
         padding: var!(space-lg);
         background: var!(bg-error);
         border-radius: "10px";
@@ -786,7 +827,7 @@ class! {
     }
 
     pub(crate) c_data_box {
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         padding: var!(space-lg);
         background: var!(bg-success);
         border-radius: "10px";
@@ -806,7 +847,7 @@ class! {
         color: "inherit";
         opacity: "0.7";
         font-size: var!(font-base);
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -814,7 +855,7 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_toggle_content {
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         padding: var!(space-lg);
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
@@ -829,8 +870,8 @@ class! {
 
     pub(crate) c_role_button_row {
         display: "flex";
-        gap: format!("{}", var!(space-md));
-        margin-bottom: var!(space-md);
+        gap: var!(gap-element);
+        margin-bottom: var!(gap-component);
         media("(max-width: 767px)") {
             flex-wrap: "wrap";
         }
@@ -876,8 +917,8 @@ class! {
     pub(crate) c_tab_bar {
         display: "flex";
         border-bottom: format!("1px solid {}", var!(border-input));
-        margin-bottom: var!(space-md);
-        gap: var!(space-xs);
+        margin-bottom: var!(gap-component);
+        gap: var!(gap-element);
         media("(max-width: 767px)") {
             flex-wrap: "wrap";
         }
@@ -910,13 +951,13 @@ class! {
     }
 
     pub(crate) c_tab_content {
-        padding: format!("{} 0px", var!(space-xs));
+        padding: format!("{} 0px", var!(gap-element));
     }
 
     pub(crate) c_tab_text {
         color: "inherit";
         font-size: var!(font-base);
-        margin-bottom: var!(space-sm);
+        margin-bottom: var!(gap-element);
     }
 
     pub(crate) c_tab_text_muted {
@@ -928,7 +969,7 @@ class! {
     pub(crate) c_tab_text_input {
         color: "inherit";
         font-size: var!(font-base);
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -939,11 +980,11 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-bottom: format!("1px solid {}", var!(border-subtle));
         border-radius: var!(radius-sm);
-        margin-bottom: var!(space-sm);
-        gap: var!(space-lg);
+        margin-bottom: var!(gap-element);
+        gap: var!(gap-component);
         background: var!(bg-list-even);
         media("(max-width: 767px)") {
             flex-wrap: "wrap";
@@ -981,8 +1022,8 @@ class! {
     pub(crate) c_list_error_text {
         color: var!(text-error);
         font-size: "13px";
-        margin-top: var!(space-xs);
-        margin-bottom: var!(space-sm);
+        margin-top: var!(gap-element);
+        margin-bottom: var!(gap-element);
         padding-left: var!(space-lg);
     }
 
@@ -996,11 +1037,11 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-bottom: format!("1px solid {}", var!(border-subtle));
         border-radius: var!(radius-sm);
-        margin-bottom: var!(space-sm);
-        gap: var!(space-lg);
+        margin-bottom: var!(gap-element);
+        gap: var!(gap-component);
         background: var!(bg-list-even);
     }
 
@@ -1008,11 +1049,11 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-bottom: format!("1px solid {}", var!(border-subtle));
         border-radius: var!(radius-sm);
-        margin-bottom: var!(space-sm);
-        gap: var!(space-lg);
+        margin-bottom: var!(gap-element);
+        gap: var!(gap-component);
         background: var!(bg-list-odd);
     }
 
@@ -1116,7 +1157,7 @@ class! {
     pub(crate) c_event_result {
         font-size: var!(font-base);
         color: "inherit";
-        margin-top: var!(space-md);
+        margin-top: var!(gap-element);
     }
 
     pub(crate) c_event_highlight {
@@ -1126,10 +1167,10 @@ class! {
 
     pub(crate) c_event_stats {
         display: "flex";
-        gap: var!("space-2xl");
-        margin-top: var!(space-md);
+        gap: var!(gap-component);
+        margin-top: var!(gap-component);
         media("(max-width: 767px)") {
-            gap: var!(space-md);
+            gap: var!(gap-component-mobile);
             flex-wrap: "wrap";
         }
     }
@@ -1231,11 +1272,11 @@ class! {
 
     pub(crate) c_event_section_row {
         display: "flex";
-        gap: var!("space-2xl");
+        gap: var!(gap-component);
         flex-wrap: "wrap";
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         media("(max-width: 767px)") {
-            gap: var!(space-md);
+            gap: var!(gap-component-mobile);
             flex-wrap: "wrap";
         }
     }
@@ -1268,7 +1309,7 @@ class! {
     pub(crate) c_timer_display {
         text-align: "center";
         padding: var!(space-xl);
-        margin: format!("{} 0px", var!(space-md));
+        margin: format!("{} 0px", var!(gap-component));
         border-radius: var!(radius-lg);
         border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
@@ -1289,7 +1330,7 @@ class! {
 
     pub(crate) c_timer_controls {
         display: "flex";
-        gap: var!(space-md);
+        gap: var!(gap-element);
         justify-content: "center";
         media("(max-width: 767px)") {
             flex-wrap: "wrap";
@@ -1299,7 +1340,7 @@ class! {
     pub(crate) c_timer_done {
         text-align: "center";
         padding: var!(space-md);
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         background: var!(bg-warning);
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-warning));
@@ -1381,7 +1422,7 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_anim_fade_in {
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         padding: var!(space-xl);
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
@@ -1469,7 +1510,7 @@ class! {
     }
 
     pub(crate) c_anim_color_box {
-        margin: format!("{} 0px", var!(space-md));
+        margin: format!("{} 0px", var!(gap-component));
         padding: var!(space-xl);
         border-radius: var!(radius-lg);
         color: var!(text-on-accent);
@@ -1487,8 +1528,8 @@ class! {
     pub(crate) c_browser_api_row {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: format!("0px {}", var!(space-xl));
-        margin-bottom: var!(space-md);
+        gap: format!("0px {}", var!(gap-component));
+        margin-bottom: var!(gap-component);
         media("(max-width: 767px)") {
             grid-template-columns: "1fr";
         }
@@ -1496,13 +1537,13 @@ class! {
 
     pub(crate) c_browser_api_actions {
         display: "flex";
-        gap: format!("{}", var!(space-md));
+        gap: var!(gap-element);
         flex-wrap: "wrap";
-        margin: format!("{} 0px", var!(space-md));
+        margin: format!("{} 0px", var!(gap-component));
     }
 
     pub(crate) c_browser_result_box {
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
         padding: format!("{} {}", "14px", var!(space-lg));
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
@@ -1522,8 +1563,8 @@ class! {
 
     pub(crate) c_browser_info_grid {
         display: "grid";
-        gap: var!(space-md);
-        margin-top: var!(space-md);
+        gap: var!(gap-component);
+        margin-top: var!(gap-component);
         media("(max-width: 767px)") {
             grid-template-columns: "1fr";
         }
@@ -1608,6 +1649,7 @@ class! {
         border-top: format!("3px solid {}", var!(border-console-accent));
         border-radius: format!("{} {} 0px 0px", var!(radius-xl), var!(radius-xl));
         box-shadow: var!(shadow-console-panel);
+        padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-normal), var!(ease-out));
         overflow: "hidden";
     }
@@ -1868,6 +1910,14 @@ class! {
         gap: format!("{}", var!(space-md));
     }
 
+    pub(crate) c_mobile_header_logo {
+        display: "flex";
+        align-items: "center";
+        gap: format!("{}", var!(space-sm));
+        text-decoration: "none";
+        color: var!(text-primary);
+    }
+
     pub(crate) c_mobile_menu_button {
         width: "40px";
         height: "40px";
@@ -1937,6 +1987,8 @@ class! {
         z-index: "201";
         display: "flex";
         flex-direction: "column";
+        padding-top: "env(safe-area-inset-top, 0px)";
+        padding-bottom: "env(safe-area-inset-bottom, 0px)";
         animation: format!("euv-slide-left {} {}", var!(duration-normal), var!(ease-out));
         box-shadow: var!(shadow-drawer);
     }
@@ -1952,7 +2004,7 @@ class! {
 
     pub(crate) c_mobile_main {
         flex: "1";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        padding: format!("{} {} {} {}", var!(space-md), var!(space-lg), "calc(16px + env(safe-area-inset-bottom, 0px))", var!(space-lg));
         background: var!(bg-primary);
         overflow-y: "auto";
         transition: format!("background {} {}", var!(duration-slow), var!(ease-in-out));
@@ -1965,25 +2017,25 @@ class! {
     pub(crate) c_keep_alive_tab_bar {
         display: "flex";
         border-bottom: format!("1px solid {}", var!(border-input));
-        margin-bottom: var!(space-md);
-        gap: var!(space-xs);
+        margin-bottom: var!(gap-component);
+        gap: var!(gap-element);
     }
 
     pub(crate) c_keep_alive_tab_panel {
-        padding: format!("{} 0px", var!(space-xs));
+        padding: format!("{} 0px", var!(gap-element));
     }
 
     pub(crate) c_keep_alive_panel_title {
         margin-top: "0px";
         color: var!(accent);
         font-size: var!(font-md);
-        margin-bottom: var!(space-sm);
+        margin-bottom: var!(gap-element);
     }
 
     pub(crate) c_keep_alive_demo_text {
         color: "inherit";
         font-size: var!(font-base);
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
     }
 
     pub(crate) c_keep_alive_counter_display {
@@ -2013,12 +2065,12 @@ class! {
     }
 
     pub(crate) c_keep_alive_form_group {
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
     }
 
     pub(crate) c_keep_alive_form_preview {
-        margin-top: var!(space-md);
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        margin-top: var!(gap-component);
+        padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         background: var!(accent-muted);
@@ -2060,8 +2112,8 @@ class! {
     }
 
     pub(crate) c_file_upload_options {
-        margin: format!("{} 0px", var!(space-md));
-        padding: format!("{} 0px", var!(space-md));
+        margin: format!("{} 0px", var!(gap-component));
+        padding: format!("{} 0px", var!(gap-component));
         border-top: format!("1px solid {}", var!(border-subtle));
         border-bottom: format!("1px solid {}", var!(border-subtle));
     }
@@ -2162,16 +2214,16 @@ class! {
     }
 
     pub(crate) c_binding_parent_box {
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
         padding: var!(space-lg);
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
-        background: "rgba(22, 101, 52, 0.04)";
+        background: var!(bg-success);
     }
 
     pub(crate) c_binding_section_title {
-        margin-top: var!(space-md);
-        margin-bottom: var!(space-sm);
+        margin-top: var!(gap-component);
+        margin-bottom: var!(gap-element);
         color: var!(accent);
         font-size: var!(font-md);
         font-weight: "600";
@@ -2180,9 +2232,9 @@ class! {
     pub(crate) c_binding_temp_converter {
         display: "flex";
         align-items: "flex-end";
-        gap: var!(space-md);
+        gap: var!(gap-component);
         flex-wrap: "wrap";
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
     }
 
     pub(crate) c_binding_temp_field {
@@ -2198,7 +2250,7 @@ class! {
     }
 
     pub(crate) c_binding_color_mixer {
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
     }
 
     pub(crate) c_binding_color_preview {
@@ -2208,7 +2260,7 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
         border: format!("1px solid {}", var!(border-subtle));
         transition: format!("background {} {}", var!(duration-normal), var!(ease-out));
     }
@@ -2282,10 +2334,10 @@ class! {
     }
 
     pub(crate) c_binding_callback_form {
-        margin-top: var!(space-sm);
+        margin-top: var!(gap-element);
         display: "flex";
         flex-direction: "column";
-        gap: format!("{}", var!(space-md));
+        gap: var!(gap-element);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2307,8 +2359,8 @@ class! {
 
     pub(crate) c_dynamic_component_tab_bar {
         display: "flex";
-        gap: var!(space-sm);
-        margin-bottom: var!(space-md);
+        gap: var!(gap-element);
+        margin-bottom: var!(gap-component);
         flex-wrap: "wrap";
     }
 
@@ -2319,11 +2371,11 @@ class! {
         border: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-primary);
         min-height: "48px";
-        margin-top: var!(space-md);
+        margin-top: var!(gap-component);
     }
 
     pub(crate) c_dynamic_component_panel_title {
-        margin: format!("0px 0px {} 0px", var!(space-md));
+        margin: format!("0px 0px {} 0px", var!(gap-component));
         font-size: var!(font-lg);
         font-weight: "600";
         color: var!(text-primary);
@@ -2355,16 +2407,16 @@ class! {
 
     pub(crate) c_virtual_list_status {
         display: "flex";
-        gap: var!("space-2xl");
-        padding: format!("{} 0px", var!(space-md));
-        margin-bottom: var!(space-md);
+        gap: var!(gap-component);
+        padding: format!("{} 0px", var!(gap-component));
+        margin-bottom: var!(gap-component);
         border-bottom: format!("1px solid {}", var!(border-subtle));
         flex-wrap: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
         media("(max-width: 767px)") {
-            gap: var!(space-md);
+            gap: var!(gap-component-mobile);
         }
     }
 
@@ -2397,7 +2449,7 @@ class! {
         border-radius: var!(radius-lg);
         padding: var!(space-xl);
         margin-top: "0px";
-        margin-bottom: var!(gap-card);
+        margin-bottom: var!(gap-section);
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
@@ -2408,7 +2460,7 @@ class! {
         min-height: "0px";
         media("(max-width: 767px)") {
             padding: var!(space-lg);
-            margin-bottom: var!(gap-card-mobile);
+            margin-bottom: var!(gap-section-mobile);
             border-radius: "10px";
         }
     }
@@ -2460,5 +2512,103 @@ class! {
         white-space: "nowrap";
         flex: "1";
         min-width: "0px";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Unified Layout Primitives
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_section_stack {
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-section);
+        media("(max-width: 767px)") {
+            gap: var!(gap-section-mobile);
+        }
+    }
+
+    pub(crate) c_component_stack {
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-component);
+        media("(max-width: 767px)") {
+            gap: var!(gap-component-mobile);
+        }
+    }
+
+    pub(crate) c_element_stack {
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-element);
+    }
+
+    pub(crate) c_cluster {
+        display: "flex";
+        gap: var!(gap-element);
+        flex-wrap: "wrap";
+        align-items: "center";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
+    }
+
+    pub(crate) c_cluster_center {
+        display: "flex";
+        gap: var!(gap-element);
+        flex-wrap: "wrap";
+        align-items: "center";
+        justify-content: "center";
+        media("(max-width: 767px)") {
+            flex-wrap: "wrap";
+        }
+    }
+
+    pub(crate) c_inline_cluster {
+        display: "flex";
+        gap: var!(gap-inline);
+        flex-wrap: "wrap";
+        align-items: "center";
+    }
+
+    pub(crate) c_grid_2col {
+        display: "grid";
+        grid-template-columns: "1fr 1fr";
+        gap: format!("0px {}", var!(gap-component));
+        media("(max-width: 767px)") {
+            grid-template-columns: "1fr";
+        }
+    }
+
+    pub(crate) c_switcher {
+        display: "flex";
+        gap: var!(gap-component);
+        flex-wrap: "wrap";
+        media("(max-width: 767px)") {
+            flex-direction: "column";
+            gap: var!(gap-component-mobile);
+        }
+    }
+
+    pub(crate) c_switcher_col {
+        flex: "1";
+        min-width: "200px";
+        media("(max-width: 767px)") {
+            min-width: "100%";
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Unified Description / Hint Text
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_description {
+        color: "inherit";
+        margin-bottom: var!(gap-element);
+    }
+
+    pub(crate) c_hint {
+        color: "inherit";
+        opacity: "0.6";
+        font-size: "13px";
     }
 }

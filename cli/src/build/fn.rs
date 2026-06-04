@@ -766,12 +766,9 @@ pub(crate) fn print_server_urls(port: u16, www_route_prefix: &str, index_html_fi
         let url: String =
             format!("{HTTP_SCHEME}://{host}:{port}/{www_route_prefix}/{index_html_file_name}");
         log::info!("Server: {url}");
-        match qrcode::QrCode::new(url.as_str()) {
+        match QrCode::new(url.as_str()) {
             Ok(code) => {
-                let string: String = code
-                    .render::<qrcode::render::unicode::Dense1x2>()
-                    .quiet_zone(false)
-                    .build();
+                let string: String = code.render::<Dense1x2>().quiet_zone(false).build();
                 for line in string.lines() {
                     log::info!("{line}");
                 }

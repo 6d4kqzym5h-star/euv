@@ -45,22 +45,22 @@ pub(crate) fn page_signals(node: VirtualNode<PageSignalsProps>) -> VirtualNode {
                 div {
                     class: c_badge_row()
                     my_badge {
-                        color: "#059669"
+                        color: "var(--badge-bg-success)"
                         text: "Success"
                         on_click: badge_on_click("Success", LogLevel::Log)
                     }
                     my_badge {
-                        color: "#dc2626"
+                        color: "var(--badge-bg-error)"
                         text: "Error"
                         on_click: badge_on_click("Error", LogLevel::Error)
                     }
                     my_badge {
-                        color: "#d97706"
+                        color: "var(--badge-bg-warning)"
                         text: "Warning"
                         on_click: badge_on_click("Warning", LogLevel::Warn)
                     }
                     my_badge {
-                        color: "#6b7280"
+                        color: "var(--badge-bg-info)"
                         text: "Info"
                         on_click: badge_on_click("Info", LogLevel::Log)
                     }

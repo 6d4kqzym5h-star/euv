@@ -324,7 +324,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             my_card {
                 title: "Mouse Over/Out Events"
                 div {
-                    style: { display: "flex"; gap: "16px"; flex-wrap: "wrap"; }
+                    class: c_switcher()
                     div {
                         class: c_event_drag_zone()
                         onmouseover: move |_event: Event| {

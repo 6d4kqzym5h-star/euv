@@ -16,7 +16,10 @@ use std::rc::Rc;
 
 use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *};
 
-use lombok_macros::*;
+use {
+    lombok_macros::*,
+    qrcode::{QrCode, render::svg},
+};
 
 /// Entry point for the euv example application.
 #[wasm_bindgen]

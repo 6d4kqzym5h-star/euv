@@ -884,13 +884,13 @@ impl ToTokens for HtmlElement {
                 })
             }).collect();
             let key_token: proc_macro2::TokenStream = key_expr.unwrap_or_else(|| quote! { None });
-            let child_tokens: Vec<proc_macro2::TokenStream> =
-                nodes_to_token_vec(self.get_children());
+            let children_tokens: proc_macro2::TokenStream =
+                children_to_flattened_tokens(self.get_children());
             tokens.extend(quote! {
                 ::euv::VirtualNode::Element {
                     tag: ::euv::Tag::Element(#tag_literal),
                     attributes: vec![#(#attr_tokens), *],
-                    children: vec![#(#child_tokens), *],
+                    children: #children_tokens,
                     key: #key_token,
                     props: None,
                 }

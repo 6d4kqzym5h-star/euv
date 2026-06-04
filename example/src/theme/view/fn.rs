@@ -54,6 +54,38 @@ css_vars! {
         content-max-width: "800px";
         mobile-header-height: "56px";
 
+        // ─── Component Spacing Scale ───
+        // Section: between major page sections (cards)
+        gap-section: "12px";
+        gap-section-mobile: "8px";
+        // Component: between logical groups inside a card
+        gap-component: "12px";
+        gap-component-mobile: "8px";
+        // Element: between sibling elements (buttons, form fields)
+        gap-element: "8px";
+        // Inline: between inline items (badges, tags)
+        gap-inline: "8px";
+
+        // ─── Responsive Breakpoints ───
+        breakpoint-mobile: "767px";
+
+        // ─── Status Color Palette (raw values for reuse) ───
+        color-success: "#16a34a";
+        color-error: "#dc2626";
+        color-warning: "#d97706";
+        color-info: "#6b7280";
+        color-purple: "#7c3aed";
+        color-red-channel: "#ef4444";
+        color-green-channel: "#22c55e";
+        color-blue-channel: "#3b82f6";
+
+        // ─── Badge Background Colors (solid fills for badge component) ───
+        badge-bg-success: "#16a34a";
+        badge-bg-error: "#dc2626";
+        badge-bg-warning: "#d97706";
+        badge-bg-info: "#6b7280";
+        badge-bg-purple: "#7c3aed";
+
         // ─── Surface Colors ───
         // Elevation: primary(0) < nav(1) = card(2) < input inset
         // Clean warm-neutral palette
@@ -77,8 +109,8 @@ css_vars! {
         // Indigo family: consistent hue across light/dark
         accent: "#4f46e5";
         accent-hover: "#4338ca";
-        accent-subtle: "rgba(79, 70, 229, 0.06)";
-        accent-muted: "rgba(79, 70, 229, 0.03)";
+        accent-subtle: "rgba(79, 70, 229, 0.12)";
+        accent-muted: "rgba(79, 70, 229, 0.08)";
         accent-gradient: "linear-gradient(135deg, #4f46e5, #6366f1)";
         accent-disabled: "#a5a5cc";
         accent-border: "rgba(79, 70, 229, 0.30)";
@@ -229,6 +261,34 @@ css_vars! {
         content-max-width: "800px";
         mobile-header-height: "56px";
 
+        // ─── Component Spacing Scale (same as light) ───
+        gap-section: "12px";
+        gap-section-mobile: "8px";
+        gap-component: "12px";
+        gap-component-mobile: "8px";
+        gap-element: "8px";
+        gap-inline: "8px";
+
+        // ─── Responsive Breakpoints (same as light) ───
+        breakpoint-mobile: "767px";
+
+        // ─── Status Color Palette (dark adjusted) ───
+        color-success: "#4ade80";
+        color-error: "#f87171";
+        color-warning: "#fbbf24";
+        color-info: "#8e8e9e";
+        color-purple: "#8b5cf6";
+        color-red-channel: "#ef4444";
+        color-green-channel: "#22c55e";
+        color-blue-channel: "#3b82f6";
+
+        // ─── Badge Background Colors (muted solid fills for dark mode) ───
+        badge-bg-success: "#166534";
+        badge-bg-error: "#991b1b";
+        badge-bg-warning: "#92400e";
+        badge-bg-info: "#4b5563";
+        badge-bg-purple: "#5b21b6";
+
         // ─── Surface Colors ───
         // Elevation: primary(0) < nav(1) < card(2) < input(3)
         // Using neutral-cool base with subtle blue undertone
@@ -249,19 +309,19 @@ css_vars! {
         text-on-accent: "#ffffff";
 
         // ─── Brand / Accent ───
-        // Indigo family: consistent hue, adjusted lightness for dark bg
-        accent: "#818cf8";
-        accent-hover: "#6366f1";
-        accent-subtle: "rgba(129, 140, 248, 0.10)";
-        accent-muted: "rgba(129, 140, 248, 0.05)";
-        accent-gradient: "linear-gradient(135deg, #6366f1, #818cf8)";
+        // Indigo family: deeper saturation for dark bg, not overly bright
+        accent: "#6366f1";
+        accent-hover: "#4f46e5";
+        accent-subtle: "rgba(99, 102, 241, 0.25)";
+        accent-muted: "rgba(99, 102, 241, 0.15)";
+        accent-gradient: "linear-gradient(135deg, #4f46e5, #6366f1)";
         accent-disabled: "#4a4a6a";
-        accent-border: "rgba(129, 140, 248, 0.30)";
+        accent-border: "rgba(99, 102, 241, 0.35)";
 
         // ─── Semantic Colors (non-status) ───
         text-danger: "#f87171";
-        text-positive: "#6ee7b7";
-        border-interactive: "rgba(129, 140, 248, 0.35)";
+        text-positive: "#4ade80";
+        border-interactive: "rgba(99, 102, 241, 0.40)";
 
         // ─── Border Colors ───
         // Layered: subtle < card < nav < input (increasing visibility)
@@ -270,7 +330,7 @@ css_vars! {
         border-card: "#28283a";
         border-card-title: "#2e2e3c";
         border-input: "#363645";
-        border-accent-light: "rgba(129, 140, 248, 0.20)";
+        border-accent-light: "rgba(99, 102, 241, 0.25)";
 
         // ─── Shadows ───
         shadow-card: "0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2)";
@@ -286,33 +346,33 @@ css_vars! {
         border-theme-button: "#363645";
 
         // ─── Status: Error ───
-        bg-error: "rgba(239, 68, 68, 0.08)";
-        text-error: "#fca5a5";
-        border-error: "rgba(239, 68, 68, 0.25)";
-        bg-error-icon: "rgba(239, 68, 68, 0.20)";
+        bg-error: "rgba(239, 68, 68, 0.10)";
+        text-error: "#f87171";
+        border-error: "rgba(239, 68, 68, 0.30)";
+        bg-error-icon: "rgba(239, 68, 68, 0.25)";
 
         // ─── Status: Success ───
-        bg-success: "rgba(34, 197, 94, 0.08)";
-        text-success: "#86efac";
-        border-success: "rgba(34, 197, 94, 0.25)";
+        bg-success: "rgba(34, 197, 94, 0.10)";
+        text-success: "#4ade80";
+        border-success: "rgba(34, 197, 94, 0.30)";
 
         // ─── Status: Warning ───
-        bg-warning: "rgba(245, 158, 11, 0.08)";
-        text-warning: "#fcd34d";
-        border-warning: "rgba(245, 158, 11, 0.25)";
+        bg-warning: "rgba(245, 158, 11, 0.10)";
+        text-warning: "#fbbf24";
+        border-warning: "rgba(245, 158, 11, 0.30)";
 
         // ─── Status: Info ───
-        text-info: "#7dd3fc";
-        border-info: "rgba(56, 189, 248, 0.25)";
+        text-info: "#60a5fa";
+        border-info: "rgba(96, 165, 250, 0.30)";
 
         // ─── Status: Pink ───
-        text-pink: "#f9a8d4";
-        border-pink: "rgba(236, 72, 153, 0.25)";
+        text-pink: "#f472b6";
+        border-pink: "rgba(244, 114, 182, 0.30)";
 
         // ─── Loading ───
-        bg-loading: "rgba(99, 102, 241, 0.08)";
-        border-loading: "rgba(99, 102, 241, 0.20)";
-        text-loading-title: "#a5b4fc";
+        bg-loading: "rgba(99, 102, 241, 0.10)";
+        border-loading: "rgba(99, 102, 241, 0.25)";
+        text-loading-title: "#818cf8";
         bg-progress: "#2a2a35";
 
         // ─── List ───
@@ -325,29 +385,29 @@ css_vars! {
         bg-console-filter: "#141420";
         border-console: "#28283a";
         text-console: "#b0b0be";
-        text-console-title: "#a5b4fc";
+        text-console-title: "#818cf8";
         border-console-button: "#2a2a35";
         text-console-button: "#8e8e9e";
-        text-console-log-latest: "#6ee7b7";
+        text-console-log-latest: "#4ade80";
         text-console-warn: "#fbbf24";
-        text-console-warn-latest: "#fcd34d";
+        text-console-warn-latest: "#f59e0b";
         text-console-error: "#f87171";
-        text-console-error-latest: "#fca5a5";
+        text-console-error-latest: "#ef4444";
         text-console-empty: "#4a4a58";
         bg-console-badge: "#dc2626";
-        bg-console-badge-log: "rgba(110, 231, 183, 0.12)";
-        bg-console-badge-warn: "rgba(251, 191, 36, 0.12)";
-        bg-console-badge-error: "rgba(248, 113, 113, 0.12)";
-        border-console-accent: "#818cf8";
-        text-console-filter-active: "#a5b4fc";
-        border-console-filter-active: "#818cf8";
-        bg-console-filter-active: "rgba(129, 140, 248, 0.12)";
-        bg-console-button: "#6366f1";
+        bg-console-badge-log: "rgba(74, 222, 128, 0.15)";
+        bg-console-badge-warn: "rgba(251, 191, 36, 0.15)";
+        bg-console-badge-error: "rgba(248, 113, 113, 0.15)";
+        border-console-accent: "#6366f1";
+        text-console-filter-active: "#818cf8";
+        border-console-filter-active: "#6366f1";
+        bg-console-filter-active: "rgba(99, 102, 241, 0.15)";
+        bg-console-button: "#4f46e5";
         text-console-button-text: "white";
-        shadow-console-button: "0 4px 14px rgba(99, 102, 241, 0.25)";
-        bg-console-button-hover: "#818cf8";
+        shadow-console-button: "0 4px 14px rgba(79, 70, 229, 0.30)";
+        bg-console-button-hover: "#6366f1";
         shadow-console-panel: "0 -8px 30px rgba(0, 0, 0, 0.4)";
         bg-console-close-hover: "rgba(239, 68, 68, 0.12)";
-        text-console-close-hover: "#f87171";
+        text-console-close-hover: "#ef4444";
     }
 }

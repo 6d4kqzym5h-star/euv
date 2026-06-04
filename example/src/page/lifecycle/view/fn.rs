@@ -48,10 +48,6 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                         div {
                             key: index.to_string()
                             class: c_log_item()
-                            style: {
-                                color: "#6b7280";
-                                font-weight: "400";
-                            }
                             log.clone()
                         }
                     }

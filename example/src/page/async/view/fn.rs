@@ -20,7 +20,7 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
                 title: "Fetch Data"
                 p {
                     class: c_fetch_hint()
-                    "Click the button below to fetch data from httpbin.org"
+                    "Click the button below to fetch data from ltpp.vip"
                 }
                 primary_button {
                     label: "Fetch"

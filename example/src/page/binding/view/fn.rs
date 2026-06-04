@@ -328,12 +328,12 @@ pub(crate) fn color_mixer(
             }
             div {
                 class: c_binding_slider_row()
-                label {
-                    r#for: COLOR_MIXER_RED_ID
-                    class: c_binding_slider_label()
-                    style: { color: "#ef4444"; }
-                    "R"
-                }
+                    label {
+                        r#for: COLOR_MIXER_RED_ID
+                        class: c_binding_slider_label()
+                        style: { color: "var(--color-red-channel)"; }
+                        "R"
+                    }
                 input {
                     id: COLOR_MIXER_RED_ID
                     name: COLOR_MIXER_RED_NAME
@@ -352,12 +352,12 @@ pub(crate) fn color_mixer(
             }
             div {
                 class: c_binding_slider_row()
-                label {
-                    r#for: COLOR_MIXER_GREEN_ID
-                    class: c_binding_slider_label()
-                    style: { color: "#22c55e"; }
-                    "G"
-                }
+                    label {
+                        r#for: COLOR_MIXER_GREEN_ID
+                        class: c_binding_slider_label()
+                        style: { color: "var(--color-green-channel)"; }
+                        "G"
+                    }
                 input {
                     id: COLOR_MIXER_GREEN_ID
                     name: COLOR_MIXER_GREEN_NAME
@@ -376,12 +376,12 @@ pub(crate) fn color_mixer(
             }
             div {
                 class: c_binding_slider_row()
-                label {
-                    r#for: COLOR_MIXER_BLUE_ID
-                    class: c_binding_slider_label()
-                    style: { color: "#3b82f6"; }
-                    "B"
-                }
+                    label {
+                        r#for: COLOR_MIXER_BLUE_ID
+                        class: c_binding_slider_label()
+                        style: { color: "var(--color-blue-channel)"; }
+                        "B"
+                    }
                 input {
                     id: COLOR_MIXER_BLUE_ID
                     name: COLOR_MIXER_BLUE_NAME
