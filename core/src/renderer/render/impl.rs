@@ -215,8 +215,12 @@ impl Renderer {
                 if let AttributeValue::Event(handler) = old_attr.get_value()
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
+                    && let Some(entry) =
+                        ensure_handler_registry_mut().remove(&(euv_id, handler.get_event_name()))
                 {
-                    ensure_handler_registry_mut().remove(&(euv_id, handler.get_event_name()));
+                    unsafe {
+                        let _ = Box::from_raw(entry);
+                    }
                 }
                 element.remove_attribute_or_property(old_attr.get_name());
             }
@@ -592,22 +596,14 @@ impl Renderer {
                 let text: Text = document.create_text_node(text_node.get_content());
                 if let Some(signal) = text_node.try_get_signal() {
                     let text_clone: Text = text.clone();
-                    let signal_clone: Signal<String> = *signal;
-                    let subscribe_signal: Signal<String> = signal_clone;
-                    signal_clone.subscribe({
-                        move || {
-                            if !is_node_connected(&text_clone) {
-                                // The text node has been removed from the DOM.
-                                // Do NOT call `deactivate()` here — the signal
-                                // may be shared with other DynamicNodes or DOM
-                                // bindings. Simply return; the listener will be
-                                // cleaned up by `clear_signal_listeners_by_addr`
-                                // during `cleanup_dom_subtree`.
-                                return;
-                            }
-                            let new_value: String = subscribe_signal.get();
-                            text_clone.set_text_content(Some(&new_value));
+                    let signal_for_sub: Signal<String> = *signal;
+                    let subscribe_signal: Signal<String> = signal_for_sub;
+                    signal_for_sub.replace_subscribe(move || {
+                        if !is_node_connected(&text_clone) {
+                            return;
                         }
+                        let new_value: String = subscribe_signal.get();
+                        text_clone.set_text_content(Some(&new_value));
                     });
                 }
                 text.into()

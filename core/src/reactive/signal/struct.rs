@@ -38,6 +38,19 @@ where
     #[set(pub(crate))]
     #[new(skip)]
     pub(crate) dependents: Vec<usize>,
+    /// Flag indicating that `replace_subscribe` was called during
+    /// `update_and_notify`'s swap-out phase. When a listener callback
+    /// re-registers listeners via `replace_subscribe`, it intends to
+    /// replace all existing listeners — but the old listeners have
+    /// already been swapped out into the local variable. Without this
+    /// flag, `update_and_notify` would incorrectly merge the old
+    /// listeners back with the new ones, defeating `replace_subscribe`'s
+    /// replacement semantics and causing listener accumulation.
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    #[new(skip)]
+    pub(crate) listeners_replaced: bool,
 }
 
 /// A reactive signal handle.

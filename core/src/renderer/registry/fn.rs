@@ -27,18 +27,18 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
             .and_then(|parent: Node| parent.dyn_ref::<Element>().cloned())
     });
     while let Some(element) = current {
-        if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID) {
-            if let Ok(euv_id) = euv_id_str.parse::<usize>() {
-                let handler_found = ensure_handler_registry()
-                    .get(&(euv_id, event_name))
-                    .and_then(|entry: &HandlerEntry| {
-                        let slot: &HandlerSlot = unsafe { &**entry };
-                        slot.try_get_handler().as_ref().cloned()
-                    });
-                if let Some(active_handler) = handler_found {
-                    active_handler.handle(event.clone());
-                    return;
-                }
+        if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
+            && let Ok(euv_id) = euv_id_str.parse::<usize>()
+        {
+            let handler_found = ensure_handler_registry()
+                .get(&(euv_id, event_name))
+                .and_then(|entry: &HandlerEntry| {
+                    let slot: &HandlerSlot = unsafe { &**entry };
+                    slot.try_get_handler().as_ref().cloned()
+                });
+            if let Some(active_handler) = handler_found {
+                active_handler.handle(event.clone());
+                return;
             }
         }
         current = element.parent_element();

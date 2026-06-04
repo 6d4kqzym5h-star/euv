@@ -148,7 +148,8 @@ pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> Option<Rc<dyn F
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A dragover handler.
 pub(crate) fn file_upload_on_drag_over(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |event: Event| {
+        event.prevent_default();
         state.get_drag_over().set(true);
     }))
 }

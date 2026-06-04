@@ -18,7 +18,9 @@ where
     ///
     /// - `Self` - A handle to the newly created reactive signal.
     pub fn create(value: T) -> Self {
-        let boxed: Box<SignalInner<T>> = Box::new(SignalInner::new(value, Vec::new(), true));
+        let mut inner: SignalInner<T> = SignalInner::new(value, Vec::new(), true);
+        inner.set_listeners_replaced(false);
+        let boxed: Box<SignalInner<T>> = Box::new(inner);
         let ptr: *mut SignalInner<T> = Box::into_raw(boxed);
         let addr: usize = ptr as usize;
         signal_inner_registry_mut().insert(addr);
@@ -83,10 +85,10 @@ where
     where
         F: FnMut() + 'static,
     {
-        let listeners: &mut Vec<Box<dyn FnMut()>> =
-            get_signal_inner_ref::<T>(self.get_inner()).get_mut_listeners();
-        listeners.clear();
-        listeners.push(Box::new(callback));
+        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
+        inner.get_mut_listeners().clear();
+        inner.get_mut_listeners().push(Box::new(callback));
+        inner.set_listeners_replaced(true);
     }
 
     /// Detaches this signal from the reactive system without freeing memory.
@@ -134,40 +136,27 @@ where
             return false;
         }
         inner.set_value(value);
+        inner.set_listeners_replaced(false);
         let mut listeners: Vec<Box<dyn FnMut()>> = Vec::new();
         swap(inner.get_mut_listeners(), &mut listeners);
         for listener in listeners.iter_mut() {
             listener();
         }
-        // Move listeners back, but ONLY if the signal's allocation still exists.
-        //
-        // A listener may have detached this signal during its execution (e.g.
-        // a DOM-bound subscribe closure that called `deactivate` because its
-        // node was removed mid-dispatch). Although no current teardown path
-        // frees the allocation, we still probe the registry before re-borrowing
-        // `get_signal_inner_ref::<T>(self.get_inner())` so that a future GC sweep — or any code that does
-        // free — cannot turn this re-borrow into a use-after-free. If the
-        // signal is gone, skip the restore entirely.
         if !is_signal_inner_alive(self.get_inner()) {
             return true;
         }
         let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
         if inner.get_alive() {
-            // Restore listeners by *prepending* the originals ahead of any
-            // listeners that were registered while we were iterating.
-            //
-            // A listener may itself call `subscribe` on this same signal,
-            // appending to `inner.listeners` (which is currently the empty Vec
-            // we swapped in). A plain `swap` back would discard those
-            // newly-registered listeners. Instead we splice the originals in
-            // front of the new ones so that both sets survive and the original
-            // ordering is preserved.
-            let new_listeners: &mut Vec<Box<dyn FnMut()>> = inner.get_mut_listeners();
-            if new_listeners.is_empty() {
-                swap(new_listeners, &mut listeners);
+            if inner.get_listeners_replaced() {
+                inner.set_listeners_replaced(false);
             } else {
-                listeners.append(new_listeners);
-                swap(new_listeners, &mut listeners);
+                let new_listeners: &mut Vec<Box<dyn FnMut()>> = inner.get_mut_listeners();
+                if new_listeners.is_empty() {
+                    swap(new_listeners, &mut listeners);
+                } else {
+                    listeners.append(new_listeners);
+                    swap(new_listeners, &mut listeners);
+                }
             }
         }
         true

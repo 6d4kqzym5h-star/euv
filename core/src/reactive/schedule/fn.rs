@@ -200,11 +200,9 @@ where
 pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
     let string_signal: Signal<String> = Signal::create(source.get().to_string());
     let string_signal_clone: Signal<String> = string_signal;
-    source.subscribe({
-        let source_inner: Signal<bool> = source;
-        move || {
-            string_signal_clone.set_silent(source_inner.get().to_string());
-        }
+    let source_for_sub: Signal<bool> = source;
+    source_for_sub.replace_subscribe(move || {
+        string_signal_clone.set_silent(source_for_sub.get().to_string());
     });
     AttributeValue::Signal(string_signal)
 }

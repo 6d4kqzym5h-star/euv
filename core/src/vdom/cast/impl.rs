@@ -180,7 +180,7 @@ where
         let source: Signal<T> = *self;
         let string_signal: Signal<String> = Signal::create(source.get().to_string());
         let string_signal_clone: Signal<String> = string_signal;
-        source.subscribe(move || {
+        source.replace_subscribe(move || {
             string_signal_clone.set_silent(source.get().to_string());
         });
         VirtualNode::Text(TextNode::new(string_signal.get(), Some(string_signal)))

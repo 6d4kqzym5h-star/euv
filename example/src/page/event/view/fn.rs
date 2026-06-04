@@ -431,12 +431,14 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         drag_status.set("Ended".to_string());
                         Console::log("DragEnd: drag ended");
                     }
-                    ondragover: move |_event: Event| {
+                    ondragover: move |event: Event| {
+                        event.prevent_default();
                     }
                     ondragenter: move |_event: Event| {
                         Console::log("DragEnter: entered drop zone");
                     }
                     ondragleave: move |_event: Event| {
+                        drag_status.set("Cancelled".to_string());
                         Console::log("DragLeave: left drop zone");
                     }
                     ondrop: move |event: Event| {
