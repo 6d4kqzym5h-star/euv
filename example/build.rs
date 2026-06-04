@@ -1,9 +1,4 @@
-use std::{
-    env,
-    fs::read_to_string,
-    fs::write,
-    path::{Display, PathBuf},
-};
+use std::{env::var, fs::read_to_string, fs::write, path::PathBuf};
 
 use {chrono::Local, toml::Table};
 
@@ -23,9 +18,8 @@ const BUILD_STATE_FILE_NAME: &str = ".euv_build_state";
 
 fn main() {
     let manifest_dir: String = env!("CARGO_MANIFEST_DIR").to_string();
-    let state_file_path: PathBuf = PathBuf::from(&manifest_dir).join(BUILD_STATE_FILE_NAME);
-    let state_file_path_display: Display<'_> = state_file_path.display();
-    println!("cargo:rerun-if-changed={state_file_path_display}");
+    let out_dir: String = var("OUT_DIR").expect("OUT_DIR not set");
+    let state_file_path: PathBuf = PathBuf::from(&out_dir).join(BUILD_STATE_FILE_NAME);
     let toml_path: PathBuf = PathBuf::from(&manifest_dir).join("Cargo.toml");
     let toml_content: String = read_to_string(&toml_path).expect("Failed to read Cargo.toml");
     let toml_table: Table = toml_content
