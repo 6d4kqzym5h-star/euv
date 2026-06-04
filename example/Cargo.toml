@@ -18,6 +18,7 @@ exclude = [
   "img",
   "**/*.log",
   "www",
+  ".euv_build_state"
 ]
 
 [dependencies]
