@@ -141,6 +141,15 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
             "/multimedia" => {
                 page_multimedia {}
             }
+            "/camera" => {
+                page_camera {}
+            }
+            "/sse" => {
+                page_sse {}
+            }
+            "/websocket" => {
+                page_websocket {}
+            }
             _ => {
                 page_not_found {}
             }

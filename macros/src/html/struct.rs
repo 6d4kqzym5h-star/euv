@@ -42,13 +42,25 @@ pub(crate) struct HtmlFor {
     pub(crate) body: Vec<HtmlNode>,
 }
 
-/// Represents a reactive `if` conditional in HTML.
+/// Represents a conditional in HTML.
 ///
-/// Syntax: `if {expr} { children } [else if {expr} { children }]* [else { children }]`.
+/// Supports two syntaxes:
+/// - Reactive: `if {expr} { children } [else if {expr} { children }]* [else { children }]`
+///   The condition expression in braces is treated as a signal that triggers re-rendering.
+/// - Inline: `if condition { children } [else if condition { children }]* [else { children }]`
+///   The condition is a plain Rust boolean expression, evaluated once at render time.
+///   This form is typically used inside `for` loops where the condition depends on loop variables.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlIf {
-    /// The list of condition-branch pairs. Each condition is a braced expression.
+    /// Whether this conditional is reactive (condition wrapped in braces as a signal).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) is_reactive: bool,
+    /// The list of condition-branch pairs.
     ///
+    /// For reactive conditionals, each condition is a braced signal expression.
+    /// For inline conditionals, each condition is a plain Rust expression.
     /// The last entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]

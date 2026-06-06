@@ -2,6 +2,9 @@ use crate::*;
 
 /// A primary button component with customizable label and click handler.
 ///
+/// The button stretches to full width when alone, and evenly shares
+/// available width with sibling buttons inside a flex container.
+///
 /// # Arguments
 ///
 /// - `VirtualNode<PrimaryButtonProps>` - The props node containing label, onclick, and disabled.
@@ -23,7 +26,11 @@ pub(crate) fn primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNo
     };
     html! {
         button {
-            class: if { disabled.get() } { c_primary_button_disabled() } else { c_primary_button() }
+            class: if { disabled.get() } {
+                c_primary_button_disabled()
+            } else {
+                c_primary_button()
+            }
             onclick: click_handler
             content
         }
@@ -55,7 +62,11 @@ pub(crate) fn modal_primary_button(node: VirtualNode<PrimaryButtonProps>) -> Vir
     };
     html! {
         button {
-            class: if { disabled.get() } { c_modal_primary_button_disabled() } else { c_modal_primary_button() }
+            class: if { disabled.get() } {
+                c_modal_primary_button_disabled()
+            } else {
+                c_modal_primary_button()
+            }
             onclick: click_handler
             content
         }

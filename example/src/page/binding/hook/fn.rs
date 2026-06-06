@@ -264,10 +264,13 @@ pub(crate) fn typed_props_on_reset_count(
 ///
 /// - `UseCustomCallbackDemo` - The custom callback demo state.
 pub(crate) fn use_custom_callback_demo() -> UseCustomCallbackDemo {
-    UseCustomCallbackDemo::new(use_signal(String::new), use_signal(|| "none".to_string()))
+    UseCustomCallbackDemo::new(
+        use_signal(|| CALLBACK_INPUT_DEFAULT_MESSAGE.to_string()),
+        use_signal(|| "none".to_string()),
+    )
 }
 
-/// Creates a custom callback handler that records the event name when the value changes.
+/// Creates a custom callback handler that updates the value signal and records the event name on input.
 ///
 /// # Arguments
 ///
@@ -277,7 +280,7 @@ pub(crate) fn use_custom_callback_demo() -> UseCustomCallbackDemo {
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A callback handler.
+/// - `Option<Rc<dyn Fn(Event)>>` - An input handler.
 pub(crate) fn custom_on_change(
     text_signal: Signal<String>,
     last_event: Signal<String>,
@@ -329,7 +332,71 @@ pub(crate) fn custom_on_reset(
     event_name: String,
 ) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_event: Event| {
-        text_signal.set(String::new());
+        text_signal.set(CALLBACK_INPUT_DEFAULT_MESSAGE.to_string());
         last_event.set(event_name.clone());
+    }))
+}
+
+/// Creates signal communication demo state signals.
+///
+/// # Returns
+///
+/// - `UseSignalCommDemo` - The signal communication demo state.
+pub(crate) fn use_signal_comm_demo() -> UseSignalCommDemo {
+    UseSignalCommDemo::new(
+        use_signal(|| SIGNAL_COMM_DEFAULT_MESSAGE.to_string()),
+        use_signal(|| 0),
+    )
+}
+
+/// Creates a click event handler that increments the signal communication counter.
+///
+/// # Arguments
+///
+/// - `Signal<i32>` - The counter signal.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler.
+pub(crate) fn signal_comm_on_increment(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        let current: i32 = counter.get();
+        counter.set(current + 1);
+    }))
+}
+
+/// Creates a click event handler that decrements the signal communication counter.
+///
+/// # Arguments
+///
+/// - `Signal<i32>` - The counter signal.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler.
+pub(crate) fn signal_comm_on_decrement(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        let current: i32 = counter.get();
+        counter.set(current - 1);
+    }))
+}
+
+/// Creates a click event handler that resets the signal communication state.
+///
+/// # Arguments
+///
+/// - `Signal<String>` - The message signal.
+/// - `Signal<i32>` - The counter signal.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler.
+pub(crate) fn signal_comm_on_reset(
+    message: Signal<String>,
+    counter: Signal<i32>,
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        message.set(SIGNAL_COMM_DEFAULT_MESSAGE.to_string());
+        counter.set(0);
     }))
 }

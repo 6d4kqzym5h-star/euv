@@ -187,6 +187,21 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
                 label: "Multimedia"
                 target: "/multimedia"
             }
+            nav_item {
+                route_signal: route_signal
+                label: "Camera"
+                target: "/camera"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "SSE"
+                target: "/sse"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "WebSocket"
+                target: "/websocket"
+            }
         }
     }
 }
@@ -337,6 +352,24 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
                 drawer_open: drawer_open
                 label: "Multimedia"
                 target: "/multimedia"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Camera"
+                target: "/camera"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "SSE"
+                target: "/sse"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "WebSocket"
+                target: "/websocket"
             }
         }
     }

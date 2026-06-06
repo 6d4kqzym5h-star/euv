@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.5.31"
+version = "0.5.32"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -72,6 +72,7 @@ web-sys = { version = "0.3.99", features = [
     "DragEvent",
     "Element",
     "Event",
+    "EventSource",
     "EventInit",
     "EventTarget",
     "File",
@@ -88,6 +89,12 @@ web-sys = { version = "0.3.99", features = [
     "HtmlImageElement",
     "HtmlInputElement",
     "HtmlMediaElement",
+    "HtmlVideoElement",
+    "MediaDevices",
+    "MediaStream",
+    "MediaStreamConstraints",
+    "MediaStreamTrack",
+    "MessageEvent",
     "HtmlOptionElement",
     "HtmlSelectElement",
     "HtmlStyleElement",
@@ -111,6 +118,7 @@ web-sys = { version = "0.3.99", features = [
     "Touch",
     "TransitionEvent",
     "WheelEvent",
+    "WebSocket",
     "Window",
 ] }
 

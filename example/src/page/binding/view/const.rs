@@ -66,3 +66,21 @@ pub(crate) const COLOR_MIXER_MIN: &str = "0";
 
 /// The HTML max attribute for the color mixer slider.
 pub(crate) const COLOR_MIXER_MAX: &str = "255";
+
+/// The HTML id for the signal communication parent message input element.
+pub(crate) const SIGNAL_COMM_PARENT_MESSAGE_ID: &str = "signal-comm-parent-message";
+
+/// The HTML id for the signal communication child message input element.
+pub(crate) const SIGNAL_COMM_CHILD_MESSAGE_ID: &str = "signal-comm-child-message";
+
+/// The HTML name attribute for the signal communication parent message input element.
+pub(crate) const SIGNAL_COMM_PARENT_MESSAGE_NAME: &str = "signal_comm_parent_message";
+
+/// The HTML name attribute for the signal communication child message input element.
+pub(crate) const SIGNAL_COMM_CHILD_MESSAGE_NAME: &str = "signal_comm_child_message";
+
+/// The default message for the signal communication demo.
+pub(crate) const SIGNAL_COMM_DEFAULT_MESSAGE: &str = "Hello from Parent!";
+
+/// The default message for the callback input demo.
+pub(crate) const CALLBACK_INPUT_DEFAULT_MESSAGE: &str = "Hello Callback!";

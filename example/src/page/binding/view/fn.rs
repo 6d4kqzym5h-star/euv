@@ -66,7 +66,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                 "Limited Counter"
             }
             p {
-                class: c_demo_text()
+                class: c_binding_demo_text()
                 "Props received: disabled="
                 span {
                     class: c_binding_typed_prop_value()
@@ -98,8 +98,6 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                     class: c_binding_typed_warning()
                     "Counter is disabled!"
                 }
-            } else {
-                p {}
             }
         }
     }
@@ -125,6 +123,7 @@ pub(crate) fn callback_input(node: VirtualNode<CallbackInputProps>) -> VirtualNo
         on_submit,
         on_reset,
     }: CallbackInputProps = node.try_get_props().unwrap_or_default();
+    let value_text: String = value.get();
     html! {
         div {
             class: c_binding_child_box()
@@ -133,7 +132,7 @@ pub(crate) fn callback_input(node: VirtualNode<CallbackInputProps>) -> VirtualNo
                 "Callback Input"
             }
             p {
-                class: c_demo_text()
+                class: c_binding_demo_text()
                 "Custom callbacks: on_change, on_submit, on_reset"
             }
             div {
@@ -144,7 +143,7 @@ pub(crate) fn callback_input(node: VirtualNode<CallbackInputProps>) -> VirtualNo
                     r#type: BINDING_TEXT_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
                     placeholder: CALLBACK_INPUT_PLACEHOLDER
-                    value: value
+                    value: value_text
                     class: c_form_input_no_transition()
                     oninput: on_change
                 }
@@ -190,10 +189,10 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                 "Child Component"
             }
             div {
-                class: c_form_input_wrapper()
+                class: c_element_stack()
                 label {
                     r#for: CHILD_INPUT_TEXT_ID
-                    class: c_form_label()
+                    class: c_binding_form_label()
                     "Edit shared text:"
                 }
                 input {
@@ -207,20 +206,17 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                 }
             }
             div {
-                class: c_counter_row()
+                class: c_counter_text()
+                "Shared count: "
                 span {
-                    class: c_demo_text()
-                    "Shared count: "
-                    span {
-                        class: c_counter_value()
-                        count_value
-                    }
+                    class: c_counter_value()
+                    count_value
                 }
-                primary_button {
-                    label: "Decrement"
-                    onclick: two_way_on_decrement(count_signal)
-                    "-"
-                }
+            }
+            primary_button {
+                label: "Decrement"
+                onclick: two_way_on_decrement(count_signal)
+                "-"
             }
         }
     }
@@ -402,9 +398,86 @@ pub(crate) fn color_mixer(
     }
 }
 
+/// A signal-based child display component that reads from and writes to shared signals.
+///
+/// Demonstrates Signal-based parent-child communication: both parent and child
+/// share the same Signal instances, so changes in either component are
+/// immediately reflected in the other.
+///
+/// # Arguments
+///
+/// - `VirtualNode<SignalChildDisplayProps>` - The props node containing message and counter signals.
+///
+/// # Returns
+///
+/// - `VirtualNode` - A styled child display element with signal-based communication.
+#[component]
+pub(crate) fn signal_child_display(node: VirtualNode<SignalChildDisplayProps>) -> VirtualNode {
+    let SignalChildDisplayProps { message, counter }: SignalChildDisplayProps =
+        node.try_get_props().unwrap_or_default();
+    let message_value: String = message.get();
+    let counter_value: i32 = counter.get();
+    html! {
+        div {
+            class: c_binding_child_box()
+            p {
+                class: c_binding_child_label()
+                "Child Component (Signal Communication)"
+            }
+            p {
+                class: c_binding_demo_text()
+                "Received message: "
+                span {
+                    class: c_binding_child_message()
+                    message_value
+                }
+            }
+            div {
+                class: c_element_stack()
+                label {
+                    r#for: SIGNAL_COMM_CHILD_MESSAGE_ID
+                    class: c_binding_form_label()
+                    "Reply to parent:"
+                }
+                input {
+                    id: SIGNAL_COMM_CHILD_MESSAGE_ID
+                    name: SIGNAL_COMM_CHILD_MESSAGE_NAME
+                    r#type: BINDING_TEXT_TYPE
+                    autocomplete: BINDING_AUTOCOMPLETE_OFF
+                    placeholder: "Type a reply..."
+                    value: message
+                    class: c_form_input_no_transition()
+                    oninput: on_input_value(message)
+                }
+            }
+            div {
+                class: c_counter_text()
+                "Shared counter: "
+                span {
+                    class: c_counter_value()
+                    counter_value
+                }
+            }
+            div {
+                class: c_counter_row()
+                primary_button {
+                    label: "-1"
+                    onclick: signal_comm_on_decrement(counter)
+                    "-1"
+                }
+                primary_button {
+                    label: "Reset"
+                    onclick: signal_comm_on_reset(message, counter)
+                    "Reset"
+                }
+            }
+        }
+    }
+}
+
 /// A component binding demo page showcasing parent-child data passing,
 /// two-way binding, cross-component reactive binding, typed props,
-/// and custom callback functions.
+/// custom callback functions, and Signal-based communication.
 ///
 /// # Returns
 ///
@@ -418,6 +491,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();
     let typed_state: UseTypedPropsDemo = use_typed_props_demo();
     let callback_state: UseCustomCallbackDemo = use_custom_callback_demo();
+    let signal_comm_state: UseSignalCommDemo = use_signal_comm_demo();
     let callback_text: Signal<String> = callback_state.get_text_value();
     let last_event: Signal<String> = callback_state.get_last_event();
     html! {
@@ -425,7 +499,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
             class: c_page_container()
             page_header {
                 title: "Component Binding"
-                subtitle: "Parent-child data passing, two-way binding, and cross-component reactive binding."
+                subtitle: "Parent-child data passing, two-way binding, cross-component reactive binding, and Signal communication."
             }
             my_card {
                 title: "Props Down, Callback Up"
@@ -476,31 +550,28 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         class: c_binding_child_label()
                         "Parent Controls"
                     }
-                    div {
-                        class: c_counter_row()
-                        primary_button {
-                            label: "Toggle Disabled"
-                            onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
-                            if { typed_state.get_disabled().get() } {
-                                "Enable"
-                            } else {
-                                "Disable"
-                            }
+                    primary_button {
+                        label: "Toggle Disabled"
+                        onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
+                        if { typed_state.get_disabled().get() } {
+                            "Enable"
+                        } else {
+                            "Disable"
                         }
-                        div {
-                            class: c_binding_typed_prop_group()
-                            label {
-                                class: c_form_label()
-                                "Max: "
-                                span {
-                                    class: c_binding_typed_prop_value()
-                                    typed_state.get_max_count()
-                                }
+                    }
+                    div {
+                        class: c_binding_typed_prop_group()
+                        label {
+                            class: c_form_label()
+                            "Max: "
+                            span {
+                                class: c_binding_typed_prop_value()
+                                typed_state.get_max_count()
                             }
                         }
                     }
                     p {
-                        class: c_demo_text()
+                        class: c_binding_demo_text()
                         "Count: "
                         span {
                             class: c_counter_value()
@@ -533,7 +604,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         "Parent State"
                     }
                     p {
-                        class: c_demo_text()
+                        class: c_binding_demo_text()
                         "Text: "
                         span {
                             class: c_event_highlight()
@@ -545,7 +616,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         }
                     }
                     p {
-                        class: c_demo_text()
+                        class: c_binding_demo_text()
                         "Last event: "
                         span {
                             class: c_binding_typed_prop_value()
@@ -573,7 +644,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         "Parent Component"
                     }
                     p {
-                        class: c_demo_text()
+                        class: c_binding_demo_text()
                         "Text: "
                         span {
                             class: c_event_highlight()
@@ -581,7 +652,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         }
                     }
                     p {
-                        class: c_demo_text()
+                        class: c_binding_demo_text()
                         "Count: "
                         span {
                             class: c_counter_value()
@@ -607,7 +678,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     "Temperature Converter"
                 }
                 p {
-                    class: c_demo_text_muted()
+                    class: c_hint()
                     "Edit either field — the other updates reactively via watch!"
                 }
                 { temperature_converter(cross_state.get_celsius(), cross_state.get_fahrenheit()) }
@@ -616,10 +687,58 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     "Color Mixer"
                 }
                 p {
-                    class: c_demo_text_muted()
+                    class: c_hint()
                     "Adjust RGB sliders — the hex color updates reactively via watch!"
                 }
                 { color_mixer(cross_state.get_red(), cross_state.get_green(), cross_state.get_blue(), cross_state.get_hex_color()) }
+            }
+            my_card {
+                title: "Signal Communication"
+                p {
+                    class: c_demo_text()
+                    "Parent and child share the same Signal instances. Changing a Signal in either component instantly updates the other — no callbacks needed."
+                }
+                div {
+                    class: c_binding_parent_box()
+                    p {
+                        class: c_binding_child_label()
+                        "Parent Component"
+                    }
+                    div {
+                        class: c_element_stack()
+                        label {
+                            r#for: SIGNAL_COMM_PARENT_MESSAGE_ID
+                            class: c_binding_form_label()
+                            "Message:"
+                        }
+                        input {
+                            id: SIGNAL_COMM_PARENT_MESSAGE_ID
+                            name: SIGNAL_COMM_PARENT_MESSAGE_NAME
+                            r#type: BINDING_TEXT_TYPE
+                            autocomplete: BINDING_AUTOCOMPLETE_OFF
+                            value: signal_comm_state.get_message()
+                            class: c_form_input_no_transition()
+                            oninput: on_input_value(signal_comm_state.get_message())
+                        }
+                    }
+                    p {
+                        class: c_binding_demo_text()
+                        "Counter: "
+                        span {
+                            class: c_counter_value()
+                            signal_comm_state.get_counter()
+                        }
+                    }
+                    primary_button {
+                        label: "+1"
+                        onclick: signal_comm_on_increment(signal_comm_state.get_counter())
+                        "+1"
+                    }
+                }
+                signal_child_display {
+                    message: signal_comm_state.get_message()
+                    counter: signal_comm_state.get_counter()
+                }
             }
         }
     }

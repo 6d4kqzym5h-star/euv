@@ -102,9 +102,15 @@ impl Parse for HtmlNode {
     }
 }
 
-/// Implementation of `Parse` for `HtmlIf`, parsing reactive `if` conditionals.
+/// Implementation of `Parse` for `HtmlIf`, parsing reactive and inline `if` conditionals.
 impl Parse for HtmlIf {
-    /// Parses a reactive `if` conditional into an `HtmlIf` AST.
+    /// Parses a conditional into an `HtmlIf` AST.
+    ///
+    /// Supports two syntaxes:
+    /// - Reactive: `if {expr} { children } [else if {expr} { children }]* [else { children }]`
+    ///   Detected when `if` is immediately followed by `{`.
+    /// - Inline: `if condition { children } [else if condition { children }]* [else { children }]`
+    ///   Detected when `if` is followed by a non-`{` token (e.g., identifier, `!`, etc.).
     ///
     /// # Arguments
     ///
@@ -115,34 +121,63 @@ impl Parse for HtmlIf {
     /// - `syn::Result<Self>` - The parsed `HtmlIf`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut branches: Vec<(Option<Expr>, Vec<HtmlNode>)> = Vec::new();
+        let is_reactive: bool = input.peek2(Brace);
         input.parse::<Token![if]>()?;
-        let cond_content: ParseBuffer<'_>;
-        braced!(cond_content in input);
-        let condition: Expr = cond_content.parse()?;
-        let body_content: ParseBuffer<'_>;
-        braced!(body_content in input);
-        let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-        branches.push((Some(condition), body));
-        while input.peek(Token![else]) {
-            input.parse::<Token![else]>()?;
-            if input.peek(Token![if]) {
-                input.parse::<Token![if]>()?;
-                let cond_content: ParseBuffer<'_>;
-                braced!(cond_content in input);
-                let condition: Expr = cond_content.parse()?;
-                let body_content: ParseBuffer<'_>;
-                braced!(body_content in input);
-                let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-                branches.push((Some(condition), body));
-            } else {
-                let body_content: ParseBuffer<'_>;
-                braced!(body_content in input);
-                let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-                branches.push((None, body));
-                break;
+        if is_reactive {
+            let cond_content: ParseBuffer<'_>;
+            braced!(cond_content in input);
+            let condition: Expr = cond_content.parse()?;
+            let body_content: ParseBuffer<'_>;
+            braced!(body_content in input);
+            let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+            branches.push((Some(condition), body));
+            while input.peek(Token![else]) {
+                input.parse::<Token![else]>()?;
+                if input.peek(Token![if]) {
+                    input.parse::<Token![if]>()?;
+                    let cond_content: ParseBuffer<'_>;
+                    braced!(cond_content in input);
+                    let condition: Expr = cond_content.parse()?;
+                    let body_content: ParseBuffer<'_>;
+                    braced!(body_content in input);
+                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+                    branches.push((Some(condition), body));
+                } else {
+                    let body_content: ParseBuffer<'_>;
+                    braced!(body_content in input);
+                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+                    branches.push((None, body));
+                    break;
+                }
+            }
+        } else {
+            let condition: Expr = input.parse()?;
+            let body_content: ParseBuffer<'_>;
+            braced!(body_content in input);
+            let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+            branches.push((Some(condition), body));
+            while input.peek(Token![else]) {
+                input.parse::<Token![else]>()?;
+                if input.peek(Token![if]) {
+                    input.parse::<Token![if]>()?;
+                    let condition: Expr = input.parse()?;
+                    let body_content: ParseBuffer<'_>;
+                    braced!(body_content in input);
+                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+                    branches.push((Some(condition), body));
+                } else {
+                    let body_content: ParseBuffer<'_>;
+                    braced!(body_content in input);
+                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+                    branches.push((None, body));
+                    break;
+                }
             }
         }
-        Ok(Self { branches })
+        Ok(Self {
+            is_reactive,
+            branches,
+        })
     }
 }
 
@@ -380,11 +415,19 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::If(html_if) => {
-                let if_chain: proc_macro2::TokenStream =
-                    build_html_if_chain(html_if.get_branches());
-                tokens.extend(quote! {
-                    ::euv::VirtualNode::create_dynamic(move || { #if_chain })
-                });
+                if *html_if.get_is_reactive() {
+                    let if_chain: proc_macro2::TokenStream =
+                        build_html_if_chain(html_if.get_branches());
+                    tokens.extend(quote! {
+                        ::euv::VirtualNode::create_dynamic(move || { #if_chain })
+                    });
+                } else {
+                    let if_chain: proc_macro2::TokenStream =
+                        build_html_if_chain_to_node(html_if.get_branches());
+                    tokens.extend(quote! {
+                        { #if_chain }
+                    });
+                }
             }
             HtmlNode::Match(html_match) => {
                 let scrutinee: &Expr = strip_braces_from_expr(html_match.get_scrutinee());

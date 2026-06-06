@@ -41,6 +41,18 @@ pub(crate) struct CallbackInputProps {
     pub(crate) on_reset: Option<Rc<dyn Fn(Event)>>,
 }
 
+/// Props for the `signal_child_display` component.
+///
+/// Demonstrates Signal-based parent-child communication where the child
+/// reads from and writes to shared signals passed down from the parent.
+#[derive(Clone, Default)]
+pub(crate) struct SignalChildDisplayProps {
+    /// The shared message signal for parent-to-child and child-to-parent text communication.
+    pub(crate) message: Signal<String>,
+    /// The shared counter signal for parent-child counter synchronization.
+    pub(crate) counter: Signal<i32>,
+}
+
 /// Props for the `page_component_binding` component.
 #[derive(Clone, Default)]
 pub(crate) struct PageComponentBindingProps;

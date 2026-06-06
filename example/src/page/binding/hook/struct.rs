@@ -73,3 +73,17 @@ pub(crate) struct UseCustomCallbackDemo {
     #[get(type(copy))]
     pub(crate) last_event: Signal<String>,
 }
+
+/// Reactive state for the Signal-based communication demo.
+///
+/// Demonstrates parent-child communication using shared signals,
+/// where both parent and child read/write the same signal instances.
+#[derive(Clone, Copy, Data, New)]
+pub(crate) struct UseSignalCommDemo {
+    /// The shared message signal between parent and child.
+    #[get(type(copy))]
+    pub(crate) message: Signal<String>,
+    /// The shared counter signal between parent and child.
+    #[get(type(copy))]
+    pub(crate) counter: Signal<i32>,
+}

@@ -19,6 +19,7 @@ use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys:
 use {
     lombok_macros::*,
     qrcode::{QrCode, render::svg},
+    serde::Deserialize,
 };
 
 /// Entry point for the euv example application.

@@ -764,11 +764,54 @@ pub(crate) fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::Toke
         .collect()
 }
 
+/// Builds a Rust `if/else if/else` chain token stream from `HtmlIf` branches,
+/// where each branch body produces a single `VirtualNode`.
+///
+/// Used for inline (non-reactive) conditionals at the top level or inside
+/// other conditionals/match arms where a single `VirtualNode` is expected.
+///
+/// # Arguments
+///
+/// - `&[(Option<Expr>, Vec<HtmlNode>)]` - The branches from an `HtmlIf`.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The generated if-chain token stream producing a `VirtualNode`.
+pub(crate) fn build_html_if_chain_to_node(
+    branches: &[(Option<Expr>, Vec<HtmlNode>)],
+) -> proc_macro2::TokenStream {
+    let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    let has_else: bool = branches
+        .last()
+        .is_some_and(|(condition, _): &(Option<Expr>, Vec<HtmlNode>)| condition.is_none());
+    for (branch_index, (condition, body)) in branches.iter().enumerate() {
+        let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
+        match (branch_index, condition) {
+            (0, Some(cond)) => {
+                if_chain.extend(quote! { if #cond { #body_expr } });
+            }
+            (_, Some(cond)) => {
+                if_chain.extend(quote! { else if #cond { #body_expr } });
+            }
+            (_, None) => {
+                if_chain.extend(quote! { else { #body_expr } });
+            }
+        }
+    }
+    if !has_else {
+        if_chain.extend(quote! { else { ::euv::VirtualNode::Empty } });
+    }
+    if_chain
+}
+
 /// Converts a list of `HtmlNode` children into a single `VirtualNode` token stream.
 ///
 /// - 0 children → `VirtualNode::Empty`
 /// - 1 child → the child's token stream directly (no Fragment wrapper)
 /// - N children → `VirtualNode::Fragment(vec![...])`
+///
+/// Inline (non-reactive) `if` conditionals are expanded as Rust `if` expressions
+/// that produce a `VirtualNode`.
 ///
 /// # Arguments
 ///
@@ -778,6 +821,13 @@ pub(crate) fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::Toke
 ///
 /// - `proc_macro2::TokenStream` - The generated token stream representing a single `VirtualNode`.
 pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
+    let has_inline_if: bool = children.iter().any(
+        |child: &HtmlNode| matches!(child, HtmlNode::If(html_if) if !html_if.get_is_reactive()),
+    );
+    if has_inline_if {
+        let vec_tokens: proc_macro2::TokenStream = children_to_tokens(children);
+        return quote! { ::euv::VirtualNode::Fragment(#vec_tokens) };
+    }
     match children.len() {
         0 => quote! { ::euv::VirtualNode::Empty },
         1 => {
@@ -792,10 +842,51 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
     }
 }
 
+/// Builds a Rust `if/else if/else` chain token stream from `HtmlIf` branches,
+/// where each branch body produces a `Vec<VirtualNode>`.
+///
+/// Used for inline (non-reactive) conditionals inside `for` loops and flattened
+/// element children, where each branch result is collected via `.extend()`.
+///
+/// # Arguments
+///
+/// - `&[(Option<Expr>, Vec<HtmlNode>)]` - The branches from an `HtmlIf`.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The generated if-chain token stream producing `Vec<VirtualNode>`.
+pub(crate) fn build_html_if_chain_to_vec(
+    branches: &[(Option<Expr>, Vec<HtmlNode>)],
+) -> proc_macro2::TokenStream {
+    let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    let has_else: bool = branches
+        .last()
+        .is_some_and(|(condition, _): &(Option<Expr>, Vec<HtmlNode>)| condition.is_none());
+    for (branch_index, (condition, body)) in branches.iter().enumerate() {
+        let body_expr: proc_macro2::TokenStream = children_to_tokens(body);
+        match (branch_index, condition) {
+            (0, Some(cond)) => {
+                if_chain.extend(quote! { if #cond { #body_expr } });
+            }
+            (_, Some(cond)) => {
+                if_chain.extend(quote! { else if #cond { #body_expr } });
+            }
+            (_, None) => {
+                if_chain.extend(quote! { else { #body_expr } });
+            }
+        }
+    }
+    if !has_else {
+        if_chain.extend(quote! { else { vec![] } });
+    }
+    if_chain
+}
+
 /// Converts a list of `HtmlNode` children into a `Vec<VirtualNode>` token stream.
 ///
-/// Always produces `vec![...]` format, used by `for` loops where the body
-/// is collected and then extended into an accumulator.
+/// Always produces `vec![...]` format when no inline conditionals are present.
+/// When inline (non-reactive) `if` conditionals exist, generates a block that
+/// builds the `Vec<VirtualNode>` incrementally using `.push()` and `.extend()`.
 ///
 /// # Arguments
 ///
@@ -805,12 +896,44 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
 ///
 /// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
-    let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
-    quote! { vec![#(#child_tokens), *] }
+    let has_inline_if: bool = children.iter().any(
+        |child: &HtmlNode| matches!(child, HtmlNode::If(html_if) if !html_if.get_is_reactive()),
+    );
+    if !has_inline_if {
+        let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
+        return quote! { vec![#(#child_tokens), *] };
+    }
+    let mut parts: Vec<proc_macro2::TokenStream> = Vec::new();
+    for child in children {
+        match child {
+            HtmlNode::If(html_if) if !html_if.get_is_reactive() => {
+                let if_chain: proc_macro2::TokenStream =
+                    build_html_if_chain_to_vec(html_if.get_branches());
+                parts.push(quote! {
+                    __euv_for_body.extend(#if_chain);
+                });
+            }
+            _ => {
+                let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+                child.to_tokens(&mut token_stream);
+                parts.push(quote! {
+                    __euv_for_body.push(#token_stream);
+                });
+            }
+        }
+    }
+    quote! {
+        {
+            let mut __euv_for_body: Vec<::euv::VirtualNode> = Vec::new();
+            #(#parts)*
+            __euv_for_body
+        }
+    }
 }
 
 /// Generates a token stream that builds a `Vec<VirtualNode>` with `For` loops
-/// expanded inline via `.extend()` instead of being wrapped in `VirtualNode::Fragment`.
+/// and inline `if` conditionals expanded inline via `.extend()` instead of being
+/// wrapped in `VirtualNode::Fragment`.
 ///
 /// This is critical for elements like `<select>` where intermediate wrapper elements
 /// (such as `<slot>` used by `VirtualNode::Fragment`) are invalid HTML and cause
@@ -836,6 +959,13 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
                     for #pattern in #iterable {
                         __euv_element_children.extend(#body_tokens);
                     }
+                });
+            }
+            HtmlNode::If(html_if) if !html_if.get_is_reactive() => {
+                let if_chain: proc_macro2::TokenStream =
+                    build_html_if_chain_to_vec(html_if.get_branches());
+                parts.push(quote! {
+                    __euv_element_children.extend(#if_chain);
                 });
             }
             _ => {

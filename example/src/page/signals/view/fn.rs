@@ -19,21 +19,18 @@ pub(crate) fn page_signals(node: VirtualNode<PageSignalsProps>) -> VirtualNode {
             my_card {
                 title: "Counter"
                 div {
-                    class: c_counter_row()
-                    div {
-                        class: c_counter_text()
-                        "Count: "
-                        span {
-                            id: COUNTER_ID
-                            class: c_counter_value()
-                            count
-                        }
+                    class: c_counter_text()
+                    "Count: "
+                    span {
+                        id: COUNTER_ID
+                        class: c_counter_value()
+                        count
                     }
-                    primary_button {
-                        label: "Increment"
-                        onclick: counter_on_increment(count)
-                        "Increment"
-                    }
+                }
+                primary_button {
+                    label: "Increment"
+                    onclick: counter_on_increment(count)
+                    "Increment"
                 }
             }
             my_card {

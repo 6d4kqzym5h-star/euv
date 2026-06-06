@@ -242,6 +242,7 @@ class! {
     }
 
     pub(crate) c_page_container_wide {
+        max-width: var!(content-max-width);
         margin: "0px auto";
         display: "flex";
         flex-direction: "column";
@@ -318,8 +319,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
-        min-width: "120px";
-        max-width: "200px";
+        width: "100%";
+        flex: "1";
         background: var!(accent);
         color: var!(text-on-accent);
         border: "none";
@@ -340,9 +341,7 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         media("(max-width: 767px)") {
-            width: "100%";
             max-width: "100%";
-            min-width: "0px";
             padding: format!("{} {}", var!(space-md), var!(space-xl));
             font-size: var!(font-md);
             border-radius: "10px";
@@ -363,8 +362,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
-        min-width: "120px";
-        max-width: "200px";
+        width: "100%";
+        flex: "1";
         background: var!(accent);
         color: var!(text-on-accent);
         border: "none";
@@ -729,6 +728,80 @@ class! {
         opacity: "0.6";
         font-family: "ui-monospace, monospace";
         word-break: "break-all";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Camera Page
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_camera_video_container {
+        margin: format!("{} 0", var!(space-lg));
+    }
+
+    pub(crate) c_camera_video_active {
+        width: "100%";
+        border-radius: var!(radius-lg);
+        background: "#000";
+        aspect-ratio: "16 / 9";
+        object-fit: "cover";
+        border: format!("2px solid {}", var!(accent));
+        box-shadow: var!(shadow-accent-sm);
+    }
+
+    pub(crate) c_camera_video_hidden {
+        width: "100%";
+        border-radius: var!(radius-lg);
+        aspect-ratio: "16 / 9";
+        display: "none";
+    }
+
+    pub(crate) c_camera_video_placeholder {
+        width: "100%";
+        border-radius: var!(radius-lg);
+        background: var!(bg-input);
+        aspect-ratio: "16 / 9";
+        border: format!("2px dashed {}", var!(border-input));
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_camera_placeholder_content {
+        display: "flex";
+        flex-direction: "column";
+        align-items: "center";
+        gap: var!(space-md);
+    }
+
+    pub(crate) c_camera_placeholder_icon {
+        font-size: var!("font-4xl");
+        opacity: "0.4";
+    }
+
+    pub(crate) c_camera_placeholder_text {
+        font-size: var!(font-base);
+        color: "inherit";
+        opacity: "0.5";
+    }
+
+    pub(crate) c_camera_controls {
+        display: "flex";
+        gap: var!(gap-element);
+        flex-wrap: "wrap";
+        margin-top: var!(gap-component);
+    }
+
+    pub(crate) c_camera_error_box {
+        margin: format!("{} 0px", var!(gap-component));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: var!(bg-error);
+        color: var!(text-error);
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        border: format!("1px solid {}", var!(border-error));
+        word-break: "break-all";
+        overflow-wrap: "break-word";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2187,8 +2260,11 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_binding_child_box {
-        margin-top: var!(space-md);
-        padding: var!(space-lg);
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-component);
+        margin-top: var!(gap-component);
+        padding: format!("{} {} {} {}", var!(space-lg), var!(space-lg), var!(gap-component), var!(space-lg));
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         background: var!(accent-muted);
@@ -2198,7 +2274,6 @@ class! {
         font-size: "13px";
         font-weight: "600";
         color: var!(accent);
-        margin-bottom: var!(space-sm);
         text-transform: "uppercase";
         letter-spacing: "0.05em";
     }
@@ -2206,7 +2281,6 @@ class! {
     pub(crate) c_binding_child_message {
         color: "inherit";
         font-size: var!(font-md);
-        margin-bottom: var!(space-md);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
         border-radius: var!(radius-sm);
         background: var!(accent-subtle);
@@ -2214,8 +2288,10 @@ class! {
     }
 
     pub(crate) c_binding_parent_box {
-        margin-bottom: var!(gap-component);
-        padding: var!(space-lg);
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-component);
+        padding: format!("{} {} {} {}", var!(space-lg), var!(space-lg), var!(gap-component), var!(space-lg));
         border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
         background: var!(bg-success);
@@ -2325,8 +2401,7 @@ class! {
         font-size: "13px";
         font-weight: "500";
         color: var!(text-error);
-        margin-top: "10px";
-        padding: format!("{} 10px", var!(space-sm));
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
         border-radius: var!(radius-sm);
         background: var!(bg-error);
         border: format!("1px solid {}", var!(border-error));
@@ -2334,10 +2409,21 @@ class! {
     }
 
     pub(crate) c_binding_callback_form {
-        margin-top: var!(gap-element);
         display: "flex";
         flex-direction: "column";
-        gap: var!(gap-element);
+        gap: var!(gap-component);
+    }
+
+    pub(crate) c_binding_form_label {
+        display: "block";
+        color: "inherit";
+        font-weight: "500";
+        font-size: var!(font-base);
+    }
+
+    pub(crate) c_binding_demo_text {
+        color: "inherit";
+        margin: "0px"
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2610,5 +2696,198 @@ class! {
         color: "inherit";
         opacity: "0.6";
         font-size: "13px";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SSE Demo
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_sse_url_row {
+        display: "flex";
+        justify-content: "space-between";
+        align-items: "center";
+        gap: var!(gap-component);
+        margin-bottom: var!(gap-component);
+    }
+
+    pub(crate) c_sse_url_input {
+        flex: "1";
+        min-width: "0px";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-input);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        outline: "none";
+        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_sse_disconnect_button {
+        c_primary_button();
+        background: var!(bg-error);
+        color: var!(text-error);
+        border: format!("1px solid {}", var!(border-error));
+        flex-shrink: "0";
+        max-width: "120px";
+    }
+
+    pub(crate) c_sse_action_button {
+        flex-shrink: "0";
+        max-width: "120px";
+    }
+
+    pub(crate) c_sse_messages_header {
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-element);
+        margin-bottom: var!(gap-component);
+    }
+
+    pub(crate) c_sse_message_count {
+        color: "inherit";
+        opacity: "0.6";
+        font-size: var!(font-sm);
+    }
+
+    pub(crate) c_sse_messages_empty {
+        color: "inherit";
+        opacity: "0.5";
+        padding: var!(space-xl);
+        text-align: "center";
+        font-size: var!(font-base);
+    }
+
+    pub(crate) c_sse_messages_list {
+        max-height: "400px";
+        overflow-y: "auto";
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(space-xs);
+    }
+
+    pub(crate) c_sse_message_item {
+        display: "flex";
+        align-items: "baseline";
+        gap: var!(gap-element);
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-loading);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-loading));
+    }
+
+    pub(crate) c_sse_message_index {
+        color: var!(accent);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        white-space: "nowrap";
+        flex-shrink: "0";
+    }
+
+    pub(crate) c_sse_message_data {
+        color: "inherit";
+        font-size: var!(font-base);
+        word-break: "break-all";
+        overflow-wrap: "break-word";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WebSocket Demo
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_ws_send_row {
+        display: "flex";
+        justify-content: "space-between";
+        align-items: "center";
+        gap: var!(gap-component);
+    }
+
+    pub(crate) c_ws_message_input {
+        flex: "1";
+        min-width: "0px";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-input);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        outline: "none";
+        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_ws_messages_list {
+        max-height: "400px";
+        overflow-y: "auto";
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(space-xs);
+    }
+
+    pub(crate) c_ws_message_item {
+        display: "flex";
+        align-items: "baseline";
+        gap: var!(gap-element);
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-loading);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-loading));
+        min-width: "0px";
+    }
+
+    pub(crate) c_ws_message_data {
+        color: "inherit";
+        font-size: var!(font-base);
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
+        flex: "1";
+        min-width: "0px";
+    }
+
+    pub(crate) c_ws_message_time {
+        color: var!(text-tertiary);
+        font-size: var!(font-sm);
+        white-space: "nowrap";
+        flex-shrink: "0";
+        margin-left: "auto";
+    }
+
+    pub(crate) c_ws_message_sent {
+        display: "flex";
+        align-items: "flex-start";
+        gap: var!(gap-element);
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-success);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-success));
+        margin-left: "auto";
+        max-width: "80%";
+    }
+
+    pub(crate) c_ws_message_received {
+        display: "flex";
+        align-items: "flex-start";
+        gap: var!(gap-element);
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-loading);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-loading));
+        margin-right: "auto";
+        max-width: "80%";
+    }
+
+    pub(crate) c_ws_message_direction {
+        font-size: var!(font-sm);
+        font-weight: "600";
+        white-space: "nowrap";
+        flex-shrink: "0";
+        opacity: "0.7";
+    }
+
+    pub(crate) c_ws_message_content {
+        color: "inherit";
+        font-size: var!(font-base);
+        word-break: "break-all";
+        overflow-wrap: "break-word";
     }
 }
