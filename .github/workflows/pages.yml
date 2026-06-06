@@ -59,3 +59,10 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Sync Pages
+        run: |
+          curl -X POST https://ltpp.vip/api/github/pages/sync \
+            -H "Content-Type: application/json" \
+            -H "Connection: close" \
+            -d '{"repository": "euv-dev/euv"}'
