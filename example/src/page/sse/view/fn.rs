@@ -26,35 +26,23 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                     class: c_demo_text()
                     "Enter the SSE endpoint URL and click Connect to start receiving server-sent events."
                 }
-                div {
-                    class: c_sse_url_row()
-                    input {
-                        r#type: "text"
-                        class: c_sse_url_input()
-                        placeholder: SSE_URL_PLACEHOLDER
-                        value: state.get_url()
-                        oninput: on_input_value(state.get_url())
+                if { state.get_connecting().get() } {
+                    button {
+                        class: c_primary_button_disabled()
+                        disabled: true
+                        "Connecting..."
                     }
-                    if { state.get_connecting().get() } {
-                        button {
-                            class: c_primary_button_disabled()
-                            class: c_sse_action_button()
-                            disabled: true
-                            "Connecting..."
-                        }
-                    } else if { state.get_connected().get() } {
-                        button {
-                            class: c_sse_disconnect_button()
-                            onclick: sse_on_disconnect(state)
-                            "Disconnect"
-                        }
-                    } else {
-                        button {
-                            class: c_primary_button()
-                            class: c_sse_action_button()
-                            onclick: sse_on_connect(state)
-                            "Connect"
-                        }
+                } else if { state.get_connected().get() } {
+                    button {
+                        class: c_sse_disconnect_button()
+                        onclick: sse_on_disconnect(state)
+                        "Disconnect"
+                    }
+                } else {
+                    button {
+                        class: c_primary_button()
+                        onclick: sse_on_connect(state)
+                        "Connect"
                     }
                 }
                 if { !state.get_error().get().is_empty() } {

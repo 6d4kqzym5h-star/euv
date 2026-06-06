@@ -2702,39 +2702,18 @@ class! {
     // SSE Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_sse_url_row {
-        display: "flex";
-        justify-content: "space-between";
-        align-items: "center";
-        gap: var!(gap-component);
-        margin-bottom: var!(gap-component);
-    }
-
-    pub(crate) c_sse_url_input {
-        flex: "1";
-        min-width: "0px";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-input);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
-        font-size: var!(font-base);
-        outline: "none";
-        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
-    }
-
     pub(crate) c_sse_disconnect_button {
         c_primary_button();
-        background: var!(bg-error);
-        color: var!(text-error);
-        border: format!("1px solid {}", var!(border-error));
-        flex-shrink: "0";
-        max-width: "120px";
+        background: var!(text-error);
+        color: var!(text-on-accent);
+        border: format!("1px solid {}", var!(text-error));
     }
 
     pub(crate) c_sse_action_button {
-        flex-shrink: "0";
+        min-width: "0px";
         max-width: "120px";
+        padding: format!("{} {}", var!(space-sm), var!(space-lg));
+        flex-shrink: "0";
     }
 
     pub(crate) c_sse_messages_header {
@@ -2811,6 +2790,8 @@ class! {
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.4";
+        box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
     }

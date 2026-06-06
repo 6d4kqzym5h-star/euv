@@ -27,34 +27,23 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     class: c_demo_text()
                     "A random UUID is generated for each session. Click Connect to establish a real-time bidirectional connection. Ping messages are sent automatically to keep the connection alive."
                 }
-                div {
-                    class: c_sse_url_row()
-                    input {
-                        r#type: "text"
-                        class: c_sse_url_input()
-                        value: state.get_url()
-                        readonly: true
+                if { state.get_connecting().get() } {
+                    button {
+                        class: c_primary_button_disabled()
+                        disabled: true
+                        "Connecting..."
                     }
-                    if { state.get_connecting().get() } {
-                        button {
-                            class: c_primary_button_disabled()
-                            class: c_sse_action_button()
-                            disabled: true
-                            "Connecting..."
-                        }
-                    } else if { state.get_connected().get() } {
-                        button {
-                            class: c_sse_disconnect_button()
-                            onclick: websocket_on_disconnect(state)
-                            "Disconnect"
-                        }
-                    } else {
-                        button {
-                            class: c_primary_button()
-                            class: c_sse_action_button()
-                            onclick: websocket_on_connect(state)
-                            "Connect"
-                        }
+                } else if { state.get_connected().get() } {
+                    button {
+                        class: c_sse_disconnect_button()
+                        onclick: websocket_on_disconnect(state)
+                        "Disconnect"
+                    }
+                } else {
+                    button {
+                        class: c_primary_button()
+                        onclick: websocket_on_connect(state)
+                        "Connect"
                     }
                 }
                 if { !state.get_error().get().is_empty() } {
