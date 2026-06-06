@@ -703,34 +703,6 @@ class! {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Multimedia Page
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    pub(crate) c_multimedia_image_section {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        padding: format!("{} 0", var!(space-lg));
-    }
-
-    pub(crate) c_multimedia_qr_code {
-        width: "200px";
-        height: "200px";
-        object-fit: "contain";
-        border-radius: var!(radius-lg);
-        pointer-events: "none";
-    }
-
-    pub(crate) c_multimedia_url_text {
-        text-align: "center";
-        font-size: var!(font-sm);
-        color: "inherit";
-        opacity: "0.6";
-        font-family: "ui-monospace, monospace";
-        word-break: "break-all";
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
     // Camera Page
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1267,7 +1239,6 @@ class! {
         border: format!("2px dashed {}", var!(border-warning));
         text-align: "center";
         user-select: "none";
-        cursor: "grab";
         color: var!(text-warning);
         transition: format!("border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
@@ -1373,6 +1344,47 @@ class! {
         font-size: var!(font-base);
         color: "inherit";
         font-weight: "500";
+    }
+
+    pub(crate) c_event_video_area {
+        padding: var!(space-lg);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-warning));
+        color: var!(text-warning);
+        width: "100%";
+        overflow: "hidden";
+    }
+
+    pub(crate) c_event_video {
+        width: "100%";
+        max-width: "100%";
+        border-radius: var!(radius-sm);
+    }
+
+    pub(crate) c_event_image_area {
+        padding: var!(space-lg);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-accent-light));
+        color: "inherit";
+        width: "100%";
+        overflow: "hidden";
+        text-align: "center";
+    }
+
+    pub(crate) c_event_image {
+        width: "200px";
+        max-width: "100%";
+        object-fit: "contain";
+        border-radius: var!(radius-lg);
+    }
+
+    pub(crate) c_event_url_text {
+        text-align: "center";
+        font-size: var!(font-sm);
+        color: "inherit";
+        opacity: "0.6";
+        font-family: "ui-monospace, monospace";
+        word-break: "break-all";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

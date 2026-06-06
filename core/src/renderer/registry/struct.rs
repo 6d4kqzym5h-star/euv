@@ -1,6 +1,9 @@
 use crate::*;
 
 /// A wrapper around `Option<NativeEventHandler>` that enables `From<usize>` conversions.
+///
+/// For non-bubbling events, also stores the JavaScript `Function` reference
+/// and `Element` needed to call `removeEventListener` during cleanup.
 #[derive(CustomDebug, Data, New)]
 pub(crate) struct HandlerSlot {
     /// The optional event handler stored in this slot.
@@ -9,6 +12,26 @@ pub(crate) struct HandlerSlot {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) handler: Option<NativeEventHandler>,
+    /// The JavaScript `Function` reference for non-bubbling event listeners.
+    ///
+    /// When a non-bubbling event is attached directly on an element via
+    /// `addEventListener`, the closure's JS `Function` must be kept alive so
+    /// it can be passed to `removeEventListener` during cleanup. For bubbling
+    /// events that use global delegation, this is `None`.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) listener_function: Option<JsValue>,
+    /// The DOM element on which a non-bubbling event listener was registered.
+    ///
+    /// Stored here so that `removeEventListener` can be called during cleanup
+    /// without needing to re-look-up the element. `None` for bubbling events.
+    #[debug(skip)]
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) element: Option<Element>,
 }
 
 /// Stores a signal update callback and its cleanup flag.

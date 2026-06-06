@@ -1,21 +1,5 @@
 use crate::*;
 
-thread_local! {
-    /// The persistent dispatch `Closure`, kept alive for the lifetime of the
-    /// program so it can be handed to `setTimeout` repeatedly.
-    ///
-    /// The closure resets the `SCHEDULED` flag and then runs the queued signal
-    /// update callbacks. Resetting `SCHEDULED` here is what allows the next
-    /// `schedule_signal_update_targeted` call to schedule a fresh dispatch; if
-    /// this never ran, the flag would stay `true` forever and every reactive
-    /// update would be silently dropped.
-    static DISPATCH_CLOSURE: closure::Closure<dyn FnMut()> =
-        closure::Closure::wrap(Box::new(|| {
-            SCHEDULED.store(false, Ordering::Relaxed);
-            dispatch_signal_update_callbacks();
-        }) as Box<dyn FnMut()>);
-}
-
 /// Invokes `callback` with a reference to the persistent dispatch `Function`.
 ///
 /// The dispatch closure is created once per thread and stored in
@@ -41,45 +25,21 @@ where
     })
 }
 
-/// Schedules a deferred signal update event.
-///
-/// If a schedule is already pending (`SCHEDULED` is true) or updates
-/// are suppressed (`SUPPRESS_SCHEDULE` is true), this is a no-op.
-/// Otherwise, sets `SCHEDULED` to true and queues the dispatch callback
-/// (preferring `queueMicrotask`) on WASM targets. This ensures that no
-/// matter how many signal updates occur within a single task, only one
-/// dispatch cycle runs, preventing CPU spikes during rapid input events
-/// (e.g., slider dragging).
-///
-/// On non-WASM targets, resets `SCHEDULED` immediately since there is
-/// no event loop to schedule on.
-pub fn schedule_signal_update() {
-    schedule_signal_update_targeted(&[]);
-}
-
 /// Schedules a deferred signal update with precise dirty marking.
 ///
-/// If `dependents` is non-empty, only those dynamic node IDs are marked
-/// dirty. If `dependents` is empty, falls back to marking all slots dirty
-/// (for backwards compatibility with `batch_updates` and other callers
-/// that don't track dependencies).
+/// Marks only the specified dynamic node IDs as dirty, then queues a
+/// single microtask dispatch if one is not already pending. When
+/// `SUPPRESS_SCHEDULE` is `true`, slots are still marked dirty but no
+/// dispatch is scheduled, allowing `batch` to batch
+/// precise dirty marks without triggering premature DOM updates.
 ///
 /// # Arguments
 ///
-/// - `&[usize]` - Dynamic node IDs to mark dirty. Empty slice means mark all.
-pub fn schedule_signal_update_targeted(dependents: &[usize]) {
+/// - `&[usize]` - Dynamic node IDs to mark dirty.
+pub fn schedule_update(dependents: &[usize]) {
+    mark_slots_dirty_targeted(dependents);
     if SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
-        if !dependents.is_empty() {
-            mark_slots_dirty_targeted(dependents);
-        } else {
-            mark_all_slots_dirty();
-        }
         return;
-    }
-    if !dependents.is_empty() {
-        mark_slots_dirty_targeted(dependents);
-    } else {
-        mark_all_slots_dirty();
     }
     if SCHEDULED.load(Ordering::Relaxed) {
         return;
@@ -123,20 +83,18 @@ pub fn schedule_signal_update_targeted(dependents: &[usize]) {
     SCHEDULED.store(false, Ordering::Relaxed);
 }
 
-/// Batches signal updates within a closure, deferring DOM synchronization until completion.
+/// Batches signal updates within a closure, deferring DOM dispatch until the
+/// outermost batch completes.
 ///
-/// Saves the current `SUPPRESS_SCHEDULE` flag, sets it to `true`,
-/// executes the closure, and restores the previous flag value.
-/// This prevents `schedule_signal_update` from queuing microtasks
-/// during the closure execution, allowing multiple signal mutations
-/// to be applied before triggering a single DOM update cycle.
+/// Sets `SUPPRESS_SCHEDULE` to `true` so that any `Signal::set()` calls
+/// inside the closure mark their dependents dirty precisely but do not
+/// queue a microtask dispatch. The previous suppress flag is restored on
+/// exit, allowing the outermost `set()` call to trigger the actual
+/// dispatch cycle that processes all accumulated dirty slots.
 ///
-/// When the outermost `batch_updates` call completes (i.e., the previous
-/// suppress flag was `false`), a single `schedule_signal_update()` is
-/// invoked to ensure that any signal mutations performed inside the
-/// closure are reflected in the DOM. This is critical for `watch!`
-/// initialisation, where `Console::log` calls mutate the console signal
-/// inside the batched block and must still trigger DynamicNode re-renders.
+/// Unlike the legacy full-broadcast approach, this uses precise dependency
+/// tracking: only the dynamic nodes that actually depend on the changed
+/// signals are marked dirty and re-rendered.
 ///
 /// # Arguments
 ///
@@ -145,19 +103,14 @@ pub fn schedule_signal_update_targeted(dependents: &[usize]) {
 /// # Returns
 ///
 /// - `R` - The result of the closure execution.
-pub fn batch_updates<F, R>(callback: F) -> R
+pub fn batch<F, R>(callback: F) -> R
 where
     F: FnOnce() -> R,
 {
     let was_outermost: bool = !SUPPRESS_SCHEDULE.load(Ordering::Relaxed);
     SUPPRESS_SCHEDULE.store(true, Ordering::Relaxed);
     let result: R = callback();
-    if was_outermost {
-        SUPPRESS_SCHEDULE.store(false, Ordering::Relaxed);
-        schedule_signal_update();
-    } else {
-        SUPPRESS_SCHEDULE.store(false, Ordering::Relaxed);
-    }
+    SUPPRESS_SCHEDULE.store(!was_outermost, Ordering::Relaxed);
     result
 }
 
@@ -172,14 +125,14 @@ where
 ///
 /// - `Signal<String>` - The attribute signal to subscribe.
 /// - `Fn() -> String + 'static` - A closure that computes the current attribute value string.
-pub(crate) fn subscribe_attr_signal<F>(attr_signal: Signal<String>, compute: F)
+pub(crate) fn subscribe_attr<F>(attr_signal: Signal<String>, compute: F)
 where
     F: Fn() -> String + 'static,
 {
     register_attr_signal_listener(
         attr_signal.get_inner(),
         Box::new(move || {
-            attr_signal.set_silent(compute());
+            attr_signal.set(compute());
         }),
     );
 }
@@ -197,12 +150,12 @@ where
 /// # Returns
 ///
 /// - `AttributeValue` - An `AttributeValue::Signal` wrapping the derived string signal.
-pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> AttributeValue {
+pub(crate) fn bool_to_attr(source: Signal<bool>) -> AttributeValue {
     let string_signal: Signal<String> = Signal::create(source.get().to_string());
     let string_signal_clone: Signal<String> = string_signal;
     let source_for_sub: Signal<bool> = source;
     source_for_sub.replace_subscribe(move || {
-        string_signal_clone.set_silent(source_for_sub.get().to_string());
+        string_signal_clone.set(source_for_sub.get().to_string());
     });
     AttributeValue::Signal(string_signal)
 }
@@ -215,7 +168,7 @@ pub(crate) fn bool_signal_to_string_attribute_value(source: Signal<bool>) -> Att
 ///
 /// - `&'static mut Option<HookContextRc>`: A mutable reference to the global hook context.
 #[allow(static_mut_refs)]
-pub(crate) fn current_hook_context_mut() -> &'static mut Option<HookContextRc> {
+pub(crate) fn try_get_current_hook_context_mut() -> &'static mut Option<HookContextRc> {
     unsafe { &mut *CURRENT_HOOK_CONTEXT.get_0().get() }
 }
 
@@ -227,6 +180,6 @@ pub(crate) fn current_hook_context_mut() -> &'static mut Option<HookContextRc> {
 ///
 /// - `&'static Option<HookContextRc>`: A shared reference to the global hook context.
 #[allow(static_mut_refs)]
-pub(crate) fn current_hook_context() -> &'static Option<HookContextRc> {
+pub(crate) fn try_get_current_hook_context() -> &'static Option<HookContextRc> {
     unsafe { &*CURRENT_HOOK_CONTEXT.get_0().get() }
 }

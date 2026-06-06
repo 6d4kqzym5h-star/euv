@@ -181,22 +181,6 @@ fn sweep_removed_signal_update_entries() {
     });
 }
 
-/// Marks all non-removed slots in the signal update registry as dirty.
-///
-/// Called by `schedule_signal_update` to indicate that at least one signal
-/// has changed and all dynamic nodes need to check for updates on the next
-/// dispatch cycle. This is the fallback when no dependency tracking info
-/// is available (e.g., during `batch_updates`).
-pub(crate) fn mark_all_slots_dirty() {
-    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
-    for entry in registry.values() {
-        let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
-        if !slot.get_removed() {
-            slot.set_dirty(true);
-        }
-    }
-}
-
 /// Marks only the specified dynamic node slots as dirty.
 ///
 /// This enables precise reactive updates: when a signal changes, only
@@ -259,8 +243,10 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
 
 /// Cleans up all handler entries associated with a DOM element.
 ///
-/// Collects all registry keys whose element ID matches `euv_id` and
-/// removes them from `HANDLER_REGISTRY`, freeing the heap allocations.
+/// For non-bubbling events, removes the `addEventListener` listener from
+/// the element using the stored `Function` reference before freeing the
+/// heap allocation. For bubbling events that use global delegation, only
+/// frees the heap allocation since the window-level listener must remain.
 ///
 /// # Arguments
 ///
@@ -274,6 +260,15 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
         .collect();
     for key in keys_to_remove {
         if let Some(entry) = registry_ref.remove(&key) {
+            let slot: &mut HandlerSlot = unsafe { &mut *entry };
+            if let Some(element) = slot.try_get_element().as_ref().cloned()
+                && let Some(listener_function) = slot.get_mut_listener_function().take()
+            {
+                let event_name: &str = key.1;
+                let listener: &Function = listener_function.unchecked_ref::<Function>();
+                let _ = element.remove_event_listener_with_callback(event_name, listener);
+            }
+            slot.set_handler(None);
             unsafe {
                 let _ = Box::from_raw(entry);
             }
@@ -320,7 +315,7 @@ pub(crate) fn cleanup_attr_signal_update_slot(addr: usize) {
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
 #[allow(static_mut_refs)]
-fn ensure_handler_registry() -> &'static HandlerRegistryMap {
+pub(crate) fn ensure_handler_registry() -> &'static HandlerRegistryMap {
     unsafe {
         if (*HANDLER_REGISTRY.get_0().get()).is_none() {
             (*HANDLER_REGISTRY.get_0().get()) = Some(HashMap::new());
@@ -344,6 +339,23 @@ pub(crate) fn ensure_handler_registry_mut() -> &'static mut HandlerRegistryMap {
             .as_mut()
             .unwrap_unchecked()
     }
+}
+
+/// Returns whether the given event name is a non-bubbling event.
+///
+/// Non-bubbling events do not propagate to `window` during the capture or
+/// bubble phase, so global event delegation cannot intercept them. These
+/// events must be attached directly on the target element.
+///
+/// # Arguments
+///
+/// - `&str` - The event name to check.
+///
+/// # Returns
+///
+/// - `bool` - Whether the event is non-bubbling.
+pub(crate) fn is_non_bubbling_event(event_name: &str) -> bool {
+    NON_BUBBLING_EVENTS.contains(&event_name)
 }
 
 /// Returns whether the event name is already delegated.

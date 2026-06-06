@@ -121,8 +121,8 @@ pub fn watch(input: TokenStream) -> TokenStream {
 /// corresponding signal. Parameter types are optional and can be annotated
 /// after a colon. The return type must be specified after `->`.
 ///
-/// The result signal is created via `use_signal` and updated via `set_silent`
-/// to avoid cascading re-renders. The initial value is computed immediately
+/// The result signal is created via `use_signal` and updated via `set()`
+/// to mark its dependents dirty precisely. The initial value is computed immediately
 /// during first render.
 ///
 /// ```ignore

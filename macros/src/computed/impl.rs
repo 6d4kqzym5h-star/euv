@@ -81,7 +81,7 @@ impl Parse for ComputedInput {
 ///    from the closure body using the current signal values.
 /// 2. Sets up a `watch!`-style subscription on all input signals.
 /// 3. When any input signal changes, re-executes the closure body and updates
-///    the result signal via `set_silent` to avoid cascading re-renders.
+///    the result signal via `set()` to mark its dependents dirty precisely.
 /// 4. Returns the result signal handle.
 ///
 /// Uses the same `Box::leak` raw pointer pattern as `watch!` for fire closure
@@ -128,7 +128,9 @@ impl ToTokens for ComputedInput {
                 quote! {
                     {
                         #signal.subscribe(move || {
-                            unsafe { (&mut *(__euv_computed_fire_addr as *mut Box<dyn ::std::ops::FnMut()>))() }
+                            ::euv::batch(|| {
+                                unsafe { (&mut *(__euv_computed_fire_addr as *mut Box<dyn ::std::ops::FnMut()>))() }
+                            });
                         });
                     }
                 }
@@ -144,11 +146,11 @@ impl ToTokens for ComputedInput {
             if !__euv_computed_subscribed.get() {
                 let __euv_computed_fire_addr: usize = Box::leak(Box::new(Box::new(move || {
                     #(#all_gets)*
-                    #result_ident.set_silent({ #(#body)* });
+                    #result_ident.set({ #(#body)* });
                 }) as Box<dyn ::std::ops::FnMut()>)) as *mut Box<dyn ::std::ops::FnMut()> as usize;
-                ::euv::batch_updates(|| {
+                ::euv::batch(|| {
                     #(#subscribe_calls)*
-                    __euv_computed_subscribed.set_silent(true);
+                    __euv_computed_subscribed.set(true);
                 });
             }
             #result_ident

@@ -218,6 +218,16 @@ impl Renderer {
                     && let Some(entry) =
                         ensure_handler_registry_mut().remove(&(euv_id, handler.get_event_name()))
                 {
+                    let slot: &mut HandlerSlot = unsafe { &mut *entry };
+                    if let Some(listener_element) = slot.try_get_element().as_ref().cloned()
+                        && let Some(listener_function) = slot.get_mut_listener_function().take()
+                    {
+                        let event_name: &str = handler.get_event_name();
+                        let listener: &Function = listener_function.unchecked_ref::<Function>();
+                        let _ = listener_element
+                            .remove_event_listener_with_callback(event_name, listener);
+                    }
+                    slot.set_handler(None);
                     unsafe {
                         let _ = Box::from_raw(entry);
                     }
@@ -916,7 +926,12 @@ impl Renderer {
         }
     }
 
-    /// Registers an event handler for a DOM element using global event delegation.
+    /// Registers an event handler for a DOM element.
+    ///
+    /// For non-bubbling events (load, error, loadstart, etc.), attaches the
+    /// listener directly on the element since global delegation on `window`
+    /// cannot capture these events. For all other events, uses global event
+    /// delegation via `ensure_delegated_listener`.
     ///
     /// # Arguments
     ///
@@ -937,16 +952,49 @@ impl Renderer {
                 new_id
             }
         };
-        ensure_delegated_listener(handler.get_event_name());
-        let key: (usize, &'static str) = (euv_id, handler.get_event_name());
-        let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
-        if let Some(existing_entry) = registry_ref.get(&key) {
-            let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
-            slot.set_handler(Some(handler.clone()));
+        let event_name: &'static str = handler.get_event_name();
+        if is_non_bubbling_event(event_name) {
+            let key: (usize, &'static str) = (euv_id, event_name);
+            let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
+            if let Some(existing_entry) = registry_ref.get(&key) {
+                let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
+                slot.set_handler(Some(handler.clone()));
+            } else {
+                let closure: Closure<dyn FnMut(Event)> =
+                    Closure::wrap(Box::new(move |event: Event| {
+                        if let Some(entry) = ensure_handler_registry().get(&key) {
+                            let slot: &HandlerSlot = unsafe { &**entry };
+                            if let Some(active_handler) = slot.try_get_handler().as_ref().cloned() {
+                                active_handler.handle(event);
+                            }
+                        }
+                    }));
+                let _ = element
+                    .add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref());
+                let listener_function: JsValue = closure.as_ref().clone();
+                closure.forget();
+                let handler_slot: HandlerEntry = Box::into_raw(Box::new(HandlerSlot::new(
+                    Some(handler.clone()),
+                    Some(listener_function),
+                    Some(element.clone()),
+                )));
+                registry_ref.insert(key, handler_slot);
+            }
         } else {
-            let handler_slot: HandlerEntry =
-                Box::into_raw(Box::new(HandlerSlot::new(Some(handler.clone()))));
-            registry_ref.insert(key, handler_slot);
+            ensure_delegated_listener(event_name);
+            let key: (usize, &'static str) = (euv_id, event_name);
+            let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
+            if let Some(existing_entry) = registry_ref.get(&key) {
+                let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
+                slot.set_handler(Some(handler.clone()));
+            } else {
+                let handler_slot: HandlerEntry = Box::into_raw(Box::new(HandlerSlot::new(
+                    Some(handler.clone()),
+                    None,
+                    None,
+                )));
+                registry_ref.insert(key, handler_slot);
+            }
         }
     }
 }

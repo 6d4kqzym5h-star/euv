@@ -23,7 +23,7 @@ where
     /// Whether this signal is still active. Set to `false` by `deactivate()`
     /// (and `clear_signal_listeners_by_addr`) to make subsequent `set()` calls
     /// complete no-ops (no value update, no listener invocation, no
-    /// `schedule_signal_update()`), ensuring stale closures like orphaned
+    /// dispatch scheduling), ensuring stale closures like orphaned
     /// `setInterval` handlers or pending `spawn_local` futures become harmless.
     #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]

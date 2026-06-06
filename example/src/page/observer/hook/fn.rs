@@ -26,7 +26,7 @@ fn bind_observer(selector: &str) {
         return;
     }
     let callback: Closure<dyn FnMut(Array)> = Closure::wrap(Box::new(move |entries: Array| {
-        batch_updates(|| {
+        batch(|| {
             for index in 0..entries.length() {
                 let entry: JsValue = entries.get(index);
                 let intersection_entry: IntersectionObserverEntry =
@@ -58,7 +58,6 @@ fn bind_observer(selector: &str) {
                 }
             }
         });
-        schedule_signal_update();
     }));
     let observer: IntersectionObserver =
         IntersectionObserver::new(callback.as_ref().unchecked_ref()).unwrap();

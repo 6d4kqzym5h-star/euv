@@ -47,7 +47,7 @@ impl IntoReactiveValue for Signal<bool> {
     ///
     /// - `AttributeValue` - A signal-backed attribute value yielding `"true"` or `"false"`.
     fn into_reactive_value(self) -> AttributeValue {
-        bool_signal_to_string_attribute_value(self)
+        bool_to_attr(self)
     }
 }
 

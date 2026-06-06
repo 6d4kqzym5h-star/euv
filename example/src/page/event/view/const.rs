@@ -16,6 +16,12 @@ pub(crate) const EVENT_FORM_CHECKBOX_ID: &str = "event-form-checkbox";
 /// The HTML id for the form select element in the event demo.
 pub(crate) const EVENT_FORM_SELECT_ID: &str = "event-form-select";
 
+/// The HTML id for the video event demo element.
+pub(crate) const EVENT_VIDEO_ID: &str = "event-video";
+
+/// The HTML id for the image event demo element.
+pub(crate) const EVENT_IMAGE_ID: &str = "event-image";
+
 /// The HTML name attribute for the keyboard event input element.
 pub(crate) const EVENT_KEYBOARD_NAME: &str = "keyboard";
 
@@ -60,3 +66,9 @@ pub(crate) const EVENT_DRAGGABLE_TRUE: &str = "true";
 
 /// The HTML controls attribute value for true.
 pub(crate) const EVENT_CONTROLS_TRUE: &str = "true";
+
+/// The HTML preload attribute value for metadata.
+pub(crate) const EVENT_PRELOAD_METADATA: &str = "metadata";
+
+/// The HTML alt text for the image event demo.
+pub(crate) const EVENT_IMAGE_ALT: &str = "Event Demo Image";

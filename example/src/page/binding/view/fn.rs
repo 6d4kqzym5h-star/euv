@@ -1,43 +1,5 @@
 use crate::*;
 
-/// A child display component that receives strongly-typed props from parent.
-///
-/// Demonstrates one-way data flow: parent passes data down via props,
-/// child communicates back up via callback.
-///
-/// # Arguments
-///
-/// - `VirtualNode` - The props node containing message and on_respond callback.
-///
-/// # Returns
-///
-/// - `VirtualNode` - A styled child display element.
-#[component]
-pub(crate) fn child_display(node: VirtualNode<ChildDisplayProps>) -> VirtualNode {
-    let ChildDisplayProps {
-        message,
-        on_respond,
-    }: ChildDisplayProps = node.try_get_props().unwrap_or_default();
-    html! {
-        div {
-            class: c_binding_child_box()
-            p {
-                class: c_binding_child_label()
-                "Child received:"
-            }
-            p {
-                class: c_binding_child_message()
-                message
-            }
-            primary_button {
-                label: "Respond"
-                onclick: on_respond
-                "Respond to Parent"
-            }
-        }
-    }
-}
-
 /// A limited counter component that receives strongly-typed (non-String) props.
 ///
 /// Demonstrates passing `bool` and `i32` props through `html!` macro
@@ -103,72 +65,11 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
     }
 }
 
-/// A callback input component that receives custom callback functions as props.
+/// A signal-based child display component that reads from and writes to shared signals.
 ///
-/// Demonstrates passing `on_change` and `on_submit` callbacks through
-/// `html!` macro and extracting them with `try_get_event` via `From<&VirtualNode>`.
-///
-/// # Arguments
-///
-/// - `VirtualNode` - The props node containing on_change and on_submit callbacks.
-///
-/// # Returns
-///
-/// - `VirtualNode` - A styled input with callback element.
-#[component]
-pub(crate) fn callback_input(node: VirtualNode<CallbackInputProps>) -> VirtualNode {
-    let CallbackInputProps {
-        value,
-        on_change,
-        on_submit,
-        on_reset,
-    }: CallbackInputProps = node.try_get_props().unwrap_or_default();
-    let value_text: String = value.get();
-    html! {
-        div {
-            class: c_binding_child_box()
-            p {
-                class: c_binding_child_label()
-                "Callback Input"
-            }
-            p {
-                class: c_binding_demo_text()
-                "Custom callbacks: on_change, on_submit, on_reset"
-            }
-            div {
-                class: c_binding_callback_form()
-                input {
-                    id: CALLBACK_INPUT_ID
-                    name: CALLBACK_INPUT_NAME
-                    r#type: BINDING_TEXT_TYPE
-                    autocomplete: BINDING_AUTOCOMPLETE_OFF
-                    placeholder: CALLBACK_INPUT_PLACEHOLDER
-                    value: value_text
-                    class: c_form_input_no_transition()
-                    oninput: on_change
-                }
-                div {
-                    class: c_counter_row()
-                    primary_button {
-                        label: "Submit"
-                        onclick: on_submit
-                        "Submit"
-                    }
-                    primary_button {
-                        label: "Reset"
-                        onclick: on_reset
-                        "Reset"
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// A child input component that shares a Signal with parent for two-way binding.
-///
-/// Demonstrates two-way binding: the same Signal is used by both parent
-/// and child components, so changes in either are reflected everywhere.
+/// Demonstrates Signal-based parent-child communication: both parent and child
+/// share the same Signal instances, so changes in either component are
+/// immediately reflected in the other.
 ///
 /// # Arguments
 ///
@@ -398,86 +299,8 @@ pub(crate) fn color_mixer(
     }
 }
 
-/// A signal-based child display component that reads from and writes to shared signals.
-///
-/// Demonstrates Signal-based parent-child communication: both parent and child
-/// share the same Signal instances, so changes in either component are
-/// immediately reflected in the other.
-///
-/// # Arguments
-///
-/// - `VirtualNode<SignalChildDisplayProps>` - The props node containing message and counter signals.
-///
-/// # Returns
-///
-/// - `VirtualNode` - A styled child display element with signal-based communication.
-#[component]
-pub(crate) fn signal_child_display(node: VirtualNode<SignalChildDisplayProps>) -> VirtualNode {
-    let SignalChildDisplayProps { message, counter }: SignalChildDisplayProps =
-        node.try_get_props().unwrap_or_default();
-    let message_value: String = message.get();
-    let counter_value: i32 = counter.get();
-    html! {
-        div {
-            class: c_binding_child_box()
-            p {
-                class: c_binding_child_label()
-                "Child Component (Signal Communication)"
-            }
-            p {
-                class: c_binding_demo_text()
-                "Received message: "
-                span {
-                    class: c_binding_child_message()
-                    message_value
-                }
-            }
-            div {
-                class: c_element_stack()
-                label {
-                    r#for: SIGNAL_COMM_CHILD_MESSAGE_ID
-                    class: c_binding_form_label()
-                    "Reply to parent:"
-                }
-                input {
-                    id: SIGNAL_COMM_CHILD_MESSAGE_ID
-                    name: SIGNAL_COMM_CHILD_MESSAGE_NAME
-                    r#type: BINDING_TEXT_TYPE
-                    autocomplete: BINDING_AUTOCOMPLETE_OFF
-                    placeholder: "Type a reply..."
-                    value: message
-                    class: c_form_input_no_transition()
-                    oninput: on_input_value(message)
-                }
-            }
-            div {
-                class: c_counter_text()
-                "Shared counter: "
-                span {
-                    class: c_counter_value()
-                    counter_value
-                }
-            }
-            div {
-                class: c_counter_row()
-                primary_button {
-                    label: "-1"
-                    onclick: signal_comm_on_decrement(counter)
-                    "-1"
-                }
-                primary_button {
-                    label: "Reset"
-                    onclick: signal_comm_on_reset(message, counter)
-                    "Reset"
-                }
-            }
-        }
-    }
-}
-
-/// A component binding demo page showcasing parent-child data passing,
-/// two-way binding, cross-component reactive binding, typed props,
-/// custom callback functions, and Signal-based communication.
+/// A component binding demo page showcasing props passing with callbacks,
+/// two-way binding, and cross-component reactive binding.
 ///
 /// # Returns
 ///
@@ -490,19 +313,15 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
     let two_way_state: UseTwoWayDemo = use_two_way_demo();
     let cross_state: UseCrossComponentDemo = use_cross_component_demo();
     let typed_state: UseTypedPropsDemo = use_typed_props_demo();
-    let callback_state: UseCustomCallbackDemo = use_custom_callback_demo();
-    let signal_comm_state: UseSignalCommDemo = use_signal_comm_demo();
-    let callback_text: Signal<String> = callback_state.get_text_value();
-    let last_event: Signal<String> = callback_state.get_last_event();
     html! {
         div {
             class: c_page_container()
             page_header {
                 title: "Component Binding"
-                subtitle: "Parent-child data passing, two-way binding, cross-component reactive binding, and Signal communication."
+                subtitle: "Props passing, two-way binding, and cross-component reactive binding."
             }
             my_card {
-                title: "Props Down, Callback Up"
+                title: "Props & Callbacks"
                 p {
                     class: c_demo_text()
                     "Parent passes data to child via props. Child communicates back via callbacks."
@@ -524,31 +343,19 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         oninput: on_input_value(props_state.get_parent_message())
                     }
                 }
-                child_display {
-                    message: props_state.get_parent_message()
-                    on_respond: props_on_child_respond(
-                        props_state.get_child_response(),
-                        format!("Child says: I got \"{}\"!", props_state.get_parent_message().get()),
-                    )
-                }
-                if { !props_state.get_child_response().get().is_empty() } {
-                    div {
-                        class: c_success_box()
-                        props_state.get_child_response()
-                    }
-                }
-            }
-            my_card {
-                title: "Typed Props (bool, i32)"
                 p {
-                    class: c_demo_text()
-                    "Pass non-String props (bool, i32) through html! and extract with try_get_typed_prop."
+                    class: c_binding_demo_text()
+                    "Message: "
+                    span {
+                        class: c_event_highlight()
+                        props_state.get_parent_message()
+                    }
                 }
                 div {
                     class: c_binding_parent_box()
                     p {
                         class: c_binding_child_label()
-                        "Parent Controls"
+                        "Typed Props Controls"
                     }
                     primary_button {
                         label: "Toggle Disabled"
@@ -589,46 +396,6 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     max_count: typed_state.get_max_count()
                     on_increment: typed_props_on_increment(typed_state.get_current_count(), typed_state.get_max_count(), typed_state.get_disabled())
                     on_reset: typed_props_on_reset_count(typed_state.get_current_count(), typed_state.get_disabled())
-                }
-            }
-            my_card {
-                title: "Custom Callbacks"
-                p {
-                    class: c_demo_text()
-                    "Pass custom callback functions as component props (on_change, on_submit, on_reset)."
-                }
-                div {
-                    class: c_binding_parent_box()
-                    p {
-                        class: c_binding_child_label()
-                        "Parent State"
-                    }
-                    p {
-                        class: c_binding_demo_text()
-                        "Text: "
-                        span {
-                            class: c_event_highlight()
-                            if { callback_text.get().is_empty() } {
-                                "(empty)"
-                            } else {
-                                callback_text
-                            }
-                        }
-                    }
-                    p {
-                        class: c_binding_demo_text()
-                        "Last event: "
-                        span {
-                            class: c_binding_typed_prop_value()
-                            { last_event.get() }
-                        }
-                    }
-                }
-                callback_input {
-                    value: callback_text
-                    on_change: custom_on_change(callback_state.get_text_value(), callback_state.get_last_event(), "on_change".to_string())
-                    on_submit: custom_on_submit(callback_state.get_last_event(), "on_submit".to_string())
-                    on_reset: custom_on_reset(callback_state.get_text_value(), callback_state.get_last_event(), "on_reset".to_string())
                 }
             }
             my_card {
@@ -691,54 +458,6 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     "Adjust RGB sliders — the hex color updates reactively via watch!"
                 }
                 { color_mixer(cross_state.get_red(), cross_state.get_green(), cross_state.get_blue(), cross_state.get_hex_color()) }
-            }
-            my_card {
-                title: "Signal Communication"
-                p {
-                    class: c_demo_text()
-                    "Parent and child share the same Signal instances. Changing a Signal in either component instantly updates the other — no callbacks needed."
-                }
-                div {
-                    class: c_binding_parent_box()
-                    p {
-                        class: c_binding_child_label()
-                        "Parent Component"
-                    }
-                    div {
-                        class: c_element_stack()
-                        label {
-                            r#for: SIGNAL_COMM_PARENT_MESSAGE_ID
-                            class: c_binding_form_label()
-                            "Message:"
-                        }
-                        input {
-                            id: SIGNAL_COMM_PARENT_MESSAGE_ID
-                            name: SIGNAL_COMM_PARENT_MESSAGE_NAME
-                            r#type: BINDING_TEXT_TYPE
-                            autocomplete: BINDING_AUTOCOMPLETE_OFF
-                            value: signal_comm_state.get_message()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(signal_comm_state.get_message())
-                        }
-                    }
-                    p {
-                        class: c_binding_demo_text()
-                        "Counter: "
-                        span {
-                            class: c_counter_value()
-                            signal_comm_state.get_counter()
-                        }
-                    }
-                    primary_button {
-                        label: "+1"
-                        onclick: signal_comm_on_increment(signal_comm_state.get_counter())
-                        "+1"
-                    }
-                }
-                signal_child_display {
-                    message: signal_comm_state.get_message()
-                    counter: signal_comm_state.get_counter()
-                }
             }
         }
     }

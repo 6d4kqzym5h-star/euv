@@ -14,7 +14,6 @@ mod keep_alive;
 mod lifecycle;
 mod list;
 mod modal;
-mod multimedia;
 mod not_found;
 mod observer;
 mod select;
@@ -27,6 +26,6 @@ mod websocket;
 pub(crate) use {
     animation::*, r#async::*, attrs::*, binding::*, browser::*, camera::*, conditional::*,
     dynamic::*, event::*, file::*, form::*, home::*, keep_alive::*, lifecycle::*, list::*,
-    modal::*, multimedia::*, not_found::*, observer::*, select::*, signals::*, sse::*, timer::*,
-    virtual_list::*, websocket::*,
+    modal::*, not_found::*, observer::*, select::*, signals::*, sse::*, timer::*, virtual_list::*,
+    websocket::*,
 };

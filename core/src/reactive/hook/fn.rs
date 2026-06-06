@@ -10,11 +10,11 @@ use crate::*;
 ///
 /// - `HookContext` - The currently active hook context.
 pub(crate) fn get_current_hook_context() -> HookContext {
-    match current_hook_context() {
+    match try_get_current_hook_context() {
         Some(hook_context_rc) => HookContext::new(hook_context_rc.clone()),
         None => {
             let rc: HookContextRc = Rc::new(RefCell::new(HookContextInner::default()));
-            *current_hook_context_mut() = Some(rc.clone());
+            *try_get_current_hook_context_mut() = Some(rc.clone());
             HookContext::new(rc)
         }
     }
@@ -37,10 +37,10 @@ pub(crate) fn with_hook_context<F, R>(context: HookContext, f: F) -> R
 where
     F: FnOnce() -> R,
 {
-    let previous: Option<HookContextRc> = current_hook_context_mut().take();
-    *current_hook_context_mut() = Some(context.get_inner().clone());
+    let previous: Option<HookContextRc> = try_get_current_hook_context_mut().take();
+    *try_get_current_hook_context_mut() = Some(context.get_inner().clone());
     let result: R = f();
-    *current_hook_context_mut() = previous;
+    *try_get_current_hook_context_mut() = previous;
     result
 }
 

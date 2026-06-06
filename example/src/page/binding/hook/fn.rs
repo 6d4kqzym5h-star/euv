@@ -6,29 +6,7 @@ use crate::*;
 ///
 /// - `UsePropsDemo` - The props demo state.
 pub(crate) fn use_props_demo() -> UsePropsDemo {
-    UsePropsDemo::new(
-        use_signal(|| "Hello from Parent!".to_string()),
-        use_signal(String::new),
-    )
-}
-
-/// Creates a click event handler that simulates a child responding to parent.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The child response signal.
-/// - `String` - The child response message.
-///
-/// # Returns
-///
-/// - `NativeEventHandler` - A click handler.
-pub(crate) fn props_on_child_respond(
-    response_signal: Signal<String>,
-    message: String,
-) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
-        response_signal.set(message.clone());
-    }))
+    UsePropsDemo::new(use_signal(|| "Hello from Parent!".to_string()))
 }
 
 /// Creates two-way binding demo state signals.
@@ -95,12 +73,12 @@ pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
     watch!(celsius, |celsius_value: f64| {
         let new_fahrenheit: f64 = celsius_value * 9.0 / 5.0 + 32.0;
         let rounded: f64 = (new_fahrenheit * 100.0).round() / 100.0;
-        fahrenheit.set_untracked(rounded);
+        fahrenheit.set(rounded);
     });
     watch!(fahrenheit, |fahrenheit_value: f64| {
         let new_celsius: f64 = (fahrenheit_value - 32.0) * 5.0 / 9.0;
         let rounded: f64 = (new_celsius * 100.0).round() / 100.0;
-        celsius.set_untracked(rounded);
+        celsius.set(rounded);
     });
     watch!(
         red,
@@ -110,7 +88,7 @@ pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
             let clamped_red: i32 = red_value.clamp(0, 255);
             let clamped_green: i32 = green_value.clamp(0, 255);
             let clamped_blue: i32 = blue_value.clamp(0, 255);
-            hex_color.set_untracked(format!(
+            hex_color.set(format!(
                 "#{:02x}{:02x}{:02x}",
                 clamped_red, clamped_green, clamped_blue
             ));
@@ -255,148 +233,5 @@ pub(crate) fn typed_props_on_reset_count(
             return;
         }
         count.set(0);
-    }))
-}
-
-/// Creates custom callback demo state signals.
-///
-/// # Returns
-///
-/// - `UseCustomCallbackDemo` - The custom callback demo state.
-pub(crate) fn use_custom_callback_demo() -> UseCustomCallbackDemo {
-    UseCustomCallbackDemo::new(
-        use_signal(|| CALLBACK_INPUT_DEFAULT_MESSAGE.to_string()),
-        use_signal(|| "none".to_string()),
-    )
-}
-
-/// Creates a custom callback handler that updates the value signal and records the event name on input.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The text value signal to update.
-/// - `Signal<String>` - The last event signal to update.
-/// - `String` - The event name to record.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - An input handler.
-pub(crate) fn custom_on_change(
-    text_signal: Signal<String>,
-    last_event: Signal<String>,
-    event_name: String,
-) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |event: Event| {
-        if let Some(target) = event.target()
-            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
-        {
-            text_signal.set(input.value());
-        }
-        last_event.set(event_name.clone());
-    }))
-}
-
-/// Creates a custom callback handler that records a submit event.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The last event signal to update.
-/// - `String` - The event name to record.
-///
-/// # Returns
-///
-/// - `NativeEventHandler` - A callback handler.
-pub(crate) fn custom_on_submit(
-    last_event: Signal<String>,
-    event_name: String,
-) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
-        last_event.set(event_name.clone());
-    }))
-}
-
-/// Creates a custom callback handler that records a reset event.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The text value signal to clear.
-/// - `Signal<String>` - The last event signal to update.
-/// - `String` - The event name to record.
-///
-/// # Returns
-///
-/// - `NativeEventHandler` - A callback handler.
-pub(crate) fn custom_on_reset(
-    text_signal: Signal<String>,
-    last_event: Signal<String>,
-    event_name: String,
-) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
-        text_signal.set(CALLBACK_INPUT_DEFAULT_MESSAGE.to_string());
-        last_event.set(event_name.clone());
-    }))
-}
-
-/// Creates signal communication demo state signals.
-///
-/// # Returns
-///
-/// - `UseSignalCommDemo` - The signal communication demo state.
-pub(crate) fn use_signal_comm_demo() -> UseSignalCommDemo {
-    UseSignalCommDemo::new(
-        use_signal(|| SIGNAL_COMM_DEFAULT_MESSAGE.to_string()),
-        use_signal(|| 0),
-    )
-}
-
-/// Creates a click event handler that increments the signal communication counter.
-///
-/// # Arguments
-///
-/// - `Signal<i32>` - The counter signal.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A click handler.
-pub(crate) fn signal_comm_on_increment(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
-        let current: i32 = counter.get();
-        counter.set(current + 1);
-    }))
-}
-
-/// Creates a click event handler that decrements the signal communication counter.
-///
-/// # Arguments
-///
-/// - `Signal<i32>` - The counter signal.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A click handler.
-pub(crate) fn signal_comm_on_decrement(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
-        let current: i32 = counter.get();
-        counter.set(current - 1);
-    }))
-}
-
-/// Creates a click event handler that resets the signal communication state.
-///
-/// # Arguments
-///
-/// - `Signal<String>` - The message signal.
-/// - `Signal<i32>` - The counter signal.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A click handler.
-pub(crate) fn signal_comm_on_reset(
-    message: Signal<String>,
-    counter: Signal<i32>,
-) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
-        message.set(SIGNAL_COMM_DEFAULT_MESSAGE.to_string());
-        counter.set(0);
     }))
 }

@@ -2,12 +2,12 @@ use crate::*;
 
 /// Scheduling flag to batch signal updates within a single tick.
 ///
-/// Set to `true` when `schedule_signal_update()` queues a microtask,
+/// Set to `true` when `schedule_update()` queues a microtask,
 /// and reset to `false` when the dispatch callback fires.
 pub(crate) static SCHEDULED: AtomicBool = AtomicBool::new(false);
 
-/// Suppress flag to prevent `schedule_signal_update()` from dispatching
-/// during internal operations such as `watch!` initialisation.
+/// Suppress flag to prevent `schedule_update()` from dispatching
+/// during internal operations such as `batch`.
 pub(crate) static SUPPRESS_SCHEDULE: AtomicBool = AtomicBool::new(false);
 
 /// The currently active `HookContext`.
@@ -24,3 +24,19 @@ pub(crate) static mut CURRENT_HOOK_CONTEXT: CurrentHookContextCell =
 ///
 /// SAFETY: Must only be accessed from the main thread (WASM single-threaded context).
 pub(crate) static CURRENT_TRACKING_DYNAMIC_ID: AtomicUsize = AtomicUsize::new(usize::MAX);
+
+thread_local! {
+    /// The persistent dispatch `Closure`, kept alive for the lifetime of the
+    /// program so it can be handed to `setTimeout` repeatedly.
+    ///
+    /// The closure resets the `SCHEDULED` flag and then runs the queued signal
+    /// update callbacks. Resetting `SCHEDULED` here is what allows the next
+    /// `schedule_update` call to schedule a fresh dispatch; if
+    /// this never ran, the flag would stay `true` forever and every reactive
+    /// update would be silently dropped.
+    pub(crate) static DISPATCH_CLOSURE: Closure<dyn FnMut()> =
+        Closure::wrap(Box::new(|| {
+            SCHEDULED.store(false, Ordering::Relaxed);
+            dispatch_signal_update_callbacks();
+        }) as Box<dyn FnMut()>);
+}

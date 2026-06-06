@@ -184,11 +184,6 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                label: "Multimedia"
-                target: "/multimedia"
-            }
-            nav_item {
-                route_signal: route_signal
                 label: "Camera"
                 target: "/camera"
             }
@@ -346,12 +341,6 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
                 drawer_open: drawer_open
                 label: "Virtual List"
                 target: "/virtual-list"
-            }
-            mobile_nav_item {
-                route_signal: route_signal
-                drawer_open: drawer_open
-                label: "Multimedia"
-                target: "/multimedia"
             }
             mobile_nav_item {
                 route_signal: route_signal

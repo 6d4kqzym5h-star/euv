@@ -210,42 +210,19 @@ where
     /// Uses precise dirty marking: only dynamic nodes that depend on
     /// this signal are marked dirty, avoiding full broadcast.
     ///
+    /// When called inside `batch`, the dispatch is
+    /// deferred (dirty slots are still marked precisely), and the
+    /// outermost `set()` call outside the suppressed scope will
+    /// trigger the actual dispatch cycle.
+    ///
     /// # Arguments
     ///
     /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
         if self.update_and_notify(value) {
             let dependents: Vec<usize> = self.get_dependents();
-            schedule_signal_update_targeted(&dependents);
+            schedule_update(&dependents);
         }
-    }
-
-    /// Sets the value of the signal and notifies listeners without scheduling
-    /// a global DOM update dispatch.
-    ///
-    /// # Arguments
-    ///
-    /// - `T` - The new value to assign to the signal.
-    pub fn set_silent(&self, value: T) {
-        self.update_and_notify(value);
-    }
-
-    /// Sets the value of the signal without notifying listeners or scheduling
-    /// a DOM update. This is useful for breaking circular watch dependencies
-    /// where two signals watch each other and would otherwise recurse infinitely.
-    ///
-    /// If the signal has been marked inactive (`alive == false`), this is a
-    /// no-op, consistent with `set()` behavior for dead signals.
-    ///
-    /// # Arguments
-    ///
-    /// - `T` - The new value to assign to the signal.
-    pub fn set_untracked(&self, value: T) {
-        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
-        if !inner.get_alive() {
-            return;
-        }
-        inner.set_value(value);
     }
 }
 

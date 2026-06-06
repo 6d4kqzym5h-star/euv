@@ -6,9 +6,6 @@ pub(crate) struct UsePropsDemo {
     /// The parent message to pass down to child.
     #[get(type(copy))]
     pub(crate) parent_message: Signal<String>,
-    /// The message received from child via callback.
-    #[get(type(copy))]
-    pub(crate) child_response: Signal<String>,
 }
 
 /// Reactive state for the two-way binding demo.
@@ -59,31 +56,4 @@ pub(crate) struct UseTypedPropsDemo {
     /// The current count value.
     #[get(type(copy))]
     pub(crate) current_count: Signal<i32>,
-}
-
-/// Reactive state for the custom callback demo.
-///
-/// Demonstrates passing custom callback functions as component props.
-#[derive(Clone, Copy, Data, New)]
-pub(crate) struct UseCustomCallbackDemo {
-    /// The text input value.
-    #[get(type(copy))]
-    pub(crate) text_value: Signal<String>,
-    /// The last callback event name received.
-    #[get(type(copy))]
-    pub(crate) last_event: Signal<String>,
-}
-
-/// Reactive state for the Signal-based communication demo.
-///
-/// Demonstrates parent-child communication using shared signals,
-/// where both parent and child read/write the same signal instances.
-#[derive(Clone, Copy, Data, New)]
-pub(crate) struct UseSignalCommDemo {
-    /// The shared message signal between parent and child.
-    #[get(type(copy))]
-    pub(crate) message: Signal<String>,
-    /// The shared counter signal between parent and child.
-    #[get(type(copy))]
-    pub(crate) counter: Signal<i32>,
 }

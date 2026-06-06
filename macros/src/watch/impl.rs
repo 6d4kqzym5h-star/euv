@@ -77,10 +77,9 @@ impl Parse for WatchInput {
 ///    preventing duplicate subscriptions and infinite re-render loops.
 /// 2. Clones each signal into a local binding.
 /// 3. On first execution, the entire initialisation (subscribe registration
-///    and body execution) is wrapped in `batch_updates` so that
-///    any `.set()` calls inside the body do not trigger premature
-///    `schedule_signal_update()` dispatches. The guard signal is updated
-///    via `set_silent` to avoid an unnecessary DOM re-render cycle.
+///    and body execution) is wrapped in `batch` so that
+///    any `set()` calls inside the body mark their dependents dirty
+///    precisely but do not trigger premature microtask dispatches.
 /// 4. Subsequent render_fn invocations skip the block entirely — the body
 ///    only fires via the `subscribe` callbacks when a watched signal
 ///    actually changes.
@@ -132,7 +131,9 @@ impl ToTokens for WatchInput {
                 quote! {
                     {
                         #signal.subscribe(move || {
-                            unsafe { (&mut *(__euv_watch_fire_addr as *mut Box<dyn ::std::ops::FnMut()>))() }
+                            ::euv::batch(|| {
+                                unsafe { (&mut *(__euv_watch_fire_addr as *mut Box<dyn ::std::ops::FnMut()>))() }
+                            });
                         });
                     }
                 }
@@ -146,13 +147,13 @@ impl ToTokens for WatchInput {
                     #(#all_gets)*
                     { #(#body)* }
                 }) as Box<dyn ::std::ops::FnMut()>)) as *mut Box<dyn ::std::ops::FnMut()> as usize;
-                ::euv::batch_updates(|| {
+                ::euv::batch(|| {
                     #(#subscribe_calls)*
                     {
                         #(#all_gets)*
                         { #(#body)* }
                     }
-                    __euv_watch_subscribed.set_silent(true);
+                    __euv_watch_subscribed.set(true);
                 });
             }
         }});

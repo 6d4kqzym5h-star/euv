@@ -1,6 +1,3 @@
-/// The HTML id for the callback input element.
-pub(crate) const CALLBACK_INPUT_ID: &str = "callback-input";
-
 /// The HTML id for the child input text element.
 pub(crate) const CHILD_INPUT_TEXT_ID: &str = "child-input-text";
 
@@ -21,9 +18,6 @@ pub(crate) const COLOR_MIXER_BLUE_ID: &str = "color-mixer-blue";
 
 /// The HTML id for the parent message input element.
 pub(crate) const BINDING_PARENT_MESSAGE_ID: &str = "binding-parent-message";
-
-/// The HTML name attribute for the callback input element.
-pub(crate) const CALLBACK_INPUT_NAME: &str = "callback_input";
 
 /// The HTML name attribute for the child input text element.
 pub(crate) const CHILD_INPUT_TEXT_NAME: &str = "shared_text";
@@ -58,29 +52,8 @@ pub(crate) const BINDING_RANGE_TYPE: &str = "range";
 /// The HTML autocomplete attribute value for off.
 pub(crate) const BINDING_AUTOCOMPLETE_OFF: &str = "off";
 
-/// The HTML placeholder for the callback input element.
-pub(crate) const CALLBACK_INPUT_PLACEHOLDER: &str = "Type something...";
-
 /// The HTML min attribute for the color mixer slider.
 pub(crate) const COLOR_MIXER_MIN: &str = "0";
 
 /// The HTML max attribute for the color mixer slider.
 pub(crate) const COLOR_MIXER_MAX: &str = "255";
-
-/// The HTML id for the signal communication parent message input element.
-pub(crate) const SIGNAL_COMM_PARENT_MESSAGE_ID: &str = "signal-comm-parent-message";
-
-/// The HTML id for the signal communication child message input element.
-pub(crate) const SIGNAL_COMM_CHILD_MESSAGE_ID: &str = "signal-comm-child-message";
-
-/// The HTML name attribute for the signal communication parent message input element.
-pub(crate) const SIGNAL_COMM_PARENT_MESSAGE_NAME: &str = "signal_comm_parent_message";
-
-/// The HTML name attribute for the signal communication child message input element.
-pub(crate) const SIGNAL_COMM_CHILD_MESSAGE_NAME: &str = "signal_comm_child_message";
-
-/// The default message for the signal communication demo.
-pub(crate) const SIGNAL_COMM_DEFAULT_MESSAGE: &str = "Hello from Parent!";
-
-/// The default message for the callback input demo.
-pub(crate) const CALLBACK_INPUT_DEFAULT_MESSAGE: &str = "Hello Callback!";

@@ -138,9 +138,6 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
             "/virtual-list" => {
                 page_virtual_list {}
             }
-            "/multimedia" => {
-                page_multimedia {}
-            }
             "/camera" => {
                 page_camera {}
             }

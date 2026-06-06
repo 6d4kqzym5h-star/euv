@@ -1,11 +1,64 @@
 use crate::*;
 
+/// Detects the current system color scheme preference.
+///
+/// Uses `window.matchMedia("(prefers-color-scheme: dark)")` to check whether
+/// the operating system is in dark mode. Falls back to light theme if the
+/// detection fails.
+///
+/// # Returns
+///
+/// - `String` - The detected system theme name ("light" or "dark").
+pub(crate) fn detect_system_theme() -> String {
+    let window: Window = window().expect("no global window exists");
+    let is_dark: bool = window
+        .match_media("(prefers-color-scheme: dark)")
+        .ok()
+        .flatten()
+        .map(|mql: MediaQueryList| mql.matches())
+        .unwrap_or(false);
+    if is_dark {
+        THEME_DARK.to_string()
+    } else {
+        THEME_LIGHT.to_string()
+    }
+}
+
+/// Subscribes to system color scheme changes and updates the theme signal.
+///
+/// Creates a `MediaQueryList` for `prefers-color-scheme: dark` and listens
+/// for `change` events. When the system theme changes, the theme signal is
+/// updated accordingly. The listener is automatically cleaned up when the
+/// hook context is cleared.
+///
+/// # Arguments
+///
+/// - `Signal<String>` - The theme signal to update when the system theme changes.
+pub(crate) fn use_system_theme_change(theme_signal: Signal<String>) {
+    let window: Window = window().expect("no global window exists");
+    let media_query: Option<MediaQueryList> = window
+        .match_media("(prefers-color-scheme: dark)")
+        .ok()
+        .flatten();
+    let Some(mql) = media_query else {
+        return;
+    };
+    let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |_event: Event| {
+        let detected: String = detect_system_theme();
+        let current: String = theme_signal.get();
+        if current != detected {
+            theme_signal.set(detected);
+        }
+    }));
+    let _ = mql.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
+    closure.forget();
+}
+
 /// Creates and returns the reactive theme state for the application.
 ///
-/// Initializes a theme signal defaulting to "light" and a derived root class
-/// signal that combines the appropriate app root class (`c_app_root` or
-/// `c_mobile_app_root`) with the active theme class. Uses `watch!` to
-/// reactively update the root class whenever the theme or mobile signal changes.
+/// Detects the system color scheme preference at startup and initializes the
+/// theme signal accordingly. Uses `watch!` to reactively update the root class
+/// whenever the theme or mobile signal changes.
 ///
 /// # Arguments
 ///
@@ -15,7 +68,9 @@ use crate::*;
 ///
 /// - `ThemeState` - The reactive theme state containing the theme signal and root class signal.
 pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
-    let theme: Signal<String> = use_signal(|| THEME_LIGHT.to_string());
+    let theme: Signal<String> = use_signal(detect_system_theme);
+    use_system_theme_change(theme);
+    let initial_theme: String = theme.get();
     let initial_mobile: bool = mobile_signal.get();
     let initial_root: &'static str = if initial_mobile {
         c_mobile_app_root().get_name()
@@ -25,7 +80,7 @@ pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
     let root_class: Signal<String> = use_signal(|| {
         format!(
             "{initial_root} {theme_class}",
-            theme_class = theme_class_name(THEME_LIGHT)
+            theme_class = theme_class_name(&initial_theme)
         )
     });
     watch!(mobile_signal, theme, |mobile: bool, theme_value: String| {

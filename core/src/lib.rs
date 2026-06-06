@@ -22,4 +22,4 @@ use std::{
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
-use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen::*, web_sys::*};
+use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, web_sys::*};
