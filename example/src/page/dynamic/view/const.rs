@@ -5,7 +5,7 @@ pub(crate) const TAG_OPTION_DIV_LABEL: &str = "div";
 pub(crate) const TAG_OPTION_SPAN_LABEL: &str = "span";
 
 /// The label for the my_card component option.
-pub(crate) const TAG_OPTION_MY_CARD_LABEL: &str = "my_card";
+pub(crate) const TAG_OPTION_MY_CARD_LABEL: &str = "my card";
 
 /// The label for the badge component option.
 pub(crate) const TAG_OPTION_BADGE_LABEL: &str = "badge";
