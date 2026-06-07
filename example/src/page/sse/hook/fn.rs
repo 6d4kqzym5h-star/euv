@@ -69,7 +69,7 @@ pub(crate) fn sse_on_connect(state: UseSse) -> Option<Rc<dyn Fn(Event)>> {
                 let message_event: MessageEvent = event_value.unchecked_into();
                 let js_value: JsValue = message_event.data();
                 let raw: String = js_value.as_string().unwrap_or_default();
-                let display: String = js_sys::JSON::parse(&raw)
+                let display: String = JSON::parse(&raw)
                     .ok()
                     .and_then(|parsed: JsValue| {
                         Reflect::get(&parsed, &JsValue::from_str("data")).ok()

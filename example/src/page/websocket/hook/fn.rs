@@ -1,6 +1,6 @@
 use crate::*;
 
-/// Generates a random UUID v4 string using `js_sys::Math::random`.
+/// Generates a random UUID v4 string using `Math::random`.
 ///
 /// # Returns
 ///
@@ -21,7 +21,7 @@ fn generate_uuid() -> String {
 
 /// Formats a millisecond timestamp into a human-readable time string.
 ///
-/// Uses `js_sys::Date` to convert the timestamp to local time and formats
+/// Uses `Date` to convert the timestamp to local time and formats
 /// it as `HH:MM:SS`.
 ///
 /// # Arguments
@@ -32,7 +32,7 @@ fn generate_uuid() -> String {
 ///
 /// - `String` - The formatted time string.
 fn format_timestamp(timestamp_ms: f64) -> String {
-    let date: js_sys::Date = js_sys::Date::new(&JsValue::from_f64(timestamp_ms));
+    let date: Date = Date::new(&JsValue::from_f64(timestamp_ms));
     let hours: u32 = date.get_hours();
     let minutes: u32 = date.get_minutes();
     let seconds: u32 = date.get_seconds();

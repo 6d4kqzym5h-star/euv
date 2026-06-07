@@ -43,7 +43,7 @@ pub(crate) fn open_camera(video_selector: &str, facing: CameraFacing) -> Result<
         CameraFacing::User => CAMERA_FACING_MODE_USER,
         CameraFacing::Environment => CAMERA_FACING_MODE_ENVIRONMENT,
     };
-    let video_constraint: js_sys::Object = js_sys::Object::new();
+    let video_constraint: Object = Object::new();
     let _ = Reflect::set(
         &video_constraint,
         &JsValue::from_str("facingMode"),
@@ -51,7 +51,7 @@ pub(crate) fn open_camera(video_selector: &str, facing: CameraFacing) -> Result<
     );
     constraints.set_video(&video_constraint);
     constraints.set_audio(&JsValue::from_bool(false));
-    let promise: js_sys::Promise = media_devices
+    let promise: Promise = media_devices
         .get_user_media_with_constraints(&constraints)
         .map_err(|error: JsValue| format!("{error:?}"))?;
     let selector: String = video_selector.to_string();
@@ -94,7 +94,7 @@ pub(crate) fn close_camera(video_selector: &str) {
         let video_element: HtmlVideoElement = element.unchecked_into();
         if let Some(stream) = video_element.src_object() {
             let stream: MediaStream = stream.unchecked_into();
-            let tracks: js_sys::Array = stream.get_tracks();
+            let tracks: Array = stream.get_tracks();
             for track_value in tracks.iter() {
                 let track: MediaStreamTrack = track_value.unchecked_into();
                 track.stop();
@@ -169,7 +169,10 @@ pub(crate) fn switch_camera(state: UseCamera) {
 ///
 /// If the URL points to the same origin (current host), extracts the
 /// hash fragment route and navigates internally using `navigate`.
-/// Otherwise, performs a full page navigation via `location.href`.
+/// If the URL host is a private/internal IP address, performs a full
+/// page navigation via `location.href` within the current browser.
+/// Otherwise (external public URL), opens the link in the system
+/// browser via `window.open` so the user stays in the app.
 ///
 /// # Arguments
 ///
@@ -177,19 +180,28 @@ pub(crate) fn switch_camera(state: UseCamera) {
 pub(crate) fn navigate_qr_url(url: &str) {
     let window_value: Window = window().expect("no global window exists");
     let location: Location = window_value.location();
-    let current_origin: String = format!(
-        "{}//{}",
-        location.protocol().unwrap_or_default(),
-        location.host().unwrap_or_default()
-    );
-    if url.starts_with(&current_origin)
+    let current_hostname: String = location.hostname().unwrap_or_default();
+    let url_hostname: String = extract_hostname(url);
+    if url_hostname == current_hostname
         && let Some(fragment) = url.split('#').nth(1)
     {
         let route: &str = if fragment.is_empty() { "/" } else { fragment };
         navigate(route);
         return;
     }
-    let _ = window_value.location().set_href(url);
+    if is_private_host(&url_hostname) {
+        let _ = window_value.location().set_href(url);
+        return;
+    }
+    if let Ok(open_fn) = Reflect::get(&window_value, &JsValue::from_str("open"))
+        .and_then(|value: JsValue| value.dyn_into::<Function>())
+    {
+        let _ = open_fn.call2(
+            &window_value,
+            &JsValue::from_str(url),
+            &JsValue::from_str(CAMERA_SYSTEM_BROWSER_TARGET),
+        );
+    }
 }
 
 /// Starts a periodic QR code scan using the browser `BarcodeDetector` API.
@@ -213,7 +225,7 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
         return;
     }
     let detector_result: Result<JsValue, JsValue> =
-        js_sys::Function::new_no_args("return new BarcodeDetector({ formats: ['qr_code'] })")
+        Function::new_no_args("return new BarcodeDetector({ formats: ['qr_code'] })")
             .call0(&JsValue::NULL);
     let detector: JsValue = match detector_result {
         Ok(value) => value,
@@ -240,18 +252,17 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
         if video_element.ready_state() != HtmlMediaElement::HAVE_ENOUGH_DATA {
             return;
         }
-        let detect_fn: js_sys::Function = Reflect::get(&detector, &JsValue::from_str("detect"))
+        let detect_fn: Function = Reflect::get(&detector, &JsValue::from_str("detect"))
             .ok()
-            .and_then(|value: JsValue| value.dyn_into::<js_sys::Function>().ok())
-            .unwrap_or_else(|| js_sys::Function::new_no_args("return Promise.resolve([])"));
-        let promise: js_sys::Promise = match detect_fn.call1(&detector, &video_element) {
+            .and_then(|value: JsValue| value.dyn_into::<Function>().ok())
+            .unwrap_or_else(|| Function::new_no_args("return Promise.resolve([])"));
+        let promise: Promise = match detect_fn.call1(&detector, &video_element) {
             Ok(result) => result.into(),
             Err(_) => return,
         };
-        let scan_state: UseCamera = state;
         let on_detected: Closure<dyn FnMut(JsValue)> =
             Closure::wrap(Box::new(move |barcodes_value: JsValue| {
-                let barcodes: js_sys::Array = match barcodes_value.dyn_into::<js_sys::Array>() {
+                let barcodes: Array = match barcodes_value.dyn_into::<Array>() {
                     Ok(array) => array,
                     Err(_) => return,
                 };
@@ -259,22 +270,22 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
                     return;
                 }
                 if let Some(first) = barcodes.get(0).as_string() {
-                    scan_state.get_scan_result().set(first.clone());
+                    state.get_scan_result().set(first.clone());
                     if is_valid_qr_url(&first) {
-                        stop_qr_scan(scan_state);
+                        stop_qr_scan(state);
                         close_camera(CAMERA_VIDEO_SELECTOR);
-                        scan_state.get_camera_open().set(false);
+                        state.get_camera_open().set(false);
                         navigate_qr_url(&first);
                     }
                 } else if let Ok(raw_value) =
                     Reflect::get(&barcodes.get(0), &JsValue::from_str("rawValue"))
                     && let Some(text) = raw_value.as_string()
                 {
-                    scan_state.get_scan_result().set(text.clone());
+                    state.get_scan_result().set(text.clone());
                     if is_valid_qr_url(&text) {
-                        stop_qr_scan(scan_state);
+                        stop_qr_scan(state);
                         close_camera(CAMERA_VIDEO_SELECTOR);
-                        scan_state.get_camera_open().set(false);
+                        state.get_camera_open().set(false);
                         navigate_qr_url(&text);
                     }
                 }
@@ -314,6 +325,87 @@ pub(crate) fn stop_qr_scan(state: UseCamera) {
 /// - `bool` - `true` if the string is a valid HTTP or HTTPS URL.
 pub(crate) fn is_valid_qr_url(text: &str) -> bool {
     text.starts_with(CAMERA_URL_PREFIX_HTTP) || text.starts_with(CAMERA_URL_PREFIX_HTTPS)
+}
+
+/// Extracts the hostname from an absolute URL string using pure Rust
+/// string parsing.
+///
+/// Supports `http://` and `https://` schemes, strips IPv6 brackets,
+/// and ignores the port portion. Returns an empty string if the URL
+/// format is not recognised.
+///
+/// # Arguments
+///
+/// - `&str` - The absolute URL to parse.
+///
+/// # Returns
+///
+/// - `String` - The extracted hostname, or an empty string on failure.
+fn extract_hostname(url: &str) -> String {
+    let rest: &str = if let Some(stripped) = url.strip_prefix(CAMERA_URL_PREFIX_HTTPS) {
+        stripped
+    } else if let Some(stripped) = url.strip_prefix(CAMERA_URL_PREFIX_HTTP) {
+        stripped
+    } else {
+        return String::new();
+    };
+    let authority: &str = rest.split('/').next().unwrap_or("");
+    let host_with_brackets: &str = authority.split(':').next().unwrap_or("");
+    if let Some(stripped) = host_with_brackets.strip_prefix('[')
+        && let Some(inner) = stripped.strip_suffix(']')
+    {
+        return inner.to_string();
+    }
+    host_with_brackets.to_string()
+}
+
+/// Checks whether the given hostname is a private or loopback IP
+/// address.
+///
+/// Recognises loopback (`127.0.0.0/8`), link-local (`169.254.0.0/16`),
+/// RFC 1918 private ranges (`10.0.0.0/8`, `172.16.0.0/12`,
+/// `192.168.0.0/16`), and the `localhost` hostname.
+///
+/// # Arguments
+///
+/// - `&str` - The hostname to inspect.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the hostname is a private/internal address.
+fn is_private_host(hostname: &str) -> bool {
+    if hostname.is_empty() {
+        return false;
+    }
+    if hostname.eq_ignore_ascii_case(CAMERA_LOCALHOST_HOSTNAME) {
+        return true;
+    }
+    let octets: Vec<&str> = hostname.split('.').collect();
+    if octets.len() != 4 {
+        return false;
+    }
+    let Ok(first) = octets[0].parse::<u8>() else {
+        return false;
+    };
+    let Ok(second) = octets[1].parse::<u8>() else {
+        return false;
+    };
+    if first == 127 {
+        return true;
+    }
+    if first == 10 {
+        return true;
+    }
+    if first == 172 && (16..=31).contains(&second) {
+        return true;
+    }
+    if first == 192 && second == 168 {
+        return true;
+    }
+    if first == 169 && second == 254 {
+        return true;
+    }
+    false
 }
 
 /// Registers a cleanup callback that closes the camera stream and

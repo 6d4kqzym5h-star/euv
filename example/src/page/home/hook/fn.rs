@@ -18,7 +18,7 @@ pub(crate) fn use_native_bridge() -> UseNativeBridge {
 
 /// Checks whether the Tauri native bridge is available on the current platform.
 ///
-/// Looks up `window.__TAURI__.core` via `js_sys::Reflect` to determine if the
+/// Looks up `window.__TAURI__.core` via `Reflect` to determine if the
 /// Tauri runtime is present. Returns `false` if the property chain does not exist
 /// or if any reflection error occurs.
 ///
@@ -47,7 +47,7 @@ pub(crate) fn is_tauri_available() -> bool {
 ///
 /// Resolves the `__TAURI__` → `core` → `invoke` property chain on the global
 /// `window` object, then calls `invoke` with the given command name and
-/// optional arguments object. Returns the resulting `js_sys::Promise`, or an
+/// optional arguments object. Returns the resulting `Promise`, or an
 /// error string if any step in the reflection chain fails.
 ///
 /// # Arguments
@@ -57,11 +57,8 @@ pub(crate) fn is_tauri_available() -> bool {
 ///
 /// # Returns
 ///
-/// - `Result<js_sys::Promise, String>` - The promise returned by the invoke call, or an error message.
-pub(crate) fn tauri_invoke(
-    command: &str,
-    args: Option<&JsValue>,
-) -> Result<js_sys::Promise, String> {
+/// - `Result<Promise, String>` - The promise returned by the invoke call, or an error message.
+pub(crate) fn tauri_invoke(command: &str, args: Option<&JsValue>) -> Result<Promise, String> {
     let window_value: Window = window().expect("no global window exists");
     let tauri_key: JsValue = JsValue::from_str("__TAURI__");
     let tauri_obj: JsValue =
@@ -85,7 +82,7 @@ pub(crate) fn tauri_invoke(
             .map_err(|error: JsValue| format!("{error:?}"))?,
     };
     result
-        .dyn_into::<js_sys::Promise>()
+        .dyn_into::<Promise>()
         .map_err(|error: JsValue| format!("{error:?}"))
 }
 
@@ -108,7 +105,7 @@ pub(crate) fn load_native_bridge_data(state: UseNativeBridge) {
     }
     let permissions_state: UseNativeBridge = state;
     spawn_local(async move {
-        let args_obj: js_sys::Object = js_sys::Object::new();
+        let args_obj: Object = Object::new();
         Reflect::set(
             &args_obj,
             &JsValue::from_str("group"),
@@ -131,8 +128,8 @@ pub(crate) fn load_native_bridge_data(state: UseNativeBridge) {
         match permissions_result {
             Ok(value) => {
                 let permissions_array: Vec<String> = value
-                    .dyn_into::<js_sys::Array>()
-                    .map(|array: js_sys::Array| {
+                    .dyn_into::<Array>()
+                    .map(|array: Array| {
                         array
                             .iter()
                             .filter_map(|item: JsValue| item.as_string())
