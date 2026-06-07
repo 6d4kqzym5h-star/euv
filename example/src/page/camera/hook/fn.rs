@@ -1,8 +1,23 @@
 use crate::*;
 
+/// Creates the camera page reactive state signals wrapped in a `UseCamera` struct.
+///
+/// # Returns
+///
+/// - `UseCamera` - The camera page state.
+pub(crate) fn use_camera() -> UseCamera {
+    UseCamera {
+        camera_open: use_signal(|| false),
+        camera_loading: use_signal(|| false),
+        error_message: use_signal(String::new),
+        facing: use_signal(|| CameraFacing::Environment),
+        scan_result: use_signal(String::new),
+        scan_handle: use_signal(|| None),
+    }
+}
+
 /// Requests camera access from the browser and binds the resulting
-/// media stream to the `<video>` element identified by the given CSS
-/// selector.
+/// media stream to the `<video>` element identified by the given CSS selector.
 ///
 /// Uses `navigator.mediaDevices.getUserMedia` with a video-only
 /// constraint. On success the stream is assigned as `srcObject` on
@@ -12,18 +27,29 @@ use crate::*;
 /// # Arguments
 ///
 /// - `&str` - The CSS selector of the `<video>` element to bind the stream to.
+/// - `CameraFacing` - The desired camera facing direction.
 ///
 /// # Returns
 ///
 /// - `Result<(), String>` - `Ok(())` on success, or an error message on failure.
-pub(crate) fn open_camera(video_selector: &str) -> Result<(), String> {
+pub(crate) fn open_camera(video_selector: &str, facing: CameraFacing) -> Result<(), String> {
     let window_value: Window = window().expect("no global window exists");
     let navigator: Navigator = window_value.navigator();
     let media_devices: MediaDevices = navigator
         .media_devices()
         .map_err(|error: JsValue| format!("{error:?}"))?;
     let constraints: MediaStreamConstraints = MediaStreamConstraints::new();
-    constraints.set_video(&JsValue::from_bool(true));
+    let facing_mode: &str = match facing {
+        CameraFacing::User => CAMERA_FACING_MODE_USER,
+        CameraFacing::Environment => CAMERA_FACING_MODE_ENVIRONMENT,
+    };
+    let video_constraint: js_sys::Object = js_sys::Object::new();
+    let _ = Reflect::set(
+        &video_constraint,
+        &JsValue::from_str("facingMode"),
+        &JsValue::from_str(facing_mode),
+    );
+    constraints.set_video(&video_constraint);
     constraints.set_audio(&JsValue::from_bool(false));
     let promise: js_sys::Promise = media_devices
         .get_user_media_with_constraints(&constraints)
@@ -76,4 +102,174 @@ pub(crate) fn close_camera(video_selector: &str) {
         }
         video_element.set_src_object(None);
     }
+}
+
+/// Switches the camera to the opposite facing direction.
+///
+/// Closes the current camera stream and reopens with the new facing
+/// mode. Updates the state signals accordingly.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+pub(crate) fn switch_camera(state: UseCamera) {
+    close_camera(CAMERA_VIDEO_SELECTOR);
+    state.camera_open.set(false);
+    let new_facing: CameraFacing = match state.facing.get() {
+        CameraFacing::User => CameraFacing::Environment,
+        CameraFacing::Environment => CameraFacing::User,
+    };
+    state.facing.set(new_facing);
+    state.camera_loading.set(true);
+    state.error_message.set(String::new());
+    let result: Result<(), String> = open_camera(CAMERA_VIDEO_SELECTOR, new_facing);
+    match result {
+        Ok(()) => {
+            state.camera_open.set(true);
+            state.camera_loading.set(false);
+        }
+        Err(error) => {
+            state.error_message.set(error);
+            state.camera_loading.set(false);
+        }
+    }
+}
+
+/// Starts a periodic QR code scan using the browser `BarcodeDetector` API.
+///
+/// If the browser does not support `BarcodeDetector`, the scan is not
+/// started and the error signal is set. On each interval tick, captures
+/// the current video frame and attempts to detect a QR code. If a QR
+/// code is found, the result is stored in `scan_result`. If the result
+/// is a URL, navigation to that URL is triggered immediately.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+pub(crate) fn start_qr_scan(state: UseCamera) {
+    let window_value: Window = window().expect("no global window exists");
+    let barcode_detector_key: JsValue = JsValue::from_str("BarcodeDetector");
+    if Reflect::get(&window_value, &barcode_detector_key).is_err() {
+        state
+            .error_message
+            .set("BarcodeDetector API is not supported in this browser".to_string());
+        return;
+    }
+    let detector_result: Result<JsValue, JsValue> =
+        js_sys::Function::new_no_args("return new BarcodeDetector({ formats: ['qr_code'] })")
+            .call0(&JsValue::NULL);
+    let detector: JsValue = match detector_result {
+        Ok(value) => value,
+        Err(error) => {
+            state
+                .error_message
+                .set(format!("Failed to create BarcodeDetector: {error:?}"));
+            return;
+        }
+    };
+    let handle: IntervalHandle = use_interval(CAMERA_SCAN_INTERVAL_MILLIS, move || {
+        let document: Document = window()
+            .expect("no global window exists")
+            .document()
+            .expect("should have a document");
+        let Some(element) = document
+            .query_selector(CAMERA_VIDEO_SELECTOR)
+            .ok()
+            .flatten()
+        else {
+            return;
+        };
+        let video_element: HtmlVideoElement = element.unchecked_into();
+        if video_element.ready_state() != HtmlMediaElement::HAVE_ENOUGH_DATA {
+            return;
+        }
+        let detect_fn: js_sys::Function = Reflect::get(&detector, &JsValue::from_str("detect"))
+            .ok()
+            .and_then(|value: JsValue| value.dyn_into::<js_sys::Function>().ok())
+            .unwrap_or_else(|| js_sys::Function::new_no_args("return Promise.resolve([])"));
+        let promise: js_sys::Promise = match detect_fn.call1(&detector, &video_element) {
+            Ok(result) => result.into(),
+            Err(_) => return,
+        };
+        let scan_state: UseCamera = state;
+        let on_detected: Closure<dyn FnMut(JsValue)> =
+            Closure::wrap(Box::new(move |barcodes_value: JsValue| {
+                let barcodes: js_sys::Array = match barcodes_value.dyn_into::<js_sys::Array>() {
+                    Ok(array) => array,
+                    Err(_) => return,
+                };
+                if barcodes.length() == 0 {
+                    return;
+                }
+                if let Some(first) = barcodes.get(0).as_string() {
+                    scan_state.scan_result.set(first.clone());
+                    if is_url(&first) {
+                        stop_qr_scan(scan_state);
+                        close_camera(CAMERA_VIDEO_SELECTOR);
+                        scan_state.camera_open.set(false);
+                        navigate(&first);
+                    }
+                } else if let Ok(raw_value) =
+                    Reflect::get(&barcodes.get(0), &JsValue::from_str("rawValue"))
+                    && let Some(text) = raw_value.as_string()
+                {
+                    scan_state.scan_result.set(text.clone());
+                    if is_url(&text) {
+                        stop_qr_scan(scan_state);
+                        close_camera(CAMERA_VIDEO_SELECTOR);
+                        scan_state.camera_open.set(false);
+                        navigate(&text);
+                    }
+                }
+            }));
+        let on_scan_error: Closure<dyn FnMut(JsValue)> =
+            Closure::wrap(Box::new(move |_error: JsValue| {}));
+        let _ = promise.then(&on_detected).catch(&on_scan_error);
+        on_detected.forget();
+        on_scan_error.forget();
+    });
+    state.scan_handle.set(Some(handle));
+}
+
+/// Stops the periodic QR code scan timer if it is running.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+pub(crate) fn stop_qr_scan(state: UseCamera) {
+    if let Some(handle) = state.scan_handle.get() {
+        handle.clear();
+        state.scan_handle.set(None);
+    }
+}
+
+/// Checks whether the given string is a URL (starts with `http://` or `https://`).
+///
+/// # Arguments
+///
+/// - `&str` - The string to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the string is a URL.
+pub(crate) fn is_url(text: &str) -> bool {
+    text.starts_with(CAMERA_URL_PREFIX_HTTP) || text.starts_with(CAMERA_URL_PREFIX_HTTPS)
+}
+
+/// Registers a cleanup callback that closes the camera stream and
+/// stops the QR code scan timer when the component unmounts or
+/// the page route switches away.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+pub(crate) fn camera_cleanup(state: UseCamera) {
+    use_cleanup(move || {
+        stop_qr_scan(state);
+        close_camera(CAMERA_VIDEO_SELECTOR);
+        state.camera_open.set(false);
+        state.camera_loading.set(false);
+        state.error_message.set(String::new());
+        state.scan_result.set(String::new());
+    });
 }

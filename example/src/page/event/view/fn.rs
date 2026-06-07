@@ -74,52 +74,61 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
+                    class: c_event_info_grid()
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "KeyDown: "
-                            span {
-                                class: c_event_highlight()
-                                keyboard.get_last_key()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "KeyDown:"
                         }
-                        p {
-                            class: c_event_result()
-                            "KeyCode: "
-                            span {
-                                class: c_event_highlight()
-                                keyboard.get_last_key_code()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            keyboard.get_last_key()
                         }
                     }
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "KeyUp: "
-                            span {
-                                class: c_event_highlight()
-                                keyboard.get_last_key_up()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "KeyCode:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Repeat: "
-                            span {
-                                class: c_event_highlight()
-                                keyboard.get_key_repeat()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            keyboard.get_last_key_code()
                         }
                     }
-                }
-                p {
-                    class: c_event_result()
-                    "Modifiers: "
-                    span {
-                        class: c_event_highlight()
-                        keyboard.get_modifier()
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "KeyUp:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            keyboard.get_last_key_up()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Repeat:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            keyboard.get_key_repeat()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Modifiers:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            keyboard.get_modifier()
+                        }
                     }
                 }
             }
@@ -191,110 +200,137 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
+                    class: c_event_info_grid()
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Clicks: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_click_count()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Clicks:"
                         }
-                        p {
-                            class: c_event_result()
-                            "DblClicks: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_double_click_count()
-                            }
-                        }
-                        p {
-                            class: c_event_result()
-                            "MouseDown: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_down_count()
-                            }
-                        }
-                        p {
-                            class: c_event_result()
-                            "MouseUp: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_up_count()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_click_count()
                         }
                     }
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Client: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_pos()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "DblClicks:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Screen: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_screen_pos()
-                            }
-                        }
-                        p {
-                            class: c_event_result()
-                            "Button: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_button()
-                            }
-                        }
-                        p {
-                            class: c_event_result()
-                            "Buttons: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_buttons()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_double_click_count()
                         }
                     }
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Enter: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_enter_count()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "MouseDown:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Leave: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_leave_count()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_down_count()
                         }
-                        p {
-                            class: c_event_result()
-                            "Over: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_over_count()
-                            }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "MouseUp:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Out: "
-                            span {
-                                class: c_event_highlight()
-                                mouse.get_mouse_out_count()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_up_count()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Client:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_pos()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Screen:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_screen_pos()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Button:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_button()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Buttons:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_buttons()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Enter:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_enter_count()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Leave:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_leave_count()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Over:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_over_count()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Out:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            mouse.get_mouse_out_count()
                         }
                     }
                 }
@@ -366,28 +402,37 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
-                    p {
-                        class: c_event_result()
-                        "Status: "
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Status:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             focus.get_focus_status()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "FocusIn: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "FocusIn:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             focus.get_focus_in_count()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "FocusOut: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "FocusOut:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             focus.get_focus_out_count()
                         }
                     }
@@ -488,28 +533,37 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
-                    p {
-                        class: c_event_result()
-                        "Status: "
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Status:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             drag.get_drag_status()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Position: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Position:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             drag.get_drag_pos()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Types: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Types:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             drag.get_drag_types()
                         }
                     }
@@ -544,20 +598,26 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
-                    p {
-                        class: c_event_result()
-                        "Delta: "
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Delta:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             wheel.get_wheel_delta()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Total Y: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Total Y:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             wheel.get_wheel_total()
                         }
                     }
@@ -608,20 +668,26 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
-                    p {
-                        class: c_event_result()
-                        "Event: "
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Event:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             clipboard.get_clipboard_event_type()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Data: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Data:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             clipboard.get_clipboard_data()
                         }
                     }
@@ -669,12 +735,18 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         "touchstart, touchmove, touchend, touchcancel"
                     }
                 }
-                p {
-                    class: c_event_result()
-                    "Touch: "
-                    span {
-                        class: c_event_highlight()
-                        touch.get_touch_info()
+                div {
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Touch:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            touch.get_touch_info()
+                        }
                     }
                 }
             }
@@ -781,44 +853,59 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
-                    p {
-                        class: c_event_result()
-                        "Input: "
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Input:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             form.get_form_input_value()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Change: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Change:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             form.get_form_change_value()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Checked: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Checked:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             form.get_form_checkbox()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Select: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Select:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             form.get_form_select_value()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Submits: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Submits:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             form.get_submit_count()
                         }
                     }
@@ -868,20 +955,26 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
-                    p {
-                        class: c_event_result()
-                        "Status: "
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Status:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             media.get_media_status()
                         }
                     }
-                    p {
-                        class: c_event_result()
-                        "Last Event: "
+                    div {
+                        class: c_event_info_row()
                         span {
-                            class: c_event_highlight()
+                            class: c_event_info_label()
+                            "Last Event:"
+                        }
+                        span {
+                            class: c_event_info_value()
                             media.get_media_event_log()
                         }
                     }
@@ -1009,62 +1102,71 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_event_section_row()
+                    class: c_event_info_grid()
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Status: "
-                            span {
-                                class: c_event_highlight()
-                                video.get_video_status()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Status:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Last Event: "
-                            span {
-                                class: c_event_highlight()
-                                video.get_video_event_log()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            video.get_video_status()
                         }
                     }
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Current Time: "
-                            span {
-                                class: c_event_highlight()
-                                video.get_video_current_time()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Last Event:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Duration: "
-                            span {
-                                class: c_event_highlight()
-                                video.get_video_duration()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            video.get_video_event_log()
                         }
                     }
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Playback Rate: "
-                            span {
-                                class: c_event_highlight()
-                                video.get_video_playback_rate()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Current Time:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Buffered: "
-                            span {
-                                class: c_event_highlight()
-                                video.get_video_buffered()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            video.get_video_current_time()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Duration:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            video.get_video_duration()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Playback Rate:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            video.get_video_playback_rate()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Buffered:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            video.get_video_buffered()
                         }
                     }
                 }
@@ -1078,7 +1180,12 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         class: c_event_image()
                         src: qr_code_data_url
                         alt: EVENT_IMAGE_ALT
-                        onload: move |_event: Event| {
+                        onload: move |event: Event| {
+                            if let Some(target) = event.target()
+                                && let Ok(img_el) = target.clone().dyn_into::<HtmlImageElement>() {
+                                    let size: String = format!("{}x{}", img_el.natural_width(), img_el.natural_height());
+                                    image.get_image_natural_size().set(size);
+                                }
                             image.get_image_status().set("Loaded".to_string());
                             image.get_image_event_log().set("Load".to_string());
                             Console::log("Image Load: image loaded successfully");
@@ -1089,47 +1196,46 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                             Console::log("Image Error: failed to load image");
                         }
                     }
+                    p {
+                        class: c_event_url_text()
+                        current_url
+                    }
                 }
                 div {
-                    class: c_event_section_row()
+                    class: c_event_info_grid()
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Status: "
-                            span {
-                                class: c_event_highlight()
-                                image.get_image_status()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Status:"
                         }
-                        p {
-                            class: c_event_result()
-                            "Last Event: "
-                            span {
-                                class: c_event_highlight()
-                                image.get_image_event_log()
-                            }
+                        span {
+                            class: c_event_info_value()
+                            image.get_image_status()
                         }
                     }
                     div {
-                        class: c_event_section_col()
-                        p {
-                            class: c_event_result()
-                            "Natural Size: "
-                            span {
-                                class: c_event_highlight()
-                                image.get_image_natural_size()
-                            }
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Last Event:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            image.get_image_event_log()
                         }
                     }
-                }
-                p {
-                    class: c_demo_text_muted()
-                    "QR code image with load, error events"
-                }
-                p {
-                    class: c_event_url_text()
-                    current_url
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Natural Size:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            image.get_image_natural_size()
+                        }
+                    }
                 }
             }
         }
