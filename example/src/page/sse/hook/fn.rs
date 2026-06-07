@@ -1,11 +1,5 @@
 use crate::*;
 
-use std::cell::RefCell;
-
-thread_local! {
-    static SSE_SOURCE: RefCell<Option<EventSource>> = const { RefCell::new(None) };
-}
-
 /// Creates SSE state signals wrapped in a `UseSse` struct.
 ///
 /// # Returns

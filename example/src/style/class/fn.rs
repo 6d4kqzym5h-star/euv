@@ -1713,7 +1713,7 @@ class! {
         bottom: "0px";
         z-index: "10000";
         background: "rgba(0, 0, 0, 0.15)";
-        transition: format!("opacity {} {}", var!(duration-normal), var!(ease-out));
+        transition: format!("opacity {} {}", var!(duration-overlay), var!(ease-out));
     }
 
     pub(crate) c_vconsole_overlay_hidden {
@@ -1735,7 +1735,7 @@ class! {
         border-radius: format!("{} {} 0px 0px", var!(radius-xl), var!(radius-xl));
         box-shadow: var!(shadow-console-panel);
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
-        transition: format!("transform {} {}", var!(duration-normal), var!(ease-out));
+        transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         overflow: "hidden";
     }
 
@@ -2059,7 +2059,12 @@ class! {
         height: "100%";
         background: "rgba(0, 0, 0, 0.4)";
         z-index: "200";
-        animation: format!("euv-fade-in {} {}", var!(duration-fast), var!(ease-out));
+        transition: format!("opacity {} {}", var!(duration-overlay), var!(ease-out));
+    }
+
+    pub(crate) c_mobile_overlay_hidden {
+        opacity: "0";
+        pointer-events: "none";
     }
 
     pub(crate) c_mobile_nav_drawer {
@@ -2074,8 +2079,12 @@ class! {
         flex-direction: "column";
         padding-top: "env(safe-area-inset-top, 0px)";
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
-        animation: format!("euv-slide-left {} {}", var!(duration-normal), var!(ease-out));
+        transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         box-shadow: var!(shadow-drawer);
+    }
+
+    pub(crate) c_mobile_nav_drawer_closed {
+        transform: "translateX(-100%)";
     }
 
     pub(crate) c_mobile_nav_drawer_header {

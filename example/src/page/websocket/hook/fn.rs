@@ -1,11 +1,5 @@
 use crate::*;
 
-use std::cell::RefCell;
-
-thread_local! {
-    static WS_INSTANCE: RefCell<Option<WebSocket>> = const { RefCell::new(None) };
-}
-
 /// Generates a random UUID v4 string using `js_sys::Math::random`.
 ///
 /// # Returns

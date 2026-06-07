@@ -56,9 +56,9 @@ pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualN
         a {
             href: format!("#{target_string}")
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
-            onclick: move |_event: Event| {
-                navigate(&nav_target);
-                drawer_open.set(false);
+            onclick: move |event: Event| {
+                event.prevent_default();
+                close_drawer_and_navigate(drawer_open, nav_target.clone());
             }
             label
         }
@@ -464,7 +464,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         class: c_mobile_header_left()
                         button {
                             class: if { drawer_open.get() } { c_mobile_menu_button_active() } else { c_mobile_menu_button() }
-                            onclick: use_toggle(drawer_open)
+                            onclick: use_drawer_toggle(drawer_open)
                             "☰"
                         }
                         a {
@@ -497,69 +497,69 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
             vconsole_panel {
                 panel_open
             }
-            if { drawer_open.get() } {
+            div {
+                class: if { drawer_open.get() } { c_mobile_overlay().to_string() } else { format!("{} {}", c_mobile_overlay().get_name(), c_mobile_overlay_hidden().get_name()) }
+                onclick: move |_event: Event| {
+                    overlay_back(None);
+                    drawer_open.set(false);
+                }
+            }
+            nav {
+                class: if { drawer_open.get() } { c_mobile_nav_drawer().to_string() } else { format!("{} {}", c_mobile_nav_drawer().get_name(), c_mobile_nav_drawer_closed().get_name()) }
                 div {
-                    class: c_mobile_overlay()
-                    onclick: move |_event: Event| {
-                        drawer_open.set(false);
+                    class: c_mobile_nav_drawer_header()
+                    div {
+                        class: c_mobile_header_left()
+                        button {
+                            class: if { drawer_open.get() } { c_mobile_menu_button_active() } else { c_mobile_menu_button() }
+                            onclick: use_drawer_toggle(drawer_open)
+                            "☰"
+                        }
+                        a {
+                            href: GITHUB_URL
+                            target: "_blank"
+                            class: c_mobile_header_logo()
+                            logo_button {
+                                variant: LogoButtonVariant::Nav
+                            }
+                            span {
+                                class: c_nav_brand_title()
+                                BRAND_NAME
+                            }
+                        }
+                    }
+                    button {
+                        class: c_mobile_menu_button()
+                        onclick: move |_event: Event| {
+                            overlay_back(None);
+                            drawer_open.set(false);
+                        }
+                        "✕"
                     }
                 }
-                nav {
-                    class: c_mobile_nav_drawer()
-                    div {
-                        class: c_mobile_nav_drawer_header()
+                p {
+                    class: c_nav_section_label()
+                    "Pages"
+                }
+                build_mobile_nav_items {
+                    route_signal: route_signal
+                    drawer_open: drawer_open
+                }
+                div {
+                    class: c_nav_theme_toggle()
+                    button {
+                        class: c_nav_theme_button()
+                        onclick: toggle_theme(theme_signal)
                         div {
-                            class: c_mobile_header_left()
-                            button {
-                                class: c_mobile_menu_button_active()
-                                onclick: use_toggle(drawer_open)
-                                "☰"
-                            }
-                            a {
-                                href: GITHUB_URL
-                                target: "_blank"
-                                class: c_mobile_header_logo()
-                                logo_button {
-                                    variant: LogoButtonVariant::Nav
-                                }
-                                span {
-                                    class: c_nav_brand_title()
-                                    BRAND_NAME
-                                }
-                            }
-                        }
-                        button {
-                            class: c_mobile_menu_button()
-                            onclick: move |_event: Event| {
-                                drawer_open.set(false);
-                            }
-                            "✕"
+                            class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
                         }
                     }
-                    p {
-                        class: c_nav_section_label()
-                        "Pages"
-                    }
-                    build_mobile_nav_items {
-                        route_signal: route_signal
-                        drawer_open: drawer_open
-                    }
-                    div {
-                        class: c_nav_theme_toggle()
-                        button {
-                            class: c_nav_theme_button()
-                            onclick: toggle_theme(theme_signal)
-                            div {
-                                class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
-                            }
-                        }
-                    }
-                    a {
-                        href: GITHUB_URL
-                        target: "_blank"
-                        class: c_nav_footer()
-                        format!("Built with {} & WASM", BRAND_NAME)
-                    }
+                }
+                a {
+                    href: GITHUB_URL
+                    target: "_blank"
+                    class: c_nav_footer()
+                    format!("Built with {} & WASM", BRAND_NAME)
                 }
             }
         }
@@ -585,7 +585,7 @@ pub(crate) fn app() -> VirtualNode {
     let root_class_signal: Signal<String> = theme_state.get_root_class();
     use_hash_change(route_signal);
     use_scroll_to_top(route_signal);
-    use_pop_state(panel_open);
+    use_overlay_history(panel_open, drawer_open, mobile_signal);
     use_scroll_drawer_to_active(drawer_open);
     html! {
         if { mobile_signal.get() } {

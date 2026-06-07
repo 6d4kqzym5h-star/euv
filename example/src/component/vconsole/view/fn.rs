@@ -60,7 +60,7 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
         };
     }
     let fab_on_click: Option<Rc<dyn Fn(Event)>> = Some(Rc::new(move |_event: Event| {
-        push_state_on_open();
+        overlay_push_state();
         panel_open.set(true);
     }));
     if !console_signal.get().is_empty() {
@@ -125,7 +125,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
             div {
                 class: overlay_class
                 onclick: move |_event: Event| {
-                    back_on_close();
+                    overlay_back(None);
                     panel_open.set(false);
                 }
             }
@@ -156,7 +156,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                         button {
                             class: c_vconsole_close_button()
                             onclick: move |_event: Event| {
-                                back_on_close();
+                                overlay_back(None);
                                 panel_open.set(false);
                             }
                             "×"

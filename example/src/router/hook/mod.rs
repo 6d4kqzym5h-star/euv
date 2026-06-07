@@ -1,6 +1,5 @@
 mod r#const;
 mod r#fn;
+mod r#static;
 
-pub(crate) use r#fn::*;
-
-pub(crate) use r#const::*;
+pub(crate) use {r#const::*, r#fn::*, r#static::*};

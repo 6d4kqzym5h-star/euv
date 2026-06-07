@@ -20,6 +20,31 @@ pub(crate) fn use_toggle(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
     }))
 }
 
+/// Creates a click event handler that toggles the mobile nav drawer signal
+/// with proper browser history management.
+///
+/// When toggling from open to closed, calls `overlay_back` to remove the
+/// extra history entry that was pushed when the drawer opened. When toggling
+/// from closed to open, the `use_overlay_history` hook handles the
+/// `pushState` call automatically.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The boolean signal controlling the drawer visibility.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that toggles the drawer.
+pub(crate) fn use_drawer_toggle(drawer_open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_event: Event| {
+        let is_open: bool = drawer_open.get();
+        if is_open {
+            overlay_back(None);
+        }
+        drawer_open.set(!is_open);
+    }))
+}
+
 /// Creates an input event handler that updates a string signal.
 ///
 /// # Arguments

@@ -39,6 +39,7 @@ css_vars! {
         duration-fast: "0.15s";
         duration-normal: "0.25s";
         duration-slow: "0.4s";
+        duration-overlay: "0.3s";
 
         // ─── Easing Functions ───
         ease-out: "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -246,6 +247,7 @@ css_vars! {
         duration-fast: "0.15s";
         duration-normal: "0.25s";
         duration-slow: "0.4s";
+        duration-overlay: "0.3s";
 
         // ─── Easing Functions (same as light) ───
         ease-out: "cubic-bezier(0.16, 1, 0.3, 1)";

@@ -30,6 +30,12 @@ pub(crate) fn navigate(route: &str) {
 
 /// Creates a link click handler that navigates to the given route.
 ///
+/// Calls `event.prevent_default()` to prevent the `<a>` element's
+/// default hash navigation, then programmatically navigates via
+/// `navigate()`. Without `preventDefault`, both the `<a href>` default
+/// behavior and `navigate()` would fire, potentially creating duplicate
+/// history entries and causing incorrect browser back/forward behavior.
+///
 /// # Arguments
 ///
 /// - `String` - The target route path.
@@ -38,7 +44,8 @@ pub(crate) fn navigate(route: &str) {
 ///
 /// - `NativeEventHandler` - An event handler for click events.
 pub(crate) fn link_handler(route: String) -> NativeEventHandler {
-    NativeEventHandler::create("click", move |_event: Event| {
+    NativeEventHandler::create("click", move |event: Event| {
+        event.prevent_default();
         navigate(&route);
     })
 }
