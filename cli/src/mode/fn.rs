@@ -11,19 +11,20 @@ use crate::*;
 /// - `Result<()>` - Indicates success or failure.
 pub(crate) async fn build_mode(mut args: ModeArgs) -> Result<()> {
     reconcile_args(&mut args);
-    args.crate_path =
-        std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| EuvError::IoPath {
+    args.set_crate_path(std::fs::canonicalize(args.get_crate_path()).map_err(
+        |error: io::Error| EuvError::IoPath {
             message: String::from("Invalid crate-path"),
-            path: args.crate_path.clone(),
+            path: args.get_crate_path().clone(),
             error,
-        })?;
-    let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
+        },
+    )?);
+    let crate_path_str: String = args.get_crate_path().to_string_lossy().to_string();
     if crate_path_str.starts_with(WINDOWS_UNC_PREFIX) {
-        args.crate_path = PathBuf::from(
+        args.set_crate_path(PathBuf::from(
             crate_path_str
                 .strip_prefix(WINDOWS_UNC_PREFIX)
                 .unwrap_or(&crate_path_str),
-        );
+        ));
     }
     print_banner(Action::Build);
     run_build_only_pipeline(&args).await?;
@@ -41,17 +42,17 @@ pub(crate) async fn build_mode(mut args: ModeArgs) -> Result<()> {
 ///
 /// - `Result<()>` - Indicates success or failure.
 pub(crate) async fn fmt_mode(args: FmtArgs) -> Result<()> {
-    let fmt_path: PathBuf = if args.path.is_absolute() {
-        args.path.clone()
+    let fmt_path: PathBuf = if args.get_path().is_absolute() {
+        args.get_path().clone()
     } else {
         std::env::current_dir()
             .map_err(|error: io::Error| EuvError::Io {
                 message: String::from("Failed to get current directory"),
                 error,
             })?
-            .join(&args.path)
+            .join(args.get_path())
     };
-    let mode: FmtMode = if args.check {
+    let mode: FmtMode = if args.get_check() {
         FmtMode::Check
     } else {
         FmtMode::Write
@@ -70,22 +71,25 @@ pub(crate) async fn fmt_mode(args: FmtArgs) -> Result<()> {
 /// - `Result<()>` - Indicates success or failure.
 pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
     reconcile_args(&mut args);
-    args.crate_path =
-        std::fs::canonicalize(&args.crate_path).map_err(|error: io::Error| EuvError::IoPath {
+    args.set_crate_path(std::fs::canonicalize(args.get_crate_path()).map_err(
+        |error: io::Error| EuvError::IoPath {
             message: String::from("Invalid crate-path"),
-            path: args.crate_path.clone(),
+            path: args.get_crate_path().clone(),
             error,
-        })?;
-    let crate_path_str: String = args.crate_path.to_string_lossy().to_string();
+        },
+    )?);
+    let crate_path_str: String = args.get_crate_path().to_string_lossy().to_string();
     if crate_path_str.starts_with(WINDOWS_UNC_PREFIX) {
-        args.crate_path = PathBuf::from(
+        args.set_crate_path(PathBuf::from(
             crate_path_str
                 .strip_prefix(WINDOWS_UNC_PREFIX)
                 .unwrap_or(&crate_path_str),
-        );
+        ));
     }
-    let www_route_prefix: String = args.www_dir.replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD);
-    let www_absolute: PathBuf = args.crate_path.join(&args.www_dir);
+    let www_route_prefix: String = args
+        .get_www_dir()
+        .replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD);
+    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
     let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
     let initial_html: String = match run_build_pipeline(&args, None).await {
         Ok(html) => html,
@@ -102,12 +106,12 @@ pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
         broadcast::Sender<ReloadEvent>,
         broadcast::Receiver<ReloadEvent>,
     ) = broadcast::channel(16);
-    let state: Arc<AppState> = Arc::new(AppState {
-        html_content: RwLock::new(initial_html),
-        reload_tx: reload_tx.clone(),
-        is_building: Mutex::new(false),
-        args: args.clone(),
-    });
+    let state: Arc<AppState> = Arc::new(AppState::new(
+        RwLock::new(initial_html),
+        reload_tx.clone(),
+        RwLock::new(false),
+        args.clone(),
+    ));
     let state_for_watch: Arc<AppState> = Arc::clone(&state);
     tokio::spawn(async move {
         if let Err(error) = watch_and_build(state_for_watch).await {
@@ -118,7 +122,7 @@ pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
     log::info!("Serving pkg from: {}", pkg_dir.display());
     let mut server: Server = Server::default();
     let mut server_config: ServerConfig = ServerConfig::default();
-    server_config.set_address(Server::format_bind_address(DEFAULT_HOST, args.port));
+    server_config.set_address(Server::format_bind_address(DEFAULT_HOST, args.get_port()));
     server.server_config(server_config);
     server.request_middleware::<RequestMiddleware>();
     server.response_middleware::<ResponseMiddleware>();
@@ -127,7 +131,7 @@ pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
     if let Err(error) = set_global_state(Arc::clone(&state)) {
         log::error!("Failed to set global state: {error}");
     }
-    print_server_urls(args.port, &www_route_prefix, INDEX_HTML_FILE_NAME);
+    print_server_urls(args.get_port(), &www_route_prefix, INDEX_HTML_FILE_NAME);
     let server_control_hook: ServerControlHook = server
         .run()
         .await

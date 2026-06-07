@@ -2,7 +2,7 @@ use crate::*;
 
 /// Reactive state for the camera page, including camera control,
 /// facing mode, and QR code scanning results.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseCamera {
     /// Whether the camera stream is currently open.
     #[get(type(copy))]

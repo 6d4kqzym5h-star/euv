@@ -39,7 +39,7 @@ use {
         process::Command,
         spawn,
         sync::{
-            Mutex, MutexGuard, RwLock, RwLockWriteGuard, broadcast,
+            RwLock, RwLockWriteGuard, broadcast,
             mpsc::{Receiver, Sender, channel},
         },
         time::{Interval, interval, sleep},
@@ -60,7 +60,7 @@ type Result<T = ()> = std::result::Result<T, EuvError>;
 pub async fn main() -> std::result::Result<(), EuvError> {
     Logger::init(log::LevelFilter::Info);
     let cli: Cli = Cli::parse();
-    match &cli.command {
+    match cli.get_command() {
         Mode::Run(mode_args) => {
             run_mode(mode_args.clone()).await?;
         }

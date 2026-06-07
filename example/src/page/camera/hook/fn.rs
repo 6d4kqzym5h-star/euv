@@ -6,14 +6,14 @@ use crate::*;
 ///
 /// - `UseCamera` - The camera page state.
 pub(crate) fn use_camera() -> UseCamera {
-    UseCamera {
-        camera_open: use_signal(|| false),
-        camera_loading: use_signal(|| false),
-        error_message: use_signal(String::new),
-        facing: use_signal(|| CameraFacing::Environment),
-        scan_result: use_signal(String::new),
-        scan_handle: use_signal(|| None),
-    }
+    UseCamera::new(
+        use_signal(|| false),
+        use_signal(|| false),
+        use_signal(String::new),
+        use_signal(|| CameraFacing::Environment),
+        use_signal(String::new),
+        use_signal(|| None),
+    )
 }
 
 /// Requests camera access from the browser and binds the resulting
@@ -104,35 +104,92 @@ pub(crate) fn close_camera(video_selector: &str) {
     }
 }
 
-/// Switches the camera to the opposite facing direction.
+/// Opens the camera, starts QR code scanning immediately, and updates
+/// the state signals accordingly.
+///
+/// If the camera fails to open, the error message signal is set.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+pub(crate) fn open_camera_and_scan(state: UseCamera) {
+    state.get_camera_loading().set(true);
+    state.get_error_message().set(String::new());
+    state.get_scan_result().set(String::new());
+    let facing: CameraFacing = state.get_facing().get();
+    let result: Result<(), String> = open_camera(CAMERA_VIDEO_SELECTOR, facing);
+    match result {
+        Ok(()) => {
+            state.get_camera_open().set(true);
+            state.get_camera_loading().set(false);
+            start_qr_scan(state);
+        }
+        Err(error) => {
+            state.get_error_message().set(error);
+            state.get_camera_loading().set(false);
+        }
+    }
+}
+
+/// Switches the camera to the opposite facing direction and restarts
+/// QR code scanning.
 ///
 /// Closes the current camera stream and reopens with the new facing
-/// mode. Updates the state signals accordingly.
+/// mode. On success, QR code scanning is started automatically.
 ///
 /// # Arguments
 ///
 /// - `UseCamera` - The camera page state.
 pub(crate) fn switch_camera(state: UseCamera) {
+    stop_qr_scan(state);
     close_camera(CAMERA_VIDEO_SELECTOR);
-    state.camera_open.set(false);
-    let new_facing: CameraFacing = match state.facing.get() {
+    state.get_camera_open().set(false);
+    let new_facing: CameraFacing = match state.get_facing().get() {
         CameraFacing::User => CameraFacing::Environment,
         CameraFacing::Environment => CameraFacing::User,
     };
-    state.facing.set(new_facing);
-    state.camera_loading.set(true);
-    state.error_message.set(String::new());
+    state.get_facing().set(new_facing);
+    state.get_camera_loading().set(true);
+    state.get_error_message().set(String::new());
     let result: Result<(), String> = open_camera(CAMERA_VIDEO_SELECTOR, new_facing);
     match result {
         Ok(()) => {
-            state.camera_open.set(true);
-            state.camera_loading.set(false);
+            state.get_camera_open().set(true);
+            state.get_camera_loading().set(false);
+            start_qr_scan(state);
         }
         Err(error) => {
-            state.error_message.set(error);
-            state.camera_loading.set(false);
+            state.get_error_message().set(error);
+            state.get_camera_loading().set(false);
         }
     }
+}
+
+/// Navigates to the URL detected from a QR code.
+///
+/// If the URL points to the same origin (current host), extracts the
+/// hash fragment route and navigates internally using `navigate`.
+/// Otherwise, performs a full page navigation via `location.href`.
+///
+/// # Arguments
+///
+/// - `&str` - The URL to navigate to.
+pub(crate) fn navigate_qr_url(url: &str) {
+    let window_value: Window = window().expect("no global window exists");
+    let location: Location = window_value.location();
+    let current_origin: String = format!(
+        "{}//{}",
+        location.protocol().unwrap_or_default(),
+        location.host().unwrap_or_default()
+    );
+    if url.starts_with(&current_origin)
+        && let Some(fragment) = url.split('#').nth(1)
+    {
+        let route: &str = if fragment.is_empty() { "/" } else { fragment };
+        navigate(route);
+        return;
+    }
+    let _ = window_value.location().set_href(url);
 }
 
 /// Starts a periodic QR code scan using the browser `BarcodeDetector` API.
@@ -151,7 +208,7 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
     let barcode_detector_key: JsValue = JsValue::from_str("BarcodeDetector");
     if Reflect::get(&window_value, &barcode_detector_key).is_err() {
         state
-            .error_message
+            .get_error_message()
             .set("BarcodeDetector API is not supported in this browser".to_string());
         return;
     }
@@ -162,7 +219,7 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
         Ok(value) => value,
         Err(error) => {
             state
-                .error_message
+                .get_error_message()
                 .set(format!("Failed to create BarcodeDetector: {error:?}"));
             return;
         }
@@ -202,25 +259,23 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
                     return;
                 }
                 if let Some(first) = barcodes.get(0).as_string() {
-                    scan_state.scan_result.set(first.clone());
-                    if is_url(&first) {
+                    scan_state.get_scan_result().set(first.clone());
+                    if is_valid_qr_url(&first) {
                         stop_qr_scan(scan_state);
                         close_camera(CAMERA_VIDEO_SELECTOR);
-                        scan_state.camera_open.set(false);
-                        let window_value: Window = window().expect("no global window exists");
-                        let _ = window_value.location().set_href(&first);
+                        scan_state.get_camera_open().set(false);
+                        navigate_qr_url(&first);
                     }
                 } else if let Ok(raw_value) =
                     Reflect::get(&barcodes.get(0), &JsValue::from_str("rawValue"))
                     && let Some(text) = raw_value.as_string()
                 {
-                    scan_state.scan_result.set(text.clone());
-                    if is_url(&text) {
+                    scan_state.get_scan_result().set(text.clone());
+                    if is_valid_qr_url(&text) {
                         stop_qr_scan(scan_state);
                         close_camera(CAMERA_VIDEO_SELECTOR);
-                        scan_state.camera_open.set(false);
-                        let window_value: Window = window().expect("no global window exists");
-                        let _ = window_value.location().set_href(&text);
+                        scan_state.get_camera_open().set(false);
+                        navigate_qr_url(&text);
                     }
                 }
             }));
@@ -230,7 +285,7 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
         on_detected.forget();
         on_scan_error.forget();
     });
-    state.scan_handle.set(Some(handle));
+    state.get_scan_handle().set(Some(handle));
 }
 
 /// Stops the periodic QR code scan timer if it is running.
@@ -239,13 +294,16 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
 ///
 /// - `UseCamera` - The camera page state.
 pub(crate) fn stop_qr_scan(state: UseCamera) {
-    if let Some(handle) = state.scan_handle.get() {
+    if let Some(handle) = state.get_scan_handle().get() {
         handle.clear();
-        state.scan_handle.set(None);
+        state.get_scan_handle().set(None);
     }
 }
 
-/// Checks whether the given string is an HTTP or HTTPS URL.
+/// Checks whether the given string is a valid QR code URL that the
+/// camera scanner should navigate to.
+///
+/// A valid URL must start with `http://` or `https://`.
 ///
 /// # Arguments
 ///
@@ -253,8 +311,8 @@ pub(crate) fn stop_qr_scan(state: UseCamera) {
 ///
 /// # Returns
 ///
-/// - `bool` - `true` if the string starts with `http://` or `https://`.
-pub(crate) fn is_url(text: &str) -> bool {
+/// - `bool` - `true` if the string is a valid HTTP or HTTPS URL.
+pub(crate) fn is_valid_qr_url(text: &str) -> bool {
     text.starts_with(CAMERA_URL_PREFIX_HTTP) || text.starts_with(CAMERA_URL_PREFIX_HTTPS)
 }
 
@@ -269,9 +327,9 @@ pub(crate) fn camera_cleanup(state: UseCamera) {
     use_cleanup(move || {
         stop_qr_scan(state);
         close_camera(CAMERA_VIDEO_SELECTOR);
-        state.camera_open.set(false);
-        state.camera_loading.set(false);
-        state.error_message.set(String::new());
-        state.scan_result.set(String::new());
+        state.get_camera_open().set(false);
+        state.get_camera_loading().set(false);
+        state.get_error_message().set(String::new());
+        state.get_scan_result().set(String::new());
     });
 }

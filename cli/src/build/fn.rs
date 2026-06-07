@@ -574,7 +574,7 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
         log::warn!("File change detected: {}", filtered_paths.join(", "));
         debounce.reset();
         sleep(Duration::from_millis(300)).await;
-        let mut building: MutexGuard<bool> = state.is_building.lock().await;
+        let mut building: RwLockWriteGuard<bool> = state.get_is_building().write().await;
         if *building {
             continue;
         }
@@ -582,19 +582,20 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
         drop(building);
         let state_for_build: Arc<AppState> = Arc::clone(&state);
         spawn(async move {
-            let args: ModeArgs = state_for_build.args.clone();
-            let reload_tx: broadcast::Sender<ReloadEvent> = state_for_build.reload_tx.clone();
+            let args: ModeArgs = state_for_build.get_args().clone();
+            let reload_tx: broadcast::Sender<ReloadEvent> = state_for_build.get_reload_tx().clone();
             match run_build_pipeline(&args, Some(&reload_tx)).await {
                 Ok(html) => {
                     let mut content: RwLockWriteGuard<String> =
-                        state_for_build.html_content.write().await;
+                        state_for_build.get_html_content().write().await;
                     *content = html;
                 }
                 Err(error) => {
                     log::error!("Build pipeline error: {error}");
                 }
             }
-            let mut building: MutexGuard<bool> = state_for_build.is_building.lock().await;
+            let mut building: RwLockWriteGuard<bool> =
+                state_for_build.get_is_building().write().await;
             *building = false;
         });
     }

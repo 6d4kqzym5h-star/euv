@@ -339,9 +339,7 @@ where
     T: Clone + PartialEq + 'static,
 {
     fn default() -> Self {
-        Self {
-            inner: UnsafeCell::new(None),
-        }
+        Self::new(UnsafeCell::new(None))
     }
 }
 

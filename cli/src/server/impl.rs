@@ -121,13 +121,16 @@ impl ServerHook for IndexRoute {
             }
         };
         if path.is_empty() || path == INDEX_HTML_FILE_NAME {
-            let html: String = state.html_content.read().await.clone();
+            let html: String = state.get_html_content().read().await.clone();
             ctx.get_mut_response()
                 .set_body(&html)
                 .set_header(CONTENT_TYPE, TEXT_HTML);
             return Status::Continue;
         }
-        let www_absolute: PathBuf = state.args.crate_path.join(&state.args.www_dir);
+        let www_absolute: PathBuf = state
+            .get_args()
+            .get_crate_path()
+            .join(state.get_args().get_www_dir());
         let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
         let file_path: PathBuf = www_absolute.join(&path);
         let canonical_path: PathBuf = match canonicalize(&file_path).await {
@@ -205,7 +208,7 @@ impl ServerHook for ReloadRoute {
                 return Status::Continue;
             }
         };
-        let mut rx: broadcast::Receiver<ReloadEvent> = state.reload_tx.subscribe();
+        let mut rx: broadcast::Receiver<ReloadEvent> = state.get_reload_tx().subscribe();
         let event: ReloadEvent = match rx.recv().await {
             Ok(event) => event,
             Err(_) => {

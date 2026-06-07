@@ -20,7 +20,7 @@ pub struct AppState {
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) is_building: Mutex<bool>,
+    pub(crate) is_building: RwLock<bool>,
     /// CLI arguments.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]

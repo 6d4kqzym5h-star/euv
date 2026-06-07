@@ -1,12 +1,16 @@
 use crate::*;
 
-/// A camera page component that allows the user to open and close
-/// the device camera, switch between front and rear cameras, and
-/// scan QR codes. When a QR code containing an HTTP URL is detected,
-/// the browser navigates directly to that URL.
+/// A camera page component that opens the device camera with QR code
+/// scanning on user action. When a QR code containing a valid HTTP or
+/// HTTPS URL is detected, the app navigates to that URL.
+///
+/// For same-origin URLs the hash fragment is extracted and an internal
+/// route navigation is performed; for external URLs a full page
+/// navigation occurs via `location.href`.
 ///
 /// Renders a page header, a card with a video preview area, camera
-/// control buttons, and a QR code scan result display area.
+/// control buttons (open/close and switch), and a QR code scan result
+/// display area.
 ///
 /// # Returns
 ///
@@ -21,23 +25,23 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
             class: c_page_container()
             page_header {
                 title: "Camera"
-                subtitle: "Access the device camera, switch between front and rear, and scan QR codes."
+                subtitle: "Open the camera to scan QR codes. Navigates on valid URL detection."
             }
             my_card {
                 title: "Camera Preview"
                 p {
                     class: c_demo_text()
-                    "Click the button below to open the device camera. Switch between front and rear cameras, or enable QR code scanning."
+                    "Open the camera to start scanning QR codes. When a valid URL is detected, you will be redirected immediately."
                 }
                 div {
                     class: c_camera_video_container()
                     video {
                         id: CAMERA_VIDEO_ID
-                        class: if { state.camera_open.get() } { c_camera_video_active() } else { c_camera_video_hidden() }
+                        class: if { state.get_camera_open().get() } { c_camera_video_active() } else { c_camera_video_hidden() }
                         autoplay: CAMERA_VIDEO_AUTOPLAY
                         playsinline: CAMERA_VIDEO_PLAYSINLINE
                     }
-                    if { state.camera_loading.get() } {
+                    if { state.get_camera_loading().get() } {
                         div {
                             class: c_camera_video_placeholder()
                             div {
@@ -51,7 +55,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                                 }
                             }
                         }
-                    } else if { !state.camera_open.get() } {
+                    } else if { !state.get_camera_open().get() } {
                         div {
                             class: c_camera_video_placeholder()
                             div {
@@ -68,22 +72,22 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         }
                     }
                 }
-                if { !state.error_message.get().is_empty() } {
+                if { !state.get_error_message().get().is_empty() } {
                     div {
                         class: c_camera_error_box()
-                        state.error_message.get()
+                        state.get_error_message().get()
                     }
                 }
                 div {
                     class: c_camera_controls()
-                    if { state.camera_open.get() } {
+                    if { state.get_camera_open().get() } {
                         button {
                             class: c_primary_button()
                             onclick: move |_event: Event| {
                                 stop_qr_scan(state);
                                 close_camera(CAMERA_VIDEO_SELECTOR);
-                                state.camera_open.set(false);
-                                state.scan_result.set(String::new());
+                                state.get_camera_open().set(false);
+                                state.get_scan_result().set(String::new());
                             }
                             "Close Camera"
                         }
@@ -92,26 +96,9 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                             onclick: move |_event: Event| {
                                 switch_camera(state);
                             }
-                            if { matches!(state.facing.get(), CameraFacing::User) } { CAMERA_SWITCH_TO_REAR_LABEL } else { CAMERA_SWITCH_TO_FRONT_LABEL }
+                            if { matches!(state.get_facing().get(), CameraFacing::User) } { CAMERA_SWITCH_TO_REAR_LABEL } else { CAMERA_SWITCH_TO_FRONT_LABEL }
                         }
-                        if { state.scan_handle.get().is_none() } {
-                            button {
-                                class: c_primary_button()
-                                onclick: move |_event: Event| {
-                                    start_qr_scan(state);
-                                }
-                                "Scan QR Code"
-                            }
-                        } else {
-                            button {
-                                class: c_primary_button()
-                                onclick: move |_event: Event| {
-                                    stop_qr_scan(state);
-                                }
-                                "Stop Scanning"
-                            }
-                        }
-                    } else if { state.camera_loading.get() } {
+                    } else if { state.get_camera_loading().get() } {
                         button {
                             class: c_primary_button_disabled()
                             disabled: true
@@ -121,27 +108,13 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         button {
                             class: c_primary_button()
                             onclick: move |_event: Event| {
-                                state.camera_loading.set(true);
-                                state.error_message.set(String::new());
-                                state.scan_result.set(String::new());
-                                let facing: CameraFacing = state.facing.get();
-                                let result: Result<(), String> = open_camera(CAMERA_VIDEO_SELECTOR, facing);
-                                match result {
-                                    Ok(()) => {
-                                        state.camera_open.set(true);
-                                        state.camera_loading.set(false);
-                                    }
-                                    Err(error) => {
-                                        state.error_message.set(error);
-                                        state.camera_loading.set(false);
-                                    }
-                                }
+                                open_camera_and_scan(state);
                             }
                             "Open Camera"
                         }
                     }
                 }
-                if { !state.scan_result.get().is_empty() } {
+                if { !state.get_scan_result().get().is_empty() } {
                     div {
                         class: c_camera_scan_result_box()
                         div {
@@ -150,7 +123,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         }
                         div {
                             class: c_camera_scan_result_value()
-                            state.scan_result.get()
+                            state.get_scan_result().get()
                         }
                     }
                 }

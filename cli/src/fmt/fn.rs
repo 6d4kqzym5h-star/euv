@@ -22,10 +22,7 @@ use crate::*;
 pub(crate) fn format_source(source: &str) -> FmtResult {
     let formatted: String = format_euv_macros(source);
     let changed: bool = formatted != source;
-    FmtResult {
-        changed,
-        output: formatted,
-    }
+    FmtResult::new(changed, formatted)
 }
 
 /// Finds and reformats all euv macro invocations in the source text.
@@ -1041,10 +1038,10 @@ async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
                 error,
             })?;
     let fmt_result: FmtResult = format_source(&content);
-    if fmt_result.changed {
+    if fmt_result.get_changed() {
         match mode {
             FmtMode::Write => {
-                write(path, &fmt_result.output)
+                write(path, fmt_result.get_output())
                     .await
                     .map_err(|error: io::Error| EuvError::IoPath {
                         message: String::from("Failed to write"),
@@ -1058,5 +1055,5 @@ async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
             }
         }
     }
-    Ok(fmt_result.changed)
+    Ok(fmt_result.get_changed())
 }
