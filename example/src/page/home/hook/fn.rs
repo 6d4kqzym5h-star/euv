@@ -12,10 +12,6 @@ pub(crate) fn use_native_bridge() -> UseNativeBridge {
     UseNativeBridge::new(
         use_signal(|| false),
         use_signal(|| true),
-        use_signal(|| false),
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(String::new),
         use_signal(String::new),
     )
 }
@@ -96,10 +92,10 @@ pub(crate) fn tauri_invoke(
 /// Asynchronously loads native bridge data and updates the provided state signals.
 ///
 /// First checks platform availability via `is_tauri_available`. If unavailable,
-/// sets `available` to `false` and returns. Otherwise, invokes both
-/// `load_cached_resource` and `resolve_bridge_group_permissions` commands,
-/// then populates the corresponding signals from the results. If any invoke
-/// fails, sets `available` to `false` so the card is hidden.
+/// sets `available` to `false` and returns. Otherwise, invokes the
+/// `resolve_bridge_group_permissions` command, then populates the corresponding
+/// signal from the result. If the invoke fails, sets `available` to `false`
+/// so the card is hidden.
 ///
 /// # Arguments
 ///
@@ -110,54 +106,7 @@ pub(crate) fn load_native_bridge_data(state: UseNativeBridge) {
         state.get_loading().set(false);
         return;
     }
-    let cached_resource_state: UseNativeBridge = state;
     let permissions_state: UseNativeBridge = state;
-    spawn_local(async move {
-        let load_result: Result<JsValue, String> =
-            match tauri_invoke(TAURI_INVOKE_LOAD_CACHED_RESOURCE, None) {
-                Ok(promise) => {
-                    let future: JsFuture = JsFuture::from(promise);
-                    match future.await {
-                        Ok(value) => Ok(value),
-                        Err(error) => Err(format!("{error:?}")),
-                    }
-                }
-                Err(error) => Err(error),
-            };
-        match load_result {
-            Ok(value) => {
-                let from_cache_value: bool = Reflect::get(&value, &JsValue::from_str("from_cache"))
-                    .ok()
-                    .and_then(|v: JsValue| v.as_bool())
-                    .unwrap_or(false);
-                let remote_url_value: String =
-                    Reflect::get(&value, &JsValue::from_str("remote_url"))
-                        .ok()
-                        .and_then(|v: JsValue| v.as_string())
-                        .unwrap_or_default();
-                let source_value: String = Reflect::get(&value, &JsValue::from_str("source"))
-                    .ok()
-                    .and_then(|v: JsValue| v.as_string())
-                    .unwrap_or_default();
-                let cache_path_value: String =
-                    Reflect::get(&value, &JsValue::from_str("cache_path"))
-                        .ok()
-                        .and_then(|v: JsValue| v.as_string())
-                        .unwrap_or_default();
-                cached_resource_state.get_from_cache().set(from_cache_value);
-                cached_resource_state.get_remote_url().set(remote_url_value);
-                cached_resource_state.get_source().set(source_value);
-                cached_resource_state.get_cache_path().set(cache_path_value);
-            }
-            Err(_) => {
-                cached_resource_state.get_available().set(false);
-                cached_resource_state.get_loading().set(false);
-                return;
-            }
-        }
-        cached_resource_state.get_available().set(true);
-        cached_resource_state.get_loading().set(false);
-    });
     spawn_local(async move {
         let args_obj: js_sys::Object = js_sys::Object::new();
         Reflect::set(
@@ -193,10 +142,12 @@ pub(crate) fn load_native_bridge_data(state: UseNativeBridge) {
                 permissions_state
                     .get_permissions()
                     .set(permissions_array.join(", "));
+                permissions_state.get_available().set(true);
             }
             Err(_) => {
                 permissions_state.get_available().set(false);
             }
         }
+        permissions_state.get_loading().set(false);
     });
 }

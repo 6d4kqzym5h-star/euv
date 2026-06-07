@@ -2,8 +2,8 @@ use crate::*;
 
 /// A camera page component that allows the user to open and close
 /// the device camera, switch between front and rear cameras, and
-/// scan QR codes. When a QR code containing a URL is detected,
-/// the page automatically navigates to that URL.
+/// scan QR codes. When a QR code containing an HTTP URL is detected,
+/// the browser navigates directly to that URL.
 ///
 /// Renders a page header, a card with a video preview area, camera
 /// control buttons, and a QR code scan result display area.
@@ -88,7 +88,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                             "Close Camera"
                         }
                         button {
-                            class: c_secondary_button()
+                            class: c_primary_button()
                             onclick: move |_event: Event| {
                                 switch_camera(state);
                             }
@@ -96,7 +96,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         }
                         if { state.scan_handle.get().is_none() } {
                             button {
-                                class: c_accent_button()
+                                class: c_primary_button()
                                 onclick: move |_event: Event| {
                                     start_qr_scan(state);
                                 }
@@ -104,7 +104,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                             }
                         } else {
                             button {
-                                class: c_danger_button()
+                                class: c_primary_button()
                                 onclick: move |_event: Event| {
                                     stop_qr_scan(state);
                                 }
@@ -151,22 +151,6 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         div {
                             class: c_camera_scan_result_value()
                             state.scan_result.get()
-                        }
-                        if { is_url(&state.scan_result.get()) } {
-                            a {
-                                class: c_camera_scan_result_link()
-                                href: state.scan_result.get()
-                                target: "_blank"
-                                onclick: move |event: Event| {
-                                    event.prevent_default();
-                                    let url: String = state.scan_result.get();
-                                    stop_qr_scan(state);
-                                    close_camera(CAMERA_VIDEO_SELECTOR);
-                                    state.camera_open.set(false);
-                                    navigate(&url);
-                                }
-                                "Open URL →"
-                            }
                         }
                     }
                 }

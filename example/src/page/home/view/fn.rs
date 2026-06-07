@@ -136,50 +136,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         class: c_info_row()
                         span {
                             class: c_info_label()
-                            "From Cache:"
-                        }
-                        span {
-                            class: c_info_value()
-                            if { native_bridge_state.get_from_cache().get() } { "Yes" } else { "No" }
-                        }
-                    }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Remote URL:"
-                        }
-                        span {
-                            class: c_info_value()
-                            native_bridge_state.get_remote_url()
-                        }
-                    }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Source:"
-                        }
-                        span {
-                            class: c_info_value()
-                            native_bridge_state.get_source()
-                        }
-                    }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Cache Path:"
-                        }
-                        span {
-                            class: c_info_value()
-                            native_bridge_state.get_cache_path()
-                        }
-                    }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
                             "Permissions:"
                         }
                         span {

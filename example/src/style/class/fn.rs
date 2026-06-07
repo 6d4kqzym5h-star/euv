@@ -677,6 +677,7 @@ class! {
     pub(crate) c_textarea_counter {
         text-align: "right";
         margin-top: var!(space-xs);
+        margin-bottom: var!(gap-component);
     }
 
     pub(crate) c_textarea_counter_text {
@@ -730,6 +731,7 @@ class! {
     pub(crate) c_counter_text {
         font-size: var!(font-lg);
         color: "inherit";
+        margin-bottom: var!(gap-component);
     }
 
     pub(crate) c_counter_value {
@@ -861,8 +863,8 @@ class! {
 
     pub(crate) c_camera_controls {
         display: "flex";
+        flex-direction: "column";
         gap: var!(gap-element);
-        flex-wrap: "wrap";
         margin-top: var!(gap-component);
     }
 
@@ -929,6 +931,7 @@ class! {
         color: "inherit";
         opacity: "0.6";
         font-size: "13px";
+        margin-bottom: var!(gap-component);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1325,7 +1328,7 @@ class! {
     pub(crate) c_render_count_text {
         font-size: var!(font-lg);
         color: "inherit";
-        margin-bottom: var!(space-md);
+        margin-bottom: var!(gap-component);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2843,6 +2846,7 @@ class! {
         color: "inherit";
         opacity: "0.6";
         font-size: "13px";
+        margin-bottom: var!(gap-component);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

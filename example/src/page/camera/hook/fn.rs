@@ -141,7 +141,7 @@ pub(crate) fn switch_camera(state: UseCamera) {
 /// started and the error signal is set. On each interval tick, captures
 /// the current video frame and attempts to detect a QR code. If a QR
 /// code is found, the result is stored in `scan_result`. If the result
-/// is a URL, navigation to that URL is triggered immediately.
+/// is an HTTP URL, the browser navigates directly to that URL.
 ///
 /// # Arguments
 ///
@@ -207,7 +207,8 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
                         stop_qr_scan(scan_state);
                         close_camera(CAMERA_VIDEO_SELECTOR);
                         scan_state.camera_open.set(false);
-                        navigate(&first);
+                        let window_value: Window = window().expect("no global window exists");
+                        let _ = window_value.location().set_href(&first);
                     }
                 } else if let Ok(raw_value) =
                     Reflect::get(&barcodes.get(0), &JsValue::from_str("rawValue"))
@@ -218,7 +219,8 @@ pub(crate) fn start_qr_scan(state: UseCamera) {
                         stop_qr_scan(scan_state);
                         close_camera(CAMERA_VIDEO_SELECTOR);
                         scan_state.camera_open.set(false);
-                        navigate(&text);
+                        let window_value: Window = window().expect("no global window exists");
+                        let _ = window_value.location().set_href(&text);
                     }
                 }
             }));
@@ -243,7 +245,7 @@ pub(crate) fn stop_qr_scan(state: UseCamera) {
     }
 }
 
-/// Checks whether the given string is a URL (starts with `http://` or `https://`).
+/// Checks whether the given string is an HTTP or HTTPS URL.
 ///
 /// # Arguments
 ///
@@ -251,7 +253,7 @@ pub(crate) fn stop_qr_scan(state: UseCamera) {
 ///
 /// # Returns
 ///
-/// - `bool` - `true` if the string is a URL.
+/// - `bool` - `true` if the string starts with `http://` or `https://`.
 pub(crate) fn is_url(text: &str) -> bool {
     text.starts_with(CAMERA_URL_PREFIX_HTTP) || text.starts_with(CAMERA_URL_PREFIX_HTTPS)
 }
