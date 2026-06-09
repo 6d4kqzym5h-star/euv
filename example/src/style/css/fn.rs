@@ -13,6 +13,13 @@ use crate::*;
 /// Panics if `window()` or `document()` is unavailable on the current platform.
 pub(crate) fn inject_app_global_css() {
     let global: &str = "html, body, #app { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg-primary); } * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }";
+    let scrollbar: &str = concat!(
+        "* { scrollbar-width: thin; } ",
+        "::-webkit-scrollbar { width: 6px; height: 6px; } ",
+        "::-webkit-scrollbar-track { background: transparent; } ",
+        "::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; } ",
+        "::-webkit-scrollbar-corner { background: transparent; }",
+    );
     let keyframes: &str = concat!(
         "@keyframes euv-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } ",
         "@keyframes euv-fade-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } } ",
@@ -25,5 +32,6 @@ pub(crate) fn inject_app_global_css() {
         "@keyframes euv-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }",
     );
     Css::inject_css(global);
+    Css::inject_css(scrollbar);
     Css::inject_css(keyframes);
 }

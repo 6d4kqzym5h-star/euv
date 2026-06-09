@@ -173,6 +173,13 @@ css_vars! {
         text-loading-title: "#4338ca";
         bg-progress: "#e5e7eb";
 
+        // ─── Scrollbar ───
+        scrollbar-track: "transparent";
+        scrollbar-thumb: "rgba(79, 70, 229, 0.18)";
+        scrollbar-thumb-hover: "rgba(79, 70, 229, 0.35)";
+        scrollbar-thumb-active: "rgba(79, 70, 229, 0.50)";
+        scrollbar-corner: "transparent";
+
         // ─── List ───
         bg-list-even: "#f9fafb";
         bg-list-odd: "#ffffff";
@@ -376,6 +383,13 @@ css_vars! {
         border-loading: "rgba(99, 102, 241, 0.25)";
         text-loading-title: "#818cf8";
         bg-progress: "#2a2a35";
+
+        // ─── Scrollbar ───
+        scrollbar-track: "transparent";
+        scrollbar-thumb: "rgba(99, 102, 241, 0.30)";
+        scrollbar-thumb-hover: "rgba(99, 102, 241, 0.50)";
+        scrollbar-thumb-active: "rgba(99, 102, 241, 0.65)";
+        scrollbar-corner: "transparent";
 
         // ─── List ───
         bg-list-even: "#1a1a22";

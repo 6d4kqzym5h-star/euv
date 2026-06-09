@@ -47,6 +47,39 @@ impl Parse for ClassInput {
             let mut pseudo_blocks: Vec<PseudoBlock> = Vec::new();
             let mut media_blocks: Vec<MediaBlock> = Vec::new();
             while !content.is_empty() {
+                if content.peek(Token![::]) {
+                    content.parse::<Token![::]>()?;
+                    let mut selector: String =
+                        format!("::{name}", name = parse_kebab_name(&content)?);
+                    while content.peek(Token![:])
+                        && !content.peek2(Token![:])
+                        && !content.peek2(Brace)
+                    {
+                        content.parse::<Token![:]>()?;
+                        let pseudo_class: String = parse_kebab_name(&content)?;
+                        selector.push(':');
+                        selector.push_str(&pseudo_class);
+                    }
+                    let block_content: ParseBuffer<'_>;
+                    braced!(block_content in content);
+                    let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> = Vec::new();
+                    while !block_content.is_empty() {
+                        let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
+                        block_content.parse::<Token![:]>()?;
+                        let expr: Expr = block_content.parse()?;
+                        let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
+                        let prop_value: ClassPropValue = ClassPropValue::Expr(expanded);
+                        block_properties.push((css_key, prop_value));
+                        if block_content.peek(Semi) {
+                            block_content.parse::<Semi>()?;
+                        }
+                    }
+                    pseudo_blocks.push(PseudoBlock {
+                        selector,
+                        properties: block_properties,
+                    });
+                    continue;
+                }
                 if content.peek(Ident) {
                     let forked: ParseBuffer<'_> = content.fork();
                     let keyword: Ident = forked.parse()?;

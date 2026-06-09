@@ -15,7 +15,19 @@ class! {
         line-height: "1.6";
         user-select: "none";
         -webkit-user-select: "none";
+        scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         transition: format!("background {} {}, color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
+        ::-webkit-scrollbar-thumb {
+            background: var!(scrollbar-thumb);
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-scrollbar-thumb: hover {
+            background: var!(scrollbar-thumb-hover);
+        }
+        ::-webkit-scrollbar-thumb: active {
+            background: var!(scrollbar-thumb-active);
+        }
     }
 
     pub(crate) c_mobile_app_root {
@@ -28,7 +40,19 @@ class! {
         color: var!(text-primary);
         line-height: "1.6";
         padding-top: "env(safe-area-inset-top, 0px)";
+        scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         transition: format!("background {} {}, color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
+        ::-webkit-scrollbar-thumb {
+            background: var!(scrollbar-thumb);
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-scrollbar-thumb: hover {
+            background: var!(scrollbar-thumb-hover);
+        }
+        ::-webkit-scrollbar-thumb: active {
+            background: var!(scrollbar-thumb-active);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -136,6 +160,18 @@ class! {
     pub(crate) c_nav_items_scroll {
         flex: "1";
         overflow-y: "auto";
+        scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
+        ::-webkit-scrollbar-thumb {
+            background: var!(scrollbar-thumb);
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-scrollbar-thumb: hover {
+            background: var!(scrollbar-thumb-hover);
+        }
+        ::-webkit-scrollbar-thumb: active {
+            background: var!(scrollbar-thumb-active);
+        }
     }
 
     pub(crate) c_nav_theme_toggle {
@@ -229,7 +265,19 @@ class! {
         padding: format!("{} {}", var!(padding-main-top), var!("space-4xl"));
         background: var!(bg-primary);
         overflow-y: "auto";
+        scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         transition: format!("background {} {}", var!(duration-slow), var!(ease-in-out));
+        ::-webkit-scrollbar-thumb {
+            background: var!(scrollbar-thumb);
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-scrollbar-thumb: hover {
+            background: var!(scrollbar-thumb-hover);
+        }
+        ::-webkit-scrollbar-thumb: active {
+            background: var!(scrollbar-thumb-active);
+        }
         media("(max-width: 767px)") {
             padding: format!("{} {}", var!(space-md), var!(space-lg));
             max-width: "100%";
