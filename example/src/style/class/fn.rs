@@ -1028,7 +1028,8 @@ class! {
 
     pub(crate) c_canvas_preview_image {
         width: "100%";
-        height: "auto";
+        height: "100%";
+        object-fit: "cover";
         display: "block";
     }
 

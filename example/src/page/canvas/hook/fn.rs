@@ -470,21 +470,12 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     image.set_src(snapshot_data_url);
     let draw_image: HtmlImageElement = image.clone();
     let draw_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let img_width: f64 = draw_image.natural_width() as f64;
-        let img_height: f64 = draw_image.natural_height() as f64;
-        let scale_x: f64 = canvas_width / img_width;
-        let scale_y: f64 = canvas_height / img_height;
-        let scale: f64 = if scale_x < scale_y { scale_x } else { scale_y };
-        let draw_width: f64 = img_width * scale;
-        let draw_height: f64 = img_height * scale;
-        let draw_x: f64 = (canvas_width - draw_width) / 2.0;
-        let draw_y: f64 = (canvas_height - draw_height) / 2.0;
         let _ = context_2d.draw_image_with_html_image_element_and_dw_and_dh(
             &draw_image,
-            draw_x,
-            draw_y,
-            draw_width,
-            draw_height,
+            0.0,
+            0.0,
+            canvas_width,
+            canvas_height,
         );
     }));
     image.set_onload(Some(draw_closure.as_ref().unchecked_ref()));
