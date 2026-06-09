@@ -171,3 +171,6 @@ panic = "unwind"
 debug = false
 codegen-units = 1
 strip = true
+
+[profile.release.package.euv-example]
+opt-level = "z"
