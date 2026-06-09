@@ -189,6 +189,16 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
+                label: "Canvas"
+                target: "/canvas"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Tags"
+                target: "/tags"
+            }
+            nav_item {
+                route_signal: route_signal
                 label: "SSE"
                 target: "/sse"
             }
@@ -347,6 +357,18 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
                 drawer_open: drawer_open
                 label: "Camera"
                 target: "/camera"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Canvas"
+                target: "/canvas"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Tags"
+                target: "/tags"
             }
             mobile_nav_item {
                 route_signal: route_signal

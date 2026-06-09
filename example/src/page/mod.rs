@@ -4,6 +4,7 @@ mod attrs;
 mod binding;
 mod browser;
 mod camera;
+mod canvas;
 mod conditional;
 mod dynamic;
 mod event;
@@ -19,13 +20,14 @@ mod observer;
 mod select;
 mod signals;
 mod sse;
+mod tags;
 mod timer;
 mod virtual_list;
 mod websocket;
 
 pub(crate) use {
-    animation::*, r#async::*, attrs::*, binding::*, browser::*, camera::*, conditional::*,
-    dynamic::*, event::*, file::*, form::*, home::*, keep_alive::*, lifecycle::*, list::*,
-    modal::*, not_found::*, observer::*, select::*, signals::*, sse::*, timer::*, virtual_list::*,
-    websocket::*,
+    animation::*, r#async::*, attrs::*, binding::*, browser::*, camera::*, canvas::*,
+    conditional::*, dynamic::*, event::*, file::*, form::*, home::*, keep_alive::*, lifecycle::*,
+    list::*, modal::*, not_found::*, observer::*, select::*, signals::*, sse::*, tags::*, timer::*,
+    virtual_list::*, websocket::*,
 };

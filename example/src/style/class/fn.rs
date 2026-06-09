@@ -912,6 +912,154 @@ class! {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // Canvas Drawing Board
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_canvas_toolbar {
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(gap-element);
+        margin-bottom: var!(gap-component);
+    }
+
+    pub(crate) c_canvas_toolbar_row {
+        display: "flex";
+        align-items: "center";
+        gap: var!(space-md);
+    }
+
+    pub(crate) c_canvas_toolbar_label {
+        font-size: var!(font-sm);
+        font-weight: "600";
+        color: "inherit";
+        min-width: "48px";
+    }
+
+    pub(crate) c_canvas_color_input {
+        width: "40px";
+        height: "32px";
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        padding: "2px";
+        background: "transparent";
+    }
+
+    pub(crate) c_canvas_range_input {
+        flex: "1";
+        cursor: "pointer";
+        accent-color: var!(accent);
+    }
+
+    pub(crate) c_canvas_width_value {
+        font-size: var!(font-sm);
+        color: "inherit";
+        min-width: "28px";
+        text-align: "center";
+        opacity: "0.7";
+    }
+
+    pub(crate) c_canvas_preview_container {
+        margin: format!("{} 0", var!(space-lg));
+        border-radius: var!(radius-lg);
+        overflow: "hidden";
+        border: format!("2px solid {}", var!(border-input));
+        background: CANVAS_BACKGROUND_COLOR;
+        aspect-ratio: "9 / 16";
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+    }
+
+    pub(crate) c_canvas_placeholder {
+        color: var!(text-muted);
+        font-size: var!(font-sm);
+        text-align: "center";
+        padding: var!(space-lg);
+    }
+
+    pub(crate) c_canvas_preview_image {
+        width: "100%";
+        height: "auto";
+        display: "block";
+    }
+
+    pub(crate) c_canvas_container_fullscreen {
+        width: "100vw";
+        height: "100vh";
+        background: var!(bg-card);
+        display: "flex";
+        flex-direction: "column";
+        position: "fixed";
+        top: "0";
+        left: "0";
+        z-index: "10002";
+        padding: format!("env(safe-area-inset-top, 0px) {} env(safe-area-inset-bottom, 0px) {}", var!(space-md), var!(space-md));
+    }
+
+    pub(crate) c_canvas_drawing_fullscreen_wrapper {
+        flex: "1";
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        overflow: "hidden";
+        padding: var!(space-xs);
+    }
+
+    pub(crate) c_canvas_drawing_fullscreen {
+        border: format!("2px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        display: "block";
+        cursor: "crosshair";
+        touch-action: "none";
+    }
+
+    pub(crate) c_canvas_fullscreen_toolbar {
+        display: "flex";
+        align-items: "center";
+        width: "100%";
+        padding: format!("0px {}", var!(space-sm));
+        height: var!(mobile-header-height);
+        background: var!(bg-card);
+        border-bottom: format!("1px solid {}", var!(border-card));
+        flex-shrink: "0";
+        gap: var!(space-sm);
+    }
+
+    pub(crate) c_canvas_fullscreen_toolbar_center {
+        display: "flex";
+        align-items: "center";
+        flex: "1";
+        gap: var!(space-sm);
+        min-width: "0";
+    }
+
+    pub(crate) c_canvas_fullscreen_range_input {
+        flex: "1";
+        min-width: "40px";
+        cursor: "pointer";
+        accent-color: var!(accent);
+    }
+
+    pub(crate) c_canvas_fullscreen_button {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        background: "transparent";
+        color: var!(accent);
+        border: format!("1px solid {}", var!(accent));
+        padding: format!("{} {}", var!(space-xs), var!(space-sm));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        font-size: var!(font-xs);
+        font-weight: "500";
+        line-height: "1.4";
+        outline: "none";
+        white-space: "nowrap";
+        flex-shrink: "0";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // Custom Attrs Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -2889,8 +3037,6 @@ class! {
     }
 
     pub(crate) c_sse_messages_list {
-        max-height: "400px";
-        overflow-y: "auto";
         display: "flex";
         flex-direction: "column";
         gap: var!(space-xs);
@@ -2948,8 +3094,6 @@ class! {
     }
 
     pub(crate) c_ws_messages_list {
-        max-height: "400px";
-        overflow-y: "auto";
         display: "flex";
         flex-direction: "column";
         gap: var!(space-xs);
@@ -3021,5 +3165,407 @@ class! {
         font-size: var!(font-base);
         word-break: "break-all";
         overflow-wrap: "break-word";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HTML5 Tags Demo
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_tag_section {
+        margin-bottom: var!(gap-component);
+    }
+
+    pub(crate) c_tag_group_title {
+        font-size: var!(font-base);
+        font-weight: "700";
+        color: var!(accent);
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+    }
+
+    pub(crate) c_tag_desc {
+        font-size: var!(font-sm);
+        color: var!(text-tertiary);
+        margin: "0px";
+        margin-bottom: var!(space-sm);
+    }
+
+    pub(crate) c_tag_demo_box {
+        background: var!(bg-loading);
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+    }
+
+    pub(crate) c_tag_demo_text {
+        margin: "0px";
+        color: "inherit";
+        font-size: var!(font-base);
+    }
+
+    pub(crate) c_tag_demo_label {
+        font-weight: "600";
+        font-size: var!(font-base);
+        margin: "0px";
+        color: "inherit";
+    }
+
+    pub(crate) c_tag_demo_heading {
+        font-weight: "600";
+        font-size: var!(font-base);
+        margin: format!("0px 0px {} 0px", var!(space-xs));
+        color: "inherit";
+    }
+
+    pub(crate) c_tag_demo_muted {
+        font-size: var!(font-sm);
+        color: var!(text-tertiary);
+        margin: "0px";
+    }
+
+    pub(crate) c_tag_demo_highlight {
+        background: var!(accent-subtle);
+        color: var!(accent);
+        padding: format!("0px {}", var!(space-xs));
+        border-radius: var!(radius-sm);
+    }
+
+    pub(crate) c_tag_demo_mark {
+        background: "var(--badge-bg-warning)";
+        color: "var(--text-primary)";
+        padding: format!("0px {}", var!(space-xs));
+        border-radius: var!(radius-sm);
+    }
+
+    pub(crate) c_tag_demo_code {
+        font-family: "monospace";
+        background: var!(bg-loading);
+        color: "var(--accent)";
+        padding: format!("{} {}", var!(space-xs), var!(space-sm));
+        border-radius: var!(radius-sm);
+        font-size: var!(font-sm);
+    }
+
+    pub(crate) c_tag_demo_kbd {
+        font-family: "monospace";
+        background: var!(bg-loading);
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-sm);
+        padding: format!("0px {}", var!(space-xs));
+        font-size: var!(font-sm);
+        box-shadow: format!("0 1px 0 {}", var!(border-loading));
+    }
+
+    pub(crate) c_tag_nav_link {
+        color: "var(--accent)";
+        text-decoration: "none";
+        margin-right: var!(space-md);
+        hover {
+            text-decoration: "underline";
+        }
+    }
+
+    pub(crate) c_tag_hr {
+        border: "none";
+        border-top: format!("1px solid {}", var!(border-loading));
+        margin: format!("{} 0px", var!(space-sm));
+    }
+
+    pub(crate) c_tag_demo_pre {
+        font-family: "monospace";
+        background: var!(bg-loading);
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: var!(space-md);
+        font-size: var!(font-sm);
+        overflow-x: "auto";
+        margin: "0px";
+    }
+
+    pub(crate) c_tag_demo_blockquote {
+        border-left: format!("4px solid {}", var!(accent));
+        margin: "0px";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: var!(bg-loading);
+        border-radius: var!(radius-md);
+        color: "inherit";
+        font-style: "italic";
+    }
+
+    pub(crate) c_tag_figure_placeholder {
+        background: var!(bg-loading);
+        border: format!("1px dashed {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: format!("{} {}", var!(space-xl), var!(space-md));
+        text-align: "center";
+        color: var!(text-tertiary);
+        font-size: var!(font-sm);
+    }
+
+    pub(crate) c_heading_h1 {
+        font-size: "2em";
+        font-weight: "700";
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+        color: "inherit";
+    }
+
+    pub(crate) c_heading_h2 {
+        font-size: "1.5em";
+        font-weight: "700";
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+        color: "inherit";
+    }
+
+    pub(crate) c_heading_h3 {
+        font-size: "1.25em";
+        font-weight: "600";
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+        color: "inherit";
+    }
+
+    pub(crate) c_heading_h4 {
+        font-size: "1.1em";
+        font-weight: "600";
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+        color: "inherit";
+    }
+
+    pub(crate) c_heading_h5 {
+        font-size: "1em";
+        font-weight: "600";
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+        color: "inherit";
+    }
+
+    pub(crate) c_heading_h6 {
+        font-size: "0.9em";
+        font-weight: "600";
+        margin: "0px";
+        margin-bottom: var!(space-xs);
+        color: "inherit";
+    }
+
+    pub(crate) c_tag_demo_list {
+        margin: "0px";
+        padding-left: var!(space-xl);
+        color: "inherit";
+    }
+
+    pub(crate) c_tag_demo_dl {
+        margin: "0px";
+        color: "inherit";
+    }
+
+    pub(crate) c_tag_demo_dt {
+        font-weight: "600";
+        color: "inherit";
+        margin-top: var!(space-sm);
+    }
+
+    pub(crate) c_tag_demo_dd {
+        margin: "0px";
+        margin-left: var!(space-xl);
+        color: var!(text-tertiary);
+    }
+
+    pub(crate) c_tag_demo_table {
+        width: "100%";
+        border-collapse: "collapse";
+        margin: "0px";
+    }
+
+    pub(crate) c_tag_demo_caption {
+        font-size: var!(font-sm);
+        font-weight: "600";
+        color: var!(text-tertiary);
+        text-align: "left";
+        margin-bottom: var!(space-sm);
+    }
+
+    pub(crate) c_tag_demo_th {
+        text-align: "left";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        background: var!(bg-loading);
+        border: format!("1px solid {}", var!(border-loading));
+        font-weight: "600";
+        color: "inherit";
+        font-size: var!(font-sm);
+    }
+
+    pub(crate) c_tag_demo_td {
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        border: format!("1px solid {}", var!(border-loading));
+        color: "inherit";
+        font-size: var!(font-sm);
+    }
+
+    pub(crate) c_tag_demo_img {
+        max-width: "100%";
+        border-radius: var!(radius-md);
+    }
+
+    pub(crate) c_tag_demo_iframe {
+        width: "100%";
+        height: "120px";
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+    }
+
+    pub(crate) c_tag_demo_embed {
+        width: "100%";
+        height: "120px";
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+    }
+
+    pub(crate) c_tag_demo_canvas {
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        background: var!(bg-loading);
+    }
+
+    pub(crate) c_tag_demo_svg {
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        background: var!(bg-loading);
+    }
+
+    pub(crate) c_tag_demo_video {
+        width: "100%";
+        max-width: "100%";
+        border-radius: var!(radius-md);
+        background: var!(bg-loading);
+    }
+
+    pub(crate) c_tag_demo_audio {
+        width: "100%";
+        max-width: "100%";
+    }
+
+    pub(crate) c_tag_button_row {
+        display: "flex";
+        align-items: "center";
+        gap: var!(space-md);
+        margin: format!("{} 0px", var!(gap-element));
+    }
+
+    pub(crate) c_tag_demo_form {
+        display: "flex";
+        flex-direction: "column";
+        gap: "0px";
+    }
+
+    pub(crate) c_tag_form_row {
+        margin: format!("{} 0px", var!(gap-element));
+    }
+
+    pub(crate) c_tag_demo_input {
+        width: "100%";
+        padding: "10px 14px";
+        background: var!(bg-input);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        box-sizing: "border-box";
+        outline: "none";
+    }
+
+    pub(crate) c_tag_demo_input_color {
+        width: "40px";
+        height: "32px";
+        padding: "2px";
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        background: "transparent";
+    }
+
+    pub(crate) c_tag_demo_textarea {
+        width: "100%";
+        padding: "10px 14px";
+        background: var!(bg-input);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        box-sizing: "border-box";
+        outline: "none";
+        resize: "vertical";
+    }
+
+    pub(crate) c_tag_demo_select {
+        width: "100%";
+        padding: "10px 14px";
+        background: var!(bg-input);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border-input));
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        box-sizing: "border-box";
+        outline: "none";
+    }
+
+    pub(crate) c_tag_demo_progress {
+        width: "200px";
+        height: "8px";
+        border-radius: var!(radius-md);
+        vertical-align: "middle";
+    }
+
+    pub(crate) c_tag_demo_meter {
+        width: "200px";
+        height: "8px";
+        vertical-align: "middle";
+    }
+
+    pub(crate) c_tag_demo_fieldset {
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: var!(space-md);
+        margin: "0px";
+    }
+
+    pub(crate) c_tag_demo_legend {
+        font-weight: "600";
+        font-size: var!(font-sm);
+        color: var!(text-secondary);
+        padding: format!("0px {}", var!(space-sm));
+    }
+
+    pub(crate) c_tag_demo_menu {
+        margin: "0px";
+        padding: "0px";
+        list-style: "none";
+        display: "flex";
+        gap: var!(space-sm);
+    }
+
+    pub(crate) c_tag_demo_details {
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: var!(space-md);
+        background: var!(bg-loading);
+    }
+
+    pub(crate) c_tag_demo_summary {
+        cursor: "pointer";
+        font-weight: "600";
+        font-size: var!(font-base);
+        color: "inherit";
+        list-style: "none";
+    }
+
+    pub(crate) c_tag_demo_dialog {
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: var!(space-md);
+        background: var!(bg-loading);
+        color: "inherit";
     }
 }
