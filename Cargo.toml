@@ -19,7 +19,7 @@ members = ["cli", "core", "example", "macros"]
 resolver = "3"
 
 [workspace.dependencies]
-euv = { path = ".", version = "0.5.51" }
+euv = { path = ".", version = "0.5.52" }
 euv-cli = { path = "cli", version = "0.5.51" }
 euv-core = { path = "core", version = "0.5.51" }
 euv-macros = { path = "macros", version = "0.5.51" }
