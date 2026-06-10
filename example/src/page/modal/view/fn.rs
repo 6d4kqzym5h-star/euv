@@ -108,14 +108,14 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: MODAL_NAME_ID
+                            for: MODAL_NAME_ID
                             class: c_form_label()
                             "Name"
                         }
                         input {
                             id: MODAL_NAME_ID
                             name: MODAL_NAME_NAME
-                            r#type: MODAL_TEXT_TYPE
+                            type: MODAL_TEXT_TYPE
                             autocomplete: MODAL_AUTOCOMPLETE_NAME
                             placeholder: MODAL_NAME_PLACEHOLDER
                             value: state.get_modal_name()
@@ -132,14 +132,14 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: MODAL_EMAIL_ID
+                            for: MODAL_EMAIL_ID
                             class: c_form_label()
                             "Email"
                         }
                         input {
                             id: MODAL_EMAIL_ID
                             name: MODAL_EMAIL_NAME
-                            r#type: MODAL_EMAIL_TYPE
+                            type: MODAL_EMAIL_TYPE
                             autocomplete: MODAL_AUTOCOMPLETE_EMAIL
                             placeholder: MODAL_EMAIL_PLACEHOLDER
                             value: state.get_modal_email()

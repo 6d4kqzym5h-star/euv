@@ -28,14 +28,14 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: DYNAMIC_KEY_INPUT_ID
+                        for: DYNAMIC_KEY_INPUT_ID
                         class: c_form_label()
                         "Attribute Key"
                     }
                     input {
                         id: DYNAMIC_KEY_INPUT_ID
                         name: DYNAMIC_KEY_INPUT_ID
-                        r#type: "text"
+                        type: "text"
                         placeholder: DYNAMIC_KEY_PLACEHOLDER
                         value: dynamic_key
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
@@ -46,14 +46,14 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: DYNAMIC_VALUE_INPUT_ID
+                        for: DYNAMIC_VALUE_INPUT_ID
                         class: c_form_label()
                         "Attribute Value"
                     }
                     input {
                         id: DYNAMIC_VALUE_INPUT_ID
                         name: DYNAMIC_VALUE_INPUT_ID
-                        r#type: "text"
+                        type: "text"
                         placeholder: DYNAMIC_VALUE_PLACEHOLDER
                         value: dynamic_value
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
@@ -86,14 +86,14 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: CLASS_KEY_INPUT_ID
+                        for: CLASS_KEY_INPUT_ID
                         class: c_form_label()
                         "CSS Property Key"
                     }
                     input {
                         id: CLASS_KEY_INPUT_ID
                         name: CLASS_KEY_INPUT_ID
-                        r#type: "text"
+                        type: "text"
                         placeholder: CLASS_KEY_PLACEHOLDER
                         value: class_prop_key
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
@@ -104,14 +104,14 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: CLASS_VALUE_INPUT_ID
+                        for: CLASS_VALUE_INPUT_ID
                         class: c_form_label()
                         "CSS Property Value"
                     }
                     input {
                         id: CLASS_VALUE_INPUT_ID
                         name: CLASS_VALUE_INPUT_ID
-                        r#type: "text"
+                        type: "text"
                         placeholder: CLASS_VALUE_PLACEHOLDER
                         value: class_prop_value
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF

@@ -99,7 +99,7 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                     input {
                         id: FILE_UPLOAD_ID
                         name: FILE_UPLOAD_NAME
-                        r#type: FILE_INPUT_TYPE
+                        type: FILE_INPUT_TYPE
                         autocomplete: FILE_AUTOCOMPLETE_OFF
                         class: c_file_upload_input_hidden()
                         accept: state.get_accept()
@@ -119,14 +119,14 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                             input {
                             id: FILE_MULTIPLE_ID
                             name: FILE_MULTIPLE_NAME
-                            r#type: FILE_CHECKBOX_TYPE
+                            type: FILE_CHECKBOX_TYPE
                             autocomplete: FILE_AUTOCOMPLETE_OFF
                             class: c_form_checkbox()
                             checked: state.get_multiple()
                             onchange: on_change_checked(state.get_multiple())
                         }
                         label {
-                            r#for: FILE_MULTIPLE_ID
+                            for: FILE_MULTIPLE_ID
                             class: c_form_checkbox_label()
                             "Allow multiple files"
                         }
@@ -134,14 +134,14 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: FILE_ACCEPT_ID
+                            for: FILE_ACCEPT_ID
                             class: c_form_label()
                             "Accept filter (e.g. .png,.jpg,image/*)"
                         }
                         input {
                             id: FILE_ACCEPT_ID
                         name: FILE_ACCEPT_NAME
-                        r#type: FILE_TEXT_TYPE
+                        type: FILE_TEXT_TYPE
                         autocomplete: FILE_AUTOCOMPLETE_OFF
                         class: c_form_input_no_transition()
                             placeholder: FILE_ACCEPT_PLACEHOLDER

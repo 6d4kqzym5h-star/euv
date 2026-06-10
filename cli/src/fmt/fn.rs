@@ -469,6 +469,19 @@ fn format_macro_body(body: &str) -> String {
             continue;
         }
         if is_if_keyword(&chars, position, len) {
+            let after_if_colon: usize = skip_spaces_on_same_line(&chars, position + 2, len);
+            if after_if_colon < len
+                && chars[after_if_colon] == CHAR_COLON
+                && (after_if_colon + 1 >= len || chars[after_if_colon + 1] != CHAR_COLON)
+            {
+                result.push_str(KEYWORD_IF);
+                position += 2;
+                if position < len && chars[position] == CHAR_SPACE {
+                    result.push(CHAR_SPACE);
+                    position += 1;
+                }
+                continue;
+            }
             result.push_str(KEYWORD_IF);
             position += 2;
             let after_if: usize = skip_spaces_on_same_line(&chars, position, len);
@@ -507,6 +520,19 @@ fn format_macro_body(body: &str) -> String {
             continue;
         }
         if is_match_keyword(&chars, position, len) {
+            let after_match_colon: usize = skip_spaces_on_same_line(&chars, position + 5, len);
+            if after_match_colon < len
+                && chars[after_match_colon] == CHAR_COLON
+                && (after_match_colon + 1 >= len || chars[after_match_colon + 1] != CHAR_COLON)
+            {
+                result.push_str(KEYWORD_MATCH);
+                position += 5;
+                if position < len && chars[position] == CHAR_SPACE {
+                    result.push(CHAR_SPACE);
+                    position += 1;
+                }
+                continue;
+            }
             result.push_str(KEYWORD_MATCH);
             position += 5;
             let after_match: usize = skip_spaces_on_same_line(&chars, position, len);
@@ -526,6 +552,19 @@ fn format_macro_body(body: &str) -> String {
             continue;
         }
         if is_for_keyword(&chars, position, len) {
+            let after_for: usize = skip_spaces_on_same_line(&chars, position + 3, len);
+            if after_for < len
+                && chars[after_for] == CHAR_COLON
+                && (after_for + 1 >= len || chars[after_for + 1] != CHAR_COLON)
+            {
+                result.push_str(KEYWORD_FOR);
+                position += 3;
+                if position < len && chars[position] == CHAR_SPACE {
+                    result.push(CHAR_SPACE);
+                    position += 1;
+                }
+                continue;
+            }
             result.push_str(KEYWORD_FOR);
             position += 3;
             position = skip_spaces_on_same_line(&chars, position, len);

@@ -59,7 +59,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     div {
                         class: c_ws_send_row()
                         input {
-                            r#type: "text"
+                            type: "text"
                             class: c_ws_message_input()
                             placeholder: WEBSOCKET_MESSAGE_PLACEHOLDER
                             value: state.get_message_input()

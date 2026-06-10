@@ -522,8 +522,7 @@ fn extract_props_type_from_fn(item_fn: &syn::ItemFn) -> String {
 /// - `bool` - `true` if the pattern is a dynamic tag.
 pub(crate) fn is_dynamic_tag_pattern(second_brace: ParseStream, outer: ParseStream) -> bool {
     second_brace.is_empty()
-        || (second_brace.peek(Ident)
-            && (second_brace.peek2(Colon) || second_brace.peek2(Token![-])))
+        || is_attr_key_pattern(second_brace)
         || second_brace.peek(Token![if])
         || second_brace.peek(Token![match])
         || second_brace.peek(Token![for])
@@ -575,6 +574,10 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
         } else if content.peek(LitStr) {
             let literal_string: LitStr = content.parse()?;
             children.push(HtmlNode::Text(literal_string.value()));
+        } else if (is_attr_key_pattern(content) || content.peek(LitStr) && content.peek2(Colon))
+            && !is_double_colon(content)
+        {
+            break;
         } else if content.peek(Token![if]) {
             let html_if: HtmlIf = content.parse()?;
             children.push(HtmlNode::If(html_if));
@@ -589,11 +592,6 @@ pub(crate) fn parse_html_children(content: ParseStream) -> syn::Result<Vec<HtmlN
             braced!(child_content in content);
             let expr: Expr = child_content.parse()?;
             children.push(HtmlNode::Dynamic(expr));
-        } else if (content.peek(Ident) || content.peek(LitStr))
-            && content.peek2(Colon)
-            && !is_double_colon(content)
-        {
-            break;
         } else if content.peek(Ident) {
             if content.peek2(Brace) {
                 let element: HtmlElement = content.parse()?;
@@ -680,6 +678,16 @@ pub(crate) fn parse_dynamic_component_children(
                 let expr: Expr = child_content.parse()?;
                 children.push(HtmlNode::Dynamic(expr));
             }
+        } else if is_attr_key_pattern(content) && !is_double_colon(content) {
+            let key_string: String = parse_kebab_name(content)?;
+            let key_literal: LitStr = LitStr::new(&key_string, content.span());
+            content.parse::<Colon>()?;
+            let key_str: String = key_string
+                .strip_prefix(RAW_IDENT_PREFIX)
+                .unwrap_or(&key_string)
+                .to_string();
+            let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
+            attributes.push((key_literal.to_token_stream(), value));
         } else if content.peek(Token![if]) {
             let html_if: HtmlIf = content.parse()?;
             children.push(HtmlNode::If(html_if));
@@ -708,19 +716,6 @@ pub(crate) fn parse_dynamic_component_children(
             let key_literal: LitStr = content.parse()?;
             let key_str: String = key_literal.value();
             content.parse::<Colon>()?;
-            let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
-            attributes.push((key_literal.to_token_stream(), value));
-        } else if content.peek(Ident)
-            && (content.peek2(Colon) || content.peek2(Token![-]))
-            && !is_double_colon(content)
-        {
-            let key_string: String = parse_kebab_name(content)?;
-            let key_literal: LitStr = LitStr::new(&key_string, content.span());
-            content.parse::<Colon>()?;
-            let key_str: String = key_string
-                .strip_prefix(RAW_IDENT_PREFIX)
-                .unwrap_or(&key_string)
-                .to_string();
             let value: HtmlAttrValue = parse_attr_value(content, &key_str)?;
             attributes.push((key_literal.to_token_stream(), value));
         } else if content.peek(LitStr) {

@@ -89,14 +89,14 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
-                    r#for: KEEP_ALIVE_NAME_ID
+                    for: KEEP_ALIVE_NAME_ID
                     class: c_form_label()
                     "Name"
                 }
                 input {
                     id: KEEP_ALIVE_NAME_ID
                     name: KEEP_ALIVE_NAME_NAME
-                    r#type: KEEP_ALIVE_TEXT_TYPE
+                    type: KEEP_ALIVE_TEXT_TYPE
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_NAME
                     placeholder: KEEP_ALIVE_NAME_PLACEHOLDER
                     value: name.get()
@@ -107,14 +107,14 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
-                    r#for: KEEP_ALIVE_EMAIL_ID
+                    for: KEEP_ALIVE_EMAIL_ID
                     class: c_form_label()
                     "Email"
                 }
                 input {
                     id: KEEP_ALIVE_EMAIL_ID
                     name: KEEP_ALIVE_EMAIL_NAME
-                    r#type: KEEP_ALIVE_EMAIL_TYPE
+                    type: KEEP_ALIVE_EMAIL_TYPE
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_EMAIL
                     placeholder: KEEP_ALIVE_EMAIL_PLACEHOLDER
                     value: email.get()
@@ -125,7 +125,7 @@ fn form_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_form_group()
                 label {
-                    r#for: KEEP_ALIVE_MESSAGE_ID
+                    for: KEEP_ALIVE_MESSAGE_ID
                     class: c_form_label()
                     "Message"
                 }

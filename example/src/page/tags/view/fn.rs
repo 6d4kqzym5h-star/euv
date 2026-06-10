@@ -414,7 +414,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         class: c_tag_demo_box()
                         button {
                             class: c_secondary_button()
-                            r#type: TAGS_BUTTON_TYPE_BUTTON
+                            type: TAGS_BUTTON_TYPE_BUTTON
                             onclick: use_section_toggle(dialog_open)
                             if { dialog_open.get() } {
                                 TAGS_DIALOG_CLOSE
@@ -1240,7 +1240,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         embed {
                             class: c_tag_demo_embed()
                             src: TAGS_BLANK_SRC
-                            r#type: TAGS_EMBED_TYPE
+                            type: TAGS_EMBED_TYPE
                         }
                     }
                 }
@@ -1259,7 +1259,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         object {
                             class: c_tag_demo_embed()
                             data: TAGS_BLANK_SRC
-                            r#type: TAGS_EMBED_TYPE
+                            type: TAGS_EMBED_TYPE
                             "Object fallback text"
                         }
                     }
@@ -1446,13 +1446,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_TEXT_ID
+                                for: TAGS_INPUT_TEXT_ID
                                 "text:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_TEXT_ID
-                                r#type: TAGS_INPUT_TYPE_TEXT
+                                type: TAGS_INPUT_TYPE_TEXT
                                 placeholder: TAGS_INPUT_TEXT_PLACEHOLDER
                             }
                         }
@@ -1460,13 +1460,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_PASSWORD_ID
+                                for: TAGS_INPUT_PASSWORD_ID
                                 "password:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_PASSWORD_ID
-                                r#type: TAGS_INPUT_TYPE_PASSWORD
+                                type: TAGS_INPUT_TYPE_PASSWORD
                                 placeholder: TAGS_INPUT_PASSWORD_PLACEHOLDER
                             }
                         }
@@ -1474,13 +1474,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_EMAIL_ID
+                                for: TAGS_INPUT_EMAIL_ID
                                 "email:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_EMAIL_ID
-                                r#type: TAGS_INPUT_TYPE_EMAIL
+                                type: TAGS_INPUT_TYPE_EMAIL
                                 placeholder: TAGS_INPUT_EMAIL_PLACEHOLDER
                             }
                         }
@@ -1488,13 +1488,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_NUMBER_ID
+                                for: TAGS_INPUT_NUMBER_ID
                                 "number:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_NUMBER_ID
-                                r#type: TAGS_INPUT_TYPE_NUMBER
+                                type: TAGS_INPUT_TYPE_NUMBER
                                 placeholder: TAGS_INPUT_NUMBER_PLACEHOLDER
                             }
                         }
@@ -1502,78 +1502,78 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_DATE_ID
+                                for: TAGS_INPUT_DATE_ID
                                 "date:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_DATE_ID
-                                r#type: TAGS_INPUT_TYPE_DATE
+                                type: TAGS_INPUT_TYPE_DATE
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_TIME_ID
+                                for: TAGS_INPUT_TIME_ID
                                 "time:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_TIME_ID
-                                r#type: TAGS_INPUT_TYPE_TIME
+                                type: TAGS_INPUT_TYPE_TIME
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_DATETIME_LOCAL_ID
+                                for: TAGS_INPUT_DATETIME_LOCAL_ID
                                 "datetime-local:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_DATETIME_LOCAL_ID
-                                r#type: TAGS_INPUT_TYPE_DATETIME_LOCAL
+                                type: TAGS_INPUT_TYPE_DATETIME_LOCAL
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_MONTH_ID
+                                for: TAGS_INPUT_MONTH_ID
                                 "month:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_MONTH_ID
-                                r#type: TAGS_INPUT_TYPE_MONTH
+                                type: TAGS_INPUT_TYPE_MONTH
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_WEEK_ID
+                                for: TAGS_INPUT_WEEK_ID
                                 "week:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_WEEK_ID
-                                r#type: TAGS_INPUT_TYPE_WEEK
+                                type: TAGS_INPUT_TYPE_WEEK
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_TEL_ID
+                                for: TAGS_INPUT_TEL_ID
                                 "tel:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_TEL_ID
-                                r#type: TAGS_INPUT_TYPE_TEL
+                                type: TAGS_INPUT_TYPE_TEL
                                 placeholder: TAGS_INPUT_TEL_PLACEHOLDER
                             }
                         }
@@ -1581,13 +1581,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_URL_ID
+                                for: TAGS_INPUT_URL_ID
                                 "url:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_URL_ID
-                                r#type: TAGS_INPUT_TYPE_URL
+                                type: TAGS_INPUT_TYPE_URL
                                 placeholder: TAGS_INPUT_URL_PLACEHOLDER
                             }
                         }
@@ -1595,13 +1595,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_SEARCH_ID
+                                for: TAGS_INPUT_SEARCH_ID
                                 "search:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_SEARCH_ID
-                                r#type: TAGS_INPUT_TYPE_SEARCH
+                                type: TAGS_INPUT_TYPE_SEARCH
                                 placeholder: TAGS_INPUT_SEARCH_PLACEHOLDER
                             }
                         }
@@ -1609,13 +1609,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_RANGE_ID
+                                for: TAGS_INPUT_RANGE_ID
                                 "range:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_RANGE_ID
-                                r#type: TAGS_INPUT_TYPE_RANGE
+                                type: TAGS_INPUT_TYPE_RANGE
                                 min: TAGS_RANGE_MIN
                                 max: TAGS_RANGE_MAX
                                 value: TAGS_RANGE_VALUE
@@ -1625,13 +1625,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_COLOR_ID
+                                for: TAGS_INPUT_COLOR_ID
                                 "color:"
                             }
                             input {
                                 class: c_tag_demo_input_color()
                                 id: TAGS_INPUT_COLOR_ID
-                                r#type: TAGS_INPUT_TYPE_COLOR
+                                type: TAGS_INPUT_TYPE_COLOR
                                 value: TAGS_COLOR_INPUT_VALUE
                             }
                         }
@@ -1639,31 +1639,31 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_CHECKBOX_ID
+                                for: TAGS_INPUT_CHECKBOX_ID
                                 "checkbox:"
                             }
                             input {
                                 id: TAGS_INPUT_CHECKBOX_ID
-                                r#type: TAGS_INPUT_TYPE_CHECKBOX
+                                type: TAGS_INPUT_TYPE_CHECKBOX
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_RADIO_A_ID
+                                for: TAGS_INPUT_RADIO_A_ID
                                 "radio:"
                             }
                             input {
                                 id: TAGS_INPUT_RADIO_A_ID
-                                r#type: TAGS_INPUT_TYPE_RADIO
+                                type: TAGS_INPUT_TYPE_RADIO
                                 name: TAGS_RADIO_NAME
                                 value: TAGS_RADIO_A_VALUE
                             }
                             " A "
                             input {
                                 id: TAGS_INPUT_RADIO_B_ID
-                                r#type: TAGS_INPUT_TYPE_RADIO
+                                type: TAGS_INPUT_TYPE_RADIO
                                 name: TAGS_RADIO_NAME
                                 value: TAGS_RADIO_B_VALUE
                             }
@@ -1673,19 +1673,19 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_INPUT_FILE_ID
+                                for: TAGS_INPUT_FILE_ID
                                 "file:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_INPUT_FILE_ID
-                                r#type: TAGS_INPUT_TYPE_FILE
+                                type: TAGS_INPUT_TYPE_FILE
                             }
                         }
                         div {
                             class: c_form_input_wrapper()
                             input {
-                                r#type: TAGS_INPUT_TYPE_HIDDEN
+                                type: TAGS_INPUT_TYPE_HIDDEN
                                 value: TAGS_HIDDEN_INPUT_VALUE
                             }
                         }
@@ -1704,7 +1704,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_TEXTAREA_ID
+                                for: TAGS_TEXTAREA_ID
                                 "textarea:"
                             }
                             textarea {
@@ -1729,7 +1729,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_SELECT_ID
+                                for: TAGS_SELECT_ID
                                 "select:"
                             }
                             select {
@@ -1874,13 +1874,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                                 class: c_form_input_wrapper()
                                 label {
                                     class: c_form_label()
-                                    r#for: TAGS_FIELDSET_NAME_ID
+                                    for: TAGS_FIELDSET_NAME_ID
                                     "Name:"
                                 }
                                 input {
                                     class: c_tag_demo_input()
                                     id: TAGS_FIELDSET_NAME_ID
-                                    r#type: TAGS_INPUT_TYPE_TEXT
+                                    type: TAGS_INPUT_TYPE_TEXT
                                     placeholder: TAGS_FIELDSET_NAME_PLACEHOLDER
                                 }
                             }
@@ -1900,17 +1900,17 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_tag_button_row()
                             button {
                                 class: c_secondary_button()
-                                r#type: TAGS_BUTTON_TYPE_BUTTON
+                                type: TAGS_BUTTON_TYPE_BUTTON
                                 TAGS_BUTTON_CLICK
                             }
                             button {
                                 class: c_primary_button()
-                                r#type: TAGS_BUTTON_TYPE_SUBMIT
+                                type: TAGS_BUTTON_TYPE_SUBMIT
                                 TAGS_BUTTON_SUBMIT
                             }
                             button {
                                 class: c_secondary_button()
-                                r#type: TAGS_BUTTON_TYPE_RESET
+                                type: TAGS_BUTTON_TYPE_RESET
                                 TAGS_BUTTON_RESET
                             }
                         }
@@ -1929,13 +1929,13 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             class: c_form_input_wrapper()
                             label {
                                 class: c_form_label()
-                                r#for: TAGS_LABEL_DEMO_ID
+                                for: TAGS_LABEL_DEMO_ID
                                 "Click to focus:"
                             }
                             input {
                                 class: c_tag_demo_input()
                                 id: TAGS_LABEL_DEMO_ID
-                                r#type: TAGS_INPUT_TYPE_TEXT
+                                type: TAGS_INPUT_TYPE_TEXT
                                 placeholder: TAGS_LABEL_DEMO_PLACEHOLDER
                             }
                         }
@@ -1962,14 +1962,14 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         li {
                             button {
                                 class: c_secondary_button()
-                                r#type: TAGS_BUTTON_TYPE_BUTTON
+                                type: TAGS_BUTTON_TYPE_BUTTON
                                 TAGS_MENU_COMMAND_FIRST
                             }
                         }
                         li {
                             button {
                                 class: c_secondary_button()
-                                r#type: TAGS_BUTTON_TYPE_BUTTON
+                                type: TAGS_BUTTON_TYPE_BUTTON
                                 TAGS_MENU_COMMAND_SECOND
                             }
                         }

@@ -25,10 +25,12 @@ pub(crate) fn canvas_on_draw(state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
 ///
 /// - `UseCanvas` - The canvas drawing board state.
 pub(crate) fn use_canvas_state() -> UseCanvas {
+    let initial_stroke_color: String = load_stroke_color();
+    let initial_line_width: f64 = load_line_width();
     UseCanvas::new(
         use_signal(|| false),
-        use_signal(|| CANVAS_DEFAULT_STROKE_COLOR.to_string()),
-        use_signal(|| CANVAS_DEFAULT_LINE_WIDTH),
+        use_signal(move || initial_stroke_color.clone()),
+        use_signal(move || initial_line_width),
         use_signal(|| false),
         use_signal(String::new),
     )
@@ -532,6 +534,52 @@ pub(crate) fn exit_fullscreen_from_popstate(state: UseCanvas) {
 /// # Arguments
 ///
 /// - `UseCanvas` - The canvas drawing board state.
+///   Loads the persisted stroke color from localStorage.
+///
+/// Returns the stored color string if available and non-empty,
+/// otherwise returns the default stroke color.
+///
+/// # Returns
+///
+/// - `String` - The persisted or default stroke color.
+pub(crate) fn load_stroke_color() -> String {
+    local_storage_get(CANVAS_STORAGE_KEY_STROKE_COLOR)
+        .filter(|color: &String| !color.is_empty())
+        .unwrap_or_else(|| CANVAS_DEFAULT_STROKE_COLOR.to_string())
+}
+
+/// Loads the persisted line width from localStorage.
+///
+/// Returns the stored line width if available and parseable,
+/// otherwise returns the default line width.
+///
+/// # Returns
+///
+/// - `f64` - The persisted or default line width.
+pub(crate) fn load_line_width() -> f64 {
+    local_storage_get(CANVAS_STORAGE_KEY_LINE_WIDTH)
+        .and_then(|width: String| width.parse::<f64>().ok())
+        .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH)
+}
+
+/// Persists the current stroke color to localStorage.
+///
+/// # Arguments
+///
+/// - `&str` - The stroke color value to persist.
+pub(crate) fn save_stroke_color(color: &str) {
+    local_storage_set(CANVAS_STORAGE_KEY_STROKE_COLOR, color);
+}
+
+/// Persists the current line width to localStorage.
+///
+/// # Arguments
+///
+/// - `f64` - The line width value to persist.
+pub(crate) fn save_line_width(width: f64) {
+    local_storage_set(CANVAS_STORAGE_KEY_LINE_WIDTH, &width.to_string());
+}
+
 pub(crate) fn use_fullscreen_popstate(state: UseCanvas) {
     use_window_event("popstate", move || {
         if state.get_fullscreen().get() {

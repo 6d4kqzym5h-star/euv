@@ -57,14 +57,14 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: TAG_CONTENT_INPUT_ID
+                        for: TAG_CONTENT_INPUT_ID
                         class: c_form_label()
                         "Content Text"
                     }
                     input {
                         id: TAG_CONTENT_INPUT_ID
                         name: TAG_CONTENT_INPUT_ID
-                        r#type: "text"
+                        type: "text"
                         placeholder: TAG_CONTENT_PLACEHOLDER
                         value: content
                         autocomplete: TAG_AUTOCOMPLETE_OFF

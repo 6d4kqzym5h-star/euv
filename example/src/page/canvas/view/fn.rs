@@ -62,7 +62,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                     div {
                         class: c_canvas_fullscreen_toolbar_center()
                         input {
-                            r#type: "color"
+                            type: "color"
                             class: c_canvas_color_input()
                             value: state.get_stroke_color().get()
                             oninput: move |event: Event| {
@@ -72,15 +72,16 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                                     .and_then(|value: JsValue| value.as_string())
                                     .unwrap_or_default();
                                 state.get_stroke_color().set(new_color);
+                                save_stroke_color(&state.get_stroke_color().get());
                             }
                         }
                         input {
-                            r#type: "range"
+                            type: "range"
                             class: c_canvas_fullscreen_range_input()
-                            min: CANVAS_MIN_LINE_WIDTH
-                            max: CANVAS_MAX_LINE_WIDTH
-                            step: CANVAS_LINE_WIDTH_STEP
-                            value: state.get_line_width().get()
+                            min: CANVAS_MIN_LINE_WIDTH_ATTR
+                            max: CANVAS_MAX_LINE_WIDTH_ATTR
+                            step: CANVAS_LINE_WIDTH_STEP_ATTR
+                            value: state.get_line_width().get().to_string()
                             oninput: move |event: Event| {
                                 let new_width: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("target"))
                                     .ok()
@@ -89,6 +90,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                                     .and_then(|string: String| string.parse::<f64>().ok())
                                     .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH);
                                 state.get_line_width().set(new_width);
+                                save_line_width(new_width);
                             }
                         }
                     }

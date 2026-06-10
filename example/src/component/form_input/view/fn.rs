@@ -23,14 +23,14 @@ pub(crate) fn form_input(node: VirtualNode<FormInputProps>) -> VirtualNode {
         div {
             class: c_form_input_wrapper()
             label {
-                r#for: id
+                for: id
                 class: c_form_label()
                 label_string
             }
             input {
                 id: id
                 name: id
-                r#type: "text"
+                type: "text"
                 placeholder: placeholder
                 value: value
                 autocomplete: autocomplete

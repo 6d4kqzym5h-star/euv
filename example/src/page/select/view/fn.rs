@@ -21,7 +21,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: SELECT_FRUIT_ID
+                        for: SELECT_FRUIT_ID
                         class: c_form_label()
                         "Choose a fruit"
                     }
@@ -64,7 +64,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: SELECT_COUNTRY_ID
+                        for: SELECT_COUNTRY_ID
                         class: c_form_label()
                         "Country"
                     }
@@ -96,7 +96,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: SELECT_CITY_ID
+                            for: SELECT_CITY_ID
                             class: c_form_label()
                             "City"
                         }
@@ -132,7 +132,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: SELECT_FEEDBACK_ID
+                        for: SELECT_FEEDBACK_ID
                         class: c_form_label()
                         "Your feedback"
                     }

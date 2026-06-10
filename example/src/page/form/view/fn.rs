@@ -21,14 +21,14 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: FORM_USERNAME_ID
+                        for: FORM_USERNAME_ID
                         class: c_form_label()
                         "Username"
                     }
                     input {
                         id: FORM_USERNAME_ID
                         name: FORM_USERNAME_NAME
-                        r#type: FORM_TEXT_TYPE
+                        type: FORM_TEXT_TYPE
                         autocomplete: FORM_AUTOCOMPLETE_USERNAME
                         placeholder: FORM_USERNAME_PLACEHOLDER
                         value: form.get_username()
@@ -45,14 +45,14 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: FORM_EMAIL_ID
+                        for: FORM_EMAIL_ID
                         class: c_form_label()
                         "Email"
                     }
                     input {
                         id: FORM_EMAIL_ID
                         name: FORM_EMAIL_NAME
-                        r#type: FORM_EMAIL_TYPE
+                        type: FORM_EMAIL_TYPE
                         autocomplete: FORM_AUTOCOMPLETE_EMAIL
                         placeholder: FORM_EMAIL_PLACEHOLDER
                         value: form.get_email()
@@ -69,14 +69,14 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: FORM_PASSWORD_ID
+                        for: FORM_PASSWORD_ID
                         class: c_form_label()
                         "Password"
                     }
                     input {
                         id: FORM_PASSWORD_ID
                         name: FORM_PASSWORD_NAME
-                        r#type: FORM_PASSWORD_TYPE
+                        type: FORM_PASSWORD_TYPE
                         autocomplete: FORM_AUTOCOMPLETE_NEW_PASSWORD
                         placeholder: FORM_PASSWORD_PLACEHOLDER
                         value: form.get_password()
@@ -95,14 +95,14 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
                     input {
                         id: FORM_AGREE_ID
                         name: FORM_AGREE_NAME
-                        r#type: FORM_CHECKBOX_TYPE
+                        type: FORM_CHECKBOX_TYPE
                         autocomplete: FORM_AUTOCOMPLETE_OFF
                         checked: form.get_agree()
                         class: c_form_checkbox()
                         onchange: form_on_change_agree(form)
                     }
                     label {
-                        r#for: FORM_AGREE_ID
+                        for: FORM_AGREE_ID
                         class: c_form_checkbox_label()
                         "I agree to the terms and conditions"
                     }

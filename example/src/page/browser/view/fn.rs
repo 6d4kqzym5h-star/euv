@@ -27,14 +27,14 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: LOCAL_STORAGE_KEY_ID
+                            for: LOCAL_STORAGE_KEY_ID
                             class: c_form_label()
                             "Key"
                         }
                         input {
                             id: LOCAL_STORAGE_KEY_ID
                             name: LOCAL_STORAGE_KEY_NAME
-                            r#type: BROWSER_TEXT_TYPE
+                            type: BROWSER_TEXT_TYPE
                             autocomplete: BROWSER_AUTOCOMPLETE_OFF
                             placeholder: LOCAL_STORAGE_KEY_PLACEHOLDER
                             value: state.get_local_key()
@@ -45,14 +45,14 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: LOCAL_STORAGE_VALUE_ID
+                            for: LOCAL_STORAGE_VALUE_ID
                             class: c_form_label()
                             "Value"
                         }
                         input {
                             id: LOCAL_STORAGE_VALUE_ID
                             name: LOCAL_STORAGE_VALUE_NAME
-                            r#type: BROWSER_TEXT_TYPE
+                            type: BROWSER_TEXT_TYPE
                             autocomplete: BROWSER_AUTOCOMPLETE_OFF
                             placeholder: LOCAL_STORAGE_VALUE_PLACEHOLDER
                             value: state.get_local_value()
@@ -102,14 +102,14 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: SESSION_STORAGE_KEY_ID
+                            for: SESSION_STORAGE_KEY_ID
                             class: c_form_label()
                             "Key"
                         }
                         input {
                             id: SESSION_STORAGE_KEY_ID
                             name: SESSION_STORAGE_KEY_NAME
-                            r#type: BROWSER_TEXT_TYPE
+                            type: BROWSER_TEXT_TYPE
                             autocomplete: BROWSER_AUTOCOMPLETE_OFF
                             placeholder: SESSION_STORAGE_KEY_PLACEHOLDER
                             value: state.get_session_key()
@@ -120,14 +120,14 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     div {
                         class: c_form_input_wrapper()
                         label {
-                            r#for: SESSION_STORAGE_VALUE_ID
+                            for: SESSION_STORAGE_VALUE_ID
                             class: c_form_label()
                             "Value"
                         }
                         input {
                             id: SESSION_STORAGE_VALUE_ID
                             name: SESSION_STORAGE_VALUE_NAME
-                            r#type: BROWSER_TEXT_TYPE
+                            type: BROWSER_TEXT_TYPE
                             autocomplete: BROWSER_AUTOCOMPLETE_OFF
                             placeholder: SESSION_STORAGE_VALUE_PLACEHOLDER
                             value: state.get_session_value()
@@ -175,14 +175,14 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: CLIPBOARD_TEXT_ID
+                        for: CLIPBOARD_TEXT_ID
                         class: c_form_label()
                         "Text to copy"
                     }
                     input {
                         id: CLIPBOARD_TEXT_ID
                         name: CLIPBOARD_TEXT_NAME
-                        r#type: BROWSER_TEXT_TYPE
+                        type: BROWSER_TEXT_TYPE
                         autocomplete: BROWSER_AUTOCOMPLETE_OFF
                         placeholder: CLIPBOARD_TEXT_PLACEHOLDER
                         value: state.get_clipboard_text()
@@ -325,14 +325,14 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: CONSOLE_MESSAGE_ID
+                        for: CONSOLE_MESSAGE_ID
                         class: c_form_label()
                         "Console message"
                     }
                     input {
                         id: CONSOLE_MESSAGE_ID
                         name: CONSOLE_MESSAGE_NAME
-                        r#type: BROWSER_TEXT_TYPE
+                        type: BROWSER_TEXT_TYPE
                         autocomplete: BROWSER_AUTOCOMPLETE_OFF
                         placeholder: CONSOLE_MESSAGE_PLACEHOLDER
                         value: state.get_console_input()

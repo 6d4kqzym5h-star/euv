@@ -281,7 +281,17 @@ impl Parse for HtmlElement {
         let mut attributes: HtmlAttrs = Vec::new();
         let mut children: Vec<HtmlNode> = Vec::new();
         while !content.is_empty() {
-            if content.peek(Token![if]) {
+            if is_attr_key_pattern(&content) && !is_double_colon(&content) {
+                let key_string: String = parse_kebab_name(&content)?;
+                let key_literal: LitStr = LitStr::new(&key_string, content.span());
+                content.parse::<Colon>()?;
+                let key_str: String = key_string
+                    .strip_prefix(RAW_IDENT_PREFIX)
+                    .unwrap_or(&key_string)
+                    .to_string();
+                let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
+                attributes.push((key_literal.to_token_stream(), value))
+            } else if content.peek(Token![if]) {
                 let html_if: HtmlIf = content.parse()?;
                 children.push(HtmlNode::If(html_if));
             } else if content.peek(Token![match]) {
@@ -336,19 +346,6 @@ impl Parse for HtmlElement {
                 content.parse::<Colon>()?;
                 let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
                 attributes.push((key_literal.to_token_stream(), value));
-            } else if content.peek(Ident)
-                && (content.peek2(Colon) || content.peek2(Token![-]))
-                && !is_double_colon(&content)
-            {
-                let key_string: String = parse_kebab_name(&content)?;
-                let key_literal: LitStr = LitStr::new(&key_string, content.span());
-                content.parse::<Colon>()?;
-                let key_str: String = key_string
-                    .strip_prefix(RAW_IDENT_PREFIX)
-                    .unwrap_or(&key_string)
-                    .to_string();
-                let value: HtmlAttrValue = parse_attr_value(&content, &key_str)?;
-                attributes.push((key_literal.to_token_stream(), value))
             } else if content.peek(LitStr) {
                 let literal_string: LitStr = content.parse()?;
                 children.push(HtmlNode::Text(literal_string.value()));

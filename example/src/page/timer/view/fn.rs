@@ -76,14 +76,14 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                 div {
                     class: c_form_input_wrapper()
                     label {
-                        r#for: COUNTDOWN_SECONDS_ID
+                        for: COUNTDOWN_SECONDS_ID
                         class: c_form_label()
                         "Set seconds"
                     }
                     input {
                         id: COUNTDOWN_SECONDS_ID
                         name: COUNTDOWN_SECONDS_NAME
-                        r#type: TIMER_NUMBER_TYPE
+                        type: TIMER_NUMBER_TYPE
                         autocomplete: TIMER_AUTOCOMPLETE_OFF
                         min: COUNTDOWN_SECONDS_MIN
                         max: COUNTDOWN_SECONDS_MAX

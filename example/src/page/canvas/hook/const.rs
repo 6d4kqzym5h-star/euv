@@ -25,14 +25,23 @@ pub(crate) const CANVAS_BACKGROUND_COLOR: &str = "#ffffff";
 /// The minimum allowed line width for drawing.
 pub(crate) const CANVAS_MIN_LINE_WIDTH: f64 = 1.0;
 
-/// The maximum allowed line width for drawing.
-pub(crate) const CANVAS_MAX_LINE_WIDTH: f64 = 30.0;
+/// The HTML attribute value for the range input minimum.
+pub(crate) const CANVAS_MIN_LINE_WIDTH_ATTR: &str = "1";
 
-/// The line width step for the range slider.
-pub(crate) const CANVAS_LINE_WIDTH_STEP: f64 = 1.0;
+/// The HTML attribute value for the range input maximum.
+pub(crate) const CANVAS_MAX_LINE_WIDTH_ATTR: &str = "30";
+
+/// The HTML attribute value for the range input step.
+pub(crate) const CANVAS_LINE_WIDTH_STEP_ATTR: &str = "1";
 
 /// The label displayed on the draw button.
 pub(crate) const CANVAS_DRAW_LABEL: &str = "Draw";
 
 /// The label displayed on the fullscreen exit button.
 pub(crate) const CANVAS_FULLSCREEN_EXIT_LABEL: &str = "Exit";
+
+/// The localStorage key for persisting the stroke color.
+pub(crate) const CANVAS_STORAGE_KEY_STROKE_COLOR: &str = "euv-canvas-stroke-color";
+
+/// The localStorage key for persisting the line width.
+pub(crate) const CANVAS_STORAGE_KEY_LINE_WIDTH: &str = "euv-canvas-line-width";

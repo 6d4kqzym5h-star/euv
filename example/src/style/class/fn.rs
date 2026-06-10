@@ -3492,8 +3492,10 @@ class! {
     }
 
     pub(crate) c_tag_demo_audio {
+        display: "block";
         width: "100%";
         max-width: "100%";
+        border-radius: var!(radius-md);
     }
 
     pub(crate) c_tag_button_row {

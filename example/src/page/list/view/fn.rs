@@ -23,7 +23,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                     input {
                         id: LIST_NEW_ITEM_ID
                         name: LIST_NEW_ITEM_NAME
-                        r#type: LIST_TEXT_TYPE
+                        type: LIST_TEXT_TYPE
                         autocomplete: LIST_AUTOCOMPLETE_OFF
                         placeholder: LIST_NEW_ITEM_PLACEHOLDER
                         value: state.get_new_item()

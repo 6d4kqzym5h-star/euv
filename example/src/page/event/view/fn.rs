@@ -33,7 +33,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 input {
                     id: EVENT_KEYBOARD_ID
                     name: EVENT_KEYBOARD_NAME
-                    r#type: EVENT_TEXT_TYPE
+                    type: EVENT_TEXT_TYPE
                     autocomplete: EVENT_AUTOCOMPLETE_OFF
                     placeholder: EVENT_KEYBOARD_PLACEHOLDER
                     class: c_form_input()
@@ -378,7 +378,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 input {
                     id: EVENT_FOCUS_ID
                     name: EVENT_FOCUS_NAME
-                    r#type: EVENT_TEXT_TYPE
+                    type: EVENT_TEXT_TYPE
                     autocomplete: EVENT_AUTOCOMPLETE_OFF
                     placeholder: EVENT_FOCUS_PLACEHOLDER
                     class: c_form_input()
@@ -630,7 +630,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         input {
                             id: EVENT_CLIPBOARD_ID
                             name: EVENT_CLIPBOARD_NAME
-                            r#type: EVENT_TEXT_TYPE
+                            type: EVENT_TEXT_TYPE
                             autocomplete: EVENT_AUTOCOMPLETE_OFF
                             placeholder: EVENT_CLIPBOARD_PLACEHOLDER
                         class: c_form_input()
@@ -764,12 +764,12 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         div {
                             class: c_form_input_wrapper()
                             label {
-                                r#for: EVENT_FORM_INPUT_ID
+                                for: EVENT_FORM_INPUT_ID
                                 class: c_form_label()
                                 "Input (oninput & onchange)"
                             }
                             input {
-                                r#type: EVENT_TEXT_TYPE
+                                type: EVENT_TEXT_TYPE
                                 id: EVENT_FORM_INPUT_ID
                                 name: EVENT_FORM_INPUT_NAME
                                 autocomplete: EVENT_AUTOCOMPLETE_OFF
@@ -794,7 +794,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                             input {
                                 id: EVENT_FORM_CHECKBOX_ID
                                 name: EVENT_FORM_CHECKBOX_NAME
-                                r#type: EVENT_CHECKBOX_TYPE
+                                type: EVENT_CHECKBOX_TYPE
                                 autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 class: c_form_checkbox()
                                 onchange: move |event: Event| {
@@ -805,7 +805,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 }
                             }
                             label {
-                                r#for: EVENT_FORM_CHECKBOX_ID
+                                for: EVENT_FORM_CHECKBOX_ID
                                 class: c_form_checkbox_label()
                                 "Checkbox (onchange)"
                             }
@@ -813,7 +813,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         div {
                             class: c_form_input_wrapper()
                             label {
-                                r#for: EVENT_FORM_SELECT_ID
+                                for: EVENT_FORM_SELECT_ID
                                 class: c_form_label()
                                 "Select (onchange)"
                             }

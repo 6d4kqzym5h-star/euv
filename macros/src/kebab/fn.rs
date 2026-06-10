@@ -1,5 +1,40 @@
 use crate::*;
 
+use proc_macro2::TokenTree;
+
+/// Checks whether the current position in the parse stream starts an attribute
+/// key pattern (e.g., `type:`, `async-onclick:`, `r#box-shadow:`).
+///
+/// Unlike `peek(Ident)` which only matches regular identifiers, this function
+/// also accepts Rust reserved keywords (such as `type`, `async`, `for`, `loop`)
+/// as attribute key prefixes. It does this by forking the stream and attempting
+/// to parse a `proc_macro2::TokenTree::Ident`, which includes both identifiers
+/// and keywords.
+///
+/// Returns `true` when the current token is an `Ident` (identifier or keyword)
+/// followed by `:` or `-`, and the `:` is not part of a `::` path separator.
+///
+/// # Arguments
+///
+/// - `&ParseStream` - The parse stream to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the current position matches an attribute key pattern.
+pub(crate) fn is_attr_key_pattern(content: ParseStream) -> bool {
+    let forked: ParseBuffer<'_> = content.fork();
+    let Ok(token_tree) = forked.parse::<TokenTree>() else {
+        return false;
+    };
+    if !matches!(token_tree, TokenTree::Ident(_)) {
+        return false;
+    }
+    if forked.peek(Colon) && !forked.peek(Token![::]) {
+        return true;
+    }
+    forked.peek(Token![-])
+}
+
 /// Parses a single identifier or keyword segment from the token stream,
 /// stripping the `r#` prefix if present.
 ///

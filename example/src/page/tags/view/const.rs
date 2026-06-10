@@ -6,7 +6,7 @@ pub(crate) const TAGS_AUDIO_SRC: &str =
     "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
 /// The image source URL for the tags embedded content demo.
-pub(crate) const TAGS_IMAGE_SRC: &str = "https://docs.ltpp.vip/image/euv.svg";
+pub(crate) const TAGS_IMAGE_SRC: &str = "https://docs.ltpp.vip/img/euv.png";
 
 /// The page header title for the tags demo page.
 pub(crate) const TAGS_PAGE_TITLE: &str = "HTML5 Tags";
