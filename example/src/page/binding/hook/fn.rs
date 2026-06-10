@@ -97,7 +97,14 @@ pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
     state
 }
 
-/// Creates an input event handler that updates the celsius value.
+/// Creates an input event handler that updates the celsius value via
+/// `requestAnimationFrame` throttling to ensure at most one signal
+/// update per paint frame.
+///
+/// Instead of updating the signal on every `oninput` event (which can
+/// fire many times per frame), stores the pending value and schedules
+/// a single `requestAnimationFrame` callback. The callback reads the
+/// latest pending value and applies it exactly once per paint frame.
 ///
 /// # Arguments
 ///
@@ -107,17 +114,41 @@ pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
 ///
 /// - `NativeEventHandler` - An input handler.
 pub(crate) fn cross_on_input_celsius(signal: Signal<f64>) -> Option<Rc<dyn Fn(Event)>> {
+    let pending_value: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+    let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             let parsed: f64 = input.value().parse().unwrap_or(0.0);
-            signal.set(parsed);
+            pending_value.set(parsed);
+            if raf_id.get().is_some() {
+                return;
+            }
+            let pending_for_raf: Rc<Cell<f64>> = pending_value.clone();
+            let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
+            let window_value: Window = window().expect("no global window exists");
+            let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                raf_id_clone.set(None);
+                signal.set(pending_for_raf.get());
+            }));
+            let id: i32 = window_value
+                .request_animation_frame(raf_closure.as_ref().unchecked_ref())
+                .unwrap_or(0);
+            raf_id.set(Some(id));
+            raf_closure.forget();
         }
     }))
 }
 
-/// Creates an input event handler that updates the fahrenheit value.
+/// Creates an input event handler that updates the fahrenheit value via
+/// `requestAnimationFrame` throttling to ensure at most one signal
+/// update per paint frame.
+///
+/// Instead of updating the signal on every `oninput` event (which can
+/// fire many times per frame), stores the pending value and schedules
+/// a single `requestAnimationFrame` callback. The callback reads the
+/// latest pending value and applies it exactly once per paint frame.
 ///
 /// # Arguments
 ///
@@ -127,17 +158,41 @@ pub(crate) fn cross_on_input_celsius(signal: Signal<f64>) -> Option<Rc<dyn Fn(Ev
 ///
 /// - `NativeEventHandler` - An input handler.
 pub(crate) fn cross_on_input_fahrenheit(signal: Signal<f64>) -> Option<Rc<dyn Fn(Event)>> {
+    let pending_value: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+    let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             let parsed: f64 = input.value().parse().unwrap_or(0.0);
-            signal.set(parsed);
+            pending_value.set(parsed);
+            if raf_id.get().is_some() {
+                return;
+            }
+            let pending_for_raf: Rc<Cell<f64>> = pending_value.clone();
+            let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
+            let window_value: Window = window().expect("no global window exists");
+            let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                raf_id_clone.set(None);
+                signal.set(pending_for_raf.get());
+            }));
+            let id: i32 = window_value
+                .request_animation_frame(raf_closure.as_ref().unchecked_ref())
+                .unwrap_or(0);
+            raf_id.set(Some(id));
+            raf_closure.forget();
         }
     }))
 }
 
-/// Creates an input event handler that updates an i32 signal.
+/// Creates an input event handler that updates an i32 signal via
+/// `requestAnimationFrame` throttling to ensure at most one signal
+/// update per paint frame.
+///
+/// Instead of updating the signal on every `oninput` event (which can
+/// fire many times per frame), stores the pending value and schedules
+/// a single `requestAnimationFrame` callback. The callback reads the
+/// latest pending value and applies it exactly once per paint frame.
 ///
 /// # Arguments
 ///
@@ -147,12 +202,29 @@ pub(crate) fn cross_on_input_fahrenheit(signal: Signal<f64>) -> Option<Rc<dyn Fn
 ///
 /// - `NativeEventHandler` - An input handler.
 pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
+    let pending_value: Rc<Cell<i32>> = Rc::new(Cell::new(0));
+    let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     Some(Rc::new(move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             let parsed: i32 = input.value().parse().unwrap_or_default();
-            signal.set(parsed.clamp(0, 255));
+            pending_value.set(parsed.clamp(0, 255));
+            if raf_id.get().is_some() {
+                return;
+            }
+            let pending_for_raf: Rc<Cell<i32>> = pending_value.clone();
+            let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
+            let window_value: Window = window().expect("no global window exists");
+            let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                raf_id_clone.set(None);
+                signal.set(pending_for_raf.get());
+            }));
+            let id: i32 = window_value
+                .request_animation_frame(raf_closure.as_ref().unchecked_ref())
+                .unwrap_or(0);
+            raf_id.set(Some(id));
+            raf_closure.forget();
         }
     }))
 }

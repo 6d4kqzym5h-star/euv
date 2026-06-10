@@ -28,16 +28,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
         state.get_stroke_color().set(new_color);
         save_stroke_color(&state.get_stroke_color().get());
     };
-    let on_line_width_input = move |event: Event| {
-        let new_width: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("target"))
-            .ok()
-            .and_then(|target: JsValue| Reflect::get(&target, &JsValue::from_str("value")).ok())
-            .and_then(|value: JsValue| value.as_string())
-            .and_then(|string: String| string.parse::<f64>().ok())
-            .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH);
-        state.get_line_width().set(new_width);
-        save_line_width(new_width);
-    };
     let on_exit_fullscreen = move |_: Event| {
         exit_fullscreen(state);
     };
@@ -136,7 +126,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                             max: CANVAS_MAX_LINE_WIDTH_ATTR
                             step: CANVAS_LINE_WIDTH_STEP_ATTR
                             value: state.get_line_width().get().to_string()
-                            oninput: on_line_width_input
+                            oninput: canvas_on_line_width_input(state)
                         }
                     }
                     button {

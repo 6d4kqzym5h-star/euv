@@ -580,6 +580,55 @@ pub(crate) fn save_line_width(width: f64) {
     local_storage_set(CANVAS_STORAGE_KEY_LINE_WIDTH, &width.to_string());
 }
 
+/// Creates an input event handler that updates the line width via
+/// `requestAnimationFrame` throttling to ensure at most one signal
+/// update per paint frame.
+///
+/// Instead of updating the signal on every `oninput` event (which can
+/// fire many times per frame), stores the pending value and schedules
+/// a single `requestAnimationFrame` callback. The callback reads the
+/// latest pending value and applies it exactly once per paint frame,
+/// then persists the value to localStorage.
+///
+/// # Arguments
+///
+/// - `UseCanvas` - The canvas drawing board state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - An input handler for the line width slider.
+pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
+    let pending_value: Rc<Cell<f64>> = Rc::new(Cell::new(CANVAS_DEFAULT_LINE_WIDTH));
+    let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+    Some(Rc::new(move |event: Event| {
+        let new_width: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("target"))
+            .ok()
+            .and_then(|target: JsValue| Reflect::get(&target, &JsValue::from_str("value")).ok())
+            .and_then(|value: JsValue| value.as_string())
+            .and_then(|string: String| string.parse::<f64>().ok())
+            .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH);
+        pending_value.set(new_width);
+        if raf_id.get().is_some() {
+            return;
+        }
+        let pending_for_raf: Rc<Cell<f64>> = pending_value.clone();
+        let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
+        let line_width_signal: Signal<f64> = state.get_line_width();
+        let window_value: Window = window().expect("no global window exists");
+        let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            raf_id_clone.set(None);
+            let current_width: f64 = pending_for_raf.get();
+            line_width_signal.set(current_width);
+            save_line_width(current_width);
+        }));
+        let id: i32 = window_value
+            .request_animation_frame(raf_closure.as_ref().unchecked_ref())
+            .unwrap_or(0);
+        raf_id.set(Some(id));
+        raf_closure.forget();
+    }))
+}
+
 pub(crate) fn use_fullscreen_popstate(state: UseCanvas) {
     use_window_event("popstate", move || {
         if state.get_fullscreen().get() {

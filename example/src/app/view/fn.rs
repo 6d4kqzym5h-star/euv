@@ -24,6 +24,7 @@ pub(crate) fn nav_item(node: VirtualNode<NavItemProps>) -> VirtualNode {
     html! {
         a {
             href: format!("#{target_string}")
+            target: "_blank"
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
             onclick: on_nav_click
             label
@@ -60,6 +61,7 @@ pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualN
     html! {
         a {
             href: format!("#{target_string}")
+            target: "_blank"
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
             onclick: on_mobile_nav_click
             label
@@ -424,6 +426,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 class: c_app_nav()
                 a {
                     href: GITHUB_URL
+                    target: "_blank"
                     onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_header()
                     logo_button {
@@ -453,6 +456,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 }
                 a {
                     href: GITHUB_URL
+                    target: "_blank"
                     onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
                     format!("Built with {} & WASM", BRAND_NAME)
@@ -512,6 +516,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         }
                         a {
                             href: GITHUB_URL
+                            target: "_blank"
                             onclick: external_link_handler(GITHUB_URL.to_string())
                             class: c_mobile_header_logo()
                             logo_button {
@@ -557,6 +562,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         }
                         a {
                             href: GITHUB_URL
+                            target: "_blank"
                             onclick: external_link_handler(GITHUB_URL.to_string())
                             class: c_mobile_header_logo()
                             logo_button {
@@ -594,6 +600,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 }
                 a {
                     href: GITHUB_URL
+                    target: "_blank"
                     onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
                     format!("Built with {} & WASM", BRAND_NAME)

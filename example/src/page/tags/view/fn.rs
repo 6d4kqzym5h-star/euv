@@ -65,16 +65,19 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         a {
                             class: c_tag_nav_link()
                             href: TAGS_HREF_PLACEHOLDER
+                            target: "_blank"
                             "Home"
                         }
                         a {
                             class: c_tag_nav_link()
                             href: TAGS_HREF_PLACEHOLDER
+                            target: "_blank"
                             "About"
                         }
                         a {
                             class: c_tag_nav_link()
                             href: TAGS_HREF_PLACEHOLDER
+                            target: "_blank"
                             "Contact"
                         }
                     }
@@ -377,6 +380,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         a {
                             class: c_tag_nav_link()
                             href: TAGS_EMAIL_ADDRESS
+                            target: "_blank"
                             TAGS_EMAIL_DISPLAY
                         }
                     }
@@ -453,6 +457,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         a {
                             class: c_tag_nav_link()
                             href: TAGS_HREF_PLACEHOLDER
+                            target: "_blank"
                             "This is a link"
                         }
                     }
