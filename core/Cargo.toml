@@ -1,6 +1,6 @@
 [package]
 name = "euv-core"
-version = "0.5.52"
+version = "0.5.53"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
