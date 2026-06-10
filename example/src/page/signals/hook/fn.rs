@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that increments the counter.
 pub(crate) fn counter_on_increment(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: i32 = counter.get();
         counter.set(current + 1);
     }))
@@ -33,7 +33,7 @@ pub(crate) fn counter_on_increment(counter: Signal<i32>) -> Option<Rc<dyn Fn(Eve
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that logs the badge click.
 pub(crate) fn badge_on_click(badge_name: &str, level: LogLevel) -> Option<Rc<dyn Fn(Event)>> {
     let name: String = badge_name.to_string();
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let message: String = format!("{} badge clicked!", name);
         match level {
             LogLevel::Log => Console::log(&message),

@@ -69,7 +69,7 @@ pub(crate) fn todo_list_on_input_new_item(state: UseTodoList) -> Option<Rc<dyn F
 ///
 /// - `NativeEventHandler` - A click handler to add a new item.
 pub(crate) fn todo_list_on_add(state: UseTodoList) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         validate_todo_new_item(state);
         let add_error_value: String = state.get_add_error().get();
         if add_error_value.is_empty() {
@@ -96,7 +96,7 @@ pub(crate) fn todo_list_on_remove(
     items: Signal<Vec<String>>,
     index: usize,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let mut current: Vec<String> = items.get();
         if index < current.len() {
             current.remove(index);

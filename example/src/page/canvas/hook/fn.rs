@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
 pub(crate) fn canvas_on_draw(state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         enter_fullscreen(state);
     }))
 }

@@ -9,13 +9,15 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `&str` - A CSS selector string to locate the target element.
+/// - `S: AsRef<str>` - A CSS selector string to locate the target element.
 /// - `FnOnce() -> VirtualNode + 'static` - A closure that returns the virtual DOM tree to render.
 ///
-pub fn mount<F>(selector: &str, render_fn: F)
+pub fn mount<S, F>(selector: S, render_fn: F)
 where
+    S: AsRef<str>,
     F: FnOnce() -> VirtualNode,
 {
+    let selector: &str = selector.as_ref();
     let window: Window = match window() {
         Some(window_instance) => window_instance,
         None => return,

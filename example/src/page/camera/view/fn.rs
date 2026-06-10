@@ -20,6 +20,18 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
     let _page_camera_props: PageCameraProps = node.try_get_props().unwrap_or_default();
     let state: UseCamera = use_camera();
     camera_cleanup(state);
+    let on_close_camera = move |_: Event| {
+        stop_qr_scan(state);
+        close_camera(CAMERA_VIDEO_SELECTOR);
+        state.get_camera_open().set(false);
+        state.get_scan_result().set(String::new());
+    };
+    let on_switch_camera = move |_: Event| {
+        switch_camera(state);
+    };
+    let on_open_camera = move |_: Event| {
+        open_camera_and_scan(state);
+    };
     html! {
         div {
             class: c_page_container()
@@ -83,19 +95,12 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                     if { state.get_camera_open().get() } {
                         button {
                             class: c_primary_button()
-                            onclick: move |_event: Event| {
-                                stop_qr_scan(state);
-                                close_camera(CAMERA_VIDEO_SELECTOR);
-                                state.get_camera_open().set(false);
-                                state.get_scan_result().set(String::new());
-                            }
+                            onclick: on_close_camera
                             "Close Camera"
                         }
                         button {
                             class: c_primary_button()
-                            onclick: move |_event: Event| {
-                                switch_camera(state);
-                            }
+                            onclick: on_switch_camera
                             if { matches!(state.get_facing().get(), CameraFacing::User) } { CAMERA_SWITCH_TO_REAR_LABEL } else { CAMERA_SWITCH_TO_FRONT_LABEL }
                         }
                     } else if { state.get_camera_loading().get() } {
@@ -107,9 +112,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                     } else {
                         button {
                             class: c_primary_button()
-                            onclick: move |_event: Event| {
-                                open_camera_and_scan(state);
-                            }
+                            onclick: on_open_camera
                             "Open Camera"
                         }
                     }

@@ -13,6 +13,9 @@ use crate::*;
 pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
     let PageTagsProps = node.try_get_props().unwrap_or_default();
     let dialog_open: Signal<bool> = use_signal(|| false);
+    let on_form_submit = move |event: Event| {
+        event.prevent_default();
+    };
     html! {
         div {
             class: c_page_container()
@@ -1429,9 +1432,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                 }
                 form {
                     class: c_tag_demo_form()
-                    onsubmit: move |event: Event| {
-                        event.prevent_default();
-                    }
+                    onsubmit: on_form_submit
                     div {
                         class: c_tag_section()
                         h4 {

@@ -26,7 +26,7 @@ pub(crate) fn use_fetch() -> UseFetch {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to trigger the fetch.
 pub(crate) fn fetch_on_fetch(state: UseFetch) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_loading().set(true);
         state.get_error().set(String::new());
         state.get_data().set(String::new());

@@ -28,7 +28,7 @@ pub(crate) fn use_two_way_demo() -> UseTwoWayDemo {
 ///
 /// - `NativeEventHandler` - A click handler.
 pub(crate) fn two_way_on_increment(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: i32 = counter.get();
         counter.set(current + 1);
     }))
@@ -44,7 +44,7 @@ pub(crate) fn two_way_on_increment(counter: Signal<i32>) -> Option<Rc<dyn Fn(Eve
 ///
 /// - `NativeEventHandler` - A click handler.
 pub(crate) fn two_way_on_decrement(counter: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: i32 = counter.get();
         counter.set(current - 1);
     }))
@@ -176,7 +176,7 @@ pub(crate) fn use_typed_props_demo() -> UseTypedPropsDemo {
 ///
 /// - `NativeEventHandler` - A click handler.
 pub(crate) fn typed_props_on_toggle_disabled(disabled: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: bool = disabled.get();
         disabled.set(!current);
     }))
@@ -200,7 +200,7 @@ pub(crate) fn typed_props_on_increment(
     max_count: Signal<i32>,
     disabled: Signal<bool>,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         if disabled.get() {
             return;
         }
@@ -228,7 +228,7 @@ pub(crate) fn typed_props_on_reset_count(
     count: Signal<i32>,
     disabled: Signal<bool>,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         if disabled.get() {
             return;
         }

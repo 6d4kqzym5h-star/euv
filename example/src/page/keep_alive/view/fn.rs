@@ -256,7 +256,7 @@ fn format_time(total_seconds: i32) -> String {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that increments the counter.
 pub(crate) fn keep_alive_counter_on_increment(count: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: i32 = count.get();
         count.set(current + 1);
     }))
@@ -272,7 +272,7 @@ pub(crate) fn keep_alive_counter_on_increment(count: Signal<i32>) -> Option<Rc<d
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that decrements the counter.
 pub(crate) fn keep_alive_counter_on_decrement(count: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: i32 = count.get();
         count.set(current - 1);
     }))
@@ -288,7 +288,7 @@ pub(crate) fn keep_alive_counter_on_decrement(count: Signal<i32>) -> Option<Rc<d
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that resets the counter.
 pub(crate) fn keep_alive_counter_on_reset(count: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         count.set(0);
     }))
 }
@@ -303,7 +303,7 @@ pub(crate) fn keep_alive_counter_on_reset(count: Signal<i32>) -> Option<Rc<dyn F
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that starts the timer.
 pub(crate) fn keep_alive_timer_on_start(running: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         running.set(true);
     }))
 }
@@ -322,7 +322,7 @@ pub(crate) fn keep_alive_timer_on_pause(
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         running.set(false);
     }))
 }
@@ -343,7 +343,7 @@ pub(crate) fn keep_alive_timer_on_reset(
     running: Signal<bool>,
     _handle: Signal<Option<IntervalHandle>>,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         running.set(false);
         elapsed.set(0);
     }))

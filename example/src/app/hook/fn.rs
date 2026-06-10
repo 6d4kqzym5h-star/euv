@@ -14,7 +14,7 @@ use crate::*;
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that toggles the signal.
 pub(crate) fn use_toggle(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: bool = signal.get();
         signal.set(!current);
     }))
@@ -36,7 +36,7 @@ pub(crate) fn use_toggle(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that toggles the drawer.
 pub(crate) fn use_drawer_toggle(drawer_open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let is_open: bool = drawer_open.get();
         if is_open {
             overlay_back(None);

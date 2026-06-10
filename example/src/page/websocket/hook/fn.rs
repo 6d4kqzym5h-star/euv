@@ -134,7 +134,7 @@ fn stop_ping_timer(ping_handle_signal: Signal<Option<IntervalHandle>>) {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the WebSocket connection.
 pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let url: String = state.get_url().get();
         if url.is_empty() {
             state
@@ -162,7 +162,7 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
         });
         let on_open: Closure<dyn FnMut(JsValue)> = Closure::wrap(Box::new({
             let state: UseWebSocket = state;
-            move |_event: JsValue| {
+            move |_: JsValue| {
                 state.get_connected().set(true);
                 state.get_connecting().set(false);
                 start_ping_timer(state.get_ping_handle());
@@ -199,7 +199,7 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
         on_message.forget();
         let on_close: Closure<dyn FnMut(JsValue)> = Closure::wrap(Box::new({
             let state: UseWebSocket = state;
-            move |_event: JsValue| {
+            move |_: JsValue| {
                 state.get_connected().set(false);
                 state.get_connecting().set(false);
                 stop_ping_timer(state.get_ping_handle());
@@ -215,7 +215,7 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
         on_close.forget();
         let on_error: Closure<dyn FnMut(JsValue)> = Closure::wrap(Box::new({
             let state: UseWebSocket = state;
-            move |_event: JsValue| {
+            move |_: JsValue| {
                 state
                     .get_error()
                     .set("WebSocket error occurred".to_string());
@@ -238,7 +238,7 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to disconnect the WebSocket.
 pub(crate) fn websocket_on_disconnect(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         stop_ping_timer(state.get_ping_handle());
         ws_close_instance();
         state.get_connected().set(false);
@@ -259,7 +259,7 @@ pub(crate) fn websocket_on_disconnect(state: UseWebSocket) -> Option<Rc<dyn Fn(E
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to send the message.
 pub(crate) fn websocket_on_send(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let text: String = state.get_message_input().get();
         if text.is_empty() {
             return;

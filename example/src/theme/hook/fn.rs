@@ -43,7 +43,7 @@ pub(crate) fn use_system_theme_change(theme_signal: Signal<String>) {
     let Some(mql) = media_query else {
         return;
     };
-    let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |_event: Event| {
+    let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |_: Event| {
         let detected: String = detect_system_theme();
         let current: String = theme_signal.get();
         if current != detected {
@@ -70,6 +70,8 @@ pub(crate) fn use_system_theme_change(theme_signal: Signal<String>) {
 pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
     let theme: Signal<String> = use_signal(detect_system_theme);
     use_system_theme_change(theme);
+    c_theme_light();
+    c_theme_dark();
     let initial_theme: String = theme.get();
     let initial_mobile: bool = mobile_signal.get();
     let initial_root: &'static str = if initial_mobile {
@@ -115,7 +117,7 @@ pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that flips the theme value.
 pub(crate) fn toggle_theme(theme_signal: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: String = theme_signal.get();
         if current == THEME_LIGHT {
             theme_signal.set(THEME_DARK.to_string());

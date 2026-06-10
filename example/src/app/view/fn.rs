@@ -20,11 +20,12 @@ pub(crate) fn nav_item(node: VirtualNode<NavItemProps>) -> VirtualNode {
     let target_string: String = target.to_string();
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
+    let on_nav_click: NativeEventHandler = link_handler(target_string.clone());
     html! {
         a {
             href: format!("#{target_string}")
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
-            onclick: link_handler(target_string)
+            onclick: on_nav_click
             label
         }
     }
@@ -52,14 +53,15 @@ pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualN
     let current_route_value: String = route_signal.get();
     let is_active: bool = current_route_value == target;
     let nav_target: String = target_string.clone();
+    let on_mobile_nav_click = move |event: Event| {
+        event.prevent_default();
+        close_drawer_and_navigate(drawer_open, nav_target.clone());
+    };
     html! {
         a {
             href: format!("#{target_string}")
             class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
-            onclick: move |event: Event| {
-                event.prevent_default();
-                close_drawer_and_navigate(drawer_open, nav_target.clone());
-            }
+            onclick: on_mobile_nav_click
             label
         }
     }
@@ -201,6 +203,11 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
                 route_signal: route_signal
                 label: "SSE"
                 target: "/sse"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Sticky & CSS"
+                target: "/sticky"
             }
             nav_item {
                 route_signal: route_signal
@@ -379,6 +386,12 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
+                label: "Sticky & CSS"
+                target: "/sticky"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
                 label: "WebSocket"
                 target: "/websocket"
             }
@@ -411,7 +424,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 class: c_app_nav()
                 a {
                     href: GITHUB_URL
-                    target: "_blank"
+                    onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_header()
                     logo_button {
                         variant: LogoButtonVariant::Nav
@@ -440,7 +453,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 }
                 a {
                     href: GITHUB_URL
-                    target: "_blank"
+                    onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
                     format!("Built with {} & WASM", BRAND_NAME)
                 }
@@ -477,6 +490,14 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
         panel_open,
         drawer_open,
     }: MobileLayoutProps = node.try_get_props().unwrap_or_default();
+    let on_overlay_click = move |_: Event| {
+        overlay_back(None);
+        drawer_open.set(false);
+    };
+    let on_drawer_close_click = move |_: Event| {
+        overlay_back(None);
+        drawer_open.set(false);
+    };
     html! {
         div {
             class: root_class_signal
@@ -491,7 +512,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         }
                         a {
                             href: GITHUB_URL
-                            target: "_blank"
+                            onclick: external_link_handler(GITHUB_URL.to_string())
                             class: c_mobile_header_logo()
                             logo_button {
                                 variant: LogoButtonVariant::Nav
@@ -521,10 +542,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
             }
             div {
                 class: if { drawer_open.get() } { c_mobile_overlay().to_string() } else { format!("{} {}", c_mobile_overlay().get_name(), c_mobile_overlay_hidden().get_name()) }
-                onclick: move |_event: Event| {
-                    overlay_back(None);
-                    drawer_open.set(false);
-                }
+                onclick: on_overlay_click
             }
             nav {
                 class: if { drawer_open.get() } { c_mobile_nav_drawer().to_string() } else { format!("{} {}", c_mobile_nav_drawer().get_name(), c_mobile_nav_drawer_closed().get_name()) }
@@ -539,7 +557,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         }
                         a {
                             href: GITHUB_URL
-                            target: "_blank"
+                            onclick: external_link_handler(GITHUB_URL.to_string())
                             class: c_mobile_header_logo()
                             logo_button {
                                 variant: LogoButtonVariant::Nav
@@ -552,10 +570,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     }
                     button {
                         class: c_mobile_menu_button()
-                        onclick: move |_event: Event| {
-                            overlay_back(None);
-                            drawer_open.set(false);
-                        }
+                        onclick: on_drawer_close_click
                         "✕"
                     }
                 }
@@ -579,7 +594,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 }
                 a {
                     href: GITHUB_URL
-                    target: "_blank"
+                    onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
                     format!("Built with {} & WASM", BRAND_NAME)
                 }

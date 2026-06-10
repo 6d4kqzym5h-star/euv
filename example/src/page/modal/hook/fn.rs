@@ -51,7 +51,7 @@ pub(crate) fn validate_modal_email(state: UseModal) {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the basic modal.
 pub(crate) fn modal_on_open_basic(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_show_basic().set(true);
     }))
 }
@@ -66,7 +66,7 @@ pub(crate) fn modal_on_open_basic(state: UseModal) -> Option<Rc<dyn Fn(Event)>> 
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the confirm modal.
 pub(crate) fn modal_on_open_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_show_confirm().set(true);
         state.get_confirm_result().set(String::new());
     }))
@@ -82,7 +82,7 @@ pub(crate) fn modal_on_open_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the form modal.
 pub(crate) fn modal_on_open_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_show_form().set(true);
         state.get_modal_name().set(String::new());
         state.get_modal_email().set(String::new());
@@ -103,7 +103,7 @@ pub(crate) fn modal_on_open_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to confirm the action.
 pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state
             .get_confirm_result()
             .set("Action confirmed!".to_string());
@@ -121,7 +121,7 @@ pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to cancel the confirm action.
 pub(crate) fn modal_on_cancel_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state
             .get_confirm_result()
             .set("Action cancelled!".to_string());
@@ -179,7 +179,7 @@ pub(crate) fn modal_on_input_email(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to submit the form modal.
 pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         validate_modal_name(state);
         validate_modal_email(state);
         let name_error_value: String = state.get_name_error().get();
@@ -215,7 +215,7 @@ pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to cancel the form modal.
 pub(crate) fn modal_on_cancel_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state
             .get_modal_submitted()
             .set("Form cancelled!".to_string());

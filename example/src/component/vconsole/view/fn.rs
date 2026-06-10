@@ -59,7 +59,7 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
             }
         };
     }
-    let fab_on_click: Option<Rc<dyn Fn(Event)>> = Some(Rc::new(move |_event: Event| {
+    let fab_on_click: Option<Rc<dyn Fn(Event)>> = Some(Rc::new(move |_: Event| {
         overlay_push_state();
         panel_open.set(true);
     }));
@@ -120,14 +120,34 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
             c_vconsole_panel_closed().get_name()
         )
     };
+    let on_overlay_click = move |_: Event| {
+        overlay_back(None);
+        panel_open.set(false);
+    };
+    let on_clear_click = move |_: Event| {
+        Console::clear();
+    };
+    let on_close_click = move |_: Event| {
+        overlay_back(None);
+        panel_open.set(false);
+    };
+    let on_filter_all_click = move |_: Event| {
+        filter_signal.set(LogFilter::All);
+    };
+    let on_filter_log_click = move |_: Event| {
+        filter_signal.set(LogFilter::Log);
+    };
+    let on_filter_warn_click = move |_: Event| {
+        filter_signal.set(LogFilter::Warn);
+    };
+    let on_filter_error_click = move |_: Event| {
+        filter_signal.set(LogFilter::Error);
+    };
     html! {
         div {
             div {
                 class: overlay_class
-                onclick: move |_event: Event| {
-                    overlay_back(None);
-                    panel_open.set(false);
-                }
+                onclick: on_overlay_click
             }
             div {
                 class: panel_class
@@ -148,17 +168,12 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                         class: c_vconsole_header_actions()
                         button {
                             class: c_vconsole_clear_button()
-                            onclick: move |_event: Event| {
-                                Console::clear();
-                            }
+                            onclick: on_clear_click
                             "Clear"
                         }
                         button {
                             class: c_vconsole_close_button()
-                            onclick: move |_event: Event| {
-                                overlay_back(None);
-                                panel_open.set(false);
-                            }
+                            onclick: on_close_click
                             "×"
                         }
                     }
@@ -167,30 +182,22 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                     class: c_vconsole_filter_bar()
                     button {
                         class: if { filter_signal.get() == LogFilter::All } { c_vconsole_filter_active() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: Event| {
-                            filter_signal.set(LogFilter::All);
-                        }
+                        onclick: on_filter_all_click
                         LogFilter::All.to_string()
                     }
                     button {
                         class: if { filter_signal.get() == LogFilter::Log } { c_vconsole_filter_active_log() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: Event| {
-                            filter_signal.set(LogFilter::Log);
-                        }
+                        onclick: on_filter_log_click
                         LogFilter::Log.to_string()
                     }
                     button {
                         class: if { filter_signal.get() == LogFilter::Warn } { c_vconsole_filter_active_warn() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: Event| {
-                            filter_signal.set(LogFilter::Warn);
-                        }
+                        onclick: on_filter_warn_click
                         LogFilter::Warn.to_string()
                     }
                     button {
                         class: if { filter_signal.get() == LogFilter::Error } { c_vconsole_filter_active_error() } else { c_vconsole_filter_button() }
-                        onclick: move |_event: Event| {
-                            filter_signal.set(LogFilter::Error);
-                        }
+                        onclick: on_filter_error_click
                         LogFilter::Error.to_string()
                     }
                 }

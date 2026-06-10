@@ -231,14 +231,17 @@ impl Css {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The serialized pseudo rules string.
+    /// - `I: AsRef<str>` - The serialized pseudo rules string.
     ///
     /// # Returns
     ///
     /// - `Vec<PseudoRule>` - The parsed pseudo rules.
-    pub fn parse_pseudo_rules(input: &str) -> Vec<PseudoRule> {
+    pub fn parse_pseudo_rules<I>(input: I) -> Vec<PseudoRule>
+    where
+        I: AsRef<str>,
+    {
+        let mut remaining: &str = input.as_ref();
         let mut rules: Vec<PseudoRule> = Vec::new();
-        let mut remaining: &str = input;
         while !remaining.is_empty() {
             let selector_end: Option<usize> = remaining.find(CSS_RULE_OPEN);
             let Some(selector_end_index) = selector_end else {
@@ -271,12 +274,16 @@ impl Css {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The serialized media rules string.
+    /// - `S: AsRef<str>` - The serialized media rules string.
     ///
     /// # Returns
     ///
     /// - `Vec<MediaRule>` - The parsed media rules.
-    pub fn parse_media_rules(input: &str) -> Vec<MediaRule> {
+    pub fn parse_media_rules<S>(input: S) -> Vec<MediaRule>
+    where
+        S: AsRef<str>,
+    {
+        let input: &str = input.as_ref();
         let mut rules: Vec<MediaRule> = Vec::new();
         let mut remaining: &str = input;
         while !remaining.is_empty() {
@@ -422,16 +429,24 @@ impl Css {
     ///
     /// # Arguments
     ///
-    /// - `&[(&str, &str)]` - An array of CSS property name-value pairs.
+    /// - `S: AsRef<str>` - An array of CSS property name-value pairs.
     ///
     /// # Returns
     ///
     /// - `String` - The CSS string (e.g., `"margin: 0 auto; max-width: 800px;"`).
-    pub fn create_style_string(props: &[(&str, &str)]) -> String {
+    pub fn create_style_string<K, V>(props: &[(K, V)]) -> String
+    where
+        K: AsRef<str>,
+        V: AsRef<str>,
+    {
         props
             .iter()
-            .map(|(key, value): &(&str, &str)| {
-                format!("{key}{CSS_PROP_SEPARATOR}{value}{CHAR_CSS_DECL_TERMINATOR}")
+            .map(|(key, value): &(K, V)| {
+                format!(
+                    "{}{CSS_PROP_SEPARATOR}{}{CHAR_CSS_DECL_TERMINATOR}",
+                    key.as_ref(),
+                    value.as_ref()
+                )
             })
             .collect::<Vec<String>>()
             .join(&CHAR_SPACE.to_string())
@@ -467,12 +482,16 @@ impl Css {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS text to inject (e.g., reset styles, keyframes, media queries).
+    /// - `S: AsRef<str>` - The CSS text to inject (e.g., reset styles, keyframes, media queries).
     ///
     /// # Panics
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
-    pub fn inject_css(css_text: &str) {
+    pub fn inject_css<S>(css_text: S)
+    where
+        S: AsRef<str>,
+    {
+        let css_text: &str = css_text.as_ref();
         Self::append_css(css_text);
     }
 }

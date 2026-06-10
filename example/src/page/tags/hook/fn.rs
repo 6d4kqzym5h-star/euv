@@ -10,7 +10,7 @@ use crate::*;
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that toggles the section.
 pub(crate) fn use_section_toggle(expanded: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: bool = expanded.get();
         expanded.set(!current);
     }))

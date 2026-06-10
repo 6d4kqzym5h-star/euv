@@ -196,6 +196,52 @@ pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
     });
 }
 
+/// Opens the given URL in the system default browser using `window.open`
+/// with the `_system` target name.
+///
+/// In a Tauri WebView environment, the `_system` target instructs the
+/// shell opener plugin to delegate the URL to the operating system's
+/// default browser. In a regular browser, `window.open` falls back to
+/// opening a new tab or window as usual.
+///
+/// # Arguments
+///
+/// - `&str` - The URL to open.
+pub(crate) fn open_system_browser(url: &str) {
+    let window_value: Window = window().expect("no global window exists");
+    if let Ok(open_fn) = Reflect::get(&window_value, &JsValue::from_str("open"))
+        .and_then(|value: JsValue| value.dyn_into::<Function>())
+    {
+        let _ = open_fn.call2(
+            &window_value,
+            &JsValue::from_str(url),
+            &JsValue::from_str(SYSTEM_BROWSER_TARGET),
+        );
+    }
+}
+
+/// Creates a click event handler for external `<a>` links that opens
+/// the URL in the system default browser.
+///
+/// Calls `event.prevent_default()` to suppress the `<a>` element's
+/// default navigation (which would open inside the WebView), then
+/// delegates to `open_system_browser` so the URL is handled by the
+/// operating system's default browser.
+///
+/// # Arguments
+///
+/// - `String` - The external URL to open on click.
+///
+/// # Returns
+///
+/// - `NativeEventHandler` - An event handler for click events.
+pub(crate) fn external_link_handler(url: String) -> NativeEventHandler {
+    NativeEventHandler::create("click", move |event: Event| {
+        event.prevent_default();
+        open_system_browser(&url);
+    })
+}
+
 /// Creates a reactive signal that tracks whether the viewport is in mobile mode
 /// and subscribes to browser `resize` events to keep it updated.
 ///

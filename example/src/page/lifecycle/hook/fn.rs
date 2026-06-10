@@ -19,7 +19,7 @@ pub(crate) fn use_lifecycle() -> UseLifecycle {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to trigger an update.
 pub(crate) fn lifecycle_on_trigger(state: UseLifecycle) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let current: i32 = state.get_render_count().get();
         let next: i32 = current + 1;
         state.get_render_count().set(next);

@@ -181,7 +181,7 @@ pub(crate) fn form_on_change_agree(state: UseForm) -> Option<Rc<dyn Fn(Event)>> 
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for form submission.
 pub(crate) fn form_on_submit(state: UseForm) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         validate_form_all(state);
         let username_error_value: String = state.get_username_error().get();
         let email_error_value: String = state.get_email_error().get();

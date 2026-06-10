@@ -15,7 +15,7 @@ pub(crate) fn tag_on_select(
     value: &str,
 ) -> Option<Rc<dyn Fn(Event)>> {
     let value_owned: String = value.to_string();
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         try_get_tag_name.set(value_owned.clone());
     }))
 }

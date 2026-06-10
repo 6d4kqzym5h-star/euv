@@ -36,10 +36,10 @@ css_vars! {
         "font-6xl": "72px";
 
         // ─── Transition Durations ───
-        duration-fast: "0.15s";
-        duration-normal: "0.25s";
-        duration-slow: "0.4s";
-        duration-overlay: "0.3s";
+        duration-fast: "0.1s";
+        duration-normal: "0.15s";
+        duration-slow: "0.2s";
+        duration-overlay: "0.2s";
 
         // ─── Easing Functions ───
         ease-out: "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -47,6 +47,8 @@ css_vars! {
 
         // ─── Layout ───
         padding-main-top: "20px";
+        padding-main-horizontal: "24px";
+        padding-main-horizontal-mobile: "12px";
         gap-page-header: "12px";
         gap-page-title: "4px";
         gap-card: "12px";
@@ -251,10 +253,10 @@ css_vars! {
         "font-6xl": "72px";
 
         // ─── Transition Durations (same as light) ───
-        duration-fast: "0.15s";
-        duration-normal: "0.25s";
-        duration-slow: "0.4s";
-        duration-overlay: "0.3s";
+        duration-fast: "0.1s";
+        duration-normal: "0.15s";
+        duration-slow: "0.2s";
+        duration-overlay: "0.2s";
 
         // ─── Easing Functions (same as light) ───
         ease-out: "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -262,6 +264,8 @@ css_vars! {
 
         // ─── Layout (same as light) ───
         padding-main-top: "20px";
+        padding-main-horizontal: "24px";
+        padding-main-horizontal-mobile: "12px";
         gap-page-header: "12px";
         gap-page-title: "4px";
         gap-card: "12px";

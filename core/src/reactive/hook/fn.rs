@@ -156,12 +156,14 @@ where
 ///
 /// # Arguments
 ///
-/// - `&str` - The event name to listen for (e.g., "hashchange", "popstate", "resize").
+/// - `E: AsRef<str>` - The event name to listen for (e.g., "hashchange", "popstate", "resize").
 /// - `FnMut() + 'static` - The callback to invoke when the event fires.
-pub fn use_window_event<F>(event_name: &str, callback: F)
+pub fn use_window_event<E, F>(event_name: E, callback: F)
 where
+    E: AsRef<str>,
     F: FnMut() + 'static,
 {
+    let event_name: &str = event_name.as_ref();
     let hook_context: HookContext = get_current_hook_context();
     let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
         return;
@@ -171,7 +173,7 @@ where
     if index < inner.get_hooks().len() {
         return;
     }
-    let event_name_owned: String = event_name.to_string();
+    let event_name_owned: String = event_name.to_owned();
     let handler_id: usize = register_window_event_handler(event_name, callback);
     inner.get_mut_cleanups().push(Box::new(move || {
         unregister_window_event_handler(&event_name_owned, handler_id);

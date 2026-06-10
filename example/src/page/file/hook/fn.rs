@@ -79,7 +79,7 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Ev
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for the custom file button.
 pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let document: Document = window().unwrap().document().unwrap();
         if let Some(input) = document.get_element_by_id(FILE_UPLOAD_ID)
             && let Ok(html_input) = input.dyn_into::<HtmlInputElement>()
@@ -99,7 +99,7 @@ pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to clear files.
 pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_file_names().set(Vec::new());
         state.get_file_sizes().set(Vec::new());
         state.get_file_types().set(Vec::new());
@@ -118,7 +118,7 @@ pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> Option<Rc<dyn Fn(Eve
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A dragenter handler.
 pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_drag_over().set(true);
     }))
 }
@@ -133,7 +133,7 @@ pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> Option<Rc<dyn F
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A dragleave handler.
 pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         state.get_drag_over().set(false);
     }))
 }

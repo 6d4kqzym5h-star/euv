@@ -67,7 +67,6 @@ class! {
         flex-direction: "column";
         height: "100vh";
         flex-shrink: "0";
-        transition: format!("background {} {}, border-color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
         media("(max-width: 767px)") {
             display: "none";
         }
@@ -87,7 +86,6 @@ class! {
         flex-shrink: "0";
         text-decoration: "none";
         cursor: "pointer";
-        transition: format!("border-color {} {}", var!(duration-slow), var!(ease-in-out));
         media("(max-width: 767px)") {
             border-bottom: "none";
         }
@@ -124,7 +122,7 @@ class! {
     pub(crate) c_logo_button_fab {
         position: "fixed";
         bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
-        right: var!(space-xl);
+        right: var!(padding-main-horizontal);
         width: "48px";
         height: "48px";
         border-radius: "14px";
@@ -134,7 +132,7 @@ class! {
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         media("(max-width: 767px)") {
             bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
-            right: var!(space-lg);
+            right: var!(padding-main-horizontal-mobile);
             width: "44px";
             height: "44px";
             border-radius: var!(radius-lg);
@@ -189,7 +187,7 @@ class! {
         outline: "none";
         background: var!(bg-theme-button);
         border: format!("1px solid {}", var!(border-theme-button));
-        transition: format!("all {} {}", var!(duration-normal), var!(ease-out));
+        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -224,7 +222,6 @@ class! {
         text-decoration: "none";
         display: "block";
         cursor: "pointer";
-        transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_nav_item_active {
@@ -232,7 +229,6 @@ class! {
         padding: format!("11px {}", var!(space-xl));
         text-decoration: "none";
         font-size: var!(font-base);
-        transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
         color: var!(accent);
         font-weight: "600";
         border-left: format!("3px solid {}", var!(accent));
@@ -244,7 +240,6 @@ class! {
         padding: format!("11px {}", var!(space-xl));
         text-decoration: "none";
         font-size: var!(font-base);
-        transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
         color: var!(text-nav-item);
         font-weight: "400";
         border-left: "3px solid transparent";
@@ -262,11 +257,16 @@ class! {
     pub(crate) c_app_main {
         flex: "1";
         width: "0px";
-        padding: format!("{} {}", var!(padding-main-top), var!("space-4xl"));
+        display: "flex";
+        flex-direction: "column";
+        align-items: "center";
+        padding: format!("{} {}", var!(padding-main-top), var!(padding-main-horizontal));
         background: var!(bg-primary);
-        overflow-y: "auto";
+        overflow-y: "overlay";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
-        transition: format!("background {} {}", var!(duration-slow), var!(ease-in-out));
+        ::-webkit-scrollbar {
+            width: "6px";
+        }
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
             border-radius: "3px";
@@ -279,19 +279,20 @@ class! {
             background: var!(scrollbar-thumb-active);
         }
         media("(max-width: 767px)") {
-            padding: format!("{} {}", var!(space-md), var!(space-lg));
-            max-width: "100%";
+            overflow-y: "auto";
+            padding: format!("{} {}", var!(space-md), var!(padding-main-horizontal-mobile));
+            align-items: "stretch";
         }
     }
 
     pub(crate) c_page_container {
+        width: "100%";
         max-width: var!(content-max-width);
-        margin: "0px auto";
     }
 
     pub(crate) c_page_container_wide {
+        width: "100%";
         max-width: var!(content-max-width);
-        margin: "0px auto";
         display: "flex";
         flex-direction: "column";
         height: "100%";
@@ -352,7 +353,6 @@ class! {
         padding-bottom: var!(space-sm);
         border-bottom: format!("2px solid {}", var!(border-card-title));
         letter-spacing: "0.01em";
-        transition: format!("border-color {} {}", var!(duration-slow), var!(ease-in-out));
         media("(max-width: 767px)") {
             font-size: var!(font-lg);
         }
@@ -556,7 +556,6 @@ class! {
         font-size: "20px";
         font-weight: "400";
         line-height: "1";
-        transition: format!("background {} {}", var!(duration-fast), var!(ease-out));
         outline: "none";
         opacity: "0.6";
         flex-shrink: "0";
@@ -624,7 +623,7 @@ class! {
         border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
-        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("box-shadow {} {}", var!(duration-fast), var!(ease-out));
         outline: "none";
         background: var!(bg-input);
         color: var!(text-primary);
@@ -786,7 +785,6 @@ class! {
         font-weight: "700";
         color: var!(accent);
         font-size: var!("font-2xl");
-        transition: format!("color {} {}", var!(duration-slow), var!(ease-in-out));
         media("(max-width: 767px)") {
             font-size: var!(font-xl);
         }
@@ -888,7 +886,6 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_camera_placeholder_content {
@@ -1144,7 +1141,6 @@ class! {
         border-radius: "10px";
         border: format!("1px solid {}", var!(border-loading));
         margin-top: var!(gap-component);
-        transition: format!("background {} {}, border-color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
     }
 
     pub(crate) c_spinner {
@@ -1587,7 +1583,6 @@ class! {
         text-align: "center";
         user-select: "none";
         color: "inherit";
-        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_event_drag_zone {
@@ -1598,7 +1593,6 @@ class! {
         text-align: "center";
         user-select: "none";
         color: var!(text-warning);
-        transition: format!("border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_event_drag_zone_active {
@@ -1724,7 +1718,6 @@ class! {
         border-radius: var!(radius-lg);
         border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
-        transition: format!("border-color {} {}", var!(duration-slow), var!(ease-in-out));
     }
 
     pub(crate) c_timer_value {
@@ -1733,7 +1726,6 @@ class! {
         color: var!(accent);
         letter-spacing: "0.04em";
         font-family: "ui-monospace, monospace";
-        transition: format!("color {} {}", var!(duration-slow), var!(ease-in-out));
         media("(max-width: 767px)") {
             font-size: var!("font-4xl");
         }
@@ -1903,7 +1895,6 @@ class! {
         border-radius: var!(radius-pill);
         margin: format!("{} 0px", var!(space-lg));
         overflow: "hidden";
-        transition: format!("background {} {}", var!(duration-slow), var!(ease-in-out));
     }
 
     pub(crate) c_progress_bar_running {
@@ -1929,7 +1920,7 @@ class! {
         font-weight: "600";
         font-size: var!(font-lg);
         cursor: "pointer";
-        transition: format!("background 0.5s {}, transform {} {}", var!(ease-in-out), var!(duration-normal), var!(ease-out));
+        transition: format!("transform {} {}", var!(duration-normal), var!(ease-out));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2118,7 +2109,6 @@ class! {
         cursor: "pointer";
         font-size: var!(font-sm);
         font-weight: "500";
-        transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
         letter-spacing: "0.02em";
     }
 
@@ -2137,7 +2127,6 @@ class! {
         cursor: "pointer";
         font-size: var!(font-lg);
         line-height: "1";
-        transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_vconsole_close_button_hover {
@@ -2219,7 +2208,6 @@ class! {
         cursor: "pointer";
         letter-spacing: "0.05em";
         text-transform: "uppercase";
-        transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_vconsole_filter_active {
@@ -2312,7 +2300,6 @@ class! {
         position: "sticky";
         top: "0px";
         z-index: "100";
-        transition: format!("background {} {}", var!(duration-slow), var!(ease-in-out));
     }
 
     pub(crate) c_mobile_header_left {
@@ -2342,7 +2329,6 @@ class! {
         align-items: "center";
         justify-content: "center";
         color: var!(text-primary);
-        transition: format!("background {} {}", var!(duration-fast), var!(ease-out));
         padding: "0px";
     }
 
@@ -2356,7 +2342,6 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        transition: format!("all {} {}", var!(duration-normal), var!(ease-out));
         padding: "0px";
     }
 
@@ -2373,7 +2358,6 @@ class! {
         align-items: "center";
         justify-content: "center";
         color: var!(accent);
-        transition: format!("background {} {}", var!(duration-fast), var!(ease-out));
         padding: "0px";
     }
 
@@ -2424,10 +2408,9 @@ class! {
 
     pub(crate) c_mobile_main {
         flex: "1";
-        padding: format!("{} {} {} {}", var!(space-md), var!(space-lg), "calc(16px + env(safe-area-inset-bottom, 0px))", var!(space-lg));
+        padding: format!("{} {} {} {}", var!(space-md), var!(padding-main-horizontal-mobile), "calc(16px + env(safe-area-inset-bottom, 0px))", var!(padding-main-horizontal-mobile));
         background: var!(bg-primary);
         overflow-y: "auto";
-        transition: format!("background {} {}", var!(duration-slow), var!(ease-in-out));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2472,7 +2455,6 @@ class! {
         color: var!(accent);
         min-width: "120px";
         text-align: "center";
-        transition: format!("color {} {}", var!(duration-slow), var!(ease-in-out));
     }
 
     pub(crate) c_keep_alive_counter_controls {
@@ -2568,7 +2550,6 @@ class! {
         padding: format!("{} {}", var!("space-4xl"), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
-        transition: format!("all {} {}", var!(duration-normal), var!(ease-out));
         background: "transparent";
     }
 
@@ -2578,7 +2559,6 @@ class! {
         padding: format!("{} {}", var!("space-4xl"), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
-        transition: format!("all {} {}", var!(duration-normal), var!(ease-out));
         background: var!(accent-muted);
     }
 
@@ -2685,7 +2665,6 @@ class! {
         justify-content: "center";
         margin-bottom: var!(gap-component);
         border: format!("1px solid {}", var!(border-subtle));
-        transition: format!("background {} {}", var!(duration-normal), var!(ease-out));
     }
 
     pub(crate) c_binding_color_hex {
@@ -3139,7 +3118,6 @@ class! {
         line-height: "1.4";
         box-sizing: "border-box";
         outline: "none";
-        transition: format!("border-color {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_ws_messages_list {
@@ -3618,5 +3596,346 @@ class! {
         padding: var!(space-md);
         background: var!(bg-loading);
         color: "inherit";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Sticky & CSS Effects Demo
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_sticky_controls {
+        display: "flex";
+        gap: var!(space-md);
+        margin-bottom: var!(gap-component);
+        flex-wrap: "wrap";
+    }
+
+    pub(crate) c_sticky_scroll_area {
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        height: "300px";
+        overflow-y: "auto";
+        padding: var!(space-lg);
+        background: var!(bg-loading);
+    }
+
+    pub(crate) c_sticky_header {
+        position: "sticky";
+        top: "0px";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: var!(accent);
+        color: var!(text-on-accent);
+        font-weight: "700";
+        font-size: var!(font-lg);
+        text-align: "center";
+        border-radius: var!(radius-md);
+        margin-bottom: var!(gap-component);
+        z-index: "10";
+    }
+
+    pub(crate) c_sticky_header_relative {
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: var!(accent-disabled);
+        color: var!(text-on-accent);
+        font-weight: "700";
+        font-size: var!(font-lg);
+        text-align: "center";
+        border-radius: var!(radius-md);
+        margin-bottom: var!(gap-component);
+        opacity: "0.6";
+    }
+
+    pub(crate) c_sticky_paragraph {
+        margin: format!("0px 0px {} 0px", var!(space-md));
+        font-size: var!(font-base);
+        color: var!(text-secondary);
+        line-height: "1.7";
+    }
+
+    pub(crate) c_sticky_glass_demo {
+        position: "relative";
+        height: "320px";
+        border-radius: var!(radius-lg);
+        overflow: "hidden";
+        background: format!("linear-gradient(135deg, {}, {}, {})", var!(accent), "var(--color-success)", "var(--color-warning)");
+        padding: var!(space-xl);
+    }
+
+    pub(crate) c_sticky_glass_circle {
+        position: "absolute";
+        border-radius: "50%";
+        filter: "blur(40px)";
+        opacity: "0.7";
+    }
+
+    pub(crate) c_sticky_glass_circle_first {
+        width: "150px";
+        height: "150px";
+        background: var!(accent);
+        top: "20px";
+        left: "30px";
+    }
+
+    pub(crate) c_sticky_glass_circle_second {
+        width: "120px";
+        height: "120px";
+        background: "var(--color-success)";
+        top: "100px";
+        right: "50px";
+    }
+
+    pub(crate) c_sticky_glass_circle_third {
+        width: "100px";
+        height: "100px";
+        background: "var(--color-warning)";
+        bottom: "30px";
+        left: "50%";
+    }
+
+    pub(crate) c_sticky_glass_card {
+        position: "relative";
+        background: "rgba(255, 255, 255, 0.15)";
+        backdrop-filter: "blur(16px)";
+        -webkit-backdrop-filter: "blur(16px)";
+        border-radius: var!(radius-lg);
+        border: "1px solid rgba(255, 255, 255, 0.25)";
+        padding: var!(space-xl);
+        z-index: "2";
+    }
+
+    pub(crate) c_sticky_glass_card_no_blur {
+        position: "relative";
+        background: "rgba(255, 255, 255, 0.5)";
+        border-radius: var!(radius-lg);
+        border: format!("1px solid {}", var!(border-loading));
+        padding: var!(space-xl);
+        z-index: "2";
+    }
+
+    pub(crate) c_sticky_glass_title {
+        margin: format!("0px 0px {} 0px", var!(space-sm));
+        font-size: var!(font-xl);
+        font-weight: "700";
+        color: "rgba(255, 255, 255, 0.95)";
+    }
+
+    pub(crate) c_sticky_glass_text {
+        margin: "0px";
+        font-size: var!(font-base);
+        color: "rgba(255, 255, 255, 0.8)";
+        line-height: "1.6";
+    }
+
+    pub(crate) c_sticky_slider_row {
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(space-sm);
+        margin-bottom: var!(gap-component);
+    }
+
+    pub(crate) c_sticky_slider_label {
+        font-size: var!(font-sm);
+        font-weight: "600";
+        color: var!(text-secondary);
+    }
+
+    pub(crate) c_sticky_slider {
+        width: "100%";
+        height: "6px";
+        -webkit-appearance: "none";
+        appearance: "none";
+        background: var!(bg-progress);
+        border-radius: var!(radius-pill);
+        outline: "none";
+        cursor: "pointer";
+    }
+
+    pub(crate) c_sticky_blur_demo {
+        position: "relative";
+        height: "200px";
+        border-radius: var!(radius-lg);
+        overflow: "hidden";
+        margin-top: var!(gap-component);
+    }
+
+    pub(crate) c_sticky_blur_background {
+        position: "absolute";
+        inset: "0px";
+        background: format!("repeating-linear-gradient(45deg, {}, {} 10px, {} 10px, {} 20px)", var!(accent), "var(--accent-disabled)", "var(--accent-disabled)", var!(accent));
+        opacity: "0.3";
+    }
+
+    pub(crate) c_sticky_blur_overlay {
+        position: "absolute";
+        inset: "0px";
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        padding: var!(space-xl);
+        background: "rgba(255, 255, 255, 0.12)";
+        border-radius: var!(radius-lg);
+        will-change: "backdrop-filter";
+    }
+
+    pub(crate) c_sticky_blur_text {
+        font-size: var!(font-lg);
+        font-weight: "600";
+        color: var!(text-primary);
+        text-align: "center";
+        line-height: "1.6";
+    }
+
+    pub(crate) c_sticky_gradient_demo {
+        display: "flex";
+        justify-content: "center";
+        align-items: "center";
+        margin-top: var!(gap-component);
+    }
+
+    pub(crate) c_sticky_gradient_wheel {
+        width: "160px";
+        height: "160px";
+        border-radius: "50%";
+        will-change: "transform";
+        box-shadow: format!("0px 0px 0px 4px {}, 0px 4px 12px rgba(0, 0, 0, 0.15)", var!(border-loading));
+    }
+
+    pub(crate) c_sticky_text_demo {
+        display: "flex";
+        flex-direction: "column";
+        align-items: "center";
+        gap: var!(space-lg);
+        padding: format!("{} 0px", var!(space-xl));
+    }
+
+    pub(crate) c_sticky_text_glow {
+        font-size: var!("font-3xl");
+        font-weight: "800";
+        color: var!(accent);
+        text-shadow: format!("0px 0px 10px {}, 0px 0px 20px {}, 0px 0px 40px {}", var!(accent), var!(accent), var!(accent));
+        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_text_neon {
+        font-size: var!("font-3xl");
+        font-weight: "800";
+        color: "var(--color-success)";
+        text-shadow: "0px 0px 7px var(--color-success), 0px 0px 10px var(--color-success), 0px 0px 21px var(--color-success), 0px 0px 42px var(--color-success)";
+        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_text_emboss {
+        font-size: var!("font-3xl");
+        font-weight: "800";
+        color: var!(text-secondary);
+        text-shadow: format!("1px 1px 1px {}, -1px -1px 1px {}", var!(bg-primary), "rgba(255, 255, 255, 0.3)");
+        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_text_plain {
+        font-size: var!("font-3xl");
+        font-weight: "800";
+        color: var!(text-secondary);
+        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_clip_demo {
+        display: "flex";
+        justify-content: "center";
+        gap: var!(space-xl);
+        flex-wrap: "wrap";
+        padding: format!("{} 0px", var!(space-xl));
+    }
+
+    pub(crate) c_sticky_clip_hexagon {
+        width: "80px";
+        height: "80px";
+        background: var!(accent);
+        color: var!(text-on-accent);
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        font-weight: "700";
+        font-size: var!(font-sm);
+        clip-path: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_clip_diamond {
+        width: "80px";
+        height: "80px";
+        background: "var(--color-success)";
+        color: var!(text-on-accent);
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        font-weight: "700";
+        font-size: var!(font-sm);
+        clip-path: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_clip_star {
+        width: "80px";
+        height: "80px";
+        background: "var(--color-warning)";
+        color: var!(text-on-accent);
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        font-weight: "700";
+        font-size: var!(font-sm);
+        clip-path: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)";
+        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_clip_message {
+        width: "80px";
+        height: "80px";
+        background: "var(--color-error)";
+        color: var!(text-on-accent);
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        font-weight: "700";
+        font-size: var!(font-sm);
+        clip-path: "polygon(0% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 100%, 50% 75%, 0% 75%)";
+        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
+    }
+
+    pub(crate) c_sticky_clip_square {
+        width: "80px";
+        height: "80px";
+        background: var!(bg-loading);
+        color: var!(text-secondary);
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        font-weight: "700";
+        font-size: var!(font-sm);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-loading));
+    }
+
+    pub(crate) c_sticky_scroll_shadow {
+        height: "200px";
+        overflow-y: "auto";
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: var!(space-lg);
+        background: var!(bg-loading);
+        background-image: "linear-gradient(var(--bg-card) 30%, transparent), linear-gradient(transparent, var(--bg-card) 70%), radial-gradient(farthest-side at 50% 0, rgba(0,0,0,0.12), transparent), radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,0.12), transparent)";
+        background-position: "0px 0px, 0px 100%, 0px 0px, 0px 100%";
+        background-repeat: "no-repeat";
+        background-size: "100% 40px, 100% 40px, 100% 14px, 100% 14px";
+        background-attachment: "local, local, scroll, scroll";
+    }
+
+    pub(crate) c_sticky_scroll_no_shadow {
+        height: "200px";
+        overflow-y: "auto";
+        border: format!("1px solid {}", var!(border-loading));
+        border-radius: var!(radius-md);
+        padding: var!(space-lg);
+        background: var!(bg-loading);
     }
 }

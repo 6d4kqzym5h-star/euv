@@ -40,7 +40,7 @@ pub(crate) fn use_countdown() -> UseCountdown {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to start the stopwatch.
 pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let was_running: bool = state.get_running().get();
         if was_running {
             return;
@@ -72,7 +72,7 @@ pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to pause the stopwatch.
 pub(crate) fn stopwatch_on_pause(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
@@ -94,7 +94,7 @@ pub(crate) fn stopwatch_on_pause(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to reset the stopwatch.
 pub(crate) fn stopwatch_on_reset(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
@@ -118,7 +118,7 @@ pub(crate) fn stopwatch_on_reset(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to start the countdown.
 pub(crate) fn countdown_on_start(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let was_running: bool = state.get_running().get();
         if was_running {
             return;
@@ -169,7 +169,7 @@ pub(crate) fn countdown_on_start(state: UseCountdown) -> Option<Rc<dyn Fn(Event)
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to pause the countdown.
 pub(crate) fn countdown_on_pause(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();
@@ -192,7 +192,7 @@ pub(crate) fn countdown_on_pause(state: UseCountdown) -> Option<Rc<dyn Fn(Event)
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to reset the countdown.
 pub(crate) fn countdown_on_reset(state: UseCountdown) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         let handle_opt: Option<IntervalHandle> = state.get_handle().get();
         if let Some(existing_handle) = handle_opt {
             existing_handle.clear();

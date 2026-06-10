@@ -13,7 +13,7 @@ use crate::*;
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A scroll handler for the virtual list container.
 pub(crate) fn virtual_list_on_scroll(state: UseVirtualList) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         if let Some(container) = virtual_list_container() {
             let html_element: HtmlElement = container.unchecked_into();
             state.get_scroll_offset().set(html_element.scroll_top());

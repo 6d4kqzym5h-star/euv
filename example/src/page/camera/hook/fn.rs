@@ -199,7 +199,7 @@ pub(crate) fn navigate_qr_url(url: &str) {
         let _ = open_fn.call2(
             &window_value,
             &JsValue::from_str(url),
-            &JsValue::from_str(CAMERA_SYSTEM_BROWSER_TARGET),
+            &JsValue::from_str(SYSTEM_BROWSER_TARGET),
         );
     }
 }

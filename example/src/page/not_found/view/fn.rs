@@ -25,7 +25,7 @@ pub(crate) fn page_not_found(node: VirtualNode<PageNotFoundProps>) -> VirtualNod
             }
             primary_button {
                 label: "Go Back"
-                onclick: Some(Rc::new(move |_event: Event| {
+                onclick: Some(Rc::new(move |_: Event| {
                     navigate("/");
                 }))
                 "Go Back"

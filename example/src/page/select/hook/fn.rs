@@ -126,7 +126,7 @@ pub(crate) fn select_on_input_textarea(state: UseSelect) -> Option<Rc<dyn Fn(Eve
 ///
 /// - `NativeEventHandler` - A click handler to submit feedback.
 pub(crate) fn select_on_submit_feedback(state: UseSelect) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         validate_select_textarea(state);
         let textarea_error_value: String = state.get_textarea_error().get();
         if textarea_error_value.is_empty() {

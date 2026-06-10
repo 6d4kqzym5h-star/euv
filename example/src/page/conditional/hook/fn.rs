@@ -15,7 +15,7 @@ pub(crate) fn user_type_on_select(
     value: &str,
 ) -> Option<Rc<dyn Fn(Event)>> {
     let value_owned: String = value.to_string();
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         user_type.set(value_owned.clone());
     }))
 }
@@ -32,7 +32,7 @@ pub(crate) fn user_type_on_select(
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the active tab.
 pub(crate) fn tab_on_select(tab: Signal<String>, value: &str) -> Option<Rc<dyn Fn(Event)>> {
     let value_owned: String = value.to_string();
-    Some(Rc::new(move |_event: Event| {
+    Some(Rc::new(move |_: Event| {
         tab.set(value_owned.clone());
     }))
 }

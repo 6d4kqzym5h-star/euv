@@ -36,7 +36,3 @@ pub(crate) const CAMERA_SWITCH_TO_FRONT_LABEL: &str = "Switch to Front";
 
 /// The hostname that represents the local loopback device.
 pub(crate) const CAMERA_LOCALHOST_HOSTNAME: &str = "localhost";
-
-/// The `window.open` target name that forces the URL to open in the
-/// system browser rather than a web-view tab.
-pub(crate) const CAMERA_SYSTEM_BROWSER_TARGET: &str = "_system";

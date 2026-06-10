@@ -66,7 +66,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                     a {
                         class: c_info_link()
                         href: EUV_REPOSITORY
-                        target: "_blank"
+                        onclick: external_link_handler(EUV_REPOSITORY.to_string())
                         EUV_REPOSITORY_NAME
                     }
                 }

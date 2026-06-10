@@ -21,6 +21,519 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
     let image: UseImageEvent = use_image_event();
     let current_url: String = current_url_without_params();
     let qr_code_data_url: String = generate_qr_code_data_url(&current_url);
+    let on_key_down = move |event: Event| {
+        if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
+            let key_name: String = keyboard_event.key();
+            keyboard.get_last_key().set(key_name);
+            let code_name: String = keyboard_event.code();
+            keyboard.get_last_key_code().set(code_name);
+            let is_repeat: bool = keyboard_event.repeat();
+            keyboard.get_key_repeat().set(is_repeat);
+            let mut modifier: String = String::new();
+            if keyboard_event.ctrl_key() {
+                modifier.push_str("Ctrl+");
+            }
+            if keyboard_event.shift_key() {
+                modifier.push_str("Shift+");
+            }
+            if keyboard_event.alt_key() {
+                modifier.push_str("Alt+");
+            }
+            if keyboard_event.meta_key() {
+                modifier.push_str("Meta+");
+            }
+            if modifier.is_empty() {
+                modifier = "None".to_string();
+            }
+            keyboard.get_modifier().set(modifier);
+            Console::log(&format!(
+                "KeyDown: {} (code: {})",
+                keyboard.get_last_key().get(),
+                keyboard.get_last_key_code().get()
+            ));
+        }
+    };
+    let on_key_up = move |event: Event| {
+        if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
+            let key_name: String = keyboard_event.key();
+            keyboard.get_last_key_up().set(key_name.clone());
+            Console::log(&format!("KeyUp: {}", key_name));
+        }
+    };
+    let on_mouse_click = move |event: Event| {
+        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
+            let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
+            mouse.get_mouse_pos().set(pos);
+            let screen: String =
+                format!("({}, {})", mouse_event.screen_x(), mouse_event.screen_y());
+            mouse.get_mouse_screen_pos().set(screen);
+            let current: i32 = mouse.get_click_count().get();
+            mouse.get_click_count().set(current + 1);
+            Console::log(&format!(
+                "Click: {} at ({}, {})",
+                current + 1,
+                mouse_event.client_x(),
+                mouse_event.client_y()
+            ));
+        }
+    };
+    let on_double_click = move |_: Event| {
+        let current: i32 = mouse.get_double_click_count().get();
+        mouse.get_double_click_count().set(current + 1);
+        Console::log(&format!("DblClick: #{}", current + 1));
+    };
+    let on_mouse_down = move |event: Event| {
+        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
+            let button_name: String = match mouse_event.button() {
+                0 => "Left".to_string(),
+                1 => "Middle".to_string(),
+                2 => "Right".to_string(),
+                _ => format!("Button {}", mouse_event.button()),
+            };
+            mouse.get_mouse_button().set(button_name);
+            let current: i32 = mouse.get_mouse_down_count().get();
+            mouse.get_mouse_down_count().set(current + 1);
+        }
+    };
+    let on_mouse_up = move |_: Event| {
+        let current: i32 = mouse.get_mouse_up_count().get();
+        mouse.get_mouse_up_count().set(current + 1);
+    };
+    let on_mouse_move = move |event: Event| {
+        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
+            let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
+            mouse.get_mouse_pos().set(pos);
+            let buttons_mask: String = format!("{}", mouse_event.buttons());
+            mouse.get_mouse_buttons().set(buttons_mask);
+        }
+    };
+    let on_mouse_enter = move |_: Event| {
+        let current: i32 = mouse.get_mouse_enter_count().get();
+        mouse.get_mouse_enter_count().set(current + 1);
+    };
+    let on_mouse_leave = move |_: Event| {
+        let current: i32 = mouse.get_mouse_leave_count().get();
+        mouse.get_mouse_leave_count().set(current + 1);
+    };
+    let on_context_menu = move |event: Event| {
+        if event.dyn_ref::<MouseEvent>().is_some() {
+            Console::log("ContextMenu: right-click detected");
+        }
+    };
+    let on_mouse_over = move |_: Event| {
+        let current: i32 = mouse.get_mouse_over_count().get();
+        mouse.get_mouse_over_count().set(current + 1);
+    };
+    let on_mouse_out = move |_: Event| {
+        let current: i32 = mouse.get_mouse_out_count().get();
+        mouse.get_mouse_out_count().set(current + 1);
+    };
+    let on_focus = move |_: Event| {
+        focus.get_focus_status().set("Focused".to_string());
+        let current: i32 = focus.get_focus_in_count().get();
+        focus.get_focus_in_count().set(current + 1);
+        Console::log("Focus: input gained focus");
+    };
+    let on_blur = move |_: Event| {
+        focus.get_focus_status().set("Not focused".to_string());
+        let current: i32 = focus.get_focus_out_count().get();
+        focus.get_focus_out_count().set(current + 1);
+        Console::log("Blur: input lost focus");
+    };
+    let on_focus_in = move |_: Event| {
+        Console::log("FocusIn: focus entered");
+    };
+    let on_focus_out = move |_: Event| {
+        Console::log("FocusOut: focus left");
+    };
+    let on_drag_start = move |_: Event| {
+        drag.get_drag_status().set("Dragging".to_string());
+        drag.get_drag_enter_counter().set(1);
+        Console::log("DragStart: drag started");
+    };
+    let on_drag = move |event: Event| {
+        if drag.get_drag_enter_counter().get() > 0
+            && let Some(drag_event) = event.dyn_ref::<DragEvent>()
+        {
+            let pos: String = format!("({}, {})", drag_event.client_x(), drag_event.client_y());
+            drag.get_drag_pending_pos().set(pos);
+            if drag.get_drag_raf_id().get() == -1 {
+                let pos_signal: Signal<String> = drag.get_drag_pos();
+                let pending_signal: Signal<String> = drag.get_drag_pending_pos();
+                let raf_id_signal: Signal<i32> = drag.get_drag_raf_id();
+                let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                    pos_signal.set(pending_signal.get());
+                    raf_id_signal.set(-1);
+                }));
+                let window: Window = window().expect("no global window exists");
+                let id: i32 = window
+                    .request_animation_frame(closure.as_ref().unchecked_ref())
+                    .unwrap_or(-1);
+                drag.get_drag_raf_id().set(id);
+                closure.forget();
+            }
+        }
+    };
+    let on_drag_end = move |_: Event| {
+        let raf_id: i32 = drag.get_drag_raf_id().get();
+        if raf_id != -1 {
+            let window: Window = window().expect("no global window exists");
+            let _ = window.cancel_animation_frame(raf_id);
+            drag.get_drag_raf_id().set(-1);
+        }
+        if !drag.get_drag_pending_pos().get().is_empty() {
+            drag.get_drag_pos().set(drag.get_drag_pending_pos().get());
+        }
+        drag.get_drag_status().set("Ended".to_string());
+        drag.get_drag_enter_counter().set(0);
+        Console::log("DragEnd: drag ended");
+    };
+    let on_drag_over = move |event: Event| {
+        event.prevent_default();
+    };
+    let on_drag_enter = move |_: Event| {
+        let counter: i32 = drag.get_drag_enter_counter().get();
+        drag.get_drag_enter_counter().set(counter + 1);
+        if counter == 0 {
+            drag.get_drag_status().set("Dragging".to_string());
+            Console::log("DragEnter: entered drop zone");
+        }
+    };
+    let on_drag_leave = move |_: Event| {
+        let counter: i32 = drag.get_drag_enter_counter().get();
+        drag.get_drag_enter_counter().set(counter - 1);
+        if counter <= 1 {
+            drag.get_drag_status().set("Outside".to_string());
+            Console::log("DragLeave: left drop zone");
+        }
+    };
+    let on_drop = move |event: Event| {
+        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
+            let types_str: String = drag_event
+                .data_transfer()
+                .map(|data_transfer: DataTransfer| {
+                    let type_count: u32 = data_transfer.types().length();
+                    (0..type_count)
+                        .filter_map(|index: u32| data_transfer.types().get(index).as_string())
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                })
+                .unwrap_or_default();
+            if types_str.is_empty() {
+                drag.get_drag_types().set("None".to_string());
+            } else {
+                drag.get_drag_types().set(types_str);
+            }
+        }
+        drag.get_drag_status().set("Dropped".to_string());
+        Console::log("Drop: item dropped");
+    };
+    let on_wheel = move |event: Event| {
+        if let Some(wheel_event) = event.dyn_ref::<WheelEvent>() {
+            let delta: String = format!(
+                "({:.1}, {:.1})",
+                wheel_event.delta_x(),
+                wheel_event.delta_y()
+            );
+            wheel.get_wheel_delta().set(delta);
+            let current: f64 = wheel.get_wheel_total().get();
+            wheel.get_wheel_total().set(current + wheel_event.delta_y());
+            let mode_name: String = match wheel_event.delta_mode() {
+                0 => "pixel".to_string(),
+                1 => "line".to_string(),
+                2 => "page".to_string(),
+                _ => "unknown".to_string(),
+            };
+            Console::log(&format!(
+                "Wheel: dx={:.1}, dy={:.1}, mode={}",
+                wheel_event.delta_x(),
+                wheel_event.delta_y(),
+                mode_name
+            ));
+        }
+    };
+    let on_copy = move |event: Event| {
+        clipboard.get_clipboard_event_type().set("Copy".to_string());
+        if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
+            let data: Option<String> = clipboard_event
+                .clipboard_data()
+                .and_then(|cd: DataTransfer| cd.get_data("text").ok());
+            clipboard
+                .get_clipboard_data()
+                .set(data.unwrap_or_else(|| "No data".to_string()));
+        }
+        Console::log("Copy: text copied");
+    };
+    let on_cut = move |event: Event| {
+        clipboard.get_clipboard_event_type().set("Cut".to_string());
+        if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
+            let data: Option<String> = clipboard_event
+                .clipboard_data()
+                .and_then(|cd: DataTransfer| cd.get_data("text").ok());
+            clipboard
+                .get_clipboard_data()
+                .set(data.unwrap_or_else(|| "No data".to_string()));
+        }
+        Console::log("Cut: text cut");
+    };
+    let on_paste = move |event: Event| {
+        clipboard
+            .get_clipboard_event_type()
+            .set("Paste".to_string());
+        if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
+            let data: Option<String> = clipboard_event
+                .clipboard_data()
+                .and_then(|cd: DataTransfer| cd.get_data("text").ok());
+            clipboard
+                .get_clipboard_data()
+                .set(data.unwrap_or_else(|| "No data".to_string()));
+        }
+        Console::log("Paste: text pasted");
+    };
+    let on_touch_start = move |event: Event| {
+        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
+            let touches: TouchList = touch_event.touches();
+            let first: Option<Touch> = touches.get(0);
+            let info: String = format!(
+                "Start: {} touches at ({}, {})",
+                touches.length(),
+                first
+                    .as_ref()
+                    .map(|touch: &Touch| touch.client_x())
+                    .unwrap_or_default(),
+                first
+                    .as_ref()
+                    .map(|touch: &Touch| touch.client_y())
+                    .unwrap_or_default()
+            );
+            touch.get_touch_info().set(info);
+            Console::log(&format!("TouchStart: {} touches", touches.length()));
+        }
+    };
+    let on_touch_move = move |event: Event| {
+        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
+            let touches: TouchList = touch_event.touches();
+            let first: Option<Touch> = touches.get(0);
+            let info: String = format!(
+                "Move: {} touches at ({}, {})",
+                touches.length(),
+                first
+                    .as_ref()
+                    .map(|touch: &Touch| touch.client_x())
+                    .unwrap_or_default(),
+                first
+                    .as_ref()
+                    .map(|touch: &Touch| touch.client_y())
+                    .unwrap_or_default()
+            );
+            touch.get_touch_info().set(info);
+        }
+    };
+    let on_touch_end = move |event: Event| {
+        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
+            let touches: TouchList = touch_event.touches();
+            let info: String = format!("End: {} touches remaining", touches.length());
+            touch.get_touch_info().set(info);
+            Console::log("TouchEnd: touch ended");
+        }
+    };
+    let on_touch_cancel = move |_: Event| {
+        touch.get_touch_info().set("Cancelled".to_string());
+        Console::log("TouchCancel: touch cancelled");
+    };
+    let on_form_submit = move |event: Event| {
+        event.prevent_default();
+        let current: i32 = form.get_submit_count().get();
+        form.get_submit_count().set(current + 1);
+        Console::log(&format!("Form submitted #{}", current + 1));
+    };
+    let on_form_input = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            form.get_form_input_value().set(input.value());
+        }
+    };
+    let on_form_change = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            form.get_form_change_value().set(input.value());
+        }
+    };
+    let on_checkbox_change = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
+        {
+            form.get_form_checkbox().set(input.checked());
+        }
+    };
+    let on_select_change = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>()
+        {
+            form.get_form_select_value().set(select.value());
+        }
+    };
+    let on_audio_play = move |_: Event| {
+        media.get_media_status().set("Playing".to_string());
+        media.get_media_event_log().set("Play".to_string());
+        Console::log("Play: audio started");
+    };
+    let on_audio_pause = move |_: Event| {
+        media.get_media_status().set("Paused".to_string());
+        media.get_media_event_log().set("Pause".to_string());
+        Console::log("Pause: audio paused");
+    };
+    let on_audio_ended = move |_: Event| {
+        media.get_media_status().set("Ended".to_string());
+        media.get_media_event_log().set("Ended".to_string());
+        Console::log("Ended: audio ended");
+    };
+    let on_audio_loaded_data = move |_: Event| {
+        media.get_media_status().set("Loaded".to_string());
+        media.get_media_event_log().set("LoadedData".to_string());
+    };
+    let on_audio_can_play = move |_: Event| {
+        media.get_media_event_log().set("CanPlay".to_string());
+    };
+    let on_audio_volume_change = move |_: Event| {
+        media.get_media_event_log().set("VolumeChange".to_string());
+        Console::log("VolumeChange: volume changed");
+    };
+    let on_audio_time_update = move |_: Event| {
+        media.get_media_event_log().set("TimeUpdate".to_string());
+    };
+    let on_video_play = move |_: Event| {
+        video.get_video_status().set("Playing".to_string());
+        video.get_video_event_log().set("Play".to_string());
+        Console::log("Video Play: video started");
+    };
+    let on_video_pause = move |_: Event| {
+        video.get_video_status().set("Paused".to_string());
+        video.get_video_event_log().set("Pause".to_string());
+        Console::log("Video Pause: video paused");
+    };
+    let on_video_ended = move |_: Event| {
+        video.get_video_status().set("Ended".to_string());
+        video.get_video_event_log().set("Ended".to_string());
+        Console::log("Video Ended: video ended");
+    };
+    let on_video_loaded_data = move |_: Event| {
+        video.get_video_status().set("Data Loaded".to_string());
+        video.get_video_event_log().set("LoadedData".to_string());
+        Console::log("Video LoadedData: data loaded");
+    };
+    let on_video_loaded_metadata = move |_: Event| {
+        video.get_video_status().set("Meta Loaded".to_string());
+        video
+            .get_video_event_log()
+            .set("LoadedMetadata".to_string());
+        Console::log("Video LoadedMetadata: metadata loaded");
+    };
+    let on_video_can_play = move |_: Event| {
+        video.get_video_event_log().set("CanPlay".to_string());
+        Console::log("Video CanPlay: can play");
+    };
+    let on_video_can_play_through = move |_: Event| {
+        video
+            .get_video_event_log()
+            .set("CanPlayThrough".to_string());
+        Console::log("Video CanPlayThrough: can play through");
+    };
+    let on_video_waiting = move |_: Event| {
+        video.get_video_status().set("Waiting".to_string());
+        video.get_video_event_log().set("Waiting".to_string());
+        Console::log("Video Waiting: buffering");
+    };
+    let on_video_playing = move |_: Event| {
+        video.get_video_status().set("Playing".to_string());
+        video.get_video_event_log().set("Playing".to_string());
+        Console::log("Video Playing: playback resumed");
+    };
+    let on_video_time_update = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(video_el) = target.clone().dyn_into::<HtmlMediaElement>()
+        {
+            let current: String = format!("{:.2}", video_el.current_time());
+            video.get_video_current_time().set(current);
+        }
+        video.get_video_event_log().set("TimeUpdate".to_string());
+    };
+    let on_video_duration_change = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(video_el) = target.clone().dyn_into::<HtmlMediaElement>()
+        {
+            let dur: String = format!("{:.2}", video_el.duration());
+            video.get_video_duration().set(dur);
+        }
+        video
+            .get_video_event_log()
+            .set("DurationChange".to_string());
+        Console::log("Video DurationChange: duration changed");
+    };
+    let on_video_progress = move |_: Event| {
+        video.get_video_event_log().set("Progress".to_string());
+    };
+    let on_video_seeking = move |_: Event| {
+        video.get_video_event_log().set("Seeking".to_string());
+        Console::log("Video Seeking: seeking started");
+    };
+    let on_video_seeked = move |_: Event| {
+        video.get_video_event_log().set("Seeked".to_string());
+        Console::log("Video Seeked: seek completed");
+    };
+    let on_video_volume_change = move |_: Event| {
+        video.get_video_event_log().set("VolumeChange".to_string());
+        Console::log("Video VolumeChange: volume changed");
+    };
+    let on_video_rate_change = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(video_el) = target.clone().dyn_into::<HtmlMediaElement>()
+        {
+            let rate: String = format!("{}", video_el.playback_rate());
+            video.get_video_playback_rate().set(rate);
+        }
+        video.get_video_event_log().set("RateChange".to_string());
+        Console::log("Video RateChange: playback rate changed");
+    };
+    let on_video_emptied = move |_: Event| {
+        video.get_video_event_log().set("Emptied".to_string());
+        Console::log("Video Emptied: media emptied");
+    };
+    let on_video_stalled = move |_: Event| {
+        video.get_video_event_log().set("Stalled".to_string());
+        Console::log("Video Stalled: data transfer stalled");
+    };
+    let on_video_suspend = move |_: Event| {
+        video.get_video_event_log().set("Suspend".to_string());
+        Console::log("Video Suspend: data transfer suspended");
+    };
+    let on_video_load_start = move |_: Event| {
+        video.get_video_event_log().set("LoadStart".to_string());
+        Console::log("Video LoadStart: loading started");
+    };
+    let on_video_error = move |_: Event| {
+        video.get_video_status().set("Error".to_string());
+        video.get_video_event_log().set("Error".to_string());
+        Console::log("Video Error: error occurred");
+    };
+    let on_image_load = move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(img_el) = target.clone().dyn_into::<HtmlImageElement>()
+        {
+            let size: String = format!("{}x{}", img_el.natural_width(), img_el.natural_height());
+            image.get_image_natural_size().set(size);
+        }
+        image.get_image_status().set("Loaded".to_string());
+        image.get_image_event_log().set("Load".to_string());
+        Console::log("Image Load: image loaded successfully");
+    };
+    let on_image_error = move |_: Event| {
+        image.get_image_status().set("Error".to_string());
+        image.get_image_event_log().set("Error".to_string());
+        Console::log("Image Error: failed to load image");
+    };
     html! {
         div {
             class: c_page_container()
@@ -37,41 +550,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     autocomplete: EVENT_AUTOCOMPLETE_OFF
                     placeholder: EVENT_KEYBOARD_PLACEHOLDER
                     class: c_form_input()
-                    onkeydown: move |event: Event| {
-                        if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
-                            let key_name: String = keyboard_event.key();
-                            keyboard.get_last_key().set(key_name);
-                            let code_name: String = keyboard_event.code();
-                            keyboard.get_last_key_code().set(code_name);
-                            let is_repeat: bool = keyboard_event.repeat();
-                            keyboard.get_key_repeat().set(is_repeat);
-                            let mut modifier: String = String::new();
-                            if keyboard_event.ctrl_key() {
-                                modifier.push_str("Ctrl+");
-                            }
-                            if keyboard_event.shift_key() {
-                                modifier.push_str("Shift+");
-                            }
-                            if keyboard_event.alt_key() {
-                                modifier.push_str("Alt+");
-                            }
-                            if keyboard_event.meta_key() {
-                                modifier.push_str("Meta+");
-                            }
-                            if modifier.is_empty() {
-                                modifier = "None".to_string();
-                            }
-                            keyboard.get_modifier().set(modifier);
-                            Console::log(&format!("KeyDown: {} (code: {})", keyboard.get_last_key().get(), keyboard.get_last_key_code().get()));
-                        }
-                    }
-                    onkeyup: move |event: Event| {
-                        if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
-                            let key_name: String = keyboard_event.key();
-                            keyboard.get_last_key_up().set(key_name.clone());
-                            Console::log(&format!("KeyUp: {}", key_name));
-                        }
-                    }
+                    onkeydown: on_key_down
+                    onkeyup: on_key_up
                 }
                 div {
                     class: c_event_info_grid()
@@ -136,60 +616,14 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 title: "Mouse Events"
                 div {
                     class: c_event_mouse_area()
-                    onclick: move |event: Event| {
-                        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
-                            let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
-                            mouse.get_mouse_pos().set(pos);
-                            let screen: String = format!("({}, {})", mouse_event.screen_x(), mouse_event.screen_y());
-                            mouse.get_mouse_screen_pos().set(screen);
-                            let current: i32 = mouse.get_click_count().get();
-                            mouse.get_click_count().set(current + 1);
-                            Console::log(&format!("Click: {} at ({}, {})", current + 1, mouse_event.client_x(), mouse_event.client_y()));
-                        }
-                    }
-                    ondblclick: move |_event: Event| {
-                        let current: i32 = mouse.get_double_click_count().get();
-                        mouse.get_double_click_count().set(current + 1);
-                        Console::log(&format!("DblClick: #{}", current + 1));
-                    }
-                    onmousedown: move |event: Event| {
-                        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
-                            let button_name: String = match mouse_event.button() {
-                                0 => "Left".to_string(),
-                                1 => "Middle".to_string(),
-                                2 => "Right".to_string(),
-                                _ => format!("Button {}", mouse_event.button()),
-                            };
-                            mouse.get_mouse_button().set(button_name);
-                            let current: i32 = mouse.get_mouse_down_count().get();
-                            mouse.get_mouse_down_count().set(current + 1);
-                        }
-                    }
-                    onmouseup: move |_event: Event| {
-                        let current: i32 = mouse.get_mouse_up_count().get();
-                        mouse.get_mouse_up_count().set(current + 1);
-                    }
-                    onmousemove: move |event: Event| {
-                        if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
-                            let pos: String = format!("({}, {})", mouse_event.client_x(), mouse_event.client_y());
-                            mouse.get_mouse_pos().set(pos);
-                            let buttons_mask: String = format!("{}", mouse_event.buttons());
-                            mouse.get_mouse_buttons().set(buttons_mask);
-                        }
-                    }
-                    onmouseenter: move |_event: Event| {
-                        let current: i32 = mouse.get_mouse_enter_count().get();
-                        mouse.get_mouse_enter_count().set(current + 1);
-                    }
-                    onmouseleave: move |_event: Event| {
-                        let current: i32 = mouse.get_mouse_leave_count().get();
-                        mouse.get_mouse_leave_count().set(current + 1);
-                    }
-                    oncontextmenu: move |event: Event| {
-                        if event.dyn_ref::<MouseEvent>().is_some() {
-                            Console::log("ContextMenu: right-click detected");
-                        }
-                    }
+                    onclick: on_mouse_click
+                    ondblclick: on_double_click
+                    onmousedown: on_mouse_down
+                    onmouseup: on_mouse_up
+                    onmousemove: on_mouse_move
+                    onmouseenter: on_mouse_enter
+                    onmouseleave: on_mouse_leave
+                    oncontextmenu: on_context_menu
                     p {
                         class: c_demo_text()
                         "Click, double-click, right-click, or move mouse here"
@@ -342,10 +776,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     div {
                         class: c_event_drag_zone()
                         class: c_switcher_col()
-                        onmouseover: move |_event: Event| {
-                            let current: i32 = mouse.get_mouse_over_count().get();
-                            mouse.get_mouse_over_count().set(current + 1);
-                        }
+                        onmouseover: on_mouse_over
                         p {
                             class: c_demo_text()
                             "Mouse Over zone"
@@ -358,10 +789,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     div {
                         class: c_event_drag_zone_active()
                         class: c_switcher_col()
-                        onmouseout: move |_event: Event| {
-                            let current: i32 = mouse.get_mouse_out_count().get();
-                            mouse.get_mouse_out_count().set(current + 1);
-                        }
+                        onmouseout: on_mouse_out
                         p {
                             class: c_demo_text()
                             "Mouse Out zone"
@@ -382,24 +810,10 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     autocomplete: EVENT_AUTOCOMPLETE_OFF
                     placeholder: EVENT_FOCUS_PLACEHOLDER
                     class: c_form_input()
-                    onfocus: move |_event: Event| {
-                        focus.get_focus_status().set("Focused".to_string());
-                        let current: i32 = focus.get_focus_in_count().get();
-                        focus.get_focus_in_count().set(current + 1);
-                        Console::log("Focus: input gained focus");
-                    }
-                    onblur: move |_event: Event| {
-                        focus.get_focus_status().set("Not focused".to_string());
-                        let current: i32 = focus.get_focus_out_count().get();
-                        focus.get_focus_out_count().set(current + 1);
-                        Console::log("Blur: input lost focus");
-                    }
-                    onfocusin: move |_event: Event| {
-                        Console::log("FocusIn: focus entered");
-                    }
-                    onfocusout: move |_event: Event| {
-                        Console::log("FocusOut: focus left");
-                    }
+                    onfocus: on_focus
+                    onblur: on_blur
+                    onfocusin: on_focus_in
+                    onfocusout: on_focus_out
                 }
                 div {
                     class: c_event_info_grid()
@@ -442,86 +856,13 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 title: "Drag Events"
                 div {
                     class: c_event_drag_zone()
-                    ondragstart: move |_event: Event| {
-                        drag.get_drag_status().set("Dragging".to_string());
-                        drag.get_drag_enter_counter().set(1);
-                        Console::log("DragStart: drag started");
-                    }
-                    ondrag: move |event: Event| {
-                        if drag.get_drag_enter_counter().get() > 0
-                            && let Some(drag_event) = event.dyn_ref::<DragEvent>()
-                        {
-                            let pos: String = format!("({}, {})", drag_event.client_x(), drag_event.client_y());
-                            drag.get_drag_pending_pos().set(pos);
-                            if drag.get_drag_raf_id().get() == -1 {
-                                let pos_signal: Signal<String> = drag.get_drag_pos();
-                                let pending_signal: Signal<String> = drag.get_drag_pending_pos();
-                                let raf_id_signal: Signal<i32> = drag.get_drag_raf_id();
-                                let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                                    pos_signal.set(pending_signal.get());
-                                    raf_id_signal.set(-1);
-                                }));
-                                let window: Window = window().expect("no global window exists");
-                                let id: i32 = window.request_animation_frame(closure.as_ref().unchecked_ref()).unwrap_or(-1);
-                                drag.get_drag_raf_id().set(id);
-                                closure.forget();
-                            }
-                        }
-                    }
-                    ondragend: move |_event: Event| {
-                        let raf_id: i32 = drag.get_drag_raf_id().get();
-                        if raf_id != -1 {
-                            let window: Window = window().expect("no global window exists");
-                            let _ = window.cancel_animation_frame(raf_id);
-                            drag.get_drag_raf_id().set(-1);
-                        }
-                        if !drag.get_drag_pending_pos().get().is_empty() {
-                            drag.get_drag_pos().set(drag.get_drag_pending_pos().get());
-                        }
-                        drag.get_drag_status().set("Ended".to_string());
-                        drag.get_drag_enter_counter().set(0);
-                        Console::log("DragEnd: drag ended");
-                    }
-                    ondragover: move |event: Event| {
-                        event.prevent_default();
-                    }
-                    ondragenter: move |_event: Event| {
-                        let counter: i32 = drag.get_drag_enter_counter().get();
-                        drag.get_drag_enter_counter().set(counter + 1);
-                        if counter == 0 {
-                            drag.get_drag_status().set("Dragging".to_string());
-                            Console::log("DragEnter: entered drop zone");
-                        }
-                    }
-                    ondragleave: move |_event: Event| {
-                        let counter: i32 = drag.get_drag_enter_counter().get();
-                        drag.get_drag_enter_counter().set(counter - 1);
-                        if counter <= 1 {
-                            drag.get_drag_status().set("Outside".to_string());
-                            Console::log("DragLeave: left drop zone");
-                        }
-                    }
-                    ondrop: move |event: Event| {
-                        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
-                            let types_str: String = drag_event
-                                .data_transfer()
-                                .map(|data_transfer: DataTransfer| {
-                                    let type_count: u32 = data_transfer.types().length();
-                                    (0..type_count)
-                                        .filter_map(|index: u32| data_transfer.types().get(index).as_string())
-                                        .collect::<Vec<String>>()
-                                        .join(", ")
-                                })
-                                .unwrap_or_default();
-                            if types_str.is_empty() {
-                                drag.get_drag_types().set("None".to_string());
-                            } else {
-                                drag.get_drag_types().set(types_str);
-                            }
-                        }
-                        drag.get_drag_status().set("Dropped".to_string());
-                        Console::log("Drop: item dropped");
-                    }
+                    ondragstart: on_drag_start
+                    ondrag: on_drag
+                    ondragend: on_drag_end
+                    ondragover: on_drag_over
+                    ondragenter: on_drag_enter
+                    ondragleave: on_drag_leave
+                    ondrop: on_drop
                     div {
                         class: c_event_drag_item()
                         draggable: EVENT_DRAGGABLE_TRUE
@@ -573,21 +914,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 title: "Wheel Event"
                 div {
                     class: c_event_wheel_zone()
-                    onwheel: move |event: Event| {
-                        if let Some(wheel_event) = event.dyn_ref::<WheelEvent>() {
-                            let delta: String = format!("({:.1}, {:.1})", wheel_event.delta_x(), wheel_event.delta_y());
-                            wheel.get_wheel_delta().set(delta);
-                            let current: f64 = wheel.get_wheel_total().get();
-                            wheel.get_wheel_total().set(current + wheel_event.delta_y());
-                            let mode_name: String = match wheel_event.delta_mode() {
-                                0 => "pixel".to_string(),
-                                1 => "line".to_string(),
-                                2 => "page".to_string(),
-                                _ => "unknown".to_string(),
-                            };
-                            Console::log(&format!("Wheel: dx={:.1}, dy={:.1}, mode={}", wheel_event.delta_x(), wheel_event.delta_y(), mode_name));
-                        }
-                    }
+                    onwheel: on_wheel
                     p {
                         class: c_demo_text()
                         "Scroll mouse wheel here"
@@ -635,36 +962,9 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                             placeholder: EVENT_CLIPBOARD_PLACEHOLDER
                         class: c_form_input()
                         value: "Sample text for clipboard"
-                        oncopy: move |event: Event| {
-                            clipboard.get_clipboard_event_type().set("Copy".to_string());
-                            if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
-                                let data: Option<String> = clipboard_event
-                                    .clipboard_data()
-                                    .and_then(|cd: DataTransfer| cd.get_data("text").ok());
-                                clipboard.get_clipboard_data().set(data.unwrap_or_else(|| "No data".to_string()));
-                            }
-                            Console::log("Copy: text copied");
-                        }
-                        oncut: move |event: Event| {
-                            clipboard.get_clipboard_event_type().set("Cut".to_string());
-                            if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
-                                let data: Option<String> = clipboard_event
-                                    .clipboard_data()
-                                    .and_then(|cd: DataTransfer| cd.get_data("text").ok());
-                                clipboard.get_clipboard_data().set(data.unwrap_or_else(|| "No data".to_string()));
-                            }
-                            Console::log("Cut: text cut");
-                        }
-                        onpaste: move |event: Event| {
-                            clipboard.get_clipboard_event_type().set("Paste".to_string());
-                            if let Some(clipboard_event) = event.dyn_ref::<ClipboardEvent>() {
-                                let data: Option<String> = clipboard_event
-                                    .clipboard_data()
-                                    .and_then(|cd: DataTransfer| cd.get_data("text").ok());
-                                clipboard.get_clipboard_data().set(data.unwrap_or_else(|| "No data".to_string()));
-                            }
-                            Console::log("Paste: text pasted");
-                        }
+                        oncopy: on_copy
+                        oncut: on_cut
+                        onpaste: on_paste
                     }
                 }
                 div {
@@ -697,35 +997,10 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 title: "Touch Events"
                 div {
                     class: c_event_touch_zone()
-                    ontouchstart: move |event: Event| {
-                        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-                            let touches: TouchList = touch_event.touches();
-                            let first: Option<Touch> = touches.get(0);
-                            let info: String = format!("Start: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or_default(), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or_default());
-                            touch.get_touch_info().set(info);
-                            Console::log(&format!("TouchStart: {} touches", touches.length()));
-                        }
-                    }
-                    ontouchmove: move |event: Event| {
-                        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-                            let touches: TouchList = touch_event.touches();
-                            let first: Option<Touch> = touches.get(0);
-                            let info: String = format!("Move: {} touches at ({}, {})", touches.length(), first.as_ref().map(|touch: &Touch| touch.client_x()).unwrap_or_default(), first.as_ref().map(|touch: &Touch| touch.client_y()).unwrap_or_default());
-                            touch.get_touch_info().set(info);
-                        }
-                    }
-                    ontouchend: move |event: Event| {
-                        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-                            let touches: TouchList = touch_event.touches();
-                            let info: String = format!("End: {} touches remaining", touches.length());
-                            touch.get_touch_info().set(info);
-                            Console::log("TouchEnd: touch ended");
-                        }
-                    }
-                    ontouchcancel: move |_event: Event| {
-                        touch.get_touch_info().set("Cancelled".to_string());
-                        Console::log("TouchCancel: touch cancelled");
-                    }
+                    ontouchstart: on_touch_start
+                    ontouchmove: on_touch_move
+                    ontouchend: on_touch_end
+                    ontouchcancel: on_touch_cancel
                     p {
                         class: c_demo_text()
                         "Touch this area (mobile/touchscreen)"
@@ -755,12 +1030,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 div {
                     class: c_event_form_area()
                     form {
-                        onsubmit: move |event: Event| {
-                            event.prevent_default();
-                            let current: i32 = form.get_submit_count().get();
-                            form.get_submit_count().set(current + 1);
-                            Console::log(&format!("Form submitted #{}", current + 1));
-                        }
+                        onsubmit: on_form_submit
                         div {
                             class: c_form_input_wrapper()
                             label {
@@ -775,18 +1045,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 placeholder: EVENT_FORM_INPUT_PLACEHOLDER
                                 class: c_form_input()
-                                oninput: move |event: Event| {
-                                    if let Some(target) = event.target()
-                                        && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
-                                            form.get_form_input_value().set(input.value());
-                                        }
-                                }
-                                onchange: move |event: Event| {
-                                    if let Some(target) = event.target()
-                                        && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
-                                            form.get_form_change_value().set(input.value());
-                                        }
-                                }
+                                oninput: on_form_input
+                                onchange: on_form_change
                             }
                         }
                         div {
@@ -797,12 +1057,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 type: EVENT_CHECKBOX_TYPE
                                 autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 class: c_form_checkbox()
-                                onchange: move |event: Event| {
-                                    if let Some(target) = event.target()
-                                        && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>() {
-                                            form.get_form_checkbox().set(input.checked());
-                                        }
-                                }
+                                onchange: on_checkbox_change
                             }
                             label {
                                 for: EVENT_FORM_CHECKBOX_ID
@@ -822,12 +1077,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 name: EVENT_FORM_SELECT_NAME
                                 autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 class: c_select_input()
-                                onchange: move |event: Event| {
-                                    if let Some(target) = event.target()
-                                        && let Ok(select) = target.clone().dyn_into::<HtmlSelectElement>() {
-                                            form.get_form_select_value().set(select.value());
-                                        }
-                                }
+                                onchange: on_select_change
                                 option {
                                     value: ""
                                     "-- Choose --"
@@ -919,35 +1169,13 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         class: c_event_audio()
                         controls: EVENT_CONTROLS_TRUE
                         src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-                        onplay: move |_event: Event| {
-                            media.get_media_status().set("Playing".to_string());
-                            media.get_media_event_log().set("Play".to_string());
-                            Console::log("Play: audio started");
-                        }
-                        onpause: move |_event: Event| {
-                            media.get_media_status().set("Paused".to_string());
-                            media.get_media_event_log().set("Pause".to_string());
-                            Console::log("Pause: audio paused");
-                        }
-                        onended: move |_event: Event| {
-                            media.get_media_status().set("Ended".to_string());
-                            media.get_media_event_log().set("Ended".to_string());
-                            Console::log("Ended: audio ended");
-                        }
-                        onloadeddata: move |_event: Event| {
-                            media.get_media_status().set("Loaded".to_string());
-                            media.get_media_event_log().set("LoadedData".to_string());
-                        }
-                        oncanplay: move |_event: Event| {
-                            media.get_media_event_log().set("CanPlay".to_string());
-                        }
-                        onvolumechange: move |_event: Event| {
-                            media.get_media_event_log().set("VolumeChange".to_string());
-                            Console::log("VolumeChange: volume changed");
-                        }
-                        ontimeupdate: move |_event: Event| {
-                            media.get_media_event_log().set("TimeUpdate".to_string());
-                        }
+                        onplay: on_audio_play
+                        onpause: on_audio_pause
+                        onended: on_audio_ended
+                        onloadeddata: on_audio_loaded_data
+                        oncanplay: on_audio_can_play
+                        onvolumechange: on_audio_volume_change
+                        ontimeupdate: on_audio_time_update
                         p {
                             class: c_demo_text_muted()
                             "Audio player with play, pause, ended, loadeddata, canplay, volumechange, timeupdate events"
@@ -990,111 +1218,27 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         controls: EVENT_CONTROLS_TRUE
                         preload: EVENT_PRELOAD_METADATA
                         src: EVENT_VIDEO_SRC
-                        onplay: move |_event: Event| {
-                            video.get_video_status().set("Playing".to_string());
-                            video.get_video_event_log().set("Play".to_string());
-                            Console::log("Video Play: video started");
-                        }
-                        onpause: move |_event: Event| {
-                            video.get_video_status().set("Paused".to_string());
-                            video.get_video_event_log().set("Pause".to_string());
-                            Console::log("Video Pause: video paused");
-                        }
-                        onended: move |_event: Event| {
-                            video.get_video_status().set("Ended".to_string());
-                            video.get_video_event_log().set("Ended".to_string());
-                            Console::log("Video Ended: video ended");
-                        }
-                        onloadeddata: move |_event: Event| {
-                            video.get_video_status().set("Data Loaded".to_string());
-                            video.get_video_event_log().set("LoadedData".to_string());
-                            Console::log("Video LoadedData: data loaded");
-                        }
-                        onloadedmetadata: move |_event: Event| {
-                            video.get_video_status().set("Meta Loaded".to_string());
-                            video.get_video_event_log().set("LoadedMetadata".to_string());
-                            Console::log("Video LoadedMetadata: metadata loaded");
-                        }
-                        oncanplay: move |_event: Event| {
-                            video.get_video_event_log().set("CanPlay".to_string());
-                            Console::log("Video CanPlay: can play");
-                        }
-                        oncanplaythrough: move |_event: Event| {
-                            video.get_video_event_log().set("CanPlayThrough".to_string());
-                            Console::log("Video CanPlayThrough: can play through");
-                        }
-                        onwaiting: move |_event: Event| {
-                            video.get_video_status().set("Waiting".to_string());
-                            video.get_video_event_log().set("Waiting".to_string());
-                            Console::log("Video Waiting: buffering");
-                        }
-                        onplaying: move |_event: Event| {
-                            video.get_video_status().set("Playing".to_string());
-                            video.get_video_event_log().set("Playing".to_string());
-                            Console::log("Video Playing: playback resumed");
-                        }
-                        ontimeupdate: move |event: Event| {
-                            if let Some(target) = event.target()
-                                && let Ok(video_el) = target.clone().dyn_into::<HtmlMediaElement>() {
-                                    let current: String = format!("{:.2}", video_el.current_time());
-                                    video.get_video_current_time().set(current);
-                                }
-                            video.get_video_event_log().set("TimeUpdate".to_string());
-                        }
-                        ondurationchange: move |event: Event| {
-                            if let Some(target) = event.target()
-                                && let Ok(video_el) = target.clone().dyn_into::<HtmlMediaElement>() {
-                                    let dur: String = format!("{:.2}", video_el.duration());
-                                    video.get_video_duration().set(dur);
-                                }
-                            video.get_video_event_log().set("DurationChange".to_string());
-                            Console::log("Video DurationChange: duration changed");
-                        }
-                        onprogress: move |_event: Event| {
-                            video.get_video_event_log().set("Progress".to_string());
-                        }
-                        onseeking: move |_event: Event| {
-                            video.get_video_event_log().set("Seeking".to_string());
-                            Console::log("Video Seeking: seeking started");
-                        }
-                        onseeked: move |_event: Event| {
-                            video.get_video_event_log().set("Seeked".to_string());
-                            Console::log("Video Seeked: seek completed");
-                        }
-                        onvolumechange: move |_event: Event| {
-                            video.get_video_event_log().set("VolumeChange".to_string());
-                            Console::log("Video VolumeChange: volume changed");
-                        }
-                        onratechange: move |event: Event| {
-                            if let Some(target) = event.target()
-                                && let Ok(video_el) = target.clone().dyn_into::<HtmlMediaElement>() {
-                                    let rate: String = format!("{}", video_el.playback_rate());
-                                    video.get_video_playback_rate().set(rate);
-                                }
-                            video.get_video_event_log().set("RateChange".to_string());
-                            Console::log("Video RateChange: playback rate changed");
-                        }
-                        onemptied: move |_event: Event| {
-                            video.get_video_event_log().set("Emptied".to_string());
-                            Console::log("Video Emptied: media emptied");
-                        }
-                        onstalled: move |_event: Event| {
-                            video.get_video_event_log().set("Stalled".to_string());
-                            Console::log("Video Stalled: data transfer stalled");
-                        }
-                        onsuspend: move |_event: Event| {
-                            video.get_video_event_log().set("Suspend".to_string());
-                            Console::log("Video Suspend: data transfer suspended");
-                        }
-                        onloadstart: move |_event: Event| {
-                            video.get_video_event_log().set("LoadStart".to_string());
-                            Console::log("Video LoadStart: loading started");
-                        }
-                        onerror: move |_event: Event| {
-                            video.get_video_status().set("Error".to_string());
-                            video.get_video_event_log().set("Error".to_string());
-                            Console::log("Video Error: error occurred");
-                        }
+                        onplay: on_video_play
+                        onpause: on_video_pause
+                        onended: on_video_ended
+                        onloadeddata: on_video_loaded_data
+                        onloadedmetadata: on_video_loaded_metadata
+                        oncanplay: on_video_can_play
+                        oncanplaythrough: on_video_can_play_through
+                        onwaiting: on_video_waiting
+                        onplaying: on_video_playing
+                        ontimeupdate: on_video_time_update
+                        ondurationchange: on_video_duration_change
+                        onprogress: on_video_progress
+                        onseeking: on_video_seeking
+                        onseeked: on_video_seeked
+                        onvolumechange: on_video_volume_change
+                        onratechange: on_video_rate_change
+                        onemptied: on_video_emptied
+                        onstalled: on_video_stalled
+                        onsuspend: on_video_suspend
+                        onloadstart: on_video_load_start
+                        onerror: on_video_error
                         p {
                             class: c_demo_text_muted()
                             "Video player with play, pause, ended, loadeddata, loadedmetadata, canplay, canplaythrough, waiting, playing, timeupdate, durationchange, progress, seeking, seeked, volumechange, ratechange, emptied, stalled, suspend, loadstart, error events"
@@ -1180,21 +1324,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         class: c_event_image()
                         src: qr_code_data_url
                         alt: EVENT_IMAGE_ALT
-                        onload: move |event: Event| {
-                            if let Some(target) = event.target()
-                                && let Ok(img_el) = target.clone().dyn_into::<HtmlImageElement>() {
-                                    let size: String = format!("{}x{}", img_el.natural_width(), img_el.natural_height());
-                                    image.get_image_natural_size().set(size);
-                                }
-                            image.get_image_status().set("Loaded".to_string());
-                            image.get_image_event_log().set("Load".to_string());
-                            Console::log("Image Load: image loaded successfully");
-                        }
-                        onerror: move |_event: Event| {
-                            image.get_image_status().set("Error".to_string());
-                            image.get_image_event_log().set("Error".to_string());
-                            Console::log("Image Error: failed to load image");
-                        }
+                        onload: on_image_load
+                        onerror: on_image_error
                     }
                     p {
                         class: c_event_url_text()
