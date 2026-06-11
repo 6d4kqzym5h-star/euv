@@ -30,13 +30,15 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install toml-cli
-        run: cargo install toml-cli --force
       - name: Cache toml-cli
+        id: cache_toml_cli
         uses: actions/cache@v3
         with:
           path: ~/.cargo/bin/toml
           key: toml-cli-${{ runner.os }}
+      - name: Install toml-cli
+        if: steps.cache_toml_cli.outputs.cache-hit != 'true'
+        run: cargo install toml-cli
       - name: Read cargo metadata
         id: read
         run: |
@@ -69,12 +71,14 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: Restore toml-cli
+        id: cache_toml_cli
         uses: actions/cache@v3
         with:
           path: ~/.cargo/bin/toml
           key: toml-cli-${{ runner.os }}
       - name: Install toml-cli
-        run: cargo install toml-cli --force
+        if: steps.cache_toml_cli.outputs.cache-hit != 'true'
+        run: cargo install toml-cli
       - name: Sync workspace version
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
