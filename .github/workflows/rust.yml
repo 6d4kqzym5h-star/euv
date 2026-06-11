@@ -96,15 +96,26 @@ jobs:
       - name: Sync workspace version
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
-          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          printf '%s\n' "$CONTENT" > Cargo.toml
-          echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
+          ROOT_DIR=$(pwd)
+          toml set Cargo.toml workspace.dependencies.euv.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          toml set Cargo.toml workspace.dependencies.euv-cli.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          toml set Cargo.toml workspace.dependencies.euv-core.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          toml set Cargo.toml workspace.dependencies.euv-macros.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          toml set Cargo.toml workspace.dependencies.euv-example.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          echo "🔧 Synced all workspace.dependencies versions to $VERSION"
+          for SUB_CRATE in cli core macros example; do
+            SUB_TOML="${ROOT_DIR}/${SUB_CRATE}/Cargo.toml"
+            if [ -f "$SUB_TOML" ]; then
+              toml set "$SUB_TOML" package.version "$VERSION" > /tmp/SubCargo.toml.tmp && mv /tmp/SubCargo.toml.tmp "$SUB_TOML"
+              echo "🔧 Synced ${SUB_CRATE}/Cargo.toml package.version to $VERSION"
+            fi
+          done
       - name: Commit and push
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
-          git add Cargo.toml
-          git diff --cached --quiet || git commit -m "chore: sync workspace.dependencies.euv version to ${{ needs.setup.outputs.version }}"
+          git add Cargo.toml cli/Cargo.toml core/Cargo.toml macros/Cargo.toml example/Cargo.toml
+          git diff --cached --quiet || git commit -m "chore: sync all package versions to ${{ needs.setup.outputs.version }}"
           git push
 
   check:
