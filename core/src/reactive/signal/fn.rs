@@ -22,37 +22,34 @@ where
     unsafe { &mut *(addr as *mut SignalInner<T>) }
 }
 
-/// Clears DOM-binding listeners on a signal identified by its inner pointer
-/// address, without deactivating the signal itself.
+/// Clears DOM-binding listeners on a bridge signal identified by its inner
+/// pointer address, deactivates the bridge signal, and releases its value memory.
 ///
 /// This function is used during DOM cleanup (`cleanup_dom_subtree`) to
-/// release signal listeners that reference DOM elements being removed.
+/// release bridge `Signal<String>` instances that are no longer needed.
 /// Only `Signal<String>` instances are bound to the DOM, so this function
 /// only handles that type. If the address does not correspond to a
 /// `Signal<String>`, this is a no-op.
 ///
-/// Importantly, this does NOT set `alive = false` or clear `dependents`.
-/// A signal may be shared across multiple DOM bindings and DynamicNodes
-/// (e.g., a user-created signal used as both a `value:` attribute on a
-/// conditionally-rendered element AND as a dependency of another
-/// DynamicNode's render function). Deactivating the signal here would
-/// permanently break all other dependents — subsequent `set()` calls
-/// would be no-ops and `get()` would skip dependency tracking.
+/// Bridge signals are internal `Signal<String>` instances created by
+/// `as_reactive_text` and `AttributeValue::Signal` for DOM binding.
+/// They have exactly one consumer (the DOM element), so deactivating them
+/// is safe when the element is removed. User-created source signals are
+/// never passed to this function — they are tracked by `SignalInner.dependents`
+/// and cleaned up by `use_signal`'s `deactivate()` on hook context teardown.
 ///
-/// The listeners are cleared to prevent stale callbacks from referencing
-/// removed DOM elements. The signal remains fully functional for future
-/// `set()` / `get()` calls and dependent DynamicNodes continue to receive
-/// updates.
+/// The bridge signal's value is replaced with `String::new()` to release
+/// the original string data, and `alive` is set to `false` so that any
+/// stale async references become safe no-ops.
 ///
 /// # Arguments
 ///
-/// - `usize` - The inner pointer address of the signal.
+/// - `usize` - The inner pointer address of the bridge signal.
 pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
     let inner: &mut SignalInner<String> = get_signal_inner_ref(addr);
     inner.get_mut_listeners().clear();
-    // Remove the attribute signal's update slot from the signal update registry.
-    // Attribute signals are registered with the signal address as key (not a
-    // dynamic_id), so they are not covered by `cleanup_dynamic_node`.
+    inner.set_alive(false);
+    inner.set_value(String::new());
     cleanup_attr_signal_update_slot(addr);
 }
 

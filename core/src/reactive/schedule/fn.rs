@@ -154,7 +154,7 @@ pub(crate) fn bool_to_attr(source: Signal<bool>) -> AttributeValue {
     let string_signal: Signal<String> = Signal::create(source.get().to_string());
     let string_signal_clone: Signal<String> = string_signal;
     let source_for_sub: Signal<bool> = source;
-    source_for_sub.replace_subscribe(move || {
+    source_for_sub.subscribe(move || {
         string_signal_clone.set(source_for_sub.get().to_string());
     });
     AttributeValue::Signal(string_signal)

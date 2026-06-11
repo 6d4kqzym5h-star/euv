@@ -588,16 +588,6 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     route_signal: route_signal
                     drawer_open: drawer_open
                 }
-                div {
-                    class: c_nav_theme_toggle()
-                    button {
-                        class: c_nav_theme_button()
-                        onclick: toggle_theme(theme_signal)
-                        div {
-                            class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
-                        }
-                    }
-                }
                 a {
                     href: GITHUB_URL
                     target: "_blank"

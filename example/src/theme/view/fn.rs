@@ -92,12 +92,12 @@ css_vars! {
         // ─── Surface Colors ───
         // Elevation: primary(0) < nav(1) = card(2) < input inset
         // Clean warm-neutral palette
-        bg-primary: "#f7f8fa";
+        bg-primary: "#f5f5f7";
         bg-nav: "#ffffff";
         bg-card: "#ffffff";
         bg-modal: "#ffffff";
-        bg-input: "#f3f4f6";
-        bg-overlay: "rgba(0, 0, 0, 0.45)";
+        bg-input: "#f0f0f2";
+        bg-overlay: "rgba(0, 0, 0, 0.40)";
 
         // ─── Text Colors ───
         // Clear hierarchy: primary > secondary > muted
