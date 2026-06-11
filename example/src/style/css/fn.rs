@@ -32,7 +32,20 @@ pub(crate) fn inject_app_global_css() {
         "@keyframes euv-progress { from { width: 0%; } to { width: 100%; } } ",
         "@keyframes euv-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }",
     );
+    let extra_keyframes: &str = concat!(
+        "@keyframes euv-scale-in-modal { from { opacity: 0; transform: translateY(24px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } } ",
+        "@keyframes euv-slide-up-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } } ",
+        "@keyframes euv-pulse-soft { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } } ",
+        "@keyframes euv-shimmer-soft { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } } ",
+    );
+    let a11y_css: &str = concat!(
+        ":focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-border); } ",
+        "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; } } ",
+        "@media (hover: none) and (pointer: coarse) { * { -webkit-tap-highlight-color: transparent; } .c_card:hover, .c_home_stat_card:hover { transform: none !important; box-shadow: var(--shadow-card) !important; } .c_home_btn_primary:hover, .c_home_btn_secondary:hover { transform: none !important; } } ",
+    );
     Css::inject_css(global);
     Css::inject_css(scrollbar);
     Css::inject_css(keyframes);
+    Css::inject_css(extra_keyframes);
+    Css::inject_css(a11y_css);
 }
