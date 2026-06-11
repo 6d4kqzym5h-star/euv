@@ -58,8 +58,37 @@ jobs:
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-  check:
+  sync_workspace_version:
     needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Restore toml-cli
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin/toml
+          key: toml-cli-${{ runner.os }}
+      - name: Install toml-cli
+        run: cargo install toml-cli
+      - name: Sync workspace version
+        run: |
+          VERSION="${{ needs.setup.outputs.version }}"
+          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
+          printf '%s\n' "$CONTENT" > Cargo.toml
+          echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
+      - name: Commit and push
+        run: |
+          git config user.name "eastspire"
+          git config user.email "root@ltpp.vip"
+          git add Cargo.toml
+          git diff --cached --quiet || git commit -m "chore: sync workspace.dependencies.euv version to ${{ needs.setup.outputs.version }}"
+          git push
+
+  check:
+    needs: sync_workspace_version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -73,7 +102,7 @@ jobs:
         run: cargo fmt -- --check
 
   tests:
-    needs: setup
+    needs: sync_workspace_version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -86,7 +115,7 @@ jobs:
         run: cargo test --all-features -- --nocapture
 
   clippy:
-    needs: setup
+    needs: sync_workspace_version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -100,7 +129,7 @@ jobs:
         run: cargo clippy --all-features
 
   build:
-    needs: setup
+    needs: sync_workspace_version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -115,7 +144,7 @@ jobs:
   publish:
     permissions:
       contents: write
-    needs: [setup, check, tests, clippy, build]
+    needs: [setup, sync_workspace_version, check, tests, clippy, build]
     if: needs.setup.outputs.tag != ''
     runs-on: ubuntu-latest
     outputs:
@@ -148,19 +177,6 @@ jobs:
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
-      - name: Sync workspace version
-        if: steps.check_branch.outputs.skip == 'false'
-        run: |
-          VERSION="${{ needs.setup.outputs.version }}"
-          CONTENT=$(toml set Cargo.toml workspace.dependencies.euv.version "$VERSION")
-          printf '%s\n' "$CONTENT" > Cargo.toml
-          echo "🔧 Synced workspace.dependencies.euv version to $VERSION"
-          git add Cargo.toml
-          git diff --cached --quiet || git commit -m "chore: sync workspace.dependencies.euv version to $VERSION"
-      - name: Sync and push workspace version
-        if: steps.check_branch.outputs.skip == 'false'
-        run: |
-          git push
       - name: Publish to crates.io
         id: publish
         if: steps.check_branch.outputs.skip == 'false'
@@ -199,7 +215,7 @@ jobs:
           cargo build --release --all-features
 
   release:
-    needs: [setup, check, tests, clippy, build, publish]
+    needs: [setup, sync_workspace_version, check, tests, clippy, build, publish]
     permissions:
       contents: write
       packages: write
