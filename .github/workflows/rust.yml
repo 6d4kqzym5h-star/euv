@@ -38,7 +38,14 @@ jobs:
           key: toml-cli-${{ runner.os }}
       - name: Install toml-cli
         if: steps.cache_toml_cli.outputs.cache-hit != 'true'
-        run: cargo install toml-cli
+        run: |
+          for i in 1 2 3 4 5 6 7 8; do
+            if cargo install toml-cli; then
+              break
+            fi
+            echo "⚠️ Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
       - name: Read cargo metadata
         id: read
         run: |
@@ -78,7 +85,14 @@ jobs:
           key: toml-cli-${{ runner.os }}
       - name: Install toml-cli
         if: steps.cache_toml_cli.outputs.cache-hit != 'true'
-        run: cargo install toml-cli
+        run: |
+          for i in 1 2 3 4 5 6 7 8; do
+            if cargo install toml-cli; then
+              break
+            fi
+            echo "⚠️ Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
       - name: Sync workspace version
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
@@ -187,7 +201,14 @@ jobs:
           key: toml-cli-${{ runner.os }}
       - name: Install cargo-release
         if: steps.check_branch.outputs.skip == 'false'
-        run: cargo install cargo-release
+        run: |
+          for i in 1 2 3 4 5 6 7 8; do
+            if cargo install cargo-release; then
+              break
+            fi
+            echo "⚠️ Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
       - name: Configure git
         if: steps.check_branch.outputs.skip == 'false'
         run: |
