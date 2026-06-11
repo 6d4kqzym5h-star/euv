@@ -125,6 +125,9 @@ web-sys = { version = "0.3.100", features = [
     "Window",
 ] }
 
+[workspace.dependencies.clicoreexamplemacros]
+version = "0.6.1"
+
 [dependencies]
 euv-core = { workspace = true }
 euv-macros = { workspace = true }
