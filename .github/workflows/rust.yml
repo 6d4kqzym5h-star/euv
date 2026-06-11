@@ -97,24 +97,39 @@ jobs:
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
           ROOT_DIR=$(pwd)
-          toml set Cargo.toml workspace.dependencies.euv.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-          toml set Cargo.toml workspace.dependencies.euv-cli.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-          toml set Cargo.toml workspace.dependencies.euv-core.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-          toml set Cargo.toml workspace.dependencies.euv-macros.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-          toml set Cargo.toml workspace.dependencies.euv-example.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-          echo "🔧 Synced all workspace.dependencies versions to $VERSION"
-          for SUB_CRATE in cli core macros example; do
-            SUB_TOML="${ROOT_DIR}/${SUB_CRATE}/Cargo.toml"
+          echo "🔧 Syncing all versions to $VERSION"
+
+          # Auto-discover all workspace members and sync workspace.dependencies
+          # Reads [workspace] members from Cargo.toml, e.g. members = ["cli", "core", ...]
+          MEMBERS=$(toml get Cargo.toml workspace.members --raw | sed 's/\[//;s/\]//;s/"//g;s/,//g')
+          for member in $MEMBERS; do
+            # Derive crate name: if member dir matches package name directly
+            PKG_NAME="$member"
+            # Check if the member dir has a Cargo.toml and read its actual package.name
+            SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
             if [ -f "$SUB_TOML" ]; then
-              toml set "$SUB_TOML" package.version "$VERSION" > /tmp/SubCargo.toml.tmp && mv /tmp/SubCargo.toml.tmp "$SUB_TOML"
-              echo "🔧 Synced ${SUB_CRATE}/Cargo.toml package.version to $VERSION"
+              PKG_NAME=$(toml get "$SUB_TOML" package.name --raw)
+            fi
+            # Sync workspace.dependencies.<pkg_name>.version
+            toml set Cargo.toml workspace.dependencies.${PKG_NAME}.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+            echo "🔧 workspace.dependencies.${PKG_NAME}.version -> $VERSION"
+
+            # Sync each sub-crate's own package.version
+            if [ -f "$SUB_TOML" ]; then
+              toml set "$SUB_TOML" package.version "$VERSION" > /tmp/sub_cargo.tmp && mv /tmp/sub_cargo.tmp "$SUB_TOML"
+              echo "🔧 ${member}/Cargo.toml package.version -> $VERSION"
             fi
           done
+
+          # Also sync the root package.version itself
+          toml set Cargo.toml package.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          echo "🔧 Cargo.toml package.version -> $VERSION"
       - name: Commit and push
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
-          git add Cargo.toml cli/Cargo.toml core/Cargo.toml macros/Cargo.toml example/Cargo.toml
+          # Stage all Cargo.toml files that may have changed
+          find . -name Cargo.toml -not -path './target/*' | xargs git add
           git diff --cached --quiet || git commit -m "chore: sync all package versions to ${{ needs.setup.outputs.version }}"
           git push
 
