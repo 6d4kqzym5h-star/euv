@@ -1168,7 +1168,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     audio {
                         class: c_event_audio()
                         controls: EVENT_CONTROLS_TRUE
-                        src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+                        src: TAGS_AUDIO_SRC
                         onplay: on_audio_play
                         onpause: on_audio_pause
                         onended: on_audio_ended

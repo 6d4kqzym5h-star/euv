@@ -2,8 +2,7 @@
 pub(crate) const TAGS_VIDEO_SRC: &str = "https://docs.ltpp.vip/video/ship.mp4";
 
 /// The audio source URL for the tags embedded content demo.
-pub(crate) const TAGS_AUDIO_SRC: &str =
-    "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+pub(crate) const TAGS_AUDIO_SRC: &str = "https://docs.ltpp.vip/audio/time_boils_the_rain.mp3";
 
 /// The image source URL for the tags embedded content demo.
 pub(crate) const TAGS_IMAGE_SRC: &str = "https://docs.ltpp.vip/img/euv.png";
