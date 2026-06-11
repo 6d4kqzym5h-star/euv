@@ -38,7 +38,8 @@ pub(crate) struct PseudoBlock {
 
 /// A media query block parsed from the `class!` macro.
 ///
-/// Represents a block like `media "(max-width: 767px)" { font-size: "14px"; }`.
+/// Represents a block like `media "(max-width: 767px)" { font-size: "14px"; }`
+/// or `media "(max-width: 767px)" { overflow-y: "auto"; ::-webkit-scrollbar { width: "0px"; } }`.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct MediaBlock {
     /// The media query condition string (e.g., "(max-width: 767px)").
@@ -51,6 +52,12 @@ pub(crate) struct MediaBlock {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
+    /// The pseudo-class and pseudo-element blocks nested inside this media block
+    /// (e.g., `::-webkit-scrollbar { width: "0px"; }`).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) pseudo_blocks: Vec<PseudoBlock>,
 }
 
 /// A parent class reference in an extends clause.

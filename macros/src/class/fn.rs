@@ -270,10 +270,14 @@ pub(crate) fn media_blocks_to_tokens(
                     }
                 })
                 .collect();
+            let pseudo_expr: proc_macro2::TokenStream =
+                pseudo_blocks_to_tokens(block.get_pseudo_blocks())
+                    .unwrap_or_else(|| quote! { vec![] });
             quote! {
                 ::euv::MediaRule::new(
                     #query.to_string(),
-                    [#(#style_parts), *].concat()
+                    [#(#style_parts), *].concat(),
+                    #pseudo_expr
                 )
             }
         })
@@ -334,6 +338,21 @@ pub(crate) fn media_blocks_to_static_string(media_blocks: &[MediaBlock]) -> Stri
             result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(&expr_to_string(expr));
             result.push_str(CSS_DECL_TERMINATOR);
+        }
+        for pseudo_block in block.get_pseudo_blocks() {
+            result.push_str(pseudo_block.get_selector());
+            result.push_str(CSS_RULE_OPEN);
+            for (key, value) in pseudo_block.get_properties() {
+                let ClassPropValue::Expr(expr) = value;
+                let ClassPropKey::Static(key_str) = key else {
+                    continue;
+                };
+                result.push_str(key_str);
+                result.push_str(CSS_PROP_SEPARATOR);
+                result.push_str(&expr_to_string(expr));
+                result.push_str(CSS_DECL_TERMINATOR);
+            }
+            result.push(CHAR_CSS_RULE_CLOSE);
         }
         result.push(CHAR_CSS_RULE_CLOSE);
     }

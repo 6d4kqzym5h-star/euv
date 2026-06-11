@@ -69,9 +69,10 @@ pub struct Css {
 
 /// Represents a CSS @media rule attached to a class.
 ///
-/// Each media rule has a query string (e.g., "(max-width: 767px)")
-/// and a style declaration string. When injected into the DOM, it produces
-/// a rule like `@media (max-width: 767px) { .class-name { font-size: 14px; } }`.
+/// Each media rule has a query string (e.g., "(max-width: 767px)"),
+/// a style declaration string, and optional nested pseudo-element rules.
+/// When injected into the DOM, it produces a rule like:
+/// `@media (max-width: 767px) { .class-name { font-size: 14px; } .class-name::-webkit-scrollbar { width: 0px; } }`.
 #[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
 pub struct MediaRule {
     /// The media query condition string (e.g., "(max-width: 767px)").
@@ -85,6 +86,12 @@ pub struct MediaRule {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     style: String,
+    /// The pseudo-element rules nested inside this media rule
+    /// (e.g., `::-webkit-scrollbar { width: "0px"; }`).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pseudo_rules: Vec<PseudoRule>,
 }
 
 /// Adapts various event value types into an `AttributeValue` for event attributes.

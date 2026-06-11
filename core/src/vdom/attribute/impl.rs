@@ -268,9 +268,11 @@ impl Css {
 
     /// Parses media query rules from a compact serialization string.
     ///
-    /// The serialization format is: `@media query { key: value; key: value; }@media query2 { ... }`
+    /// The serialization format is:
+    /// `@media query { key: value; ::selector { key: value; } }@media query2 { ... }`
     /// This is used by the `class!` macro for fully static class definitions
     /// where media rules can be computed at compile time.
+    /// Supports nested pseudo-element blocks inside media query blocks.
     ///
     /// # Arguments
     ///
@@ -299,19 +301,114 @@ impl Css {
             let after_query: &str = after_prefix[query_end_index..]
                 .strip_prefix(CSS_RULE_OPEN)
                 .unwrap_or_default();
-            let style_end: Option<usize> = after_query.find(CHAR_CSS_RULE_CLOSE);
-            let Some(style_end_index) = style_end else {
-                break;
-            };
-            let style: &str = &after_query[..style_end_index];
-            if !query.is_empty() && !style.is_empty() {
-                rules.push(MediaRule::new(query.to_string(), style.to_string()));
+            let mut depth: usize = 1;
+            let mut close_pos: usize = 0;
+            for (index, char_value) in after_query.char_indices() {
+                if char_value == '{' {
+                    depth += 1;
+                } else if char_value == '}' {
+                    depth -= 1;
+                    if depth == 0 {
+                        close_pos = index;
+                        break;
+                    }
+                }
             }
-            remaining = after_query[style_end_index..]
+            if close_pos == 0 {
+                break;
+            }
+            let body: &str = &after_query[..close_pos];
+            let (style, pseudo_rules): (String, Vec<PseudoRule>) = Self::parse_media_body(body);
+            if !query.is_empty() && (!style.is_empty() || !pseudo_rules.is_empty()) {
+                rules.push(MediaRule::new(query.to_string(), style, pseudo_rules));
+            }
+            remaining = after_query[close_pos..]
                 .strip_prefix(CHAR_CSS_RULE_CLOSE)
                 .unwrap_or_default();
         }
         rules
+    }
+
+    /// Parses the body of a media rule, separating top-level style declarations
+    /// from nested pseudo-element blocks.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The media rule body content (between the outer braces).
+    ///
+    /// # Returns
+    ///
+    /// - `(String, Vec<PseudoRule>)` - A tuple of the style string and pseudo rules.
+    fn parse_media_body(body: &str) -> (String, Vec<PseudoRule>) {
+        let mut style_parts: String = String::new();
+        let mut pseudo_rules: Vec<PseudoRule> = Vec::new();
+        let mut remaining: &str = body;
+        while !remaining.is_empty() {
+            let brace_pos: Option<usize> = remaining.find('{');
+            match brace_pos {
+                Some(pos) => {
+                    let before_brace: &str = remaining[..pos].trim();
+                    if before_brace.starts_with("::") || before_brace.starts_with(':') {
+                        let selector: &str = before_brace;
+                        let after_brace: &str = &remaining[pos + 1..];
+                        let mut depth: usize = 1;
+                        let mut close_pos: usize = 0;
+                        for (index, char_value) in after_brace.char_indices() {
+                            if char_value == '{' {
+                                depth += 1;
+                            } else if char_value == '}' {
+                                depth -= 1;
+                                if depth == 0 {
+                                    close_pos = index;
+                                    break;
+                                }
+                            }
+                        }
+                        if close_pos > 0 {
+                            let inner_style: &str = after_brace[..close_pos].trim();
+                            if !selector.is_empty() && !inner_style.is_empty() {
+                                pseudo_rules.push(PseudoRule::new(
+                                    selector.to_string(),
+                                    inner_style.to_string(),
+                                ));
+                            }
+                            remaining = after_brace[close_pos + 1..].trim_start();
+                            continue;
+                        }
+                        break;
+                    } else {
+                        style_parts.push_str(before_brace);
+                        style_parts.push(' ');
+                        let after_brace: &str = &remaining[pos + 1..];
+                        let mut depth: usize = 1;
+                        let mut close_pos: usize = 0;
+                        for (index, char_value) in after_brace.char_indices() {
+                            if char_value == '{' {
+                                depth += 1;
+                            } else if char_value == '}' {
+                                depth -= 1;
+                                if depth == 0 {
+                                    close_pos = index;
+                                    break;
+                                }
+                            }
+                        }
+                        if close_pos > 0 {
+                            style_parts.push_str(after_brace[..close_pos].trim());
+                            style_parts.push(' ');
+                            remaining = after_brace[close_pos + 1..].trim_start();
+                            continue;
+                        }
+                        break;
+                    }
+                }
+                None => {
+                    style_parts.push_str(remaining.trim());
+                    break;
+                }
+            }
+        }
+        (style_parts.trim().to_string(), pseudo_rules)
     }
 
     /// Injects this class's styles into the DOM if not already present.
@@ -347,11 +444,25 @@ impl Css {
         }
         for media_rule in self.get_media_rules() {
             if !media_rule.get_query().is_empty() {
-                css_text = format!(
-                    "{css_text}{CHAR_CSS_RULE_SEPARATOR}{CSS_MEDIA_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{CHAR_CSS_CLASS_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}{CSS_RULE_CLOSE_FORMAT}",
-                    media_rule.get_query(),
+                let mut media_body: String = format!(
+                    "{CHAR_CSS_CLASS_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
                     self.get_name(),
                     media_rule.get_style()
+                );
+                for pseudo_rule in media_rule.get_pseudo_rules() {
+                    if !pseudo_rule.get_style().is_empty() {
+                        media_body = format!(
+                            "{media_body} {CHAR_CSS_CLASS_PREFIX}{}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
+                            self.get_name(),
+                            pseudo_rule.get_selector(),
+                            pseudo_rule.get_style()
+                        );
+                    }
+                }
+                css_text = format!(
+                    "{css_text}{CHAR_CSS_RULE_SEPARATOR}{CSS_MEDIA_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
+                    media_rule.get_query(),
+                    media_body
                 );
             }
         }

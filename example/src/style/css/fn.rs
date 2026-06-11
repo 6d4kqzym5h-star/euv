@@ -19,6 +19,7 @@ pub(crate) fn inject_app_global_css() {
         "::-webkit-scrollbar-track { background: transparent; } ",
         "::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; } ",
         "::-webkit-scrollbar-corner { background: transparent; }",
+        "@media (max-width: 767px) { * { scrollbar-width: none; } ::-webkit-scrollbar { width: 0px; height: 0px; } }",
     );
     let keyframes: &str = concat!(
         "@keyframes euv-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } ",

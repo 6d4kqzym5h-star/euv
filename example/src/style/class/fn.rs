@@ -39,7 +39,7 @@ class! {
         background: var!(bg-nav);
         color: var!(text-primary);
         line-height: "1.6";
-        padding-top: "env(safe-area-inset-top, 0px)";
+        padding: format!("env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)");
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         transition: format!("background {} {}, color {} {}", var!(duration-slow), var!(ease-in-out), var!(duration-slow), var!(ease-in-out));
         ::-webkit-scrollbar-thumb {
@@ -282,6 +282,10 @@ class! {
             overflow-y: "auto";
             padding: format!("{} {}", var!(space-md), var!(padding-main-horizontal-mobile));
             align-items: "stretch";
+            scrollbar-width: "none";
+            ::-webkit-scrollbar {
+                width: "0px";
+            }
         }
     }
 
@@ -2408,9 +2412,19 @@ class! {
 
     pub(crate) c_mobile_main {
         flex: "1";
-        padding: format!("{} {} {} {}", var!(space-md), var!(padding-main-horizontal-mobile), "calc(16px + env(safe-area-inset-bottom, 0px))", var!(padding-main-horizontal-mobile));
+        padding: format!("{} {} calc(16px + env(safe-area-inset-bottom, 0px)) {}", var!(space-md), var!(padding-main-horizontal-mobile), var!(padding-main-horizontal-mobile));
         background: var!(bg-primary);
         overflow-y: "auto";
+        scrollbar-width: "none";
+        ::-webkit-scrollbar {
+            width: "0px";
+        }
+        media("(min-width: 768px)") {
+            scrollbar-width: "thin";
+            ::-webkit-scrollbar {
+                width: "6px";
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
