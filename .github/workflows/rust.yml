@@ -95,6 +95,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -109,6 +111,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Prepare environment
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -122,6 +126,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Load clippy
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -136,6 +142,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Setup build
         uses: dtolnay/rust-toolchain@stable
         with:
