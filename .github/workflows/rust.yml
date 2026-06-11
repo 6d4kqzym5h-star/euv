@@ -59,6 +59,8 @@ jobs:
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
   sync_workspace_version:
+    permissions:
+      contents: write
     needs: setup
     runs-on: ubuntu-latest
     steps:
