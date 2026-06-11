@@ -177,6 +177,8 @@ jobs:
       - name: Checkout
         if: steps.check_branch.outputs.skip == 'false'
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
       - name: Restore toml-cli
         if: steps.check_branch.outputs.skip == 'false'
         uses: actions/cache@v3
@@ -241,6 +243,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref }}
           fetch-depth: 0
       - name: Get package name and branch info
         id: package_info
