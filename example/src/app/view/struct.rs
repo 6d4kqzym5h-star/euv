@@ -55,7 +55,8 @@ pub(crate) struct BuildMobileNavItemsProps {
 pub(crate) struct DesktopLayoutProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,
-    /// The reactive signal holding the current theme.
+    /// The reactive signal holding the current theme (kept for API consistency).
+    #[allow(dead_code)]
     pub(crate) theme_signal: Signal<String>,
     /// The reactive signal holding the root class name.
     pub(crate) root_class_signal: Signal<String>,

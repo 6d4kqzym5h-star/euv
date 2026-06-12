@@ -220,13 +220,54 @@ class! {
 
     pub(crate) c_nav_footer {
         padding: format!("{} {}", var!(space-lg), var!(space-xl));
-        border-top: format!("1px solid {}", var!(border-subtle));
-        font-size: var!(font-sm);
+        position: "relative";
+        font-size: var!(font-xs);
         color: var!(text-muted);
         flex-shrink: "0";
         text-decoration: "none";
-        display: "block";
+        display: "flex";
+        align-items: "center";
+        gap: var!(space-xs);
         cursor: "pointer";
+        transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
+        opacity: "0.7";
+        hover {
+            opacity: "1";
+        }
+    }
+
+    pub(crate) c_nav_footer_divider {
+        position: "absolute";
+        top: "0";
+        left: var!(space-lg);
+        right: var!(space-lg);
+        height: "1px";
+        background: format!("linear-gradient(90deg, transparent, {}, transparent)", var!(border-subtle));
+    }
+
+    pub(crate) c_nav_footer_text {
+        font-weight: "400";
+        letter-spacing: "0.02em";
+    }
+
+    pub(crate) c_nav_footer_brand {
+        font-weight: "700";
+        background: var!(accent-gradient);
+        -webkit-background-clip: "text";
+        -webkit-text-fill-color: "transparent";
+        background-clip: "text";
+    }
+
+    pub(crate) c_nav_footer_badge {
+        display: "inline-flex";
+        align-items: "center";
+        padding: "1px 6px";
+        border-radius: var!(radius-sm);
+        background: var!(accent-muted);
+        color: var!(accent);
+        font-size: "10px";
+        font-weight: "600";
+        letter-spacing: "0.04em";
     }
 
     pub(crate) c_nav_item_active {
@@ -614,7 +655,7 @@ class! {
         }
         focus {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: "none";
         }
     }
 
@@ -2293,20 +2334,18 @@ class! {
 
     pub(crate) c_vconsole_close_button {
         background: "transparent";
-        border: format!("1px solid {}", var!(border-console-button));
+        border: "none";
         color: var!(text-console-button);
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         border-radius: var!(radius-sm);
         cursor: "pointer";
         font-size: var!(font-lg);
         line-height: "1";
-        transition: format!("border-color {} {}, color {} {}, background {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_vconsole_close_button_hover {
-        border-color: var!(text-console-close-hover);
         color: var!(text-console-close-hover);
-        background: var!(bg-console-close-hover);
     }
 
     pub(crate) c_vconsole_body {
@@ -2538,6 +2577,26 @@ class! {
         padding: "0px";
     }
 
+    pub(crate) c_mobile_drawer_close_button {
+        width: "32px";
+        height: "32px";
+        border-radius: var!(radius-sm);
+        background: "transparent";
+        border: "none";
+        cursor: "pointer";
+        font-size: "18px";
+        font-weight: "500";
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        color: var!(text-muted);
+        padding: "0px";
+        transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
+        hover {
+            color: var!(text-primary);
+        }
+    }
+
     pub(crate) c_mobile_overlay {
         position: "fixed";
         top: "0px";
@@ -2572,6 +2631,9 @@ class! {
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         box-shadow: var!(shadow-drawer);
+        border-top-right-radius: var!(radius-xl);
+        border-bottom-right-radius: var!(radius-xl);
+        overflow: "hidden";
     }
 
     pub(crate) c_mobile_nav_drawer_closed {

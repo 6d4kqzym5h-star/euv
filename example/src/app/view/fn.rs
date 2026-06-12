@@ -415,7 +415,7 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
 pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNode {
     let DesktopLayoutProps {
         route_signal,
-        theme_signal,
+        theme_signal: _,
         root_class_signal,
         panel_open,
     }: DesktopLayoutProps = node.try_get_props().unwrap_or_default();
@@ -444,22 +444,26 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 build_desktop_nav_items {
                     route_signal: route_signal
                 }
-                div {
-                    class: c_nav_theme_toggle()
-                    button {
-                        class: c_nav_theme_button()
-                        onclick: toggle_theme(theme_signal)
-                        div {
-                            class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
-                        }
-                    }
-                }
                 a {
                     href: GITHUB_URL
                     target: "_blank"
                     onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
-                    format!("Built with {} & WASM", BRAND_NAME)
+                    div {
+                        class: c_nav_footer_divider()
+                    }
+                    span {
+                        class: c_nav_footer_text()
+                        "Built with"
+                    }
+                    span {
+                        class: c_nav_footer_brand()
+                        BRAND_NAME
+                    }
+                    span {
+                        class: c_nav_footer_badge()
+                        "WASM"
+                    }
                 }
             }
             main {
@@ -575,7 +579,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         }
                     }
                     button {
-                        class: c_mobile_menu_button()
+                        class: c_mobile_drawer_close_button()
                         onclick: on_drawer_close_click
                         "✕"
                     }
@@ -593,7 +597,21 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     target: "_blank"
                     onclick: external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
-                    format!("Built with {} & WASM", BRAND_NAME)
+                    div {
+                        class: c_nav_footer_divider()
+                    }
+                    span {
+                        class: c_nav_footer_text()
+                        "Built with"
+                    }
+                    span {
+                        class: c_nav_footer_brand()
+                        BRAND_NAME
+                    }
+                    span {
+                        class: c_nav_footer_badge()
+                        "WASM"
+                    }
                 }
             }
         }
@@ -621,6 +639,8 @@ pub(crate) fn app() -> VirtualNode {
     use_scroll_to_top(route_signal);
     use_overlay_history(panel_open, drawer_open, mobile_signal);
     use_scroll_drawer_to_active(drawer_open);
+    use_safe_area_fix();
+    use_keyboard_inset_fix();
     html! {
         if { mobile_signal.get() } {
             mobile_layout {

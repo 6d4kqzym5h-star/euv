@@ -64,10 +64,22 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                     }
                 }
             }
+            my_card {
+                title: "Nested Modals"
+                p {
+                    class: c_demo_text()
+                    "Three stacked modal layers. The system back gesture closes them one at a time, newest first."
+                }
+                primary_button {
+                    label: "Open"
+                    onclick: modal_on_open_nested_1(state)
+                    "Open Layer 1"
+                }
+            }
             if { state.get_show_basic().get() } {
                 my_modal {
                     title: "Basic Modal"
-                    onclick: use_toggle(state.get_show_basic())
+                    onclick: modal_dismiss_handler(state.get_show_basic())
                     p {
                         class: c_demo_text()
                         "This is a basic modal dialog. Click the close button or the overlay to dismiss."
@@ -81,7 +93,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
             if { state.get_show_confirm().get() } {
                 my_modal {
                     title: "Confirm Action"
-                    onclick: use_toggle(state.get_show_confirm())
+                    onclick: modal_dismiss_handler(state.get_show_confirm())
                     p {
                         class: c_demo_text()
                         "Are you sure you want to proceed with this action?"
@@ -104,7 +116,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
             if { state.get_show_form().get() } {
                 my_modal {
                     title: "Quick Sign Up"
-                    onclick: use_toggle(state.get_show_form())
+                    onclick: modal_dismiss_handler(state.get_show_form())
                     div {
                         class: c_form_input_wrapper()
                         label {
@@ -171,6 +183,60 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             onclick: modal_on_cancel_form(state)
                             "Cancel"
                         }
+                    }
+                }
+            }
+            if { state.get_show_nested_1().get() } {
+                my_modal {
+                    title: "Nested Modal · Layer 1"
+                    onclick: modal_dismiss_handler(state.get_show_nested_1())
+                    p {
+                        class: c_demo_text()
+                        "This is the first layer. Open another modal on top of it."
+                    }
+                    p {
+                        class: c_demo_text_muted()
+                        "Use the system back gesture to close the topmost layer first."
+                    }
+                    div {
+                        class: c_modal_actions()
+                        modal_primary_button {
+                            label: "Open Layer 2"
+                            onclick: modal_on_open_nested_2(state)
+                            "Open Layer 2"
+                        }
+                    }
+                }
+            }
+            if { state.get_show_nested_2().get() } {
+                my_modal {
+                    title: "Nested Modal · Layer 2"
+                    onclick: modal_dismiss_handler(state.get_show_nested_2())
+                    p {
+                        class: c_demo_text()
+                        "This is the second layer, stacked over layer 1."
+                    }
+                    div {
+                        class: c_modal_actions()
+                        modal_primary_button {
+                            label: "Open Layer 3"
+                            onclick: modal_on_open_nested_3(state)
+                            "Open Layer 3"
+                        }
+                    }
+                }
+            }
+            if { state.get_show_nested_3().get() } {
+                my_modal {
+                    title: "Nested Modal · Layer 3"
+                    onclick: modal_dismiss_handler(state.get_show_nested_3())
+                    p {
+                        class: c_demo_text()
+                        "This is the third and innermost layer."
+                    }
+                    p {
+                        class: c_demo_text_muted()
+                        "Press back three times: layer 3, then 2, then 1 close in order before leaving the page."
                     }
                 }
             }

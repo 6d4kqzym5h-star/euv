@@ -497,6 +497,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
 pub(crate) fn exit_fullscreen(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
+    force_safe_area_recalc();
     let window_value: Window = window().expect("no global window exists");
     let history: History = window_value.history().expect("no history object exists");
     let _ = history.back();
@@ -519,6 +520,7 @@ pub(crate) fn exit_fullscreen(state: UseCanvas) {
 pub(crate) fn exit_fullscreen_from_popstate(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
+    force_safe_area_recalc();
 }
 
 /// Subscribes to browser `popstate` events to handle the system back

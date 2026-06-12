@@ -12,6 +12,15 @@ pub(crate) struct UseModal {
     /// Whether the form modal is visible.
     #[get(type(copy))]
     pub(crate) show_form: Signal<bool>,
+    /// Whether the first (outermost) nested modal layer is visible.
+    #[get(type(copy))]
+    pub(crate) show_nested_1: Signal<bool>,
+    /// Whether the second nested modal layer is visible.
+    #[get(type(copy))]
+    pub(crate) show_nested_2: Signal<bool>,
+    /// Whether the third (innermost) nested modal layer is visible.
+    #[get(type(copy))]
+    pub(crate) show_nested_3: Signal<bool>,
     /// The confirm action result message.
     #[get(type(copy))]
     pub(crate) confirm_result: Signal<String>,
