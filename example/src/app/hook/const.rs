@@ -14,6 +14,16 @@ pub(crate) const KEYBOARD_RESIZE_EVENT: &str = "resize";
 /// keyboard showing or hiding on iOS Safari.
 pub(crate) const VISUAL_VIEWPORT_RESIZE_EVENT: &str = "resize";
 
+/// The `scroll` event emitted by `window.visualViewport` whenever the visual
+/// viewport scrolls.
+///
+/// On mobile devices the on-screen keyboard may close without blurring the
+/// focused element. If the user then scrolls the page and re-taps the field,
+/// the keyboard reappears but the field may no longer be within the visible
+/// viewport. Listening for this event ensures the focused field is
+/// repositioned into the visible area after every viewport scroll.
+pub(crate) const VISUAL_VIEWPORT_SCROLL_EVENT: &str = "scroll";
+
 /// CSS selector matching every focusable text-entry element whose visibility
 /// must be guaranteed when the on-screen keyboard appears.
 ///

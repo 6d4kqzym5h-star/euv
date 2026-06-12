@@ -346,7 +346,7 @@ css_vars! {
         bg-nav: "#151520";
         bg-card: "#1c1c28";
         bg-modal: "#1c1c28";
-        bg-input: "#232330";
+        bg-input: "#1a1a28";
         bg-overlay: "rgba(0, 0, 0, 0.60)";
 
         // ─── Text Colors ───

@@ -472,7 +472,6 @@ class! {
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: var!(shadow-accent-sm);
-            flex-shrink: "0";
         }
     }
 
@@ -797,28 +796,35 @@ class! {
 
     pub(crate) c_form_input {
         width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
-        transition: format!("box-shadow {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
         background: var!(bg-input);
         color: var!(text-primary);
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
         focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
         }
     }
 
     pub(crate) c_form_input_no_transition {
         width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
@@ -827,10 +833,11 @@ class! {
 
     pub(crate) c_form_input_error {
         width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
@@ -838,8 +845,8 @@ class! {
         overflow-x: "hidden";
         word-wrap: "break-word";
         font-family: "inherit";
-        line-height: "1.5";
         color: var!(text-primary);
+        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         focus {
             outline: "none";
             border-color: var!(text-error);
@@ -877,10 +884,11 @@ class! {
 
     pub(crate) c_select_input {
         width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
@@ -890,21 +898,27 @@ class! {
         background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")";
         background-repeat: "no-repeat";
         background-position: "right 14px center";
-        transition: format!("box-shadow {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
         focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
         }
     }
 
     pub(crate) c_textarea_input {
         width: "100%";
         max-width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
@@ -912,13 +926,17 @@ class! {
         overflow-x: "hidden";
         word-wrap: "break-word";
         font-family: "inherit";
-        line-height: "1.5";
         color: var!(text-primary);
-        transition: format!("box-shadow {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
         focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
         }
     }
 
@@ -1582,29 +1600,46 @@ class! {
     pub(crate) c_list_input {
         flex: "1";
         min-width: "0px";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-sm);
+        border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.4";
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
+        focus {
+            outline: "none";
+            border-color: var!(accent);
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
+        }
     }
 
     pub(crate) c_list_input_error {
         flex: "1";
         min-width: "0px";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
-        border-radius: var!(radius-sm);
+        border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.4";
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
+        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        focus {
+            outline: "none";
+            border-color: var!(text-error);
+            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+        }
     }
 
     pub(crate) c_list_error_text {
@@ -2746,14 +2781,20 @@ class! {
 
     pub(crate) c_file_upload_input {
         width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         color: var!(text-primary);
         cursor: "pointer";
+        transition: format!("border-color {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
     }
 
     pub(crate) c_file_upload_input_hidden {
@@ -3364,15 +3405,26 @@ class! {
     pub(crate) c_ws_message_input {
         flex: "1";
         min-width: "0px";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.4";
+        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
+        focus {
+            outline: "none";
+            border-color: var!(accent);
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
+        }
     }
 
     pub(crate) c_ws_messages_list {
@@ -3750,14 +3802,26 @@ class! {
 
     pub(crate) c_tag_demo_input {
         width: "100%";
-        padding: "10px 14px";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
+        focus {
+            outline: "none";
+            border-color: var!(accent);
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
+        }
     }
 
     pub(crate) c_tag_demo_input_color {
@@ -3772,27 +3836,51 @@ class! {
 
     pub(crate) c_tag_demo_textarea {
         width: "100%";
-        padding: "10px 14px";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
         resize: "vertical";
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
+        focus {
+            outline: "none";
+            border-color: var!(accent);
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
+        }
     }
 
     pub(crate) c_tag_demo_select {
         width: "100%";
-        padding: "10px 14px";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
+        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
+        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(accent-border);
+            background: var!(accent-muted);
+        }
+        focus {
+            outline: "none";
+            border-color: var!(accent);
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            background: var!(accent-muted);
+        }
     }
 
     pub(crate) c_tag_demo_progress {

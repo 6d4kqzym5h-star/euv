@@ -46,9 +46,7 @@ pub(crate) fn force_safe_area_recalc() {
     let html_element: HtmlElement = root_element.unchecked_into();
     let style: CssStyleDeclaration = html_element.style();
     // Phase 1: toggle display to force full layout invalidation of env() values
-    let original_display: String = style
-        .get_property_value("display")
-        .unwrap_or_default();
+    let original_display: String = style.get_property_value("display").unwrap_or_default();
     let _ = style.set_property("display", "none");
     // Force synchronous reflow by reading offsetHeight
     let _ = html_element.offset_height();
@@ -72,12 +70,14 @@ pub(crate) fn force_safe_area_recalc() {
         let html_el: HtmlElement = el.unchecked_into();
         let el_style: CssStyleDeclaration = html_el.style();
         // Re-apply safe-area padding to force env() re-evaluation
-        let _ = el_style.set_property(
-            "padding-top",
-            "env(safe-area-inset-top, 0px)",
-        );
+        let _ = el_style.set_property("padding-top", "env(safe-area-inset-top, 0px)");
         let _ = html_el.offset_height();
+        // Clean up all temporary padding properties to restore original styles
         let _ = el_style.remove_property("padding-top");
+        let _ = el_style.remove_property("padding-right");
+        let _ = el_style.remove_property("padding-bottom");
+        let _ = el_style.remove_property("padding-left");
+        let _ = el_style.remove_property("padding");
         // Scroll to current position to help iOS refresh viewport insets
         let scroll_x: f64 = win.scroll_x().unwrap_or(0.0);
         let scroll_y: f64 = win.scroll_y().unwrap_or(0.0);
@@ -213,7 +213,8 @@ pub(crate) fn on_change_checked(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)
 }
 
 /// Registers the global listeners that keep a focused text-entry field fully
-/// visible inside the viewport whenever the on-screen keyboard appears.
+/// visible inside the viewport whenever the on-screen keyboard appears or the
+/// user scrolls the page while a field remains focused.
 ///
 /// Because the application shell pins `html, body, #app` to `overflow: hidden`
 /// and performs all scrolling inside the inner `<main>` container, the browser
@@ -228,6 +229,12 @@ pub(crate) fn on_change_checked(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)
 /// - Listening for `window` `resize` and `visualViewport` `resize` so the
 ///   correction is re-applied when the keyboard finishes animating in or when
 ///   the viewport geometry changes (orientation change, keyboard resize).
+/// - Listening for `visualViewport` `scroll` so the correction is re-applied
+///   when the user scrolls the page while a text-entry field still has focus.
+///   On mobile devices the keyboard may close without blurring the field; if
+///   the user then scrolls and re-taps the field, the keyboard reappears but
+///   the field may have been scrolled out of view. The `scroll` listener
+///   ensures the focused field is repositioned into the visible area.
 ///
 /// Each trigger defers to `ensure_focused_field_visible`, which performs the
 /// occlusion math against the visual viewport and scrolls the field into the
@@ -243,14 +250,22 @@ pub(crate) fn use_keyboard_inset_fix() {
     });
     if let Some(viewport) = window().and_then(|window_value: Window| window_value.visual_viewport())
     {
-        let listener: Closure<dyn FnMut()> = Closure::wrap(Box::new(|| {
+        let resize_listener: Closure<dyn FnMut()> = Closure::wrap(Box::new(|| {
             ensure_focused_field_visible();
         }));
         let _ = viewport.add_event_listener_with_callback(
             VISUAL_VIEWPORT_RESIZE_EVENT,
-            listener.as_ref().unchecked_ref(),
+            resize_listener.as_ref().unchecked_ref(),
         );
-        listener.forget();
+        resize_listener.forget();
+        let scroll_listener: Closure<dyn FnMut()> = Closure::wrap(Box::new(|| {
+            ensure_focused_field_visible();
+        }));
+        let _ = viewport.add_event_listener_with_callback(
+            VISUAL_VIEWPORT_SCROLL_EVENT,
+            scroll_listener.as_ref().unchecked_ref(),
+        );
+        scroll_listener.forget();
     }
 }
 
@@ -292,16 +307,28 @@ pub(crate) fn ensure_focused_field_visible() {
     raf_closure.forget();
 }
 
-/// Scrolls the given text-entry field so it sits fully within the area not
-/// covered by the on-screen keyboard, keeping a small margin for readability.
+/// Scrolls the given text-entry field so it sits fully within the visible
+/// viewport, keeping a small margin for readability.
 ///
 /// The visible bottom edge is derived from `window.visualViewport` (its
 /// `offsetTop + height`) which excludes the keyboard region on iOS Safari; on
-/// platforms without a visual viewport the layout `innerHeight` is used. When
-/// the keyboard is open (detected by comparing the visual viewport height to
-/// the layout height against `KEYBOARD_OPEN_THRESHOLD_PX`), the field is first
-/// centred via `scrollIntoView`, then any residual occlusion is corrected by
-/// nudging the nearest scrollable ancestor so the field clears the keyboard.
+/// platforms without a visual viewport the layout `innerHeight` is used.
+///
+/// The function always centres the field via `scrollIntoView` first, which
+/// resolves occlusion in the common case and gracefully degrades on platforms
+/// without a visual viewport. Then, regardless of whether the keyboard is
+/// open, it re-measures the element's position and corrects any remaining
+/// occlusion by nudging the nearest scrollable ancestor.
+///
+/// When the keyboard is open the visible area is the region above the
+/// keyboard; when the keyboard is closed the visible area is the full layout
+/// viewport. This ensures that a focused field near the bottom of the page is
+/// still scrolled into view even when the user scrolls the page while the
+/// field remains focused, or when the keyboard reappears after a scroll.
+///
+/// If the scrollable container does not have enough remaining scroll distance
+/// the field is scrolled as close to the top of the visible area as possible
+/// to guarantee at least partial visibility.
 ///
 /// # Arguments
 ///
@@ -324,19 +351,17 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
         .unwrap_or(layout_height);
     let visible_bottom: f64 = visible_top + visible_height;
     let keyboard_open: bool = layout_height - visible_height > KEYBOARD_OPEN_THRESHOLD_PX;
-    // Always centre the field first; this resolves occlusion in the common case
-    // and gracefully degrades on platforms without a visual viewport.
     let options: ScrollIntoViewOptions = ScrollIntoViewOptions::new();
     options.set_behavior(ScrollBehavior::Smooth);
     options.set_block(ScrollLogicalPosition::Center);
     element.scroll_into_view_with_scroll_into_view_options(&options);
-    if !keyboard_open {
-        return;
-    }
-    // Re-measure and correct any residual occlusion that `scrollIntoView`
-    // cannot resolve, since it is unaware of the visual-viewport keyboard inset.
     let rect: DomRect = element.get_bounding_client_rect();
-    let overflow_bottom: f64 = rect.bottom() + KEYBOARD_VISIBLE_MARGIN_PX - visible_bottom;
+    let effective_bottom: f64 = if keyboard_open {
+        visible_bottom
+    } else {
+        layout_height
+    };
+    let overflow_bottom: f64 = rect.bottom() + KEYBOARD_VISIBLE_MARGIN_PX - effective_bottom;
     let overflow_top: f64 = visible_top + KEYBOARD_VISIBLE_MARGIN_PX - rect.top();
     let delta: f64 = if overflow_bottom > 0.0 {
         overflow_bottom
@@ -347,7 +372,14 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
     };
     if let Some(container) = nearest_scrollable_ancestor(element) {
         let current_scroll_top: i32 = container.scroll_top();
-        container.set_scroll_top((current_scroll_top as f64 + delta).max(0.0) as i32);
+        let max_scroll_top: i32 = (container.scroll_height() - container.client_height()).max(0);
+        let target_scroll_top: i32 = (current_scroll_top as f64 + delta)
+            .round()
+            .clamp(0.0, max_scroll_top as f64) as i32;
+        container.set_scroll_top(target_scroll_top);
+        if target_scroll_top >= max_scroll_top && overflow_bottom > 0.0 {
+            scroll_ancestor_chain_into_view(element, overflow_bottom, effective_bottom);
+        }
     }
 }
 
@@ -377,4 +409,55 @@ pub(crate) fn nearest_scrollable_ancestor(element: &HtmlElement) -> Option<HtmlE
         current = node.parent_element();
     }
     None
+}
+
+/// When the nearest scrollable ancestor has been scrolled to its maximum but
+/// the element still overflows the visible bottom edge (e.g. the field is
+/// near the bottom of the page and there is not enough scroll distance left),
+/// walks up the ancestor chain and nudges each outer scrollable container
+/// further to maximise the visible area of the element.
+///
+/// The algorithm starts from the element's parent and visits every scrollable
+/// ancestor. For each one it computes how much additional scroll distance is
+/// available (`maxScrollTop - currentScrollTop`) and applies the smaller of
+/// that and the remaining `overflow` so the field is revealed as much as
+/// possible without overshooting.
+///
+/// After scrolling an outer ancestor the element's bounding rect is
+/// re-measured so the remaining overflow is accurate for the next iteration.
+///
+/// # Arguments
+///
+/// - `&HtmlElement` - The focused text-entry element that is still occluded.
+/// - `f64` - The initial bottom overflow in CSS pixels (element bottom +
+///   margin minus the visible bottom edge).
+/// - `f64` - The y-coordinate of the visible bottom edge (layout height
+///   when the keyboard is closed, or `offsetTop + height` of the visual
+///   viewport when the keyboard is open).
+pub(crate) fn scroll_ancestor_chain_into_view(
+    element: &HtmlElement,
+    mut overflow: f64,
+    effective_bottom: f64,
+) {
+    let mut current: Option<Element> = element.parent_element();
+    while let Some(node) = current {
+        if let Ok(ancestor) = node.clone().dyn_into::<HtmlElement>()
+            && ancestor.scroll_height() > ancestor.client_height()
+        {
+            let current_scroll: i32 = ancestor.scroll_top();
+            let max_scroll: i32 = (ancestor.scroll_height() - ancestor.client_height()).max(0);
+            let available: i32 = (max_scroll - current_scroll).max(0);
+            let needed: i32 = overflow.round() as i32;
+            let scroll_delta: i32 = available.min(needed);
+            if scroll_delta > 0 {
+                ancestor.set_scroll_top(current_scroll + scroll_delta);
+                let updated_rect: DomRect = element.get_bounding_client_rect();
+                overflow = updated_rect.bottom() + KEYBOARD_VISIBLE_MARGIN_PX - effective_bottom;
+                if overflow <= 0.0 {
+                    return;
+                }
+            }
+        }
+        current = node.parent_element();
+    }
 }

@@ -34,7 +34,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                         class: c_primary_button()
                         class: c_list_item_button()
                         onclick: todo_list_on_add(state)
-                        "Add Item"
+                        "Add"
                     }
                 }
                 if { !state.get_add_error().get().is_empty() } {

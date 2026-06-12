@@ -66,17 +66,17 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     primary_button {
                         label: "Set"
                         onclick: local_storage_on_set(state)
-                        "Set Item"
+                        "Set"
                     }
                     primary_button {
                         label: "Get"
                         onclick: local_storage_on_get(state)
-                        "Get Item"
+                        "Get"
                     }
                     primary_button {
                         label: "Remove"
                         onclick: local_storage_on_remove(state)
-                        "Remove Item"
+                        "Remove"
                     }
                 }
                 div {
@@ -141,17 +141,17 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     primary_button {
                         label: "Set"
                         onclick: session_storage_on_set(state)
-                        "Set Item"
+                        "Set"
                     }
                     primary_button {
                         label: "Get"
                         onclick: session_storage_on_get(state)
-                        "Get Item"
+                        "Get"
                     }
                     primary_button {
                         label: "Remove"
                         onclick: session_storage_on_remove(state)
-                        "Remove Item"
+                        "Remove"
                     }
                 }
                 div {

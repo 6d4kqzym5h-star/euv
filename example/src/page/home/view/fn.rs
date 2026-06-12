@@ -11,13 +11,14 @@ use crate::*;
 /// - `VirtualNode` - The home page virtual DOM tree.
 #[component]
 pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
-    let _props = node.try_get_props().unwrap_or_default();
+    let PageHomeProps = node.try_get_props().unwrap_or_default();
     let native_bridge_state: UseNativeBridge = use_native_bridge();
     let is_first_render: Signal<bool> = use_signal(|| true);
     if is_first_render.get() {
         is_first_render.set(false);
         load_native_bridge_data(native_bridge_state);
     }
+    let version: String = format!("v{EUV_VERSION}");
     html! {
         div {
             class: c_page_container()
@@ -35,7 +36,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                     }
                     div {
                         class: c_home_hero_badge()
-                        "v" { EUV_VERSION }
+                        version.clone()
                     }
                     p {
                         class: c_home_hero_subtitle()
@@ -48,13 +49,13 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             href: EUV_REPOSITORY
                             target: "_blank"
                             onclick: external_link_handler(EUV_REPOSITORY.to_string())
-                            "View on GitHub"
+                            "GitHub"
                         }
                         a {
                             class: c_home_btn_secondary()
                             href: "#/signals"
                             onclick: link_handler("/signals".to_string())
-                            "Explore Demos"
+                            "Explore"
                         }
                     }
                 }
@@ -241,7 +242,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         }
                         span {
                             class: c_info_value()
-                            EUV_VERSION
+                            version
                         }
                     }
                     div {
