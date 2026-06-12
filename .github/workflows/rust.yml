@@ -99,37 +99,47 @@ jobs:
           ROOT_DIR=$(pwd)
           echo "🔧 Syncing all versions to $VERSION"
 
-          # Auto-discover all workspace members and sync workspace.dependencies
-          # Reads [workspace] members from Cargo.toml, e.g. members = ["cli", "core", ...]
+          # Collect all workspace member package names (including root package if it depends on itself)
+          MEMBER_PKG_NAMES=""
           MEMBERS=$(toml get Cargo.toml workspace.members --raw | sed 's/\[//;s/\]//;s/"//g;s/,//g')
           for member in $MEMBERS; do
-            # Derive crate name: if member dir matches package name directly
-            PKG_NAME="$member"
-            # Check if the member dir has a Cargo.toml and read its actual package.name
             SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
             if [ -f "$SUB_TOML" ]; then
               PKG_NAME=$(toml get "$SUB_TOML" package.name --raw)
+              MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $PKG_NAME"
             fi
-            # Sync workspace.dependencies.<pkg_name>.version
-            toml set Cargo.toml workspace.dependencies.${PKG_NAME}.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-            echo "🔧 workspace.dependencies.${PKG_NAME}.version -> $VERSION"
+          done
 
-            # Sync each sub-crate's own package.version
+          # Also include the root package itself
+          ROOT_PKG_NAME=$(toml get Cargo.toml package.name --raw)
+          MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $ROOT_PKG_NAME"
+
+          # Sync workspace.dependencies.<pkg_name>.version for all member packages using sed
+          # This handles both inline table format: euv-cli = { path = "cli", version = "0.6.3" }
+          # and sub-table format: [workspace.dependencies.euv-cli] version = "0.6.3"
+          for pkg_name in $MEMBER_PKG_NAMES; do
+            if grep -q "^${pkg_name} *=.*version" Cargo.toml; then
+              sed -i -E "s|^(${pkg_name}[[:space:]]*=[[:space:]]*\{.*version[[:space:]]*=[[:space:]]*\")([^\"]+)(\".*)|\1${VERSION}\3|" Cargo.toml
+              echo "🔧 workspace.dependencies.${pkg_name}.version -> $VERSION (inline)"
+            elif grep -q "^\[workspace\.dependencies\.${pkg_name}\]" Cargo.toml; then
+              sed -i -E "/^\[workspace\.dependencies\.${pkg_name}\]/,/^\[/ s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
+              echo "🔧 workspace.dependencies.${pkg_name}.version -> $VERSION (sub-table)"
+            else
+              echo "⏭️ workspace.dependencies.${pkg_name} not found, skipping"
+            fi
+          done
+
+          # Sync each sub-crate's own package.version
+          for member in $MEMBERS; do
+            SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
             if [ -f "$SUB_TOML" ]; then
-              toml set "$SUB_TOML" package.version "$VERSION" > /tmp/sub_cargo.tmp && mv /tmp/sub_cargo.tmp "$SUB_TOML"
+              sed -i -E "s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" "$SUB_TOML"
               echo "🔧 ${member}/Cargo.toml package.version -> $VERSION"
             fi
           done
 
-          # Also sync the root package.version and workspace.dependencies.<root_pkg>.version (if exists)
-          ROOT_PKG_NAME=$(toml get Cargo.toml package.name --raw)
-          if toml get Cargo.toml workspace.dependencies.${ROOT_PKG_NAME} > /dev/null 2>&1; then
-            toml set Cargo.toml workspace.dependencies.${ROOT_PKG_NAME}.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
-            echo "🔧 workspace.dependencies.${ROOT_PKG_NAME}.version -> $VERSION"
-          else
-            echo "⏭️ workspace.dependencies.${ROOT_PKG_NAME} not found, skipping"
-          fi
-          toml set Cargo.toml package.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+          # Sync the root package.version itself
+          sed -i -E "0,/^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
           echo "🔧 Cargo.toml package.version -> $VERSION"
       - name: Commit and push
         run: |
