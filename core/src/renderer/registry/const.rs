@@ -4,6 +4,12 @@
 /// so the framework can look up the element's identity across re-renders.
 pub(crate) const DATA_EUV_ID: &str = "data-euv-id";
 
+/// The maximum number of dispatch iterations allowed in `dispatch_signal_update_callbacks`.
+///
+/// Prevents infinite loops when callbacks continuously re-queue themselves.
+/// After this many passes, the dispatch loop breaks even if dirty entries remain.
+pub(crate) const MAX_ITERATIONS: usize = 3;
+
 /// Event names that do not bubble up to `window`.
 ///
 /// These events must be attached directly on the target element

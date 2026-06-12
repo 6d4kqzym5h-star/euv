@@ -11,6 +11,6 @@ thread_local! {
     /// callback. Opening a modal pushes an entry and adds a browser history
     /// entry; a system back gesture pops the topmost entry and invokes its
     /// callback, so the most recently opened modal is always closed first.
-    pub(crate) static MODAL_STACK: RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>> =
+    pub(crate) static MODAL_STACK: ModalStack =
         const { RefCell::new(Vec::new()) };
 }

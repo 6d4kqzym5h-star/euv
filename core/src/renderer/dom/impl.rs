@@ -1,50 +1,5 @@
 use crate::*;
 
-/// Extension trait for `Element` providing DOM attribute/property manipulation methods.
-///
-/// Since Rust's orphan rules prevent adding inherent methods to foreign types like
-/// `web_sys::Element`, this trait provides the same functionality through an extension
-/// trait pattern. All methods are available on any `Element` reference via trait dispatch.
-pub(crate) trait ElementExt {
-    /// Removes or clears a DOM attribute/property, depending on the attribute name.
-    ///
-    /// For `value`, sets the DOM property to an empty string rather than calling
-    /// `remove_attribute`, because `remove_attribute("value")` only removes the
-    /// HTML attribute and does not clear the displayed value of input elements.
-    /// For boolean properties (`checked`, `disabled`, `selected`, `readonly`),
-    /// sets the DOM property to `false` rather than calling `remove_attribute`,
-    /// because `remove_attribute` on a previously-set attribute may not correctly
-    /// reset the property in all browsers.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str` - The name of the attribute or property to remove.
-    fn remove_attribute_or_property(&self, name: &str);
-
-    /// Sets a DOM attribute or property, depending on the attribute name.
-    ///
-    /// For `value`, uses the DOM property to ensure input elements update correctly.
-    /// For boolean attributes (`checked`, `disabled`, `selected`, `readonly`),
-    /// uses the DOM property so that the browser honors the value correctly
-    /// (HTML attributes are present-or-absent, not true/false strings).
-    /// For all other attributes, uses `set_attribute`.
-    ///
-    /// # Arguments
-    ///
-    /// - `&str` - The name of the attribute or property to set.
-    /// - `&str` - The value to assign.
-    fn set_attribute_or_property(&self, name: &str, value: &str);
-
-    /// Appends a signal address to the element's `data-euv-signal-addrs` attribute.
-    ///
-    /// Uses `push_str` to avoid `format!` allocation overhead.
-    ///
-    /// # Arguments
-    ///
-    /// - `usize` - The signal inner address to append.
-    fn track_signal_addr(&self, addr: usize);
-}
-
 /// Implementation of `ElementExt` for `Element`.
 impl ElementExt for Element {
     fn remove_attribute_or_property(&self, name: &str) {

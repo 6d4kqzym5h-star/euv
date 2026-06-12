@@ -640,7 +640,7 @@ class! {
         background: "transparent";
         color: "inherit";
         border: "none";
-        padding: format!("{} 10px", var!(space-sm));
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
         border-radius: var!(radius-sm);
         cursor: "pointer";
         font-size: "20px";
@@ -1652,9 +1652,7 @@ class! {
     }
 
     pub(crate) c_list_item_button {
-        min-width: "0px";
         max-width: "120px";
-        padding: format!("{} {}", var!(space-sm), var!(space-lg));
         flex-shrink: "0";
     }
 
@@ -4284,7 +4282,7 @@ class! {
         display: "inline-flex";
         align-items: "center";
         gap: var!(space-sm);
-        padding: format!("{} {}", var!(space-md), var!(space-xl));
+        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
         border-radius: var!(radius-lg);
         background: var!(accent-gradient);
         color: var!(text-on-accent);
@@ -4305,7 +4303,7 @@ class! {
         display: "inline-flex";
         align-items: "center";
         gap: var!(space-sm);
-        padding: format!("{} {}", var!(space-md), var!(space-xl));
+        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
         border-radius: var!(radius-lg);
         background: "transparent";
         color: var!(accent);

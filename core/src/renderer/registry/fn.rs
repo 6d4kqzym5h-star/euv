@@ -96,7 +96,6 @@ pub(crate) fn dispatch_signal_update_callbacks() {
     }
     SIGNAL_UPDATE_DISPATCHING.store(true, Ordering::Relaxed);
     let mut iterations: usize = 0;
-    const MAX_ITERATIONS: usize = 3;
     loop {
         let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
         let dirty_keys: Vec<usize> = registry

@@ -143,19 +143,16 @@ pub(crate) fn overlay_back(navigate_target: Option<String>) {
 /// - `Signal<bool>` - The modal's visibility signal, used as a stable identity for later removal.
 /// - `Rc<dyn Fn()>` - The callback that closes the modal (e.g., sets the visibility signal to `false`).
 pub(crate) fn modal_push(visible: Signal<bool>, closer: Rc<dyn Fn()>) {
-    let already_open: bool =
-        MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
-            stack
-                .borrow()
-                .iter()
-                .any(|(signal, _): &(Signal<bool>, Rc<dyn Fn()>)| *signal == visible)
-        });
+    let already_open: bool = MODAL_STACK.with(|stack: &ModalStack| {
+        stack
+            .borrow()
+            .iter()
+            .any(|(signal, _): &ModalStackEntry| *signal == visible)
+    });
     if already_open {
         return;
     }
-    MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
-        stack.borrow_mut().push((visible, closer))
-    });
+    MODAL_STACK.with(|stack: &ModalStack| stack.borrow_mut().push((visible, closer)));
     overlay_push_state();
 }
 
@@ -171,11 +168,11 @@ pub(crate) fn modal_push(visible: Signal<bool>, closer: Rc<dyn Fn()>) {
 ///
 /// - `Option<Rc<dyn Fn()>>` - The topmost modal's close callback, or `None` if no modal is open.
 pub(crate) fn modal_pop_closer() -> Option<Rc<dyn Fn()>> {
-    MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
+    MODAL_STACK.with(|stack: &ModalStack| {
         stack
             .borrow_mut()
             .pop()
-            .map(|(_, closer): (Signal<bool>, Rc<dyn Fn()>)| closer)
+            .map(|(_, closer): ModalStackEntry| closer)
     })
 }
 
@@ -193,11 +190,11 @@ pub(crate) fn modal_pop_closer() -> Option<Rc<dyn Fn()>> {
 ///
 /// - `Signal<bool>` - The visibility signal identifying the modal to remove.
 pub(crate) fn modal_close_via_ui(visible: Signal<bool>) {
-    let removed: bool = MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
+    let removed: bool = MODAL_STACK.with(|stack: &ModalStack| {
         let mut entries = stack.borrow_mut();
         if let Some(index) = entries
             .iter()
-            .rposition(|(signal, _): &(Signal<bool>, Rc<dyn Fn()>)| *signal == visible)
+            .rposition(|(signal, _): &ModalStackEntry| *signal == visible)
         {
             entries.remove(index);
             true
