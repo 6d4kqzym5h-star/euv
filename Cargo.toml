@@ -92,6 +92,7 @@ web-sys = { version = "0.3.100", features = [
     "HtmlInputElement",
     "HtmlMediaElement",
     "HtmlVideoElement",
+    "HtmlMetaElement",
     "MediaDevices",
     "MediaQueryList",
     "MediaStream",
