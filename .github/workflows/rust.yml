@@ -121,7 +121,14 @@ jobs:
             fi
           done
 
-          # Also sync the root package.version itself
+          # Also sync the root package.version and workspace.dependencies.<root_pkg>.version (if exists)
+          ROOT_PKG_NAME=$(toml get Cargo.toml package.name --raw)
+          if toml get Cargo.toml workspace.dependencies.${ROOT_PKG_NAME} > /dev/null 2>&1; then
+            toml set Cargo.toml workspace.dependencies.${ROOT_PKG_NAME}.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
+            echo "🔧 workspace.dependencies.${ROOT_PKG_NAME}.version -> $VERSION"
+          else
+            echo "⏭️ workspace.dependencies.${ROOT_PKG_NAME} not found, skipping"
+          fi
           toml set Cargo.toml package.version "$VERSION" > /tmp/Cargo.toml.tmp && mv /tmp/Cargo.toml.tmp Cargo.toml
           echo "🔧 Cargo.toml package.version -> $VERSION"
       - name: Commit and push
