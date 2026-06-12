@@ -75,6 +75,10 @@ pub(crate) fn use_overlay_history(
             }
             return;
         }
+        if let Some(closer) = modal_pop_closer() {
+            closer();
+            return;
+        }
         if panel_open.get() {
             panel_open.set(false);
             return;
@@ -110,6 +114,100 @@ pub(crate) fn overlay_back(navigate_target: Option<String>) {
     let window: Window = window().expect("no global window exists");
     let history: History = window.history().expect("no history object exists");
     let _ = history.back();
+}
+
+/// Registers an open modal by pushing it onto the global modal stack and
+/// adding a browser history entry, enabling nested modals.
+///
+/// The stack is ordered with the most recently opened modal on top. When the
+/// user triggers a system back gesture (or presses the browser back button),
+/// the `popstate` handler in `use_overlay_history` pops the topmost entry and
+/// invokes its close callback, so the most recently opened modal is dismissed
+/// first instead of navigating to the previous page.
+///
+/// If the given visibility signal is already on the stack, this is a no-op so
+/// that re-opening an already-open modal does not create duplicate stack or
+/// history entries.
+///
+/// # Convention
+///
+/// This is the low-level stack primitive. Prefer the higher-level
+/// `open_modal` / `dismiss_modal` helpers in the modal page module, which pair
+/// this push with the matching `modal_close_via_ui` removal. Calling this
+/// directly without a matching close (or toggling the visibility signal
+/// directly) desynchronizes the modal stack from the browser history and
+/// breaks the back-gesture behavior.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The modal's visibility signal, used as a stable identity for later removal.
+/// - `Rc<dyn Fn()>` - The callback that closes the modal (e.g., sets the visibility signal to `false`).
+pub(crate) fn modal_push(visible: Signal<bool>, closer: Rc<dyn Fn()>) {
+    let already_open: bool =
+        MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
+            stack
+                .borrow()
+                .iter()
+                .any(|(signal, _): &(Signal<bool>, Rc<dyn Fn()>)| *signal == visible)
+        });
+    if already_open {
+        return;
+    }
+    MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
+        stack.borrow_mut().push((visible, closer))
+    });
+    overlay_push_state();
+}
+
+/// Pops the most recently opened modal from the global modal stack and returns
+/// its close callback, without invoking it.
+///
+/// Used by the `popstate` handler to obtain the closer for the topmost
+/// (most recently opened) modal so it can dismiss that modal in response to a
+/// system back gesture. This is what makes nested modals close one layer at a
+/// time, newest first.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn()>>` - The topmost modal's close callback, or `None` if no modal is open.
+pub(crate) fn modal_pop_closer() -> Option<Rc<dyn Fn()>> {
+    MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
+        stack
+            .borrow_mut()
+            .pop()
+            .map(|(_, closer): (Signal<bool>, Rc<dyn Fn()>)| closer)
+    })
+}
+
+/// Closes a modal that was opened via [`modal_push`] when the user dismisses
+/// it through the UI (close button, overlay click, confirm/cancel action)
+/// rather than the system back gesture.
+///
+/// Removes the entry matching the given visibility signal from the global
+/// stack (by identity, not necessarily the top, so nested modals stay
+/// consistent) and consumes one matching browser history entry via
+/// `history.back()`, keeping the history count in sync so a subsequent back
+/// gesture behaves correctly.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The visibility signal identifying the modal to remove.
+pub(crate) fn modal_close_via_ui(visible: Signal<bool>) {
+    let removed: bool = MODAL_STACK.with(|stack: &RefCell<Vec<(Signal<bool>, Rc<dyn Fn()>)>>| {
+        let mut entries = stack.borrow_mut();
+        if let Some(index) = entries
+            .iter()
+            .rposition(|(signal, _): &(Signal<bool>, Rc<dyn Fn()>)| *signal == visible)
+        {
+            entries.remove(index);
+            true
+        } else {
+            false
+        }
+    });
+    if removed {
+        overlay_back(None);
+    }
 }
 
 /// Closes the drawer and navigates to the given route, properly handling
