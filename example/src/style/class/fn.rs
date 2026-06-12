@@ -35,7 +35,7 @@ class! {
         height: "100vh";
         overflow: "hidden";
         font-family: "system-ui, -apple-system, sans-serif";
-        background: var!(bg-primary);
+        background: var!(bg-nav);
         color: var!(text-primary);
         line-height: "1.6";
         padding: format!("env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)");

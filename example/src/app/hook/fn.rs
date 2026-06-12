@@ -17,76 +17,30 @@ use crate::*;
 /// - Any future fullscreen scenarios
 pub(crate) fn use_safe_area_fix() {
     use_window_event("fullscreenchange", || {
-        force_safe_area_recalc();
+        resize();
     });
     use_window_event("webkitfullscreenchange", || {
-        force_safe_area_recalc();
+        resize();
     });
     use_window_event("resize", || {
-        force_safe_area_recalc();
+        resize();
     });
 }
 
-/// Forces the browser to recalculate `env(safe-area-inset-*)` values by
-/// triggering a synchronous layout reflow on the `#app` root element.
-///
-/// The technique temporarily sets the root element to `display: none`,
-/// reads a layout property to force a synchronous reflow, then restores
-/// the original display value. This invalidates all cached `env()`
-/// CSS function results. A deferred second pass using `setTimeout`
-/// re-applies the safe-area padding explicitly to handle iOS Safari
-/// which sometimes requires a delayed re-evaluation after fullscreen
-/// transitions (especially native video fullscreen exit).
-pub(crate) fn force_safe_area_recalc() {
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
-    let Some(root_element) = document_value.query_selector("#app").ok().flatten() else {
-        return;
-    };
-    let html_element: HtmlElement = root_element.unchecked_into();
-    let style: CssStyleDeclaration = html_element.style();
-    // Phase 1: toggle display to force full layout invalidation of env() values
-    let original_display: String = style.get_property_value("display").unwrap_or_default();
-    let _ = style.set_property("display", "none");
-    // Force synchronous reflow by reading offsetHeight
-    let _ = html_element.offset_height();
-    // Restore original display (or remove inline override)
-    if original_display.is_empty() {
-        let _ = style.remove_property("display");
-    } else {
-        let _ = style.set_property("display", &original_display);
-    }
-    // Force another reflow after restoration
-    let _ = html_element.offset_height();
-    // Phase 2: deferred re-evaluation for iOS Safari native video fullscreen exit.
-    // iOS sometimes caches the safe-area-inset-top as 0 until the next
-    // layout pass after the viewport geometry stabilizes.
+/// Resizes the window.
+pub(crate) fn resize() {
     let deferred_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let win: Window = window().expect("no global window exists");
-        let doc: Document = win.document().expect("should have a document");
-        let Some(el) = doc.query_selector("#app").ok().flatten() else {
-            return;
-        };
-        let html_el: HtmlElement = el.unchecked_into();
-        let el_style: CssStyleDeclaration = html_el.style();
-        // Re-apply safe-area padding to force env() re-evaluation
-        let _ = el_style.set_property("padding-top", "env(safe-area-inset-top, 0px)");
-        let _ = html_el.offset_height();
-        // Clean up all temporary padding properties to restore original styles
-        let _ = el_style.remove_property("padding-top");
-        let _ = el_style.remove_property("padding-right");
-        let _ = el_style.remove_property("padding-bottom");
-        let _ = el_style.remove_property("padding-left");
-        let _ = el_style.remove_property("padding");
-        // Scroll to current position to help iOS refresh viewport insets
         let scroll_x: f64 = win.scroll_x().unwrap_or(0.0);
         let scroll_y: f64 = win.scroll_y().unwrap_or(0.0);
         win.scroll_to_with_x_and_y(scroll_x, scroll_y);
     }));
-    let _ = window_value.set_timeout_with_callback_and_timeout_and_arguments_0(
-        deferred_closure.as_ref().unchecked_ref::<Function>(),
-        360,
-    );
+    let _ = window()
+        .expect("no global window exists")
+        .set_timeout_with_callback_and_timeout_and_arguments_0(
+            deferred_closure.as_ref().unchecked_ref::<Function>(),
+            360,
+        );
     deferred_closure.forget();
 }
 
