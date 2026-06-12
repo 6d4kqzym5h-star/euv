@@ -31,6 +31,7 @@ pub(crate) fn primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNo
             } else {
                 c_primary_button()
             }
+            disabled: disabled
             onclick: click_handler
             content
         }
@@ -67,6 +68,7 @@ pub(crate) fn modal_primary_button(node: VirtualNode<PrimaryButtonProps>) -> Vir
             } else {
                 c_modal_primary_button()
             }
+            disabled: disabled
             onclick: click_handler
             content
         }

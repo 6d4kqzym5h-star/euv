@@ -472,6 +472,7 @@ class! {
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: var!(shadow-accent-sm);
+            flex-shrink: "0";
         }
     }
 
@@ -517,6 +518,7 @@ class! {
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: "none";
+            flex-shrink: "0";
         }
     }
 
@@ -554,6 +556,7 @@ class! {
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: "none";
+            flex-shrink: "0";
         }
     }
 
@@ -591,6 +594,7 @@ class! {
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: "none";
+            flex-shrink: "0";
         }
     }
 
