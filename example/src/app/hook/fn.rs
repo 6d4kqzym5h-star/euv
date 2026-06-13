@@ -264,24 +264,32 @@ pub(crate) fn ensure_focused_field_visible() {
     raf_closure.forget();
 }
 
-/// Scrolls the given text-entry field so it sits fully within the visible
-/// viewport, keeping a small margin for readability.
+/// Scrolls the given text-entry field so it sits fully inside the visible
+/// viewport with a comfortable gap kept between the field and the on-screen
+/// keyboard (or the viewport bottom).
 ///
-/// The visible bottom edge is derived from `window.visualViewport` (its
-/// `offsetTop + height`) which excludes the keyboard region on iOS Safari; on
-/// platforms without a visual viewport the layout `innerHeight` is used.
+/// Rather than relying on the browser's `scrollIntoView`, which cannot account
+/// for the on-screen keyboard region and does nothing useful when the app shell
+/// pins the document to `overflow: hidden`, this function computes the exact
+/// scroll delta needed to place the field inside a usable "band" and applies it
+/// to the nearest scroll container directly. The field is repositioned on
+/// *every* focus — even when it is already partially visible — so each tap
+/// reliably brings the field into view with the required keyboard gap.
 ///
-/// The function always centres the field via `scrollIntoView` first, which
-/// resolves occlusion in the common case and gracefully degrades on platforms
-/// without a visual viewport. Then, regardless of whether the keyboard is
-/// open, it re-measures the element's position and corrects any remaining
-/// occlusion by nudging the nearest scrollable ancestor.
+/// The band is bounded by:
+///
+/// - `band_bottom` = `effective_bottom - KEYBOARD_VISIBLE_MARGIN_PX`, the
+///   lowest position the field's bottom edge may occupy while keeping a gap
+///   above the keyboard.
+/// - `band_top` = `visible_top + KEYBOARD_VISIBLE_MARGIN_PX`, the highest
+///   position the field's top edge may occupy while keeping a gap below any
+///   sticky header or notch.
 ///
 /// The visible bottom edge (`effective_bottom`) is determined as follows:
 ///
 /// - When `visualViewport` reports a shrink larger than
 ///   `KEYBOARD_OPEN_THRESHOLD_PX` the keyboard is considered open and the
-///   measured `visible_bottom` is used directly.
+///   measured `offsetTop + height` is used directly.
 /// - Otherwise the keyboard height cannot be measured (it has not appeared
 ///   yet, or the browser does not shrink the viewport). In this case the
 ///   lower `KEYBOARD_ESTIMATED_FRACTION` of the layout viewport is reserved
@@ -289,14 +297,12 @@ pub(crate) fn ensure_focused_field_visible() {
 ///   page is still pushed up into the area that stays visible once the
 ///   keyboard slides in.
 ///
-/// Because the estimated reserve guarantees a non-trivial visible bottom edge,
-/// every focused field — including those at the very bottom of an unscrolled
-/// page — is scrolled into the visible area on focus rather than being left in
-/// place when no occlusion is detected against the full layout viewport.
-///
-/// If the scrollable container does not have enough remaining scroll distance
-/// the field is scrolled as close to the top of the visible area as possible
-/// to guarantee at least partial visibility.
+/// On an unscrolled page (content shorter than the viewport) the scroll
+/// container has no spare scroll distance, so [`ensure_bottom_scroll_room`]
+/// reserves temporary bottom padding before the scroll range is measured. If
+/// the nearest container still cannot absorb the full upward shift the
+/// remaining overflow is consumed from outer scroll contexts via
+/// [`scroll_ancestor_chain_into_view`].
 ///
 /// # Arguments
 ///
@@ -317,41 +323,60 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
         .as_ref()
         .map(|value: &VisualViewport| value.height())
         .unwrap_or(layout_height);
-    let visible_bottom: f64 = visible_top + visible_height;
     let keyboard_open: bool = layout_height - visible_height > KEYBOARD_OPEN_THRESHOLD_PX;
-    let options: ScrollIntoViewOptions = ScrollIntoViewOptions::new();
-    options.set_behavior(ScrollBehavior::Smooth);
-    options.set_block(ScrollLogicalPosition::Center);
-    element.scroll_into_view_with_scroll_into_view_options(&options);
-    let rect: DomRect = element.get_bounding_client_rect();
-    // When the real keyboard height is known, anchor to the measured visible
-    // bottom; otherwise reserve an estimated keyboard region at the bottom of
-    // the layout viewport so bottom-pinned fields are still revealed even
-    // before the keyboard has finished animating in.
+    // The y-coordinate of the lowest pixel that stays visible above the
+    // keyboard. When the real keyboard height is known (the visual viewport
+    // has shrunk) anchor to the measured visible bottom; otherwise reserve an
+    // estimated keyboard region at the bottom of the layout viewport so
+    // bottom-pinned fields are still lifted into the area that remains visible
+    // once the keyboard finishes animating in.
     let effective_bottom: f64 = if keyboard_open {
-        visible_bottom
+        visible_top + visible_height
     } else {
         layout_height - layout_height * KEYBOARD_ESTIMATED_FRACTION
     };
-    let overflow_bottom: f64 = rect.bottom() + KEYBOARD_VISIBLE_MARGIN_PX - effective_bottom;
-    let overflow_top: f64 = visible_top + KEYBOARD_VISIBLE_MARGIN_PX - rect.top();
-    let delta: f64 = if overflow_bottom > 0.0 {
-        overflow_bottom
-    } else if overflow_top > 0.0 {
-        -overflow_top
+    // The usable band where a focused field should sit, with a comfortable
+    // margin kept against both the keyboard (or viewport bottom) and the top
+    // edge so the field never hugs an edge.
+    let band_top: f64 = visible_top + KEYBOARD_VISIBLE_MARGIN_PX;
+    let band_bottom: f64 = effective_bottom - KEYBOARD_VISIBLE_MARGIN_PX;
+    let rect: DomRect = element.get_bounding_client_rect();
+    // Determine how far (and in which direction) the field must move so that it
+    // sits inside the usable band. A positive `delta` scrolls the content up
+    // (revealing lower content); a negative `delta` scrolls it down. The field
+    // is *always* repositioned on focus so that every tap brings it into the
+    // visible band with the required keyboard gap, even when it is already
+    // partially visible.
+    let delta: f64 = if rect.bottom() > band_bottom {
+        // The field (or its lower edge) is below the usable band: lift it so
+        // its bottom rests on the band's lower boundary, keeping the keyboard
+        // gap. If the field is taller than the band, prefer revealing its top.
+        let lift_to_bottom: f64 = rect.bottom() - band_bottom;
+        let lift_to_top: f64 = rect.top() - band_top;
+        if rect.height() > band_bottom - band_top {
+            lift_to_top.max(0.0)
+        } else {
+            lift_to_bottom
+        }
+    } else if rect.top() < band_top {
+        // The field is above the usable band (scrolled too far up or partially
+        // hidden behind a sticky header): push the content down so its top
+        // aligns with the band's upper boundary.
+        rect.top() - band_top
     } else {
-        // The field already sits comfortably within the visible area; the
-        // initial `scrollIntoView(center)` has revealed it, so no further
-        // ancestor correction is required.
+        // The field already sits comfortably within the band; no correction is
+        // required and we avoid a redundant scroll that would jitter the view.
         return;
     };
-    // When the field overflows the bottom of the visible area, the scroll
-    // container needs enough room below the field to lift it above the
-    // keyboard. On an unscrolled page (content shorter than the viewport) the
-    // container has no spare scroll distance, so reserve temporary bottom
-    // padding on the overflow container before scrolling.
-    let container: Option<HtmlElement> = if overflow_bottom > 0.0 {
-        ensure_bottom_scroll_room(element, overflow_bottom)
+    // When the field needs to move up the scroll container must have enough
+    // room below the field to lift it above the keyboard. On an unscrolled page
+    // (content shorter than the viewport) the container has no spare scroll
+    // distance, so reserve temporary bottom padding on the overflow container
+    // before measuring its scroll range. Reading `scroll_height` afterwards
+    // forces a synchronous reflow, so the freshly added padding is reflected in
+    // the measurements below.
+    let container: Option<HtmlElement> = if delta > 0.0 {
+        ensure_bottom_scroll_room(element, delta)
     } else {
         nearest_scrollable_ancestor(element)
     };
@@ -364,8 +389,15 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
         .round()
         .clamp(0.0, max_scroll_top as f64) as i32;
     container.set_scroll_top(target_scroll_top);
-    if target_scroll_top >= max_scroll_top && overflow_bottom > 0.0 {
-        scroll_ancestor_chain_into_view(element, overflow_bottom, effective_bottom);
+    // If the nearest container could not absorb the full upward shift (it hit
+    // its maximum scroll offset) walk the ancestor chain to consume the
+    // remaining overflow from outer scroll contexts.
+    if delta > 0.0 && target_scroll_top >= max_scroll_top {
+        let remaining_rect: DomRect = element.get_bounding_client_rect();
+        let remaining: f64 = remaining_rect.bottom() - band_bottom;
+        if remaining > 0.0 {
+            scroll_ancestor_chain_into_view(element, remaining, effective_bottom);
+        }
     }
 }
 
