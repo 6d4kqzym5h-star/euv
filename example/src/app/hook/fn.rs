@@ -199,6 +199,9 @@ pub(crate) fn use_keyboard_inset_fix() {
     use_window_event(FOCUS_IN_EVENT, || {
         ensure_focused_field_visible();
     });
+    use_window_event(FOCUS_OUT_EVENT, || {
+        release_scroll_room_if_unfocused();
+    });
     use_window_event(KEYBOARD_RESIZE_EVENT, || {
         ensure_focused_field_visible();
     });
@@ -274,11 +277,22 @@ pub(crate) fn ensure_focused_field_visible() {
 /// open, it re-measures the element's position and corrects any remaining
 /// occlusion by nudging the nearest scrollable ancestor.
 ///
-/// When the keyboard is open the visible area is the region above the
-/// keyboard; when the keyboard is closed the visible area is the full layout
-/// viewport. This ensures that a focused field near the bottom of the page is
-/// still scrolled into view even when the user scrolls the page while the
-/// field remains focused, or when the keyboard reappears after a scroll.
+/// The visible bottom edge (`effective_bottom`) is determined as follows:
+///
+/// - When `visualViewport` reports a shrink larger than
+///   `KEYBOARD_OPEN_THRESHOLD_PX` the keyboard is considered open and the
+///   measured `visible_bottom` is used directly.
+/// - Otherwise the keyboard height cannot be measured (it has not appeared
+///   yet, or the browser does not shrink the viewport). In this case the
+///   lower `KEYBOARD_ESTIMATED_FRACTION` of the layout viewport is reserved
+///   as an estimated keyboard region, so a field pinned to the bottom of the
+///   page is still pushed up into the area that stays visible once the
+///   keyboard slides in.
+///
+/// Because the estimated reserve guarantees a non-trivial visible bottom edge,
+/// every focused field — including those at the very bottom of an unscrolled
+/// page — is scrolled into the visible area on focus rather than being left in
+/// place when no occlusion is detected against the full layout viewport.
 ///
 /// If the scrollable container does not have enough remaining scroll distance
 /// the field is scrolled as close to the top of the visible area as possible
@@ -310,10 +324,14 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
     options.set_block(ScrollLogicalPosition::Center);
     element.scroll_into_view_with_scroll_into_view_options(&options);
     let rect: DomRect = element.get_bounding_client_rect();
+    // When the real keyboard height is known, anchor to the measured visible
+    // bottom; otherwise reserve an estimated keyboard region at the bottom of
+    // the layout viewport so bottom-pinned fields are still revealed even
+    // before the keyboard has finished animating in.
     let effective_bottom: f64 = if keyboard_open {
         visible_bottom
     } else {
-        layout_height
+        layout_height - layout_height * KEYBOARD_ESTIMATED_FRACTION
     };
     let overflow_bottom: f64 = rect.bottom() + KEYBOARD_VISIBLE_MARGIN_PX - effective_bottom;
     let overflow_top: f64 = visible_top + KEYBOARD_VISIBLE_MARGIN_PX - rect.top();
@@ -322,19 +340,212 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
     } else if overflow_top > 0.0 {
         -overflow_top
     } else {
+        // The field already sits comfortably within the visible area; the
+        // initial `scrollIntoView(center)` has revealed it, so no further
+        // ancestor correction is required.
         return;
     };
-    if let Some(container) = nearest_scrollable_ancestor(element) {
-        let current_scroll_top: i32 = container.scroll_top();
-        let max_scroll_top: i32 = (container.scroll_height() - container.client_height()).max(0);
-        let target_scroll_top: i32 = (current_scroll_top as f64 + delta)
-            .round()
-            .clamp(0.0, max_scroll_top as f64) as i32;
-        container.set_scroll_top(target_scroll_top);
-        if target_scroll_top >= max_scroll_top && overflow_bottom > 0.0 {
-            scroll_ancestor_chain_into_view(element, overflow_bottom, effective_bottom);
-        }
+    // When the field overflows the bottom of the visible area, the scroll
+    // container needs enough room below the field to lift it above the
+    // keyboard. On an unscrolled page (content shorter than the viewport) the
+    // container has no spare scroll distance, so reserve temporary bottom
+    // padding on the overflow container before scrolling.
+    let container: Option<HtmlElement> = if overflow_bottom > 0.0 {
+        ensure_bottom_scroll_room(element, overflow_bottom)
+    } else {
+        nearest_scrollable_ancestor(element)
+    };
+    let Some(container) = container else {
+        return;
+    };
+    let current_scroll_top: i32 = container.scroll_top();
+    let max_scroll_top: i32 = (container.scroll_height() - container.client_height()).max(0);
+    let target_scroll_top: i32 = (current_scroll_top as f64 + delta)
+        .round()
+        .clamp(0.0, max_scroll_top as f64) as i32;
+    container.set_scroll_top(target_scroll_top);
+    if target_scroll_top >= max_scroll_top && overflow_bottom > 0.0 {
+        scroll_ancestor_chain_into_view(element, overflow_bottom, effective_bottom);
     }
+}
+
+/// Guarantees that the overflow container enclosing a focused field has enough
+/// scroll distance below the field to lift it above the on-screen keyboard.
+///
+/// On a page whose content is shorter than the viewport the scroll container
+/// has no spare scroll distance, so a field pinned near the bottom can never
+/// be scrolled up regardless of how the scroll offset is adjusted. This is the
+/// root cause of the "bottom field stays hidden on an unscrolled page" case.
+///
+/// The function locates the nearest ancestor that establishes a vertical
+/// scroll context (`overflow-y` of `auto`, `scroll`, or `overlay`) — even when
+/// it is not currently scrollable — and applies a temporary `padding-bottom`
+/// large enough to cover the requested overflow plus the keyboard margin. The
+/// reserved amount is tagged with a data attribute so it can be removed on
+/// blur by [`clear_bottom_scroll_room`]. The padding is only ever grown, never
+/// shrunk, so repeated focus events do not cause the layout to jump.
+///
+/// # Arguments
+///
+/// - `&HtmlElement` - The focused text-entry element to reveal.
+/// - `f64` - The bottom overflow in CSS pixels that must be made scrollable.
+///
+/// # Returns
+///
+/// - `Option<HtmlElement>` - The overflow container with reserved room, or the
+///   nearest already-scrollable ancestor when no scroll context is found.
+pub(crate) fn ensure_bottom_scroll_room(
+    element: &HtmlElement,
+    overflow_bottom: f64,
+) -> Option<HtmlElement> {
+    let Some(container) = nearest_overflow_container(element) else {
+        return nearest_scrollable_ancestor(element);
+    };
+    let needed: f64 = (overflow_bottom + KEYBOARD_VISIBLE_MARGIN_PX).max(0.0);
+    if needed <= 0.0 {
+        return Some(container);
+    }
+    let existing: f64 = container
+        .get_attribute(KEYBOARD_RESERVED_PADDING_ATTR)
+        .and_then(|value: String| value.parse::<f64>().ok())
+        .unwrap_or(0.0);
+    if needed > existing {
+        let current_padding: f64 = current_padding_bottom(&container);
+        let base_padding: f64 = current_padding - existing;
+        let new_padding: f64 = base_padding + needed;
+        let _ = container
+            .style()
+            .set_property("padding-bottom", &format!("{new_padding}px"));
+        let _ = container.set_attribute(KEYBOARD_RESERVED_PADDING_ATTR, &needed.to_string());
+    }
+    Some(container)
+}
+
+/// Releases the reserved bottom scroll room, but only once focus has truly
+/// left every editable field.
+///
+/// The `focusout` event fires *before* the next element gains focus, so when
+/// the user taps from one input straight to another the document's active
+/// element is momentarily the `body`. Clearing the reserved padding
+/// immediately would cause the layout to jump back and forth on every
+/// field-to-field tap. To avoid this, the check is deferred to a macrotask via
+/// `setTimeout(0)`; by the time it runs the new field (if any) has received
+/// focus, so the padding is only released when the active element is no longer
+/// an editable field.
+pub(crate) fn release_scroll_room_if_unfocused() {
+    let window_value: Window = window().expect("no global window exists");
+    let deferred: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let document_value: Document = window()
+            .and_then(|value: Window| value.document())
+            .expect("should have a document");
+        let still_editing: bool = document_value
+            .active_element()
+            .map(|active: Element| active.matches(EDITABLE_ELEMENT_SELECTOR).unwrap_or(false))
+            .unwrap_or(false);
+        if !still_editing {
+            clear_bottom_scroll_room();
+        }
+    }));
+    let _ = window_value.set_timeout_with_callback_and_timeout_and_arguments_0(
+        deferred.as_ref().unchecked_ref::<Function>(),
+        0,
+    );
+    deferred.forget();
+}
+
+/// Removes any temporary bottom padding previously reserved by
+/// [`ensure_bottom_scroll_room`] when no editable field is focused.
+///
+/// Invoked from the `focusout` listener. The reserved padding is restored to
+/// the element's original `padding-bottom` (the value before any reservation)
+/// by subtracting the amount recorded in the data attribute, and the attribute
+/// is cleared so a subsequent focus starts from a clean baseline.
+pub(crate) fn clear_bottom_scroll_room() {
+    let window_value: Window = window().expect("no global window exists");
+    let document_value: Document = window_value.document().expect("should have a document");
+    let Ok(nodes) =
+        document_value.query_selector_all(&format!("[{KEYBOARD_RESERVED_PADDING_ATTR}]"))
+    else {
+        return;
+    };
+    for index in 0..nodes.length() {
+        let Some(node) = nodes.item(index) else {
+            continue;
+        };
+        let Ok(container) = node.dyn_into::<HtmlElement>() else {
+            continue;
+        };
+        let reserved: f64 = container
+            .get_attribute(KEYBOARD_RESERVED_PADDING_ATTR)
+            .and_then(|value: String| value.parse::<f64>().ok())
+            .unwrap_or(0.0);
+        let restored: f64 = (current_padding_bottom(&container) - reserved).max(0.0);
+        let _ = container
+            .style()
+            .set_property("padding-bottom", &format!("{restored}px"));
+        let _ = container.remove_attribute(KEYBOARD_RESERVED_PADDING_ATTR);
+    }
+}
+
+/// Reads the resolved `padding-bottom` of an element in CSS pixels.
+///
+/// Falls back to `0.0` when the computed style is unavailable or cannot be
+/// parsed (for example on platforms without `getComputedStyle`).
+///
+/// # Arguments
+///
+/// - `&HtmlElement` - The element whose `padding-bottom` is read.
+///
+/// # Returns
+///
+/// - `f64` - The resolved bottom padding in CSS pixels.
+pub(crate) fn current_padding_bottom(element: &HtmlElement) -> f64 {
+    let window_value: Window = window().expect("no global window exists");
+    window_value
+        .get_computed_style(element)
+        .ok()
+        .flatten()
+        .and_then(|style: CssStyleDeclaration| style.get_property_value("padding-bottom").ok())
+        .map(|value: String| value.trim_end_matches("px").to_string())
+        .and_then(|value: String| value.parse::<f64>().ok())
+        .unwrap_or(0.0)
+}
+
+/// Walks up the ancestor chain to find the nearest element that establishes a
+/// vertical scroll context, i.e. whose computed `overflow-y` is `auto`,
+/// `scroll`, or `overlay`.
+///
+/// Unlike [`nearest_scrollable_ancestor`], this does not require the container
+/// to currently have overflowing content; it identifies the element that
+/// *would* scroll once enough content (or padding) is present. This is what
+/// allows a bottom-pinned field on an unscrolled page to be revealed: the
+/// container is found first, given temporary bottom padding, and then scrolled.
+///
+/// # Arguments
+///
+/// - `&HtmlElement` - The element whose scroll-context ancestor is sought.
+///
+/// # Returns
+///
+/// - `Option<HtmlElement>` - The nearest scroll-context ancestor, if any.
+pub(crate) fn nearest_overflow_container(element: &HtmlElement) -> Option<HtmlElement> {
+    let window_value: Window = window().expect("no global window exists");
+    let mut current: Option<Element> = element.parent_element();
+    while let Some(node) = current {
+        if let Ok(html_node) = node.clone().dyn_into::<HtmlElement>() {
+            let overflow_y: String = window_value
+                .get_computed_style(&html_node)
+                .ok()
+                .flatten()
+                .and_then(|style: CssStyleDeclaration| style.get_property_value("overflow-y").ok())
+                .unwrap_or_default();
+            if matches!(overflow_y.as_str(), "auto" | "scroll" | "overlay") {
+                return Some(html_node);
+            }
+        }
+        current = node.parent_element();
+    }
+    None
 }
 
 /// Walks up the ancestor chain from the given element to find the nearest
