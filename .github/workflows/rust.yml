@@ -99,14 +99,18 @@ jobs:
           ROOT_DIR=$(pwd)
           echo "🔧 Syncing all versions to $VERSION"
 
-          # Collect all workspace member package names (including root package if it depends on itself)
+          # Collect all workspace member directory names
           MEMBER_PKG_NAMES=""
-          MEMBERS=$(toml get Cargo.toml workspace.members --raw | sed 's/\[//;s/\]//;s/"//g;s/,//g')
+          MEMBERS=$(toml get Cargo.toml workspace.members --raw | tr -d '[]"' | tr ',' '\n' | tr -d '[:space:]' | grep -v '^$')
+          echo "📋 Found workspace members: $MEMBERS"
           for member in $MEMBERS; do
             SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
             if [ -f "$SUB_TOML" ]; then
               PKG_NAME=$(toml get "$SUB_TOML" package.name --raw)
               MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $PKG_NAME"
+              echo "📋 Member: $member -> package: $PKG_NAME"
+            else
+              echo "⚠️ $SUB_TOML not found, skipping"
             fi
           done
 
@@ -122,11 +126,13 @@ jobs:
             fi
           done
 
+          echo "📋 All package names to sync:$MEMBER_PKG_NAMES"
+
           # Sync workspace.dependencies.<pkg_name>.version for all member packages using sed
           # This handles both inline table format: euv-cli = { path = "cli", version = "0.6.3" }
           # and sub-table format: [workspace.dependencies.euv-cli] version = "0.6.3"
           for pkg_name in $MEMBER_PKG_NAMES; do
-            if grep -q "^${pkg_name} *=.*version" Cargo.toml; then
+            if grep -q "^${pkg_name}[[:space:]]*=" Cargo.toml && grep -q "^${pkg_name}[[:space:]]*=.*version" Cargo.toml; then
               sed -i -E "s|^(${pkg_name}[[:space:]]*=[[:space:]]*\{.*version[[:space:]]*=[[:space:]]*\")([^\"]+)(\".*)|\1${VERSION}\3|" Cargo.toml
               echo "🔧 workspace.dependencies.${pkg_name}.version -> $VERSION (inline)"
             elif grep -q "^\[workspace\.dependencies\.${pkg_name}\]" Cargo.toml; then
@@ -143,6 +149,8 @@ jobs:
             if [ -f "$SUB_TOML" ]; then
               sed -i -E "s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" "$SUB_TOML"
               echo "🔧 ${member}/Cargo.toml package.version -> $VERSION"
+            else
+              echo "⚠️ ${member}/Cargo.toml not found, skipping"
             fi
           done
 
