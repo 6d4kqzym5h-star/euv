@@ -203,12 +203,12 @@ pub(crate) fn use_keyboard_inset_fix() {
         release_scroll_room_if_unfocused();
     });
     use_window_event(KEYBOARD_RESIZE_EVENT, || {
-        ensure_focused_field_visible();
+        ensure_visibility_after_viewport_change();
     });
     if let Some(viewport) = window().and_then(|window_value: Window| window_value.visual_viewport())
     {
         let resize_listener: Closure<dyn FnMut()> = Closure::wrap(Box::new(|| {
-            ensure_focused_field_visible();
+            ensure_visibility_after_viewport_change();
         }));
         let _ = viewport.add_event_listener_with_callback(
             VISUAL_VIEWPORT_RESIZE_EVENT,
@@ -262,6 +262,42 @@ pub(crate) fn ensure_focused_field_visible() {
     }));
     let _ = window_value.request_animation_frame(raf_closure.as_ref().unchecked_ref());
     raf_closure.forget();
+}
+
+/// Reacts to a layout- or visual-viewport size change by either revealing the
+/// focused field (keyboard opening) or restoring the original layout (keyboard
+/// closing).
+///
+/// The on-screen keyboard does not always blur the focused element when it is
+/// dismissed (for example when the user taps the keyboard's "hide" button on
+/// iOS or swipes it away on Android). In that case no `focusout` event fires,
+/// so the temporary bottom padding reserved by [`ensure_bottom_scroll_room`]
+/// would linger and leave the page taller than its content. This function
+/// detects the keyboard being closed by comparing the visual-viewport height
+/// against the layout height: when the viewport is (almost) back to full
+/// height the keyboard is considered closed and [`clear_bottom_scroll_room`]
+/// is invoked to restore the original height. Otherwise the keyboard is open
+/// (or opening) and the focused field is scrolled back into view.
+pub(crate) fn ensure_visibility_after_viewport_change() {
+    let window_value: Window = window().expect("no global window exists");
+    let layout_height: f64 = window_value
+        .inner_height()
+        .ok()
+        .and_then(|value: JsValue| value.as_f64())
+        .unwrap_or(0.0);
+    let visible_height: f64 = window_value
+        .visual_viewport()
+        .map(|viewport: VisualViewport| viewport.height())
+        .unwrap_or(layout_height);
+    let keyboard_open: bool = layout_height - visible_height > KEYBOARD_OPEN_THRESHOLD_PX;
+    if keyboard_open {
+        ensure_focused_field_visible();
+    } else {
+        // The keyboard has been dismissed: release any reserved scroll room so
+        // the page returns to its original height even when the field was not
+        // blurred.
+        clear_bottom_scroll_room();
+    }
 }
 
 /// Scrolls the given text-entry field so it sits fully inside the visible
@@ -335,11 +371,12 @@ pub(crate) fn scroll_field_into_visible_area(element: &HtmlElement) {
     } else {
         layout_height - layout_height * KEYBOARD_ESTIMATED_FRACTION
     };
-    // The usable band where a focused field should sit, with a comfortable
-    // margin kept against both the keyboard (or viewport bottom) and the top
-    // edge so the field never hugs an edge.
+    // The usable band where a focused field should sit. A small margin is kept
+    // against the top edge so the field never hugs a sticky header or notch,
+    // while a larger gap is kept against the keyboard so the field is lifted
+    // comfortably above it rather than sitting flush against its top edge.
     let band_top: f64 = visible_top + KEYBOARD_VISIBLE_MARGIN_PX;
-    let band_bottom: f64 = effective_bottom - KEYBOARD_VISIBLE_MARGIN_PX;
+    let band_bottom: f64 = effective_bottom - KEYBOARD_GAP_PX;
     let rect: DomRect = element.get_bounding_client_rect();
     // Determine how far (and in which direction) the field must move so that it
     // sits inside the usable band. A positive `delta` scrolls the content up
@@ -649,7 +686,7 @@ pub(crate) fn scroll_ancestor_chain_into_view(
             if scroll_delta > 0 {
                 ancestor.set_scroll_top(current_scroll + scroll_delta);
                 let updated_rect: DomRect = element.get_bounding_client_rect();
-                overflow = updated_rect.bottom() + KEYBOARD_VISIBLE_MARGIN_PX - effective_bottom;
+                overflow = updated_rect.bottom() + KEYBOARD_GAP_PX - effective_bottom;
                 if overflow <= 0.0 {
                     return;
                 }

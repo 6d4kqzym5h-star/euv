@@ -45,8 +45,18 @@ pub(crate) const KEYBOARD_SCROLL_DELAY_MILLIS: i32 = 300;
 pub(crate) const KEYBOARD_OPEN_THRESHOLD_PX: f64 = 120.0;
 
 /// The vertical breathing room (in CSS pixels) kept between a focused field and
-/// the top edge of the keyboard (or viewport) after scrolling.
+/// the top edge of the viewport (or any sticky header) after scrolling.
 pub(crate) const KEYBOARD_VISIBLE_MARGIN_PX: f64 = 16.0;
+
+/// The vertical gap (in CSS pixels) kept between the bottom of a focused field
+/// and the top edge of the on-screen keyboard (or the reserved keyboard region
+/// when the keyboard height cannot be measured).
+///
+/// This is intentionally larger than `KEYBOARD_VISIBLE_MARGIN_PX` so the field
+/// is lifted comfortably above the keyboard rather than hugging its top edge,
+/// leaving room for the caret, any inline validation message, and a more
+/// balanced composition.
+pub(crate) const KEYBOARD_GAP_PX: f64 = 48.0;
 
 /// The fraction of the layout viewport height that is reserved as an estimated
 /// on-screen keyboard region when the real keyboard height cannot be measured.
