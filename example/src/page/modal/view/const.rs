@@ -1,3 +1,11 @@
+/// The duration, in milliseconds, of the modal closing (exit) animation.
+///
+/// Must stay in sync with the `--duration-modal-content` CSS variable
+/// (`0.32s`) defined in the theme, since the modal is removed from the DOM
+/// only after this delay so the `euv-scale-out-modal` / `euv-fade-out`
+/// keyframes have time to finish playing.
+pub(crate) const MODAL_CLOSE_ANIMATION_MILLIS: i32 = 320;
+
 /// The HTML id for the modal name input element.
 pub(crate) const MODAL_NAME_ID: &str = "modal-name";
 

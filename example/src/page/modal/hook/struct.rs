@@ -6,21 +6,39 @@ pub(crate) struct UseModal {
     /// Whether the basic modal is visible.
     #[get(type(copy))]
     pub(crate) show_basic: Signal<bool>,
+    /// Whether the basic modal is playing its closing animation.
+    #[get(type(copy))]
+    pub(crate) closing_basic: Signal<bool>,
     /// Whether the confirm modal is visible.
     #[get(type(copy))]
     pub(crate) show_confirm: Signal<bool>,
+    /// Whether the confirm modal is playing its closing animation.
+    #[get(type(copy))]
+    pub(crate) closing_confirm: Signal<bool>,
     /// Whether the form modal is visible.
     #[get(type(copy))]
     pub(crate) show_form: Signal<bool>,
+    /// Whether the form modal is playing its closing animation.
+    #[get(type(copy))]
+    pub(crate) closing_form: Signal<bool>,
     /// Whether the first (outermost) nested modal layer is visible.
     #[get(type(copy))]
     pub(crate) show_nested_1: Signal<bool>,
+    /// Whether the first nested modal layer is playing its closing animation.
+    #[get(type(copy))]
+    pub(crate) closing_nested_1: Signal<bool>,
     /// Whether the second nested modal layer is visible.
     #[get(type(copy))]
     pub(crate) show_nested_2: Signal<bool>,
+    /// Whether the second nested modal layer is playing its closing animation.
+    #[get(type(copy))]
+    pub(crate) closing_nested_2: Signal<bool>,
     /// Whether the third (innermost) nested modal layer is visible.
     #[get(type(copy))]
     pub(crate) show_nested_3: Signal<bool>,
+    /// Whether the third nested modal layer is playing its closing animation.
+    #[get(type(copy))]
+    pub(crate) closing_nested_3: Signal<bool>,
     /// The confirm action result message.
     #[get(type(copy))]
     pub(crate) confirm_result: Signal<String>,
