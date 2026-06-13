@@ -114,6 +114,14 @@ jobs:
           ROOT_PKG_NAME=$(toml get Cargo.toml package.name --raw)
           MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $ROOT_PKG_NAME"
 
+          # Also include all sub-table format workspace.dependencies entries
+          SUB_TABLE_PKGS=$(grep -oP '^\[workspace\.dependencies\.\K[^\]]+' Cargo.toml || true)
+          for pkg_name in $SUB_TABLE_PKGS; do
+            if ! echo "$MEMBER_PKG_NAMES" | grep -qw "$pkg_name"; then
+              MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $pkg_name"
+            fi
+          done
+
           # Sync workspace.dependencies.<pkg_name>.version for all member packages using sed
           # This handles both inline table format: euv-cli = { path = "cli", version = "0.6.3" }
           # and sub-table format: [workspace.dependencies.euv-cli] version = "0.6.3"
