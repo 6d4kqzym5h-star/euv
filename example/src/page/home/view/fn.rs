@@ -53,8 +53,8 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         }
                         a {
                             class: c_home_btn_secondary()
-                            href: "#/signals"
-                            onclick: link_handler("/signals".to_string())
+                            href: "#/counter"
+                            onclick: link_handler("/counter".to_string())
                             "Explore"
                         }
                     }

@@ -33,12 +33,15 @@ pub(crate) fn use_modal() -> UseModal {
 /// # Arguments
 ///
 /// - `Signal<bool>` - The visibility signal controlling the modal.
-pub(crate) fn open_modal(visible: Signal<bool>) {
+/// - `Signal<bool>` - The closing signal tracking the exit animation state.
+pub(crate) fn open_modal(visible: Signal<bool>, closing: Signal<bool>) {
     visible.set(true);
+    closing.set(false);
     modal_push(
         visible,
         Rc::new(move || {
-            visible.set(false);
+            closing.set(true);
+            dismiss_modal_after_animation(visible, closing);
         }),
     );
 }
@@ -47,36 +50,72 @@ pub(crate) fn open_modal(visible: Signal<bool>) {
 /// action (close button, overlay click, confirm/cancel), keeping the browser
 /// history in sync.
 ///
-/// Sets the signal to `false` and consumes the matching history entry so a
-/// later back gesture behaves correctly. Do not call this from the back
-/// gesture path; the `popstate` handler invokes the registered close callback
-/// directly in that case.
+/// Removes the modal from the global stack and consumes the matching history
+/// entry so a later back gesture behaves correctly. The visibility signal is
+/// NOT set to `false` here; that is deferred to [`dismiss_modal_after_animation`]
+/// so the exit animation can play before the modal is removed from the DOM.
+/// Do not call this from the back gesture path; the `popstate` handler invokes
+/// the registered close callback directly in that case.
 ///
 /// # Arguments
 ///
 /// - `Signal<bool>` - The visibility signal controlling the modal.
-pub(crate) fn dismiss_modal(visible: Signal<bool>) {
-    visible.set(false);
+/// - `Signal<bool>` - The closing signal tracking the exit animation state.
+pub(crate) fn dismiss_modal(visible: Signal<bool>, closing: Signal<bool>) {
     modal_close_via_ui(visible);
+    dismiss_modal_after_animation(visible, closing);
 }
 
-/// Creates a click event handler that closes a modal through the UI, keeping
-/// the browser history in sync.
+/// Schedules the final modal cleanup after the exit animation completes.
 ///
-/// Intended as a drop-in replacement for `use_toggle` on modal close
-/// affordances (the overlay and the `×` button) so the back gesture and the
-/// UI close path share the same history bookkeeping.
+/// Uses `setTimeout` with a duration matching the CSS exit animation duration
+/// so the modal remains visible during the animation and is removed from the
+/// DOM only after it finishes. This is more reliable than relying on the
+/// `animationend` DOM event, which may not fire consistently in all vdom
+/// patching scenarios.
 ///
 /// # Arguments
 ///
 /// - `Signal<bool>` - The visibility signal controlling the modal.
+/// - `Signal<bool>` - The closing signal tracking the exit animation state.
+fn dismiss_modal_after_animation(visible: Signal<bool>, closing: Signal<bool>) {
+    let window: Window = window().expect("no global window exists");
+    let callback: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        closing.set(false);
+        visible.set(false);
+    }));
+    let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+        callback.as_ref().unchecked_ref::<Function>(),
+        MODAL_CLOSE_DURATION_MS,
+    );
+    callback.forget();
+}
+
+/// Creates a click event handler that starts the modal close animation by
+/// setting the closing signal to true and syncing the browser history.
+///
+/// The modal will play its exit animation. After the animation duration
+/// elapses, [`dismiss_modal_after_animation`] will reset the closing signal
+/// and set the visibility signal to false, which removes the modal from the DOM.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The visibility signal controlling the modal.
+/// - `Signal<bool>` - The closing signal tracking the exit animation state.
 ///
 /// # Returns
 ///
-/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that dismisses the modal.
-pub(crate) fn modal_dismiss_handler(visible: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that starts the modal close animation.
+pub(crate) fn modal_dismiss_handler(
+    visible: Signal<bool>,
+    closing: Signal<bool>,
+) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        dismiss_modal(visible);
+        if closing.get() {
+            return;
+        }
+        closing.set(true);
+        dismiss_modal(visible, closing);
     }))
 }
 
@@ -123,7 +162,7 @@ pub(crate) fn validate_modal_email(state: UseModal) {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the basic modal.
 pub(crate) fn modal_on_open_basic(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        open_modal(state.get_show_basic());
+        open_modal(state.get_show_basic(), state.get_closing_basic());
     }))
 }
 
@@ -139,7 +178,7 @@ pub(crate) fn modal_on_open_basic(state: UseModal) -> Option<Rc<dyn Fn(Event)>> 
 pub(crate) fn modal_on_open_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
         state.get_confirm_result().set(String::new());
-        open_modal(state.get_show_confirm());
+        open_modal(state.get_show_confirm(), state.get_closing_confirm());
     }))
 }
 
@@ -160,7 +199,7 @@ pub(crate) fn modal_on_open_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
         state.get_modal_error().set(String::new());
         state.get_name_error().set(String::new());
         state.get_email_error().set(String::new());
-        open_modal(state.get_show_form());
+        open_modal(state.get_show_form(), state.get_closing_form());
     }))
 }
 
@@ -175,7 +214,7 @@ pub(crate) fn modal_on_open_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the first nested layer.
 pub(crate) fn modal_on_open_nested_1(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        open_modal(state.get_show_nested_1());
+        open_modal(state.get_show_nested_1(), state.get_closing_nested_1());
     }))
 }
 
@@ -191,7 +230,7 @@ pub(crate) fn modal_on_open_nested_1(state: UseModal) -> Option<Rc<dyn Fn(Event)
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the second nested layer.
 pub(crate) fn modal_on_open_nested_2(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        open_modal(state.get_show_nested_2());
+        open_modal(state.get_show_nested_2(), state.get_closing_nested_2());
     }))
 }
 
@@ -207,7 +246,7 @@ pub(crate) fn modal_on_open_nested_2(state: UseModal) -> Option<Rc<dyn Fn(Event)
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the third nested layer.
 pub(crate) fn modal_on_open_nested_3(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        open_modal(state.get_show_nested_3());
+        open_modal(state.get_show_nested_3(), state.get_closing_nested_3());
     }))
 }
 
@@ -222,10 +261,14 @@ pub(crate) fn modal_on_open_nested_3(state: UseModal) -> Option<Rc<dyn Fn(Event)
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to confirm the action.
 pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        if state.get_closing_confirm().get() {
+            return;
+        }
         state
             .get_confirm_result()
             .set("Action confirmed!".to_string());
-        dismiss_modal(state.get_show_confirm());
+        state.get_closing_confirm().set(true);
+        dismiss_modal(state.get_show_confirm(), state.get_closing_confirm());
     }))
 }
 
@@ -240,10 +283,14 @@ pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to cancel the confirm action.
 pub(crate) fn modal_on_cancel_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        if state.get_closing_confirm().get() {
+            return;
+        }
         state
             .get_confirm_result()
             .set("Action cancelled!".to_string());
-        dismiss_modal(state.get_show_confirm());
+        state.get_closing_confirm().set(true);
+        dismiss_modal(state.get_show_confirm(), state.get_closing_confirm());
     }))
 }
 
@@ -298,6 +345,9 @@ pub(crate) fn modal_on_input_email(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to submit the form modal.
 pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        if state.get_closing_form().get() {
+            return;
+        }
         validate_modal_name(state);
         validate_modal_email(state);
         let name_error_value: String = state.get_name_error().get();
@@ -316,7 +366,8 @@ pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
                 state.get_modal_name().get(),
                 state.get_modal_email().get()
             ));
-            dismiss_modal(state.get_show_form());
+            state.get_closing_form().set(true);
+            dismiss_modal(state.get_show_form(), state.get_closing_form());
         } else {
             state.get_modal_error().set(validation_errors.join("; "));
         }
@@ -334,9 +385,13 @@ pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to cancel the form modal.
 pub(crate) fn modal_on_cancel_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        if state.get_closing_form().get() {
+            return;
+        }
         state
             .get_modal_submitted()
             .set("Form cancelled!".to_string());
-        dismiss_modal(state.get_show_form());
+        state.get_closing_form().set(true);
+        dismiss_modal(state.get_show_form(), state.get_closing_form());
     }))
 }

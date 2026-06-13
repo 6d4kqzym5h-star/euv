@@ -48,11 +48,15 @@ css_vars! {
         duration-slow: "0.24s";
         duration-slower: "0.32s";
         duration-overlay: "0.24s";
+        duration-modal-overlay: "0.18s";
+        duration-modal-content: "0.32s";
 
         // ─── Easing Functions ───
         ease-out: "cubic-bezier(0.16, 1, 0.3, 1)";
+        ease-in: "cubic-bezier(0.4, 0, 1, 1)";
         ease-in-out: "cubic-bezier(0.4, 0, 0.2, 1)";
         ease-bounce: "cubic-bezier(0.34, 1.56, 0.64, 1)";
+        ease-bounce-out: "cubic-bezier(0.36, 0, 0.66, -0.56)";
 
         // ─── Layout ───
         padding-main-top: "24px";
@@ -293,11 +297,15 @@ css_vars! {
         duration-slow: "0.24s";
         duration-slower: "0.32s";
         duration-overlay: "0.24s";
+        duration-modal-overlay: "0.18s";
+        duration-modal-content: "0.32s";
 
         // ─── Easing Functions (same as light) ───
         ease-out: "cubic-bezier(0.16, 1, 0.3, 1)";
+        ease-in: "cubic-bezier(0.4, 0, 1, 1)";
         ease-in-out: "cubic-bezier(0.4, 0, 0.2, 1)";
         ease-bounce: "cubic-bezier(0.34, 1.56, 0.64, 1)";
+        ease-bounce-out: "cubic-bezier(0.36, 0, 0.66, -0.56)";
 
         // ─── Layout (same as light) ───
         padding-main-top: "24px";

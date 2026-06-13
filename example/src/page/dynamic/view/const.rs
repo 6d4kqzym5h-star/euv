@@ -33,3 +33,6 @@ pub(crate) const TAG_AUTOCOMPLETE_OFF: &str = "off";
 
 /// The id for the tag content input element.
 pub(crate) const TAG_CONTENT_INPUT_ID: &str = "dynamic-tag-content-input";
+
+/// The CSS selector for the dynamic component tab bar container.
+pub(crate) const DYNAMIC_TAB_BAR_SELECTOR: &str = ".c_dynamic_component_tab_bar";

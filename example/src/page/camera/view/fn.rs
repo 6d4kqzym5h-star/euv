@@ -96,7 +96,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         button {
                             class: c_primary_button()
                             onclick: on_close_camera
-                            "Close Camera"
+                            "Close"
                         }
                         button {
                             class: c_primary_button()
@@ -113,7 +113,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         button {
                             class: c_primary_button()
                             onclick: on_open_camera
-                            "Open Camera"
+                            "Open"
                         }
                     }
                 }

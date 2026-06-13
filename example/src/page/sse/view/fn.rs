@@ -30,13 +30,13 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                     button {
                         class: c_primary_button_disabled()
                         disabled: true
-                        "Connecting..."
+                        "Wait"
                     }
                 } else if { state.get_connected().get() } {
                     button {
                         class: c_sse_disconnect_button()
                         onclick: sse_on_disconnect(state)
-                        "Disconnect"
+                        "Close"
                     }
                 } else {
                     button {

@@ -88,8 +88,11 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
             "/" => {
                 page_home {}
             }
-            "/signals" => {
-                page_signals {}
+            "/counter" => {
+                page_counter {}
+            }
+            "/badge" => {
+                page_badge {}
             }
             "/event" => {
                 page_event {}

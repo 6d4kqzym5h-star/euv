@@ -617,6 +617,131 @@ pub(crate) fn nearest_overflow_container(element: &HtmlElement) -> Option<HtmlEl
     None
 }
 
+/// Creates a reactive equal-wrap layout hook that ensures items wrap into rows
+/// with equal column counts.
+///
+/// When a container holds N items and the available width cannot fit all N in
+/// one row, this hook finds the largest column count `c` such that:
+/// - `c` evenly divides `total_count` (every row has the same number of items),
+/// - `container_width / c >= EQUAL_WRAP_MIN_ITEM_WIDTH` (items are not too
+///   narrow).
+///
+/// The computed column count is applied directly to the container element's
+/// inline `grid-template-columns` style as `repeat(c, 1fr)`. The container
+/// must use the `c_equal_wrap` class (which provides `display: grid` and
+/// `gap`) or have an equivalent grid layout.
+///
+/// A window `resize` listener monitors viewport changes and recalculates the
+/// optimal column count on every resize, debounced by
+/// `EQUAL_WRAP_RESIZE_DEBOUNCE_MILLIS`.
+///
+/// # Arguments
+///
+/// - `usize` - The total number of items in the container.
+/// - `&str` - A CSS selector string that uniquely identifies the container
+///   element in the DOM.
+///
+/// # Returns
+///
+/// - `Signal<usize>` - A reactive signal holding the current column count.
+pub(crate) fn use_equal_wrap(total_count: usize, selector: &str) -> Signal<usize> {
+    let cols_signal: Signal<usize> =
+        use_signal(move || compute_equal_wrap_cols(total_count, selector));
+    let selector_string: String = selector.to_string();
+    let selector_for_apply: String = selector_string.clone();
+    let recalculate_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let updated_cols: usize = compute_equal_wrap_cols(total_count, &selector_string);
+        cols_signal.set(updated_cols);
+        apply_equal_wrap_cols(&selector_string, updated_cols);
+    }));
+    let recalculate_callback: Function = recalculate_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    recalculate_closure.forget();
+    let debounce_window: Window = window().expect("no global window exists");
+    let timer_signal: Signal<Option<i32>> = use_signal(|| None);
+    use_window_event("resize", move || {
+        let old_timer: Option<i32> = timer_signal.get();
+        if let Some(timer_id) = old_timer {
+            debounce_window.clear_timeout_with_handle(timer_id);
+        }
+        let new_timer: i32 = debounce_window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                &recalculate_callback,
+                EQUAL_WRAP_RESIZE_DEBOUNCE_MILLIS,
+            )
+            .unwrap_or_default();
+        timer_signal.set(Some(new_timer));
+    });
+    let initial_cols: usize = cols_signal.get();
+    apply_equal_wrap_cols(&selector_for_apply, initial_cols);
+    cols_signal
+}
+
+/// Computes the optimal column count for the equal-wrap layout.
+///
+/// Iterates from `total_count` down to `1` and returns the first value `c`
+/// that evenly divides `total_count` and whose item width
+/// (`container_width / c`) is at least `EQUAL_WRAP_MIN_ITEM_WIDTH`.
+/// Falls back to `1` when no suitable divisor is found.
+///
+/// # Arguments
+///
+/// - `usize` - The total number of items.
+/// - `&str` - The CSS selector for the container element.
+///
+/// # Returns
+///
+/// - `usize` - The computed column count.
+fn compute_equal_wrap_cols(total_count: usize, selector: &str) -> usize {
+    if total_count == 0 {
+        return 1;
+    }
+    let document_value: Document = window()
+        .expect("no global window exists")
+        .document()
+        .expect("should have a document");
+    let Some(element) = document_value.query_selector(selector).unwrap_or(None) else {
+        return total_count;
+    };
+    let html_element: HtmlElement = element.unchecked_into();
+    let container_width: f64 = html_element.client_width() as f64;
+    if container_width <= 0.0 {
+        return total_count;
+    }
+    for cols in (1..=total_count).rev() {
+        if total_count.is_multiple_of(cols) {
+            let item_width: f64 = container_width / cols as f64;
+            if item_width >= EQUAL_WRAP_MIN_ITEM_WIDTH {
+                return cols;
+            }
+        }
+    }
+    1
+}
+
+/// Writes the computed column count into the container element's inline style
+/// as the `grid-template-columns` property value `repeat(cols, 1fr)`.
+///
+/// # Arguments
+///
+/// - `&str` - The CSS selector for the container element.
+/// - `usize` - The column count to apply.
+fn apply_equal_wrap_cols(selector: &str, cols: usize) {
+    let document_value: Document = window()
+        .expect("no global window exists")
+        .document()
+        .expect("should have a document");
+    let Some(element) = document_value.query_selector(selector).unwrap_or(None) else {
+        return;
+    };
+    let html_element: HtmlElement = element.unchecked_into();
+    let _ = html_element
+        .style()
+        .set_property("grid-template-columns", &format!("repeat({}, 1fr)", cols));
+}
+
 /// Walks up the ancestor chain from the given element to find the nearest
 /// vertically scrollable container.
 ///

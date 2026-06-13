@@ -35,9 +35,9 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                     " times."
                 }
                 primary_button {
-                    label: "Trigger Update"
+                    label: "Update"
                     onclick: lifecycle_on_trigger(state)
-                    "Trigger Update"
+                    "Update"
                 }
             }
             my_card {

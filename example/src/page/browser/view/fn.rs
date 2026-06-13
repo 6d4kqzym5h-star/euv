@@ -195,12 +195,12 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     primary_button {
                         label: "Copy"
                         onclick: clipboard_on_copy(state)
-                        "Copy to Clipboard"
+                        "Copy"
                     }
                     primary_button {
                         label: "Paste"
                         onclick: clipboard_on_paste(state)
-                        "Read Clipboard"
+                        "Paste"
                     }
                 }
                 div {
@@ -224,7 +224,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 primary_button {
                     label: "Refresh"
                     onclick: window_on_refresh_size(state)
-                    "Refresh Size"
+                    "Refresh"
                 }
                 div {
                     class: c_browser_info_grid()
@@ -345,17 +345,17 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     primary_button {
                         label: "Log"
                         onclick: console_on_log(state.get_console_input())
-                        "console.log"
+                        "log"
                     }
                     primary_button {
                         label: "Warn"
                         onclick: console_on_warn(state.get_console_input())
-                        "console.warn"
+                        "warn"
                     }
                     primary_button {
                         label: "Error"
                         onclick: console_on_error(state.get_console_input())
-                        "console.error"
+                        "error"
                     }
                 }
             }

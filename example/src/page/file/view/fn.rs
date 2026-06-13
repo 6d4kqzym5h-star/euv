@@ -107,9 +107,9 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                         onchange: file_upload_on_change(state)
                     }
                     primary_button {
-                        label: "Choose File"
+                        label: "Browse"
                         onclick: file_upload_on_select()
-                        "Choose File"
+                        "Browse"
                     }
                 }
                 div {

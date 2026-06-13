@@ -44,12 +44,12 @@ fn counter_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_counter_controls()
                 primary_button {
-                    label: "Decrement"
+                    label: "-1"
                     onclick: keep_alive_counter_on_decrement(count)
                     "-1"
                 }
                 primary_button {
-                    label: "Increment"
+                    label: "+1"
                     onclick: keep_alive_counter_on_increment(count)
                     "+1"
                 }

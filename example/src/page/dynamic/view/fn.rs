@@ -15,6 +15,7 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
     let PageDynamicComponentProps = node.try_get_props().unwrap_or_default();
     let tag_name_opt: Signal<String> = use_signal(|| DEFAULT_TAG_NAME.to_string());
     let content: Signal<String> = use_signal(|| "Hello, dynamic tag!".to_string());
+    let _tab_cols: Signal<usize> = use_equal_wrap(4, DYNAMIC_TAB_BAR_SELECTOR);
     html! {
         div {
             class: c_page_container()
@@ -29,7 +30,7 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                     "Select a tag type below. Native HTML elements (div, span) and user components (my_card, badge) are both supported."
                 }
                 div {
-                    class: c_dynamic_component_tab_bar()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_dynamic_component_tab_bar().get_name())
                     primary_button {
                         label: TAG_OPTION_DIV_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_DIV)

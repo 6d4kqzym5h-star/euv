@@ -24,11 +24,11 @@ pub(crate) fn page_not_found(node: VirtualNode<PageNotFoundProps>) -> VirtualNod
                 "The requested page does not exist."
             }
             primary_button {
-                label: "Go Back"
+                label: "Back"
                 onclick: Some(Rc::new(move |_: Event| {
                     navigate("/");
                 }))
-                "Go Back"
+                "Back"
             }
         }
     }

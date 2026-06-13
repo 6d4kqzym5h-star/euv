@@ -93,8 +93,13 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                label: "Signals"
-                target: "/signals"
+                label: "Counter"
+                target: "/counter"
+            }
+            nav_item {
+                route_signal: route_signal
+                label: "Badge"
+                target: "/badge"
             }
             nav_item {
                 route_signal: route_signal
@@ -113,7 +118,7 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                label: "Conditional"
+                label: "Condition"
                 target: "/conditional"
             }
             nav_item {
@@ -138,7 +143,7 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                label: "File Upload"
+                label: "Upload"
                 target: "/file-upload"
             }
             nav_item {
@@ -163,27 +168,27 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                label: "Keep-Alive"
+                label: "KeepAlive"
                 target: "/keep-alive"
             }
             nav_item {
                 route_signal: route_signal
-                label: "Component Binding"
+                label: "Binding"
                 target: "/component-binding"
             }
             nav_item {
                 route_signal: route_signal
-                label: "Custom Attrs"
+                label: "Attrs"
                 target: "/custom-attrs"
             }
             nav_item {
                 route_signal: route_signal
-                label: "Dynamic Component"
+                label: "DynTag"
                 target: "/dynamic-component"
             }
             nav_item {
                 route_signal: route_signal
-                label: "Virtual List"
+                label: "VList"
                 target: "/virtual-list"
             }
             nav_item {
@@ -208,7 +213,7 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                label: "Sticky & CSS"
+                label: "Sticky"
                 target: "/sticky"
             }
             nav_item {
@@ -250,8 +255,14 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Signals"
-                target: "/signals"
+                label: "Counter"
+                target: "/counter"
+            }
+            mobile_nav_item {
+                route_signal: route_signal
+                drawer_open: drawer_open
+                label: "Badge"
+                target: "/badge"
             }
             mobile_nav_item {
                 route_signal: route_signal
@@ -274,7 +285,7 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Conditional"
+                label: "Condition"
                 target: "/conditional"
             }
             mobile_nav_item {
@@ -304,7 +315,7 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "File Upload"
+                label: "Upload"
                 target: "/file-upload"
             }
             mobile_nav_item {
@@ -334,31 +345,31 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Keep-Alive"
+                label: "KeepAlive"
                 target: "/keep-alive"
             }
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Component Binding"
+                label: "Binding"
                 target: "/component-binding"
             }
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Custom Attrs"
+                label: "Attrs"
                 target: "/custom-attrs"
             }
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Dynamic Component"
+                label: "DynTag"
                 target: "/dynamic-component"
             }
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Virtual List"
+                label: "VList"
                 target: "/virtual-list"
             }
             mobile_nav_item {
@@ -388,7 +399,7 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
             mobile_nav_item {
                 route_signal: route_signal
                 drawer_open: drawer_open
-                label: "Sticky & CSS"
+                label: "Sticky"
                 target: "/sticky"
             }
             mobile_nav_item {

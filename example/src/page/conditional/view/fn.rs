@@ -11,6 +11,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
     let show_details: Signal<bool> = use_signal(|| false);
     let user_type: Signal<String> = use_signal(|| "guest".to_string());
     let tab: Signal<String> = use_signal(|| "info".to_string());
+    let _role_cols: Signal<usize> = use_equal_wrap(3, CONDITIONAL_ROLE_BUTTON_ROW_SELECTOR);
     html! {
         div {
             class: c_page_container()
@@ -46,7 +47,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
             my_card {
                 title: "Role-Based Rendering"
                 div {
-                    class: c_role_button_row()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_role_button_row().get_name())
                     primary_button {
                         label: "Guest"
                         onclick: user_type_on_select(user_type, "guest")

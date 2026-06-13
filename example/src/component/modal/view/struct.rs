@@ -9,4 +9,6 @@ pub(crate) struct MyModalProps {
     pub(crate) title: &'static str,
     /// Optional close handler triggered by overlay or close button click.
     pub(crate) onclick: Option<Rc<dyn Fn(Event)>>,
+    /// Whether the modal is playing its exit animation.
+    pub(crate) closing: bool,
 }

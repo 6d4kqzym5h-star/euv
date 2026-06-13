@@ -1,3 +1,5 @@
+use crate::*;
+
 /// The video source URL for the tags embedded content demo.
 pub(crate) const TAGS_VIDEO_SRC: &str = "https://docs.ltpp.vip/video/ship.mp4";
 
@@ -89,7 +91,7 @@ pub(crate) const TAGS_OPTGROUP_FRONTEND: &str = "Frontend";
 pub(crate) const TAGS_OPTGROUP_BACKEND: &str = "Backend";
 
 /// The button label for the primary click action.
-pub(crate) const TAGS_BUTTON_CLICK: &str = "Click Me";
+pub(crate) const TAGS_BUTTON_CLICK: &str = "Click";
 
 /// The button label for the form submit action.
 pub(crate) const TAGS_BUTTON_SUBMIT: &str = "Submit";
@@ -98,10 +100,10 @@ pub(crate) const TAGS_BUTTON_SUBMIT: &str = "Submit";
 pub(crate) const TAGS_BUTTON_RESET: &str = "Reset";
 
 /// The button label to close the dialog element.
-pub(crate) const TAGS_DIALOG_CLOSE: &str = "Close Dialog";
+pub(crate) const TAGS_DIALOG_CLOSE: &str = "Close";
 
 /// The button label to open the dialog element.
-pub(crate) const TAGS_DIALOG_OPEN: &str = "Open Dialog";
+pub(crate) const TAGS_DIALOG_OPEN: &str = "Open";
 
 /// The menu command label for the first item.
 pub(crate) const TAGS_MENU_COMMAND_FIRST: &str = "Command 1";
@@ -362,7 +364,7 @@ pub(crate) const TAGS_SVG_CIRCLE_CY: &str = "50";
 pub(crate) const TAGS_SVG_CIRCLE_R: &str = "40";
 
 /// The SVG circle fill for the SVG element demo.
-pub(crate) const TAGS_SVG_CIRCLE_FILL: &str = "var(--accent)";
+pub(crate) const TAGS_SVG_CIRCLE_FILL: &str = var!(accent);
 
 /// The SVG circle opacity for the SVG element demo.
 pub(crate) const TAGS_SVG_CIRCLE_OPACITY: &str = "0.6";

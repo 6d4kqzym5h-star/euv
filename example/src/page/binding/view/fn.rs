@@ -115,7 +115,7 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                 }
             }
             primary_button {
-                label: "Decrement"
+                label: "-1"
                 onclick: two_way_on_decrement(count_signal)
                 "-"
             }
@@ -228,7 +228,7 @@ pub(crate) fn color_mixer(
                     label {
                         for: COLOR_MIXER_RED_ID
                         class: c_binding_slider_label()
-                        style: { color: "var(--color-red-channel)"; }
+                        style: { color: var!(color-red-channel); }
                         "R"
                     }
                 input {
@@ -252,7 +252,7 @@ pub(crate) fn color_mixer(
                     label {
                         for: COLOR_MIXER_GREEN_ID
                         class: c_binding_slider_label()
-                        style: { color: "var(--color-green-channel)"; }
+                        style: { color: var!(color-green-channel); }
                         "G"
                     }
                 input {
@@ -276,7 +276,7 @@ pub(crate) fn color_mixer(
                     label {
                         for: COLOR_MIXER_BLUE_ID
                         class: c_binding_slider_label()
-                        style: { color: "var(--color-blue-channel)"; }
+                        style: { color: var!(color-blue-channel); }
                         "B"
                     }
                 input {
@@ -331,7 +331,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     label {
                         for: BINDING_PARENT_MESSAGE_ID
                         class: c_form_label()
-                        "Parent message:"
+                        "Parent message: "
                     }
                     input {
                         id: BINDING_PARENT_MESSAGE_ID
@@ -358,7 +358,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         "Typed Props Controls"
                     }
                     primary_button {
-                        label: "Toggle Disabled"
+                        label: "Toggle"
                         onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
                         if { typed_state.get_disabled().get() } {
                             "Enable"
@@ -427,7 +427,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         }
                     }
                     primary_button {
-                        label: "Increment"
+                        label: "+1"
                         onclick: two_way_on_increment(two_way_state.get_shared_count())
                         "+"
                     }

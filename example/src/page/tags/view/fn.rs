@@ -1903,7 +1903,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A clickable button."
                         }
                         div {
-                            class: c_tag_button_row()
+                            class: format!("{} {}", c_equal_wrap().get_name(), c_tag_button_row().get_name())
                             button {
                                 class: c_secondary_button()
                                 type: TAGS_BUTTON_TYPE_BUTTON

@@ -25,7 +25,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     primary_button {
                         label: "Toggle"
                         onclick: sticky_on_toggle_sticky(state)
-                        if { state.get_sticky_enabled().get() } { "Disable Sticky" } else { "Enable Sticky" }
+                        if { state.get_sticky_enabled().get() } { "Off" } else { "On" }
                     }
                 }
                 div {
@@ -49,7 +49,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     primary_button {
                         label: "Toggle"
                         onclick: sticky_on_toggle_glass(state)
-                        if { state.get_glass_enabled().get() } { "Disable Glass" } else { "Enable Glass" }
+                        if { state.get_glass_enabled().get() } { "Off" } else { "On" }
                     }
                 }
                 div {
@@ -131,7 +131,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     class: c_sticky_gradient_demo()
                     div {
                         class: c_sticky_gradient_wheel()
-                        style: format!("background: conic-gradient(from {}deg, var(--accent), var(--color-success), var(--color-warning), var(--color-error), var(--accent))", STICKY_ANGLE_INITIAL)
+                        style: format!("background: conic-gradient(from {}deg, {}, {}, {}, {}, {})", STICKY_ANGLE_INITIAL, var!(accent), var!(color-success), var!(color-warning), var!(color-error), var!(accent))
                     }
                 }
             }
@@ -142,7 +142,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     primary_button {
                         label: "Toggle"
                         onclick: sticky_on_toggle_text_shadow(state)
-                        if { state.get_text_shadow_enabled().get() } { "Disable Shadow" } else { "Enable Shadow" }
+                        if { state.get_text_shadow_enabled().get() } { "Off" } else { "On" }
                     }
                 }
                 div {
@@ -168,7 +168,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     primary_button {
                         label: "Toggle"
                         onclick: sticky_on_toggle_clip_path(state)
-                        if { state.get_clip_path_enabled().get() } { "Disable Clip" } else { "Enable Clip" }
+                        if { state.get_clip_path_enabled().get() } { "Off" } else { "On" }
                     }
                 }
                 div {
@@ -198,7 +198,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     primary_button {
                         label: "Toggle"
                         onclick: sticky_on_toggle_scroll_shadow(state)
-                        if { state.get_scroll_shadow_visible().get() } { "Disable Shadow" } else { "Enable Shadow" }
+                        if { state.get_scroll_shadow_visible().get() } { "Off" } else { "On" }
                     }
                 }
                 div {

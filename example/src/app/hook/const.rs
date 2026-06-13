@@ -56,7 +56,7 @@ pub(crate) const KEYBOARD_VISIBLE_MARGIN_PX: f64 = 16.0;
 /// is lifted comfortably above the keyboard rather than hugging its top edge,
 /// leaving room for the caret, any inline validation message, and a more
 /// balanced composition.
-pub(crate) const KEYBOARD_GAP_PX: f64 = 48.0;
+pub(crate) const KEYBOARD_GAP_PX: f64 = 36.0;
 
 /// The fraction of the layout viewport height that is reserved as an estimated
 /// on-screen keyboard region when the real keyboard height cannot be measured.
@@ -85,3 +85,17 @@ pub(crate) const KEYBOARD_RESERVED_PADDING_ATTR: &str = "data-euv-kb-pad";
 /// listener observes blur on every editable element. It is used to release the
 /// temporary bottom padding reserved while a field was focused.
 pub(crate) const FOCUS_OUT_EVENT: &str = "focusout";
+
+/// The minimum width (in CSS pixels) that a single button/item must occupy
+/// before the equal-wrap layout considers adding more columns.
+///
+/// The hook computes the maximum number of columns `c` such that
+/// `container_width / c >= EQUAL_WRAP_MIN_ITEM_WIDTH` and `c` evenly divides
+/// the total item count. This prevents columns from becoming too narrow.
+pub(crate) const EQUAL_WRAP_MIN_ITEM_WIDTH: f64 = 80.0;
+
+/// The debounce interval (in milliseconds) for the ResizeObserver callback
+/// used by `use_equal_wrap`.
+///
+/// Avoids excessive style recalculations during continuous resize operations.
+pub(crate) const EQUAL_WRAP_RESIZE_DEBOUNCE_MILLIS: i32 = 32;

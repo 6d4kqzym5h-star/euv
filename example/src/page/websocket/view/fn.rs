@@ -31,13 +31,13 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     button {
                         class: c_primary_button_disabled()
                         disabled: true
-                        "Connecting..."
+                        "Wait"
                     }
                 } else if { state.get_connected().get() } {
                     button {
                         class: c_sse_disconnect_button()
                         onclick: websocket_on_disconnect(state)
-                        "Disconnect"
+                        "Close"
                     }
                 } else {
                     button {
