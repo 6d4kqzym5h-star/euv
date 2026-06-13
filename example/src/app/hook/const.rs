@@ -86,14 +86,6 @@ pub(crate) const KEYBOARD_RESERVED_PADDING_ATTR: &str = "data-euv-kb-pad";
 /// temporary bottom padding reserved while a field was focused.
 pub(crate) const FOCUS_OUT_EVENT: &str = "focusout";
 
-/// The minimum width (in CSS pixels) that a single button/item must occupy
-/// before the equal-wrap layout considers adding more columns.
-///
-/// The hook computes the maximum number of columns `c` such that
-/// `container_width / c >= EQUAL_WRAP_MIN_ITEM_WIDTH` and `c` evenly divides
-/// the total item count. This prevents columns from becoming too narrow.
-pub(crate) const EQUAL_WRAP_MIN_ITEM_WIDTH: f64 = 80.0;
-
 /// The debounce interval (in milliseconds) for the ResizeObserver callback
 /// used by `use_equal_wrap`.
 ///

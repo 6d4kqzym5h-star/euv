@@ -71,9 +71,7 @@ pub(crate) fn dismiss_modal(visible: Signal<bool>) {
 /// # Returns
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that dismisses the modal.
-pub(crate) fn modal_dismiss_handler(
-    visible: Signal<bool>,
-) -> Option<Rc<dyn Fn(Event)>> {
+pub(crate) fn modal_dismiss_handler(visible: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
         if !visible.get() {
             return;

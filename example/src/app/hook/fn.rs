@@ -835,7 +835,11 @@ fn compute_equal_wrap_all_cols(total_count: usize, selector: &str) -> usize {
             continue;
         }
         let child_count: usize = html_element.children().length() as usize;
-        let effective_total: usize = if child_count > 0 { child_count } else { total_count };
+        let effective_total: usize = if child_count > 0 {
+            child_count
+        } else {
+            total_count
+        };
         let mut cols: usize = effective_total;
         loop {
             apply_equal_wrap_cols_to_element(&html_element, cols);
@@ -896,25 +900,6 @@ fn apply_equal_wrap_cols_to_element(element: &HtmlElement, cols: usize) {
     let _ = element
         .style()
         .set_property("grid-template-columns", &format!("repeat({}, 1fr)", cols));
-}
-
-/// Writes the computed column count into the first element matching the
-/// selector's inline style as `grid-template-columns: repeat(cols, 1fr)`.
-///
-/// # Arguments
-///
-/// - `&str` - The CSS selector for the container element.
-/// - `usize` - The column count to apply.
-fn apply_equal_wrap_cols(selector: &str, cols: usize) {
-    let document_value: Document = window()
-        .expect("no global window exists")
-        .document()
-        .expect("should have a document");
-    let Some(element) = document_value.query_selector(selector).unwrap_or(None) else {
-        return;
-    };
-    let html_element: HtmlElement = element.unchecked_into();
-    apply_equal_wrap_cols_to_element(&html_element, cols);
 }
 
 /// Walks up the ancestor chain from the given element to find the nearest
