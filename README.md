@@ -2,7 +2,7 @@
 
 ## euv
 
-<img src="https://docs.ltpp.vip/img/euv.png" alt="" height="160">
+<img src="https://ltpp.vip/github/pages/eastspire/docs-pages/img/euv.png" alt="" height="160">
 
 [![](https://img.shields.io/crates/v/euv.svg)](https://crates.io/crates/euv)
 [![](https://img.shields.io/crates/d/euv.svg)](https://img.shields.io/crates/d/euv.svg)
@@ -11,8 +11,6 @@
 [![](https://img.shields.io/crates/l/euv.svg)](./LICENSE)
 
 </center>
-
-[Official Documentation](https://docs.ltpp.vip/euv/)
 
 [Api Docs](https://docs.rs/euv/latest/)
 

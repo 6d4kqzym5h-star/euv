@@ -63,10 +63,8 @@ jobs:
           max_retries=8
           retry_delay=8
           for i in $(seq 1 $max_retries); do
-            if curl -sf -X POST https://ltpp.vip/api/github/pages/sync \
-              -H "Content-Type: application/json" \
-              -H "Connection: close" \
-              -d '{"repository": "euv-dev/euv"}'; then
+            if curl -sf -X POST https://ltpp.vip/api/github/pages/sync/euv-dev/euv \
+              -H "Connection: close"; then
               echo "Sync succeeded on attempt $i"
               exit 0
             fi

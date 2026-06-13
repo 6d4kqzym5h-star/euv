@@ -10,8 +10,6 @@
 
 </center>
 
-[Official Documentation](https://docs.ltpp.vip/euv/)
-
 [Api Docs](https://docs.rs/euv-macros/latest/)
 
 > Procedural macros for the euv UI framework, providing the macro and attribute for declarative UI composition.

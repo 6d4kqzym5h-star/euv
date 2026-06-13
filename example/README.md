@@ -10,8 +10,6 @@
 
 </center>
 
-[Official Documentation](https://docs.ltpp.vip/euv/)
-
 [Api Docs](https://docs.rs/euv/latest/)
 
 > An example application demonstrating the euv UI framework with reactive signals, custom components, and WebAssembly.

@@ -10,8 +10,6 @@
 
 </center>
 
-[Official Documentation](https://docs.ltpp.vip/euv/)
-
 [Api Docs](https://docs.rs/euv-cli/latest/)
 
 > The official CLI tool for the euv UI framework, providing run/build/fmt modes with hot reload and wasm-pack integration.
