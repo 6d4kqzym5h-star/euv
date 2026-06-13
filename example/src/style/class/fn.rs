@@ -987,10 +987,8 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_counter_row {
-        display: "flex";
         align-items: "center";
         gap: var!(gap-component);
-        flex-wrap: "wrap";
     }
 
     pub(crate) c_counter_text {
@@ -1965,12 +1963,7 @@ class! {
     }
 
     pub(crate) c_timer_controls {
-        display: "flex";
         gap: var!(gap-element);
-        justify-content: "center";
-        media("(max-width: 767px)") {
-            flex-wrap: "wrap";
-        }
     }
 
     pub(crate) c_timer_done {
@@ -2215,9 +2208,7 @@ class! {
     }
 
     pub(crate) c_browser_api_actions {
-        display: "flex";
         gap: var!(gap-element);
-        flex-wrap: "wrap";
         margin: format!("{} 0px", var!(gap-component));
     }
 
@@ -2775,12 +2766,7 @@ class! {
     }
 
     pub(crate) c_keep_alive_counter_controls {
-        display: "flex";
         gap: format!("{}", var!(space-md));
-        justify-content: "center";
-        media("(max-width: 767px)") {
-            flex-wrap: "wrap";
-        }
     }
 
     pub(crate) c_keep_alive_form_group {

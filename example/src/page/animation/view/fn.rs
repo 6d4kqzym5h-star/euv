@@ -14,6 +14,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
     let progress: UseProgress = use_progress();
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
+    let _progress_cols: Signal<usize> = use_equal_wrap_all(2, TIMER_CONTROLS_SELECTOR);
     html! {
         div {
             class: c_page_container()
@@ -68,7 +69,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
             my_card {
                 title: "Progress Bar"
                 div {
-                    class: c_timer_controls()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_timer_controls().get_name())
                     primary_button {
                         label: "Start"
                         onclick: progress_on_start(progress)

@@ -20,6 +20,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
         on_increment,
         on_reset,
     }: LimitedCounterProps = node.try_get_props().unwrap_or_default();
+    let _counter_row_cols: Signal<usize> = use_equal_wrap_all(2, COUNTER_ROW_SELECTOR);
     html! {
         div {
             class: c_binding_child_box()
@@ -41,7 +42,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                 }
             }
             div {
-                class: c_counter_row()
+                class: format!("{} {}", c_equal_wrap().get_name(), c_counter_row().get_name())
                 primary_button {
                     label: "+1"
                     onclick: on_increment

@@ -25,6 +25,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
     let PageTimerProps = node.try_get_props().unwrap_or_default();
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
+    let _timer_cols: Signal<usize> = use_equal_wrap_all(2, TIMER_CONTROLS_SELECTOR);
     use_cleanup(move || {
         if let Some(handle) = stopwatch.get_handle().get() {
             handle.clear();
@@ -50,7 +51,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_timer_controls()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_timer_controls().get_name())
                     if { !stopwatch.get_running().get() } {
                         primary_button {
                             label: "Start"
@@ -101,7 +102,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_timer_controls()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_timer_controls().get_name())
                     if { !countdown.get_running().get() } {
                         primary_button {
                             label: "Start"

@@ -57,3 +57,6 @@ pub(crate) const CLIPBOARD_TEXT_PLACEHOLDER: &str = "Enter text to copy...";
 
 /// The HTML placeholder for the console message input element.
 pub(crate) const CONSOLE_MESSAGE_PLACEHOLDER: &str = "Type a message to log...";
+
+/// The CSS selector for the browser API actions button containers.
+pub(crate) const BROWSER_API_ACTIONS_SELECTOR: &str = ".c_browser_api_actions";

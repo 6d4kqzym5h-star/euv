@@ -42,7 +42,7 @@ fn counter_tab() -> VirtualNode {
                 }
             }
             div {
-                class: c_keep_alive_counter_controls()
+                class: format!("{} {}", c_equal_wrap().get_name(), c_keep_alive_counter_controls().get_name())
                 primary_button {
                     label: "-1"
                     onclick: keep_alive_counter_on_decrement(count)
@@ -207,7 +207,7 @@ fn timer_tab() -> VirtualNode {
                 }
             }
             div {
-                class: c_keep_alive_counter_controls()
+                class: format!("{} {}", c_equal_wrap().get_name(), c_keep_alive_counter_controls().get_name())
                 if { !running.get() } {
                     primary_button {
                         label: "Start"
@@ -362,6 +362,7 @@ pub(crate) fn keep_alive_timer_on_reset(
 pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
     let PageKeepAliveProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<String> = use_signal(|| "counter".to_string());
+    let _keep_alive_cols: Signal<usize> = use_equal_wrap_all(3, KEEP_ALIVE_COUNTER_CONTROLS_SELECTOR);
     html! {
         div {
             class: c_page_container()

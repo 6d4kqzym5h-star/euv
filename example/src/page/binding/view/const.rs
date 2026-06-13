@@ -57,3 +57,6 @@ pub(crate) const COLOR_MIXER_MIN: &str = "0";
 
 /// The HTML max attribute for the color mixer slider.
 pub(crate) const COLOR_MIXER_MAX: &str = "255";
+
+/// The CSS selector for the counter row button containers.
+pub(crate) const COUNTER_ROW_SELECTOR: &str = ".c_counter_row";

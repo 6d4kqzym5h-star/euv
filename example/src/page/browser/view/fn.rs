@@ -9,6 +9,7 @@ use crate::*;
 pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
     let PageBrowserProps = node.try_get_props().unwrap_or_default();
     let state: UseBrowserApi = use_browser_api();
+    let _actions_cols: Signal<usize> = use_equal_wrap_all(3, BROWSER_API_ACTIONS_SELECTOR);
     html! {
         div {
             class: c_page_container()
@@ -62,7 +63,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_browser_api_actions()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
                     primary_button {
                         label: "Set"
                         onclick: local_storage_on_set(state)
@@ -137,7 +138,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_browser_api_actions()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
                     primary_button {
                         label: "Set"
                         onclick: session_storage_on_set(state)
@@ -191,7 +192,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_browser_api_actions()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
                     primary_button {
                         label: "Copy"
                         onclick: clipboard_on_copy(state)
@@ -341,7 +342,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_browser_api_actions()
+                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
                     primary_button {
                         label: "Log"
                         onclick: console_on_log(state.get_console_input())

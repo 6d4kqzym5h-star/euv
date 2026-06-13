@@ -648,9 +648,10 @@ pub(crate) fn nearest_overflow_container(element: &HtmlElement) -> Option<HtmlEl
 pub(crate) fn use_equal_wrap(total_count: usize, selector: &str) -> Signal<usize> {
     let cols_signal: Signal<usize> = use_signal(move || total_count.max(1));
     let selector_string: String = selector.to_string();
-    let selector_for_apply: String = selector_string.clone();
+    let selector_for_resize: String = selector_string.clone();
+    let selector_for_init: String = selector_string.clone();
     let recalculate_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let updated_cols: usize = compute_equal_wrap_cols(total_count, &selector_string);
+        let updated_cols: usize = compute_equal_wrap_cols(total_count, &selector_for_resize);
         cols_signal.set(updated_cols);
     }));
     let recalculate_callback: Function = recalculate_closure
@@ -673,8 +674,70 @@ pub(crate) fn use_equal_wrap(total_count: usize, selector: &str) -> Signal<usize
             .unwrap_or_default();
         timer_signal.set(Some(new_timer));
     });
-    let initial_cols: usize = compute_equal_wrap_cols(total_count, &selector_for_apply);
-    cols_signal.set(initial_cols);
+    // Defer initial calculation to the next animation frame so the DOM has
+    // been laid out and child elements have their final dimensions.
+    let init_window: Window = window().expect("no global window exists");
+    let init_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let initial_cols: usize = compute_equal_wrap_cols(total_count, &selector_for_init);
+        cols_signal.set(initial_cols);
+    }));
+    let _ = init_window.request_animation_frame(init_closure.as_ref().unchecked_ref());
+    init_closure.forget();
+    cols_signal
+}
+
+/// Creates a reactive equal-wrap layout hook that applies to ALL elements
+/// matching the given selector. Each matched container independently computes
+/// its optimal column count based on its own children's overflow state.
+///
+/// This is useful when multiple button groups on the same page share the same
+/// CSS class (e.g. multiple `.c_browser_api_actions` containers).
+///
+/// # Arguments
+///
+/// - `usize` - The total number of items per container.
+/// - `&str` - A CSS selector string matching one or more container elements.
+///
+/// # Returns
+///
+/// - `Signal<usize>` - A reactive signal holding the column count (reflects
+///   the last computed value; primarily used for reactivity tracking).
+pub(crate) fn use_equal_wrap_all(total_count: usize, selector: &str) -> Signal<usize> {
+    let cols_signal: Signal<usize> = use_signal(move || total_count.max(1));
+    let selector_string: String = selector.to_string();
+    let selector_for_resize: String = selector_string.clone();
+    let selector_for_init: String = selector_string.clone();
+    let recalculate_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let updated_cols: usize = compute_equal_wrap_all_cols(total_count, &selector_for_resize);
+        cols_signal.set(updated_cols);
+    }));
+    let recalculate_callback: Function = recalculate_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    recalculate_closure.forget();
+    let debounce_window: Window = window().expect("no global window exists");
+    let timer_signal: Signal<Option<i32>> = use_signal(|| None);
+    use_window_event("resize", move || {
+        let old_timer: Option<i32> = timer_signal.get();
+        if let Some(timer_id) = old_timer {
+            debounce_window.clear_timeout_with_handle(timer_id);
+        }
+        let new_timer: i32 = debounce_window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                &recalculate_callback,
+                EQUAL_WRAP_RESIZE_DEBOUNCE_MILLIS,
+            )
+            .unwrap_or_default();
+        timer_signal.set(Some(new_timer));
+    });
+    let init_window: Window = window().expect("no global window exists");
+    let init_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let initial_cols: usize = compute_equal_wrap_all_cols(total_count, &selector_for_init);
+        cols_signal.set(initial_cols);
+    }));
+    let _ = init_window.request_animation_frame(init_closure.as_ref().unchecked_ref());
+    init_closure.forget();
     cols_signal
 }
 
@@ -685,9 +748,6 @@ pub(crate) fn use_equal_wrap(total_count: usize, selector: &str) -> Signal<usize
 /// grid layout, then checks if any child has text overflow. If overflow is
 /// detected, halves the column count and retries. This ensures wrapping
 /// always produces rows with half the previous column count (e.g. 4→2→1).
-///
-/// Falls back to `EQUAL_WRAP_MIN_ITEM_WIDTH` check as a safety net when
-/// the container or children are not yet in the DOM.
 ///
 /// # Arguments
 ///
@@ -717,16 +777,13 @@ fn compute_equal_wrap_cols(total_count: usize, selector: &str) -> usize {
     let mut cols: usize = total_count;
     loop {
         // Apply the candidate column count to measure overflow.
-        apply_equal_wrap_cols(selector, cols);
+        apply_equal_wrap_cols_to_element(&html_element, cols);
+        // Force a synchronous reflow so scrollWidth/clientWidth reflect the
+        // new grid-template-columns value we just set.
+        let _ = html_element.offset_width();
         // Check if any child element has text overflow.
         if !has_child_text_overflow(&html_element) {
             return cols;
-        }
-        // Also guard against items being too narrow as a safety net.
-        let item_width: f64 = container_width / cols as f64;
-        if item_width < EQUAL_WRAP_MIN_ITEM_WIDTH && cols > 1 {
-            cols = (cols / 2).max(1);
-            continue;
         }
         // Halve the column count for the next attempt.
         if cols <= 1 {
@@ -734,6 +791,69 @@ fn compute_equal_wrap_cols(total_count: usize, selector: &str) -> usize {
         }
         cols /= 2;
     }
+}
+
+/// Computes and applies the optimal column count for ALL elements matching
+/// the selector. Each element is independently measured and may end up with
+/// a different column count depending on its own width and children.
+///
+/// Returns the minimum column count across all matched elements (used as the
+/// signal value for reactivity tracking).
+///
+/// # Arguments
+///
+/// - `usize` - The total number of items per container.
+/// - `&str` - The CSS selector matching one or more container elements.
+///
+/// # Returns
+///
+/// - `usize` - The minimum computed column count across all containers.
+fn compute_equal_wrap_all_cols(total_count: usize, selector: &str) -> usize {
+    if total_count == 0 {
+        return 1;
+    }
+    let document_value: Document = window()
+        .expect("no global window exists")
+        .document()
+        .expect("should have a document");
+    let Ok(node_list) = document_value.query_selector_all(selector) else {
+        return total_count;
+    };
+    if node_list.length() == 0 {
+        return total_count;
+    }
+    let mut min_cols: usize = total_count;
+    for i in 0..node_list.length() {
+        let Some(node) = node_list.item(i) else {
+            continue;
+        };
+        let Ok(html_element) = node.dyn_into::<HtmlElement>() else {
+            continue;
+        };
+        let container_width: f64 = html_element.client_width() as f64;
+        if container_width <= 0.0 {
+            continue;
+        }
+        let child_count: usize = html_element.children().length() as usize;
+        let effective_total: usize = if child_count > 0 { child_count } else { total_count };
+        let mut cols: usize = effective_total;
+        loop {
+            apply_equal_wrap_cols_to_element(&html_element, cols);
+            let _ = html_element.offset_width();
+            if !has_child_text_overflow(&html_element) {
+                break;
+            }
+            if cols <= 1 {
+                cols = 1;
+                break;
+            }
+            cols /= 2;
+        }
+        if cols < min_cols {
+            min_cols = cols;
+        }
+    }
+    min_cols
 }
 
 /// Checks whether any direct child element of the container has text overflow.
@@ -765,8 +885,21 @@ fn has_child_text_overflow(container: &HtmlElement) -> bool {
     false
 }
 
-/// Writes the computed column count into the container element's inline style
+/// Writes the computed column count into a specific element's inline style
 /// as the `grid-template-columns` property value `repeat(cols, 1fr)`.
+///
+/// # Arguments
+///
+/// - `&HtmlElement` - The container element to update.
+/// - `usize` - The column count to apply.
+fn apply_equal_wrap_cols_to_element(element: &HtmlElement, cols: usize) {
+    let _ = element
+        .style()
+        .set_property("grid-template-columns", &format!("repeat({}, 1fr)", cols));
+}
+
+/// Writes the computed column count into the first element matching the
+/// selector's inline style as `grid-template-columns: repeat(cols, 1fr)`.
 ///
 /// # Arguments
 ///
@@ -781,9 +914,7 @@ fn apply_equal_wrap_cols(selector: &str, cols: usize) {
         return;
     };
     let html_element: HtmlElement = element.unchecked_into();
-    let _ = html_element
-        .style()
-        .set_property("grid-template-columns", &format!("repeat({}, 1fr)", cols));
+    apply_equal_wrap_cols_to_element(&html_element, cols);
 }
 
 /// Walks up the ancestor chain from the given element to find the nearest
