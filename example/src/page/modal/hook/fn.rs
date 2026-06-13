@@ -83,8 +83,8 @@ fn start_close_animation(visible: Signal<bool>, closing: Signal<bool>) {
     closing.set(true);
     let window: Window = window().expect("no global window exists");
     let callback: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        closing.set(false);
         visible.set(false);
+        closing.set(false);
     }));
     let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
         callback.as_ref().unchecked_ref::<Function>(),
