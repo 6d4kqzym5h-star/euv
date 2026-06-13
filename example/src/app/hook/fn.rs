@@ -618,13 +618,14 @@ pub(crate) fn nearest_overflow_container(element: &HtmlElement) -> Option<HtmlEl
 }
 
 /// Creates a reactive equal-wrap layout hook that ensures items wrap into rows
-/// with equal column counts.
+/// with equal column counts, halving the column count when text overflows.
 ///
-/// When a container holds N items and the available width cannot fit all N in
-/// one row, this hook finds the largest column count `c` such that:
-/// - `c` evenly divides `total_count` (every row has the same number of items),
-/// - `container_width / c >= EQUAL_WRAP_MIN_ITEM_WIDTH` (items are not too
-///   narrow).
+/// When a container holds N items, this hook starts with all N items in one
+/// row. After applying the grid layout, it checks whether any child element
+/// has text overflow (scrollWidth > clientWidth). If overflow is detected,
+/// the column count is halved repeatedly until no overflow occurs or the
+/// column count reaches 1. This guarantees that when wrapping happens, each
+/// new row has exactly half the items of the previous attempt (e.g. 4→2→1).
 ///
 /// The computed column count is applied directly to the container element's
 /// inline `grid-template-columns` style as `repeat(c, 1fr)`. The container
@@ -645,14 +646,12 @@ pub(crate) fn nearest_overflow_container(element: &HtmlElement) -> Option<HtmlEl
 ///
 /// - `Signal<usize>` - A reactive signal holding the current column count.
 pub(crate) fn use_equal_wrap(total_count: usize, selector: &str) -> Signal<usize> {
-    let cols_signal: Signal<usize> =
-        use_signal(move || compute_equal_wrap_cols(total_count, selector));
+    let cols_signal: Signal<usize> = use_signal(move || total_count.max(1));
     let selector_string: String = selector.to_string();
     let selector_for_apply: String = selector_string.clone();
     let recalculate_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let updated_cols: usize = compute_equal_wrap_cols(total_count, &selector_string);
         cols_signal.set(updated_cols);
-        apply_equal_wrap_cols(&selector_string, updated_cols);
     }));
     let recalculate_callback: Function = recalculate_closure
         .as_ref()
@@ -674,17 +673,21 @@ pub(crate) fn use_equal_wrap(total_count: usize, selector: &str) -> Signal<usize
             .unwrap_or_default();
         timer_signal.set(Some(new_timer));
     });
-    let initial_cols: usize = cols_signal.get();
-    apply_equal_wrap_cols(&selector_for_apply, initial_cols);
+    let initial_cols: usize = compute_equal_wrap_cols(total_count, &selector_for_apply);
+    cols_signal.set(initial_cols);
     cols_signal
 }
 
-/// Computes the optimal column count for the equal-wrap layout.
+/// Computes the optimal column count for the equal-wrap layout by detecting
+/// text overflow in child elements.
 ///
-/// Iterates from `total_count` down to `1` and returns the first value `c`
-/// that evenly divides `total_count` and whose item width
-/// (`container_width / c`) is at least `EQUAL_WRAP_MIN_ITEM_WIDTH`.
-/// Falls back to `1` when no suitable divisor is found.
+/// Starts with `total_count` columns (all items in one row), applies the
+/// grid layout, then checks if any child has text overflow. If overflow is
+/// detected, halves the column count and retries. This ensures wrapping
+/// always produces rows with half the previous column count (e.g. 4→2→1).
+///
+/// Falls back to `EQUAL_WRAP_MIN_ITEM_WIDTH` check as a safety net when
+/// the container or children are not yet in the DOM.
 ///
 /// # Arguments
 ///
@@ -710,15 +713,56 @@ fn compute_equal_wrap_cols(total_count: usize, selector: &str) -> usize {
     if container_width <= 0.0 {
         return total_count;
     }
-    for cols in (1..=total_count).rev() {
-        if total_count.is_multiple_of(cols) {
-            let item_width: f64 = container_width / cols as f64;
-            if item_width >= EQUAL_WRAP_MIN_ITEM_WIDTH {
-                return cols;
-            }
+    // Start with all items in one row, then halve until no overflow.
+    let mut cols: usize = total_count;
+    loop {
+        // Apply the candidate column count to measure overflow.
+        apply_equal_wrap_cols(selector, cols);
+        // Check if any child element has text overflow.
+        if !has_child_text_overflow(&html_element) {
+            return cols;
+        }
+        // Also guard against items being too narrow as a safety net.
+        let item_width: f64 = container_width / cols as f64;
+        if item_width < EQUAL_WRAP_MIN_ITEM_WIDTH && cols > 1 {
+            cols = (cols / 2).max(1);
+            continue;
+        }
+        // Halve the column count for the next attempt.
+        if cols <= 1 {
+            return 1;
+        }
+        cols /= 2;
+    }
+}
+
+/// Checks whether any direct child element of the container has text overflow.
+///
+/// An element is considered to have text overflow when its `scrollWidth`
+/// exceeds its `clientWidth`, indicating that the content is wider than the
+/// visible area (typically truncated with ellipsis).
+///
+/// # Arguments
+///
+/// - `&HtmlElement` - The container element whose children are inspected.
+///
+/// # Returns
+///
+/// - `bool` - `true` if at least one child has text overflow.
+fn has_child_text_overflow(container: &HtmlElement) -> bool {
+    let children: HtmlCollection = container.children();
+    for i in 0..children.length() {
+        let Some(child) = children.item(i) else {
+            continue;
+        };
+        let Ok(child_html) = child.dyn_into::<HtmlElement>() else {
+            continue;
+        };
+        if child_html.scroll_width() > child_html.client_width() {
+            return true;
         }
     }
-    1
+    false
 }
 
 /// Writes the computed column count into the container element's inline style

@@ -40,8 +40,7 @@ pub(crate) fn open_modal(visible: Signal<bool>, closing: Signal<bool>) {
     modal_push(
         visible,
         Rc::new(move || {
-            closing.set(true);
-            dismiss_modal_after_animation(visible, closing);
+            start_close_animation(visible, closing);
         }),
     );
 }
@@ -52,7 +51,7 @@ pub(crate) fn open_modal(visible: Signal<bool>, closing: Signal<bool>) {
 ///
 /// Removes the modal from the global stack and consumes the matching history
 /// entry so a later back gesture behaves correctly. The visibility signal is
-/// NOT set to `false` here; that is deferred to [`dismiss_modal_after_animation`]
+/// NOT set to `false` here; that is deferred to the scheduled timeout
 /// so the exit animation can play before the modal is removed from the DOM.
 /// Do not call this from the back gesture path; the `popstate` handler invokes
 /// the registered close callback directly in that case.
@@ -63,22 +62,25 @@ pub(crate) fn open_modal(visible: Signal<bool>, closing: Signal<bool>) {
 /// - `Signal<bool>` - The closing signal tracking the exit animation state.
 pub(crate) fn dismiss_modal(visible: Signal<bool>, closing: Signal<bool>) {
     modal_close_via_ui(visible);
-    dismiss_modal_after_animation(visible, closing);
+    start_close_animation(visible, closing);
 }
 
-/// Schedules the final modal cleanup after the exit animation completes.
+/// Starts the modal close animation if not already in progress.
 ///
-/// Uses `setTimeout` with a duration matching the CSS exit animation duration
-/// so the modal remains visible during the animation and is removed from the
-/// DOM only after it finishes. This is more reliable than relying on the
-/// `animationend` DOM event, which may not fire consistently in all vdom
-/// patching scenarios.
+/// Sets `closing` to `true` (which triggers the CSS exit animation) and
+/// schedules a timeout to remove the modal from the DOM after the animation
+/// completes. If `closing` is already `true`, this is a no-op, preventing
+/// duplicate timeouts that would cause the animation to appear to run twice.
 ///
 /// # Arguments
 ///
 /// - `Signal<bool>` - The visibility signal controlling the modal.
 /// - `Signal<bool>` - The closing signal tracking the exit animation state.
-fn dismiss_modal_after_animation(visible: Signal<bool>, closing: Signal<bool>) {
+fn start_close_animation(visible: Signal<bool>, closing: Signal<bool>) {
+    if closing.get() {
+        return;
+    }
+    closing.set(true);
     let window: Window = window().expect("no global window exists");
     let callback: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         closing.set(false);
@@ -95,8 +97,8 @@ fn dismiss_modal_after_animation(visible: Signal<bool>, closing: Signal<bool>) {
 /// setting the closing signal to true and syncing the browser history.
 ///
 /// The modal will play its exit animation. After the animation duration
-/// elapses, [`dismiss_modal_after_animation`] will reset the closing signal
-/// and set the visibility signal to false, which removes the modal from the DOM.
+/// elapses, the scheduled timeout will reset the closing signal and set the
+/// visibility signal to false, which removes the modal from the DOM.
 ///
 /// # Arguments
 ///
@@ -114,7 +116,6 @@ pub(crate) fn modal_dismiss_handler(
         if closing.get() {
             return;
         }
-        closing.set(true);
         dismiss_modal(visible, closing);
     }))
 }
@@ -267,7 +268,6 @@ pub(crate) fn modal_on_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event)>> {
         state
             .get_confirm_result()
             .set("Action confirmed!".to_string());
-        state.get_closing_confirm().set(true);
         dismiss_modal(state.get_show_confirm(), state.get_closing_confirm());
     }))
 }
@@ -289,7 +289,6 @@ pub(crate) fn modal_on_cancel_confirm(state: UseModal) -> Option<Rc<dyn Fn(Event
         state
             .get_confirm_result()
             .set("Action cancelled!".to_string());
-        state.get_closing_confirm().set(true);
         dismiss_modal(state.get_show_confirm(), state.get_closing_confirm());
     }))
 }
@@ -366,7 +365,6 @@ pub(crate) fn modal_on_form_submit(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
                 state.get_modal_name().get(),
                 state.get_modal_email().get()
             ));
-            state.get_closing_form().set(true);
             dismiss_modal(state.get_show_form(), state.get_closing_form());
         } else {
             state.get_modal_error().set(validation_errors.join("; "));
@@ -391,7 +389,6 @@ pub(crate) fn modal_on_cancel_form(state: UseModal) -> Option<Rc<dyn Fn(Event)>>
         state
             .get_modal_submitted()
             .set("Form cancelled!".to_string());
-        state.get_closing_form().set(true);
         dismiss_modal(state.get_show_form(), state.get_closing_form());
     }))
 }
