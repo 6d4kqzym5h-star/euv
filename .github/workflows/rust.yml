@@ -101,7 +101,7 @@ jobs:
 
           # Collect all workspace member directory names
           MEMBER_PKG_NAMES=""
-          MEMBERS=$(toml get Cargo.toml workspace.members --raw | tr -d '[]"' | tr ',' '\n' | tr -d '[:space:]' | grep -v '^$')
+          MEMBERS=$(toml get Cargo.toml workspace.members --raw | tr -d '[]"' | sed 's/,/\n/g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$')
           echo "📋 Found workspace members: $MEMBERS"
           for member in $MEMBERS; do
             SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
