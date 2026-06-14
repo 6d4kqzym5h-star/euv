@@ -2,7 +2,7 @@
 
 ## euv
 
-<img src="https://ltpp.vip/github/pages/eastspire/docs-pages/img/euv.png" alt="" height="160">
+<img src="https://ltpp.vip/github/pages/docs-pages/pages/img/euv.png" alt="" height="160">
 
 [![](https://img.shields.io/crates/v/euv.svg)](https://crates.io/crates/euv)
 [![](https://img.shields.io/crates/d/euv.svg)](https://img.shields.io/crates/d/euv.svg)
