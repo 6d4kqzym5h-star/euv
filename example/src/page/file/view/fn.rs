@@ -85,6 +85,7 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
         div {
             class: c_page_container()
             page_header {
+                icon: "📁"
                 title: "File Upload"
                 subtitle: "File selection, drag-and-drop zone, and file list display."
             }

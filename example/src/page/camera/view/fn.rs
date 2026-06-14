@@ -36,6 +36,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "📷"
                 title: "Camera"
                 subtitle: "Open the camera to scan QR codes. Navigates on valid URL detection."
             }

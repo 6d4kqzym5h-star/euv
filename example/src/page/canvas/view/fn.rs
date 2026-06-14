@@ -74,6 +74,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "🎨"
                 title: "Canvas"
                 subtitle: "A freehand drawing board. Tap Draw to start creating."
             }

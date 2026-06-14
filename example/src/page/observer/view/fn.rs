@@ -16,6 +16,7 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
         div {
             class: c_page_container()
             page_header {
+                icon: "👁️"
                 title: "Observer"
                 subtitle: "IntersectionObserver API demo: detect when elements enter or leave the viewport."
             }

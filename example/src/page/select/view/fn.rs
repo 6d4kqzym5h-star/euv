@@ -13,6 +13,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "📋"
                 title: "Select & Textarea"
                 subtitle: "Dropdown selection, cascading selects, and textarea binding."
             }

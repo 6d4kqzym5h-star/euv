@@ -20,6 +20,7 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
         div {
             class: c_page_container()
             page_header {
+                icon: "⚙️"
                 title: "Custom Attributes"
                 subtitle: "Static and dynamic attribute keys and values."
             }

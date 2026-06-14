@@ -38,6 +38,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "⏱️"
                 title: "Timer"
                 subtitle: "Stopwatch and countdown timer with interval-based updates."
             }

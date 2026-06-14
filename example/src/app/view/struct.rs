@@ -7,6 +7,8 @@ use crate::*;
 pub(crate) struct NavItemProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,
+    /// The emoji icon for the navigation item.
+    pub(crate) icon: &'static str,
     /// The display label for the navigation item.
     pub(crate) label: &'static str,
     /// The target route path.
@@ -22,6 +24,8 @@ pub(crate) struct MobileNavItemProps {
     pub(crate) route_signal: Signal<String>,
     /// The reactive signal controlling the mobile nav drawer visibility.
     pub(crate) drawer_open: Signal<bool>,
+    /// The emoji icon for the navigation item.
+    pub(crate) icon: &'static str,
     /// The display label for the navigation item.
     pub(crate) label: &'static str,
     /// The target route path.

@@ -20,6 +20,7 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
         div {
             class: c_page_container()
             page_header {
+                icon: "🏷️"
                 title: "Dynamic Tag"
                 subtitle: "Switch tags at runtime using the {tag} { content } syntax."
             }

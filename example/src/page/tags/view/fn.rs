@@ -20,6 +20,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "🏷️"
                 title: TAGS_PAGE_TITLE
                 subtitle: TAGS_PAGE_SUBTITLE
             }

@@ -368,6 +368,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
         div {
             class: c_page_container()
             page_header {
+                icon: "💚"
                 title: "Keep-Alive"
                 subtitle: "Preserve component state across tab switches using CSS display toggling."
             }

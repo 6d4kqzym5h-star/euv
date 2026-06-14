@@ -538,6 +538,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "🎯"
                 title: "Event Handling"
                 subtitle: "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, media, video, and image events."
             }

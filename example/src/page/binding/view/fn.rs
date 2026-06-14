@@ -318,6 +318,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
         div {
             class: c_page_container()
             page_header {
+                icon: "🔗"
                 title: "Component Binding"
                 subtitle: "Props passing, two-way binding, and cross-component reactive binding."
             }

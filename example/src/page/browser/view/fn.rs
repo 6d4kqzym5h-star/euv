@@ -14,6 +14,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "🌐"
                 title: "Browser APIs"
                 subtitle: "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location."
             }

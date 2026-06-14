@@ -13,6 +13,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "💬"
                 title: "Modal Dialog"
                 subtitle: "Overlay dialogs with different content patterns."
             }

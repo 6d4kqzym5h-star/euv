@@ -16,6 +16,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
         div {
             class: c_page_container()
             page_header {
+                icon: "🔀"
                 title: "Conditional Rendering"
                 subtitle: "Toggle visibility and switch between views."
             }

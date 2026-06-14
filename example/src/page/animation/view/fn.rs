@@ -19,6 +19,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
         div {
             class: c_page_container()
             page_header {
+                icon: "🎬"
                 title: "Animation"
                 subtitle: "CSS transitions, keyframe animations, and reactive style changes."
             }

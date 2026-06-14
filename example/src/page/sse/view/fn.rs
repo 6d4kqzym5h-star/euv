@@ -17,6 +17,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "📡"
                 title: "Server-Sent Events"
                 subtitle: "Connect to an SSE endpoint and receive real-time streaming events."
             }

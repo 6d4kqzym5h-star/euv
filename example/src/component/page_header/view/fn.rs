@@ -1,13 +1,14 @@
 use crate::*;
 
-/// Renders a standard page header with a title and subtitle.
+/// Renders a standard page header with an emoji icon, title, and subtitle.
 ///
-/// Produces a consistent `div > h1 + p` structure used by every demo page
-/// in the example application.
+/// Produces a consistent hero-style banner with gradient glow effect,
+/// matching the home page design language. Every demo page uses this
+/// component as its first child.
 ///
 /// # Arguments
 ///
-/// - `PageHeaderProps` - The typed props containing title and subtitle.
+/// - `PageHeaderProps` - The typed props containing icon, title, and subtitle.
 /// - `VirtualNode` - The children nodes.
 ///
 /// # Returns
@@ -15,18 +16,31 @@ use crate::*;
 /// - `VirtualNode` - The page header virtual DOM tree.
 #[component]
 pub(crate) fn page_header(node: VirtualNode<PageHeaderProps>) -> VirtualNode {
-    let PageHeaderProps { title, subtitle }: PageHeaderProps =
-        node.try_get_props().unwrap_or_default();
+    let PageHeaderProps {
+        icon,
+        title,
+        subtitle,
+    }: PageHeaderProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
-            class: c_page_header()
-            h1 {
-                class: c_page_title()
-                title
+            class: c_page_hero()
+            div {
+                class: c_page_hero_glow()
             }
-            p {
-                class: c_page_subtitle()
-                subtitle
+            div {
+                class: c_page_hero_content()
+                div {
+                    class: c_page_hero_icon()
+                    icon
+                }
+                h1 {
+                    class: c_page_hero_title()
+                    title
+                }
+                p {
+                    class: c_page_hero_subtitle()
+                    subtitle
+                }
             }
         }
     }

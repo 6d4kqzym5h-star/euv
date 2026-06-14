@@ -12,6 +12,7 @@ pub(crate) fn page_badge(node: VirtualNode<PageBadgeProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "🏷️"
                 title: "Badge"
                 subtitle: "Status indicators with click support."
             }

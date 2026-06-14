@@ -13,6 +13,7 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "🔢"
                 title: "Counter"
                 subtitle: "Reactive counter driven by signal state."
             }

@@ -18,6 +18,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
         div {
             class: c_page_container()
             page_header {
+                icon: "🔌"
                 title: "WebSocket Chat"
                 subtitle: "Connect to a WebSocket chat server with automatic UUID and Ping keep-alive."
             }

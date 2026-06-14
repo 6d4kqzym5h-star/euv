@@ -15,6 +15,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "📌"
                 title: "Sticky & CSS Effects"
                 subtitle: "Position sticky, glassmorphism, backdrop-filter, clip-path, and more."
             }

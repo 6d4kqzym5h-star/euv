@@ -13,6 +13,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "📝"
                 title: "List Rendering"
                 subtitle: "Dynamic list with add and remove operations."
             }

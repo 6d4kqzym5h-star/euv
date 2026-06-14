@@ -13,6 +13,7 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
         div {
             class: c_page_container()
             page_header {
+                icon: "⏳"
                 title: "Async Data"
                 subtitle: "Simulating network requests with loading states."
             }

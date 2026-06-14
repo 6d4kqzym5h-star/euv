@@ -13,6 +13,7 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
         div {
             class: c_page_container()
             page_header {
+                icon: "📄"
                 title: "Form Demo"
                 subtitle: "Two-way binding and validation example."
             }
