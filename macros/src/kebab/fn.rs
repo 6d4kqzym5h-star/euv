@@ -60,6 +60,14 @@ pub(crate) fn parse_ident_segment(input: ParseStream) -> syn::Result<String> {
                 .unwrap_or(&raw_name)
                 .to_string())
         }
+        proc_macro2::TokenTree::Literal(literal) => {
+            let literal_string: String = literal.to_string();
+            if literal_string.starts_with(CHAR_DOUBLE_QUOTE) {
+                Err(input.error(ERR_EXPECTED_IDENTIFIER))
+            } else {
+                Ok(literal_string)
+            }
+        }
         _ => Err(input.error(ERR_EXPECTED_IDENTIFIER)),
     }
 }
@@ -155,9 +163,14 @@ pub(crate) fn reconstruct_kebab_from_tokens(tokens: &proc_macro2::TokenStream) -
             }
             proc_macro2::TokenTree::Literal(literal) => {
                 let literal_token_stream: proc_macro2::TokenStream =
-                    proc_macro2::TokenTree::Literal(literal).into();
+                    proc_macro2::TokenTree::Literal(literal.clone()).into();
                 if let Ok(literal_string) = syn::parse2::<LitStr>(literal_token_stream) {
                     result.push_str(&literal_string.value());
+                } else {
+                    let literal_text: String = literal.to_string();
+                    if !literal_text.starts_with(CHAR_DOUBLE_QUOTE) {
+                        result.push_str(&literal_text);
+                    }
                 }
             }
             _ => {}

@@ -9,12 +9,12 @@ css_vars! {
         space-md: "12px";
         space-lg: "16px";
         space-xl: "20px";
-        "space-2xl": "24px";
-        "space-3xl": "32px";
-        "space-4xl": "40px";
-        "space-5xl": "48px";
-        "space-6xl": "64px";
-        "space-7xl": "80px";
+        space-2xl: "24px";
+        space-3xl: "32px";
+        space-4xl: "40px";
+        space-5xl: "48px";
+        space-6xl: "64px";
+        space-7xl: "80px";
 
         // ─── Border Radius Scale ───
         // Consistent rounding: subtle → medium → large → full
@@ -23,7 +23,7 @@ css_vars! {
         radius-md: "10px";
         radius-lg: "14px";
         radius-xl: "18px";
-        "radius-2xl": "24px";
+        radius-2xl: "24px";
         radius-pill: "9999px";
 
         // ─── Font Size Scale ───
@@ -34,11 +34,11 @@ css_vars! {
         font-md: "15px";
         font-lg: "16px";
         font-xl: "18px";
-        "font-2xl": "22px";
-        "font-3xl": "28px";
-        "font-4xl": "36px";
-        "font-5xl": "48px";
-        "font-6xl": "72px";
+        font-2xl: "22px";
+        font-3xl: "28px";
+        font-4xl: "36px";
+        font-5xl: "48px";
+        font-6xl: "72px";
 
         // ─── Transition Durations ───
         // Unified timing: all micro-interactions use consistent timing
@@ -261,12 +261,12 @@ css_vars! {
         space-md: "12px";
         space-lg: "16px";
         space-xl: "20px";
-        "space-2xl": "24px";
-        "space-3xl": "32px";
-        "space-4xl": "40px";
-        "space-5xl": "48px";
-        "space-6xl": "64px";
-        "space-7xl": "80px";
+        space-2xl: "24px";
+        space-3xl: "32px";
+        space-4xl: "40px";
+        space-5xl: "48px";
+        space-6xl: "64px";
+        space-7xl: "80px";
 
         // ─── Border Radius Scale (same as light) ───
         radius-xs: "4px";
@@ -274,7 +274,7 @@ css_vars! {
         radius-md: "10px";
         radius-lg: "14px";
         radius-xl: "18px";
-        "radius-2xl": "24px";
+        radius-2xl: "24px";
         radius-pill: "9999px";
 
         // ─── Font Size Scale (same as light) ───
@@ -284,11 +284,11 @@ css_vars! {
         font-md: "15px";
         font-lg: "16px";
         font-xl: "18px";
-        "font-2xl": "22px";
-        "font-3xl": "28px";
-        "font-4xl": "36px";
-        "font-5xl": "48px";
-        "font-6xl": "72px";
+        font-2xl: "22px";
+        font-3xl: "28px";
+        font-4xl: "36px";
+        font-5xl: "48px";
+        font-6xl: "72px";
 
         // ─── Transition Durations (same as light) ───
         duration-instant: "0.05s";

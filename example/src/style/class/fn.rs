@@ -7,7 +7,7 @@ class! {
 
     pub(crate) c_app_root {
         display: "flex";
-        height: "100vh";
+        height: "100%";
         overflow: "hidden";
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(bg-primary);
@@ -32,7 +32,7 @@ class! {
     pub(crate) c_mobile_app_root {
         display: "flex";
         flex-direction: "column";
-        height: "100vh";
+        height: "100%";
         overflow: "hidden";
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(bg-nav);
@@ -65,7 +65,7 @@ class! {
         border-right: format!("1px solid {}", var!(glass-border));
         display: "flex";
         flex-direction: "column";
-        height: "100vh";
+        height: "100%";
         flex-shrink: "0";
         media("(max-width: 767px)") {
             display: "none";
@@ -376,13 +376,13 @@ class! {
     }
 
     pub(crate) c_page_title {
-        font-size: var!("font-3xl");
+        font-size: var!(font-3xl);
         font-weight: "700";
         color: var!(text-primary);
         margin-bottom: var!(gap-page-title);
         letter-spacing: "-0.02em";
         media("(max-width: 767px)") {
-            font-size: var!("font-2xl");
+            font-size: var!(font-2xl);
         }
     }
 
@@ -403,7 +403,7 @@ class! {
     pub(crate) c_page_hero {
         position: "relative";
         text-align: "center";
-        padding: format!("{} {} {} {}", var!("space-4xl"), var!(space-xl), var!("space-4xl"), var!(space-xl));
+        padding: format!("{} {} {} {}", var!(space-4xl), var!(space-xl), var!(space-4xl), var!(space-xl));
         margin-bottom: var!(space-xl);
         border-radius: var!(radius-xl);
         overflow: "hidden";
@@ -411,7 +411,7 @@ class! {
         border: format!("1px solid {}", var!(border-card));
         box-shadow: var!(shadow-card);
         media("(max-width: 767px)") {
-            padding: format!("{} {} {} {}", var!("space-2xl"), var!(space-lg), var!("space-2xl"), var!(space-lg));
+            padding: format!("{} {} {} {}", var!(space-2xl), var!(space-lg), var!(space-2xl), var!(space-lg));
             margin-bottom: var!(space-lg);
         }
     }
@@ -446,7 +446,7 @@ class! {
     }
 
     pub(crate) c_page_hero_title {
-        font-size: var!("font-4xl");
+        font-size: var!(font-4xl);
         font-weight: "800";
         letter-spacing: "-0.03em";
         margin: "0px";
@@ -458,7 +458,7 @@ class! {
         margin-bottom: var!(space-sm);
         filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.12))";
         media("(max-width: 767px)") {
-            font-size: var!("font-3xl");
+            font-size: var!(font-3xl);
         }
     }
 
@@ -534,6 +534,7 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_primary_button {
+        display: "flex";
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
@@ -542,14 +543,14 @@ class! {
         background: var!(accent);
         color: var!(text-on-accent);
         border: "none";
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1.4";
+        line-height: "1";
         outline: "none";
         box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
@@ -557,6 +558,7 @@ class! {
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
+        vertical-align: "middle";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
@@ -579,6 +581,7 @@ class! {
     }
 
     pub(crate) c_secondary_button {
+        display: "flex";
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
@@ -587,20 +590,21 @@ class! {
         background: "transparent";
         color: var!(accent);
         border: format!("1px solid {}", var!(accent));
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1.4";
+        line-height: "1";
         outline: "none";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
+        vertical-align: "middle";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -616,6 +620,7 @@ class! {
     }
 
     pub(crate) c_accent_button {
+        display: "flex";
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
@@ -624,20 +629,21 @@ class! {
         background: var!(bg-success);
         color: var!(text-success);
         border: format!("1px solid {}", var!(border-success));
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1.4";
+        line-height: "1";
         outline: "none";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
+        vertical-align: "middle";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-success));
@@ -653,6 +659,7 @@ class! {
     }
 
     pub(crate) c_danger_button {
+        display: "flex";
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
@@ -661,20 +668,21 @@ class! {
         background: var!(bg-error);
         color: var!(text-error);
         border: format!("1px solid {}", var!(border-error));
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1.4";
+        line-height: "1";
         outline: "none";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
+        vertical-align: "middle";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
@@ -690,6 +698,7 @@ class! {
     }
 
     pub(crate) c_modal_primary_button {
+        display: "flex";
         justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
@@ -698,14 +707,14 @@ class! {
         background: var!(accent);
         color: var!(text-on-accent);
         border: "none";
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1.4";
+        line-height: "1";
         outline: "none";
         box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
@@ -713,6 +722,7 @@ class! {
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
+        vertical-align: "middle";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
@@ -728,6 +738,7 @@ class! {
     }
 
     pub(crate) c_modal_close_button {
+        display: "flex";
         justify-content: "center";
         align-items: "center";
         background: "transparent";
@@ -738,6 +749,8 @@ class! {
         cursor: "pointer";
         font-size: "20px";
         font-weight: "400";
+        line-height: "1";
+        vertical-align: "middle";
         line-height: "1";
         outline: "none";
         opacity: "0.6";
@@ -1097,7 +1110,7 @@ class! {
     pub(crate) c_counter_value {
         font-weight: "700";
         color: var!(accent);
-        font-size: var!("font-2xl");
+        font-size: var!(font-2xl);
         media("(max-width: 767px)") {
             font-size: var!(font-xl);
         }
@@ -1213,7 +1226,7 @@ class! {
     }
 
     pub(crate) c_camera_placeholder_icon {
-        font-size: var!("font-4xl");
+        font-size: var!(font-4xl);
         opacity: "0.4";
     }
 
@@ -1349,7 +1362,7 @@ class! {
 
     pub(crate) c_canvas_container_fullscreen {
         width: "100vw";
-        height: "100vh";
+        height: "100%";
         background: var!(bg-card);
         display: "flex";
         flex-direction: "column";
@@ -1811,16 +1824,16 @@ class! {
 
     pub(crate) c_not_found_container {
         text-align: "center";
-        padding: format!("{} {}", var!("space-7xl"), var!(space-xl));
+        padding: format!("{} {}", var!(space-7xl), var!(space-xl));
         max-width: "480px";
         margin: "0px auto";
         media("(max-width: 767px)") {
-            padding: format!("{} {}", var!("space-4xl"), var!(space-xl));
+            padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         }
     }
 
     pub(crate) c_not_found_code {
-        font-size: var!("font-6xl");
+        font-size: var!(font-6xl);
         font-weight: "800";
         color: var!(text-muted);
         line-height: "1";
@@ -1832,7 +1845,7 @@ class! {
     }
 
     pub(crate) c_not_found_title {
-        font-size: var!("font-2xl");
+        font-size: var!(font-2xl);
         font-weight: "600";
         color: "inherit";
         margin-bottom: var!(space-md);
@@ -1842,7 +1855,7 @@ class! {
         color: "inherit";
         opacity: "0.7";
         font-size: var!(font-lg);
-        margin-bottom: var!("space-3xl");
+        margin-bottom: var!(space-3xl);
         line-height: "1.6";
     }
 
@@ -2055,13 +2068,13 @@ class! {
     }
 
     pub(crate) c_timer_value {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         font-weight: "700";
         color: var!(accent);
         letter-spacing: "0.04em";
         font-family: "ui-monospace, monospace";
         media("(max-width: 767px)") {
-            font-size: var!("font-4xl");
+            font-size: var!(font-4xl);
         }
     }
 
@@ -2216,20 +2229,20 @@ class! {
     }
 
     pub(crate) c_anim_spin {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         animation: "euv-spin 1.5s linear infinite";
         display: "inline-block";
         media("(max-width: 767px)") {
-            font-size: var!("font-4xl");
+            font-size: var!(font-4xl);
         }
     }
 
     pub(crate) c_anim_spin_stopped {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         display: "inline-block";
         opacity: "0.4";
         media("(max-width: 767px)") {
-            font-size: var!("font-4xl");
+            font-size: var!(font-4xl);
         }
     }
 
@@ -2242,22 +2255,22 @@ class! {
     }
 
     pub(crate) c_anim_pulse {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         animation: "euv-pulse 1.5s ease-in-out infinite";
         display: "inline-block";
         color: var!(text-danger);
         media("(max-width: 767px)") {
-            font-size: var!("font-4xl");
+            font-size: var!(font-4xl);
         }
     }
 
     pub(crate) c_anim_pulse_stopped {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         display: "inline-block";
         opacity: "0.4";
         color: var!(text-danger);
         media("(max-width: 767px)") {
-            font-size: var!("font-4xl");
+            font-size: var!(font-4xl);
         }
     }
 
@@ -2550,7 +2563,7 @@ class! {
         color: var!(text-console-empty);
         font-size: "13px";
         text-align: "center";
-        padding: format!("{} 0px", var!("space-4xl"));
+        padding: format!("{} 0px", var!(space-4xl));
     }
 
     pub(crate) c_vconsole_count {
@@ -2860,7 +2873,7 @@ class! {
     }
 
     pub(crate) c_keep_alive_counter_value {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         font-weight: "700";
         font-variant-numeric: "tabular-nums";
         color: var!(accent);
@@ -2959,7 +2972,7 @@ class! {
     pub(crate) c_file_upload_drop_zone {
         border: format!("2px dashed {}", var!(border-input));
         border-radius: var!(radius-lg);
-        padding: format!("{} {}", var!("space-4xl"), var!(space-xl));
+        padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
         background: "transparent";
@@ -2968,14 +2981,14 @@ class! {
     pub(crate) c_file_upload_drop_zone_active {
         border: format!("2px dashed {}", var!(accent));
         border-radius: var!(radius-lg);
-        padding: format!("{} {}", var!("space-4xl"), var!(space-xl));
+        padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
         background: var!(accent-muted);
     }
 
     pub(crate) c_file_upload_drop_icon {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         display: "block";
         margin-bottom: var!(space-md);
     }
@@ -4266,7 +4279,7 @@ class! {
     }
 
     pub(crate) c_sticky_text_glow {
-        font-size: var!("font-3xl");
+        font-size: var!(font-3xl);
         font-weight: "800";
         color: var!(accent);
         text-shadow: format!("0px 0px 10px {}, 0px 0px 20px {}, 0px 0px 40px {}", var!(accent), var!(accent), var!(accent));
@@ -4274,7 +4287,7 @@ class! {
     }
 
     pub(crate) c_sticky_text_neon {
-        font-size: var!("font-3xl");
+        font-size: var!(font-3xl);
         font-weight: "800";
         color: var!(color-success);
         text-shadow: format!("0px 0px 7px {}, 0px 0px 10px {}, 0px 0px 21px {}, 0px 0px 42px {}", var!(color-success), var!(color-success), var!(color-success), var!(color-success));
@@ -4282,7 +4295,7 @@ class! {
     }
 
     pub(crate) c_sticky_text_emboss {
-        font-size: var!("font-3xl");
+        font-size: var!(font-3xl);
         font-weight: "800";
         color: var!(text-secondary);
         text-shadow: format!("1px 1px 1px {}, -1px -1px 1px {}", var!(bg-primary), "rgba(255, 255, 255, 0.3)");
@@ -4290,7 +4303,7 @@ class! {
     }
 
     pub(crate) c_sticky_text_plain {
-        font-size: var!("font-3xl");
+        font-size: var!(font-3xl);
         font-weight: "800";
         color: var!(text-secondary);
         transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
@@ -4404,7 +4417,7 @@ class! {
     pub(crate) c_home_hero {
         position: "relative";
         text-align: "center";
-        padding: format!("{} {} {} {}", var!("space-5xl"), var!(space-xl), var!("space-5xl"), var!(space-xl));
+        padding: format!("{} {} {} {}", var!(space-5xl), var!(space-xl), var!(space-5xl), var!(space-xl));
         margin-bottom: var!(space-xl);
         border-radius: var!(radius-xl);
         overflow: "hidden";
@@ -4412,7 +4425,7 @@ class! {
         border: format!("1px solid {}", var!(border-card));
         box-shadow: var!(shadow-card);
         media("(max-width: 767px)") {
-            padding: format!("{} {} {} {}", var!("space-3xl"), var!(space-lg), var!("space-3xl"), var!(space-lg));
+            padding: format!("{} {} {} {}", var!(space-3xl), var!(space-lg), var!(space-3xl), var!(space-lg));
             margin-bottom: var!(space-lg);
         }
     }
@@ -4450,7 +4463,7 @@ class! {
     }
 
     pub(crate) c_home_hero_title {
-        font-size: var!("font-5xl");
+        font-size: var!(font-5xl);
         font-weight: "800";
         letter-spacing: "-0.03em";
         margin: "0px";
@@ -4462,7 +4475,7 @@ class! {
         margin-bottom: var!(space-xs);
         filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.15))";
         media("(max-width: 767px)") {
-            font-size: var!("font-4xl");
+            font-size: var!(font-4xl);
         }
     }
 
@@ -4486,9 +4499,11 @@ class! {
     }
 
     pub(crate) c_home_btn_primary {
+        display: "inline-flex";
+        justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-lg);
         background: var!(accent-gradient);
         color: var!(text-on-accent);
@@ -4499,6 +4514,9 @@ class! {
         cursor: "pointer";
         box-shadow: var!(shadow-accent-sm);
         letter-spacing: "0.01em";
+        vertical-align: "middle";
+        line-height: "1";
+        min-height: "36px";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
@@ -4506,9 +4524,11 @@ class! {
     }
 
     pub(crate) c_home_btn_secondary {
+        display: "inline-flex";
+        justify-content: "center";
         align-items: "center";
         gap: var!(space-sm);
-        padding: format!("{} {}", var!(space-sm), var!("space-2xl"));
+        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         border-radius: var!(radius-lg);
         background: "transparent";
         color: var!(accent);
@@ -4518,6 +4538,9 @@ class! {
         border: format!("1.5px solid {}", var!(accent-border));
         cursor: "pointer";
         letter-spacing: "0.01em";
+        vertical-align: "middle";
+        line-height: "1";
+        min-height: "36px";
         focus {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -4552,7 +4575,7 @@ class! {
     }
 
     pub(crate) c_home_stat_icon {
-        font-size: var!("font-2xl");
+        font-size: var!(font-2xl);
         line-height: "1";
     }
 
@@ -4581,7 +4604,7 @@ class! {
     }
 
     pub(crate) c_home_section_title {
-        font-size: var!("font-2xl");
+        font-size: var!(font-2xl);
         font-weight: "700";
         color: var!(text-primary);
         margin: "0px";
@@ -4614,7 +4637,7 @@ class! {
     }
 
     pub(crate) c_feature_icon {
-        font-size: var!("font-2xl");
+        font-size: var!(font-2xl);
         line-height: "1";
         margin-bottom: var!(space-xs);
     }
