@@ -83,7 +83,7 @@ pub struct ModeArgs {
 
 /// Arguments for the `fmt` subcommand.
 ///
-/// Formats euv macro invocations (`html!`, `class!`, `css_vars!`, `watch!`)
+/// Formats euv macro invocations (`html!`, `class!`, `vars!`, `watch!`)
 /// in Rust source files.
 #[derive(Clone, Data, Debug, New, Parser)]
 pub struct FmtArgs {

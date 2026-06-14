@@ -2,7 +2,7 @@ use crate::*;
 
 /// Formats a single Rust source file by reformatting all euv macro invocations.
 ///
-/// Scans the source code for `html!`, `class!`, `css_vars!`, and `watch!`
+/// Scans the source code for `html!`, `class!`, `vars!`, and `watch!`
 /// macro calls, then applies formatting rules to their token bodies:
 ///
 /// - Tag name and `{` separated by exactly one space

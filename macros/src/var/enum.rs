@@ -1,9 +1,9 @@
-/// The value side of a CSS variable definition.
+/// The value side of a vars variable definition.
 ///
 /// Always stored as an expression token stream. String literals like `"#fff"`
 /// and dynamic expressions are all parsed as Rust expressions.
 #[derive(Clone, Debug)]
-pub(crate) enum CssVarValue {
+pub(crate) enum VarsValue {
     /// A dynamic expression (Rust code token stream) that evaluates to a string.
     Expr(proc_macro2::TokenStream),
 }

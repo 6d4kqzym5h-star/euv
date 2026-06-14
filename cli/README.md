@@ -54,7 +54,7 @@ euv run --release --crate-path ./example --port 80 --www-dir www -- --target web
 
 ### Fmt (format euv macros)
 
-Format euv macro invocations (`html!`, `class!`, `css_vars!`, `watch!`) in Rust source files:
+Format euv macro invocations (`html!`, `class!`, `vars!`, `watch!`) in Rust source files:
 
 ```shell
 # Format all .rs files in the current directory (recursive)

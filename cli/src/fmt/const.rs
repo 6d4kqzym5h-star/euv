@@ -4,8 +4,8 @@ pub(crate) const MACRO_NAME_HTML: &str = "html";
 /// The euv macro name for `class!`.
 pub(crate) const MACRO_NAME_CLASS: &str = "class";
 
-/// The euv macro name for `css_vars!`.
-pub(crate) const MACRO_NAME_CSS_VARS: &str = "css_vars";
+/// The euv macro name for `vars!`.
+pub(crate) const MACRO_NAME_VARS: &str = "vars";
 
 /// The euv macro name for `watch!`.
 pub(crate) const MACRO_NAME_WATCH: &str = "watch";
@@ -14,7 +14,7 @@ pub(crate) const MACRO_NAME_WATCH: &str = "watch";
 pub(crate) const EUV_MACRO_NAMES: &[&str] = &[
     MACRO_NAME_HTML,
     MACRO_NAME_CLASS,
-    MACRO_NAME_CSS_VARS,
+    MACRO_NAME_VARS,
     MACRO_NAME_WATCH,
 ];
 

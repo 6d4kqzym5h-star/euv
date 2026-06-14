@@ -2,7 +2,7 @@
 //!
 //! Procedural macros for the euv UI framework, including the `html!` macro
 //! for declarative UI syntax, the `class!` macro for CSS class definitions,
-//! the `css_vars!` macro for CSS custom properties, the `watch!` macro for
+//! the `vars!` macro for CSS custom properties, the `watch!` macro for
 //! reactive side effects, the `computed!` macro for reactive computed signals,
 //! and the `component` attribute macro.
 
@@ -137,7 +137,7 @@ pub fn computed(input: TokenStream) -> TokenStream {
     parse_computed(input)
 }
 
-/// The `css_vars!` macro for defining CSS custom properties.
+/// The `vars!` macro for defining CSS custom properties.
 ///
 /// Each variable block creates a `Css` function that, when called,
 /// injects the CSS custom properties into the DOM. Variable names are
@@ -147,7 +147,7 @@ pub fn computed(input: TokenStream) -> TokenStream {
 /// (e.g., `bg-primary`) or as quoted string literals (e.g., `"bg-primary"`).
 ///
 /// ```ignore
-/// css_vars! {
+/// vars! {
 ///     pub c_theme_light {
 ///         bg-primary: "#f8f9fb";
 ///         text-primary: "#1a1a2e";
@@ -155,18 +155,18 @@ pub fn computed(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro]
-pub fn css_vars(input: TokenStream) -> TokenStream {
-    parse_css_vars(input)
+pub fn vars(input: TokenStream) -> TokenStream {
+    parse_vars(input)
 }
 
-/// The `var!` macro for referencing CSS custom properties defined via `css_vars!`.
+/// The `var!` macro for referencing CSS custom properties defined via `vars!`.
 ///
 /// The variable name can be written as an unquoted kebab-case identifier
 /// (e.g., `bg-primary`) or as a quoted string literal (e.g., `"bg-primary"`),
 /// and expands to the CSS string `"var(--bg-primary)"`.
 ///
 /// ```ignore
-/// css_vars! {
+/// vars! {
 ///     pub c_theme {
 ///         bg-primary: "#f8f9fb";
 ///     }

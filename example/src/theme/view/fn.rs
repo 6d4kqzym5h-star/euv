@@ -1,6 +1,6 @@
 use crate::*;
 
-css_vars! {
+vars! {
     pub(crate) c_theme_light {
         // ─── Spacing Scale ───
         // 4px base unit, harmonized geometric progression

@@ -10,7 +10,7 @@ use crate::*;
 /// - `&proc_macro2::TokenStream` - The `OnceLock` constant name token stream.
 /// - `&str` - The class name string literal.
 /// - `&proc_macro2::TokenStream` - Token stream that evaluates to the CSS style string.
-pub(crate) fn emit_css_var_once_lock_fn(
+pub(crate) fn emit_vars_once_lock_fn(
     tokens: &mut proc_macro2::TokenStream,
     visibility: &Visibility,
     fn_name_token: &proc_macro2::TokenStream,
@@ -30,7 +30,7 @@ pub(crate) fn emit_css_var_once_lock_fn(
     });
 }
 
-/// Parses the `css_vars!` macro input and generates `Css` function definitions.
+/// Parses the `vars!` macro input and generates `Css` function definitions.
 ///
 /// # Arguments
 ///
@@ -39,9 +39,9 @@ pub(crate) fn emit_css_var_once_lock_fn(
 /// # Returns
 ///
 /// - `TokenStream` - The generated token stream constructing `Css` functions.
-pub(crate) fn parse_css_vars(input: TokenStream) -> TokenStream {
-    let tokens: proc_macro2::TokenStream = match syn::parse::<CssVarInput>(input) {
-        Ok(css_var_input) => css_var_input.into_token_stream(),
+pub(crate) fn parse_vars(input: TokenStream) -> TokenStream {
+    let tokens: proc_macro2::TokenStream = match syn::parse::<VarsInput>(input) {
+        Ok(vars_input) => vars_input.into_token_stream(),
         Err(error) => return error.to_compile_error().into(),
     };
     TokenStream::from(tokens)
