@@ -88,9 +88,9 @@ pub fn schedule_update(dependents: &[usize]) {
 ///
 /// Sets `SUPPRESS_SCHEDULE` to `true` so that any `Signal::set()` calls
 /// inside the closure mark their dependents dirty precisely but do not
-/// queue a microtask dispatch. The previous suppress flag is restored on
-/// exit, allowing the outermost `set()` call to trigger the actual
-/// dispatch cycle that processes all accumulated dirty slots.
+/// queue a microtask dispatch. When the outermost batch completes,
+/// a single dispatch is scheduled if any dirty slots were accumulated
+/// during the batch, ensuring that all pending updates are processed.
 ///
 /// Unlike the legacy full-broadcast approach, this uses precise dependency
 /// tracking: only the dynamic nodes that actually depend on the changed
@@ -111,6 +111,9 @@ where
     SUPPRESS_SCHEDULE.store(true, Ordering::Relaxed);
     let result: R = callback();
     SUPPRESS_SCHEDULE.store(!was_outermost, Ordering::Relaxed);
+    if was_outermost && has_dirty_slots() {
+        schedule_update(&[]);
+    }
     result
 }
 

@@ -291,55 +291,76 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         Console::log("Paste: text pasted");
     };
     let on_touch_start = move |event: Event| {
-        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-            let touches: TouchList = touch_event.touches();
-            let first: Option<Touch> = touches.get(0);
-            let info: String = format!(
-                "Start: {} touches at ({}, {})",
-                touches.length(),
-                first
-                    .as_ref()
-                    .map(|touch: &Touch| touch.client_x())
-                    .unwrap_or_default(),
-                first
-                    .as_ref()
-                    .map(|touch: &Touch| touch.client_y())
-                    .unwrap_or_default()
-            );
-            touch.get_touch_info().set(info);
-            Console::log(&format!("TouchStart: {} touches", touches.length()));
-        }
+        let points: Vec<NativeTouchPoint> = extract_touch_points(&event);
+        let detail: String = points
+            .iter()
+            .map(|point: &NativeTouchPoint| {
+                format!(
+                    "#{}({}, {})",
+                    point.get_identifier(),
+                    point.get_client_x(),
+                    point.get_client_y()
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(", ");
+        let info: String = format!("Start: {} touches [{}]", points.len(), detail);
+        touch.get_touch_info().set(info);
+        Console::log(&format!("TouchStart: {} touches", points.len()));
     };
     let on_touch_move = move |event: Event| {
-        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-            let touches: TouchList = touch_event.touches();
-            let first: Option<Touch> = touches.get(0);
-            let info: String = format!(
-                "Move: {} touches at ({}, {})",
-                touches.length(),
-                first
-                    .as_ref()
-                    .map(|touch: &Touch| touch.client_x())
-                    .unwrap_or_default(),
-                first
-                    .as_ref()
-                    .map(|touch: &Touch| touch.client_y())
-                    .unwrap_or_default()
-            );
-            touch.get_touch_info().set(info);
-        }
+        let points: Vec<NativeTouchPoint> = extract_touch_points(&event);
+        let detail: String = points
+            .iter()
+            .map(|point: &NativeTouchPoint| {
+                format!(
+                    "#{}({}, {})",
+                    point.get_identifier(),
+                    point.get_client_x(),
+                    point.get_client_y()
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(", ");
+        let info: String = format!("Move: {} touches [{}]", points.len(), detail);
+        touch.get_touch_info().set(info);
     };
     let on_touch_end = move |event: Event| {
-        if let Some(touch_event) = event.dyn_ref::<TouchEvent>() {
-            let touches: TouchList = touch_event.touches();
-            let info: String = format!("End: {} touches remaining", touches.length());
-            touch.get_touch_info().set(info);
-            Console::log("TouchEnd: touch ended");
-        }
+        let remaining: Vec<NativeTouchPoint> = extract_touch_points(&event);
+        let changed: Vec<NativeTouchPoint> = extract_changed_touch_points(&event);
+        let detail: String = changed
+            .iter()
+            .map(|point: &NativeTouchPoint| {
+                format!(
+                    "#{}({}, {})",
+                    point.get_identifier(),
+                    point.get_client_x(),
+                    point.get_client_y()
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(", ");
+        let info: String = format!("End: {} remaining, lifted [{}]", remaining.len(), detail);
+        touch.get_touch_info().set(info);
+        Console::log(&format!("TouchEnd: {} remaining", remaining.len()));
     };
-    let on_touch_cancel = move |_: Event| {
-        touch.get_touch_info().set("Cancelled".to_string());
-        Console::log("TouchCancel: touch cancelled");
+    let on_touch_cancel = move |event: Event| {
+        let changed: Vec<NativeTouchPoint> = extract_changed_touch_points(&event);
+        let detail: String = changed
+            .iter()
+            .map(|point: &NativeTouchPoint| {
+                format!(
+                    "#{}({}, {})",
+                    point.get_identifier(),
+                    point.get_client_x(),
+                    point.get_client_y()
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(", ");
+        let info: String = format!("Cancel: [{}]", detail);
+        touch.get_touch_info().set(info);
+        Console::log(&format!("TouchCancel: [{}]", detail));
     };
     let on_form_submit = move |event: Event| {
         event.prevent_default();

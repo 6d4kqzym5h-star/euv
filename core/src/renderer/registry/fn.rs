@@ -201,6 +201,23 @@ pub(crate) fn mark_slots_dirty_targeted(dynamic_ids: &[usize]) {
     }
 }
 
+/// Returns whether the signal update registry contains any dirty slots.
+///
+/// Used by `batch` to determine whether a dispatch should be scheduled
+/// after the outermost batch completes.
+///
+/// # Returns
+///
+/// - `bool` - `true` if at least one non-removed dirty slot exists.
+pub(crate) fn has_dirty_slots() -> bool {
+    ensure_signal_update_registry_mut()
+        .values()
+        .any(|entry: &SignalUpdateEntry| {
+            let slot: &SignalUpdateSlot = unsafe { &**entry };
+            slot.get_dirty() && !slot.get_removed()
+        })
+}
+
 /// Registers a signal update callback for a DynamicNode placeholder.
 ///
 /// Allocates a `SignalUpdateSlot` on the heap and inserts the raw pointer

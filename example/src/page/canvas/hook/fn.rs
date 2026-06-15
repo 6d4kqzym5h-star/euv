@@ -252,80 +252,134 @@ pub(crate) fn get_mouse_client(event: &Event) -> (f64, f64) {
     (client_x, client_y)
 }
 
-/// Extracts the first touch point coordinates relative to the canvas element
-/// from a touch event.
+/// Begins new drawing strokes for all active touch points.
 ///
-/// Reads the first item from `touches`, then computes `offsetX` and
-/// `offsetY` by subtracting the canvas bounding rect from the touch
-/// client coordinates.
+/// Each touch point starts its own independent path on the canvas,
+/// enabling simultaneous multi-finger drawing. The stroke color and
+/// line width are applied from the current state signals.
 ///
 /// # Arguments
 ///
-/// - `&Event` - The touch event.
-///
-/// # Returns
-///
-/// - `(f64, f64)` - A tuple containing the `(offset_x, offset_y)` coordinates.
-pub(crate) fn get_touch_offset(event: &Event) -> (f64, f64) {
-    let target: JsValue = event
-        .target()
-        .map_or(JsValue::NULL, |event_target: EventTarget| {
-            event_target.into()
-        });
-    let element: Element = target.unchecked_into();
-    let rect: DomRect = element.get_bounding_client_rect();
-    let touches_value: JsValue = Reflect::get(event.as_ref(), &JsValue::from_str("touches"))
+/// - `UseCanvas` - The canvas drawing board state.
+/// - `&Event` - The touchstart event.
+/// - `bool` - Whether the canvas is in fullscreen mode.
+pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_fullscreen: bool) {
+    let points: Vec<NativeTouchPointF64> = extract_touch_points_f64(event);
+    let window_value: Window = window().expect("no global window exists");
+    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(element) = document_value
+        .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
-        .unwrap_or(JsValue::NULL);
-    let touches: Array = touches_value.unchecked_into();
-    if touches.length() == 0 {
-        return (0.0, 0.0);
+        .flatten()
+    else {
+        return;
+    };
+    let canvas_element: HtmlCanvasElement = element.unchecked_into();
+    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+        return;
+    };
+    let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
+    let stroke_color: String = state.get_stroke_color().get();
+    let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
+    let _ = Reflect::set(
+        &context_2d,
+        &JsValue::from_str("strokeStyle"),
+        &JsValue::from_str(&stroke_color),
+    );
+    context_2d.set_line_width(line_width);
+    context_2d.set_line_cap("round");
+    context_2d.set_line_join("round");
+    state.get_drawing().set(true);
+    for point in &points {
+        let (mapped_x, mapped_y): (f64, f64) = if is_fullscreen {
+            (
+                point.get_client_x() - canvas_rect.left(),
+                point.get_client_y() - canvas_rect.top(),
+            )
+        } else {
+            (point.get_offset_x(), point.get_offset_y())
+        };
+        context_2d.begin_path();
+        context_2d.move_to(mapped_x, mapped_y);
     }
-    let first_touch: JsValue = touches.get(0);
-    let client_x: f64 = Reflect::get(&first_touch, &JsValue::from_str("clientX"))
-        .ok()
-        .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
-    let client_y: f64 = Reflect::get(&first_touch, &JsValue::from_str("clientY"))
-        .ok()
-        .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
-    let offset_x: f64 = client_x - rect.left();
-    let offset_y: f64 = client_y - rect.top();
-    (offset_x, offset_y)
 }
 
-/// Extracts the first touch point client coordinates from a touch event.
+/// Continues drawing strokes for all active touch points.
 ///
-/// Reads `clientX` and `clientY` from the first touch, which are
-/// used in fullscreen mode for accurate coordinate mapping after
-/// CSS transforms.
+/// Each touch point draws a line segment from its current path
+/// position to the new position, enabling simultaneous multi-finger
+/// drawing.
 ///
 /// # Arguments
 ///
-/// - `&Event` - The touch event.
-///
-/// # Returns
-///
-/// - `(f64, f64)` - A tuple containing the `(client_x, client_y)` coordinates.
-pub(crate) fn get_touch_client(event: &Event) -> (f64, f64) {
-    let touches_value: JsValue = Reflect::get(event.as_ref(), &JsValue::from_str("touches"))
-        .ok()
-        .unwrap_or(JsValue::NULL);
-    let touches: Array = touches_value.unchecked_into();
-    if touches.length() == 0 {
-        return (0.0, 0.0);
+/// - `UseCanvas` - The canvas drawing board state.
+/// - `&Event` - The touchmove event.
+/// - `bool` - Whether the canvas is in fullscreen mode.
+pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_fullscreen: bool) {
+    if !state.get_drawing().get() {
+        return;
     }
-    let first_touch: JsValue = touches.get(0);
-    let client_x: f64 = Reflect::get(&first_touch, &JsValue::from_str("clientX"))
+    let points: Vec<NativeTouchPointF64> = extract_touch_points_f64(event);
+    let window_value: Window = window().expect("no global window exists");
+    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(element) = document_value
+        .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
-        .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
-    let client_y: f64 = Reflect::get(&first_touch, &JsValue::from_str("clientY"))
+        .flatten()
+    else {
+        return;
+    };
+    let canvas_element: HtmlCanvasElement = element.unchecked_into();
+    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+        return;
+    };
+    let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
+    for point in &points {
+        let (mapped_x, mapped_y): (f64, f64) = if is_fullscreen {
+            (
+                point.get_client_x() - canvas_rect.left(),
+                point.get_client_y() - canvas_rect.top(),
+            )
+        } else {
+            (point.get_offset_x(), point.get_offset_y())
+        };
+        context_2d.line_to(mapped_x, mapped_y);
+        context_2d.stroke();
+    }
+}
+
+/// Ends drawing strokes for the touch points that were lifted.
+///
+/// Uses `changedTouches` to identify which specific fingers were
+/// lifted, and closes only those paths. If no touches remain,
+/// stops the overall drawing state.
+///
+/// # Arguments
+///
+/// - `UseCanvas` - The canvas drawing board state.
+/// - `&Event` - The touchend or touchcancel event.
+pub(crate) fn stop_drawing_multi_touch(state: UseCanvas, event: &Event) {
+    let remaining: Vec<NativeTouchPoint> = extract_touch_points(event);
+    let window_value: Window = window().expect("no global window exists");
+    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(element) = document_value
+        .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
-        .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
-    (client_x, client_y)
+        .flatten()
+    else {
+        return;
+    };
+    let canvas_element: HtmlCanvasElement = element.unchecked_into();
+    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+        return;
+    };
+    let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    context_2d.close_path();
+    if remaining.is_empty() {
+        state.get_drawing().set(false);
+    }
 }
 
 /// Prevents the default browser behavior for the given event.

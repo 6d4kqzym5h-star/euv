@@ -680,8 +680,8 @@ impl Renderer {
         CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
         let initial_vnode: VirtualNode =
             with_hook_context(hook_context.clone(), || dynamic_node.render());
-        CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
+        CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
         let render_fn_rc: Rc<UnsafeCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
         let placeholder_clone: Element = placeholder.clone();
@@ -707,7 +707,6 @@ impl Renderer {
                 let inner: &mut RenderFnInner = unsafe { &mut *render_fn_rc.get() };
                 (inner.get_mut_render_fn())()
             });
-            CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
             let current_arm: usize = hook_context
                 .get_inner()
                 .try_borrow()
@@ -722,6 +721,7 @@ impl Renderer {
                 if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
                     let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
                     if Self::visual_eq(old_vnode, &new_unwrapped) {
+                        CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
                         return;
                     }
                 }
@@ -732,6 +732,7 @@ impl Renderer {
             } else {
                 renderer_mut.render(new_vnode);
             }
+            CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         });
         register_dynamic_listener(dynamic_id, callback);
         initial_dom

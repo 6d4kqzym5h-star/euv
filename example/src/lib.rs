@@ -9,8 +9,9 @@ mod page;
 mod router;
 mod style;
 mod theme;
+mod touch;
 
-use {app::*, component::*, page::*, router::*, style::*, theme::*};
+use {app::*, component::*, page::*, router::*, style::*, theme::*, touch::*};
 
 use std::{
     cell::{Cell, RefCell},

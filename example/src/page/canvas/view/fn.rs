@@ -53,22 +53,17 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
     };
     let on_canvas_touch_start = move |event: Event| {
         prevent_event_default(&event);
-        let (offset_x, offset_y): (f64, f64) = get_touch_offset(&event);
-        let (client_x, client_y): (f64, f64) = get_touch_client(&event);
-        let (mapped_x, mapped_y): (f64, f64) =
-            map_rotated_offset(offset_x, offset_y, client_x, client_y, true);
-        start_drawing(state, mapped_x, mapped_y);
+        start_drawing_multi_touch(state, &event, true);
     };
     let on_canvas_touch_move = move |event: Event| {
         prevent_event_default(&event);
-        let (offset_x, offset_y): (f64, f64) = get_touch_offset(&event);
-        let (client_x, client_y): (f64, f64) = get_touch_client(&event);
-        let (mapped_x, mapped_y): (f64, f64) =
-            map_rotated_offset(offset_x, offset_y, client_x, client_y, true);
-        continue_drawing(state, mapped_x, mapped_y);
+        continue_drawing_multi_touch(state, &event, true);
     };
-    let on_canvas_touch_end = move |_: Event| {
-        stop_drawing(state);
+    let on_canvas_touch_end = move |event: Event| {
+        stop_drawing_multi_touch(state, &event);
+    };
+    let on_canvas_touch_cancel = move |event: Event| {
+        stop_drawing_multi_touch(state, &event);
     };
     html! {
         div {
@@ -149,6 +144,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                         ontouchstart: on_canvas_touch_start
                         ontouchmove: on_canvas_touch_move
                         ontouchend: on_canvas_touch_end
+                        ontouchcancel: on_canvas_touch_cancel
                     }
                 }
             }

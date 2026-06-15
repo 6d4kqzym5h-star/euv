@@ -1,12 +1,20 @@
 use crate::*;
 
+fn create_log_data(times: i32) -> String {
+    format!("Updated: render count = {times}")
+}
+
 /// Creates lifecycle demo state signals wrapped in a `UseLifecycle` struct.
 ///
 /// # Returns
 ///
 /// - `UseLifecycle` - The lifecycle state.
 pub(crate) fn use_lifecycle() -> UseLifecycle {
-    UseLifecycle::new(use_signal(|| 0), use_signal(std::vec::Vec::new))
+    let times: i32 = 1;
+    UseLifecycle::new(
+        use_signal(|| times),
+        use_signal(|| vec![create_log_data(times)]),
+    )
 }
 
 /// Creates a click event handler that increments the render count and logs the update.
@@ -24,7 +32,7 @@ pub(crate) fn lifecycle_on_trigger(state: UseLifecycle) -> Option<Rc<dyn Fn(Even
         let next: i32 = current + 1;
         state.get_render_count().set(next);
         let mut current_logs: Vec<String> = state.get_logs().get();
-        current_logs.push(format!("Updated: render count = {}", next));
+        current_logs.push(create_log_data(next));
         state.get_logs().set(current_logs);
     }))
 }
