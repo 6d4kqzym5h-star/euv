@@ -172,7 +172,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                             "Clear"
                         }
                         button {
-                            class: c_modal_close_button()
+                            class: c_vconsole_close_button()
                             onclick: on_close_click
                             "×"
                         }

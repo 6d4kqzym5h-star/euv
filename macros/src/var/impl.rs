@@ -44,7 +44,7 @@ impl Parse for VarsInput {
             braced!(content in input);
             let mut vars: Vec<(String, VarsValue)> = Vec::new();
             while !content.is_empty() {
-                let var_name: String = parse_kebab_name(&content)?;
+                let var_name: String = parse_ident_name(&content)?;
                 let css_key: String = format!("{CSS_CUSTOM_PROPERTY_PREFIX}{var_name}");
                 content.parse::<Token![:]>()?;
                 let var_value: VarsValue = {

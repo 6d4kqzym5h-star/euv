@@ -15,6 +15,7 @@ use {app::*, component::*, page::*, router::*, style::*, theme::*, touch::*};
 
 use std::{
     cell::{Cell, RefCell},
+    collections::HashMap,
     rc::Rc,
 };
 

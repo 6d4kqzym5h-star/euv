@@ -20,11 +20,16 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
         clear_canvas(CANVAS_DRAWING_SELECTOR);
     };
     let on_color_input = move |event: Event| {
-        let new_color: String = Reflect::get(event.as_ref(), &JsValue::from_str("target"))
-            .ok()
-            .and_then(|target: JsValue| Reflect::get(&target, &JsValue::from_str("value")).ok())
-            .and_then(|value: JsValue| value.as_string())
-            .unwrap_or_default();
+        let new_color: String = Reflect::get(
+            event.as_ref(),
+            &JsValue::from_str(CANVAS_EVENT_PROPERTY_TARGET),
+        )
+        .ok()
+        .and_then(|target: JsValue| {
+            Reflect::get(&target, &JsValue::from_str(CANVAS_EVENT_PROPERTY_VALUE)).ok()
+        })
+        .and_then(|value: JsValue| value.as_string())
+        .unwrap_or_default();
         state.get_stroke_color().set(new_color);
         save_stroke_color(&state.get_stroke_color().get());
     };

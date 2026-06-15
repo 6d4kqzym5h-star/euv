@@ -27,13 +27,16 @@ pub(crate) fn canvas_on_draw(state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
 pub(crate) fn use_canvas_state() -> UseCanvas {
     let initial_stroke_color: String = load_stroke_color();
     let initial_line_width: f64 = load_line_width();
-    UseCanvas::new(
-        use_signal(|| false),
-        use_signal(move || initial_stroke_color.clone()),
-        use_signal(move || initial_line_width),
-        use_signal(|| false),
-        use_signal(String::new),
-    )
+    UseCanvas {
+        drawing: use_signal(|| false),
+        stroke_color: use_signal(move || initial_stroke_color.clone()),
+        line_width: use_signal(move || initial_line_width),
+        fullscreen: use_signal(|| false),
+        snapshot_data_url: use_signal(String::new),
+        last_x: use_signal(|| 0.0),
+        last_y: use_signal(|| 0.0),
+        touch_last_points: use_signal(HashMap::new),
+    }
 }
 
 /// Captures the current canvas content as a data URL and stores it
@@ -73,6 +76,8 @@ pub(crate) fn update_snapshot(state: UseCanvas) {
 /// - `f64` - The y coordinate of the starting point.
 pub(crate) fn start_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
     state.get_drawing().set(true);
+    state.get_last_x().set(offset_x);
+    state.get_last_y().set(offset_y);
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let Some(element) = document_value
@@ -83,21 +88,27 @@ pub(crate) fn start_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
         return;
     };
     let canvas_element: HtmlCanvasElement = element.unchecked_into();
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+    let Some(context_object) = canvas_element
+        .get_context(CANVAS_CONTEXT_TYPE)
+        .ok()
+        .flatten()
+    else {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     context_2d.begin_path();
     let _ = Reflect::set(
         &context_2d,
-        &JsValue::from_str("strokeStyle"),
+        &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
         &JsValue::from_str(&state.get_stroke_color().get()),
     );
     let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
     context_2d.set_line_width(line_width);
-    context_2d.set_line_cap("round");
-    context_2d.set_line_join("round");
+    context_2d.set_line_cap(CANVAS_LINE_CAP_ROUND);
+    context_2d.set_line_join(CANVAS_LINE_JOIN_ROUND);
     context_2d.move_to(offset_x, offset_y);
+    context_2d.line_to(offset_x, offset_y);
+    context_2d.stroke();
 }
 
 /// Continues the current drawing stroke to the specified coordinates.
@@ -114,6 +125,10 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
     if !state.get_drawing().get() {
         return;
     }
+    let prev_x: f64 = state.get_last_x().get();
+    let prev_y: f64 = state.get_last_y().get();
+    state.get_last_x().set(offset_x);
+    state.get_last_y().set(offset_y);
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let Some(element) = document_value
@@ -124,10 +139,25 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
         return;
     };
     let canvas_element: HtmlCanvasElement = element.unchecked_into();
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+    let Some(context_object) = canvas_element
+        .get_context(CANVAS_CONTEXT_TYPE)
+        .ok()
+        .flatten()
+    else {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    let _ = Reflect::set(
+        &context_2d,
+        &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
+        &JsValue::from_str(&state.get_stroke_color().get()),
+    );
+    let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
+    context_2d.set_line_width(line_width);
+    context_2d.set_line_cap(CANVAS_LINE_CAP_ROUND);
+    context_2d.set_line_join(CANVAS_LINE_JOIN_ROUND);
+    context_2d.begin_path();
+    context_2d.move_to(prev_x, prev_y);
     context_2d.line_to(offset_x, offset_y);
     context_2d.stroke();
 }
@@ -140,25 +170,7 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
 ///
 /// - `UseCanvas` - The canvas drawing board state.
 pub(crate) fn stop_drawing(state: UseCanvas) {
-    if !state.get_drawing().get() {
-        return;
-    }
     state.get_drawing().set(false);
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
-    let Some(element) = document_value
-        .query_selector(CANVAS_DRAWING_SELECTOR)
-        .ok()
-        .flatten()
-    else {
-        return;
-    };
-    let canvas_element: HtmlCanvasElement = element.unchecked_into();
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
-        return;
-    };
-    let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    context_2d.close_path();
 }
 
 /// Clears the entire canvas and refills it with the white background color.
@@ -182,14 +194,18 @@ pub(crate) fn clear_canvas(canvas_selector: &str) {
     let canvas_element: HtmlCanvasElement = element.unchecked_into();
     let width: f64 = canvas_element.width() as f64;
     let height: f64 = canvas_element.height() as f64;
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+    let Some(context_object) = canvas_element
+        .get_context(CANVAS_CONTEXT_TYPE)
+        .ok()
+        .flatten()
+    else {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     context_2d.clear_rect(0.0, 0.0, width, height);
     let _ = Reflect::set(
         &context_2d,
-        &JsValue::from_str("fillStyle"),
+        &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_FILL_STYLE),
         &JsValue::from_str(CANVAS_BACKGROUND_COLOR),
     );
     context_2d.fill_rect(0.0, 0.0, width, height);
@@ -215,11 +231,11 @@ pub(crate) fn get_pointer_offset(event: &Event) -> (f64, f64) {
         .map_or(JsValue::NULL, |event_target: EventTarget| {
             event_target.into()
         });
-    let offset_x: f64 = Reflect::get(&target, &JsValue::from_str("offsetX"))
+    let offset_x: f64 = Reflect::get(&target, &JsValue::from_str(CANVAS_EVENT_PROPERTY_OFFSET_X))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
         .unwrap_or(0.0);
-    let offset_y: f64 = Reflect::get(&target, &JsValue::from_str("offsetY"))
+    let offset_y: f64 = Reflect::get(&target, &JsValue::from_str(CANVAS_EVENT_PROPERTY_OFFSET_Y))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
         .unwrap_or(0.0);
@@ -241,14 +257,20 @@ pub(crate) fn get_pointer_offset(event: &Event) -> (f64, f64) {
 ///
 /// - `(f64, f64)` - A tuple containing the `(client_x, client_y)` coordinates.
 pub(crate) fn get_mouse_client(event: &Event) -> (f64, f64) {
-    let client_x: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientX"))
-        .ok()
-        .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
-    let client_y: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientY"))
-        .ok()
-        .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+    let client_x: f64 = Reflect::get(
+        event.as_ref(),
+        &JsValue::from_str(CANVAS_EVENT_PROPERTY_CLIENT_X),
+    )
+    .ok()
+    .and_then(|value: JsValue| value.as_f64())
+    .unwrap_or(0.0);
+    let client_y: f64 = Reflect::get(
+        event.as_ref(),
+        &JsValue::from_str(CANVAS_EVENT_PROPERTY_CLIENT_Y),
+    )
+    .ok()
+    .and_then(|value: JsValue| value.as_f64())
+    .unwrap_or(0.0);
     (client_x, client_y)
 }
 
@@ -275,7 +297,11 @@ pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_full
         return;
     };
     let canvas_element: HtmlCanvasElement = element.unchecked_into();
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+    let Some(context_object) = canvas_element
+        .get_context(CANVAS_CONTEXT_TYPE)
+        .ok()
+        .flatten()
+    else {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
@@ -284,13 +310,14 @@ pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_full
     let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
     let _ = Reflect::set(
         &context_2d,
-        &JsValue::from_str("strokeStyle"),
+        &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
         &JsValue::from_str(&stroke_color),
     );
     context_2d.set_line_width(line_width);
-    context_2d.set_line_cap("round");
-    context_2d.set_line_join("round");
+    context_2d.set_line_cap(CANVAS_LINE_CAP_ROUND);
+    context_2d.set_line_join(CANVAS_LINE_JOIN_ROUND);
     state.get_drawing().set(true);
+    let mut touch_last: HashMap<i32, (f64, f64)> = state.get_touch_last_points().get();
     for point in &points {
         let (mapped_x, mapped_y): (f64, f64) = if is_fullscreen {
             (
@@ -300,9 +327,13 @@ pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_full
         } else {
             (point.get_offset_x(), point.get_offset_y())
         };
+        touch_last.insert(point.get_identifier(), (mapped_x, mapped_y));
         context_2d.begin_path();
         context_2d.move_to(mapped_x, mapped_y);
+        context_2d.line_to(mapped_x, mapped_y);
+        context_2d.stroke();
     }
+    state.get_touch_last_points().set(touch_last);
 }
 
 /// Continues drawing strokes for all active touch points.
@@ -331,11 +362,24 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
         return;
     };
     let canvas_element: HtmlCanvasElement = element.unchecked_into();
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+    let Some(context_object) = canvas_element
+        .get_context(CANVAS_CONTEXT_TYPE)
+        .ok()
+        .flatten()
+    else {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
+    let _ = Reflect::set(
+        &context_2d,
+        &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
+        &JsValue::from_str(&state.get_stroke_color().get()),
+    );
+    let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
+    context_2d.set_line_width(line_width);
+    context_2d.set_line_cap(CANVAS_LINE_CAP_ROUND);
+    context_2d.set_line_join(CANVAS_LINE_JOIN_ROUND);
     for point in &points {
         let (mapped_x, mapped_y): (f64, f64) = if is_fullscreen {
             (
@@ -345,6 +389,16 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
         } else {
             (point.get_offset_x(), point.get_offset_y())
         };
+        let identifier: i32 = point.get_identifier();
+        let mut touch_last: HashMap<i32, (f64, f64)> = state.get_touch_last_points().get();
+        let (prev_x, prev_y): (f64, f64) = touch_last
+            .get(&identifier)
+            .copied()
+            .unwrap_or((mapped_x, mapped_y));
+        touch_last.insert(identifier, (mapped_x, mapped_y));
+        state.get_touch_last_points().set(touch_last);
+        context_2d.begin_path();
+        context_2d.move_to(prev_x, prev_y);
         context_2d.line_to(mapped_x, mapped_y);
         context_2d.stroke();
     }
@@ -361,22 +415,13 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
 /// - `UseCanvas` - The canvas drawing board state.
 /// - `&Event` - The touchend or touchcancel event.
 pub(crate) fn stop_drawing_multi_touch(state: UseCanvas, event: &Event) {
+    let changed_points: Vec<NativeTouchPoint> = extract_changed_touch_points(event);
     let remaining: Vec<NativeTouchPoint> = extract_touch_points(event);
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
-    let Some(element) = document_value
-        .query_selector(CANVAS_DRAWING_SELECTOR)
-        .ok()
-        .flatten()
-    else {
-        return;
-    };
-    let canvas_element: HtmlCanvasElement = element.unchecked_into();
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
-        return;
-    };
-    let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    context_2d.close_path();
+    let mut touch_last: HashMap<i32, (f64, f64)> = state.get_touch_last_points().get();
+    for point in &changed_points {
+        touch_last.remove(&point.get_identifier());
+    }
+    state.get_touch_last_points().set(touch_last);
     if remaining.is_empty() {
         state.get_drawing().set(false);
     }
@@ -501,21 +546,31 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     let canvas_height: f64 = canvas_width * 16.0 / 9.0;
     canvas_element
         .style()
-        .set_property("width", &format!("{}px", canvas_width as i32))
+        .set_property(
+            CANVAS_STYLE_PROPERTY_WIDTH,
+            &format!("{}{}", canvas_width as i32, CANVAS_PIXEL_UNIT),
+        )
         .unwrap_or(());
     canvas_element
         .style()
-        .set_property("height", &format!("{}px", canvas_height as i32))
+        .set_property(
+            CANVAS_STYLE_PROPERTY_HEIGHT,
+            &format!("{}{}", canvas_height as i32, CANVAS_PIXEL_UNIT),
+        )
         .unwrap_or(());
     canvas_element.set_width(canvas_width as u32);
     canvas_element.set_height(canvas_height as u32);
-    let Some(context_object) = canvas_element.get_context("2d").ok().flatten() else {
+    let Some(context_object) = canvas_element
+        .get_context(CANVAS_CONTEXT_TYPE)
+        .ok()
+        .flatten()
+    else {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     let _ = Reflect::set(
         &context_2d,
-        &JsValue::from_str("fillStyle"),
+        &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_FILL_STYLE),
         &JsValue::from_str(CANVAS_BACKGROUND_COLOR),
     );
     context_2d.fill_rect(0.0, 0.0, canvas_width, canvas_height);
@@ -657,12 +712,17 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
     let pending_value: Rc<Cell<f64>> = Rc::new(Cell::new(CANVAS_DEFAULT_LINE_WIDTH));
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     Some(Rc::new(move |event: Event| {
-        let new_width: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("target"))
-            .ok()
-            .and_then(|target: JsValue| Reflect::get(&target, &JsValue::from_str("value")).ok())
-            .and_then(|value: JsValue| value.as_string())
-            .and_then(|string: String| string.parse::<f64>().ok())
-            .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH);
+        let new_width: f64 = Reflect::get(
+            event.as_ref(),
+            &JsValue::from_str(CANVAS_EVENT_PROPERTY_TARGET),
+        )
+        .ok()
+        .and_then(|target: JsValue| {
+            Reflect::get(&target, &JsValue::from_str(CANVAS_EVENT_PROPERTY_VALUE)).ok()
+        })
+        .and_then(|value: JsValue| value.as_string())
+        .and_then(|string: String| string.parse::<f64>().ok())
+        .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH);
         pending_value.set(new_width);
         if raf_id.get().is_some() {
             return;

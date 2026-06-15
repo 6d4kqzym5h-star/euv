@@ -282,7 +282,7 @@ impl Parse for HtmlElement {
         let mut children: Vec<HtmlNode> = Vec::new();
         while !content.is_empty() {
             if is_attr_key_pattern(&content) && !is_double_colon(&content) {
-                let key_string: String = parse_kebab_name(&content)?;
+                let key_string: String = parse_ident_name(&content)?;
                 let key_literal: LitStr = LitStr::new(&key_string, content.span());
                 content.parse::<Colon>()?;
                 let key_str: String = key_string

@@ -50,13 +50,13 @@ impl Parse for ClassInput {
                 if content.peek(Token![::]) {
                     content.parse::<Token![::]>()?;
                     let mut selector: String =
-                        format!("::{name}", name = parse_kebab_name(&content)?);
+                        format!("::{name}", name = parse_ident_name(&content)?);
                     while content.peek(Token![:])
                         && !content.peek2(Token![:])
                         && !content.peek2(Brace)
                     {
                         content.parse::<Token![:]>()?;
-                        let pseudo_class: String = parse_kebab_name(&content)?;
+                        let pseudo_class: String = parse_ident_name(&content)?;
                         selector.push(':');
                         selector.push_str(&pseudo_class);
                     }
@@ -209,7 +209,7 @@ impl Parse for ClassInput {
                                     block_content.parse::<Token![::]>()?;
                                     let mut selector: String = format!(
                                         "::{name}",
-                                        name = parse_kebab_name(&block_content)?
+                                        name = parse_ident_name(&block_content)?
                                     );
                                     while block_content.peek(Token![:])
                                         && !block_content.peek2(Token![:])
@@ -217,7 +217,7 @@ impl Parse for ClassInput {
                                     {
                                         block_content.parse::<Token![:]>()?;
                                         let pseudo_class: String =
-                                            parse_kebab_name(&block_content)?;
+                                            parse_ident_name(&block_content)?;
                                         selector.push(':');
                                         selector.push_str(&pseudo_class);
                                     }

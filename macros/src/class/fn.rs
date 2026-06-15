@@ -37,7 +37,7 @@ pub(crate) fn parse_class_prop_key(input: ParseStream) -> syn::Result<ClassPropK
         let expr: Expr = content.parse()?;
         Ok(ClassPropKey::Dynamic(expr.to_token_stream()))
     } else {
-        let key: String = parse_kebab_name(input)?;
+        let key: String = parse_ident_name(input)?;
         Ok(ClassPropKey::Static(key))
     }
 }
@@ -78,7 +78,7 @@ pub(crate) fn expand_var_macros(expr: &Expr) -> proc_macro2::TokenStream {
         Expr::Macro(expr_macro) => {
             if expr_macro.mac.path.is_ident(VAR) {
                 let body_tokens: &proc_macro2::TokenStream = &expr_macro.mac.tokens;
-                let body_str: String = reconstruct_kebab_from_tokens(body_tokens);
+                let body_str: String = reconstruct_ident_from_tokens(body_tokens);
                 let css_name: String = format!("{CSS_VAR_PREFIX}{body_str}{CSS_VAR_SUFFIX}");
                 quote! { #css_name }
             } else if expr_macro.mac.path.is_ident(FORMAT_MACRO) {
@@ -129,7 +129,7 @@ pub(crate) fn expand_var_macros_in_tokens(
                 {
                     if let Some(proc_macro2::TokenTree::Group(group)) = iter.next() {
                         let inner: proc_macro2::TokenStream = group.stream();
-                        let var_name: String = reconstruct_kebab_from_tokens(&inner);
+                        let var_name: String = reconstruct_ident_from_tokens(&inner);
                         let css_name: String = format!("{CSS_VAR_PREFIX}{var_name}{CSS_VAR_SUFFIX}");
                         let expanded: proc_macro2::TokenStream = quote! { #css_name };
                         result.extend(expanded);

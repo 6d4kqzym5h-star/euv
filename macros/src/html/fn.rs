@@ -679,7 +679,7 @@ pub(crate) fn parse_dynamic_component_children(
                 children.push(HtmlNode::Dynamic(expr));
             }
         } else if is_attr_key_pattern(content) && !is_double_colon(content) {
-            let key_string: String = parse_kebab_name(content)?;
+            let key_string: String = parse_ident_name(content)?;
             let key_literal: LitStr = LitStr::new(&key_string, content.span());
             content.parse::<Colon>()?;
             let key_str: String = key_string
@@ -1152,7 +1152,7 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
         if is_style_object {
             let mut style_props: Vec<(String, HtmlStylePropValue)> = Vec::new();
             while !style_content.is_empty() {
-                let css_key: String = parse_kebab_name(&style_content)?;
+                let css_key: String = parse_ident_name(&style_content)?;
                 style_content.parse::<Colon>()?;
                 let prop_value: HtmlStylePropValue = if style_content.peek(Token![if]) {
                     let html_attr_if: HtmlAttrIf = parse_attr_if(&style_content)?;

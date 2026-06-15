@@ -9,11 +9,11 @@
 mod class;
 mod computed;
 mod html;
-mod kebab;
+mod ident;
 mod var;
 mod watch;
 
-pub(crate) use {class::*, computed::*, html::*, kebab::*, var::*, watch::*};
+pub(crate) use {class::*, computed::*, html::*, ident::*, var::*, watch::*};
 
 use std::{
     collections::HashMap,
@@ -28,7 +28,7 @@ use std::{
 use {
     lombok_macros::*,
     proc_macro::TokenStream,
-    proc_macro2::Span,
+    proc_macro2::{Span, TokenTree},
     quote::{ToTokens, quote, quote_spanned},
     syn::{
         Attribute, Expr, ExprLit, Field, File, Ident, Item, Lit, LitStr, Path, Stmt, Token, Type,

@@ -2515,6 +2515,37 @@ class! {
         }
     }
 
+    pub(crate) c_vconsole_close_button {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        background: "transparent";
+        color: var!(text-console-button);
+        border: format!("1px solid {}", var!(border-console-button));
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-sm);
+        cursor: "pointer";
+        font-size: "16px";
+        font-weight: "400";
+        line-height: "1";
+        text-align: "center";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        vertical-align: "middle";
+        outline: "none";
+        transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
+        hover {
+            border-color: var!(text-console-close-hover);
+            color: var!(text-console-close-hover);
+            background: var!(bg-console-close-hover);
+        }
+        focus_visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(border-console-button));
+        }
+    }
+
     pub(crate) c_vconsole_body {
         flex: "1";
         overflow-y: "auto";
