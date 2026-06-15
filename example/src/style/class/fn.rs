@@ -766,15 +766,20 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_badge {
-        display: "inline-block";
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        min-width: "52px";
         color: var!(text-on-accent);
         padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border: "1.5px solid transparent";
         border-radius: var!(radius-pill);
         font-size: var!(font-sm);
         font-weight: "600";
         cursor: "pointer";
         letter-spacing: "0.03em";
         text-transform: "uppercase";
+        text-align: "center";
         background: var!(accent-gradient);
         focus_visible {
             outline: "none";
@@ -787,7 +792,10 @@ class! {
     }
 
     pub(crate) c_badge_outline {
-        display: "inline-block";
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        min-width: "52px";
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         border-radius: var!(radius-pill);
         font-size: var!(font-sm);
@@ -795,6 +803,7 @@ class! {
         cursor: "pointer";
         letter-spacing: "0.03em";
         text-transform: "uppercase";
+        text-align: "center";
         background: "transparent";
         border: "1.5px solid";
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
@@ -2481,38 +2490,29 @@ class! {
     }
 
     pub(crate) c_vconsole_clear_button {
-        background: "transparent";
-        border: format!("1px solid {}", var!(border-console-button));
-        color: var!(text-console-button);
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        background: var!(bg-error);
+        color: var!(text-error);
+        border: format!("1px solid {}", var!(border-error));
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         border-radius: var!(radius-sm);
         cursor: "pointer";
         font-size: var!(font-sm);
         font-weight: "500";
         letter-spacing: "0.02em";
-        transition: format!("border-color {} {}, color {} {}, background {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-    }
-
-    pub(crate) c_vconsole_clear_button_hover {
-        border-color: var!(text-console-warn);
-        color: var!(text-console-warn);
-        background: "rgba(251, 191, 36, 0.08)";
-    }
-
-    pub(crate) c_vconsole_close_button {
-        background: "transparent";
-        border: "none";
-        color: var!(text-console-button);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
-        cursor: "pointer";
-        font-size: var!(font-lg);
         line-height: "1";
-        transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
-    }
-
-    pub(crate) c_vconsole_close_button_hover {
-        color: var!(text-console-close-hover);
+        text-align: "center";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        vertical-align: "middle";
+        outline: "none";
+        focus_visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+        }
     }
 
     pub(crate) c_vconsole_body {
@@ -2575,71 +2575,6 @@ class! {
         background: var!(bg-console-filter);
         border-bottom: format!("1px solid {}", var!(border-console));
         flex-shrink: "0";
-    }
-
-    pub(crate) c_vconsole_filter_button {
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
-        background: "transparent";
-        border: format!("1px solid {}", var!(border-console-button));
-        color: var!(text-console-button);
-        font-size: var!(font-xs);
-        font-weight: "500";
-        cursor: "pointer";
-        letter-spacing: "0.05em";
-        text-transform: "uppercase";
-    }
-
-    pub(crate) c_vconsole_filter_active {
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
-        background: var!(bg-console-filter-active);
-        border: format!("1px solid {}", var!(border-console-filter-active));
-        color: var!(text-console-filter-active);
-        font-size: var!(font-xs);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.05em";
-        text-transform: "uppercase";
-    }
-
-    pub(crate) c_vconsole_filter_active_log {
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
-        background: var!(bg-console-badge-log);
-        border: format!("1px solid {}", var!(text-console-log-latest));
-        color: var!(text-console-log-latest);
-        font-size: var!(font-xs);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.05em";
-        text-transform: "uppercase";
-    }
-
-    pub(crate) c_vconsole_filter_active_warn {
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
-        background: var!(bg-console-badge-warn);
-        border: format!("1px solid {}", var!(text-console-warn-latest));
-        color: var!(text-console-warn-latest);
-        font-size: var!(font-xs);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.05em";
-        text-transform: "uppercase";
-    }
-
-    pub(crate) c_vconsole_filter_active_error {
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
-        background: var!(bg-console-badge-error);
-        border: format!("1px solid {}", var!(text-console-error-latest));
-        color: var!(text-console-error-latest);
-        font-size: var!(font-xs);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.05em";
-        text-transform: "uppercase";
     }
 
     pub(crate) c_vconsole_level_badge {

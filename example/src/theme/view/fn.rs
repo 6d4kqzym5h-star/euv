@@ -214,8 +214,6 @@ vars! {
         border-console: "#e8e8f0";
         text-console: "#1a1a2e";
         text-console-title: "#4f46e5";
-        border-console-button: "#d4d4de";
-        text-console-button: "#5c5c72";
         text-console-log-latest: "#15803d";
         text-console-warn: "#b45309";
         text-console-warn-latest: "#92400e";
@@ -227,16 +225,11 @@ vars! {
         bg-console-badge-warn: "rgba(180, 83, 9, 0.06)";
         bg-console-badge-error: "rgba(220, 38, 38, 0.06)";
         border-console-accent: "#4f46e5";
-        text-console-filter-active: "#4f46e5";
-        border-console-filter-active: "#4f46e5";
-        bg-console-filter-active: "rgba(79, 70, 229, 0.06)";
         bg-console-button: "#4f46e5";
         text-console-button-text: "white";
         shadow-console-button: "0 4px 14px rgba(79, 70, 229, 0.22)";
         bg-console-button-hover: "#4338ca";
         shadow-console-panel: "0 -8px 32px rgba(15, 15, 26, 0.06)";
-        bg-console-close-hover: "rgba(220, 38, 38, 0.05)";
-        text-console-close-hover: "#dc2626";
 
         // ─── Glass / Surface Effects ───
         bg-glass: "rgba(255, 255, 255, 0.65)";
@@ -460,8 +453,6 @@ vars! {
         border-console: "#28283a";
         text-console: "#b0b0c4";
         text-console-title: "#a5b4fc";
-        border-console-button: "#2c2c3e";
-        text-console-button: "#8e8ea4";
         text-console-log-latest: "#4ade80";
         text-console-warn: "#fbbf24";
         text-console-warn-latest: "#f59e0b";
@@ -473,16 +464,11 @@ vars! {
         bg-console-badge-warn: "rgba(251, 191, 36, 0.10)";
         bg-console-badge-error: "rgba(248, 113, 113, 0.10)";
         border-console-accent: "#7c7cf8";
-        text-console-filter-active: "#a5b4fc";
-        border-console-filter-active: "#7c7cf8";
-        bg-console-filter-active: "rgba(124, 124, 248, 0.10)";
         bg-console-button: "#6366f1";
         text-console-button-text: "white";
         shadow-console-button: "0 4px 14px rgba(99, 102, 241, 0.28)";
         bg-console-button-hover: "#7c7cf8";
         shadow-console-panel: "0 -8px 32px rgba(0, 0, 0, 0.35)";
-        bg-console-close-hover: "rgba(248, 113, 113, 0.10)";
-        text-console-close-hover: "#f87171";
 
         // ─── Glass / Surface Effects ───
         bg-glass: "rgba(28, 28, 40, 0.65)";

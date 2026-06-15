@@ -172,7 +172,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                             "Clear"
                         }
                         button {
-                            class: c_vconsole_close_button()
+                            class: c_modal_close_button()
                             onclick: on_close_click
                             "×"
                         }
@@ -180,25 +180,29 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                 }
                 div {
                     class: c_vconsole_filter_bar()
-                    button {
-                        class: if { filter_signal.get() == LogFilter::All } { c_vconsole_filter_active() } else { c_vconsole_filter_button() }
-                        onclick: on_filter_all_click
-                        LogFilter::All.to_string()
+                    my_badge {
+                        color: var!(accent)
+                        text: "All"
+                        outline: { filter_signal.get() != LogFilter::All }
+                        on_click: Some(Rc::new(on_filter_all_click))
                     }
-                    button {
-                        class: if { filter_signal.get() == LogFilter::Log } { c_vconsole_filter_active_log() } else { c_vconsole_filter_button() }
-                        onclick: on_filter_log_click
-                        LogFilter::Log.to_string()
+                    my_badge {
+                        color: var!(badge-bg-success)
+                        text: "Log"
+                        outline: { filter_signal.get() != LogFilter::Log }
+                        on_click: Some(Rc::new(on_filter_log_click))
                     }
-                    button {
-                        class: if { filter_signal.get() == LogFilter::Warn } { c_vconsole_filter_active_warn() } else { c_vconsole_filter_button() }
-                        onclick: on_filter_warn_click
-                        LogFilter::Warn.to_string()
+                    my_badge {
+                        color: var!(badge-bg-warning)
+                        text: "Warn"
+                        outline: { filter_signal.get() != LogFilter::Warn }
+                        on_click: Some(Rc::new(on_filter_warn_click))
                     }
-                    button {
-                        class: if { filter_signal.get() == LogFilter::Error } { c_vconsole_filter_active_error() } else { c_vconsole_filter_button() }
-                        onclick: on_filter_error_click
-                        LogFilter::Error.to_string()
+                    my_badge {
+                        color: var!(badge-bg-error)
+                        text: "Error"
+                        outline: { filter_signal.get() != LogFilter::Error }
+                        on_click: Some(Rc::new(on_filter_error_click))
                     }
                 }
                 div {
