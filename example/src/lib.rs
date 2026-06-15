@@ -3,15 +3,11 @@
 //! A demonstration application showcasing the euv component system,
 //! reactive signals, routing, and HTML macros.
 
-mod app;
 mod component;
 mod page;
-mod router;
 mod style;
-mod theme;
-mod touch;
 
-use {app::*, component::*, page::*, router::*, style::*, theme::*, touch::*};
+use {component::*, page::*, style::*};
 
 use std::{
     cell::{Cell, RefCell},
