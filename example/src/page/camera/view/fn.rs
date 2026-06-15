@@ -106,7 +106,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         }
                     } else if { state.get_camera_loading().get() } {
                         button {
-                            class: c_primary_button_disabled()
+                            class: c_primary_button()
                             disabled: true
                             "Opening..."
                         }

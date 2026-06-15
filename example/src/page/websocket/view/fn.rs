@@ -30,7 +30,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                 }
                 if { state.get_connecting().get() } {
                     button {
-                        class: c_primary_button_disabled()
+                        class: c_primary_button()
                         disabled: true
                         "Wait"
                     }

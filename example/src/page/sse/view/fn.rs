@@ -29,7 +29,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                 }
                 if { state.get_connecting().get() } {
                     button {
-                        class: c_primary_button_disabled()
+                        class: c_primary_button()
                         disabled: true
                         "Wait"
                     }

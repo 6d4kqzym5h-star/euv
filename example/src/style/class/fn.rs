@@ -192,7 +192,7 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
@@ -559,9 +559,15 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+        }
+        disabled {
+            background: var!(accent-disabled);
+            cursor: "not-allowed";
+            opacity: "0.55";
+            box-shadow: "none";
         }
         media("(max-width: 767px)") {
             max-width: "100%";
@@ -570,14 +576,6 @@ class! {
             border-radius: var!(radius-md);
             box-shadow: var!(shadow-accent-sm);
         }
-    }
-
-    pub(crate) c_primary_button_disabled {
-        c_primary_button();
-        background: var!(accent-disabled);
-        cursor: "not-allowed";
-        opacity: "0.55";
-        box-shadow: "none";
     }
 
     pub(crate) c_secondary_button {
@@ -605,7 +603,7 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
@@ -644,7 +642,7 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-success));
         }
@@ -683,7 +681,7 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
         }
@@ -723,18 +721,16 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
         }
-    }
-
-    pub(crate) c_modal_primary_button_disabled {
-        c_modal_primary_button();
-        background: var!(accent-disabled);
-        cursor: "not-allowed";
-        opacity: "0.55";
-        box-shadow: "none";
+        disabled {
+            background: var!(accent-disabled);
+            cursor: "not-allowed";
+            opacity: "0.55";
+            box-shadow: "none";
+        }
     }
 
     pub(crate) c_modal_close_button {
@@ -780,7 +776,7 @@ class! {
         letter-spacing: "0.03em";
         text-transform: "uppercase";
         background: var!(accent-gradient);
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
@@ -3460,7 +3456,8 @@ class! {
         c_primary_button();
         background: var!(text-error);
         color: var!(text-on-accent);
-        border: format!("1px solid {}", var!(text-error));
+        border: "none";
+        box-shadow: format!("inset 0 0 0 1px {}, {}", var!(text-error), var!(shadow-accent-sm));
     }
 
     pub(crate) c_sse_action_button {
@@ -4517,7 +4514,7 @@ class! {
         vertical-align: "middle";
         line-height: "1";
         min-height: "36px";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
         }
@@ -4541,7 +4538,7 @@ class! {
         vertical-align: "middle";
         line-height: "1";
         min-height: "36px";
-        focus {
+        focus_visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
