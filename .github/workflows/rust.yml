@@ -280,34 +280,42 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          set -e
           echo "published=false" >> $GITHUB_OUTPUT
           echo "${{ secrets.CARGO_REGISTRY_TOKEN }}" | cargo login
           PACKAGE_NAME=$(toml get Cargo.toml package.name --raw)
           VERSION=${{ needs.setup.outputs.version }}
           MAX_RETRY=36
           SUCCESS=false
+          ALREADY_PUBLISHED=false
           for ((i=1; i<=MAX_RETRY; i++)); do
             echo "🚀 Attempt $i/$MAX_RETRY: releasing $PACKAGE_NAME v$VERSION"
-            if cargo release "$VERSION" --workspace --execute --no-confirm; then
-              echo "✅ $pkg release success"
-              echo "published=true" >> "$GITHUB_OUTPUT"
-              echo "🎉🎉🎉 PUBLISH SUCCESSFUL 🎉🎉🎉"
-              echo "✅ Successfully published $PACKAGE_NAME v$VERSION to crates.io"
-              echo "📦 Crates.io: https://crates.io/crates/$PACKAGE_NAME/$VERSION"
-              echo "📚 Docs.rs: https://docs.rs/$PACKAGE_NAME/$VERSION"
+            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm 2>&1) || true
+            if echo "$RELEASE_OUTPUT" | grep -q "is already published"; then
+              echo "📦 $PACKAGE_NAME v$VERSION is already published to crates.io, treating as success"
+              ALREADY_PUBLISHED=true
               SUCCESS=true
               break
-            else
-              echo "⚠️ Attempt $i failed"
-              if [ "$i" -lt "$MAX_RETRY" ]; then
-                echo "🔁 Retrying..."
-                sleep 2
-              fi
+            fi
+            if [ $? -eq 0 ] 2>/dev/null || echo "$RELEASE_OUTPUT" | grep -qiE "(success|published)"; then
+              echo "✅ $PACKAGE_NAME release success"
+              SUCCESS=true
+              break
+            fi
+            echo "⚠️ Attempt $i failed"
+            echo "$RELEASE_OUTPUT"
+            if [ "$i" -lt "$MAX_RETRY" ]; then
+              echo "🔁 Retrying..."
+              sleep 5
             fi
           done
-          if [ "$SUCCESS" != "true" ]; then
-            echo "❌ $pkg release failed after $MAX_RETRY attempts"
+          if [ "$SUCCESS" = "true" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "🎉🎉🎉 PUBLISH SUCCESSFUL 🎉🎉🎉"
+            echo "✅ Successfully published $PACKAGE_NAME v$VERSION to crates.io"
+            echo "📦 Crates.io: https://crates.io/crates/$PACKAGE_NAME/$VERSION"
+            echo "📚 Docs.rs: https://docs.rs/$PACKAGE_NAME/$VERSION"
+          else
+            echo "❌ $PACKAGE_NAME release failed after $MAX_RETRY attempts"
           fi
           cargo build --release --all-features
 

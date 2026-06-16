@@ -294,7 +294,7 @@ pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
 /// Opens the given URL in the system default browser using `window.open`
 /// with the `_system` target name.
 ///
-/// In a Tauri WebView environment, the `_system` target instructs the
+/// In a bridge WebView environment, the `_system` target instructs the
 /// shell opener plugin to delegate the URL to the operating system's
 /// default browser. In a regular browser, `window.open` falls back to
 /// opening a new tab or window as usual.

@@ -13,10 +13,12 @@ use crate::*;
 pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
     let PageHomeProps = node.try_get_props().unwrap_or_default();
     let native_bridge_state: UseNativeBridge = use_native_bridge();
+    let cache_update_state: UseCacheUpdate = use_cache_update();
     let is_first_render: Signal<bool> = use_signal(|| true);
     if is_first_render.get() {
         is_first_render.set(false);
         load_native_bridge_data(native_bridge_state);
+        load_cache_update(cache_update_state);
     }
     let version: String = format!("v{EUV_VERSION}");
     html! {
@@ -207,7 +209,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                             p {
                                 class: c_feature_desc()
-                                "Run anywhere with WASM — browsers, servers, and native via Tauri."
+                                "Run anywhere with WASM — browsers, servers, and native via bridge."
                             }
                         }
                     }
@@ -340,7 +342,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         "Native Bridge"
                     }
                     my_card {
-                        title: "Tauri Integration"
+                        title: "bridge Integration"
                         div {
                             class: c_info_row()
                             span {
