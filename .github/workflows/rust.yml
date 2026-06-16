@@ -193,7 +193,7 @@ jobs:
           ALREADY_PUBLISHED=false
           for ((i=1; i<=MAX_RETRY; i++)); do
             echo "🚀 Attempt $i/$MAX_RETRY: releasing $PACKAGE_NAME v$VERSION"
-            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm --no-dev-version 2>&1) || true
+            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm 2>&1) || true
             if echo "$RELEASE_OUTPUT" | grep -q "is already published"; then
               echo "📦 $PACKAGE_NAME v$VERSION is already published to crates.io, treating as success"
               ALREADY_PUBLISHED=true
