@@ -2418,7 +2418,9 @@ class! {
         right: "0px";
         bottom: "0px";
         z-index: "10000";
-        background: "rgba(0, 0, 0, 0.15)";
+        background: var!(bg-overlay);
+        backdrop-filter: var!(glass-blur-sm);
+        -webkit-backdrop-filter: var!(glass-blur-sm);
         transition: format!("opacity {} {}", var!(duration-overlay), var!(ease-out));
     }
 
@@ -2432,7 +2434,7 @@ class! {
         bottom: "0px";
         left: "0px";
         right: "0px";
-        height: "88vh";
+        height: "calc(76vh - env(safe-area-inset-bottom, 0px))";
         background: var!(bg-console);
         z-index: "10001";
         display: "flex";
