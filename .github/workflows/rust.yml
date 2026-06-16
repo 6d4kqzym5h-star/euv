@@ -77,84 +77,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
-      - name: Restore toml-cli
-        id: cache_toml_cli
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo/bin/toml
-          key: toml-cli-${{ runner.os }}
-      - name: Install toml-cli
-        if: steps.cache_toml_cli.outputs.cache-hit != 'true'
-        run: |
-          for i in 1 2 3 4 5 6 7 8; do
-            if cargo install toml-cli; then
-              break
-            fi
-            echo "⚠️ Attempt $i failed, retrying in 5s..."
-            sleep 5
-          done
       - name: Sync workspace version
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
-          ROOT_DIR=$(pwd)
-          echo "🔧 Syncing all versions to $VERSION"
-
-          # Collect all workspace member directory names
-          MEMBER_PKG_NAMES=""
-          MEMBERS=$(toml get Cargo.toml workspace.members --raw | tr -d '[]"' | sed 's/,/\n/g' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$')
-          echo "📋 Found workspace members: $MEMBERS"
-          for member in $MEMBERS; do
-            SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
-            if [ -f "$SUB_TOML" ]; then
-              PKG_NAME=$(toml get "$SUB_TOML" package.name --raw)
-              MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $PKG_NAME"
-              echo "📋 Member: $member -> package: $PKG_NAME"
-            else
-              echo "⚠️ $SUB_TOML not found, skipping"
-            fi
-          done
-
-          # Also include the root package itself
-          ROOT_PKG_NAME=$(toml get Cargo.toml package.name --raw)
-          MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $ROOT_PKG_NAME"
-
-          # Also include all sub-table format workspace.dependencies entries
-          SUB_TABLE_PKGS=$(grep -oP '^\[workspace\.dependencies\.\K[^\]]+' Cargo.toml || true)
-          for pkg_name in $SUB_TABLE_PKGS; do
-            if ! echo "$MEMBER_PKG_NAMES" | grep -qw "$pkg_name"; then
-              MEMBER_PKG_NAMES="$MEMBER_PKG_NAMES $pkg_name"
-            fi
-          done
-
-          echo "📋 All package names to sync:$MEMBER_PKG_NAMES"
-
-          # Sync workspace.dependencies.<pkg_name>.version for all member packages using sed
-          # This handles both inline table format: euv-cli = { path = "cli", version = "0.6.3" }
-          # and sub-table format: [workspace.dependencies.euv-cli] version = "0.6.3"
-          for pkg_name in $MEMBER_PKG_NAMES; do
-            if grep -q "^${pkg_name}[[:space:]]*=" Cargo.toml && grep -q "^${pkg_name}[[:space:]]*=.*version" Cargo.toml; then
-              sed -i -E "s|^(${pkg_name}[[:space:]]*=[[:space:]]*\{.*version[[:space:]]*=[[:space:]]*\")([^\"]+)(\".*)|\1${VERSION}\3|" Cargo.toml
-              echo "🔧 workspace.dependencies.${pkg_name}.version -> $VERSION (inline)"
-            elif grep -q "^\[workspace\.dependencies\.${pkg_name}\]" Cargo.toml; then
-              sed -i -E "/^\[workspace\.dependencies\.${pkg_name}\]/,/^\[/ s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
-              echo "🔧 workspace.dependencies.${pkg_name}.version -> $VERSION (sub-table)"
-            else
-              echo "⏭️ workspace.dependencies.${pkg_name} not found, skipping"
-            fi
-          done
-
-          # Sync each sub-crate's own package.version
-          for member in $MEMBERS; do
-            SUB_TOML="${ROOT_DIR}/${member}/Cargo.toml"
-            if [ -f "$SUB_TOML" ]; then
-              sed -i -E "s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" "$SUB_TOML"
-              echo "🔧 ${member}/Cargo.toml package.version -> $VERSION"
-            else
-              echo "⚠️ ${member}/Cargo.toml not found, skipping"
-            fi
-          done
-
-          # Sync the root package.version itself
+          echo "🔧 Syncing root package version to $VERSION"
           sed -i -E "0,/^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
           echo "🔧 Cargo.toml package.version -> $VERSION"
       - name: Update Cargo.lock
@@ -274,6 +200,9 @@ jobs:
         run: |
           git config user.name "eastspire"
           git config user.email "root@ltpp.vip"
+      - name: Pull sync_workspace_version changes
+        if: steps.check_branch.outputs.skip == 'false'
+        run: git pull
       - name: Publish to crates.io
         id: publish
         if: steps.check_branch.outputs.skip == 'false'
@@ -289,14 +218,14 @@ jobs:
           ALREADY_PUBLISHED=false
           for ((i=1; i<=MAX_RETRY; i++)); do
             echo "🚀 Attempt $i/$MAX_RETRY: releasing $PACKAGE_NAME v$VERSION"
-            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm 2>&1) || true
+            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm --no-dev-version 2>&1) || true
             if echo "$RELEASE_OUTPUT" | grep -q "is already published"; then
               echo "📦 $PACKAGE_NAME v$VERSION is already published to crates.io, treating as success"
               ALREADY_PUBLISHED=true
               SUCCESS=true
               break
             fi
-            if [ $? -eq 0 ] 2>/dev/null || echo "$RELEASE_OUTPUT" | grep -qiE "(success|published)"; then
+            if echo "$RELEASE_OUTPUT" | grep -qiE "(success|published)"; then
               echo "✅ $PACKAGE_NAME release success"
               SUCCESS=true
               break

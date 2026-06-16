@@ -18,7 +18,8 @@ use std::{
 use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *};
 
 use {
-    lombok_macros::*,
+    compare_version::{CompareVersion, VersionLevel},
+    lombok_macros::{Data, New},
     qrcode::{QrCode, render::svg},
     serde::Deserialize,
 };

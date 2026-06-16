@@ -169,9 +169,11 @@ pub(crate) fn load_native_bridge_data(state: UseNativeBridge) {
 ///
 /// First fetches `DOCS_STATUS_URL` and parses the `{ "doc_status": bool,
 /// "version": string }` JSON payload into the provided state signals.
-/// Then, if the bridge is available, invokes the `update_cache` command
-/// via `window.bridge.core.invoke("update_cache")` and updates the
-/// `updating` signal accordingly.
+/// If the remote version is greater than `EUV_VERSION` and the bridge
+/// is available, invokes the `update_cache` command via
+/// `window.bridge.core.invoke("update_cache")` and updates the
+/// `updating` signal accordingly. Otherwise, logs that the current
+/// version is already the latest.
 ///
 /// # Arguments
 ///
@@ -195,6 +197,15 @@ pub(crate) fn load_cache_update(state: UseCacheUpdate) {
                     serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default();
                 doc_status_signal.set(parsed.get_doc_status());
                 version_signal.set(parsed.get_version().clone());
+                if !matches!(
+                    CompareVersion::compare_version(parsed.get_version(), EUV_VERSION),
+                    Ok(VersionLevel::Greater)
+                ) {
+                    Console::log(&format!(
+                        "Current version v{EUV_VERSION} is already the latest version"
+                    ));
+                    return;
+                }
             }
         }
         if !is_bridge_available() {
@@ -203,8 +214,9 @@ pub(crate) fn load_cache_update(state: UseCacheUpdate) {
         updating_signal.set(true);
         if let Ok(promise) = bridge_invoke(INVOKE_UPDATE_CACHE, None) {
             let future: JsFuture = JsFuture::from(promise);
-            if let Ok(result) = future.await {
-                Console::log(&result.as_string().unwrap_or_default());
+            match future.await {
+                Ok(result) => Console::log(&result.as_string().unwrap_or_default()),
+                Err(error) => Console::error(&error.as_string().unwrap_or_default()),
             }
         }
         updating_signal.set(false);

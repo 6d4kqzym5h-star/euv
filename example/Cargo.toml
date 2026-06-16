@@ -28,6 +28,7 @@ web-sys = { workspace = true }
 serde_json = { workspace = true }
 wasm-bindgen = { workspace = true }
 lombok-macros = { workspace = true }
+compare_version = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
 console_error_panic_hook = { workspace = true }
 qrcode = { workspace = true, features = ["svg"] }
