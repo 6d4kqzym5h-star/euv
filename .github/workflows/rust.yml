@@ -68,30 +68,13 @@ jobs:
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
   sync_workspace_version:
-    permissions:
-      contents: write
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-      - name: Sync workspace version
+      - name: Verify version
         run: |
           VERSION="${{ needs.setup.outputs.version }}"
-          echo "🔧 Syncing root package version to $VERSION"
-          sed -i -E "0,/^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
-          echo "🔧 Cargo.toml package.version -> $VERSION"
-      - name: Update Cargo.lock
-        run: cargo generate-lockfile
-      - name: Commit and push
-        run: |
-          git config user.name "eastspire"
-          git config user.email "root@ltpp.vip"
-          git add -A
-          git diff --cached --quiet || git commit -m "chore: sync all package versions to ${{ needs.setup.outputs.version }}"
-          git push
+          echo "🔧 Target version: $VERSION"
 
   check:
     needs: sync_workspace_version
@@ -195,14 +178,6 @@ jobs:
             echo "⚠️ Attempt $i failed, retrying in 5s..."
             sleep 5
           done
-      - name: Configure git
-        if: steps.check_branch.outputs.skip == 'false'
-        run: |
-          git config user.name "eastspire"
-          git config user.email "root@ltpp.vip"
-      - name: Pull sync_workspace_version changes
-        if: steps.check_branch.outputs.skip == 'false'
-        run: git pull
       - name: Publish to crates.io
         id: publish
         if: steps.check_branch.outputs.skip == 'false'
@@ -369,3 +344,32 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_and_push:
+    permissions:
+      contents: write
+    needs: [setup, release]
+    if: needs.setup.outputs.tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Pull latest changes
+        run: git pull
+      - name: Sync workspace version
+        run: |
+          VERSION="${{ needs.setup.outputs.version }}"
+          echo "🔧 Syncing root package version to $VERSION"
+          sed -i -E "0,/^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
+          echo "🔧 Cargo.toml package.version -> $VERSION"
+      - name: Update Cargo.lock
+        run: cargo generate-lockfile
+      - name: Commit and push
+        run: |
+          git config user.name "eastspire"
+          git config user.email "root@ltpp.vip"
+          git add -A
+          git diff --cached --quiet || git commit -m "chore: sync all package versions to ${{ needs.setup.outputs.version }}"
+          git push
