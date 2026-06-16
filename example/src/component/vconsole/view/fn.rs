@@ -36,6 +36,8 @@ pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNo
 ///
 /// Uses the shared `logo_button` component with the `Fab` variant
 /// to display the branded "E" button with gradient background.
+/// Always renders the button and badge in the DOM, toggling visibility
+/// via CSS class to avoid arm-switch `render_full_replace`.
 ///
 /// # Arguments
 ///
@@ -51,34 +53,28 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
         panel_open,
         console_signal,
     }: VconsoleFabProps = node.try_get_props().unwrap_or_default();
-    let is_open: bool = panel_open.get();
-    if is_open {
-        return html! {
-            div {
-                class: c_vconsole_fab_hidden()
-            }
-        };
-    }
     let fab_on_click: Option<Rc<dyn Fn(Event)>> = Some(Rc::new(move |_: Event| {
         overlay_push_state();
         panel_open.set(true);
     }));
-    if !console_signal.get().is_empty() {
-        html! {
+    html! {
+        div {
+            class: if { panel_open.get() } {
+                c_vconsole_fab_hidden()
+            } else {
+                c_vconsole_fab_visible()
+            }
             logo_button {
                 variant: LogoButtonVariant::Fab
                 on_click: fab_on_click
                 span {
-                    class: c_vconsole_badge()
+                    class: if { console_signal.get().is_empty() } {
+                        c_vconsole_badge_hidden()
+                    } else {
+                        c_vconsole_badge()
+                    }
                     if { console_signal.get().len() > 99 } { "99+" } else { console_signal.get().len().to_string() }
                 }
-            }
-        }
-    } else {
-        html! {
-            logo_button {
-                variant: LogoButtonVariant::Fab
-                on_click: fab_on_click
             }
         }
     }
@@ -215,17 +211,29 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
 }
 
 /// Builds the vConsole log entry virtual nodes from the reactive log signal with level filtering.
+///
+/// Always renders both the empty-state and the log-list containers, toggling
+/// visibility with CSS `display` so that the `if` arm-switch never triggers
+/// `render_full_replace` when the first log entry arrives.
 fn build_vconsole_log_nodes(
     logs: Signal<Vec<ConsoleEntry>>,
     filter: Signal<LogFilter>,
 ) -> VirtualNode {
     html! {
-        if { filter_console_entries(logs, filter).is_empty() } {
-            div {
-                class: c_vconsole_empty()
-                "No logs yet."
+        div {
+            class: if { filter_console_entries(logs, filter).is_empty() } {
+                c_vconsole_empty()
+            } else {
+                c_vconsole_empty_hidden()
             }
-        } else {
+            "No logs yet."
+        }
+        div {
+            class: if { filter_console_entries(logs, filter).is_empty() } {
+                c_vconsole_log_list_hidden()
+            } else {
+                c_vconsole_log_list()
+            }
             for (index, entry) in { &filter_console_entries(logs, filter) } {
                 div {
                     key: index.to_string()

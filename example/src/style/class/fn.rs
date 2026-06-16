@@ -2412,6 +2412,10 @@ class! {
         pointer-events: "none";
     }
 
+    pub(crate) c_vconsole_badge_hidden {
+        display: "none";
+    }
+
     pub(crate) c_vconsole_overlay {
         position: "fixed";
         top: "0px";
@@ -2452,6 +2456,10 @@ class! {
 
     pub(crate) c_vconsole_fab_hidden {
         display: "none";
+    }
+
+    pub(crate) c_vconsole_fab_visible {
+        display: "block";
     }
 
     pub(crate) c_vconsole_header {
@@ -2592,6 +2600,18 @@ class! {
         font-size: "13px";
         text-align: "center";
         padding: format!("{} 0px", var!(space-4xl));
+    }
+
+    pub(crate) c_vconsole_empty_hidden {
+        display: "none";
+    }
+
+    pub(crate) c_vconsole_log_list {
+        display: "block";
+    }
+
+    pub(crate) c_vconsole_log_list_hidden {
+        display: "none";
     }
 
     pub(crate) c_vconsole_count {
