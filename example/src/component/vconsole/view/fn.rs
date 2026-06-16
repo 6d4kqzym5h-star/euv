@@ -37,7 +37,8 @@ pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNo
 /// Uses the shared `logo_button` component with the `Fab` variant
 /// to display the branded "E" button with gradient background.
 /// Always renders the button and badge in the DOM, toggling visibility
-/// via CSS class to avoid arm-switch `render_full_replace`.
+/// via `transform` + `opacity` so the browser has already performed layout;
+/// opening only triggers a CSS transition instead of a costly DOM rebuild.
 ///
 /// # Arguments
 ///
@@ -68,12 +69,14 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
                 variant: LogoButtonVariant::Fab
                 on_click: fab_on_click
                 span {
-                    class: if { console_signal.get().is_empty() } {
-                        c_vconsole_badge_hidden()
-                    } else {
+                    class: if { !console_signal.get().is_empty() } {
                         c_vconsole_badge()
                     }
-                    if { console_signal.get().len() > 99 } { "99+" } else { console_signal.get().len().to_string() }
+                    if { console_signal.get().len() > 99 } {
+                        "99+"
+                    } else if { !console_signal.get().is_empty() } {
+                        console_signal.get().len().to_string()
+                    }
                 }
             }
         }
@@ -81,6 +84,11 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
 }
 
 /// Renders the vConsole drawer panel with log entries, level filter, and controls.
+///
+/// Both the overlay and the panel are always present in the DOM.
+/// When closed the overlay uses `opacity:0` + `pointer-events:none` and the panel
+/// uses `transform:translateY(100%)` so the browser has already performed layout;
+/// opening only triggers a CSS transition instead of a costly DOM rebuild.
 ///
 /// # Arguments
 ///
@@ -97,25 +105,6 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
         panel_open,
     }: VconsoleDrawerProps = node.try_get_props().unwrap_or_default();
     let filter_signal: Signal<LogFilter> = use_signal(|| LogFilter::All);
-    let is_open: bool = panel_open.get();
-    let overlay_class: String = if is_open {
-        c_vconsole_overlay().get_name().to_string()
-    } else {
-        format!(
-            "{} {}",
-            c_vconsole_overlay().get_name(),
-            c_vconsole_overlay_hidden().get_name()
-        )
-    };
-    let panel_class: String = if is_open {
-        c_vconsole_panel().get_name().to_string()
-    } else {
-        format!(
-            "{} {}",
-            c_vconsole_panel().get_name(),
-            c_vconsole_panel_closed().get_name()
-        )
-    };
     let on_overlay_click = move |_: Event| {
         overlay_back(None);
         panel_open.set(false);
@@ -142,11 +131,19 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
     html! {
         div {
             div {
-                class: overlay_class
+                class: if { panel_open.get() } {
+                    c_vconsole_overlay().to_string()
+                } else {
+                    format!("{} {}", c_vconsole_overlay().get_name(), c_vconsole_overlay_hidden().get_name())
+                }
                 onclick: on_overlay_click
             }
             div {
-                class: panel_class
+                class: if { panel_open.get() } {
+                    c_vconsole_panel().to_string()
+                } else {
+                    format!("{} {}", c_vconsole_panel().get_name(), c_vconsole_panel_closed().get_name())
+                }
                 div {
                     class: c_vconsole_header()
                     h3 {
@@ -213,7 +210,7 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
 /// Builds the vConsole log entry virtual nodes from the reactive log signal with level filtering.
 ///
 /// Always renders both the empty-state and the log-list containers, toggling
-/// visibility with CSS `display` so that the `if` arm-switch never triggers
+/// visibility with CSS `height` + `overflow` so that the `if` arm-switch never triggers
 /// `render_full_replace` when the first log entry arrives.
 fn build_vconsole_log_nodes(
     logs: Signal<Vec<ConsoleEntry>>,

@@ -80,6 +80,14 @@ pub(crate) struct HtmlAttrIf {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) branches: Vec<(Option<Expr>, Expr)>,
+    /// The default token stream for the implicit else branch when no explicit else exists.
+    ///
+    /// For `class` attributes, this is an empty string. For `style` attributes,
+    /// this is also an empty string. For other attributes, an empty string is used.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) else_default: proc_macro2::TokenStream,
 }
 
 /// Represents a reactive `match` expression in HTML.

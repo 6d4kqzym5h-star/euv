@@ -488,8 +488,9 @@ impl ToTokens for HtmlStylePropValue {
             HtmlStylePropValue::Literal(literal_value) => literal_value.to_tokens(tokens),
             HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlStylePropValue::If(html_attr_if) => {
+                let else_default: &proc_macro2::TokenStream = html_attr_if.get_else_default();
                 let if_chain: proc_macro2::TokenStream =
-                    attr_if_to_tokens(html_attr_if, quote! { #STR_EMPTY });
+                    attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Reactive);
                 if_chain.to_tokens(tokens);
             }
         }
@@ -512,10 +513,11 @@ impl ToTokens for HtmlAttrValue {
         match self {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlAttrValue::If(html_attr_if) => {
+                let else_default: &proc_macro2::TokenStream = html_attr_if.get_else_default();
                 let if_chain: proc_macro2::TokenStream =
-                    attr_if_to_tokens(html_attr_if, quote! { #STR_EMPTY });
+                    attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Reactive);
                 tokens.extend(quote! {
-                    ::euv::AttributeValue::create_reactive_signal(move || ::euv::IntoReactiveString::into_reactive_string(#if_chain))
+                    ::euv::AttributeValue::create_reactive_signal(move || #if_chain)
                 });
             }
             HtmlAttrValue::Style(props) => {
@@ -685,7 +687,7 @@ impl ToTokens for HtmlDynamicTag {
                                     _ => quote! { #STR_EMPTY },
                                 };
                                 let if_chain: proc_macro2::TokenStream =
-                                    attr_if_to_tokens(html_attr_if, else_default);
+                                    attr_if_to_tokens(html_attr_if, else_default, AttrIfMode::Raw);
                                 quote! { #field_ident: #if_chain }
                             }
                             HtmlAttrValue::Style(props) => {
@@ -836,7 +838,7 @@ impl ToTokens for HtmlElement {
                                 _ => quote! { #STR_EMPTY },
                             };
                             let if_chain: proc_macro2::TokenStream =
-                                attr_if_to_tokens(html_attr_if, else_default);
+                                attr_if_to_tokens(html_attr_if, else_default, AttrIfMode::Raw);
                             quote! { #field_ident: #if_chain }
                         }
                         HtmlAttrValue::Style(props) => {

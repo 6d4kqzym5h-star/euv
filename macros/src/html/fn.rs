@@ -984,6 +984,7 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
 /// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.
 ///
 /// Unlike `HtmlIf` (which contains HTML child nodes), each branch body here is a Rust expression.
+/// When no explicit `else` branch is provided, an empty string is used as the default.
 ///
 /// # Arguments
 ///
@@ -1021,7 +1022,11 @@ pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
             break;
         }
     }
-    Ok(HtmlAttrIf { branches })
+    let else_default: proc_macro2::TokenStream = quote! { #STR_EMPTY };
+    Ok(HtmlAttrIf {
+        branches,
+        else_default,
+    })
 }
 
 /// Strips outer braces from an `Expr` if it is an `Expr::Block` with a single expression,
@@ -1051,10 +1056,20 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 /// The generated code is used inside a reactive closure so that when signals
 /// change, the conditional is re-evaluated.
 ///
+/// The `mode` parameter controls how branch bodies are emitted:
+/// - `AttrIfMode::Reactive`: Each branch body is wrapped in
+///   `::euv::IntoReactiveString::into_reactive_string(...)` so that all branches
+///   produce a `String` regardless of their original type (e.g., `Css`, `&str`, `String`).
+///   This ensures type compatibility when the `if` and implicit `else` branches
+///   return different types.
+/// - `AttrIfMode::Raw`: Branch bodies are emitted as-is without wrapping.
+///   Used for component props where branch types are already consistent.
+///
 /// # Arguments
 ///
 /// - `&HtmlAttrIf` - The parsed attribute-level reactive conditional.
 /// - `proc_macro2::TokenStream` - The default else branch token stream, used when no explicit else branch exists.
+/// - `AttrIfMode` - The code generation mode for branch body wrapping.
 ///
 /// # Returns
 ///
@@ -1062,6 +1077,7 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 pub(crate) fn attr_if_to_tokens(
     html_attr_if: &HtmlAttrIf,
     else_default: proc_macro2::TokenStream,
+    mode: AttrIfMode,
 ) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     let has_else: bool = html_attr_if
@@ -1069,20 +1085,32 @@ pub(crate) fn attr_if_to_tokens(
         .last()
         .is_some_and(|(condition, _): &(Option<Expr>, Expr)| condition.is_none());
     for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
+        let body_tokens: proc_macro2::TokenStream = match mode {
+            AttrIfMode::Reactive => {
+                quote! { ::euv::IntoReactiveString::into_reactive_string(#body) }
+            }
+            AttrIfMode::Raw => quote! { #body },
+        };
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                if_chain.extend(quote! { if #cond { #body } });
+                if_chain.extend(quote! { if #cond { #body_tokens } });
             }
             (_, Some(cond)) => {
-                if_chain.extend(quote! { else if #cond { #body } });
+                if_chain.extend(quote! { else if #cond { #body_tokens } });
             }
             (_, None) => {
-                if_chain.extend(quote! { else { #body } });
+                if_chain.extend(quote! { else { #body_tokens } });
             }
         }
     }
     if !has_else {
-        if_chain.extend(quote! { else { #else_default } });
+        let else_tokens: proc_macro2::TokenStream = match mode {
+            AttrIfMode::Reactive => {
+                quote! { ::euv::IntoReactiveString::into_reactive_string(#else_default) }
+            }
+            AttrIfMode::Raw => quote! { #else_default },
+        };
+        if_chain.extend(quote! { else { #else_tokens } });
     }
     if_chain
 }

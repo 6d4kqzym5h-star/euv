@@ -120,19 +120,13 @@ class! {
     }
 
     pub(crate) c_logo_button_fab {
-        position: "fixed";
-        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
-        right: var!(padding-main-horizontal);
         width: "36px";
         height: "36px";
         border-radius: "14px";
         font-size: var!(font-xl);
-        z-index: "9999";
         box-shadow: var!(shadow-console-button);
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         media("(max-width: 767px)") {
-            bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
-            right: var!(padding-main-horizontal-mobile);
             width: "44px";
             height: "44px";
             border-radius: var!(radius-lg);
@@ -2410,6 +2404,7 @@ class! {
         line-height: "1";
         box-shadow: "0px 2px 6px rgba(239, 68, 68, 0.3)";
         pointer-events: "none";
+        transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
     }
 
     pub(crate) c_vconsole_badge_hidden {
@@ -2437,7 +2432,7 @@ class! {
         bottom: "0px";
         left: "0px";
         right: "0px";
-        height: "66vh";
+        height: "88vh";
         background: var!(bg-console);
         z-index: "10001";
         display: "flex";
@@ -2455,11 +2450,32 @@ class! {
     }
 
     pub(crate) c_vconsole_fab_hidden {
-        display: "none";
+        position: "fixed";
+        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
+        right: var!(padding-main-horizontal);
+        z-index: "9999";
+        transform: "translateX(calc(100% + 40px))";
+        opacity: "0";
+        pointer-events: "none";
+        transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
+        media("(max-width: 767px)") {
+            bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
+            right: var!(padding-main-horizontal-mobile);
+        }
     }
 
     pub(crate) c_vconsole_fab_visible {
-        display: "block";
+        position: "fixed";
+        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
+        right: var!(padding-main-horizontal);
+        z-index: "9999";
+        transform: "translateX(0)";
+        opacity: "1";
+        transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
+        media("(max-width: 767px)") {
+            bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
+            right: var!(padding-main-horizontal-mobile);
+        }
     }
 
     pub(crate) c_vconsole_header {
@@ -2600,18 +2616,24 @@ class! {
         font-size: "13px";
         text-align: "center";
         padding: format!("{} 0px", var!(space-4xl));
+        overflow: "hidden";
+        transition: format!("height {} {}, padding {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
     }
 
     pub(crate) c_vconsole_empty_hidden {
-        display: "none";
+        height: "0";
+        overflow: "hidden";
+        padding: "0";
     }
 
     pub(crate) c_vconsole_log_list {
-        display: "block";
+        overflow: "hidden";
+        transition: format!("height {} {}", var!(duration-normal), var!(ease-out));
     }
 
     pub(crate) c_vconsole_log_list_hidden {
-        display: "none";
+        height: "0";
+        overflow: "hidden";
     }
 
     pub(crate) c_vconsole_count {
