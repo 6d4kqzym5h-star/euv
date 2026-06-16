@@ -1791,6 +1791,8 @@ class! {
 
     pub(crate) c_list_item_button {
         max-width: "120px";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        line-height: "1.5";
         flex-shrink: "0";
     }
 
