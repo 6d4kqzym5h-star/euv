@@ -1402,7 +1402,6 @@ class! {
         padding: format!("0px {}", var!(space-sm));
         height: var!(mobile-header-height);
         background: var!(bg-card);
-        border-bottom: format!("1px solid {}", var!(border-card));
         flex-shrink: "0";
         gap: var!(space-sm);
     }
