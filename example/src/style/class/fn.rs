@@ -3415,38 +3415,40 @@ class! {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // SSE Demo
+    // Network Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_sse_disconnect_button {
+    pub(crate) c_net_disconnect_button {
         c_primary_button();
         background: var!(text-error);
         color: var!(text-on-accent);
         border: "none";
         box-shadow: format!("inset 0 0 0 1px {}, {}", var!(text-error), var!(shadow-accent-sm));
+        line-height: "1.5";
     }
 
-    pub(crate) c_sse_action_button {
+    pub(crate) c_net_action_button {
         min-width: "0px";
         max-width: "120px";
-        padding: format!("{} {}", var!(space-sm), var!(space-lg));
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        line-height: "1.5";
         flex-shrink: "0";
     }
 
-    pub(crate) c_sse_messages_header {
+    pub(crate) c_net_messages_header {
         display: "flex";
         flex-direction: "column";
         gap: var!(gap-element);
         margin-bottom: var!(gap-component);
     }
 
-    pub(crate) c_sse_message_count {
+    pub(crate) c_net_message_count {
         color: "inherit";
         opacity: "0.6";
         font-size: var!(font-sm);
     }
 
-    pub(crate) c_sse_messages_empty {
+    pub(crate) c_net_messages_empty {
         color: "inherit";
         opacity: "0.5";
         padding: var!(space-xl);
@@ -3454,13 +3456,13 @@ class! {
         font-size: var!(font-base);
     }
 
-    pub(crate) c_sse_messages_list {
+    pub(crate) c_net_messages_list {
         display: "flex";
         flex-direction: "column";
         gap: var!(space-xs);
     }
 
-    pub(crate) c_sse_message_item {
+    pub(crate) c_net_message_item {
         display: "flex";
         align-items: "baseline";
         gap: var!(gap-element);
@@ -3470,7 +3472,7 @@ class! {
         border: format!("1px solid {}", var!(border-loading));
     }
 
-    pub(crate) c_sse_message_index {
+    pub(crate) c_net_message_index {
         color: var!(accent);
         font-size: var!(font-sm);
         font-weight: "600";
@@ -3478,7 +3480,7 @@ class! {
         flex-shrink: "0";
     }
 
-    pub(crate) c_sse_message_data {
+    pub(crate) c_net_message_data {
         color: "inherit";
         font-size: var!(font-base);
         word-break: "break-all";

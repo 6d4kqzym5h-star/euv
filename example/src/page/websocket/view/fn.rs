@@ -36,7 +36,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     }
                 } else if { state.get_connected().get() } {
                     button {
-                        class: c_sse_disconnect_button()
+                        class: c_net_disconnect_button()
                         onclick: websocket_on_disconnect(state)
                         "Close"
                     }
@@ -68,7 +68,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                         }
                         button {
                             class: c_primary_button()
-                            class: c_sse_action_button()
+                            class: c_net_action_button()
                             onclick: websocket_on_send(state)
                             "Send"
                         }
@@ -79,7 +79,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                 title: "Messages"
                 if { state.get_messages().get().is_empty() } {
                     div {
-                        class: c_sse_messages_empty()
+                        class: c_net_messages_empty()
                         "No messages yet. Connect to start receiving."
                     }
                 } else {
@@ -90,7 +90,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                                 key: index.to_string()
                                 class: c_ws_message_item()
                                 span {
-                                    class: c_sse_message_index()
+                                    class: c_net_message_index()
                                     format!("#{}", index + 1)
                                 }
                                 span {

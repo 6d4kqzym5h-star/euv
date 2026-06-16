@@ -35,7 +35,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                     }
                 } else if { state.get_connected().get() } {
                     button {
-                        class: c_sse_disconnect_button()
+                        class: c_net_disconnect_button()
                         onclick: sse_on_disconnect(state)
                         "Close"
                     }
@@ -57,22 +57,22 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                 title: "Messages"
                 if { state.get_messages().get().is_empty() } {
                     div {
-                        class: c_sse_messages_empty()
+                        class: c_net_messages_empty()
                         "No messages received yet. Connect to an SSE endpoint to start receiving events."
                     }
                 } else {
                     div {
-                        class: c_sse_messages_list()
+                        class: c_net_messages_list()
                         for (index, message) in { state.get_messages().get().iter().enumerate() } {
                             div {
                                 key: index.to_string()
-                                class: c_sse_message_item()
+                                class: c_net_message_item()
                                 span {
-                                    class: c_sse_message_index()
+                                    class: c_net_message_index()
                                     format!("#{}", index + 1)
                                 }
                                 span {
-                                    class: c_sse_message_data()
+                                    class: c_net_message_data()
                                     message.clone()
                                 }
                             }
