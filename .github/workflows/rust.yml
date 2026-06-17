@@ -283,7 +283,8 @@ jobs:
           VERSION="${{ needs.setup.outputs.version }}"
           PUBLISH_ORDER=("euv-macros" "euv-core" "euv-cli" "euv")
           SKIP_PACKAGES=("euv-example")
-          OVERALL_SUCCESS=true
+          MAIN_PACKAGE="euv"
+          declare -A PUBLISH_RESULT
           for PKG_NAME in "${PUBLISH_ORDER[@]}"; do
             for SKIP in "${SKIP_PACKAGES[@]}"; do
               if [ "$PKG_NAME" = "$SKIP" ]; then
@@ -325,27 +326,35 @@ jobs:
                 echo "🔁 Retrying..."
               fi
             done
-            if [ "$PKG_PUBLISHED" = "false" ]; then
-              echo "❌ $PKG_NAME v$VERSION failed to publish"
-              OVERALL_SUCCESS=false
-              break
-            fi
-            VERIFY_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "User-Agent: euv-ci/1.0" "https://crates.io/api/v1/crates/$PKG_NAME/$VERSION")
-            if [ "$VERIFY_HTTP_CODE" = "200" ]; then
-              echo "✅ $PKG_NAME v$VERSION verified on crates.io (HTTP 200)"
+            PUBLISH_RESULT[$PKG_NAME]=$PKG_PUBLISHED
+            if [ "$PKG_PUBLISHED" = "true" ]; then
+              VERIFY_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "User-Agent: euv-ci/1.0" "https://crates.io/api/v1/crates/$PKG_NAME/$VERSION")
+              if [ "$VERIFY_HTTP_CODE" = "200" ]; then
+                echo "✅ $PKG_NAME v$VERSION verified on crates.io (HTTP 200)"
+              else
+                echo "⚠️ $PKG_NAME v$VERSION could not be verified (HTTP $VERIFY_HTTP_CODE), but publish reported success - continuing"
+              fi
             else
-              echo "⚠️ $PKG_NAME v$VERSION could not be verified (HTTP $VERIFY_HTTP_CODE), but publish reported success - continuing"
+              echo "❌ $PKG_NAME v$VERSION failed to publish, continuing with next package"
             fi
           done
-          if [ "$OVERALL_SUCCESS" = "true" ]; then
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 Publish Summary:"
+          for PKG_NAME in "${PUBLISH_ORDER[@]}"; do
+            if [ "${PUBLISH_RESULT[$PKG_NAME]:-false}" = "true" ]; then
+              echo "  ✅ $PKG_NAME v$VERSION"
+            else
+              echo "  ❌ $PKG_NAME v$VERSION"
+            fi
+          done
+          if [ "${PUBLISH_RESULT[$MAIN_PACKAGE]:-false}" = "true" ]; then
             echo "published=true" >> "$GITHUB_OUTPUT"
             echo "🎉🎉🎉 PUBLISH SUCCESSFUL 🎉🎉🎉"
-            ROOT_PKG_NAME=$(toml get Cargo.toml package.name --raw)
-            echo "✅ All packages published to crates.io"
-            echo "📦 Crates.io: https://crates.io/crates/$ROOT_PKG_NAME/$VERSION"
-            echo "📚 Docs.rs: https://docs.rs/$ROOT_PKG_NAME/$VERSION"
+            echo "✅ Main package $MAIN_PACKAGE v$VERSION published to crates.io"
+            echo "📦 Crates.io: https://crates.io/crates/$MAIN_PACKAGE/$VERSION"
+            echo "📚 Docs.rs: https://docs.rs/$MAIN_PACKAGE/$VERSION"
           else
-            echo "❌ Publish failed for one or more packages"
+            echo "❌ Main package $MAIN_PACKAGE v$VERSION failed to publish"
           fi
 
   release:
