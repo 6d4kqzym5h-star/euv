@@ -9,6 +9,7 @@ description = """An example application demonstrating the euv UI framework with 
 keywords = ["cross-platform"]
 repository = "https://github.com/euv-dev/euv.git"
 categories = ["network-programming", "web-programming"]
+publish = false
 exclude = [
   "target",
   "Cargo.lock",
