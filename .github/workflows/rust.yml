@@ -305,7 +305,6 @@ jobs:
             echo "$RELEASE_OUTPUT"
             if [ "$i" -lt "$MAX_RETRY" ]; then
               echo "🔁 Retrying..."
-              sleep 5
             fi
           done
           if [ "$SUCCESS" = "true" ]; then
