@@ -127,8 +127,6 @@ jobs:
           echo "📋 All package names to sync:$MEMBER_PKG_NAMES"
 
           # Sync workspace.dependencies.<pkg_name>.version for all member packages using sed
-          # This handles both inline table format: euv-cli = { path = "cli", version = "0.6.3" }
-          # and sub-table format: [workspace.dependencies.euv-cli] version = "0.6.3"
           for pkg_name in $MEMBER_PKG_NAMES; do
             if grep -q "^${pkg_name}[[:space:]]*=" Cargo.toml && grep -q "^${pkg_name}[[:space:]]*=.*version" Cargo.toml; then
               sed -i -E "s|^(${pkg_name}[[:space:]]*=[[:space:]]*\{.*version[[:space:]]*=[[:space:]]*\")([^\"]+)(\".*)|\1${VERSION}\3|" Cargo.toml
@@ -327,7 +325,7 @@ jobs:
             done
             PUBLISH_RESULT[$PKG_NAME]=$PKG_PUBLISHED
             if [ "$PKG_PUBLISHED" = "true" ]; then
-              VERIFY_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "User-Agent: euv-ci/1.0" "https://crates.io/api/v1/crates/$PKG_NAME/$VERSION")
+              VERIFY_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "User-Agent: euv" "https://crates.io/api/v1/crates/$PKG_NAME/$VERSION")
               if [ "$VERIFY_HTTP_CODE" = "200" ]; then
                 echo "✅ $PKG_NAME v$VERSION verified on crates.io (HTTP 200)"
               else
