@@ -44,7 +44,6 @@ jobs:
               break
             fi
             echo "⚠️ Attempt $i failed, retrying in 5s..."
-            sleep 5
           done
       - name: Read cargo metadata
         id: read
