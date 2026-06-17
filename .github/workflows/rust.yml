@@ -178,6 +178,11 @@ jobs:
             echo "⚠️ Attempt $i failed, retrying in 5s..."
             sleep 5
           done
+      - name: Configure git
+        if: steps.check_branch.outputs.skip == 'false'
+        run: |
+          git config --global user.name "eastspire"
+          git config --global user.email "root@ltpp.vip"
       - name: Publish to crates.io
         id: publish
         if: steps.check_branch.outputs.skip == 'false'
@@ -208,6 +213,8 @@ jobs:
             echo "⚠️ Attempt $i failed"
             echo "$RELEASE_OUTPUT"
             if [ "$i" -lt "$MAX_RETRY" ]; then
+              git checkout -- .
+              git clean -fd
               echo "🔁 Retrying..."
               sleep 5
             fi
