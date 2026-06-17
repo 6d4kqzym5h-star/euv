@@ -198,7 +198,7 @@ jobs:
           ALREADY_PUBLISHED=false
           for ((i=1; i<=MAX_RETRY; i++)); do
             echo "🚀 Attempt $i/$MAX_RETRY: releasing $PACKAGE_NAME v$VERSION"
-            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm 2>&1) || true
+            RELEASE_OUTPUT=$(cargo release "$VERSION" --workspace --execute --no-confirm --no-push 2>&1) || true
             if echo "$RELEASE_OUTPUT" | grep -q "is already published"; then
               echo "📦 $PACKAGE_NAME v$VERSION is already published to crates.io, treating as success"
               ALREADY_PUBLISHED=true
@@ -220,6 +220,9 @@ jobs:
             fi
           done
           if [ "$SUCCESS" = "true" ]; then
+            git add -A
+            git diff --cached --quiet || git commit -m "chore: release $VERSION"
+            git push
             echo "published=true" >> "$GITHUB_OUTPUT"
             echo "🎉🎉🎉 PUBLISH SUCCESSFUL 🎉🎉🎉"
             echo "✅ Successfully published $PACKAGE_NAME v$VERSION to crates.io"
@@ -365,12 +368,6 @@ jobs:
           ref: ${{ github.ref }}
       - name: Pull latest changes
         run: git pull
-      - name: Sync workspace version
-        run: |
-          VERSION="${{ needs.setup.outputs.version }}"
-          echo "🔧 Syncing root package version to $VERSION"
-          sed -i -E "0,/^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")/s|^(version[[:space:]]*=[[:space:]]*\")([^\"]+)(\")|\1${VERSION}\3|" Cargo.toml
-          echo "🔧 Cargo.toml package.version -> $VERSION"
       - name: Update Cargo.lock
         run: cargo generate-lockfile
       - name: Commit and push
