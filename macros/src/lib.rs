@@ -31,8 +31,8 @@ use {
     proc_macro2::{Span, TokenTree},
     quote::{ToTokens, quote, quote_spanned},
     syn::{
-        Attribute, Expr, ExprLit, Field, File, Ident, Item, Lit, LitStr, Path, Stmt, Token, Type,
-        Visibility, braced, parenthesized, parse,
+        Attribute, Expr, Field, File, Ident, Item, LitStr, Path, Stmt, Token, Type, Visibility,
+        braced, parenthesized, parse,
         parse::{Parse, ParseBuffer, ParseStream},
         parse_file, parse2,
         token::{Brace, Colon, Paren, Semi},

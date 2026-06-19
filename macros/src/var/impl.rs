@@ -101,14 +101,15 @@ impl ToTokens for VarsDef {
                     .iter()
                     .map(|(key, value): &(String, VarsValue)| match value {
                         VarsValue::Expr(expr) => {
-                            quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                            let key_sep: String = format!("{key}{CSS_PROP_SEPARATOR}");
+                            quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                         }
                     })
                     .collect();
                 let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
                 tokens.extend(quote! {
                         #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
-                        let css: ::euv::Css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)), [#(#css_string_parts), *].concat(), vec![], vec![]);
+                        let css: ::euv::Css = ::euv::Css::new(format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)), [#(#css_string_parts), *].concat(), Vec::new(), Vec::new());
                         css.inject_style();
                         css
                     }
@@ -143,19 +144,24 @@ impl ToTokens for VarsDef {
                         .iter()
                     .map(|(key, value): &(String, VarsValue)| match value {
                         VarsValue::Expr(expr) => {
-                            quote! { #key.to_string() + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                            let key_sep: String = format!("{key}{CSS_PROP_SEPARATOR}");
+                            quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                         }
                     })
                     .collect();
                     quote! { [#(#css_string_parts), *].concat() }
                 };
-                emit_vars_once_lock_fn(
+                emit_once_lock_fn(
                     tokens,
-                    visibility,
-                    &fn_name_token,
-                    &const_name_token,
-                    &class_name_str,
-                    &style_expr,
+                    OnceLockParams {
+                        visibility,
+                        fn_name_token: &fn_name_token,
+                        const_name_token: &const_name_token,
+                        class_name_str: &class_name_str,
+                        style_expr: &style_expr,
+                        selector_expr: &quote! { Vec::new() },
+                        at_rule_expr: &quote! { Vec::new() },
+                    },
                 );
             }
         }

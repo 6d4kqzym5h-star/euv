@@ -19,15 +19,15 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "⚙️"
                 title: "Custom Attributes"
                 subtitle: "Static and dynamic attribute keys and values."
             }
-            my_card {
+            euv_card {
                 title: "HTML Dynamic Attribute (Variable Key & Value)"
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: DYNAMIC_KEY_INPUT_ID
                         class: c_form_label()
@@ -40,12 +40,12 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                         placeholder: DYNAMIC_KEY_PLACEHOLDER
                         value: dynamic_key
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
-                        class: c_form_input()
+                        class: c_euv_input()
                         oninput: attrs_on_input_key(dynamic_key)
                     }
                 }
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: DYNAMIC_VALUE_INPUT_ID
                         class: c_form_label()
@@ -58,7 +58,7 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                         placeholder: DYNAMIC_VALUE_PLACEHOLDER
                         value: dynamic_value
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
-                        class: c_form_input()
+                        class: c_euv_input()
                         oninput: attrs_on_input_value(dynamic_value)
                     }
                 }
@@ -82,10 +82,10 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "CSS Dynamic Key (class! macro)"
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: CLASS_KEY_INPUT_ID
                         class: c_form_label()
@@ -98,12 +98,12 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                         placeholder: CLASS_KEY_PLACEHOLDER
                         value: class_prop_key
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
-                        class: c_form_input()
+                        class: c_euv_input()
                         oninput: attrs_on_input_key(class_prop_key)
                     }
                 }
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: CLASS_VALUE_INPUT_ID
                         class: c_form_label()
@@ -116,7 +116,7 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                         placeholder: CLASS_VALUE_PLACEHOLDER
                         value: class_prop_value
                         autocomplete: ATTRS_AUTOCOMPLETE_OFF
-                        class: c_form_input()
+                        class: c_euv_input()
                         oninput: attrs_on_input_value(class_prop_value)
                     }
                 }

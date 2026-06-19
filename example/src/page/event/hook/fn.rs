@@ -108,7 +108,7 @@ pub(crate) fn use_touch_event() -> UseTouchEvent {
 /// - `UseFormEvent` - The form event demo state.
 pub(crate) fn use_form_event() -> UseFormEvent {
     let mut state: UseFormEvent = UseFormEvent::default();
-    state.set_form_input_value(use_signal(String::new));
+    state.set_euv_input_value(use_signal(String::new));
     state.set_form_change_value(use_signal(|| "None".to_string()));
     state.set_form_checkbox(use_signal(|| false));
     state.set_form_select_value(use_signal(|| "None".to_string()));

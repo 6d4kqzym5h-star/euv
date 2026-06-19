@@ -11,18 +11,17 @@ pub(crate) fn page_not_found(node: VirtualNode<PageNotFoundProps>) -> VirtualNod
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🔍"
                 title: "404 Not Found"
                 subtitle: "The page you are looking for does not exist."
             }
             div {
-                class: c_not_found_actions()
-                primary_button {
+                class: c_button_controls()
+                euv_button {
+                    variant: EuvButtonVariant::Primary
                     label: "Back to Home"
-                    onclick: Some(Rc::new(move |_: Event| {
-                        navigate("/");
-                    }))
+                    onclick: not_found_on_go_home()
                     "Back to Home"
                 }
             }

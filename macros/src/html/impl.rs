@@ -489,9 +489,24 @@ impl ToTokens for HtmlStylePropValue {
             HtmlStylePropValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlStylePropValue::If(html_attr_if) => {
                 let else_default: &proc_macro2::TokenStream = html_attr_if.get_else_default();
+                let mode: AttrIfMode = if html_attr_if.get_is_inline() {
+                    AttrIfMode::Raw
+                } else {
+                    AttrIfMode::Reactive
+                };
                 let if_chain: proc_macro2::TokenStream =
-                    attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Reactive);
+                    attr_if_to_tokens(html_attr_if, else_default.clone(), mode);
                 if_chain.to_tokens(tokens);
+            }
+            HtmlStylePropValue::Match(html_attr_match) => {
+                let mode: AttrIfMode = if html_attr_match.get_is_inline() {
+                    AttrIfMode::Raw
+                } else {
+                    AttrIfMode::Reactive
+                };
+                let match_expr: proc_macro2::TokenStream =
+                    attr_match_to_tokens(html_attr_match, mode);
+                match_expr.to_tokens(tokens);
             }
         }
     }
@@ -499,10 +514,10 @@ impl ToTokens for HtmlStylePropValue {
 
 /// Implementation of `ToTokens` for `HtmlAttrValue`, converting attribute values into tokens.
 ///
-/// For `HtmlAttrValue::If`, generates a reactive signal via `AttributeValue::create_reactive_signal`.
-/// For `HtmlAttrValue::Style` containing `If` conditions, generates a reactive signal via
-/// `AttributeValue::create_reactive_signal`.
-/// For static values (`Expr` and `Style` without `If`), the value is emitted directly.
+/// For `HtmlAttrValue::If` and `HtmlAttrValue::Match`, generates either a reactive signal
+/// or an inline expression depending on whether the conditional is reactive or inline.
+/// For `HtmlAttrValue::Style` containing conditionals, generates a reactive signal.
+/// For static values (`Expr` and `Style` without conditionals), the value is emitted directly.
 impl ToTokens for HtmlAttrValue {
     /// Converts this attribute value into its token stream representation.
     ///
@@ -514,25 +529,77 @@ impl ToTokens for HtmlAttrValue {
             HtmlAttrValue::Expr(expr) => expr.to_tokens(tokens),
             HtmlAttrValue::If(html_attr_if) => {
                 let else_default: &proc_macro2::TokenStream = html_attr_if.get_else_default();
-                let if_chain: proc_macro2::TokenStream =
-                    attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Reactive);
-                tokens.extend(quote! {
-                    ::euv::AttributeValue::create_reactive_signal(move || #if_chain)
-                });
+                if html_attr_if.get_is_inline() {
+                    let if_chain: proc_macro2::TokenStream =
+                        attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Raw);
+                    tokens.extend(quote! {
+                        ::euv::AttrValueAdapter::new(#if_chain).into_reactive_attribute_value()
+                    });
+                } else {
+                    let if_chain: proc_macro2::TokenStream =
+                        attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Reactive);
+                    tokens.extend(quote! {
+                        ::euv::AttributeValue::create_reactive_signal(move || #if_chain)
+                    });
+                }
+            }
+            HtmlAttrValue::Match(html_attr_match) => {
+                if html_attr_match.get_is_inline() {
+                    let match_expr: proc_macro2::TokenStream =
+                        attr_match_to_tokens(html_attr_match, AttrIfMode::Raw);
+                    tokens.extend(quote! {
+                        ::euv::AttrValueAdapter::new(#match_expr).into_reactive_attribute_value()
+                    });
+                } else {
+                    let match_expr: proc_macro2::TokenStream =
+                        attr_match_to_tokens(html_attr_match, AttrIfMode::Reactive);
+                    tokens.extend(quote! {
+                        ::euv::AttributeValue::create_reactive_signal(move || #match_expr)
+                    });
+                }
             }
             HtmlAttrValue::Style(props) => {
-                let has_if: bool = props
-                    .iter()
-                    .any(|(_, value): &(String, HtmlStylePropValue)| {
-                        matches!(value, HtmlStylePropValue::If(_))
-                    });
+                let has_conditional: bool = is_style_props_conditional(props);
+                let has_inline: bool = is_attr_value_inline(self);
                 let all_literal: bool =
                     props
                         .iter()
                         .all(|(_, value): &(String, HtmlStylePropValue)| {
                             matches!(value, HtmlStylePropValue::Literal(_))
                         });
-                if has_if {
+                if has_inline {
+                    let prop_tokens: Vec<proc_macro2::TokenStream> = props
+                        .iter()
+                        .map(|(key, value): &(String, HtmlStylePropValue)| {
+                            let value_tokens: proc_macro2::TokenStream = match value {
+                                HtmlStylePropValue::If(html_attr_if)
+                                    if html_attr_if.get_is_inline() =>
+                                {
+                                    let else_default: &proc_macro2::TokenStream =
+                                        html_attr_if.get_else_default();
+                                    let if_chain: proc_macro2::TokenStream = attr_if_to_tokens(
+                                        html_attr_if,
+                                        else_default.clone(),
+                                        AttrIfMode::Raw,
+                                    );
+                                    quote! { #if_chain }
+                                }
+                                HtmlStylePropValue::Match(html_attr_match)
+                                    if html_attr_match.get_is_inline() =>
+                                {
+                                    let match_expr: proc_macro2::TokenStream =
+                                        attr_match_to_tokens(html_attr_match, AttrIfMode::Raw);
+                                    quote! { #match_expr }
+                                }
+                                _ => quote! { #value },
+                            };
+                            quote! { (#key, #value_tokens) }
+                        })
+                        .collect();
+                    tokens.extend(quote! {
+                        ::euv::Css::create_style_string(&[#(#prop_tokens), *])
+                    });
+                } else if has_conditional {
                     let prop_tokens: Vec<proc_macro2::TokenStream> = props
                         .iter()
                         .map(|(key, value): &(String, HtmlStylePropValue)| {
@@ -617,43 +684,8 @@ impl ToTokens for HtmlDynamicTag {
             .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
                 let key_string: String = extract_attr_key_string(key);
                 let attr_name_token: proc_macro2::TokenStream = quote! { #key_string.to_string() };
-                let value_tokens: proc_macro2::TokenStream = match value {
-                    HtmlAttrValue::Style(props) => {
-                        let has_if: bool =
-                            props
-                                .iter()
-                                .any(|(_, style_value): &(String, HtmlStylePropValue)| {
-                                    matches!(style_value, HtmlStylePropValue::If(_))
-                                });
-                        if has_if {
-                            quote! { #value }
-                        } else {
-                            quote! { ::euv::AttributeValue::Text(#value) }
-                        }
-                    }
-                    HtmlAttrValue::If(_) => {
-                        quote! { #value }
-                    }
-                    HtmlAttrValue::Classes(_) => {
-                        quote! { #value }
-                    }
-                    HtmlAttrValue::Styles(_) => {
-                        quote! { #value }
-                    }
-                    HtmlAttrValue::Expr(expr) => {
-                        if let Some(event_name_str) = key_string.strip_prefix(EVENT_ATTR_PREFIX) {
-                            quote! {
-                                ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
-                            }
-                        } else if key_string == ATTR_KEY_CHILDREN {
-                            quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
-                        } else {
-                            quote! {
-                                ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
-                            }
-                        }
-                    }
-                };
+                let value_tokens: proc_macro2::TokenStream =
+                    attr_value_to_entry_value_tokens(value, &key_string);
                 quote! {
                     ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
                 }
@@ -690,13 +722,14 @@ impl ToTokens for HtmlDynamicTag {
                                     attr_if_to_tokens(html_attr_if, else_default, AttrIfMode::Raw);
                                 quote! { #field_ident: #if_chain }
                             }
+                            HtmlAttrValue::Match(html_attr_match) => {
+                                let match_expr: proc_macro2::TokenStream =
+                                    attr_match_to_tokens(html_attr_match, AttrIfMode::Raw);
+                                quote! { #field_ident: #match_expr }
+                            }
                             HtmlAttrValue::Style(props) => {
-                                let has_if: bool = props.iter().any(
-                                    |(_, style_value): &(String, HtmlStylePropValue)| {
-                                        matches!(style_value, HtmlStylePropValue::If(_))
-                                    },
-                                );
-                                if has_if {
+                                let has_conditional: bool = is_style_props_conditional(props);
+                                if has_conditional {
                                     quote! { #field_ident: #value }
                                 } else {
                                     quote! { #field_ident: (#value).to_string() }
@@ -736,7 +769,7 @@ impl ToTokens for HtmlDynamicTag {
                 let component_call_tokens: proc_macro2::TokenStream = if has_children_field {
                     quote! { #fn_ident(::euv::VirtualNode::Element {
                         tag: ::euv::Tag::Component(#fn_name_str.to_string()),
-                        attributes: vec![],
+                        attributes: Vec::new(),
                         children: vec![#(#dyn_child_tokens), *],
                         key: None,
                         props: Some(Box::new(#props_ident { children: #children_token, ..#props_init_tokens })),
@@ -744,7 +777,7 @@ impl ToTokens for HtmlDynamicTag {
                 } else {
                     quote! { #fn_ident(::euv::VirtualNode::Element {
                         tag: ::euv::Tag::Component(#fn_name_str.to_string()),
-                        attributes: vec![],
+                        attributes: Vec::new(),
                         children: vec![#(#dyn_child_tokens), *],
                         key: None,
                         props: Some(Box::new(#props_init_tokens)),
@@ -841,13 +874,14 @@ impl ToTokens for HtmlElement {
                                 attr_if_to_tokens(html_attr_if, else_default, AttrIfMode::Raw);
                             quote! { #field_ident: #if_chain }
                         }
+                        HtmlAttrValue::Match(html_attr_match) => {
+                            let match_expr: proc_macro2::TokenStream =
+                                attr_match_to_tokens(html_attr_match, AttrIfMode::Raw);
+                            quote! { #field_ident: #match_expr }
+                        }
                         HtmlAttrValue::Style(props) => {
-                            let has_if: bool = props.iter().any(
-                                |(_, style_value): &(String, HtmlStylePropValue)| {
-                                    matches!(style_value, HtmlStylePropValue::If(_))
-                                },
-                            );
-                            if has_if {
+                            let has_conditional: bool = is_style_props_conditional(props);
+                            if has_conditional {
                                 quote! { #field_ident: #value }
                             } else {
                                 quote! { #field_ident: (#value).to_string() }
@@ -872,7 +906,7 @@ impl ToTokens for HtmlElement {
             tokens.extend(quote! {
                 #tag_ident(::euv::VirtualNode::Element {
                     tag: ::euv::Tag::Component(#tag_name.to_string()),
-                    attributes: vec![],
+                    attributes: Vec::new(),
                     children: vec![#(#child_tokens), *],
                     key: None,
                     props: Some(Box::new(#props_init_tokens)),
@@ -889,38 +923,7 @@ impl ToTokens for HtmlElement {
                     }
                     return None;
                 }
-                let value_tokens: proc_macro2::TokenStream = match value {
-                    HtmlAttrValue::Style(props) => {
-                        let has_if: bool = props.iter().any(|(_, style_value): &(String, HtmlStylePropValue)| matches!(style_value, HtmlStylePropValue::If(_)));
-                        if has_if {
-                            quote! { #value }
-                        } else {
-                            quote! { ::euv::AttributeValue::Text(#value) }
-                        }
-                    }
-                    HtmlAttrValue::If(_) => {
-                        quote! { #value }
-                    }
-                    HtmlAttrValue::Classes(_) => {
-                        quote! { #value }
-                    }
-                    HtmlAttrValue::Styles(_) => {
-                        quote! { #value }
-                    }
-                    HtmlAttrValue::Expr(expr) => {
-                        if let Some(event_name_str) = key_string.strip_prefix(EVENT_ATTR_PREFIX) {
-                            quote! {
-                                ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
-                            }
-                        } else if key_string == ATTR_KEY_CHILDREN {
-                            quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
-                        } else {
-                            quote! {
-                                ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
-                            }
-                        }
-                    }
-                };
+                let value_tokens: proc_macro2::TokenStream = attr_value_to_entry_value_tokens(value, &key_string);
                 Some(quote! {
                     ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
                 })

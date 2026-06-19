@@ -9,6 +9,17 @@ pub(crate) struct WsMessage {
     pub(crate) time: String,
 }
 
+/// The client-sent WebSocket text message format for serialization.
+///
+/// Serialized as: `{"type":"Text","data":"<user input>"}`
+#[derive(Clone, Serialize)]
+pub(crate) struct WsClientTextMessage {
+    /// The message type, always `"Text"`.
+    pub(crate) r#type: &'static str,
+    /// The user input text payload.
+    pub(crate) data: String,
+}
+
 /// The server-sent WebSocket message format for deserialization.
 ///
 /// Example JSON: `{"type":"Text","name":"uuid","data":"hello","time":1780741281040}`

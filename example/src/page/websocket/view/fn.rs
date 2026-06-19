@@ -2,7 +2,7 @@ use crate::*;
 
 /// A WebSocket chat page with auto-generated UUID and Ping keep-alive.
 ///
-/// Renders a page header, a connection card, a send message card,
+/// Renders a header, a connection card, a send message card,
 /// and a messages card that displays all received WebSocket messages
 /// as raw text.
 ///
@@ -17,34 +17,40 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🔌"
                 title: "WebSocket Chat"
                 subtitle: "Connect to a WebSocket chat server with automatic UUID and Ping keep-alive."
             }
-            my_card {
+            euv_card {
                 title: "Connection"
                 p {
                     class: c_demo_text()
                     "A random UUID is generated for each session. Click Connect to establish a real-time bidirectional connection. Ping messages are sent automatically to keep the connection alive."
                 }
-                if { state.get_connecting().get() } {
-                    button {
-                        class: c_primary_button()
-                        disabled: true
-                        "Wait"
-                    }
-                } else if { state.get_connected().get() } {
-                    button {
-                        class: c_net_disconnect_button()
-                        onclick: websocket_on_disconnect(state)
-                        "Close"
-                    }
-                } else {
-                    button {
-                        class: c_primary_button()
-                        onclick: websocket_on_connect(state)
-                        "Connect"
+                div {
+                    class: c_button_controls_auto()
+                    if { state.get_connecting().get() } {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
+                            label: "Wait"
+                            disabled: state.get_connecting()
+                            "Wait"
+                        }
+                    } else if { state.get_connected().get() } {
+                        euv_button {
+                            variant: EuvButtonVariant::Danger
+                            label: "Close"
+                            onclick: websocket_on_disconnect(state)
+                            "Close"
+                        }
+                    } else {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
+                            label: "Connect"
+                            onclick: websocket_on_connect(state)
+                            "Connect"
+                        }
                     }
                 }
                 if { !state.get_error().get().is_empty() } {
@@ -55,27 +61,30 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                 }
             }
             if { state.get_connected().get() } {
-                my_card {
+                euv_card {
                     title: "Send Message"
                     div {
-                        class: c_ws_send_row()
+                        class: c_inline_input_row()
                         input {
                             type: "text"
                             class: c_ws_message_input()
                             placeholder: WEBSOCKET_MESSAGE_PLACEHOLDER
-                            value: state.get_message_input()
+                            value: state.get_message_input().get()
                             oninput: on_input_value(state.get_message_input())
                         }
-                        button {
-                            class: c_primary_button()
-                            class: c_net_action_button()
-                            onclick: websocket_on_send(state)
-                            "Send"
+                        div {
+                            class: c_inline_input_button_wrap()
+                            euv_button {
+                                variant: EuvButtonVariant::Primary
+                                label: "Send"
+                                onclick: websocket_on_send(state)
+                                "Send"
+                            }
                         }
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Messages"
                 if { state.get_messages().get().is_empty() } {
                     div {
@@ -84,17 +93,17 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     }
                 } else {
                     div {
-                        class: c_ws_messages_list()
+                        class: c_net_messages_list()
                         for (index, message) in { state.get_messages().get().iter().enumerate() } {
                             div {
                                 key: index.to_string()
-                                class: c_ws_message_item()
+                                class: c_net_message_item()
                                 span {
                                     class: c_net_message_index()
                                     format!("#{}", index + 1)
                                 }
                                 span {
-                                    class: c_ws_message_data()
+                                    class: c_net_message_data()
                                     message.data.clone()
                                 }
                                 if !message.time.is_empty() {

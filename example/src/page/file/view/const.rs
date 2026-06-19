@@ -19,9 +19,6 @@ pub(crate) const FILE_ACCEPT_NAME: &str = "accept";
 /// The HTML input type for the file input element.
 pub(crate) const FILE_INPUT_TYPE: &str = "file";
 
-/// The HTML input type for the multiple files checkbox element.
-pub(crate) const FILE_CHECKBOX_TYPE: &str = "checkbox";
-
 /// The HTML input type for the accept filter input element.
 pub(crate) const FILE_TEXT_TYPE: &str = "text";
 

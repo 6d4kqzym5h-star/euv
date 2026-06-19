@@ -12,15 +12,15 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "📝"
                 title: "List Rendering"
                 subtitle: "Dynamic list with add and remove operations."
             }
-            my_card {
+            euv_card {
                 title: "Todo List"
                 div {
-                    class: c_list_input_row()
+                    class: c_inline_input_row()
                     input {
                         id: LIST_NEW_ITEM_ID
                         name: LIST_NEW_ITEM_NAME
@@ -31,11 +31,14 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                         class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_list_input_error() }
                         oninput: todo_list_on_input_new_item(state)
                     }
-                    button {
-                        class: c_primary_button()
-                        class: c_list_item_button()
-                        onclick: todo_list_on_add(state)
-                        "Add"
+                    div {
+                        class: c_inline_input_button_wrap()
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
+                            label: "Add"
+                            onclick: todo_list_on_add(state)
+                            "Add"
+                        }
                     }
                 }
                 if { !state.get_add_error().get().is_empty() } {
@@ -56,11 +59,14 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                                 class: c_list_item_text()
                                 item.clone()
                             }
-                            button {
-                                class: c_primary_button()
+                            div {
                                 class: c_list_item_button()
-                                onclick: todo_list_on_remove(state.get_items(), index)
-                                "Remove"
+                                euv_button {
+                                    variant: EuvButtonVariant::Danger
+                                    label: "Remove"
+                                    onclick: todo_list_on_remove(state.get_items(), index)
+                                    "Remove"
+                                }
                             }
                         }
                     }

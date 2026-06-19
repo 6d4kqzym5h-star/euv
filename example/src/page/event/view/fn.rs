@@ -368,11 +368,11 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         form.get_submit_count().set(current + 1);
         Console::log(&format!("Form submitted #{}", current + 1));
     };
-    let on_form_input = move |event: Event| {
+    let on_euv_input = move |event: Event| {
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
-            form.get_form_input_value().set(input.value());
+            form.get_euv_input_value().set(input.value());
         }
     };
     let on_form_change = move |event: Event| {
@@ -558,12 +558,12 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🎯"
                 title: "Event Handling"
                 subtitle: "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, media, video, and image events."
             }
-            my_card {
+            euv_card {
                 title: "Keyboard Events"
                 input {
                     id: EVENT_KEYBOARD_ID
@@ -571,7 +571,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     type: EVENT_TEXT_TYPE
                     autocomplete: EVENT_AUTOCOMPLETE_OFF
                     placeholder: EVENT_KEYBOARD_PLACEHOLDER
-                    class: c_form_input()
+                    class: c_euv_input()
                     onkeydown: on_key_down
                     onkeyup: on_key_up
                 }
@@ -634,7 +634,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Mouse Events"
                 div {
                     class: c_event_mouse_area()
@@ -791,7 +791,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Mouse Over/Out Events"
                 div {
                     class: c_switcher()
@@ -823,7 +823,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Focus Events"
                 input {
                     id: EVENT_FOCUS_ID
@@ -831,7 +831,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     type: EVENT_TEXT_TYPE
                     autocomplete: EVENT_AUTOCOMPLETE_OFF
                     placeholder: EVENT_FOCUS_PLACEHOLDER
-                    class: c_form_input()
+                    class: c_euv_input()
                     onfocus: on_focus
                     onblur: on_blur
                     onfocusin: on_focus_in
@@ -874,7 +874,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Drag Events"
                 div {
                     class: c_event_drag_zone()
@@ -932,7 +932,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Wheel Event"
                 div {
                     class: c_event_wheel_zone()
@@ -972,7 +972,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Clipboard Events"
                 div {
                     class: c_event_clipboard_area()
@@ -982,7 +982,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                             type: EVENT_TEXT_TYPE
                             autocomplete: EVENT_AUTOCOMPLETE_OFF
                             placeholder: EVENT_CLIPBOARD_PLACEHOLDER
-                        class: c_form_input()
+                        class: c_euv_input()
                         value: "Sample text for clipboard"
                         oncopy: on_copy
                         oncut: on_cut
@@ -1015,7 +1015,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Touch Events"
                 div {
                     class: c_event_touch_zone()
@@ -1047,14 +1047,14 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Form Events"
                 div {
                     class: c_event_form_area()
                     form {
                         onsubmit: on_form_submit
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 for: EVENT_FORM_INPUT_ID
                                 class: c_form_label()
@@ -1066,8 +1066,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 name: EVENT_FORM_INPUT_NAME
                                 autocomplete: EVENT_AUTOCOMPLETE_OFF
                                 placeholder: EVENT_FORM_INPUT_PLACEHOLDER
-                                class: c_form_input()
-                                oninput: on_form_input
+                                class: c_euv_input()
+                                oninput: on_euv_input
                                 onchange: on_form_change
                             }
                         }
@@ -1088,7 +1088,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 for: EVENT_FORM_SELECT_ID
                                 class: c_form_label()
@@ -1118,7 +1118,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 }
                             }
                         }
-                        primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Submit"
                             "Submit"
                         }
@@ -1134,7 +1135,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         }
                         span {
                             class: c_event_info_value()
-                            form.get_form_input_value()
+                            form.get_euv_input_value()
                         }
                     }
                     div {
@@ -1183,7 +1184,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Audio Media Events"
                 div {
                     class: c_event_media_area()
@@ -1230,7 +1231,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Video Events"
                 div {
                     class: c_event_video_area()
@@ -1337,7 +1338,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Image Events"
                 div {
                     class: c_event_image_area()

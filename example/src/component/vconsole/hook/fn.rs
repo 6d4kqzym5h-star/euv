@@ -112,3 +112,89 @@ pub(crate) fn get_log_level_badge(level: LogLevel) -> String {
         LogLevel::Error => "ERR".to_string(),
     }
 }
+
+/// Creates a click event handler that opens the vConsole fab panel.
+///
+/// Pushes an overlay state and sets the panel visibility signal to true.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The signal controlling panel visibility.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that opens the panel.
+pub(crate) fn vconsole_fab_on_click(panel_open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        overlay_push_state();
+        panel_open.set(true);
+    }))
+}
+
+/// Creates a click event handler that sets the log filter to "All".
+///
+/// # Arguments
+///
+/// - `Signal<LogFilter>` - The signal controlling the active log filter.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to All.
+pub(crate) fn vconsole_on_filter_all(
+    filter_signal: Signal<LogFilter>,
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        filter_signal.set(LogFilter::All);
+    }))
+}
+
+/// Creates a click event handler that sets the log filter to "Log".
+///
+/// # Arguments
+///
+/// - `Signal<LogFilter>` - The signal controlling the active log filter.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to Log.
+pub(crate) fn vconsole_on_filter_log(
+    filter_signal: Signal<LogFilter>,
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        filter_signal.set(LogFilter::Log);
+    }))
+}
+
+/// Creates a click event handler that sets the log filter to "Warn".
+///
+/// # Arguments
+///
+/// - `Signal<LogFilter>` - The signal controlling the active log filter.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to Warn.
+pub(crate) fn vconsole_on_filter_warn(
+    filter_signal: Signal<LogFilter>,
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        filter_signal.set(LogFilter::Warn);
+    }))
+}
+
+/// Creates a click event handler that sets the log filter to "Error".
+///
+/// # Arguments
+///
+/// - `Signal<LogFilter>` - The signal controlling the active log filter.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to Error.
+pub(crate) fn vconsole_on_filter_error(
+    filter_signal: Signal<LogFilter>,
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        filter_signal.set(LogFilter::Error);
+    }))
+}

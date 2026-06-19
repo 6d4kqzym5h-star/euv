@@ -14,16 +14,17 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "📌"
                 title: "Sticky & CSS Effects"
                 subtitle: "Position sticky, glassmorphism, backdrop-filter, clip-path, and more."
             }
-            my_card {
+            euv_card {
                 title: "Sticky Header"
                 div {
-                    class: c_sticky_controls()
-                    primary_button {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Toggle"
                         onclick: sticky_on_toggle_sticky(state)
                         if { state.get_sticky_enabled().get() } { "Off" } else { "On" }
@@ -43,11 +44,12 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Glassmorphism"
                 div {
-                    class: c_sticky_controls()
-                    primary_button {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Toggle"
                         onclick: sticky_on_toggle_glass(state)
                         if { state.get_glass_enabled().get() } { "Off" } else { "On" }
@@ -77,7 +79,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Backdrop Blur Control"
                 div {
                     class: c_sticky_slider_row()
@@ -110,13 +112,13 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Conic Gradient"
                 div {
                     class: c_sticky_slider_row()
                     label {
                         class: format!("{} {}", c_sticky_slider_label().get_name(), "c_sticky_slider_angle_label")
-                        { format!("{}: {}°", STICKY_ANGLE_LABEL, STICKY_ANGLE_INITIAL) }
+                        format!("{}: {}°", STICKY_ANGLE_LABEL, STICKY_ANGLE_INITIAL)
                     }
                     input {
                         r#type: "range"
@@ -136,11 +138,12 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Text Shadow"
                 div {
-                    class: c_sticky_controls()
-                    primary_button {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Toggle"
                         onclick: sticky_on_toggle_text_shadow(state)
                         if { state.get_text_shadow_enabled().get() } { "Off" } else { "On" }
@@ -162,11 +165,12 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Clip Path"
                 div {
-                    class: c_sticky_controls()
-                    primary_button {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Toggle"
                         onclick: sticky_on_toggle_clip_path(state)
                         if { state.get_clip_path_enabled().get() } { "Off" } else { "On" }
@@ -192,11 +196,12 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Scroll Shadow"
                 div {
-                    class: c_sticky_controls()
-                    primary_button {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Toggle"
                         onclick: sticky_on_toggle_scroll_shadow(state)
                         if { state.get_scroll_shadow_visible().get() } { "Off" } else { "On" }
@@ -207,7 +212,7 @@ pub(crate) fn page_sticky(node: VirtualNode<PageStickyProps>) -> VirtualNode {
                     for i in { 0..10 } {
                         p {
                             class: c_sticky_paragraph()
-                            { format!("Scroll item {} - This content demonstrates inner scrolling with a shadow indicator.", i + 1) }
+                            format!("Scroll item {} - This content demonstrates inner scrolling with a shadow indicator.", i + 1)
                         }
                     }
                 }

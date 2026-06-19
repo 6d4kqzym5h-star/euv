@@ -9,16 +9,15 @@ use crate::*;
 pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
     let PageBrowserProps = node.try_get_props().unwrap_or_default();
     let state: UseBrowserApi = use_browser_api();
-    let _actions_cols: Signal<usize> = use_equal_wrap_all(3, BROWSER_API_ACTIONS_SELECTOR);
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🌐"
                 title: "Browser APIs"
                 subtitle: "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location."
             }
-            my_card {
+            euv_card {
                 title: "localStorage"
                 p {
                     class: c_demo_text()
@@ -26,56 +25,43 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 }
                 div {
                     class: c_browser_api_row()
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: LOCAL_STORAGE_KEY_ID
-                            class: c_form_label()
-                            "Key"
-                        }
-                        input {
-                            id: LOCAL_STORAGE_KEY_ID
-                            name: LOCAL_STORAGE_KEY_NAME
-                            type: BROWSER_TEXT_TYPE
-                            autocomplete: BROWSER_AUTOCOMPLETE_OFF
-                            placeholder: LOCAL_STORAGE_KEY_PLACEHOLDER
-                            value: state.get_local_key()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(state.get_local_key())
-                        }
+                    euv_field {
+                        id: LOCAL_STORAGE_KEY_ID
+                        name: LOCAL_STORAGE_KEY_NAME
+                        label: "Key"
+                        input_type: BROWSER_TEXT_TYPE
+                        placeholder: LOCAL_STORAGE_KEY_PLACEHOLDER
+                        autocomplete: BROWSER_AUTOCOMPLETE_OFF
+                        value: state.get_local_key()
+                        error: None
                     }
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: LOCAL_STORAGE_VALUE_ID
-                            class: c_form_label()
-                            "Value"
-                        }
-                        input {
-                            id: LOCAL_STORAGE_VALUE_ID
-                            name: LOCAL_STORAGE_VALUE_NAME
-                            type: BROWSER_TEXT_TYPE
-                            autocomplete: BROWSER_AUTOCOMPLETE_OFF
-                            placeholder: LOCAL_STORAGE_VALUE_PLACEHOLDER
-                            value: state.get_local_value()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(state.get_local_value())
-                        }
+                    euv_field {
+                        id: LOCAL_STORAGE_VALUE_ID
+                        name: LOCAL_STORAGE_VALUE_NAME
+                        label: "Value"
+                        input_type: BROWSER_TEXT_TYPE
+                        placeholder: LOCAL_STORAGE_VALUE_PLACEHOLDER
+                        autocomplete: BROWSER_AUTOCOMPLETE_OFF
+                        value: state.get_local_value()
+                        error: None
                     }
                 }
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
-                    primary_button {
+                    class: c_browser_api_actions()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Set"
                         onclick: local_storage_on_set(state)
                         "Set"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Get"
                         onclick: local_storage_on_get(state)
                         "Get"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Danger
                         label: "Remove"
                         onclick: local_storage_on_remove(state)
                         "Remove"
@@ -93,7 +79,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "sessionStorage"
                 p {
                     class: c_demo_text()
@@ -101,56 +87,43 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 }
                 div {
                     class: c_browser_api_row()
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: SESSION_STORAGE_KEY_ID
-                            class: c_form_label()
-                            "Key"
-                        }
-                        input {
-                            id: SESSION_STORAGE_KEY_ID
-                            name: SESSION_STORAGE_KEY_NAME
-                            type: BROWSER_TEXT_TYPE
-                            autocomplete: BROWSER_AUTOCOMPLETE_OFF
-                            placeholder: SESSION_STORAGE_KEY_PLACEHOLDER
-                            value: state.get_session_key()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(state.get_session_key())
-                        }
+                    euv_field {
+                        id: SESSION_STORAGE_KEY_ID
+                        name: SESSION_STORAGE_KEY_NAME
+                        label: "Key"
+                        input_type: BROWSER_TEXT_TYPE
+                        placeholder: SESSION_STORAGE_KEY_PLACEHOLDER
+                        autocomplete: BROWSER_AUTOCOMPLETE_OFF
+                        value: state.get_session_key()
+                        error: None
                     }
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: SESSION_STORAGE_VALUE_ID
-                            class: c_form_label()
-                            "Value"
-                        }
-                        input {
-                            id: SESSION_STORAGE_VALUE_ID
-                            name: SESSION_STORAGE_VALUE_NAME
-                            type: BROWSER_TEXT_TYPE
-                            autocomplete: BROWSER_AUTOCOMPLETE_OFF
-                            placeholder: SESSION_STORAGE_VALUE_PLACEHOLDER
-                            value: state.get_session_value()
-                            class: c_form_input_no_transition()
-                            oninput: on_input_value(state.get_session_value())
-                        }
+                    euv_field {
+                        id: SESSION_STORAGE_VALUE_ID
+                        name: SESSION_STORAGE_VALUE_NAME
+                        label: "Value"
+                        input_type: BROWSER_TEXT_TYPE
+                        placeholder: SESSION_STORAGE_VALUE_PLACEHOLDER
+                        autocomplete: BROWSER_AUTOCOMPLETE_OFF
+                        value: state.get_session_value()
+                        error: None
                     }
                 }
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
-                    primary_button {
+                    class: c_browser_api_actions()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Set"
                         onclick: session_storage_on_set(state)
                         "Set"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Get"
                         onclick: session_storage_on_get(state)
                         "Get"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Danger
                         label: "Remove"
                         onclick: session_storage_on_remove(state)
                         "Remove"
@@ -168,38 +141,32 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Clipboard API"
                 p {
                     class: c_demo_text()
                     "Read from and write to the system clipboard."
                 }
-                div {
-                    class: c_form_input_wrapper()
-                    label {
-                        for: CLIPBOARD_TEXT_ID
-                        class: c_form_label()
-                        "Text to copy"
-                    }
-                    input {
-                        id: CLIPBOARD_TEXT_ID
-                        name: CLIPBOARD_TEXT_NAME
-                        type: BROWSER_TEXT_TYPE
-                        autocomplete: BROWSER_AUTOCOMPLETE_OFF
-                        placeholder: CLIPBOARD_TEXT_PLACEHOLDER
-                        value: state.get_clipboard_text()
-                        class: c_form_input_no_transition()
-                        oninput: on_input_value(state.get_clipboard_text())
-                    }
+                euv_field {
+                    id: CLIPBOARD_TEXT_ID
+                    name: CLIPBOARD_TEXT_NAME
+                    label: "Text to copy"
+                    input_type: BROWSER_TEXT_TYPE
+                    placeholder: CLIPBOARD_TEXT_PLACEHOLDER
+                    autocomplete: BROWSER_AUTOCOMPLETE_OFF
+                    value: state.get_clipboard_text()
+                    error: None
                 }
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
-                    primary_button {
+                    class: c_browser_api_actions()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Copy"
                         onclick: clipboard_on_copy(state)
                         "Copy"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Paste"
                         onclick: clipboard_on_paste(state)
                         "Paste"
@@ -217,16 +184,20 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Window"
                 p {
                     class: c_demo_text()
                     "Read the current window dimensions."
                 }
-                primary_button {
-                    label: "Refresh"
-                    onclick: window_on_refresh_size(state)
-                    "Refresh"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Refresh"
+                        onclick: window_on_refresh_size(state)
+                        "Refresh"
+                    }
                 }
                 div {
                     class: c_browser_info_grid()
@@ -243,7 +214,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Navigator"
                 p {
                     class: c_demo_text()
@@ -275,7 +246,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Location"
                 p {
                     class: c_demo_text()
@@ -318,43 +289,38 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Console"
                 p {
                     class: c_demo_text()
                     "Send messages to the browser developer console."
                 }
-                div {
-                    class: c_form_input_wrapper()
-                    label {
-                        for: CONSOLE_MESSAGE_ID
-                        class: c_form_label()
-                        "Console message"
-                    }
-                    input {
-                        id: CONSOLE_MESSAGE_ID
-                        name: CONSOLE_MESSAGE_NAME
-                        type: BROWSER_TEXT_TYPE
-                        autocomplete: BROWSER_AUTOCOMPLETE_OFF
-                        placeholder: CONSOLE_MESSAGE_PLACEHOLDER
-                        value: state.get_console_input()
-                        class: c_form_input_no_transition()
-                        oninput: on_input_value(state.get_console_input())
-                    }
+                euv_field {
+                    id: CONSOLE_MESSAGE_ID
+                    name: CONSOLE_MESSAGE_NAME
+                    label: "Console message"
+                    input_type: BROWSER_TEXT_TYPE
+                    placeholder: CONSOLE_MESSAGE_PLACEHOLDER
+                    autocomplete: BROWSER_AUTOCOMPLETE_OFF
+                    value: state.get_console_input()
+                    error: None
                 }
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_browser_api_actions().get_name())
-                    primary_button {
+                    class: c_browser_api_actions()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Log"
                         onclick: console_on_log(state.get_console_input())
                         "log"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Warn"
                         onclick: console_on_warn(state.get_console_input())
                         "warn"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Danger
                         label: "Error"
                         onclick: console_on_error(state.get_console_input())
                         "error"

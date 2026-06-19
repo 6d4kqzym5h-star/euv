@@ -84,30 +84,27 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "📁"
                 title: "File Upload"
                 subtitle: "File selection, drag-and-drop zone, and file list display."
             }
-            my_card {
+            euv_card {
                 title: "File Input"
+                input {
+                    id: FILE_UPLOAD_ID
+                    name: FILE_UPLOAD_NAME
+                    type: FILE_INPUT_TYPE
+                    autocomplete: FILE_AUTOCOMPLETE_OFF
+                    class: c_file_upload_input_hidden()
+                    accept: state.get_accept()
+                    multiple: state.get_multiple()
+                    onchange: file_upload_on_change(state)
+                }
                 div {
-                    class: c_form_input_wrapper()
-                    label {
-                        class: c_form_label()
-                        "Select file(s)"
-                    }
-                    input {
-                        id: FILE_UPLOAD_ID
-                        name: FILE_UPLOAD_NAME
-                        type: FILE_INPUT_TYPE
-                        autocomplete: FILE_AUTOCOMPLETE_OFF
-                        class: c_file_upload_input_hidden()
-                        accept: state.get_accept()
-                        multiple: state.get_multiple()
-                        onchange: file_upload_on_change(state)
-                    }
-                    primary_button {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Browse"
                         onclick: file_upload_on_select()
                         "Browse"
@@ -115,40 +112,22 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                 }
                 div {
                     class: c_file_upload_options()
-                    div {
-                        class: c_form_checkbox_row()
-                            input {
-                            id: FILE_MULTIPLE_ID
-                            name: FILE_MULTIPLE_NAME
-                            type: FILE_CHECKBOX_TYPE
-                            autocomplete: FILE_AUTOCOMPLETE_OFF
-                            class: c_form_checkbox()
-                            checked: state.get_multiple()
-                            onchange: on_change_checked(state.get_multiple())
-                        }
-                        label {
-                            for: FILE_MULTIPLE_ID
-                            class: c_form_checkbox_label()
-                            "Allow multiple files"
-                        }
-                    }
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: FILE_ACCEPT_ID
-                            class: c_form_label()
-                            "Accept filter (e.g. .png,.jpg,image/*)"
-                        }
-                        input {
-                            id: FILE_ACCEPT_ID
-                        name: FILE_ACCEPT_NAME
-                        type: FILE_TEXT_TYPE
+                    euv_checkbox {
+                        id: FILE_MULTIPLE_ID
+                        name: FILE_MULTIPLE_NAME
                         autocomplete: FILE_AUTOCOMPLETE_OFF
-                        class: c_form_input_no_transition()
-                            placeholder: FILE_ACCEPT_PLACEHOLDER
-                            value: state.get_accept()
-                            oninput: on_input_value(state.get_accept())
-                        }
+                        checked: state.get_multiple()
+                        label: "Allow multiple files"
+                    }
+                    euv_field {
+                        id: FILE_ACCEPT_ID
+                        name: FILE_ACCEPT_NAME
+                        label: "Accept filter"
+                        input_type: FILE_TEXT_TYPE
+                        placeholder: FILE_ACCEPT_PLACEHOLDER
+                        autocomplete: FILE_AUTOCOMPLETE_OFF
+                        value: state.get_accept()
+                        error: None
                     }
                 }
                 p {
@@ -160,13 +139,17 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                     }
                 }
                 build_file_list(state)
-                primary_button {
-                    label: "Clear"
-                    onclick: file_upload_on_clear(state)
-                    "Clear"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
+                        label: "Clear"
+                        onclick: file_upload_on_clear(state)
+                        "Clear"
+                    }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Drag & Drop Zone"
                 build_drop_zone(state)
                 p {

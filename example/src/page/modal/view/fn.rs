@@ -12,69 +12,85 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "💬"
                 title: "Modal Dialog"
                 subtitle: "Overlay dialogs with different content patterns."
             }
-            my_card {
+            euv_card {
                 title: "Basic Modal"
                 p {
                     class: c_demo_text()
                     "A simple modal with text content."
                 }
-                primary_button {
-                    label: "Open"
-                    onclick: modal_on_open_basic(state)
-                    "Open"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Open"
+                        onclick: modal_on_open_basic(state)
+                        "Open"
+                    }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Confirm Modal"
                 p {
                     class: c_demo_text()
                     "A modal requiring user confirmation."
                 }
-                primary_button {
-                    label: "Open"
-                    onclick: modal_on_open_confirm(state)
-                    "Ask Confirm"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Open"
+                        onclick: modal_on_open_confirm(state)
+                        "Ask Confirm"
+                    }
                 }
                 if { !state.get_confirm_result().get().is_empty() } {
-                    div {
-                        class: c_success_box()
+                    euv_alert {
+                        variant: AlertVariant::Success
                         state.get_confirm_result()
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Form Modal"
                 p {
                     class: c_demo_text()
                     "A modal containing a form with inputs."
                 }
-                primary_button {
-                    label: "Open"
-                    onclick: modal_on_open_form(state)
-                    "Open Form"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Open"
+                        onclick: modal_on_open_form(state)
+                        "Open Form"
+                    }
                 }
                 if { !state.get_modal_submitted().get().is_empty() } {
-                    div {
-                        class: c_success_box()
+                    euv_alert {
+                        variant: AlertVariant::Success
                         state.get_modal_submitted()
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Nested Modals"
                 p {
                     class: c_demo_text()
                     "Three stacked modal layers. The system back gesture closes them one at a time, newest first."
                 }
-                primary_button {
-                    label: "Open"
-                    onclick: modal_on_open_nested_1(state)
-                    "Open Layer 1"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Open"
+                        onclick: modal_on_open_nested_1(state)
+                        "Open Layer 1"
+                    }
                 }
             }
             if { state.get_show_basic().get() } {
@@ -101,12 +117,14 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                     }
                     div {
                         class: c_modal_actions()
-                        modal_primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Confirm"
                             onclick: modal_on_confirm(state)
                             "Confirm"
                         }
-                        modal_primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Secondary
                             label: "Cancel"
                             onclick: modal_on_cancel_confirm(state)
                             "Cancel"
@@ -118,68 +136,44 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 my_modal {
                     title: "Quick Sign Up"
                     onclick: modal_dismiss_handler(state.get_show_form())
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: MODAL_NAME_ID
-                            class: c_form_label()
-                            "Name"
-                        }
-                        input {
-                            id: MODAL_NAME_ID
-                            name: MODAL_NAME_NAME
-                            type: MODAL_TEXT_TYPE
-                            autocomplete: MODAL_AUTOCOMPLETE_NAME
-                            placeholder: MODAL_NAME_PLACEHOLDER
-                            value: state.get_modal_name()
-                            class: if { state.get_name_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
-                            oninput: modal_on_input_name(state)
-                        }
-                        if { !state.get_name_error().get().is_empty() } {
-                            p {
-                                class: c_field_error_text()
-                                state.get_name_error()
-                            }
-                        }
+                    euv_field {
+                        id: MODAL_NAME_ID
+                        name: MODAL_NAME_NAME
+                        label: "Name"
+                        input_type: MODAL_TEXT_TYPE
+                        placeholder: MODAL_NAME_PLACEHOLDER
+                        autocomplete: MODAL_AUTOCOMPLETE_NAME
+                        value: state.get_modal_name()
+                        error: Some(state.get_name_error())
+                        oninput: modal_on_input_name(state)
                     }
-                    div {
-                        class: c_form_input_wrapper()
-                        label {
-                            for: MODAL_EMAIL_ID
-                            class: c_form_label()
-                            "Email"
-                        }
-                        input {
-                            id: MODAL_EMAIL_ID
-                            name: MODAL_EMAIL_NAME
-                            type: MODAL_EMAIL_TYPE
-                            autocomplete: MODAL_AUTOCOMPLETE_EMAIL
-                            placeholder: MODAL_EMAIL_PLACEHOLDER
-                            value: state.get_modal_email()
-                            class: if { state.get_email_error().get().is_empty() } { c_form_input_no_transition() } else { c_form_input_error() }
-                            oninput: modal_on_input_email(state)
-                        }
-                        if { !state.get_email_error().get().is_empty() } {
-                            p {
-                                class: c_field_error_text()
-                                state.get_email_error()
-                            }
-                        }
+                    euv_field {
+                        id: MODAL_EMAIL_ID
+                        name: MODAL_EMAIL_NAME
+                        label: "Email"
+                        input_type: MODAL_EMAIL_TYPE
+                        placeholder: MODAL_EMAIL_PLACEHOLDER
+                        autocomplete: MODAL_AUTOCOMPLETE_EMAIL
+                        value: state.get_modal_email()
+                        error: Some(state.get_email_error())
+                        oninput: modal_on_input_email(state)
                     }
                     if { !state.get_modal_error().get().is_empty() } {
-                        div {
-                            class: c_error_box()
+                        euv_alert {
+                            variant: AlertVariant::Error
                             state.get_modal_error()
                         }
                     }
                     div {
                         class: c_modal_actions()
-                        modal_primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Submit"
                             onclick: modal_on_form_submit(state)
                             "Submit"
                         }
-                        modal_primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Secondary
                             label: "Cancel"
                             onclick: modal_on_cancel_form(state)
                             "Cancel"
@@ -201,7 +195,8 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                     }
                     div {
                         class: c_modal_actions()
-                        modal_primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Open Layer 2"
                             onclick: modal_on_open_nested_2(state)
                             "Open Layer 2"
@@ -219,7 +214,8 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                     }
                     div {
                         class: c_modal_actions()
-                        modal_primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Open Layer 3"
                             onclick: modal_on_open_nested_3(state)
                             "Open Layer 3"

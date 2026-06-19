@@ -1,35 +1,5 @@
 use crate::*;
 
-/// Generates the `OnceLock`-based static function body for a no-param CSS variable block.
-///
-/// # Arguments
-///
-/// - `&mut proc_macro2::TokenStream` - The target token stream to append to.
-/// - `&Visibility` - The visibility modifier.
-/// - `&proc_macro2::TokenStream` - The function name token stream.
-/// - `&proc_macro2::TokenStream` - The `OnceLock` constant name token stream.
-/// - `&str` - The class name string literal.
-/// - `&proc_macro2::TokenStream` - Token stream that evaluates to the CSS style string.
-pub(crate) fn emit_vars_once_lock_fn(
-    tokens: &mut proc_macro2::TokenStream,
-    visibility: &Visibility,
-    fn_name_token: &proc_macro2::TokenStream,
-    const_name_token: &proc_macro2::TokenStream,
-    class_name_str: &str,
-    style_expr: &proc_macro2::TokenStream,
-) {
-    tokens.extend(quote! {
-        #visibility fn #fn_name_token() -> &'static ::euv::Css {
-            static #const_name_token: ::std::sync::OnceLock<::euv::Css> = ::std::sync::OnceLock::new();
-            #const_name_token.get_or_init(|| {
-                let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, vec![], vec![]);
-                css.inject_style();
-                css
-            })
-        }
-    });
-}
-
 /// Parses the `vars!` macro input and generates `Css` function definitions.
 ///
 /// # Arguments

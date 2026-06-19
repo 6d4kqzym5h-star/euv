@@ -15,12 +15,12 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "👁️"
                 title: "Observer"
                 subtitle: "IntersectionObserver API demo: detect when elements enter or leave the viewport."
             }
-            my_card {
+            euv_card {
                 title: "Intersection Observer"
                 p {
                     class: c_demo_text()

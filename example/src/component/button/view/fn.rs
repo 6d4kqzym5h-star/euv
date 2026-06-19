@@ -1,68 +1,63 @@
 use crate::*;
 
-/// A primary button component with customizable label and click handler.
+/// A versatile button component supporting multiple variants and states.
 ///
-/// The button stretches to full width when alone, and evenly shares
-/// available width with sibling buttons inside a flex container.
+/// Renders a styled `<button>` element whose appearance is determined by the
+/// `variant` and `disabled` props. When children are provided they replace
+/// the label text.
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<PrimaryButtonProps>` - The props node containing label, onclick, and disabled.
+/// - `VirtualNode<EuvButtonProps>` - The props node containing variant, label, onclick, disabled.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - A styled button element.
 #[component]
-pub(crate) fn primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
-    let PrimaryButtonProps {
+pub(crate) fn euv_button(node: VirtualNode<EuvButtonProps>) -> VirtualNode {
+    let EuvButtonProps {
+        variant,
         label,
         onclick: click_handler,
         disabled,
-    }: PrimaryButtonProps = node.try_get_props().unwrap_or_default();
+    }: EuvButtonProps = node.try_get_props().unwrap_or_default();
     let children: VirtualNode = node.try_get_child_node();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
         other => other,
     };
-    html! {
-        button {
-            class: c_primary_button()
-            disabled: disabled
-            onclick: click_handler
-            content
-        }
-    }
-}
-
-/// A modal primary button component with the same style as `primary_button` but without full width on mobile.
-///
-/// Used inside modal dialogs where the button should not stretch to 100% width on mobile viewports.
-///
-/// # Arguments
-///
-/// - `VirtualNode<PrimaryButtonProps>` - The props node containing label, onclick, and disabled.
-///
-/// # Returns
-///
-/// - `VirtualNode` - A styled button element.
-#[component]
-pub(crate) fn modal_primary_button(node: VirtualNode<PrimaryButtonProps>) -> VirtualNode {
-    let PrimaryButtonProps {
-        label,
-        onclick: click_handler,
-        disabled,
-    }: PrimaryButtonProps = node.try_get_props().unwrap_or_default();
-    let children: VirtualNode = node.try_get_child_node();
-    let content: VirtualNode = match children {
-        VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
-        other => other,
-    };
-    html! {
-        button {
-            class: c_modal_primary_button()
-            disabled: disabled
-            onclick: click_handler
-            content
-        }
+    match variant {
+        EuvButtonVariant::Primary => html! {
+            button {
+                class: c_euv_button_primary_md()
+                disabled: disabled.get()
+                onclick: click_handler
+                content
+            }
+        },
+        EuvButtonVariant::Secondary => html! {
+            button {
+                class: c_euv_button_secondary_md()
+                disabled: disabled.get()
+                onclick: click_handler
+                content
+            }
+        },
+        EuvButtonVariant::Outline => html! {
+            button {
+                class: c_euv_button_outline_md()
+                disabled: disabled.get()
+                onclick: click_handler
+                content
+            }
+        },
+        EuvButtonVariant::Danger => html! {
+            button {
+                class: c_euv_button_danger_md()
+                disabled: disabled.get()
+                onclick: click_handler
+                content
+            }
+        },
     }
 }

@@ -54,6 +54,12 @@ pub(crate) const CHAR_BRACE_LEFT: char = '{';
 /// The right brace character used to delimit code blocks and macro bodies.
 pub(crate) const CHAR_BRACE_RIGHT: char = '}';
 
+/// The left parenthesis character, used in CSS functional pseudo-class detection.
+pub(crate) const CHAR_LEFT_PAREN: char = '(';
+
+/// The right parenthesis character, used in CSS functional pseudo-class detection.
+pub(crate) const CHAR_RIGHT_PAREN: char = ')';
+
 /// The double quote character used to delimit string literals.
 pub(crate) const CHAR_DOUBLE_QUOTE: char = '"';
 
@@ -74,6 +80,9 @@ pub(crate) const CHAR_UNDERSCORE: char = '_';
 
 /// The hash character, used in raw identifier prefix detection.
 pub(crate) const CHAR_HASH: char = '#';
+
+/// The hyphen character, used in CSS selector identifier detection.
+pub(crate) const CHAR_HYPHEN: char = '-';
 
 /// The newline character.
 pub(crate) const CHAR_NEWLINE: char = '\n';

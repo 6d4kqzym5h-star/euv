@@ -18,46 +18,80 @@ pub(crate) struct ClassParam {
     pub(crate) param_type: Type,
 }
 
-/// A pseudo-class or pseudo-element block parsed from the `class!` macro.
+/// A selector block parsed from the `class!` macro.
 ///
-/// Represents a block like `hover { background: "red"; }` or
-/// `focus { outline: "2px solid blue"; }`.
+/// Represents a CSS pseudo-class, pseudo-element, or compound selector block
+/// parsed directly from CSS syntax:
+/// - Pseudo-class: `:hover { ... }`, `:focus-visible { ... }`, `:nth-child(2n) { ... }`
+/// - Pseudo-element: `::before { ... }`, `::-webkit-scrollbar { ... }`
+/// - Compound selectors: `::-webkit-scrollbar-thumb:hover { ... }`
+///
+/// The selector string is reconstructed verbatim from the parsed tokens,
+/// preserving the original CSS syntax without modification.
 #[derive(Clone, Data, Debug, New)]
-pub(crate) struct PseudoBlock {
-    /// The pseudo selector string (e.g., ":hover", ":focus", "::before").
+pub(crate) struct SelectorBlock {
+    /// The CSS selector string (e.g., ":hover", "::before", "::-webkit-scrollbar-thumb:hover").
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) selector: String,
-    /// The style properties inside this pseudo block.
+    /// The style properties inside this selector block.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
+    /// Nested selector blocks inside this selector block
+    /// (e.g., `::-webkit-scrollbar { ::-webkit-scrollbar-thumb { ... } }`).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) selector_blocks: Vec<SelectorBlock>,
 }
 
-/// A media query block parsed from the `class!` macro.
+/// An at-rule block parsed from the `class!` macro.
 ///
-/// Represents a block like `media "(max-width: 767px)" { font-size: "14px"; }`
-/// or `media "(max-width: 767px)" { overflow-y: "auto"; ::-webkit-scrollbar { width: "0px"; } }`.
+/// Represents any CSS at-rule parsed directly from CSS syntax:
+/// - `@media (max-width: 767px) { ... }`
+/// - `@keyframes fade-in { ... }`
+/// - `@supports (display: grid) { ... }`
+/// - `@layer base { ... }`
+/// - `@container (width > 400px) { ... }`
+/// - `@property --my-color { ... }`
+/// - `@scope (.hero) { ... }`
+/// - `@font-face { ... }`
+/// - `@charset "UTF-8";`
+/// - `@import url("style.css");`
+/// - And all other CSS at-rules
 #[derive(Clone, Data, Debug, New)]
-pub(crate) struct MediaBlock {
-    /// The media query condition string (e.g., "(max-width: 767px)").
+pub(crate) struct AtRuleBlock {
+    /// The kind of at-rule (media, keyframes, supports, etc.).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) query: String,
-    /// The style properties inside this media block.
+    pub(crate) kind: AtRuleKind,
+    /// The prelude/query string after the at-rule name
+    /// (e.g., "(max-width: 767px)" for @media, "fade-in" for @keyframes).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) prelude: String,
+    /// The style properties inside this at-rule block.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
-    /// The pseudo-class and pseudo-element blocks nested inside this media block
-    /// (e.g., `::-webkit-scrollbar { width: "0px"; }`).
+    /// Nested selector blocks inside this at-rule block
+    /// (e.g., `@media (...) { :hover { ... } ::before { ... } }`).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) pseudo_blocks: Vec<PseudoBlock>,
+    pub(crate) selector_blocks: Vec<SelectorBlock>,
+    /// Nested at-rule blocks inside this at-rule block
+    /// (e.g., `@supports (...) { @media (...) { ... } }`).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) at_rule_blocks: Vec<AtRuleBlock>,
 }
 
 /// A parent class reference in an extends clause.
@@ -80,7 +114,8 @@ pub(crate) struct ClassExtend {
 /// A single class definition parsed from the `class!` macro.
 ///
 /// Contains visibility, name, optional parameters, style properties,
-/// optional pseudo-class/pseudo-element blocks, and optional media query blocks.
+/// optional selector blocks (pseudo-classes/pseudo-elements), and
+/// optional at-rule blocks (media queries, keyframes, etc.).
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct ClassDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
@@ -108,16 +143,16 @@ pub(crate) struct ClassDef {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
-    /// The pseudo-class and pseudo-element blocks for this class.
+    /// The selector blocks (pseudo-classes/pseudo-elements) for this class.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) pseudo_blocks: Vec<PseudoBlock>,
-    /// The media query blocks for this class.
+    pub(crate) selector_blocks: Vec<SelectorBlock>,
+    /// The at-rule blocks (media queries, keyframes, etc.) for this class.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) media_blocks: Vec<MediaBlock>,
+    pub(crate) at_rule_blocks: Vec<AtRuleBlock>,
 }
 
 /// The entire `class!` macro input, containing multiple class definitions.
@@ -142,8 +177,8 @@ pub(crate) struct ClassInput {
 /// - `const_name_token`: The `OnceLock` constant name token stream.
 /// - `class_name_str`: The class name as a string literal.
 /// - `style_expr`: Token stream that evaluates to the CSS style string.
-/// - `pseudo_expr`: Token stream that evaluates to the pseudo rules vector.
-/// - `media_expr`: Token stream that evaluates to the media rules vector.
+/// - `selector_expr`: Token stream that evaluates to the selector rules vector.
+/// - `at_rule_expr`: Token stream that evaluates to the at-rule rules vector.
 pub(crate) struct OnceLockParams<'a> {
     /// The visibility modifier for the generated function.
     pub(crate) visibility: &'a Visibility,
@@ -155,8 +190,8 @@ pub(crate) struct OnceLockParams<'a> {
     pub(crate) class_name_str: &'a str,
     /// Token stream that evaluates to the CSS style string.
     pub(crate) style_expr: &'a proc_macro2::TokenStream,
-    /// Token stream that evaluates to the pseudo rules vector.
-    pub(crate) pseudo_expr: &'a proc_macro2::TokenStream,
-    /// Token stream that evaluates to the media rules vector.
-    pub(crate) media_expr: &'a proc_macro2::TokenStream,
+    /// Token stream that evaluates to the selector rules vector.
+    pub(crate) selector_expr: &'a proc_macro2::TokenStream,
+    /// Token stream that evaluates to the at-rule rules vector.
+    pub(crate) at_rule_expr: &'a proc_macro2::TokenStream,
 }

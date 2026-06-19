@@ -20,7 +20,6 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
         on_increment,
         on_reset,
     }: LimitedCounterProps = node.try_get_props().unwrap_or_default();
-    let _counter_row_cols: Signal<usize> = use_equal_wrap_all(2, COUNTER_ROW_SELECTOR);
     html! {
         div {
             class: c_binding_child_box()
@@ -42,14 +41,16 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                 }
             }
             div {
-                class: format!("{} {}", c_equal_wrap().get_name(), c_counter_row().get_name())
-                primary_button {
+                class: c_counter_row()
+                euv_button {
+                    variant: EuvButtonVariant::Primary
                     label: "+1"
                     onclick: on_increment
                     disabled: disabled
                     "+1"
                 }
-                primary_button {
+                euv_button {
+                    variant: EuvButtonVariant::Secondary
                     label: "Reset"
                     onclick: on_reset
                     disabled: disabled
@@ -103,7 +104,7 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                     type: BINDING_TEXT_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
                     value: text_value
-                    class: c_form_input_no_transition()
+                    class: c_euv_input_no_transition()
                     oninput: on_input_value(text_signal)
                 }
             }
@@ -115,7 +116,8 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                     count_value
                 }
             }
-            primary_button {
+            euv_button {
+                variant: EuvButtonVariant::Danger
                 label: "-1"
                 onclick: two_way_on_decrement(count_signal)
                 "-"
@@ -159,7 +161,7 @@ pub(crate) fn temperature_converter(
                     type: BINDING_NUMBER_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
                     value: format!("{:.1}", celsius_value)
-                    class: c_form_input_no_transition()
+                    class: c_euv_input_no_transition()
                     oninput: cross_on_input_celsius(celsius_signal)
                 }
             }
@@ -180,7 +182,7 @@ pub(crate) fn temperature_converter(
                     type: BINDING_NUMBER_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
                     value: format!("{:.1}", fahrenheit_value)
-                    class: c_form_input_no_transition()
+                    class: c_euv_input_no_transition()
                     oninput: cross_on_input_fahrenheit(fahrenheit_signal)
                 }
             }
@@ -317,19 +319,19 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🔗"
                 title: "Component Binding"
                 subtitle: "Props passing, two-way binding, and cross-component reactive binding."
             }
-            my_card {
+            euv_card {
                 title: "Props & Callbacks"
                 p {
                     class: c_demo_text()
                     "Parent passes data to child via props. Child communicates back via callbacks."
                 }
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: BINDING_PARENT_MESSAGE_ID
                         class: c_form_label()
@@ -341,7 +343,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         type: BINDING_TEXT_TYPE
                         autocomplete: BINDING_AUTOCOMPLETE_OFF
                         value: props_state.get_parent_message()
-                        class: c_form_input_no_transition()
+                        class: c_euv_input_no_transition()
                         oninput: on_input_value(props_state.get_parent_message())
                     }
                 }
@@ -359,7 +361,8 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         class: c_binding_child_label()
                         "Typed Props Controls"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Toggle"
                         onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
                         if { typed_state.get_disabled().get() } {
@@ -400,7 +403,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     on_reset: typed_props_on_reset_count(typed_state.get_current_count(), typed_state.get_disabled())
                 }
             }
-            my_card {
+            euv_card {
                 title: "Two-Way Binding (Shared Signal)"
                 p {
                     class: c_demo_text()
@@ -428,7 +431,8 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                             two_way_state.get_shared_count()
                         }
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "+1"
                         onclick: two_way_on_increment(two_way_state.get_shared_count())
                         "+"
@@ -436,7 +440,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                 }
                 { child_input(two_way_state.get_shared_text(), two_way_state.get_shared_count()) }
             }
-            my_card {
+            euv_card {
                 title: "Cross-Component Reactive Binding (watch!)"
                 p {
                     class: c_demo_text()

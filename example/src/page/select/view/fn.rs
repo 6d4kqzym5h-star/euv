@@ -12,15 +12,15 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "📋"
                 title: "Select & Textarea"
                 subtitle: "Dropdown selection, cascading selects, and textarea binding."
             }
-            my_card {
+            euv_card {
                 title: "Simple Select"
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: SELECT_FRUIT_ID
                         class: c_form_label()
@@ -60,10 +60,10 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Cascading Select"
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: SELECT_COUNTRY_ID
                         class: c_form_label()
@@ -95,7 +95,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                 }
                 if { !state.get_selected_country().get().is_empty() } {
                     div {
-                        class: c_form_input_wrapper()
+                        class: c_euv_input_wrapper()
                         label {
                             for: SELECT_CITY_ID
                             class: c_form_label()
@@ -128,10 +128,10 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Textarea with Feedback"
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: SELECT_FEEDBACK_ID
                         class: c_form_label()
@@ -141,7 +141,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         id: SELECT_FEEDBACK_ID
                         name: SELECT_FEEDBACK_NAME
                         autocomplete: SELECT_AUTOCOMPLETE_OFF
-                        class: if { state.get_textarea_error().get().is_empty() } { c_textarea_input() } else { c_form_input_error() }
+                        class: if { state.get_textarea_error().get().is_empty() } { c_textarea_input() } else { c_textarea_input_error() }
                         placeholder: SELECT_FEEDBACK_PLACEHOLDER
                         value: state.get_textarea_content()
                         oninput: select_on_input_textarea(state)
@@ -161,10 +161,14 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         { format!("{} / 200 characters", state.get_textarea_content().get().len()) }
                     }
                 }
-                primary_button {
-                    label: "Submit"
-                    onclick: select_on_submit_feedback(state)
-                    "Submit"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Submit"
+                        onclick: select_on_submit_feedback(state)
+                        "Submit"
+                    }
                 }
                 if { !state.get_feedback().get().is_empty() } {
                     div {

@@ -12,22 +12,26 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "⏳"
                 title: "Async Data"
                 subtitle: "Simulating network requests with loading states."
             }
-            my_card {
+            euv_card {
                 title: "Fetch Data"
                 p {
                     class: c_fetch_hint()
                     "Click the button below to fetch data from ltpp.vip"
                 }
-                primary_button {
-                    label: "Fetch"
-                    onclick: fetch_on_fetch(fetch)
-                    disabled: fetch.get_loading()
-                    "Fetch"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Fetch"
+                        onclick: fetch_on_fetch(fetch)
+                        disabled: fetch.get_loading()
+                        "Fetch"
+                    }
                 }
                 if { fetch.get_loading().get() } {
                     div {

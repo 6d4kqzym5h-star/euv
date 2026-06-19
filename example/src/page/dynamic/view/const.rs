@@ -4,8 +4,8 @@ pub(crate) const TAG_OPTION_DIV_LABEL: &str = "div";
 /// The label for the span tag option.
 pub(crate) const TAG_OPTION_SPAN_LABEL: &str = "span";
 
-/// The label for the my_card component option.
-pub(crate) const TAG_OPTION_MY_CARD_LABEL: &str = "my card";
+/// The label for the euv_card component option.
+pub(crate) const TAG_OPTION_EUV_CARD_LABEL: &str = "euv card";
 
 /// The label for the badge component option.
 pub(crate) const TAG_OPTION_BADGE_LABEL: &str = "badge";
@@ -16,8 +16,8 @@ pub(crate) const TAG_NAME_DIV: &str = "div";
 /// The tag name for a native span element.
 pub(crate) const TAG_NAME_SPAN: &str = "span";
 
-/// The tag name for the my_card user component.
-pub(crate) const TAG_NAME_MY_CARD: &str = "my_card";
+/// The tag name for the euv_card user component.
+pub(crate) const TAG_NAME_EUV_CARD: &str = "euv_card";
 
 /// The tag name for the badge user component.
 pub(crate) const TAG_NAME_BADGE: &str = "badge";
@@ -33,6 +33,3 @@ pub(crate) const TAG_AUTOCOMPLETE_OFF: &str = "off";
 
 /// The id for the tag content input element.
 pub(crate) const TAG_CONTENT_INPUT_ID: &str = "dynamic-tag-content-input";
-
-/// The CSS selector for the dynamic component tab bar container.
-pub(crate) const DYNAMIC_TAB_BAR_SELECTOR: &str = ".c_dynamic_component_tab_bar";

@@ -151,26 +151,6 @@ pub(crate) fn form_on_input_password(state: UseForm) -> Option<Rc<dyn Fn(Event)>
     }))
 }
 
-/// Creates a change event handler that updates the agree checkbox and validates it.
-///
-/// # Arguments
-///
-/// - `UseForm` - The form state.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A change handler.
-pub(crate) fn form_on_change_agree(state: UseForm) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |event: Event| {
-        if let Some(target) = event.target()
-            && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
-        {
-            state.get_agree().set(input.checked());
-        }
-        validate_form_agree(state);
-    }))
-}
-
 /// Creates a click event handler that validates and submits the form.
 ///
 /// # Arguments

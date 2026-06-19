@@ -408,6 +408,55 @@ fn is_private_host(hostname: &str) -> bool {
     false
 }
 
+/// Creates a click event handler that closes the camera stream and
+/// stops the QR code scan.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
+pub(crate) fn camera_on_close(state: UseCamera) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        stop_qr_scan(state);
+        close_camera(CAMERA_VIDEO_SELECTOR);
+        state.get_camera_open().set(false);
+        state.get_scan_result().set(String::new());
+    }))
+}
+
+/// Creates a click event handler that switches the camera facing direction.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
+pub(crate) fn camera_on_switch(state: UseCamera) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        switch_camera(state);
+    }))
+}
+
+/// Creates a click event handler that opens the camera and starts QR scanning.
+///
+/// # Arguments
+///
+/// - `UseCamera` - The camera page state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
+pub(crate) fn camera_on_open(state: UseCamera) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        open_camera_and_scan(state);
+    }))
+}
+
 /// Registers a cleanup callback that closes the camera stream and
 /// stops the QR code scan timer when the component unmounts or
 /// the page route switches away.

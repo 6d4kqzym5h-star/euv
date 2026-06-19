@@ -18,6 +18,3 @@ pub(crate) const COUNTDOWN_SECONDS_MAX: &str = "3600";
 
 /// The HTML placeholder for the countdown seconds input element.
 pub(crate) const COUNTDOWN_SECONDS_PLACEHOLDER: &str = "Enter seconds...";
-
-/// The CSS selector for the timer controls button containers.
-pub(crate) const TIMER_CONTROLS_SELECTOR: &str = ".c_timer_controls";

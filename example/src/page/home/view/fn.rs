@@ -13,18 +13,10 @@ use crate::*;
 pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
     let PageHomeProps = node.try_get_props().unwrap_or_default();
     let native_bridge_state: UseNativeBridge = use_native_bridge();
-    let cache_update_state: UseCacheUpdate = use_cache_update();
-    let is_first_render: Signal<bool> = use_signal(|| true);
-    if is_first_render.get() {
-        is_first_render.set(false);
-        load_native_bridge_data(native_bridge_state);
-        load_cache_update(cache_update_state);
-    }
     let version: String = format!("v{EUV_VERSION}");
     html! {
         div {
             class: c_page_container()
-            // ── Hero Section ──
             div {
                 class: c_home_hero()
                 div {
@@ -37,8 +29,16 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         BRAND_NAME
                     }
                     div {
-                        class: c_home_hero_badge()
-                        version.clone()
+                        class: c_home_hero_badge_row()
+                        div {
+                            class: c_home_hero_badge()
+                            version.clone()
+                        }
+                        euv_tag {
+                            color: EuvTagColor::Success
+                            variant: EuvTagVariant::Solid
+                            text: "WASM"
+                        }
                     }
                     p {
                         class: c_home_hero_subtitle()
@@ -62,8 +62,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                     }
                 }
             }
-
-            // ── Stats Row ──
             div {
                 class: c_home_stats()
                 div {
@@ -127,8 +125,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                     }
                 }
             }
-
-            // ── Feature Cards ──
             div {
                 class: c_home_section()
                 h2 {
@@ -141,7 +137,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                 }
                 div {
                     class: c_home_feature_grid()
-                    my_card {
+                    euv_card {
                         title: "Reactive Signals"
                         div {
                             class: c_feature_card()
@@ -159,7 +155,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                         }
                     }
-                    my_card {
+                    euv_card {
                         title: "Virtual DOM"
                         div {
                             class: c_feature_card()
@@ -177,7 +173,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                         }
                     }
-                    my_card {
+                    euv_card {
                         title: "HTML Macros"
                         div {
                             class: c_feature_card()
@@ -195,7 +191,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                         }
                     }
-                    my_card {
+                    euv_card {
                         title: "Cross-Platform"
                         div {
                             class: c_feature_card()
@@ -215,77 +211,36 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                     }
                 }
             }
-
-            // ── Package Info ──
             div {
                 class: c_home_section()
                 h2 {
                     class: c_home_section_title()
                     "Package Info"
                 }
-                my_card {
+                euv_card {
                     title: "Project Details"
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Name"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_PACKAGE_NAME
-                        }
+                    euv_info {
+                        label: "Name"
+                        EUV_PACKAGE_NAME
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Version"
-                        }
-                        span {
-                            class: c_info_value()
-                            version
-                        }
+                    euv_info {
+                        label: "Version"
+                        version.clone()
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Edition"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_EDITION
-                        }
+                    euv_info {
+                        label: "Edition"
+                        EUV_EDITION
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "License"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_LICENSE
-                        }
+                    euv_info {
+                        label: "License"
+                        EUV_LICENSE
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Authors"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_AUTHORS
-                        }
+                    euv_info {
+                        label: "Authors"
+                        EUV_AUTHORS
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Repository"
-                        }
+                    euv_info {
+                        label: "Repository"
                         a {
                             class: c_info_link()
                             href: EUV_REPOSITORY
@@ -295,45 +250,22 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         }
                     }
                 }
-                my_card {
+                euv_card {
                     title: "Build Information"
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Date"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_BUILD_DATE
-                        }
+                    euv_info {
+                        label: "Date"
+                        EUV_BUILD_DATE
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Time"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_BUILD_CLOCK
-                        }
+                    euv_info {
+                        label: "Time"
+                        EUV_BUILD_CLOCK
                     }
-                    div {
-                        class: c_info_row()
-                        span {
-                            class: c_info_label()
-                            "Timestamp"
-                        }
-                        span {
-                            class: c_info_value()
-                            EUV_BUILD_TIMESTAMP
-                        }
+                    euv_info {
+                        label: "Timestamp"
+                        EUV_BUILD_TIMESTAMP
                     }
                 }
             }
-
-            // ── Native Bridge (conditional) ──
             if { !native_bridge_state.get_loading().get() && native_bridge_state.get_available().get() } {
                 div {
                     class: c_home_section()
@@ -341,18 +273,11 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         class: c_home_section_title()
                         "Native Bridge"
                     }
-                    my_card {
+                    euv_card {
                         title: "bridge Integration"
-                        div {
-                            class: c_info_row()
-                            span {
-                                class: c_info_label()
-                                "Permissions"
-                            }
-                            span {
-                                class: c_info_value()
-                                native_bridge_state.get_permissions()
-                            }
+                        euv_info {
+                            label: "Permissions"
+                            native_bridge_state.get_permissions()
                         }
                     }
                 }

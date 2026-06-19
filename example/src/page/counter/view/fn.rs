@@ -12,26 +12,43 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🔢"
                 title: "Counter"
                 subtitle: "Reactive counter driven by signal state."
             }
-            my_card {
+            euv_card {
                 title: "Counter"
-                div {
+                p {
                     class: c_counter_text()
-                    "Count: "
+                    "The current count is "
                     span {
                         id: COUNTER_ID
                         class: c_counter_value()
                         count
                     }
+                    " clicks."
                 }
-                primary_button {
-                    label: "Add"
-                    onclick: counter_on_increment(count)
-                    "Add"
+                div {
+                    class: c_button_controls_auto()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Add"
+                        onclick: counter_on_increment(count)
+                        "Add"
+                    }
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
+                        label: "Subtract"
+                        onclick: counter_on_decrement(count)
+                        "Subtract"
+                    }
+                    euv_button {
+                        variant: EuvButtonVariant::Danger
+                        label: "Reset"
+                        onclick: counter_on_reset(count)
+                        "Reset"
+                    }
                 }
             }
         }

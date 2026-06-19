@@ -21,7 +21,7 @@ use {
     compare_version::{CompareVersion, VersionLevel},
     lombok_macros::{Data, New},
     qrcode::{QrCode, render::svg},
-    serde::Deserialize,
+    serde::{Deserialize, Serialize},
 };
 
 /// Entry point for the euv example application.

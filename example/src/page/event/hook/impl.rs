@@ -99,7 +99,7 @@ impl Default for UseFormEvent {
     /// Creates a default `UseFormEvent` with empty signals.
     fn default() -> Self {
         Self {
-            form_input_value: Signal::create(String::new()),
+            euv_input_value: Signal::create(String::new()),
             form_change_value: Signal::create(String::new()),
             form_checkbox: Signal::create(false),
             form_select_value: Signal::create(String::new()),

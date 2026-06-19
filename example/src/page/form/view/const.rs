@@ -31,9 +31,6 @@ pub(crate) const FORM_EMAIL_TYPE: &str = "email";
 /// The HTML input type for password.
 pub(crate) const FORM_PASSWORD_TYPE: &str = "password";
 
-/// The HTML input type for checkbox.
-pub(crate) const FORM_CHECKBOX_TYPE: &str = "checkbox";
-
 /// The HTML autocomplete attribute value for username.
 pub(crate) const FORM_AUTOCOMPLETE_USERNAME: &str = "username";
 

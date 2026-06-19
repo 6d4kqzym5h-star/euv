@@ -68,13 +68,25 @@ pub(crate) struct HtmlIf {
     pub(crate) branches: Vec<(Option<Expr>, Vec<HtmlNode>)>,
 }
 
-/// Represents a reactive `if` conditional in attribute value position.
+/// Represents a reactive or inline `if` conditional in attribute value position.
 ///
-/// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`.
+/// Supports two syntaxes:
+/// - Reactive: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
+///   The condition expression in braces is treated as a signal that triggers re-rendering.
+/// - Inline: `if condition { value } [else if condition { value }]* [else { value }]`
+///   The condition is a plain Rust boolean expression, evaluated once at render time.
+///   This form is typically used inside `for` loops where the condition depends on loop variables.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlAttrIf {
-    /// The list of condition-branch pairs. Each condition is a braced expression.
+    /// Whether this conditional is inline (condition is a plain expression, not a braced signal).
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) is_inline: bool,
+    /// The list of condition-branch pairs.
     ///
+    /// For reactive conditionals, each condition is a braced signal expression.
+    /// For inline conditionals, each condition is a plain Rust expression.
     /// The last entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
@@ -88,6 +100,36 @@ pub(crate) struct HtmlAttrIf {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) else_default: proc_macro2::TokenStream,
+}
+
+/// Represents a reactive or inline `match` expression in attribute value position.
+///
+/// Supports two syntaxes:
+/// - Reactive: `match {expr} { pattern => value, ... }`
+///   The expression in braces is treated as a signal that triggers re-rendering.
+/// - Inline: `match expr { pattern => value, ... }`
+///   The expression is a plain Rust expression, evaluated once at render time.
+///   This form is typically used inside `for` loops where the scrutinee depends on loop variables.
+#[derive(Clone, Data, Debug, New)]
+pub(crate) struct HtmlAttrMatch {
+    /// Whether this match is inline (scrutinee is a plain expression, not a braced signal).
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) is_inline: bool,
+    /// The expression to match against.
+    ///
+    /// For reactive match, this is a braced signal expression.
+    /// For inline match, this is a plain Rust expression.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) scrutinee: Expr,
+    /// The match arms: each arm has a pattern as a raw token stream and a body expression.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) arms: Vec<(proc_macro2::TokenStream, Expr)>,
 }
 
 /// Represents a reactive `match` expression in HTML.

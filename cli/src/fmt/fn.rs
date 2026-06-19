@@ -488,7 +488,7 @@ fn format_macro_body(body: &str) -> String {
             if position < len && chars[after_if] == CHAR_BRACE_LEFT {
                 result.push(CHAR_SPACE);
                 let (block, end) = extract_brace_block(&chars, after_if);
-                result.push_str(&block);
+                result.push_str(&format_brace_block(&block));
                 position = end;
                 position = skip_spaces_on_same_line(&chars, position, len);
                 if position < len && chars[position] == CHAR_BRACE_LEFT {
@@ -539,7 +539,7 @@ fn format_macro_body(body: &str) -> String {
             if after_match < len && chars[after_match] == CHAR_BRACE_LEFT {
                 result.push(CHAR_SPACE);
                 let (block, end) = extract_brace_block(&chars, after_match);
-                result.push_str(&block);
+                result.push_str(&format_brace_block(&block));
                 position = end;
                 position = skip_spaces_on_same_line(&chars, position, len);
                 if position < len && chars[position] == CHAR_BRACE_LEFT {
@@ -574,7 +574,7 @@ fn format_macro_body(body: &str) -> String {
             while position < len && !is_in_keyword(&chars, position, len) {
                 if chars[position] == CHAR_BRACE_LEFT {
                     let (block, end) = extract_brace_block(&chars, position);
-                    result.push_str(&block);
+                    result.push_str(&format_brace_block(&block));
                     position = end;
                     continue;
                 }
@@ -599,7 +599,7 @@ fn format_macro_body(body: &str) -> String {
                 if position < len && chars[position] == CHAR_BRACE_LEFT {
                     result.push(CHAR_SPACE);
                     let (block, end) = extract_brace_block(&chars, position);
-                    result.push_str(&block);
+                    result.push_str(&format_brace_block(&block));
                     position = end;
                     position = skip_spaces_on_same_line(&chars, position, len);
                     if position < len && chars[position] == CHAR_BRACE_LEFT {
@@ -635,6 +635,7 @@ fn format_macro_body(body: &str) -> String {
             if position < len
                 && chars[position] != CHAR_NEWLINE
                 && chars[position] != CHAR_CARRIAGE_RETURN
+                && !is_pseudo_selector_after_colon(&chars, position, len)
             {
                 result.push(CHAR_SPACE);
             }
@@ -659,23 +660,22 @@ fn format_macro_body(body: &str) -> String {
         }
         if chars[position] == CHAR_BRACE_LEFT {
             let (inner, end) = extract_brace_content(&chars, position);
-            if inner.contains(CHAR_NEWLINE) {
+            let trimmed_inner: &str = inner.trim();
+            if trimmed_inner.is_empty() {
+                result.push(CHAR_BRACE_LEFT);
+                result.push(CHAR_BRACE_RIGHT);
+            } else if inner.contains(CHAR_NEWLINE) {
                 let formatted_inner: String = format_macro_body(&inner);
                 result.push(CHAR_BRACE_LEFT);
                 result.push_str(&formatted_inner);
                 result.push(CHAR_BRACE_RIGHT);
             } else {
-                let trimmed_inner: &str = inner.trim();
-                if trimmed_inner.is_empty() {
-                    result.push(CHAR_BRACE_LEFT);
-                    result.push(CHAR_BRACE_RIGHT);
-                } else {
-                    result.push(CHAR_BRACE_LEFT);
-                    result.push(CHAR_SPACE);
-                    result.push_str(trimmed_inner);
-                    result.push(CHAR_SPACE);
-                    result.push(CHAR_BRACE_RIGHT);
-                }
+                let formatted_inner: String = format_macro_body(trimmed_inner);
+                result.push(CHAR_BRACE_LEFT);
+                result.push(CHAR_SPACE);
+                result.push_str(&formatted_inner);
+                result.push(CHAR_SPACE);
+                result.push(CHAR_BRACE_RIGHT);
             }
             position = end;
             continue;
@@ -822,6 +822,47 @@ fn is_in_keyword(chars: &[char], pos: usize, len: usize) -> bool {
         && !is_raw_prefix(chars, pos)
 }
 
+/// Formats a brace block by adding spaces inside single-line braces.
+///
+/// For blocks that do not contain newlines, trims inner content and adds
+/// single spaces around it: `{ content }`. Empty blocks remain `{}`.
+/// For blocks containing newlines, returns the block unchanged.
+///
+/// # Arguments
+///
+/// - `&str` - The brace block text (including outer `{` and `}`).
+///
+/// # Returns
+///
+/// - `String` - The formatted brace block text.
+fn format_brace_block(block: &str) -> String {
+    let block_chars: Vec<char> = block.chars().collect();
+    if block_chars.len() < 2
+        || block_chars[0] != CHAR_BRACE_LEFT
+        || *block_chars.last().unwrap() != CHAR_BRACE_RIGHT
+    {
+        return block.to_string();
+    }
+    let inner: String = block_chars[1..block_chars.len() - 1].iter().collect();
+    if inner.contains(CHAR_NEWLINE) {
+        return block.to_string();
+    }
+    let trimmed_inner: &str = inner.trim();
+    if trimmed_inner.is_empty() {
+        let mut empty_result: String = String::new();
+        empty_result.push(CHAR_BRACE_LEFT);
+        empty_result.push(CHAR_BRACE_RIGHT);
+        return empty_result;
+    }
+    let mut formatted: String = String::new();
+    formatted.push(CHAR_BRACE_LEFT);
+    formatted.push(CHAR_SPACE);
+    formatted.push_str(trimmed_inner);
+    formatted.push(CHAR_SPACE);
+    formatted.push(CHAR_BRACE_RIGHT);
+    formatted
+}
+
 /// Skips spaces (but not newlines) on the same line.
 ///
 /// # Arguments
@@ -838,6 +879,87 @@ fn skip_spaces_on_same_line(chars: &[char], mut pos: usize, len: usize) -> usize
         pos += 1;
     }
     pos
+}
+
+/// Checks whether the content after a colon is a CSS pseudo-class or pseudo-element selector.
+///
+/// A pseudo-class/pseudo-element selector is identified by looking ahead:
+/// after the colon, if an identifier is found, and that identifier
+/// (possibly followed by more hyphen-separated identifiers like `focus-visible`)
+/// is immediately followed by `{` (not `!` which indicates a macro call like `format!`),
+/// then this is a selector colon and should not have a space after it.
+///
+/// Also handles functional pseudo-classes like `:nth-child(2n+1)`, `:not(.class)`,
+/// where the identifier is followed by a parenthesized argument list before `{`.
+///
+/// Returns `false` if the first identifier after the colon is a Rust keyword
+/// (e.g., `if`, `match`, `for`) since those are attribute value expressions,
+/// not CSS selectors.
+///
+/// # Arguments
+///
+/// - `&[char]` - The source character slice.
+/// - `usize` - The current position (right after the colon, spaces already skipped).
+/// - `usize` - The total length of the source.
+///
+/// # Returns
+///
+/// - `bool` - Whether the content after the colon is a CSS selector.
+fn is_pseudo_selector_after_colon(chars: &[char], mut pos: usize, len: usize) -> bool {
+    if pos >= len || !is_ident_char(chars[pos]) {
+        return false;
+    }
+    let ident_start: usize = pos;
+    while pos < len && is_ident_char(chars[pos]) {
+        pos += 1;
+    }
+    let first_ident: String = chars[ident_start..pos].iter().collect();
+    if is_rust_keyword(&first_ident) {
+        return false;
+    }
+    while pos < len && chars[pos] == CHAR_HYPHEN && pos + 1 < len && is_ident_char(chars[pos + 1]) {
+        pos += 1;
+        while pos < len && is_ident_char(chars[pos]) {
+            pos += 1;
+        }
+    }
+    let after_ident: usize = skip_spaces_on_same_line(chars, pos, len);
+    if after_ident < len && chars[after_ident] == CHAR_BRACE_LEFT {
+        return true;
+    }
+    if after_ident < len && chars[after_ident] == CHAR_LEFT_PAREN {
+        let mut depth: i32 = 0;
+        let mut paren_pos: usize = after_ident;
+        while paren_pos < len {
+            if chars[paren_pos] == CHAR_LEFT_PAREN {
+                depth += 1;
+            } else if chars[paren_pos] == CHAR_RIGHT_PAREN {
+                depth -= 1;
+                if depth == 0 {
+                    let after_paren: usize = skip_spaces_on_same_line(chars, paren_pos + 1, len);
+                    return after_paren < len && chars[after_paren] == CHAR_BRACE_LEFT;
+                }
+            }
+            paren_pos += 1;
+        }
+    }
+    false
+}
+
+/// Checks whether a string is a Rust keyword that can appear after a colon
+/// in euv macro attribute syntax (e.g., `class: if { ... }`).
+///
+/// These keywords indicate attribute value expressions, not CSS selectors.
+///
+/// # Arguments
+///
+/// - `&str` - The identifier string to check.
+///
+/// # Returns
+///
+/// - `bool` - Whether the string is a Rust keyword.
+fn is_rust_keyword(ident: &str) -> bool {
+    matches!(ident, KEYWORD_IF | KEYWORD_MATCH | KEYWORD_FOR)
 }
 
 /// Checks whether the identifier found before the colon is a Rust raw identifier (r#prefix).

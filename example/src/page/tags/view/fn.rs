@@ -19,7 +19,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🏷️"
                 title: TAGS_PAGE_TITLE
                 subtitle: TAGS_PAGE_SUBTITLE
@@ -27,7 +27,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Sectioning Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_SECTIONING_TITLE
                 div {
                     class: c_tag_section()
@@ -185,7 +185,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Heading Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_HEADING_TITLE
                 div {
                     class: c_tag_section()
@@ -251,7 +251,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Block-level / Flow Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_FLOW_TITLE
                 div {
                     class: c_tag_section()
@@ -420,9 +420,9 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                     }
                     div {
                         class: c_tag_demo_box()
-                        button {
-                            class: c_secondary_button()
-                            type: TAGS_BUTTON_TYPE_BUTTON
+                        euv_button {
+                            variant: EuvButtonVariant::Secondary
+                            label: "Toggle Dialog"
                             onclick: use_section_toggle(dialog_open)
                             if { dialog_open.get() } {
                                 TAGS_DIALOG_CLOSE
@@ -441,7 +441,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Inline / Phrasing Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_PHRASING_TITLE
                 div {
                     class: c_tag_section()
@@ -955,7 +955,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // List Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_LIST_TITLE
                 div {
                     class: c_tag_section()
@@ -1037,7 +1037,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Table Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_TABLE_TITLE
                 div {
                     class: c_tag_section()
@@ -1169,7 +1169,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Embedded Content
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_EMBEDDED_TITLE
                 div {
                     class: c_tag_section()
@@ -1423,7 +1423,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Form Elements
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_FORM_TITLE
                 div {
                     class: c_tag_section()
@@ -1450,7 +1450,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "Typed data entry fields."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_TEXT_ID
@@ -1464,7 +1464,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_PASSWORD_ID
@@ -1478,7 +1478,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_EMAIL_ID
@@ -1492,7 +1492,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_NUMBER_ID
@@ -1506,7 +1506,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_DATE_ID
@@ -1519,7 +1519,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_TIME_ID
@@ -1532,7 +1532,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_DATETIME_LOCAL_ID
@@ -1545,7 +1545,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_MONTH_ID
@@ -1558,7 +1558,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_WEEK_ID
@@ -1571,7 +1571,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_TEL_ID
@@ -1585,7 +1585,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_URL_ID
@@ -1599,7 +1599,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_SEARCH_ID
@@ -1613,7 +1613,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_RANGE_ID
@@ -1629,7 +1629,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_COLOR_ID
@@ -1643,7 +1643,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_CHECKBOX_ID
@@ -1655,7 +1655,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_RADIO_A_ID
@@ -1677,7 +1677,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             " B"
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_INPUT_FILE_ID
@@ -1690,7 +1690,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             }
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             input {
                                 type: TAGS_INPUT_TYPE_HIDDEN
                                 value: TAGS_HIDDEN_INPUT_VALUE
@@ -1708,7 +1708,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A multi-line plain text editing control."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_TEXTAREA_ID
@@ -1733,7 +1733,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A dropdown selection control with optional groups."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_SELECT_ID
@@ -1778,7 +1778,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A set of pre-defined options for an input field."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             input {
                                 class: c_tag_demo_input()
                                 list: TAGS_DATALIST_ID
@@ -1809,7 +1809,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A container for the result of a calculation."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             output {
                                 class: c_tag_demo_code()
                                 name: TAGS_OUTPUT_NAME
@@ -1828,7 +1828,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A progress bar indicating completion."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             progress {
                                 class: c_tag_demo_progress()
                                 value: TAGS_PROGRESS_VALUE
@@ -1848,7 +1848,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A scalar measurement within a known range."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             meter {
                                 class: c_tag_demo_meter()
                                 value: TAGS_METER_VALUE
@@ -1878,7 +1878,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                                 "Personal Info"
                             }
                             div {
-                                class: c_form_input_wrapper()
+                                class: c_euv_input_wrapper()
                                 label {
                                     class: c_form_label()
                                     for: TAGS_FIELDSET_NAME_ID
@@ -1904,20 +1904,20 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A clickable button."
                         }
                         div {
-                            class: format!("{} {}", c_equal_wrap().get_name(), c_tag_button_row().get_name())
-                            button {
-                                class: c_secondary_button()
-                                type: TAGS_BUTTON_TYPE_BUTTON
+                            class: c_tag_button_row()
+                            euv_button {
+                                variant: EuvButtonVariant::Secondary
+                                label: TAGS_BUTTON_CLICK
                                 TAGS_BUTTON_CLICK
                             }
-                            button {
-                                class: c_primary_button()
-                                type: TAGS_BUTTON_TYPE_SUBMIT
+                            euv_button {
+                                variant: EuvButtonVariant::Primary
+                                label: TAGS_BUTTON_SUBMIT
                                 TAGS_BUTTON_SUBMIT
                             }
-                            button {
-                                class: c_secondary_button()
-                                type: TAGS_BUTTON_TYPE_RESET
+                            euv_button {
+                                variant: EuvButtonVariant::Secondary
+                                label: TAGS_BUTTON_RESET
                                 TAGS_BUTTON_RESET
                             }
                         }
@@ -1933,7 +1933,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             "A caption for an item in a user interface."
                         }
                         div {
-                            class: c_form_input_wrapper()
+                            class: c_euv_input_wrapper()
                             label {
                                 class: c_form_label()
                                 for: TAGS_LABEL_DEMO_ID
@@ -1952,7 +1952,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
             // ═══════════════════════════════════════════════════════════════
             // Interactive / Scripting
             // ═══════════════════════════════════════════════════════════════
-            my_card {
+            euv_card {
                 title: TAGS_INTERACTIVE_TITLE
                 div {
                     class: c_tag_section()
@@ -1967,16 +1967,16 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                     menu {
                         class: c_tag_demo_menu()
                         li {
-                            button {
-                                class: c_secondary_button()
-                                type: TAGS_BUTTON_TYPE_BUTTON
+                            euv_button {
+                                variant: EuvButtonVariant::Secondary
+                                label: TAGS_MENU_COMMAND_FIRST
                                 TAGS_MENU_COMMAND_FIRST
                             }
                         }
                         li {
-                            button {
-                                class: c_secondary_button()
-                                type: TAGS_BUTTON_TYPE_BUTTON
+                            euv_button {
+                                variant: EuvButtonVariant::Secondary
+                                label: TAGS_MENU_COMMAND_SECOND
                                 TAGS_MENU_COMMAND_SECOND
                             }
                         }

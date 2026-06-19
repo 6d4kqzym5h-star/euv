@@ -11,21 +11,24 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
     let show_details: Signal<bool> = use_signal(|| false);
     let user_type: Signal<String> = use_signal(|| "guest".to_string());
     let tab: Signal<String> = use_signal(|| "info".to_string());
-    let _role_cols: Signal<usize> = use_equal_wrap(3, CONDITIONAL_ROLE_BUTTON_ROW_SELECTOR);
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🔀"
                 title: "Conditional Rendering"
                 subtitle: "Toggle visibility and switch between views."
             }
-            my_card {
+            euv_card {
                 title: "Toggle Content"
-                primary_button {
-                    label: "Toggle"
-                    onclick: use_toggle(show_details)
-                    "Toggle"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: if { show_details.get() } { EuvButtonVariant::Outline } else { EuvButtonVariant::Primary }
+                        label: "Toggle"
+                        onclick: use_toggle(show_details)
+                        "Toggle"
+                    }
                 }
                 if { show_details.get() } {
                     div {
@@ -45,21 +48,24 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Role-Based Rendering"
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_role_button_row().get_name())
-                    primary_button {
+                    class: c_role_button_row()
+                    euv_button {
+                        variant: if { user_type.get() == "guest" } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
                         label: "Guest"
                         onclick: user_type_on_select(user_type, "guest")
                         "Guest"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: if { user_type.get() == "user" } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
                         label: "User"
                         onclick: user_type_on_select(user_type, "user")
                         "User"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: if { user_type.get() == "admin" } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
                         label: "Admin"
                         onclick: user_type_on_select(user_type, "admin")
                         "Admin"
@@ -95,7 +101,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Tab Switching"
                 div {
                     class: c_tab_bar()
@@ -136,7 +142,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                                 class: c_tab_text_input()
                                 "This is the settings tab."
                             }
-                            form_input {
+                            euv_input {
                                 id: SETTINGS_DISPLAY_NAME_ID
                                 label: "Display Name"
                                 placeholder: SETTINGS_DISPLAY_NAME_PLACEHOLDER

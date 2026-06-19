@@ -12,7 +12,6 @@ class! {
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(bg-primary);
         color: var!(text-primary);
-        line-height: "1.6";
         user-select: "none";
         -webkit-user-select: "none";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
@@ -21,10 +20,10 @@ class! {
             border-radius: "3px";
             border: "none";
         }
-        ::-webkit-scrollbar-thumb: hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
         }
-        ::-webkit-scrollbar-thumb: active {
+        ::-webkit-scrollbar-thumb:active {
             background: var!(scrollbar-thumb-active);
         }
     }
@@ -34,10 +33,10 @@ class! {
         flex-direction: "column";
         height: "100%";
         overflow: "hidden";
+        gap: var!(space-sm);
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(bg-nav);
         color: var!(text-primary);
-        line-height: "1.6";
         padding: format!("env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)");
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
@@ -45,10 +44,10 @@ class! {
             border-radius: "3px";
             border: "none";
         }
-        ::-webkit-scrollbar-thumb: hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
         }
-        ::-webkit-scrollbar-thumb: active {
+        ::-webkit-scrollbar-thumb:active {
             background: var!(scrollbar-thumb-active);
         }
     }
@@ -67,7 +66,7 @@ class! {
         flex-direction: "column";
         height: "100%";
         flex-shrink: "0";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             display: "none";
         }
     }
@@ -86,7 +85,7 @@ class! {
         flex-shrink: "0";
         text-decoration: "none";
         cursor: "pointer";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             border-bottom: "none";
         }
     }
@@ -98,7 +97,7 @@ class! {
         letter-spacing: "-0.02em";
     }
 
-    pub(crate) c_logo_button {
+    pub(crate) c_euv_logo {
         display: "flex";
         background: var!(accent-gradient);
         border-radius: var!(radius-md);
@@ -109,31 +108,30 @@ class! {
         border: "none";
         cursor: "pointer";
         padding: "0px";
-        line-height: "1";
         flex-shrink: "0";
     }
 
-    pub(crate) c_logo_button_nav {
+    pub(crate) c_euv_logo_nav {
         width: "32px";
         height: "32px";
         font-size: var!(font-lg);
     }
 
-    pub(crate) c_logo_button_fab {
+    pub(crate) c_euv_logo_fab {
         width: "36px";
         height: "36px";
         border-radius: "14px";
         font-size: var!(font-xl);
         box-shadow: var!(shadow-console-button);
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             width: "44px";
             height: "44px";
             border-radius: var!(radius-lg);
         }
     }
 
-    pub(crate) c_logo_button_fab_hover {
+    pub(crate) c_euv_logo_fab_hover {
         box-shadow: var!(shadow-accent-lg);
     }
 
@@ -157,10 +155,10 @@ class! {
             border-radius: "3px";
             border: "none";
         }
-        ::-webkit-scrollbar-thumb: hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
         }
-        ::-webkit-scrollbar-thumb: active {
+        ::-webkit-scrollbar-thumb:active {
             background: var!(scrollbar-thumb-active);
         }
     }
@@ -169,7 +167,7 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-xl));
         flex-shrink: "0";
         margin-top: "auto";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             display: "none";
         }
     }
@@ -186,7 +184,7 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
@@ -225,7 +223,7 @@ class! {
         cursor: "pointer";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
         opacity: "0.7";
-        hover {
+        :hover {
             opacity: "1";
         }
     }
@@ -289,7 +287,7 @@ class! {
         border-left: "3px solid transparent";
         background: "transparent";
         transition: format!("background {} {}, color {} {}, border-left-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             background: var!(accent-muted);
             color: var!(accent);
             border-left-color: var!(accent-border);
@@ -298,7 +296,6 @@ class! {
 
     pub(crate) c_nav_item_icon {
         font-size: "16px";
-        line-height: "1";
         flex-shrink: "0";
         width: "20px";
         text-align: "center";
@@ -333,13 +330,13 @@ class! {
             border-radius: "3px";
             border: "none";
         }
-        ::-webkit-scrollbar-thumb: hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
         }
-        ::-webkit-scrollbar-thumb: active {
+        ::-webkit-scrollbar-thumb:active {
             background: var!(scrollbar-thumb-active);
         }
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             overflow-y: "auto";
             padding: format!("{} {}", var!(space-md), var!(padding-main-horizontal-mobile));
             align-items: "stretch";
@@ -365,7 +362,7 @@ class! {
         height: "100%";
     }
 
-    pub(crate) c_page_header {
+    pub(crate) c_header {
         margin-bottom: var!(gap-page-header);
     }
 
@@ -375,7 +372,7 @@ class! {
         color: var!(text-primary);
         margin-bottom: var!(gap-page-title);
         letter-spacing: "-0.02em";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-2xl);
         }
     }
@@ -384,14 +381,13 @@ class! {
         font-size: var!(font-lg);
         color: var!(text-secondary);
         opacity: "0.8";
-        line-height: "1.6";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-base);
         }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Page Hero Banner (unified page header with emoji icon)
+    // Page Hero Banner (unified header with emoji icon)
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_page_hero {
@@ -404,7 +400,7 @@ class! {
         background: var!(bg-card);
         border: format!("1px solid {}", var!(border-card));
         box-shadow: var!(shadow-card);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: format!("{} {} {} {}", var!(space-2xl), var!(space-lg), var!(space-2xl), var!(space-lg));
             margin-bottom: var!(space-lg);
         }
@@ -431,10 +427,9 @@ class! {
 
     pub(crate) c_page_hero_icon {
         font-size: "48px";
-        line-height: "1";
         margin-bottom: var!(space-md);
         filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.1))";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: "40px";
         }
     }
@@ -448,10 +443,9 @@ class! {
         -webkit-background-clip: "text";
         -webkit-text-fill-color: "transparent";
         background-clip: "text";
-        line-height: "1.2";
         margin-bottom: var!(space-sm);
         filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.12))";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-3xl);
         }
     }
@@ -461,9 +455,8 @@ class! {
         color: var!(text-secondary);
         margin: "0px auto";
         max-width: "560px";
-        line-height: "1.7";
         opacity: "0.85";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-base);
         }
     }
@@ -481,7 +474,7 @@ class! {
         box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: var!(space-lg);
             margin-bottom: var!(gap-section-mobile);
             border-radius: var!(radius-lg);
@@ -497,7 +490,7 @@ class! {
         box-shadow: var!(shadow-lg);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: var!(space-lg);
             margin-bottom: var!(gap-section-mobile);
             border-radius: var!(radius-lg);
@@ -515,10 +508,10 @@ class! {
         color: var!(text-primary);
         font-size: var!(font-lg);
         font-weight: "600";
-        padding-bottom: var!(space-sm);
+        padding-bottom: var!(gap-component);
         border-bottom: format!("1px solid {}", var!(border-card-title));
         letter-spacing: "-0.01em";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-md);
         }
     }
@@ -533,39 +526,42 @@ class! {
         align-items: "center";
         gap: var!(space-sm);
         width: "100%";
-        flex: "1";
+        height: "42px";
         background: var!(accent);
         color: var!(text-on-accent);
-        border: "none";
-        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
+        border: "1px solid transparent";
+        padding: format!("0px {}", var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1";
         outline: "none";
+        box-sizing: "border-box";
         box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
-        vertical-align: "middle";
-        focus_visible {
+        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
         }
-        disabled {
+        :disabled {
             background: var!(accent-disabled);
             cursor: "not-allowed";
             opacity: "0.55";
             box-shadow: "none";
         }
-        media("(max-width: 767px)") {
+        :hover {
+            background: var!(accent-hover);
+        }
+        @media ((max-width: 767px)) {
             max-width: "100%";
-            padding: format!("{} {}", var!(space-md), var!(space-xl));
+            padding: format!("{} {}", var!(space-lg), var!(space-xl));
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: var!(shadow-accent-sm);
@@ -578,32 +574,35 @@ class! {
         align-items: "center";
         gap: var!(space-sm);
         width: "100%";
-        flex: "1";
+        height: "42px";
         background: "transparent";
         color: var!(accent);
         border: format!("1px solid {}", var!(accent));
-        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
+        padding: format!("0px {}", var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1";
         outline: "none";
+        box-sizing: "border-box";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
-        vertical-align: "middle";
-        focus_visible {
+        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-subtle);
+        }
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             max-width: "100%";
-            padding: format!("{} {}", var!(space-md), var!(space-xl));
+            padding: format!("{} {}", var!(space-lg), var!(space-xl));
             font-size: var!(font-md);
             border-radius: var!(radius-md);
             box-shadow: "none";
@@ -621,14 +620,13 @@ class! {
         background: var!(bg-success);
         color: var!(text-success);
         border: format!("1px solid {}", var!(border-success));
-        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
+        padding: format!("{} {}", var!(space-md), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1";
         outline: "none";
         white-space: "nowrap";
         overflow: "hidden";
@@ -636,11 +634,11 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-success));
         }
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             max-width: "100%";
             padding: format!("{} {}", var!(space-md), var!(space-xl));
             font-size: var!(font-md);
@@ -656,30 +654,30 @@ class! {
         align-items: "center";
         gap: var!(space-sm);
         width: "100%";
-        flex: "1";
+        height: "42px";
         background: var!(bg-error);
         color: var!(text-error);
         border: format!("1px solid {}", var!(border-error));
-        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
+        padding: format!("0px {}", var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1";
         outline: "none";
+        box-sizing: "border-box";
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
         }
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             max-width: "100%";
             padding: format!("{} {}", var!(space-md), var!(space-xl));
             font-size: var!(font-md);
@@ -698,15 +696,14 @@ class! {
         flex: "1";
         background: var!(accent);
         color: var!(text-on-accent);
-        border: "none";
-        padding: format!("{} {}", var!(space-sm), var!(space-2xl));
+        border: "1px solid transparent";
+        padding: format!("{} {}", var!(space-md), var!(space-2xl));
         border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
         letter-spacing: "0.02em";
         text-align: "center";
-        line-height: "1";
         outline: "none";
         box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
@@ -714,12 +711,15 @@ class! {
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
-        vertical-align: "middle";
-        focus_visible {
+        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-hover);
+        }
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
         }
-        disabled {
+        :disabled {
             background: var!(accent-disabled);
             cursor: "not-allowed";
             opacity: "0.55";
@@ -739,19 +739,169 @@ class! {
         cursor: "pointer";
         font-size: "20px";
         font-weight: "400";
-        line-height: "1";
         vertical-align: "middle";
-        line-height: "1";
         outline: "none";
         opacity: "0.6";
         flex-shrink: "0";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             opacity: "1";
         }
-        focus {
+        :focus {
             outline: "none";
             box-shadow: "none";
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Button Controls Container
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_button_controls {
+        display: "flex";
+        flex-wrap: "wrap";
+        gap: var!(gap-element);
+        margin-top: var!(gap-component);
+    }
+
+
+    pub(crate) c_button_controls_auto {
+        display: "flex";
+        flex-wrap: "wrap";
+        gap: var!(gap-element);
+        margin-top: var!(gap-component);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Euv Button Variants
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_euv_button_primary_md {
+        display: "flex";
+        justify-content: "center";
+        align-items: "center";
+        gap: var!(space-sm);
+        flex: "1 1 120px";
+        height: "42px";
+        padding: format!("0px {}", var!(space-xl));
+        background: var!(accent);
+        color: var!(text-on-accent);
+        border: "1px solid transparent";
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        font-size: var!(font-base);
+        font-weight: "500";
+        outline: "none";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        box-sizing: "border-box";
+        box-shadow: var!(shadow-accent-sm);
+        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-hover);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+        }
+        :disabled {
+            background: var!(accent-disabled);
+            cursor: "not-allowed";
+            opacity: "0.55";
+            box-shadow: "none";
+        }
+    }
+
+    pub(crate) c_euv_button_secondary_md {
+        display: "flex";
+        justify-content: "center";
+        align-items: "center";
+        gap: var!(space-sm);
+        flex: "1 1 120px";
+        height: "42px";
+        padding: format!("0px {}", var!(space-xl));
+        background: "transparent";
+        color: var!(accent);
+        border: format!("1px solid {}", var!(accent));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        font-size: var!(font-base);
+        font-weight: "500";
+        outline: "none";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        box-sizing: "border-box";
+        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-subtle);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+        }
+    }
+
+    pub(crate) c_euv_button_outline_md {
+        display: "flex";
+        justify-content: "center";
+        align-items: "center";
+        gap: var!(space-sm);
+        flex: "1 1 120px";
+        height: "42px";
+        padding: format!("0px {}", var!(space-xl));
+        background: "transparent";
+        color: var!(text-secondary);
+        border: format!("1px solid {}", var!(border-card));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        font-size: var!(font-base);
+        font-weight: "500";
+        outline: "none";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        box-sizing: "border-box";
+        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-muted);
+            border-color: var!(accent-border);
+            color: var!(accent);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+        }
+    }
+
+    pub(crate) c_euv_button_danger_md {
+        display: "flex";
+        justify-content: "center";
+        align-items: "center";
+        gap: var!(space-sm);
+        flex: "1 1 120px";
+        height: "42px";
+        padding: format!("0px {}", var!(space-xl));
+        background: var!(bg-error);
+        color: var!(text-error);
+        border: format!("1px solid {}", var!(border-error));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        font-size: var!(font-base);
+        font-weight: "500";
+        outline: "none";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        box-sizing: "border-box";
+        transition: format!("background {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: "rgba(220, 38, 38, 0.12)";
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(border-error));
         }
     }
 
@@ -775,11 +925,11 @@ class! {
         text-transform: "uppercase";
         text-align: "center";
         background: var!(accent-gradient);
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-xs), var!(space-sm));
             font-size: var!(font-xs);
         }
@@ -801,7 +951,7 @@ class! {
         background: "transparent";
         border: "1.5px solid";
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-xs), var!(space-sm));
             font-size: var!(font-xs);
         }
@@ -880,10 +1030,115 @@ class! {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // Euv Tag Variants (semantic colour tags)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub(crate) c_euv_tag_solid_purple {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(color-purple);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-pill);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        letter-spacing: "0.03em";
+        text-transform: "uppercase";
+        background: "rgba(124, 58, 237, 0.08)";
+        border: format!("1px solid {}", var!(border-pink));
+    }
+
+    pub(crate) c_euv_tag_outline_success {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(text-success);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-pill);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        letter-spacing: "0.03em";
+        text-transform: "uppercase";
+        background: "transparent";
+        border: format!("1.5px solid {}", var!(text-success));
+        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_euv_tag_outline_error {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(text-error);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-pill);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        letter-spacing: "0.03em";
+        text-transform: "uppercase";
+        background: "transparent";
+        border: format!("1.5px solid {}", var!(text-error));
+        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_euv_tag_outline_warning {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(text-warning);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-pill);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        letter-spacing: "0.03em";
+        text-transform: "uppercase";
+        background: "transparent";
+        border: format!("1.5px solid {}", var!(text-warning));
+        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_euv_tag_outline_info {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(text-info);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-pill);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        letter-spacing: "0.03em";
+        text-transform: "uppercase";
+        background: "transparent";
+        border: format!("1.5px solid {}", var!(text-info));
+        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+    }
+
+    pub(crate) c_euv_tag_outline_purple {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(color-purple);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        border-radius: var!(radius-pill);
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        letter-spacing: "0.03em";
+        text-transform: "uppercase";
+        background: "transparent";
+        border: format!("1.5px solid {}", var!(color-purple));
+        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // Form Elements
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_form_input_wrapper {
+    pub(crate) c_euv_input_wrapper {
         margin: format!("{} 0px", var!(gap-element));
     }
 
@@ -895,23 +1150,110 @@ class! {
         font-size: var!(font-base);
     }
 
-    pub(crate) c_form_input {
+    pub(crate) c_inline_input_row {
+        display: "flex";
+        align-items: "stretch";
+        gap: var!(gap-component);
+    }
+
+    pub(crate) c_inline_input_button {
+        flex-shrink: "0";
+        height: "42px";
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        padding: format!("0px {}", var!(space-lg));
+        border-radius: var!(radius-md);
+        cursor: "pointer";
+        font-size: var!(font-base);
+        font-weight: "500";
+        outline: "none";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        box-sizing: "border-box";
+    }
+
+    pub(crate) c_inline_input_button_primary {
+        background: var!(accent);
+        color: var!(text-on-accent);
+        border: "none";
+        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-hover);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+        }
+        :disabled {
+            background: var!(accent-disabled);
+            cursor: "not-allowed";
+            opacity: "0.55";
+        }
+    }
+
+    pub(crate) c_inline_input_button_danger {
+        background: var!(bg-error);
+        color: var!(text-error);
+        border: format!("1px solid {}", var!(border-error));
+        transition: format!("background {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: "rgba(220, 38, 38, 0.12)";
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+        }
+    }
+
+    pub(crate) c_inline_input_button_secondary {
+        background: "transparent";
+        color: var!(accent);
+        border: format!("1px solid {}", var!(accent));
+        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-subtle);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+        }
+    }
+
+    pub(crate) c_inline_input_button_outline {
+        background: "transparent";
+        color: var!(text-secondary);
+        border: format!("1px solid {}", var!(border-card));
+        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-muted);
+            border-color: var!(accent-border);
+            color: var!(accent);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+        }
+    }
+
+    pub(crate) c_euv_input {
         width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
         background: var!(bg-input);
         color: var!(text-primary);
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -919,36 +1261,32 @@ class! {
         }
     }
 
-    pub(crate) c_form_input_no_transition {
+    pub(crate) c_euv_input_no_transition {
         width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
     }
 
-    pub(crate) c_form_input_error {
+    pub(crate) c_euv_input_error {
         width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
-        resize: "vertical";
-        overflow-x: "hidden";
-        word-wrap: "break-word";
-        font-family: "inherit";
         color: var!(text-primary);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(text-error);
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
@@ -978,18 +1316,18 @@ class! {
         display: "grid";
         grid-template-columns: "1fr 1fr";
         gap: format!("0px {}", var!(gap-component));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
     }
 
     pub(crate) c_select_input {
         width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
@@ -1000,11 +1338,11 @@ class! {
         background-repeat: "no-repeat";
         background-position: "right 14px center";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -1019,7 +1357,6 @@ class! {
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
@@ -1029,15 +1366,38 @@ class! {
         font-family: "inherit";
         color: var!(text-primary);
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
             background: var!(accent-muted);
+        }
+    }
+
+    pub(crate) c_textarea_input_error {
+        width: "100%";
+        max-width: "100%";
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        border: format!("1px solid {}", var!(text-error));
+        border-radius: var!(radius-md);
+        font-size: var!(font-base);
+        box-sizing: "border-box";
+        background: var!(bg-input);
+        outline: "none";
+        resize: "vertical";
+        overflow-x: "hidden";
+        word-wrap: "break-word";
+        font-family: "inherit";
+        color: var!(text-primary);
+        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :focus {
+            outline: "none";
+            border-color: var!(text-error);
+            box-shadow: format!("0 0 0 3px {}", var!(border-error));
         }
     }
 
@@ -1091,13 +1451,38 @@ class! {
         font-size: var!(font-base);
     }
 
+    pub(crate) c_warning_box {
+        margin-top: var!(gap-component);
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: var!(bg-warning);
+        color: var!(text-warning);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-warning));
+        font-size: var!(font-base);
+    }
+
+    pub(crate) c_info_box {
+        margin-top: var!(gap-component);
+        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: "rgba(3, 105, 161, 0.06)";
+        color: var!(text-info);
+        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(border-info));
+        font-size: var!(font-base);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Counter / Signals Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_counter_row {
+        display: "grid";
+        grid-template-columns: "1fr 1fr";
         align-items: "center";
         gap: var!(gap-component);
+        @media ((max-width: 767px)) {
+            grid-template-columns: "1fr";
+        }
     }
 
     pub(crate) c_counter_text {
@@ -1110,7 +1495,7 @@ class! {
         font-weight: "700";
         color: var!(accent);
         font-size: var!(font-2xl);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-xl);
         }
     }
@@ -1176,7 +1561,7 @@ class! {
         flex: "1";
         text-decoration: "none";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             opacity: "0.7";
         }
     }
@@ -1310,8 +1695,8 @@ class! {
     }
 
     pub(crate) c_canvas_color_input {
-        width: "40px";
-        height: "32px";
+        width: "42px";
+        height: "42px";
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         cursor: "pointer";
@@ -1409,8 +1794,8 @@ class! {
     }
 
     pub(crate) c_canvas_fullscreen_range_input {
-        flex: "1";
-        min-width: "40px";
+        flex: "1 1 0%";
+        min-width: "120px";
         cursor: "pointer";
         accent-color: var!(accent);
     }
@@ -1426,10 +1811,14 @@ class! {
         cursor: "pointer";
         font-size: var!(font-xs);
         font-weight: "500";
-        line-height: "1.4";
         outline: "none";
         white-space: "nowrap";
         flex-shrink: "0";
+    }
+
+    pub(crate) c_canvas_fullscreen_toolbar_button {
+        flex: "0 0 auto";
+        overflow: "hidden";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1570,6 +1959,9 @@ class! {
     }
 
     pub(crate) c_role_button_row {
+        display: "flex";
+        flex-wrap: "wrap";
+        gap: var!(gap-element);
         margin-bottom: var!(gap-component);
     }
 
@@ -1615,7 +2007,7 @@ class! {
         border-bottom: format!("1px solid {}", var!(border-input));
         margin-bottom: var!(gap-component);
         gap: var!(gap-element);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             flex-wrap: "wrap";
         }
     }
@@ -1642,7 +2034,7 @@ class! {
         font-size: var!(font-base);
         font-weight: "500";
         transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             background: var!(accent-muted);
             color: var!(accent);
         }
@@ -1684,7 +2076,7 @@ class! {
         margin-bottom: var!(gap-element);
         gap: var!(gap-component);
         background: var!(bg-list-even);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             flex-wrap: "wrap";
         }
     }
@@ -1692,21 +2084,21 @@ class! {
     pub(crate) c_list_input {
         flex: "1";
         min-width: "0px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -1717,17 +2109,17 @@ class! {
     pub(crate) c_list_input_error {
         flex: "1";
         min-width: "0px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         outline: "none";
         color: var!(text-primary);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(text-error);
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
@@ -1742,10 +2134,15 @@ class! {
         padding-left: var!(space-lg);
     }
 
+    pub(crate) c_inline_input_button_wrap {
+        flex-shrink: "0";
+    }
+
     pub(crate) c_list_ul {
         list-style: "none";
         padding: "0px";
         margin: "0px";
+        margin-top: var!(gap-component);
     }
 
     pub(crate) c_list_item_even {
@@ -1784,8 +2181,6 @@ class! {
 
     pub(crate) c_list_item_button {
         max-width: "120px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        line-height: "1.5";
         flex-shrink: "0";
     }
 
@@ -1799,7 +2194,6 @@ class! {
         border-radius: var!(radius-md);
         font-family: "ui-monospace, monospace";
         font-size: "13px";
-        line-height: "1.5";
         margin-top: "0px";
         color: var!(text-console);
     }
@@ -1827,7 +2221,7 @@ class! {
         padding: format!("{} {}", var!(space-7xl), var!(space-xl));
         max-width: "480px";
         margin: "0px auto";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         }
     }
@@ -1836,10 +2230,9 @@ class! {
         font-size: var!(font-6xl);
         font-weight: "800";
         color: var!(text-muted);
-        line-height: "1";
         margin-bottom: var!(space-md);
         letter-spacing: "-0.04em";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: "56px";
         }
     }
@@ -1856,7 +2249,6 @@ class! {
         opacity: "0.7";
         font-size: var!(font-lg);
         margin-bottom: var!(space-3xl);
-        line-height: "1.6";
     }
 
     pub(crate) c_not_found_actions {
@@ -1891,7 +2283,7 @@ class! {
         grid-template-columns: "1fr 1fr";
         gap: var!(gap-element);
         margin-top: var!(gap-component);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
             gap: var!(gap-element);
         }
@@ -2073,12 +2465,14 @@ class! {
         color: var!(accent);
         letter-spacing: "0.04em";
         font-family: "ui-monospace, monospace";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
     }
 
     pub(crate) c_timer_controls {
+        display: "flex";
+        flex-wrap: "wrap";
         gap: var!(gap-element);
     }
 
@@ -2112,7 +2506,7 @@ class! {
         justify-content: "center";
         z-index: "1000";
         animation: format!("euv-fade-in {} {}", var!(duration-modal-overlay), var!(ease-out));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             align-items: "center";
             justify-content: "center";
         }
@@ -2133,7 +2527,7 @@ class! {
         z-index: "1000";
         animation: format!("euv-fade-out {} {}", var!(duration-modal-overlay), var!(ease-out));
         pointer-events: "none";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             align-items: "center";
             justify-content: "center";
         }
@@ -2150,7 +2544,7 @@ class! {
         animation: format!("euv-scale-in-modal {} {}", var!(duration-modal-content), var!(ease-bounce));
         overflow: "hidden";
         color: var!(text-card);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             max-width: "100%";
             width: "calc(100% - 32px)";
             border-radius: var!(radius-xl);
@@ -2170,7 +2564,7 @@ class! {
         animation: format!("euv-scale-out-modal {} {}", var!(duration-modal-content), var!(ease-in));
         overflow: "hidden";
         color: var!(text-card);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             max-width: "100%";
             width: "calc(100% - 32px)";
             border-radius: var!(radius-xl);
@@ -2183,7 +2577,7 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(space-lg), var!(space-xl));
+        padding: format!("{} {}", var!(space-md), var!(space-xl));
         border-bottom: format!("1px solid {}", var!(border-card-title));
     }
 
@@ -2195,15 +2589,15 @@ class! {
     }
 
     pub(crate) c_modal_body {
-        padding: format!("0px {}", var!(space-xl));
+        padding: format!("{} {}", var!(space-md), var!(space-xl));
         color: "inherit";
     }
 
     pub(crate) c_modal_actions {
         display: "flex";
-        justify-content: "center";
+        flex-wrap: "wrap";
         gap: var!(space-md);
-        margin: format!("{} 0px", var!(space-lg));
+        margin: format!("{} 0px", var!(space-md));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2232,7 +2626,7 @@ class! {
         font-size: var!(font-5xl);
         animation: "euv-spin 1.5s linear infinite";
         display: "inline-block";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
     }
@@ -2241,7 +2635,7 @@ class! {
         font-size: var!(font-5xl);
         display: "inline-block";
         opacity: "0.4";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
     }
@@ -2259,7 +2653,7 @@ class! {
         animation: "euv-pulse 1.5s ease-in-out infinite";
         display: "inline-block";
         color: var!(text-danger);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
     }
@@ -2269,7 +2663,7 @@ class! {
         display: "inline-block";
         opacity: "0.4";
         color: var!(text-danger);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
     }
@@ -2318,12 +2712,14 @@ class! {
         grid-template-columns: "1fr 1fr";
         gap: format!("0px {}", var!(gap-component));
         margin-bottom: var!(gap-component);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
     }
 
     pub(crate) c_browser_api_actions {
+        display: "flex";
+        flex-wrap: "wrap";
         gap: var!(gap-element);
         margin: format!("{} 0px", var!(gap-component));
     }
@@ -2351,7 +2747,7 @@ class! {
         display: "grid";
         gap: var!(gap-component);
         margin-top: var!(gap-component);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
     }
@@ -2401,7 +2797,6 @@ class! {
         align-items: "center";
         justify-content: "center";
         padding: format!("0px {}", var!(space-xs));
-        line-height: "1";
         box-shadow: "0px 2px 6px rgba(239, 68, 68, 0.3)";
         pointer-events: "none";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
@@ -2460,7 +2855,7 @@ class! {
         opacity: "0";
         pointer-events: "none";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
             right: var!(padding-main-horizontal-mobile);
         }
@@ -2474,7 +2869,7 @@ class! {
         transform: "translateX(0)";
         opacity: "1";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
             right: var!(padding-main-horizontal-mobile);
         }
@@ -2529,14 +2924,13 @@ class! {
         font-size: var!(font-sm);
         font-weight: "500";
         letter-spacing: "0.02em";
-        line-height: "1";
         text-align: "center";
         white-space: "nowrap";
         user-select: "none";
         -webkit-user-select: "none";
         vertical-align: "middle";
         outline: "none";
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
         }
@@ -2554,7 +2948,6 @@ class! {
         cursor: "pointer";
         font-size: "16px";
         font-weight: "400";
-        line-height: "1";
         text-align: "center";
         white-space: "nowrap";
         user-select: "none";
@@ -2562,12 +2955,12 @@ class! {
         vertical-align: "middle";
         outline: "none";
         transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(text-console-close-hover);
             color: var!(text-console-close-hover);
             background: var!(bg-console-close-hover);
         }
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-console-button));
         }
@@ -2579,7 +2972,6 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         font-family: "ui-monospace, monospace";
         font-size: "13px";
-        line-height: "1.6";
     }
 
     pub(crate) c_vconsole_log_item {
@@ -2684,8 +3076,7 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "space-between";
-        padding: format!("0px {}", var!(space-lg));
-        height: var!(mobile-header-height);
+        padding: format!("{} {}", var!(space-sm), var!(space-lg));
         background: var!(bg-nav);
         backdrop-filter: var!(glass-blur-md);
         -webkit-backdrop-filter: var!(glass-blur-md);
@@ -2770,7 +3161,7 @@ class! {
         color: var!(text-muted);
         padding: "0px";
         transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             color: var!(text-primary);
         }
     }
@@ -2836,7 +3227,7 @@ class! {
         ::-webkit-scrollbar {
             width: "0px";
         }
-        media("(min-width: 768px)") {
+        @media ((min-width: 768px)) {
             scrollbar-width: "thin";
             ::-webkit-scrollbar {
                 width: "6px";
@@ -2889,6 +3280,8 @@ class! {
     }
 
     pub(crate) c_keep_alive_counter_controls {
+        display: "flex";
+        flex-wrap: "wrap";
         gap: format!("{}", var!(space-md));
     }
 
@@ -2921,13 +3314,12 @@ class! {
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         background: var!(bg-input);
         color: var!(text-primary);
         cursor: "pointer";
         transition: format!("border-color {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
@@ -3202,6 +3594,9 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_dynamic_component_tab_bar {
+        display: "flex";
+        flex-wrap: "wrap";
+        gap: var!(gap-element);
         margin-bottom: var!(gap-component);
     }
 
@@ -3256,7 +3651,7 @@ class! {
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             gap: var!(gap-component-mobile);
         }
     }
@@ -3299,7 +3694,7 @@ class! {
         flex-direction: "column";
         flex: "1";
         min-height: "0px";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: var!(space-lg);
             margin-bottom: var!(gap-section-mobile);
             border-radius: var!(radius-lg);
@@ -3363,7 +3758,7 @@ class! {
         display: "flex";
         flex-direction: "column";
         gap: var!(gap-section);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             gap: var!(gap-section-mobile);
         }
     }
@@ -3372,7 +3767,7 @@ class! {
         display: "flex";
         flex-direction: "column";
         gap: var!(gap-component);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             gap: var!(gap-component-mobile);
         }
     }
@@ -3388,7 +3783,7 @@ class! {
         gap: var!(gap-element);
         flex-wrap: "wrap";
         align-items: "center";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             flex-wrap: "wrap";
         }
     }
@@ -3399,7 +3794,7 @@ class! {
         flex-wrap: "wrap";
         align-items: "center";
         justify-content: "center";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             flex-wrap: "wrap";
         }
     }
@@ -3411,16 +3806,12 @@ class! {
         align-items: "center";
     }
 
-    pub(crate) c_equal_wrap {
-        display: "grid";
-        gap: var!(gap-element);
-    }
 
     pub(crate) c_grid_2col {
         display: "grid";
         grid-template-columns: "1fr 1fr";
         gap: format!("0px {}", var!(gap-component));
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
     }
@@ -3429,7 +3820,7 @@ class! {
         display: "flex";
         gap: var!(gap-component);
         flex-wrap: "wrap";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             flex-direction: "column";
             gap: var!(gap-component-mobile);
         }
@@ -3438,7 +3829,7 @@ class! {
     pub(crate) c_switcher_col {
         flex: "1";
         min-width: "200px";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             min-width: "100%";
         }
     }
@@ -3469,14 +3860,12 @@ class! {
         color: var!(text-on-accent);
         border: "none";
         box-shadow: format!("inset 0 0 0 1px {}, {}", var!(text-error), var!(shadow-accent-sm));
-        line-height: "1.5";
     }
 
     pub(crate) c_net_action_button {
         min-width: "0px";
         max-width: "120px";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        line-height: "1.5";
         flex-shrink: "0";
     }
 
@@ -3546,21 +3935,21 @@ class! {
     pub(crate) c_ws_message_input {
         flex: "1";
         min-width: "0px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -3735,7 +4124,7 @@ class! {
         color: var!(accent);
         text-decoration: "none";
         margin-right: var!(space-md);
-        hover {
+        :hover {
             text-decoration: "underline";
         }
     }
@@ -3925,6 +4314,9 @@ class! {
     }
 
     pub(crate) c_tag_button_row {
+        display: "flex";
+        flex-wrap: "wrap";
+        gap: var!(gap-element);
         margin: format!("{} 0px", var!(gap-element));
     }
 
@@ -3940,21 +4332,21 @@ class! {
 
     pub(crate) c_tag_demo_input {
         width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -3980,16 +4372,15 @@ class! {
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
         resize: "vertical";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -4005,15 +4396,14 @@ class! {
         border: format!("1px solid {}", var!(border-input));
         border-radius: var!(radius-md);
         font-size: var!(font-base);
-        line-height: "1.5";
         box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        hover {
+        :hover {
             border-color: var!(accent-border);
             background: var!(accent-muted);
         }
-        focus {
+        :focus {
             outline: "none";
             border-color: var!(accent);
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
@@ -4097,6 +4487,7 @@ class! {
         overflow-y: "auto";
         padding: var!(space-lg);
         background: var!(bg-loading);
+        margin-top: var!(gap-component);
     }
 
     pub(crate) c_sticky_header {
@@ -4129,7 +4520,6 @@ class! {
         margin: format!("0px 0px {} 0px", var!(space-md));
         font-size: var!(font-base);
         color: var!(text-secondary);
-        line-height: "1.7";
     }
 
     pub(crate) c_sticky_glass_demo {
@@ -4139,6 +4529,7 @@ class! {
         overflow: "hidden";
         background: format!("linear-gradient(135deg, {}, {}, {})", var!(accent), var!(color-success), var!(color-warning));
         padding: var!(space-xl);
+        margin-top: var!(gap-component);
     }
 
     pub(crate) c_sticky_glass_circle {
@@ -4203,7 +4594,6 @@ class! {
         margin: "0px";
         font-size: var!(font-base);
         color: "rgba(255, 255, 255, 0.8)";
-        line-height: "1.6";
     }
 
     pub(crate) c_sticky_slider_row {
@@ -4262,7 +4652,6 @@ class! {
         font-weight: "600";
         color: var!(text-primary);
         text-align: "center";
-        line-height: "1.6";
     }
 
     pub(crate) c_sticky_gradient_demo {
@@ -4404,6 +4793,7 @@ class! {
         border-radius: var!(radius-md);
         padding: var!(space-lg);
         background: var!(bg-loading);
+        margin-top: var!(gap-component);
         background-image: format!("linear-gradient({} 30%, transparent), linear-gradient(transparent, {} 70%), radial-gradient(farthest-side at 50% 0, rgba(0,0,0,0.12), transparent), radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,0.12), transparent)", var!(bg-card), var!(bg-card));
         background-position: "0px 0px, 0px 100%, 0px 0px, 0px 100%";
         background-repeat: "no-repeat";
@@ -4418,6 +4808,7 @@ class! {
         border-radius: var!(radius-md);
         padding: var!(space-lg);
         background: var!(bg-loading);
+        margin-top: var!(gap-component);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -4434,7 +4825,7 @@ class! {
         background: var!(bg-card);
         border: format!("1px solid {}", var!(border-card));
         box-shadow: var!(shadow-card);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             padding: format!("{} {} {} {}", var!(space-3xl), var!(space-lg), var!(space-3xl), var!(space-lg));
             margin-bottom: var!(space-lg);
         }
@@ -4459,8 +4850,17 @@ class! {
         z-index: "1";
     }
 
+    pub(crate) c_home_hero_badge_row {
+        display: "inline-flex";
+        align-items: "center";
+        gap: var!(space-sm);
+        margin-bottom: var!(space-md);
+    }
+
     pub(crate) c_home_hero_badge {
-        display: "inline-block";
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
         border-radius: var!(radius-pill);
         background: var!(accent-subtle);
@@ -4468,7 +4868,6 @@ class! {
         font-size: var!(font-xs);
         font-weight: "600";
         letter-spacing: "0.05em";
-        margin-bottom: var!(space-md);
         border: format!("1px solid {}", var!(accent-border));
     }
 
@@ -4481,10 +4880,9 @@ class! {
         -webkit-background-clip: "text";
         -webkit-text-fill-color: "transparent";
         background-clip: "text";
-        line-height: "1.1";
         margin-bottom: var!(space-xs);
         filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.15))";
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
     }
@@ -4494,9 +4892,8 @@ class! {
         color: var!(text-secondary);
         margin: "0px auto";
         max-width: "520px";
-        line-height: "1.7";
         margin-bottom: var!(space-lg);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             font-size: var!(font-base);
         }
     }
@@ -4520,14 +4917,13 @@ class! {
         font-size: var!(font-base);
         font-weight: "600";
         text-decoration: "none";
-        border: "none";
+        border: "1.5px solid transparent";
         cursor: "pointer";
         box-shadow: var!(shadow-accent-sm);
         letter-spacing: "0.01em";
         vertical-align: "middle";
-        line-height: "1";
         min-height: "36px";
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
         }
@@ -4549,9 +4945,8 @@ class! {
         cursor: "pointer";
         letter-spacing: "0.01em";
         vertical-align: "middle";
-        line-height: "1";
         min-height: "36px";
-        focus_visible {
+        :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
@@ -4566,7 +4961,7 @@ class! {
         grid-template-columns: "repeat(4, 1fr)";
         gap: var!(space-md);
         margin-bottom: var!(space-xl);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "repeat(2, 1fr)";
             gap: var!(space-sm);
         }
@@ -4586,7 +4981,6 @@ class! {
 
     pub(crate) c_home_stat_icon {
         font-size: var!(font-2xl);
-        line-height: "1";
     }
 
     pub(crate) c_home_stat_value {
@@ -4618,7 +5012,7 @@ class! {
         font-weight: "700";
         color: var!(text-primary);
         margin: "0px";
-        margin-bottom: var!(space-xs);
+        margin-bottom: var!(gap-component);
         letter-spacing: "-0.02em";
     }
 
@@ -4627,14 +5021,13 @@ class! {
         color: var!(text-secondary);
         margin: "0px";
         margin-bottom: var!(space-lg);
-        line-height: "1.6";
     }
 
     pub(crate) c_home_feature_grid {
         display: "grid";
         grid-template-columns: "repeat(2, 1fr)";
         gap: var!(space-md);
-        media("(max-width: 767px)") {
+        @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
     }
@@ -4648,7 +5041,6 @@ class! {
 
     pub(crate) c_feature_icon {
         font-size: var!(font-2xl);
-        line-height: "1";
         margin-bottom: var!(space-xs);
     }
 
@@ -4664,7 +5056,6 @@ class! {
         font-size: var!(font-sm);
         color: var!(text-secondary);
         margin: "0px";
-        line-height: "1.6";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

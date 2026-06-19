@@ -34,7 +34,7 @@ pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNo
 
 /// Renders the floating action button for the vConsole panel.
 ///
-/// Uses the shared `logo_button` component with the `Fab` variant
+/// Uses the shared `euv_logo` component with the `Fab` variant
 /// to display the branded "E" button with gradient background.
 /// Always renders the button and badge in the DOM, toggling visibility
 /// via `transform` + `opacity` so the browser has already performed layout;
@@ -54,10 +54,6 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
         panel_open,
         console_signal,
     }: VconsoleFabProps = node.try_get_props().unwrap_or_default();
-    let fab_on_click: Option<Rc<dyn Fn(Event)>> = Some(Rc::new(move |_: Event| {
-        overlay_push_state();
-        panel_open.set(true);
-    }));
     html! {
         div {
             class: if { panel_open.get() } {
@@ -65,9 +61,9 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
             } else {
                 c_vconsole_fab_visible()
             }
-            logo_button {
+            euv_logo {
                 variant: LogoButtonVariant::Fab
-                on_click: fab_on_click
+                on_click: vconsole_fab_on_click(panel_open)
                 span {
                     class: if { !console_signal.get().is_empty() } {
                         c_vconsole_badge()
@@ -115,18 +111,6 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
     let on_close_click = move |_: Event| {
         overlay_back(None);
         panel_open.set(false);
-    };
-    let on_filter_all_click = move |_: Event| {
-        filter_signal.set(LogFilter::All);
-    };
-    let on_filter_log_click = move |_: Event| {
-        filter_signal.set(LogFilter::Log);
-    };
-    let on_filter_warn_click = move |_: Event| {
-        filter_signal.set(LogFilter::Warn);
-    };
-    let on_filter_error_click = move |_: Event| {
-        filter_signal.set(LogFilter::Error);
     };
     html! {
         div {
@@ -177,25 +161,25 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                         color: var!(accent)
                         text: "All"
                         outline: { filter_signal.get() != LogFilter::All }
-                        on_click: Some(Rc::new(on_filter_all_click))
+                        on_click: vconsole_on_filter_all(filter_signal)
                     }
                     my_badge {
                         color: var!(badge-bg-success)
                         text: "Log"
                         outline: { filter_signal.get() != LogFilter::Log }
-                        on_click: Some(Rc::new(on_filter_log_click))
+                        on_click: vconsole_on_filter_log(filter_signal)
                     }
                     my_badge {
                         color: var!(badge-bg-warning)
                         text: "Warn"
                         outline: { filter_signal.get() != LogFilter::Warn }
-                        on_click: Some(Rc::new(on_filter_warn_click))
+                        on_click: vconsole_on_filter_warn(filter_signal)
                     }
                     my_badge {
                         color: var!(badge-bg-error)
                         text: "Error"
                         outline: { filter_signal.get() != LogFilter::Error }
-                        on_click: Some(Rc::new(on_filter_error_click))
+                        on_click: vconsole_on_filter_error(filter_signal)
                     }
                 }
                 div {

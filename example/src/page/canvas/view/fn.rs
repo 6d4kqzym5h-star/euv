@@ -16,9 +16,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
     let _page_canvas_props: PageCanvasProps = node.try_get_props().unwrap_or_default();
     let state: UseCanvas = use_canvas_state();
     use_fullscreen_popstate(state);
-    let on_clear_canvas = move |_: Event| {
-        clear_canvas(CANVAS_DRAWING_SELECTOR);
-    };
     let on_color_input = move |event: Event| {
         let new_color: String = Reflect::get(
             event.as_ref(),
@@ -32,9 +29,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
         .unwrap_or_default();
         state.get_stroke_color().set(new_color);
         save_stroke_color(&state.get_stroke_color().get());
-    };
-    let on_exit_fullscreen = move |_: Event| {
-        exit_fullscreen(state);
     };
     let on_canvas_mouse_down = move |event: Event| {
         let (offset_x, offset_y): (f64, f64) = get_pointer_offset(&event);
@@ -73,17 +67,21 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🎨"
                 title: "Canvas"
                 subtitle: "A freehand drawing board. Tap Draw to start creating."
             }
-            my_card {
+            euv_card {
                 title: "Drawing Board"
-                primary_button {
-                    label: CANVAS_DRAW_LABEL
-                    onclick: canvas_on_draw(state)
-                    CANVAS_DRAW_LABEL
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: CANVAS_DRAW_LABEL
+                        onclick: canvas_on_draw(state)
+                        CANVAS_DRAW_LABEL
+                    }
                 }
                 div {
                     class: c_canvas_preview_container()
@@ -107,10 +105,14 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                 class: c_canvas_container_fullscreen()
                 div {
                     class: c_canvas_fullscreen_toolbar()
-                    button {
-                        class: c_canvas_fullscreen_button()
-                        onclick: on_clear_canvas
-                        "Clear"
+                    div {
+                        class: c_canvas_fullscreen_toolbar_button()
+                        euv_button {
+                            variant: EuvButtonVariant::Danger
+                            label: "Clear"
+                            onclick: canvas_on_clear(state)
+                            "Clear"
+                        }
                     }
                     div {
                         class: c_canvas_fullscreen_toolbar_center()
@@ -130,10 +132,14 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                             oninput: canvas_on_line_width_input(state)
                         }
                     }
-                    button {
-                        class: c_canvas_fullscreen_button()
-                        onclick: on_exit_fullscreen
-                        CANVAS_FULLSCREEN_EXIT_LABEL
+                    div {
+                        class: c_canvas_fullscreen_toolbar_button()
+                        euv_button {
+                            variant: EuvButtonVariant::Secondary
+                            label: CANVAS_FULLSCREEN_EXIT_LABEL
+                            onclick: canvas_on_exit_fullscreen(state)
+                            CANVAS_FULLSCREEN_EXIT_LABEL
+                        }
                     }
                 }
                 div {

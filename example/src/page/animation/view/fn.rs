@@ -14,21 +14,24 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
     let progress: UseProgress = use_progress();
     let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
-    let _progress_cols: Signal<usize> = use_equal_wrap_all(2, TIMER_CONTROLS_SELECTOR);
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🎬"
                 title: "Animation"
                 subtitle: "CSS transitions, keyframe animations, and reactive style changes."
             }
-            my_card {
+            euv_card {
                 title: "Fade In / Out"
-                primary_button {
-                    label: "Toggle"
-                    onclick: use_toggle(box_visible)
-                    "Toggle Visibility"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: if { box_visible.get() } { EuvButtonVariant::Outline } else { EuvButtonVariant::Primary }
+                        label: "Toggle"
+                        onclick: use_toggle(box_visible)
+                        if { box_visible.get() } { "Hide Element" } else { "Show Element" }
+                    }
                 }
                 if { box_visible.get() } {
                     div {
@@ -37,12 +40,16 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Spinning Element"
-                primary_button {
-                    label: "Toggle"
-                    onclick: use_toggle(spin_active)
-                    if { spin_active.get() } { "Stop Spin" } else { "Start Spin" }
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: if { spin_active.get() } { EuvButtonVariant::Danger } else { EuvButtonVariant::Primary }
+                        label: "Toggle"
+                        onclick: use_toggle(spin_active)
+                        if { spin_active.get() } { "Stop Spin" } else { "Start Spin" }
+                    }
                 }
                 div {
                     class: c_anim_spin_container()
@@ -52,12 +59,16 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Pulse Effect"
-                primary_button {
-                    label: "Toggle"
-                    onclick: use_toggle(pulse_active)
-                    if { pulse_active.get() } { "Stop Pulse" } else { "Start Pulse" }
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: if { pulse_active.get() } { EuvButtonVariant::Danger } else { EuvButtonVariant::Primary }
+                        label: "Toggle"
+                        onclick: use_toggle(pulse_active)
+                        if { pulse_active.get() } { "Stop Pulse" } else { "Start Pulse" }
+                    }
                 }
                 div {
                     class: c_anim_pulse_container()
@@ -67,16 +78,18 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Progress Bar"
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_timer_controls().get_name())
-                    primary_button {
+                    class: c_button_controls_auto()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Start"
                         onclick: progress_on_start(progress)
                         "Start"
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Reset"
                         onclick: progress_on_reset(progress)
                         "Reset"
@@ -89,12 +102,16 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Color Cycle"
-                primary_button {
-                    label: "Next"
-                    onclick: color_cycle_on_next(color_index)
-                    "Next Color"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
+                        label: "Next"
+                        onclick: color_cycle_on_next(color_index)
+                        "Next Color"
+                    }
                 }
                 div {
                     class: c_anim_color_box()

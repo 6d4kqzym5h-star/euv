@@ -42,18 +42,21 @@ fn counter_tab() -> VirtualNode {
                 }
             }
             div {
-                class: format!("{} {}", c_equal_wrap().get_name(), c_keep_alive_counter_controls().get_name())
-                primary_button {
+                class: c_keep_alive_counter_controls()
+                euv_button {
+                    variant: EuvButtonVariant::Secondary
                     label: "-1"
                     onclick: keep_alive_counter_on_decrement(count)
                     "-1"
                 }
-                primary_button {
+                euv_button {
+                    variant: EuvButtonVariant::Primary
                     label: "+1"
                     onclick: keep_alive_counter_on_increment(count)
                     "+1"
                 }
-                primary_button {
+                euv_button {
+                    variant: EuvButtonVariant::Outline
                     label: "Reset"
                     onclick: keep_alive_counter_on_reset(count)
                     "Reset"
@@ -100,7 +103,7 @@ fn form_tab() -> VirtualNode {
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_NAME
                     placeholder: KEEP_ALIVE_NAME_PLACEHOLDER
                     value: name.get()
-                    class: c_form_input()
+                    class: c_euv_input()
                     oninput: on_input_value(name)
                 }
             }
@@ -118,7 +121,7 @@ fn form_tab() -> VirtualNode {
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_EMAIL
                     placeholder: KEEP_ALIVE_EMAIL_PLACEHOLDER
                     value: email.get()
-                    class: c_form_input()
+                    class: c_euv_input()
                     oninput: on_input_value(email)
                 }
             }
@@ -207,21 +210,24 @@ fn timer_tab() -> VirtualNode {
                 }
             }
             div {
-                class: format!("{} {}", c_equal_wrap().get_name(), c_keep_alive_counter_controls().get_name())
+                class: c_keep_alive_counter_controls()
                 if { !running.get() } {
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
                         label: "Start"
                         onclick: keep_alive_timer_on_start(running)
                         "Start"
                     }
                 } else {
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Danger
                         label: "Pause"
                         onclick: keep_alive_timer_on_pause(running, handle)
                         "Pause"
                     }
                 }
-                primary_button {
+                euv_button {
+                    variant: EuvButtonVariant::Secondary
                     label: "Reset"
                     onclick: keep_alive_timer_on_reset(elapsed, running, handle)
                     "Reset"
@@ -362,17 +368,15 @@ pub(crate) fn keep_alive_timer_on_reset(
 pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
     let PageKeepAliveProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<String> = use_signal(|| "counter".to_string());
-    let _keep_alive_cols: Signal<usize> =
-        use_equal_wrap_all(3, KEEP_ALIVE_COUNTER_CONTROLS_SELECTOR);
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "💚"
                 title: "Keep-Alive"
                 subtitle: "Preserve component state across tab switches using CSS display toggling."
             }
-            my_card {
+            euv_card {
                 title: "Tab Switching with State Preservation"
                 div {
                     class: c_keep_alive_tab_bar()
@@ -405,7 +409,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                     { timer_tab() }
                 }
             }
-            my_card {
+            euv_card {
                 title: "How It Works"
                 p {
                     class: c_keep_alive_demo_text()

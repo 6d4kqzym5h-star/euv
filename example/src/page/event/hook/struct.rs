@@ -137,7 +137,7 @@ pub(crate) struct UseTouchEvent {
 pub(crate) struct UseFormEvent {
     /// The input value from oninput.
     #[get(type(copy))]
-    pub(crate) form_input_value: Signal<String>,
+    pub(crate) euv_input_value: Signal<String>,
     /// The change value from onchange.
     #[get(type(copy))]
     pub(crate) form_change_value: Signal<String>,

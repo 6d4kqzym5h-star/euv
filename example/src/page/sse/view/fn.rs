@@ -2,7 +2,7 @@ use crate::*;
 
 /// A Server-Sent Events (SSE) demo page showcasing real-time streaming from an SSE endpoint.
 ///
-/// Renders a page header, a URL input card for connecting to an SSE server,
+/// Renders a header, a URL input card for connecting to an SSE server,
 /// and a messages display card showing real-time event data.
 ///
 /// # Returns
@@ -16,34 +16,40 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "📡"
                 title: "Server-Sent Events"
                 subtitle: "Connect to an SSE endpoint and receive real-time streaming events."
             }
-            my_card {
+            euv_card {
                 title: "Connection"
                 p {
                     class: c_demo_text()
                     "Enter the SSE endpoint URL and click Connect to start receiving server-sent events."
                 }
-                if { state.get_connecting().get() } {
-                    button {
-                        class: c_primary_button()
-                        disabled: true
-                        "Wait"
-                    }
-                } else if { state.get_connected().get() } {
-                    button {
-                        class: c_net_disconnect_button()
-                        onclick: sse_on_disconnect(state)
-                        "Close"
-                    }
-                } else {
-                    button {
-                        class: c_primary_button()
-                        onclick: sse_on_connect(state)
-                        "Connect"
+                div {
+                    class: c_button_controls_auto()
+                    if { state.get_connecting().get() } {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
+                            label: "Wait"
+                            disabled: state.get_connecting()
+                            "Wait"
+                        }
+                    } else if { state.get_connected().get() } {
+                        euv_button {
+                            variant: EuvButtonVariant::Danger
+                            label: "Close"
+                            onclick: sse_on_disconnect(state)
+                            "Close"
+                        }
+                    } else {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
+                            label: "Connect"
+                            onclick: sse_on_connect(state)
+                            "Connect"
+                        }
                     }
                 }
                 if { !state.get_error().get().is_empty() } {
@@ -53,7 +59,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Messages"
                 if { state.get_messages().get().is_empty() } {
                     div {

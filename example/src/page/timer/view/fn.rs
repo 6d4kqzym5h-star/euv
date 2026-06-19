@@ -25,7 +25,6 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
     let PageTimerProps = node.try_get_props().unwrap_or_default();
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
-    let _timer_cols: Signal<usize> = use_equal_wrap_all(2, TIMER_CONTROLS_SELECTOR);
     use_cleanup(move || {
         if let Some(handle) = stopwatch.get_handle().get() {
             handle.clear();
@@ -37,12 +36,12 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "⏱️"
                 title: "Timer"
                 subtitle: "Stopwatch and countdown timer with interval-based updates."
             }
-            my_card {
+            euv_card {
                 title: "Stopwatch"
                 div {
                     class: c_timer_display()
@@ -52,31 +51,34 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_timer_controls().get_name())
+                    class: c_timer_controls()
                     if { !stopwatch.get_running().get() } {
-                        primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Start"
                             onclick: stopwatch_on_start(stopwatch)
                             "Start"
                         }
                     } else {
-                        primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Danger
                             label: "Pause"
                             onclick: stopwatch_on_pause(stopwatch)
                             "Pause"
                         }
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Reset"
                         onclick: stopwatch_on_reset(stopwatch)
                         "Reset"
                     }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Countdown Timer"
                 div {
-                    class: c_form_input_wrapper()
+                    class: c_euv_input_wrapper()
                     label {
                         for: COUNTDOWN_SECONDS_ID
                         class: c_form_label()
@@ -91,7 +93,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                         max: COUNTDOWN_SECONDS_MAX
                         placeholder: COUNTDOWN_SECONDS_PLACEHOLDER
                         value: countdown.get_input()
-                        class: c_form_input()
+                        class: c_euv_input()
                         oninput: countdown_on_input(countdown)
                     }
                 }
@@ -103,21 +105,24 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: format!("{} {}", c_equal_wrap().get_name(), c_timer_controls().get_name())
+                    class: c_timer_controls()
                     if { !countdown.get_running().get() } {
-                        primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
                             label: "Start"
                             onclick: countdown_on_start(countdown)
                             "Start"
                         }
                     } else {
-                        primary_button {
+                        euv_button {
+                            variant: EuvButtonVariant::Danger
                             label: "Pause"
                             onclick: countdown_on_pause(countdown)
                             "Pause"
                         }
                     }
-                    primary_button {
+                    euv_button {
+                        variant: EuvButtonVariant::Secondary
                         label: "Reset"
                         onclick: countdown_on_reset(countdown)
                         "Reset"

@@ -1,10 +1,12 @@
 use crate::*;
 
-/// Props for the `primary_button` component.
+/// Props for the `euv_button` component.
 ///
-/// Defines the strongly-typed interface for the primary button.
+/// Defines the strongly-typed interface for a versatile button.
 #[derive(Clone, Default)]
-pub(crate) struct PrimaryButtonProps {
+pub(crate) struct EuvButtonProps {
+    /// The visual variant determining colour scheme.
+    pub(crate) variant: EuvButtonVariant,
     /// The button label text, used as fallback when no children are provided.
     pub(crate) label: &'static str,
     /// Optional click event handler.

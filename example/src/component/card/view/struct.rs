@@ -1,4 +1,4 @@
-/// Props for the `my_card` component.
+/// Props for the `euv_card` component.
 ///
 /// Defines the strongly-typed interface for the card wrapper.
 #[derive(Clone, Default)]

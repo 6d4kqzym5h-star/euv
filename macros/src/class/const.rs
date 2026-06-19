@@ -1,131 +1,56 @@
-/// The keyword name for the `nth_child` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_NTH_CHILD: &str = "nth_child";
-
-/// The keyword name for the `nth_last_child` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_NTH_LAST_CHILD: &str = "nth_last_child";
-
-/// The keyword name for the `media` query block in class macro syntax.
-pub(crate) const KEYWORD_MEDIA: &str = "media";
-
-/// The keyword name for the `hover` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_HOVER: &str = "hover";
-
-/// The keyword name for the `focus` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_FOCUS: &str = "focus";
-
-/// The keyword name for the `focus_within` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_FOCUS_WITHIN: &str = "focus_within";
-
-/// The keyword name for the `focus_visible` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_FOCUS_VISIBLE: &str = "focus_visible";
-
-/// The keyword name for the `active` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_ACTIVE: &str = "active";
-
-/// The keyword name for the `visited` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_VISITED: &str = "visited";
-
-/// The keyword name for the `disabled` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_DISABLED: &str = "disabled";
-
-/// The keyword name for the `enabled` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_ENABLED: &str = "enabled";
-
-/// The keyword name for the `checked` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_CHECKED: &str = "checked";
-
-/// The keyword name for the `readonly` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_READONLY: &str = "readonly";
-
-/// The keyword name for the `readwrite` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_READWRITE: &str = "readwrite";
-
-/// The keyword name for the `required` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_REQUIRED: &str = "required";
-
-/// The keyword name for the `optional` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_OPTIONAL: &str = "optional";
-
-/// The keyword name for the `valid` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_VALID: &str = "valid";
-
-/// The keyword name for the `invalid` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_INVALID: &str = "invalid";
-
-/// The keyword name for the `in_range` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_IN_RANGE: &str = "in_range";
-
-/// The keyword name for the `out_of_range` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_OUT_OF_RANGE: &str = "out_of_range";
-
-/// The keyword name for the `placeholder_shown` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_PLACEHOLDER_SHOWN: &str = "placeholder_shown";
-
-/// The keyword name for the `first_child` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_FIRST_CHILD: &str = "first_child";
-
-/// The keyword name for the `last_child` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_LAST_CHILD: &str = "last_child";
-
-/// The keyword name for the `only_child` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_ONLY_CHILD: &str = "only_child";
-
-/// The keyword name for the `first_of_type` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_FIRST_OF_TYPE: &str = "first_of_type";
-
-/// The keyword name for the `last_of_type` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_LAST_OF_TYPE: &str = "last_of_type";
-
-/// The keyword name for the `only_of_type` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_ONLY_OF_TYPE: &str = "only_of_type";
-
-/// The keyword name for the `root` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_ROOT: &str = "root";
-
-/// The keyword name for the `empty` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_EMPTY: &str = "empty";
-
-/// The keyword name for the `target` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_TARGET: &str = "target";
-
-/// The keyword name for the `link` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_LINK: &str = "link";
-
-/// The keyword name for the `any_link` pseudo-class in class macro syntax.
-pub(crate) const KEYWORD_ANY_LINK: &str = "any_link";
-
-/// The keyword name for the `before` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_BEFORE: &str = "before";
-
-/// The keyword name for the `after` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_AFTER: &str = "after";
-
-/// The keyword name for the `first_line` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_FIRST_LINE: &str = "first_line";
-
-/// The keyword name for the `first_letter` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_FIRST_LETTER: &str = "first_letter";
-
-/// The keyword name for the `selection` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_SELECTION: &str = "selection";
-
-/// The keyword name for the `placeholder` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_PLACEHOLDER: &str = "placeholder";
-
-/// The keyword name for the `backdrop` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_BACKDROP: &str = "backdrop";
-
-/// The keyword name for the `marker` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_MARKER: &str = "marker";
-
-/// The keyword name for the `spelling_error` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_SPELLING_ERROR: &str = "spelling_error";
-
-/// The keyword name for the `grammar_error` pseudo-element in class macro syntax.
-pub(crate) const KEYWORD_GRAMMAR_ERROR: &str = "grammar_error";
-
 /// The CSS `@media` rule prefix used in serialized media query strings.
 pub(crate) const CSS_MEDIA_PREFIX: &str = "@media ";
+
+/// The CSS `@keyframes` rule prefix used in serialized keyframes strings.
+pub(crate) const CSS_KEYFRAMES_PREFIX: &str = "@keyframes ";
+
+/// The CSS `@supports` rule prefix used in serialized supports strings.
+pub(crate) const CSS_SUPPORTS_PREFIX: &str = "@supports ";
+
+/// The CSS `@layer` rule prefix used in serialized layer strings.
+pub(crate) const CSS_LAYER_PREFIX: &str = "@layer ";
+
+/// The CSS `@container` rule prefix used in serialized container strings.
+pub(crate) const CSS_CONTAINER_PREFIX: &str = "@container ";
+
+/// The CSS `@property` rule prefix used in serialized property strings.
+pub(crate) const CSS_PROPERTY_PREFIX: &str = "@property ";
+
+/// The CSS `@scope` rule prefix used in serialized scope strings.
+pub(crate) const CSS_SCOPE_PREFIX: &str = "@scope ";
+
+/// The CSS `@font-face` rule marker used in serialized font-face strings.
+pub(crate) const CSS_FONT_FACE_PREFIX: &str = "@font-face";
+
+/// The CSS `@charset` rule marker used in serialized charset strings.
+pub(crate) const CSS_CHARSET_PREFIX: &str = "@charset ";
+
+/// The CSS `@import` rule marker used in serialized import strings.
+pub(crate) const CSS_IMPORT_PREFIX: &str = "@import ";
+
+/// The CSS `@namespace` rule marker used in serialized namespace strings.
+pub(crate) const CSS_NAMESPACE_PREFIX: &str = "@namespace ";
+
+/// The CSS `@page` rule marker used in serialized page strings.
+pub(crate) const CSS_PAGE_PREFIX: &str = "@page ";
+
+/// The CSS `@color-profile` rule marker used in serialized color-profile strings.
+pub(crate) const CSS_COLOR_PROFILE_PREFIX: &str = "@color-profile ";
+
+/// The CSS `@counter-style` rule marker used in serialized counter-style strings.
+pub(crate) const CSS_COUNTER_STYLE_PREFIX: &str = "@counter-style ";
+
+/// The CSS `@font-feature-values` rule marker used in serialized font-feature-values strings.
+pub(crate) const CSS_FONT_FEATURE_VALUES_PREFIX: &str = "@font-feature-values ";
+
+/// The CSS `@font-palette-values` rule marker used in serialized font-palette-values strings.
+pub(crate) const CSS_FONT_PALETTE_VALUES_PREFIX: &str = "@font-palette-values ";
+
+/// The CSS `@document` rule marker used in serialized document strings.
+pub(crate) const CSS_DOCUMENT_PREFIX: &str = "@document ";
+
+/// The CSS `@starting-style` rule marker used in serialized starting-style strings.
+pub(crate) const CSS_STARTING_STYLE_PREFIX: &str = "@starting-style";
 
 /// The CSS pseudo-rule serialization separator between selector and style block.
 pub(crate) const CSS_RULE_OPEN: &str = " { ";
@@ -139,6 +64,9 @@ pub(crate) const CSS_DECL_TERMINATOR: &str = "; ";
 /// The space string used for concatenating CSS parts.
 pub(crate) const STR_SPACE: &str = " ";
 
+/// The hyphen string used for replacing underscores in kebab-case conversion.
+pub(crate) const STR_HYPHEN: &str = "-";
+
 /// The keyword name for the `var` function in class macro syntax.
 pub(crate) const VAR: &str = "var";
 
@@ -151,125 +79,92 @@ pub(crate) const CSS_VAR_SUFFIX: &str = ")";
 /// The `format` macro name used to detect format! invocations in class property values.
 pub(crate) const FORMAT_MACRO: &str = "format";
 
-/// The CSS pseudo selector for `:hover`.
-pub(crate) const PSEUDO_HOVER: &str = ":hover";
+/// The at-rule keyword name for `media`.
+pub(crate) const AT_MEDIA: &str = "media";
 
-/// The CSS pseudo selector for `:focus`.
-pub(crate) const PSEUDO_FOCUS: &str = ":focus";
+/// The at-rule keyword name for `keyframes`.
+pub(crate) const AT_KEYFRAMES: &str = "keyframes";
 
-/// The CSS pseudo selector for `:focus-within`.
-pub(crate) const PSEUDO_FOCUS_WITHIN: &str = ":focus-within";
+/// The at-rule keyword name for `supports`.
+pub(crate) const AT_SUPPORTS: &str = "supports";
 
-/// The CSS pseudo selector for `:focus-visible`.
-pub(crate) const PSEUDO_FOCUS_VISIBLE: &str = ":focus-visible";
+/// The at-rule keyword name for `layer`.
+pub(crate) const AT_LAYER: &str = "layer";
 
-/// The CSS pseudo selector for `:active`.
-pub(crate) const PSEUDO_ACTIVE: &str = ":active";
+/// The at-rule keyword name for `container`.
+pub(crate) const AT_CONTAINER: &str = "container";
 
-/// The CSS pseudo selector for `:visited`.
-pub(crate) const PSEUDO_VISITED: &str = ":visited";
+/// The at-rule keyword name for `property`.
+pub(crate) const AT_PROPERTY: &str = "property";
 
-/// The CSS pseudo selector for `:disabled`.
-pub(crate) const PSEUDO_DISABLED: &str = ":disabled";
+/// The at-rule keyword name for `scope`.
+pub(crate) const AT_SCOPE: &str = "scope";
 
-/// The CSS pseudo selector for `:enabled`.
-pub(crate) const PSEUDO_ENABLED: &str = ":enabled";
+/// The at-rule keyword name for `font-face`.
+pub(crate) const AT_FONT_FACE: &str = "font-face";
 
-/// The CSS pseudo selector for `:checked`.
-pub(crate) const PSEUDO_CHECKED: &str = ":checked";
+/// The at-rule keyword name for `charset`.
+pub(crate) const AT_CHARSET: &str = "charset";
 
-/// The CSS pseudo selector for `:read-only`.
-pub(crate) const PSEUDO_READONLY: &str = ":read-only";
+/// The at-rule keyword name for `import`.
+pub(crate) const AT_IMPORT: &str = "import";
 
-/// The CSS pseudo selector for `:read-write`.
-pub(crate) const PSEUDO_READWRITE: &str = ":read-write";
+/// The at-rule keyword name for `namespace`.
+pub(crate) const AT_NAMESPACE: &str = "namespace";
 
-/// The CSS pseudo selector for `:required`.
-pub(crate) const PSEUDO_REQUIRED: &str = ":required";
+/// The at-rule keyword name for `page`.
+pub(crate) const AT_PAGE: &str = "page";
 
-/// The CSS pseudo selector for `:optional`.
-pub(crate) const PSEUDO_OPTIONAL: &str = ":optional";
+/// The at-rule keyword name for `color-profile`.
+pub(crate) const AT_COLOR_PROFILE: &str = "color-profile";
 
-/// The CSS pseudo selector for `:valid`.
-pub(crate) const PSEUDO_VALID: &str = ":valid";
+/// The at-rule keyword name for `counter-style`.
+pub(crate) const AT_COUNTER_STYLE: &str = "counter-style";
 
-/// The CSS pseudo selector for `:invalid`.
-pub(crate) const PSEUDO_INVALID: &str = ":invalid";
+/// The at-rule keyword name for `font-feature-values`.
+pub(crate) const AT_FONT_FEATURE_VALUES: &str = "font-feature-values";
 
-/// The CSS pseudo selector for `:in-range`.
-pub(crate) const PSEUDO_IN_RANGE: &str = ":in-range";
+/// The at-rule keyword name for `font-palette-values`.
+pub(crate) const AT_FONT_PALETTE_VALUES: &str = "font-palette-values";
 
-/// The CSS pseudo selector for `:out-of-range`.
-pub(crate) const PSEUDO_OUT_OF_RANGE: &str = ":out-of-range";
+/// The at-rule keyword name for `document`.
+pub(crate) const AT_DOCUMENT: &str = "document";
 
-/// The CSS pseudo selector for `:placeholder-shown`.
-pub(crate) const PSEUDO_PLACEHOLDER_SHOWN: &str = ":placeholder-shown";
+/// The at-rule keyword name for `starting-style`.
+pub(crate) const AT_STARTING_STYLE: &str = "starting-style";
 
-/// The CSS pseudo selector for `:first-child`.
-pub(crate) const PSEUDO_FIRST_CHILD: &str = ":first-child";
+/// The at-rule keyword name for `view-transition`.
+pub(crate) const AT_VIEW_TRANSITION: &str = "view-transition";
 
-/// The CSS pseudo selector for `:last-child`.
-pub(crate) const PSEUDO_LAST_CHILD: &str = ":last-child";
+/// The at-rule keyword name for `position-try`.
+pub(crate) const AT_POSITION_TRY: &str = "position-try";
 
-/// The CSS pseudo selector for `:only-child`.
-pub(crate) const PSEUDO_ONLY_CHILD: &str = ":only-child";
+/// The at-rule keyword name for `custom-media`.
+pub(crate) const AT_CUSTOM_MEDIA: &str = "custom-media";
 
-/// The CSS pseudo selector for `:first-of-type`.
-pub(crate) const PSEUDO_FIRST_OF_TYPE: &str = ":first-of-type";
+/// The at-rule keyword name for `function`.
+pub(crate) const AT_FUNCTION: &str = "function";
 
-/// The CSS pseudo selector for `:last-of-type`.
-pub(crate) const PSEUDO_LAST_OF_TYPE: &str = ":last-of-type";
+/// The colon character used in CSS pseudo-class/at-rule syntax.
+pub(crate) const CHAR_COLON: char = ':';
 
-/// The CSS pseudo selector for `:only-of-type`.
-pub(crate) const PSEUDO_ONLY_OF_TYPE: &str = ":only-of-type";
+/// The comma character used in CSS media query lists.
+pub(crate) const CHAR_COMMA: char = ',';
 
-/// The CSS pseudo selector for `:root`.
-pub(crate) const PSEUDO_ROOT: &str = ":root";
+/// The left parenthesis character used in CSS functional notation.
+pub(crate) const CHAR_LEFT_PAREN: char = '(';
 
-/// The CSS pseudo selector for `:empty`.
-pub(crate) const PSEUDO_EMPTY: &str = ":empty";
+/// The right parenthesis character used in CSS functional notation.
+pub(crate) const CHAR_RIGHT_PAREN: char = ')';
 
-/// The CSS pseudo selector for `:target`.
-pub(crate) const PSEUDO_TARGET: &str = ":target";
+/// The left bracket character used in CSS attribute selectors.
+pub(crate) const CHAR_LEFT_BRACKET: char = '[';
 
-/// The CSS pseudo selector for `:link`.
-pub(crate) const PSEUDO_LINK: &str = ":link";
-
-/// The CSS pseudo selector for `:any-link`.
-pub(crate) const PSEUDO_ANY_LINK: &str = ":any-link";
-
-/// The CSS pseudo element selector for `::before`.
-pub(crate) const PSEUDO_BEFORE: &str = "::before";
-
-/// The CSS pseudo element selector for `::after`.
-pub(crate) const PSEUDO_AFTER: &str = "::after";
-
-/// The CSS pseudo element selector for `::first-line`.
-pub(crate) const PSEUDO_FIRST_LINE: &str = "::first-line";
-
-/// The CSS pseudo element selector for `::first-letter`.
-pub(crate) const PSEUDO_FIRST_LETTER: &str = "::first-letter";
-
-/// The CSS pseudo element selector for `::selection`.
-pub(crate) const PSEUDO_SELECTION: &str = "::selection";
-
-/// The CSS pseudo element selector for `::placeholder`.
-pub(crate) const PSEUDO_PLACEHOLDER: &str = "::placeholder";
-
-/// The CSS pseudo element selector for `::backdrop`.
-pub(crate) const PSEUDO_BACKDROP: &str = "::backdrop";
-
-/// The CSS pseudo element selector for `::marker`.
-pub(crate) const PSEUDO_MARKER: &str = "::marker";
-
-/// The CSS pseudo element selector for `::spelling-error`.
-pub(crate) const PSEUDO_SPELLING_ERROR: &str = "::spelling-error";
-
-/// The CSS pseudo element selector for `::grammar-error`.
-pub(crate) const PSEUDO_GRAMMAR_ERROR: &str = "::grammar-error";
-
-/// The hyphen string used for replacing underscores in kebab-case conversion.
-pub(crate) const STR_HYPHEN: &str = "-";
+/// The right bracket character used in CSS attribute selectors.
+pub(crate) const CHAR_RIGHT_BRACKET: char = ']';
 
 /// The closing brace character used to terminate CSS rule blocks.
 pub(crate) const CHAR_CSS_RULE_CLOSE: char = '}';
+
+/// The at-sign character used to prefix CSS at-rules.
+pub(crate) const CHAR_AT: char = '@';

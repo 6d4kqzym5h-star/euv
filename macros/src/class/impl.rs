@@ -4,6 +4,11 @@ use crate::*;
 impl Parse for ClassInput {
     /// Parses the `class!` macro input into a `ClassInput` AST.
     ///
+    /// Supports CSS-native syntax:
+    /// - Pseudo-classes: `:hover { ... }`, `:focus-visible { ... }`, `:nth-child(2n) { ... }`
+    /// - Pseudo-elements: `::before { ... }`, `::-webkit-scrollbar { ... }`
+    /// - At-rules: `@media (max-width: 767px) { ... }`, `@keyframes fade { ... }`
+    ///
     /// # Arguments
     ///
     /// - `ParseStream` - The syn parse stream to read from.
@@ -44,40 +49,38 @@ impl Parse for ClassInput {
             braced!(content in input);
             let mut extends: Vec<ClassExtend> = Vec::new();
             let mut properties: Vec<(ClassPropKey, ClassPropValue)> = Vec::new();
-            let mut pseudo_blocks: Vec<PseudoBlock> = Vec::new();
-            let mut media_blocks: Vec<MediaBlock> = Vec::new();
+            let mut selector_blocks: Vec<SelectorBlock> = Vec::new();
+            let mut at_rule_blocks: Vec<AtRuleBlock> = Vec::new();
             while !content.is_empty() {
                 if content.peek(Token![::]) {
                     content.parse::<Token![::]>()?;
-                    let mut selector: String =
-                        format!("::{name}", name = parse_ident_name(&content)?);
-                    while content.peek(Token![:])
-                        && !content.peek2(Token![:])
-                        && !content.peek2(Brace)
-                    {
-                        content.parse::<Token![:]>()?;
-                        let pseudo_class: String = parse_ident_name(&content)?;
-                        selector.push(':');
-                        selector.push_str(&pseudo_class);
-                    }
+                    let selector: String = parse_selector(&content, 2)?;
                     let block_content: ParseBuffer<'_>;
                     braced!(block_content in content);
-                    let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> = Vec::new();
-                    while !block_content.is_empty() {
-                        let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
-                        block_content.parse::<Token![:]>()?;
-                        let expr: Expr = block_content.parse()?;
-                        let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
-                        let prop_value: ClassPropValue = ClassPropValue::Expr(expanded);
-                        block_properties.push((css_key, prop_value));
-                        if block_content.peek(Semi) {
-                            block_content.parse::<Semi>()?;
-                        }
-                    }
-                    pseudo_blocks.push(PseudoBlock {
+                    let inner: BlockContent = parse_block_content(&block_content)?;
+                    selector_blocks.push(SelectorBlock::new(
                         selector,
-                        properties: block_properties,
-                    });
+                        inner.properties,
+                        inner.selector_blocks,
+                    ));
+                    continue;
+                }
+                if content.peek(Token![:]) && !content.peek2(Brace) {
+                    content.parse::<Token![:]>()?;
+                    let selector: String = parse_selector(&content, 1)?;
+                    let block_content: ParseBuffer<'_>;
+                    braced!(block_content in content);
+                    let inner: BlockContent = parse_block_content(&block_content)?;
+                    selector_blocks.push(SelectorBlock::new(
+                        selector,
+                        inner.properties,
+                        inner.selector_blocks,
+                    ));
+                    continue;
+                }
+                if peek_at_rule(&content) {
+                    let at_rule: AtRuleBlock = parse_at_rule(&content)?;
+                    at_rule_blocks.push(at_rule);
                     continue;
                 }
                 if content.peek(Ident) {
@@ -85,7 +88,7 @@ impl Parse for ClassInput {
                     let keyword: Ident = forked.parse()?;
                     let keyword_str: String = keyword.to_string();
                     let is_extends: bool =
-                        forked.peek(Paren) && !keyword_str.starts_with(KEYWORD_MEDIA) && {
+                        forked.peek(Paren) && !keyword_str.starts_with(CHAR_AT) && {
                             let forked_extends_buffer: ParseBuffer<'_> = content.fork();
                             let _ = forked_extends_buffer.parse::<Ident>();
                             if forked_extends_buffer.peek(Paren) {
@@ -119,150 +122,6 @@ impl Parse for ClassInput {
                         }
                         continue;
                     }
-                    if let Some(selector) = lookup_pseudo_selector(&keyword_str)
-                        && forked.peek(Brace)
-                    {
-                        content.parse::<Ident>()?;
-                        let selector: &'static str = selector;
-                        let block_content: ParseBuffer<'_>;
-                        braced!(block_content in content);
-                        let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> = Vec::new();
-                        while !block_content.is_empty() {
-                            let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
-                            block_content.parse::<Token![:]>()?;
-                            let expr: Expr = block_content.parse()?;
-                            let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
-                            let prop_value: ClassPropValue = ClassPropValue::Expr(expanded);
-                            block_properties.push((css_key, prop_value));
-                            if block_content.peek(Semi) {
-                                block_content.parse::<Semi>()?;
-                            }
-                        }
-                        pseudo_blocks.push(PseudoBlock {
-                            selector: selector.to_string(),
-                            properties: block_properties,
-                        });
-                        continue;
-                    } else if (keyword_str == KEYWORD_NTH_CHILD
-                        || keyword_str == KEYWORD_NTH_LAST_CHILD)
-                        && forked.peek(Paren)
-                    {
-                        let forked_nth_check: ParseBuffer<'_> = forked;
-                        let _paren_content: ParseBuffer<'_>;
-                        parenthesized!(_paren_content in forked_nth_check);
-                        if forked_nth_check.peek(Brace) {
-                            content.parse::<Ident>()?;
-                            let paren_content: ParseBuffer<'_>;
-                            parenthesized!(paren_content in content);
-                            let arg_tokens: proc_macro2::TokenStream = paren_content.parse()?;
-                            let selector: String = format!(
-                                ":{keyword_str}({})",
-                                arg_tokens.to_string().replace(CHAR_SPACE, "")
-                            );
-                            let block_content: ParseBuffer<'_>;
-                            braced!(block_content in content);
-                            let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> =
-                                Vec::new();
-                            while !block_content.is_empty() {
-                                let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
-                                block_content.parse::<Token![:]>()?;
-                                let expr: Expr = block_content.parse()?;
-                                let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
-                                let prop_value: ClassPropValue = ClassPropValue::Expr(expanded);
-                                block_properties.push((css_key, prop_value));
-                                if block_content.peek(Semi) {
-                                    block_content.parse::<Semi>()?;
-                                }
-                            }
-                            pseudo_blocks.push(PseudoBlock {
-                                selector,
-                                properties: block_properties,
-                            });
-                            continue;
-                        }
-                    } else if keyword_str == KEYWORD_MEDIA && forked.peek(Paren) {
-                        let forked_media_check: ParseBuffer<'_> = forked;
-                        let paren_content2: ParseBuffer<'_>;
-                        parenthesized!(paren_content2 in forked_media_check);
-                        if forked_media_check.peek(Brace) {
-                            content.parse::<Ident>()?;
-                            let query_content: ParseBuffer<'_>;
-                            parenthesized!(query_content in content);
-                            let query_expr: Expr = query_content.parse()?;
-                            let query_str: String = match &query_expr {
-                                Expr::Lit(ExprLit {
-                                    lit: Lit::Str(literal_string),
-                                    ..
-                                }) => literal_string.value(),
-                                _ => query_expr
-                                    .to_token_stream()
-                                    .to_string()
-                                    .replace(CHAR_SPACE, STR_EMPTY),
-                            };
-                            let block_content: ParseBuffer<'_>;
-                            braced!(block_content in content);
-                            let mut block_properties: Vec<(ClassPropKey, ClassPropValue)> =
-                                Vec::new();
-                            let mut block_pseudo_blocks: Vec<PseudoBlock> = Vec::new();
-                            while !block_content.is_empty() {
-                                if block_content.peek(Token![::]) {
-                                    block_content.parse::<Token![::]>()?;
-                                    let mut selector: String = format!(
-                                        "::{name}",
-                                        name = parse_ident_name(&block_content)?
-                                    );
-                                    while block_content.peek(Token![:])
-                                        && !block_content.peek2(Token![:])
-                                        && !block_content.peek2(Brace)
-                                    {
-                                        block_content.parse::<Token![:]>()?;
-                                        let pseudo_class: String =
-                                            parse_ident_name(&block_content)?;
-                                        selector.push(':');
-                                        selector.push_str(&pseudo_class);
-                                    }
-                                    let inner_content: ParseBuffer<'_>;
-                                    braced!(inner_content in block_content);
-                                    let mut inner_properties: Vec<(ClassPropKey, ClassPropValue)> =
-                                        Vec::new();
-                                    while !inner_content.is_empty() {
-                                        let css_key: ClassPropKey =
-                                            parse_class_prop_key(&inner_content)?;
-                                        inner_content.parse::<Token![:]>()?;
-                                        let expr: Expr = inner_content.parse()?;
-                                        let expanded: proc_macro2::TokenStream =
-                                            expand_var_macros(&expr);
-                                        let prop_value: ClassPropValue =
-                                            ClassPropValue::Expr(expanded);
-                                        inner_properties.push((css_key, prop_value));
-                                        if inner_content.peek(Semi) {
-                                            inner_content.parse::<Semi>()?;
-                                        }
-                                    }
-                                    block_pseudo_blocks.push(PseudoBlock {
-                                        selector,
-                                        properties: inner_properties,
-                                    });
-                                    continue;
-                                }
-                                let css_key: ClassPropKey = parse_class_prop_key(&block_content)?;
-                                block_content.parse::<Token![:]>()?;
-                                let expr: Expr = block_content.parse()?;
-                                let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
-                                let prop_value: ClassPropValue = ClassPropValue::Expr(expanded);
-                                block_properties.push((css_key, prop_value));
-                                if block_content.peek(Semi) {
-                                    block_content.parse::<Semi>()?;
-                                }
-                            }
-                            media_blocks.push(MediaBlock {
-                                query: query_str,
-                                properties: block_properties,
-                                pseudo_blocks: block_pseudo_blocks,
-                            });
-                            continue;
-                        }
-                    }
                 }
                 let css_key: ClassPropKey = parse_class_prop_key(&content)?;
                 content.parse::<Token![:]>()?;
@@ -280,8 +139,8 @@ impl Parse for ClassInput {
                 params,
                 extends,
                 properties,
-                pseudo_blocks,
-                media_blocks,
+                selector_blocks,
+                at_rule_blocks,
             });
         }
         Ok(Self { classes })
@@ -300,7 +159,7 @@ impl ToTokens for ClassDef {
         let name: &Ident = self.get_name();
         let class_name_str: String = name.to_string();
         let has_extra: bool =
-            !self.get_pseudo_blocks().is_empty() || !self.get_media_blocks().is_empty();
+            !self.get_selector_blocks().is_empty() || !self.get_at_rule_blocks().is_empty();
         let has_extends: bool = !self.get_extends().is_empty();
         match self.try_get_params() {
             Some(params) => {
@@ -331,8 +190,18 @@ impl ToTokens for ClassDef {
                     .collect();
                 for (key, value) in self.get_properties() {
                     let ClassPropValue::Expr(expr) = value;
-                    let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
-                    all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr) + #CSS_DECL_TERMINATOR });
+                    match key {
+                        ClassPropKey::Static(static_key) => {
+                            let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
+                            all_css_parts.push(
+                                quote! { #key_sep.to_string() + &(#expr) + #CSS_DECL_TERMINATOR },
+                            );
+                        }
+                        ClassPropKey::Dynamic(_) => {
+                            let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
+                            all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr) + #CSS_DECL_TERMINATOR });
+                        }
+                    }
                 }
                 let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
                     quote! { #class_name_str.to_string() }
@@ -341,21 +210,21 @@ impl ToTokens for ClassDef {
                     quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)) }
                 };
                 if has_extra {
-                    let pseudo_expr: proc_macro2::TokenStream =
-                        pseudo_blocks_to_tokens(self.get_pseudo_blocks())
-                            .unwrap_or_else(|| quote! { vec![] });
-                    let media_expr: proc_macro2::TokenStream =
-                        media_blocks_to_tokens(self.get_media_blocks())
-                            .unwrap_or_else(|| quote! { vec![] });
+                    let selector_expr: proc_macro2::TokenStream =
+                        selector_blocks_to_tokens(self.get_selector_blocks())
+                            .unwrap_or_else(|| quote! { Vec::new() });
+                    let at_rule_expr: proc_macro2::TokenStream =
+                        at_rule_blocks_to_media_tokens(self.get_at_rule_blocks())
+                            .unwrap_or_else(|| quote! { Vec::new() });
                     tokens.extend(quote! {
                         #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
-                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #pseudo_expr, #media_expr)
+                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #selector_expr, #at_rule_expr)
                         }
                     });
                 } else {
                     tokens.extend(quote! {
                         #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
-                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), vec![], vec![])
+                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), Vec::new(), Vec::new())
                         }
                     });
                 }
@@ -376,54 +245,21 @@ impl ToTokens for ClassDef {
                             is_static_string_expr(expr)
                         },
                     )
-                    && self.get_pseudo_blocks().iter().all(|block: &PseudoBlock| {
-                        block.get_properties().iter().all(
-                            |(key, value): &(ClassPropKey, ClassPropValue)| {
-                                let ClassPropKey::Static(_) = key else {
-                                    return false;
-                                };
-                                let ClassPropValue::Expr(expr) = value;
-                                is_static_string_expr(expr)
-                            },
-                        )
-                    })
-                    && self.get_media_blocks().iter().all(|block: &MediaBlock| {
-                        block.get_properties().iter().all(
-                            |(key, value): &(ClassPropKey, ClassPropValue)| {
-                                let ClassPropKey::Static(_) = key else {
-                                    return false;
-                                };
-                                let ClassPropValue::Expr(expr) = value;
-                                is_static_string_expr(expr)
-                            },
-                        ) && block
-                            .get_pseudo_blocks()
-                            .iter()
-                            .all(|pseudo_block: &PseudoBlock| {
-                                pseudo_block.get_properties().iter().all(
-                                    |(key, value): &(ClassPropKey, ClassPropValue)| {
-                                        let ClassPropKey::Static(_) = key else {
-                                            return false;
-                                        };
-                                        let ClassPropValue::Expr(expr) = value;
-                                        is_static_string_expr(expr)
-                                    },
-                                )
-                            })
-                    });
-                let (pseudo_expr, media_expr): (
+                    && is_selector_blocks_static(self.get_selector_blocks())
+                    && is_at_rule_blocks_static(self.get_at_rule_blocks());
+                let (selector_expr, at_rule_expr): (
                     proc_macro2::TokenStream,
                     proc_macro2::TokenStream,
                 ) = if has_extra {
-                    let pseudo: proc_macro2::TokenStream =
-                        pseudo_blocks_to_tokens(self.get_pseudo_blocks())
-                            .unwrap_or_else(|| quote! { vec![] });
-                    let media: proc_macro2::TokenStream =
-                        media_blocks_to_tokens(self.get_media_blocks())
-                            .unwrap_or_else(|| quote! { vec![] });
-                    (pseudo, media)
+                    let selector: proc_macro2::TokenStream =
+                        selector_blocks_to_tokens(self.get_selector_blocks())
+                            .unwrap_or_else(|| quote! { Vec::new() });
+                    let at_rule: proc_macro2::TokenStream =
+                        at_rule_blocks_to_media_tokens(self.get_at_rule_blocks())
+                            .unwrap_or_else(|| quote! { Vec::new() });
+                    (selector, at_rule)
                 } else {
-                    (quote! { vec![] }, quote! { vec![] })
+                    (quote! { Vec::new() }, quote! { Vec::new() })
                 };
                 if all_static {
                     let mut css_string: String = String::new();
@@ -438,10 +274,10 @@ impl ToTokens for ClassDef {
                         css_string.push_str(CSS_DECL_TERMINATOR);
                     }
                     if has_extra {
-                        let pseudo_static: String =
-                            pseudo_blocks_to_static_string(self.get_pseudo_blocks());
-                        let media_static: String =
-                            media_blocks_to_static_string(self.get_media_blocks());
+                        let selector_static: String =
+                            selector_blocks_to_static_string(self.get_selector_blocks());
+                        let at_rule_static: String =
+                            at_rule_blocks_to_static_string(self.get_at_rule_blocks());
                         emit_once_lock_fn(
                             tokens,
                             OnceLockParams {
@@ -450,8 +286,8 @@ impl ToTokens for ClassDef {
                                 const_name_token: &const_name_token,
                                 class_name_str: &class_name_str,
                                 style_expr: &quote! { #css_string.to_string() },
-                                pseudo_expr: &quote! { ::euv::Css::parse_pseudo_rules(#pseudo_static) },
-                                media_expr: &quote! { ::euv::Css::parse_media_rules(#media_static) },
+                                selector_expr: &quote! { ::euv::Css::parse_pseudo_rules(#selector_static) },
+                                at_rule_expr: &quote! { ::euv::Css::parse_media_rules(#at_rule_static) },
                             },
                         );
                     } else {
@@ -463,8 +299,8 @@ impl ToTokens for ClassDef {
                                 const_name_token: &const_name_token,
                                 class_name_str: &class_name_str,
                                 style_expr: &quote! { #css_string.to_string() },
-                                pseudo_expr: &pseudo_expr,
-                                media_expr: &media_expr,
+                                selector_expr: &selector_expr,
+                                at_rule_expr: &at_rule_expr,
                             },
                         );
                     }
@@ -484,9 +320,17 @@ impl ToTokens for ClassDef {
                         .collect();
                     for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
-                        let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
-                        all_css_parts
-                            .push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                        match key {
+                            ClassPropKey::Static(static_key) => {
+                                let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
+                                all_css_parts.push(quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                            }
+                            ClassPropKey::Dynamic(_) => {
+                                let key_token: proc_macro2::TokenStream =
+                                    class_prop_key_to_tokens(key);
+                                all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                            }
+                        }
                     }
                     emit_once_lock_fn(
                         tokens,
@@ -496,8 +340,8 @@ impl ToTokens for ClassDef {
                             const_name_token: &const_name_token,
                             class_name_str: &class_name_str,
                             style_expr: &quote! { [#(#all_css_parts), *].concat() },
-                            pseudo_expr: &pseudo_expr,
-                            media_expr: &media_expr,
+                            selector_expr: &selector_expr,
+                            at_rule_expr: &at_rule_expr,
                         },
                     );
                 }

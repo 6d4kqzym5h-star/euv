@@ -45,14 +45,16 @@ pub(crate) enum HtmlNode {
 
 /// Represents the value side of an attribute.
 ///
-/// Supports plain expressions, style objects, reactive conditionals,
-/// and merged multi-class/multi-style attribute values.
+/// Supports plain expressions, style objects, reactive/inline conditionals,
+/// reactive/inline match expressions, and merged multi-class/multi-style attribute values.
 #[derive(Clone, Debug)]
 pub(crate) enum HtmlAttrValue {
     /// A normal Rust expression.
     Expr(Expr),
-    /// A reactive conditional: `if {expr} { value } else if {expr} { value } else { value }`.
+    /// A conditional: `if {expr} { value }` (reactive) or `if condition { value }` (inline).
     If(HtmlAttrIf),
+    /// A match expression: `match {expr} { ... }` (reactive) or `match expr { ... }` (inline).
+    Match(HtmlAttrMatch),
     /// A style object: `{key: value; key2: value2;}`.
     ///
     /// The value can be either a string literal or an expression.
@@ -69,17 +71,22 @@ pub(crate) enum HtmlAttrValue {
 
 /// Represents a single value in a style property.
 ///
-/// May be a static string literal, a dynamic expression, or a reactive conditional.
+/// May be a static string literal, a dynamic expression, a reactive/inline conditional,
+/// or a reactive/inline match expression.
 #[derive(Clone, Debug)]
 pub(crate) enum HtmlStylePropValue {
     /// A static string literal.
     Literal(String),
     /// A dynamic expression.
     Expr(Expr),
-    /// A reactive conditional in attribute value position.
+    /// A conditional in attribute value position.
     ///
-    /// Syntax: `if {expr} { value } [else if {expr} { value }]* [else { value }]`.
+    /// Syntax: `if {expr} { value }` (reactive) or `if condition { value }` (inline).
     If(HtmlAttrIf),
+    /// A match expression in attribute value position.
+    ///
+    /// Syntax: `match {expr} { ... }` (reactive) or `match expr { ... }` (inline).
+    Match(HtmlAttrMatch),
 }
 
 /// Determines how `attr_if_to_tokens` wraps each branch body during code generation.

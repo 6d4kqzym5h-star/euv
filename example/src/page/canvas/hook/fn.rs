@@ -15,6 +15,36 @@ pub(crate) fn canvas_on_draw(state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
     }))
 }
 
+/// Creates a click event handler that clears the canvas drawing.
+///
+/// # Arguments
+///
+/// - `UseCanvas` - The canvas drawing board state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
+pub(crate) fn canvas_on_clear(_state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        clear_canvas(CANVAS_DRAWING_SELECTOR);
+    }))
+}
+
+/// Creates a click event handler that exits fullscreen drawing mode.
+///
+/// # Arguments
+///
+/// - `UseCanvas` - The canvas drawing board state.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
+pub(crate) fn canvas_on_exit_fullscreen(state: UseCanvas) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        exit_fullscreen(state);
+    }))
+}
+
 /// Creates the canvas drawing board reactive state signals wrapped
 /// in a `UseCanvas` struct.
 ///

@@ -42,6 +42,3 @@ pub(crate) const KEEP_ALIVE_MESSAGE_PLACEHOLDER: &str = "Write a message...";
 
 /// The HTML rows attribute for the message textarea element.
 pub(crate) const KEEP_ALIVE_MESSAGE_ROWS: &str = "3";
-
-/// The CSS selector for the keep-alive counter controls button containers.
-pub(crate) const KEEP_ALIVE_COUNTER_CONTROLS_SELECTOR: &str = ".c_keep_alive_counter_controls";

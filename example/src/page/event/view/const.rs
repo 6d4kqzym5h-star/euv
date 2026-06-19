@@ -32,7 +32,7 @@ pub(crate) const EVENT_FOCUS_NAME: &str = "focus";
 pub(crate) const EVENT_CLIPBOARD_NAME: &str = "clipboard";
 
 /// The HTML name attribute for the form input element.
-pub(crate) const EVENT_FORM_INPUT_NAME: &str = "form_input";
+pub(crate) const EVENT_FORM_INPUT_NAME: &str = "euv_input";
 
 /// The HTML name attribute for the form checkbox element.
 pub(crate) const EVENT_FORM_CHECKBOX_NAME: &str = "form_checkbox";

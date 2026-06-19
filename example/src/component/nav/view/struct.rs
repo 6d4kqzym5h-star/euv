@@ -51,36 +51,3 @@ pub(crate) struct BuildMobileNavItemsProps {
     /// The reactive signal controlling the mobile nav drawer visibility.
     pub(crate) drawer_open: Signal<bool>,
 }
-
-/// Props for the `desktop_layout` component.
-///
-/// Defines the strongly-typed interface for the desktop application shell layout.
-#[derive(Clone, Default)]
-pub(crate) struct DesktopLayoutProps {
-    /// The reactive signal holding the current route.
-    pub(crate) route_signal: Signal<String>,
-    /// The reactive signal holding the current theme (kept for API consistency).
-    #[allow(dead_code)]
-    pub(crate) theme_signal: Signal<String>,
-    /// The reactive signal holding the root class name.
-    pub(crate) root_class_signal: Signal<String>,
-    /// The reactive signal controlling vconsole panel visibility.
-    pub(crate) panel_open: Signal<bool>,
-}
-
-/// Props for the `mobile_layout` component.
-///
-/// Defines the strongly-typed interface for the mobile application shell layout.
-#[derive(Clone, Default)]
-pub(crate) struct MobileLayoutProps {
-    /// The reactive signal holding the current route.
-    pub(crate) route_signal: Signal<String>,
-    /// The reactive signal holding the current theme.
-    pub(crate) theme_signal: Signal<String>,
-    /// The reactive signal holding the root class name.
-    pub(crate) root_class_signal: Signal<String>,
-    /// The reactive signal controlling vconsole panel visibility.
-    pub(crate) panel_open: Signal<bool>,
-    /// The reactive signal controlling the mobile nav drawer visibility.
-    pub(crate) drawer_open: Signal<bool>,
-}

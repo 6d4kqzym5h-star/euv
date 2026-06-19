@@ -126,6 +126,10 @@ fn stop_ping_timer(ping_handle_signal: Signal<Option<IntervalHandle>>) {
 /// connection, starts a Ping keep-alive timer. The WebSocket instance
 /// is stored in a thread-local so it can be closed later.
 ///
+/// A `connection_id` is captured at creation time and checked inside
+/// each callback to prevent stale callbacks from a previous connection
+/// from corrupting the state of the current connection.
+///
 /// # Arguments
 ///
 /// - `UseWebSocket` - The WebSocket connection state.
@@ -144,6 +148,11 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
         }
         ws_close_instance();
         stop_ping_timer(state.get_ping_handle());
+        let connection_id: usize = WS_CONNECTION_ID.with(|id: &Cell<usize>| {
+            let next: usize = id.get() + 1;
+            id.set(next);
+            next
+        });
         state.get_connecting().set(true);
         state.get_error().set(String::new());
         state.get_messages().set(Vec::new());
@@ -200,6 +209,13 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
         let on_close: Closure<dyn FnMut(JsValue)> = Closure::wrap(Box::new({
             let state: UseWebSocket = state;
             move |_: JsValue| {
+                let current_id: usize = WS_CONNECTION_ID.with(|id: &Cell<usize>| id.get());
+                if current_id != connection_id {
+                    return;
+                }
+                WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
+                    instance.borrow_mut().take();
+                });
                 state.get_connected().set(false);
                 state.get_connecting().set(false);
                 stop_ping_timer(state.get_ping_handle());
@@ -216,9 +232,25 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
         let on_error: Closure<dyn FnMut(JsValue)> = Closure::wrap(Box::new({
             let state: UseWebSocket = state;
             move |_: JsValue| {
+                let current_id: usize = WS_CONNECTION_ID.with(|id: &Cell<usize>| id.get());
+                if current_id != connection_id {
+                    return;
+                }
+                WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
+                    instance.borrow_mut().take();
+                });
+                state.get_connected().set(false);
+                state.get_connecting().set(false);
+                stop_ping_timer(state.get_ping_handle());
                 state
                     .get_error()
                     .set("WebSocket error occurred".to_string());
+                let mut messages: Vec<WsMessage> = state.get_messages().get();
+                messages.push(WsMessage {
+                    data: "[System] Connection lost due to error".to_string(),
+                    time: String::new(),
+                });
+                state.get_messages().set(messages);
             }
         }));
         socket.set_onerror(Some(on_error.as_ref().unchecked_ref()));
@@ -229,6 +261,8 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
 /// Closes the WebSocket connection and resets state signals.
 ///
 /// Stops the Ping keep-alive timer before closing the connection.
+/// Increments `WS_CONNECTION_ID` to invalidate any in-flight
+/// callbacks from the old connection.
 ///
 /// # Arguments
 ///
@@ -239,6 +273,9 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to disconnect the WebSocket.
 pub(crate) fn websocket_on_disconnect(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        WS_CONNECTION_ID.with(|id: &Cell<usize>| {
+            id.set(id.get() + 1);
+        });
         stop_ping_timer(state.get_ping_handle());
         ws_close_instance();
         state.get_connected().set(false);
@@ -249,7 +286,7 @@ pub(crate) fn websocket_on_disconnect(state: UseWebSocket) -> Option<Rc<dyn Fn(E
 
 /// Sends a text message through the active WebSocket connection.
 ///
-/// Wraps the input text in a JSON envelope with `type: "Text"` before sending.
+/// Serializes a `WsClientTextMessage` struct into JSON before sending.
 ///
 /// # Arguments
 ///
@@ -264,10 +301,21 @@ pub(crate) fn websocket_on_send(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>
         if text.is_empty() {
             return;
         }
-        let body: String = format!("{}{}\"}}", WEBSOCKET_TEXT_MESSAGE_TEMPLATE, text);
+        let message: WsClientTextMessage = WsClientTextMessage {
+            r#type: "Text",
+            data: text,
+        };
+        let body: String = serde_json::to_string(&message).unwrap_or_default();
         WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
             if let Some(socket) = instance.borrow().as_ref() {
-                let _ = socket.send_with_str(&body);
+                if socket.ready_state() == WebSocket::OPEN {
+                    let _ = socket.send_with_str(&body);
+                } else {
+                    state.get_connected().set(false);
+                    state
+                        .get_error()
+                        .set("Connection lost, please reconnect".to_string());
+                }
             }
         });
         state.get_message_input().set(String::new());

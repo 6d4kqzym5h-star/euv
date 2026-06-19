@@ -12,10 +12,10 @@ pub(crate) const TAGS_AUDIO_SRC: &str =
 pub(crate) const TAGS_IMAGE_SRC: &str =
     "https://ltpp.vip/github/pages/docs-pages/pages/img/euv.png";
 
-/// The page header title for the tags demo page.
+/// The header title for the tags demo page.
 pub(crate) const TAGS_PAGE_TITLE: &str = "HTML5 Tags";
 
-/// The page header subtitle for the tags demo page.
+/// The header subtitle for the tags demo page.
 pub(crate) const TAGS_PAGE_SUBTITLE: &str = "All standard HTML5 elements with live examples.";
 
 /// The card title for the sectioning content section.
@@ -167,15 +167,6 @@ pub(crate) const TAGS_INPUT_TYPE_FILE: &str = "file";
 
 /// The HTML input type for hidden.
 pub(crate) const TAGS_INPUT_TYPE_HIDDEN: &str = "hidden";
-
-/// The HTML button type for button.
-pub(crate) const TAGS_BUTTON_TYPE_BUTTON: &str = "button";
-
-/// The HTML button type for submit.
-pub(crate) const TAGS_BUTTON_TYPE_SUBMIT: &str = "submit";
-
-/// The HTML button type for reset.
-pub(crate) const TAGS_BUTTON_TYPE_RESET: &str = "reset";
 
 /// The HTML id for the text input element.
 pub(crate) const TAGS_INPUT_TEXT_ID: &str = "tag-input-text";

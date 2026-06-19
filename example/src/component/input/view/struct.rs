@@ -1,0 +1,16 @@
+/// Props for the `euv_input` component.
+///
+/// Defines the strongly-typed interface for the labeled input field.
+#[derive(Clone, Default)]
+pub(crate) struct EuvInputProps {
+    /// The unique identifier for the input element.
+    pub(crate) id: &'static str,
+    /// The label text displayed above the input.
+    pub(crate) label: &'static str,
+    /// The placeholder text shown when the input is empty.
+    pub(crate) placeholder: &'static str,
+    /// The current input value.
+    pub(crate) value: &'static str,
+    /// The autocomplete hint for the browser.
+    pub(crate) autocomplete: &'static str,
+}

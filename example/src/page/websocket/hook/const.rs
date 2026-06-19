@@ -10,8 +10,5 @@ pub(crate) const WEBSOCKET_MAX_MESSAGES: usize = 100;
 /// The interval in milliseconds for sending Ping messages to keep the connection alive.
 pub(crate) const WEBSOCKET_PING_INTERVAL_MS: i32 = 30000;
 
-/// The JSON template for sending a text message through the WebSocket.
-pub(crate) const WEBSOCKET_TEXT_MESSAGE_TEMPLATE: &str = r#"{"type":"Text","data":""#;
-
 /// The JSON body for sending a Ping message through the WebSocket.
 pub(crate) const WEBSOCKET_PING_MESSAGE: &str = r#"{"type":"Ping","data":""}"#;

@@ -872,7 +872,7 @@ pub(crate) fn build_html_if_chain_to_vec(
         }
     }
     if !has_else {
-        if_chain.extend(quote! { else { vec![] } });
+        if_chain.extend(quote! { else { Vec::new() } });
     }
     if_chain
 }
@@ -981,9 +981,14 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
     }
 }
 
-/// Parses a reactive `if {expr} { value } [else if {expr} { value }]* [else { value }]` in attribute value position.
+/// Parses a reactive or inline `if` conditional in attribute value position.
 ///
-/// Unlike `HtmlIf` (which contains HTML child nodes), each branch body here is a Rust expression.
+/// Supports two syntaxes:
+/// - Reactive: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
+///   Detected when `if` is immediately followed by `{`.
+/// - Inline: `if condition { value } [else if condition { value }]* [else { value }]`
+///   Detected when `if` is followed by a non-`{` token (e.g., identifier, `!`, etc.).
+///
 /// When no explicit `else` branch is provided, an empty string is used as the default.
 ///
 /// # Arguments
@@ -992,40 +997,121 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
 ///
 /// # Returns
 ///
-/// - `syn::Result<HtmlAttrIf>` - The parsed attribute-level reactive conditional.
+/// - `syn::Result<HtmlAttrIf>` - The parsed attribute-level reactive or inline conditional.
 pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
+    let is_inline: bool = !content.peek2(Brace);
     let mut branches: Vec<(Option<Expr>, Expr)> = Vec::new();
     content.parse::<Token![if]>()?;
-    let cond_content: ParseBuffer<'_>;
-    braced!(cond_content in content);
-    let condition: Expr = cond_content.parse()?;
-    let body_content: ParseBuffer<'_>;
-    braced!(body_content in content);
-    let body: Expr = body_content.parse()?;
-    branches.push((Some(condition), body));
-    while content.peek(Token![else]) {
-        content.parse::<Token![else]>()?;
-        if content.peek(Token![if]) {
-            content.parse::<Token![if]>()?;
-            let cond_content: ParseBuffer<'_>;
-            braced!(cond_content in content);
-            let condition: Expr = cond_content.parse()?;
-            let body_content: ParseBuffer<'_>;
-            braced!(body_content in content);
-            let body: Expr = body_content.parse()?;
-            branches.push((Some(condition), body));
-        } else {
-            let body_content: ParseBuffer<'_>;
-            braced!(body_content in content);
-            let body: Expr = body_content.parse()?;
-            branches.push((None, body));
-            break;
+    if is_inline {
+        let condition: Expr = content.parse()?;
+        let body_content: ParseBuffer<'_>;
+        braced!(body_content in content);
+        let body: Expr = body_content.parse()?;
+        branches.push((Some(condition), body));
+        while content.peek(Token![else]) {
+            content.parse::<Token![else]>()?;
+            if content.peek(Token![if]) {
+                content.parse::<Token![if]>()?;
+                let condition: Expr = content.parse()?;
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in content);
+                let body: Expr = body_content.parse()?;
+                branches.push((Some(condition), body));
+            } else {
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in content);
+                let body: Expr = body_content.parse()?;
+                branches.push((None, body));
+                break;
+            }
+        }
+    } else {
+        let cond_content: ParseBuffer<'_>;
+        braced!(cond_content in content);
+        let condition: Expr = cond_content.parse()?;
+        let body_content: ParseBuffer<'_>;
+        braced!(body_content in content);
+        let body: Expr = body_content.parse()?;
+        branches.push((Some(condition), body));
+        while content.peek(Token![else]) {
+            content.parse::<Token![else]>()?;
+            if content.peek(Token![if]) {
+                content.parse::<Token![if]>()?;
+                let cond_content: ParseBuffer<'_>;
+                braced!(cond_content in content);
+                let condition: Expr = cond_content.parse()?;
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in content);
+                let body: Expr = body_content.parse()?;
+                branches.push((Some(condition), body));
+            } else {
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in content);
+                let body: Expr = body_content.parse()?;
+                branches.push((None, body));
+                break;
+            }
         }
     }
     let else_default: proc_macro2::TokenStream = quote! { #STR_EMPTY };
     Ok(HtmlAttrIf {
+        is_inline,
         branches,
         else_default,
+    })
+}
+
+/// Parses a reactive or inline `match` expression in attribute value position.
+///
+/// Supports two syntaxes:
+/// - Reactive: `match {expr} { pattern => value, ... }`
+///   Detected when `match` is immediately followed by `{`.
+/// - Inline: `match expr { pattern => value, ... }`
+///   Detected when `match` is followed by a non-`{` token.
+///
+/// # Arguments
+///
+/// - `ParseStream` - The parse stream positioned at the `match` keyword.
+///
+/// # Returns
+///
+/// - `syn::Result<HtmlAttrMatch>` - The parsed attribute-level reactive or inline match expression.
+pub(crate) fn parse_attr_match(content: ParseStream) -> syn::Result<HtmlAttrMatch> {
+    let is_inline: bool = !content.peek2(Brace);
+    content.parse::<Token![match]>()?;
+    let scrutinee: Expr = if is_inline {
+        content.parse()?
+    } else {
+        let scrutinee_content: ParseBuffer<'_>;
+        braced!(scrutinee_content in content);
+        scrutinee_content.parse()?
+    };
+    let arms_content: ParseBuffer<'_>;
+    braced!(arms_content in content);
+    let mut arms: Vec<(proc_macro2::TokenStream, Expr)> = Vec::new();
+    while !arms_content.is_empty() {
+        let mut pattern_tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+        while !arms_content.peek(Token![=>]) {
+            let token_tree: proc_macro2::TokenTree = arms_content.parse()?;
+            pattern_tokens.extend([token_tree]);
+        }
+        arms_content.parse::<Token![=>]>()?;
+        let body: Expr = if arms_content.peek(Brace) {
+            let body_content: ParseBuffer<'_>;
+            braced!(body_content in arms_content);
+            body_content.parse()?
+        } else {
+            arms_content.parse()?
+        };
+        arms.push((pattern_tokens, body));
+        if arms_content.peek(Token![,]) {
+            arms_content.parse::<Token![,]>()?;
+        }
+    }
+    Ok(HtmlAttrMatch {
+        is_inline,
+        scrutinee,
+        arms,
     })
 }
 
@@ -1115,6 +1201,88 @@ pub(crate) fn attr_if_to_tokens(
     if_chain
 }
 
+/// Generates a token stream for an `HtmlAttrMatch` as a Rust `match` expression.
+///
+/// The `mode` parameter controls how arm bodies are emitted:
+/// - `AttrIfMode::Reactive`: Each arm body is wrapped in
+///   `::euv::IntoReactiveString::into_reactive_string(...)`.
+/// - `AttrIfMode::Raw`: Arm bodies are emitted as-is without wrapping.
+///
+/// # Arguments
+///
+/// - `&HtmlAttrMatch` - The parsed attribute-level match expression.
+/// - `AttrIfMode` - The code generation mode for arm body wrapping.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The generated `match ... { ... }` token stream.
+pub(crate) fn attr_match_to_tokens(
+    html_attr_match: &HtmlAttrMatch,
+    mode: AttrIfMode,
+) -> proc_macro2::TokenStream {
+    let scrutinee: &Expr = html_attr_match.get_scrutinee();
+    let arm_tokens: Vec<proc_macro2::TokenStream> = html_attr_match
+        .get_arms()
+        .iter()
+        .map(|(pattern, body): &(proc_macro2::TokenStream, Expr)| {
+            let body_tokens: proc_macro2::TokenStream = match mode {
+                AttrIfMode::Reactive => {
+                    quote! { ::euv::IntoReactiveString::into_reactive_string(#body) }
+                }
+                AttrIfMode::Raw => quote! { #body },
+            };
+            quote! { #pattern => #body_tokens, }
+        })
+        .collect();
+    quote! { match #scrutinee { #(#arm_tokens)* } }
+}
+
+/// Checks whether an `HtmlAttrValue` contains any inline (non-reactive) conditional logic.
+///
+/// Returns `true` if the value is an inline `If` or inline `Match`, or if it contains
+/// inline conditionals in `Style` properties.
+///
+/// # Arguments
+///
+/// - `&HtmlAttrValue` - The attribute value to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the value contains inline conditional logic.
+pub(crate) fn is_attr_value_inline(value: &HtmlAttrValue) -> bool {
+    match value {
+        HtmlAttrValue::If(html_attr_if) => html_attr_if.get_is_inline(),
+        HtmlAttrValue::Match(html_attr_match) => html_attr_match.get_is_inline(),
+        HtmlAttrValue::Style(props) => props.iter().any(
+            |(_, style_value): &(String, HtmlStylePropValue)| {
+                matches!(style_value, HtmlStylePropValue::If(html_attr_if) if html_attr_if.get_is_inline())
+                    || matches!(style_value, HtmlStylePropValue::Match(html_attr_match) if html_attr_match.get_is_inline())
+            },
+        ),
+        _ => false,
+    }
+}
+
+/// Checks whether style properties contain any conditional logic.
+///
+/// # Arguments
+///
+/// - `&[(String, HtmlStylePropValue)]` - The style properties to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if any style property contains a conditional.
+pub(crate) fn is_style_props_conditional(props: &[(String, HtmlStylePropValue)]) -> bool {
+    props
+        .iter()
+        .any(|(_, value): &(String, HtmlStylePropValue)| {
+            matches!(
+                value,
+                HtmlStylePropValue::If(_) | HtmlStylePropValue::Match(_)
+            )
+        })
+}
+
 /// Builds a Rust `if/else if/else` chain token stream from `HtmlIf` branches.
 ///
 /// Each branch body is converted to a `VirtualNode` token stream via `children_to_node_tokens`.
@@ -1173,6 +1341,9 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
     if content.peek(Token![if]) {
         return Ok(HtmlAttrValue::If(parse_attr_if(content)?));
     }
+    if content.peek(Token![match]) {
+        return Ok(HtmlAttrValue::Match(parse_attr_match(content)?));
+    }
     if key_str == ATTR_KEY_STYLE && content.peek(Brace) {
         let style_content: ParseBuffer<'_>;
         braced!(style_content in content);
@@ -1185,6 +1356,9 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
                 let prop_value: HtmlStylePropValue = if style_content.peek(Token![if]) {
                     let html_attr_if: HtmlAttrIf = parse_attr_if(&style_content)?;
                     HtmlStylePropValue::If(html_attr_if)
+                } else if style_content.peek(Token![match]) {
+                    let html_attr_match: HtmlAttrMatch = parse_attr_match(&style_content)?;
+                    HtmlStylePropValue::Match(html_attr_match)
                 } else if style_content.peek(LitStr) {
                     let literal_string: LitStr = style_content.parse()?;
                     HtmlStylePropValue::Literal(literal_string.value())
@@ -1194,6 +1368,9 @@ pub(crate) fn parse_attr_value(content: ParseStream, key_str: &str) -> syn::Resu
                     if expr_content.peek(Token![if]) {
                         let html_attr_if: HtmlAttrIf = parse_attr_if(&expr_content)?;
                         HtmlStylePropValue::If(html_attr_if)
+                    } else if expr_content.peek(Token![match]) {
+                        let html_attr_match: HtmlAttrMatch = parse_attr_match(&expr_content)?;
+                        HtmlStylePropValue::Match(html_attr_match)
                     } else {
                         let expr: Expr = expr_content.parse()?;
                         HtmlStylePropValue::Expr(expr)
@@ -1318,17 +1495,20 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
                 }
             }
         }
-        HtmlAttrValue::If(_) => {
+        HtmlAttrValue::If(_) | HtmlAttrValue::Match(_) => {
             quote! { #value }
         }
         HtmlAttrValue::Style(props) => {
-            let has_if: bool =
+            let has_conditional: bool =
                 props
                     .iter()
                     .any(|(_, style_value): &(String, HtmlStylePropValue)| {
-                        matches!(style_value, HtmlStylePropValue::If(_))
+                        matches!(
+                            style_value,
+                            HtmlStylePropValue::If(_) | HtmlStylePropValue::Match(_)
+                        )
                     });
-            if has_if {
+            if has_conditional {
                 quote! { #value }
             } else {
                 quote! { ::euv::AttributeValue::Text(#value) }
@@ -1358,19 +1538,22 @@ pub(crate) fn style_value_to_attribute_value_tokens(
 ) -> proc_macro2::TokenStream {
     match value {
         HtmlAttrValue::Style(props) => {
-            let has_if: bool =
+            let has_conditional: bool =
                 props
                     .iter()
                     .any(|(_, style_value): &(String, HtmlStylePropValue)| {
-                        matches!(style_value, HtmlStylePropValue::If(_))
+                        matches!(
+                            style_value,
+                            HtmlStylePropValue::If(_) | HtmlStylePropValue::Match(_)
+                        )
                     });
-            if has_if {
+            if has_conditional {
                 quote! { #value }
             } else {
                 quote! { ::euv::AttributeValue::Text(#value) }
             }
         }
-        HtmlAttrValue::If(_) => {
+        HtmlAttrValue::If(_) | HtmlAttrValue::Match(_) => {
             quote! { #value }
         }
         HtmlAttrValue::Expr(expr) => {
@@ -1403,5 +1586,54 @@ pub(crate) fn extract_attr_key_string(key: &proc_macro2::TokenStream) -> String 
         raw.strip_prefix(RAW_IDENT_PREFIX)
             .unwrap_or(&raw)
             .to_string()
+    }
+}
+
+/// Converts an `HtmlAttrValue` into a token stream that produces an `AttributeValue`
+/// for use inside an `AttributeEntry::new()` call.
+///
+/// This is the shared conversion logic used by both `HtmlElement::to_tokens` and
+/// `HtmlDynamicTag::to_tokens` to avoid duplicating the attribute value dispatch.
+///
+/// # Arguments
+///
+/// - `&HtmlAttrValue` - The attribute value to convert.
+/// - `&str` - The attribute key name (used for event and special key detection).
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - Token stream that evaluates to an `AttributeValue`.
+pub(crate) fn attr_value_to_entry_value_tokens(
+    value: &HtmlAttrValue,
+    key_str: &str,
+) -> proc_macro2::TokenStream {
+    match value {
+        HtmlAttrValue::Style(props) => {
+            let has_conditional: bool = is_style_props_conditional(props);
+            if has_conditional {
+                quote! { #value }
+            } else {
+                quote! { ::euv::AttributeValue::Text(#value) }
+            }
+        }
+        HtmlAttrValue::If(_) | HtmlAttrValue::Match(_) => {
+            quote! { #value }
+        }
+        HtmlAttrValue::Classes(_) | HtmlAttrValue::Styles(_) => {
+            quote! { #value }
+        }
+        HtmlAttrValue::Expr(expr) => {
+            if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
+                quote! {
+                    ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
+                }
+            } else if key_str == ATTR_KEY_CHILDREN {
+                quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
+            } else {
+                quote! {
+                    ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                }
+            }
+        }
     }
 }

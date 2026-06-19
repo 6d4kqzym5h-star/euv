@@ -11,68 +11,84 @@ pub(crate) fn page_badge(node: VirtualNode<PageBadgeProps>) -> VirtualNode {
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "🏷️"
                 title: "Badge"
                 subtitle: "Status indicators with click support."
             }
-            my_card {
-                title: "Badges"
+            euv_card {
+                title: "Solid Tags"
                 p {
                     class: c_badge_hint()
                     "Status indicators with click support"
                 }
                 div {
                     class: c_badge_row()
-                    my_badge {
-                        color: var!(badge-bg-success)
+                    euv_tag {
+                        color: EuvTagColor::Success
+                        variant: EuvTagVariant::Solid
                         text: "Success"
                         on_click: badge_on_click("Success", LogLevel::Log)
                     }
-                    my_badge {
-                        color: var!(badge-bg-error)
+                    euv_tag {
+                        color: EuvTagColor::Error
+                        variant: EuvTagVariant::Solid
                         text: "Error"
                         on_click: badge_on_click("Error", LogLevel::Error)
                     }
-                    my_badge {
-                        color: var!(badge-bg-warning)
+                    euv_tag {
+                        color: EuvTagColor::Warning
+                        variant: EuvTagVariant::Solid
                         text: "Warning"
                         on_click: badge_on_click("Warning", LogLevel::Warn)
                     }
-                    my_badge {
-                        color: var!(badge-bg-info)
+                    euv_tag {
+                        color: EuvTagColor::Info
+                        variant: EuvTagVariant::Solid
                         text: "Info"
                         on_click: badge_on_click("Info", LogLevel::Log)
                     }
+                    euv_tag {
+                        color: EuvTagColor::Purple
+                        variant: EuvTagVariant::Solid
+                        text: "Purple"
+                        on_click: badge_on_click("Purple", LogLevel::Log)
+                    }
                 }
             }
-            my_card {
-                title: "Outline Badges"
+            euv_card {
+                title: "Outline Tags"
                 div {
                     class: c_badge_row()
-                    my_badge {
-                        color: var!(badge-bg-success)
+                    euv_tag {
+                        color: EuvTagColor::Success
+                        variant: EuvTagVariant::Outline
                         text: "Success"
-                        outline: true
                         on_click: badge_on_click("Outline Success", LogLevel::Log)
                     }
-                    my_badge {
-                        color: var!(badge-bg-error)
+                    euv_tag {
+                        color: EuvTagColor::Error
+                        variant: EuvTagVariant::Outline
                         text: "Error"
-                        outline: true
                         on_click: badge_on_click("Outline Error", LogLevel::Error)
                     }
-                    my_badge {
-                        color: var!(badge-bg-warning)
+                    euv_tag {
+                        color: EuvTagColor::Warning
+                        variant: EuvTagVariant::Outline
                         text: "Warning"
-                        outline: true
                         on_click: badge_on_click("Outline Warning", LogLevel::Warn)
                     }
-                    my_badge {
-                        color: var!(badge-bg-info)
+                    euv_tag {
+                        color: EuvTagColor::Info
+                        variant: EuvTagVariant::Outline
                         text: "Info"
-                        outline: true
                         on_click: badge_on_click("Outline Info", LogLevel::Log)
+                    }
+                    euv_tag {
+                        color: EuvTagColor::Purple
+                        variant: EuvTagVariant::Outline
+                        text: "Purple"
+                        on_click: badge_on_click("Outline Purple", LogLevel::Log)
                     }
                 }
             }

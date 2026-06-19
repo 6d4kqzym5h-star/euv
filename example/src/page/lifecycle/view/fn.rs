@@ -19,12 +19,12 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
     html! {
         div {
             class: c_page_container()
-            page_header {
+            euv_header {
                 icon: "♻️"
                 title: "Lifecycle"
                 subtitle: "Track component updates and lifecycle events."
             }
-            my_card {
+            euv_card {
                 title: "Render Counter"
                 p {
                     class: c_render_count_text()
@@ -35,13 +35,17 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                     }
                     " times."
                 }
-                primary_button {
-                    label: "Update"
-                    onclick: lifecycle_on_trigger(state)
-                    "Update"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Update"
+                        onclick: lifecycle_on_trigger(state)
+                        "Update"
+                    }
                 }
             }
-            my_card {
+            euv_card {
                 title: "Event Log"
                 div {
                     class: c_log_container()
