@@ -280,7 +280,7 @@ pub(crate) const TAGS_RANGE_MAX: &str = "100";
 pub(crate) const TAGS_RANGE_VALUE: &str = "50";
 
 /// The default value for the color input element.
-pub(crate) const TAGS_COLOR_INPUT_VALUE: &str = "#4f46e5";
+pub(crate) const TAGS_COLOR_INPUT_VALUE: &str = "#000000";
 
 /// The value for the hidden input element.
 pub(crate) const TAGS_HIDDEN_INPUT_VALUE: &str = "hidden-value";

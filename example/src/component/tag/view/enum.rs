@@ -11,15 +11,9 @@ pub(crate) enum EuvTagVariant {
 /// The semantic colour type of the `euv_tag` component.
 #[derive(Clone, Default)]
 pub(crate) enum EuvTagColor {
-    /// Success / positive status (green).
+    /// Black tag with white text.
     #[default]
-    Success,
-    /// Error / negative status (red).
-    Error,
-    /// Warning / caution status (amber).
-    Warning,
-    /// Informational status (blue).
-    Info,
-    /// Purple / special status.
-    Purple,
+    Black,
+    /// White tag with black text.
+    White,
 }

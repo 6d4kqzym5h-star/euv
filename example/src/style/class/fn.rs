@@ -10,14 +10,13 @@ class! {
         height: "100%";
         overflow: "hidden";
         font-family: "system-ui, -apple-system, sans-serif";
-        background: var!(bg-primary);
-        color: var!(text-primary);
+        background: var!(background);
+        color: var!(foreground);
         user-select: "none";
         -webkit-user-select: "none";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
-            border-radius: "3px";
             border: "none";
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -31,17 +30,17 @@ class! {
     pub(crate) c_mobile_app_root {
         display: "flex";
         flex-direction: "column";
+        width: "100%";
         height: "100%";
         overflow: "hidden";
         gap: var!(space-sm);
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(bg-nav);
-        color: var!(text-primary);
+        color: var!(foreground);
         padding: format!("env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)");
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
-            border-radius: "3px";
             border: "none";
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -61,7 +60,7 @@ class! {
         background: var!(bg-nav);
         backdrop-filter: var!(glass-blur-md);
         -webkit-backdrop-filter: var!(glass-blur-md);
-        border-right: format!("1px solid {}", var!(glass-border));
+        border-right: format!("1px solid {}", var!(border));
         display: "flex";
         flex-direction: "column";
         height: "100%";
@@ -77,7 +76,7 @@ class! {
         border-bottom: format!("1px solid {}", var!(border-subtle));
         font-size: var!(font-xl);
         font-weight: "700";
-        color: var!(text-primary);
+        color: var!(foreground);
         letter-spacing: "-0.02em";
         display: "flex";
         align-items: "center";
@@ -93,22 +92,22 @@ class! {
     pub(crate) c_nav_brand_title {
         font-size: var!(font-xl);
         font-weight: "700";
-        color: var!(text-primary);
+        color: var!(foreground);
         letter-spacing: "-0.02em";
     }
 
     pub(crate) c_euv_logo {
         display: "flex";
-        background: var!(accent-gradient);
-        border-radius: var!(radius-md);
+        background: var!(accent);
         align-items: "center";
         justify-content: "center";
-        color: var!(text-on-accent);
+        color: var!(primary-foreground);
         font-weight: "700";
         border: "none";
         cursor: "pointer";
         padding: "0px";
         flex-shrink: "0";
+        position: "relative";
     }
 
     pub(crate) c_euv_logo_nav {
@@ -120,14 +119,12 @@ class! {
     pub(crate) c_euv_logo_fab {
         width: "36px";
         height: "36px";
-        border-radius: "14px";
         font-size: var!(font-xl);
         box-shadow: var!(shadow-console-button);
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         @media ((max-width: 767px)) {
             width: "44px";
             height: "44px";
-            border-radius: var!(radius-lg);
         }
     }
 
@@ -140,7 +137,7 @@ class! {
         margin: "0px";
         font-size: var!(font-xs);
         font-weight: "700";
-        color: var!(text-muted);
+        color: var!(foreground);
         text-transform: "uppercase";
         letter-spacing: "0.10em";
         flex-shrink: "0";
@@ -152,7 +149,6 @@ class! {
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
-            border-radius: "3px";
             border: "none";
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -176,17 +172,20 @@ class! {
         width: "100%";
         height: "36px";
         padding: "0px";
-        border-radius: var!(radius-md);
         cursor: "pointer";
         outline: "none";
         background: "transparent";
-        border: "none";
+        border: format!("1px solid {}", var!(border));
         display: "flex";
         align-items: "center";
         justify-content: "center";
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(ring));
+        }
+        :active {
+            background: "transparent";
+            border-color: var!(border);
         }
     }
 
@@ -196,7 +195,7 @@ class! {
         background-repeat: "no-repeat";
         background-position: "center";
         background-size: "20px 20px";
-        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23fbbf24' stroke='%23fbbf24' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Cline x1='12' y1='1' x2='12' y2='4'/%3E%3Cline x1='12' y1='20' x2='12' y2='23'/%3E%3Cline x1='4.22' y1='4.22' x2='6.34' y2='6.34'/%3E%3Cline x1='17.66' y1='17.66' x2='19.78' y2='19.78'/%3E%3Cline x1='1' y1='12' x2='4' y2='12'/%3E%3Cline x1='20' y1='12' x2='23' y2='12'/%3E%3Cline x1='4.22' y1='19.78' x2='6.34' y2='17.66'/%3E%3Cline x1='17.66' y1='6.34' x2='19.78' y2='4.22'/%3E%3C/svg%3E\")";
+        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23ffffff' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Cline x1='12' y1='1' x2='12' y2='4'/%3E%3Cline x1='12' y1='20' x2='12' y2='23'/%3E%3Cline x1='4.22' y1='4.22' x2='6.34' y2='6.34'/%3E%3Cline x1='17.66' y1='17.66' x2='19.78' y2='19.78'/%3E%3Cline x1='1' y1='12' x2='4' y2='12'/%3E%3Cline x1='20' y1='12' x2='23' y2='12'/%3E%3Cline x1='4.22' y1='19.78' x2='6.34' y2='17.66'/%3E%3Cline x1='17.66' y1='6.34' x2='19.78' y2='4.22'/%3E%3C/svg%3E\")";
         transition: format!("transform {} {}", var!(duration-normal), var!(ease-out));
     }
 
@@ -206,7 +205,7 @@ class! {
         background-repeat: "no-repeat";
         background-position: "center";
         background-size: "20px 20px";
-        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23fbbf24' stroke='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z'/%3E%3C/svg%3E\")";
+        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='%23000000' stroke='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z'/%3E%3C/svg%3E\")";
         transition: format!("transform {} {}", var!(duration-normal), var!(ease-out));
     }
 
@@ -222,7 +221,7 @@ class! {
         gap: var!(space-xs);
         cursor: "pointer";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
-        opacity: "0.7";
+        opacity: "1";
         :hover {
             opacity: "1";
         }
@@ -244,21 +243,12 @@ class! {
 
     pub(crate) c_nav_footer_brand {
         font-weight: "700";
-        background: var!(accent-gradient);
-        -webkit-background-clip: "text";
-        -webkit-text-fill-color: "transparent";
-        background-clip: "text";
+        color: var!(accent);
     }
 
     pub(crate) c_nav_footer_badge {
-        align-items: "center";
-        padding: "1px 6px";
-        border-radius: var!(radius-sm);
-        background: var!(accent-muted);
+        font-weight: "700";
         color: var!(accent);
-        font-size: "10px";
-        font-weight: "600";
-        letter-spacing: "0.04em";
     }
 
     pub(crate) c_nav_item_active {
@@ -268,10 +258,9 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-xl));
         text-decoration: "none";
         font-size: var!(font-base);
-        color: var!(accent);
+        color: var!(text-on-accent);
         font-weight: "600";
-        border-left: format!("3px solid {}", var!(accent));
-        background: var!(accent-subtle);
+        background: var!(accent);
         transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
@@ -282,15 +271,14 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-xl));
         text-decoration: "none";
         font-size: var!(font-base);
-        color: var!(text-nav-item);
+        color: var!(foreground);
         font-weight: "400";
-        border-left: "3px solid transparent";
         background: "transparent";
-        transition: format!("background {} {}, color {} {}, border-left-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-muted);
             color: var!(accent);
-            border-left-color: var!(accent-border);
+            box-shadow: format!("inset 0 0 0 1px {}", var!(foreground));
         }
     }
 
@@ -306,6 +294,7 @@ class! {
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
+        color: "inherit";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -318,16 +307,17 @@ class! {
         display: "flex";
         flex-direction: "column";
         align-items: "center";
-        padding: format!("{} {}", var!(padding-main-top), var!(padding-main-horizontal));
-        background: var!(bg-primary);
-        overflow-y: "overlay";
+        min-width: "0px";
+        min-height: "100%";
+        padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(padding-main-top), var!(padding-main-horizontal), var!(space-3xl), var!(padding-main-horizontal));
+        background: var!(background);
+        overflow: "auto";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar {
             width: "6px";
         }
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
-            border-radius: "3px";
             border: "none";
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -337,8 +327,7 @@ class! {
             background: var!(scrollbar-thumb-active);
         }
         @media ((max-width: 767px)) {
-            overflow-y: "auto";
-            padding: format!("{} {}", var!(space-md), var!(padding-main-horizontal-mobile));
+            padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(space-md), var!(padding-main-horizontal-mobile), var!(space-3xl), var!(padding-main-horizontal-mobile));
             align-items: "stretch";
             scrollbar-width: "none";
             ::-webkit-scrollbar {
@@ -352,6 +341,10 @@ class! {
         max-width: var!(content-max-width);
         display: "flex";
         flex-direction: "column";
+        flex: "1";
+        min-width: "0px";
+        min-height: "0px";
+        padding-bottom: var!(space-4xl);
     }
 
     pub(crate) c_page_container_wide {
@@ -359,7 +352,9 @@ class! {
         max-width: var!(content-max-width);
         display: "flex";
         flex-direction: "column";
-        height: "100%";
+        min-width: "0px";
+        min-height: "0px";
+        padding-bottom: var!(space-4xl);
     }
 
     pub(crate) c_header {
@@ -369,7 +364,7 @@ class! {
     pub(crate) c_page_title {
         font-size: var!(font-3xl);
         font-weight: "700";
-        color: var!(text-primary);
+        color: var!(foreground);
         margin-bottom: var!(gap-page-title);
         letter-spacing: "-0.02em";
         @media ((max-width: 767px)) {
@@ -379,8 +374,8 @@ class! {
 
     pub(crate) c_page_subtitle {
         font-size: var!(font-lg);
-        color: var!(text-secondary);
-        opacity: "0.8";
+        color: var!(muted-foreground);
+        opacity: "1";
         @media ((max-width: 767px)) {
             font-size: var!(font-base);
         }
@@ -395,11 +390,9 @@ class! {
         text-align: "center";
         padding: format!("{} {} {} {}", var!(space-4xl), var!(space-xl), var!(space-4xl), var!(space-xl));
         margin-bottom: var!(space-xl);
-        border-radius: var!(radius-xl);
-        overflow: "hidden";
-        background: var!(bg-card);
+        background: var!(card);
         border: format!("1px solid {}", var!(border-card));
-        box-shadow: var!(shadow-card);
+        box-sizing: "border-box";
         @media ((max-width: 767px)) {
             padding: format!("{} {} {} {}", var!(space-2xl), var!(space-lg), var!(space-2xl), var!(space-lg));
             margin-bottom: var!(space-lg);
@@ -414,9 +407,7 @@ class! {
         width: "400px";
         height: "400px";
         border-radius: "50%";
-        background: var!(accent-gradient);
-        opacity: "0.05";
-        filter: "blur(60px)";
+        background: "transparent";
         pointer-events: "none";
     }
 
@@ -428,7 +419,6 @@ class! {
     pub(crate) c_page_hero_icon {
         font-size: "48px";
         margin-bottom: var!(space-md);
-        filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.1))";
         @media ((max-width: 767px)) {
             font-size: "40px";
         }
@@ -439,12 +429,8 @@ class! {
         font-weight: "800";
         letter-spacing: "-0.03em";
         margin: "0px";
-        background: var!(accent-gradient);
-        -webkit-background-clip: "text";
-        -webkit-text-fill-color: "transparent";
-        background-clip: "text";
+        color: var!(foreground);
         margin-bottom: var!(space-sm);
-        filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.12))";
         @media ((max-width: 767px)) {
             font-size: var!(font-3xl);
         }
@@ -452,10 +438,10 @@ class! {
 
     pub(crate) c_page_hero_subtitle {
         font-size: var!(font-lg);
-        color: var!(text-secondary);
+        color: var!(muted-foreground);
         margin: "0px auto";
         max-width: "560px";
-        opacity: "0.85";
+        opacity: "1";
         @media ((max-width: 767px)) {
             font-size: var!(font-base);
         }
@@ -466,34 +452,30 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_card {
-        background: var!(bg-card);
-        border-radius: var!(radius-xl);
+        background: var!(card);
         padding: var!(space-xl);
         margin-top: "0px";
         margin-bottom: var!(gap-section);
-        box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
-        color: var!(text-card);
+        color: var!(card-foreground);
+        box-sizing: "border-box";
         @media ((max-width: 767px)) {
             padding: var!(space-lg);
             margin-bottom: var!(gap-section-mobile);
-            border-radius: var!(radius-lg);
         }
     }
 
     pub(crate) c_card_elevated {
-        background: var!(bg-card);
-        border-radius: var!(radius-xl);
+        background: var!(card);
         padding: var!(space-xl);
         margin-top: "0px";
         margin-bottom: var!(gap-section);
-        box-shadow: var!(shadow-lg);
         border: format!("1px solid {}", var!(border-card));
-        color: var!(text-card);
+        color: var!(card-foreground);
+        box-sizing: "border-box";
         @media ((max-width: 767px)) {
             padding: var!(space-lg);
             margin-bottom: var!(gap-section-mobile);
-            border-radius: var!(radius-lg);
         }
     }
 
@@ -505,7 +487,7 @@ class! {
     pub(crate) c_card_title {
         margin-top: "0px";
         margin-bottom: var!(gap-component);
-        color: var!(text-primary);
+        color: var!(foreground);
         font-size: var!(font-lg);
         font-weight: "600";
         padding-bottom: var!(gap-component);
@@ -527,11 +509,10 @@ class! {
         gap: var!(space-sm);
         width: "100%";
         height: "42px";
-        background: var!(accent);
-        color: var!(text-on-accent);
+        background: var!(primary);
+        color: var!(primary-foreground);
         border: "1px solid transparent";
         padding: format!("0px {}", var!(space-2xl));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -548,22 +529,26 @@ class! {
         transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+            box-shadow: format!("0 0 0 3px {}, {}", var!(ring), var!(shadow-accent-sm));
         }
         :disabled {
             background: var!(accent-disabled);
             cursor: "not-allowed";
-            opacity: "0.55";
+            opacity: "1";
             box-shadow: "none";
         }
         :hover {
             background: var!(accent-hover);
         }
+        :active {
+            background: var!(primary);
+            color: var!(primary-foreground);
+            border-color: "transparent";
+        }
         @media ((max-width: 767px)) {
             max-width: "100%";
             padding: format!("{} {}", var!(space-lg), var!(space-xl));
             font-size: var!(font-md);
-            border-radius: var!(radius-md);
             box-shadow: var!(shadow-accent-sm);
         }
     }
@@ -576,10 +561,9 @@ class! {
         width: "100%";
         height: "42px";
         background: "transparent";
-        color: var!(accent);
-        border: format!("1px solid {}", var!(accent));
+        color: var!(primary);
+        border: format!("1px solid {}", var!(primary));
         padding: format!("0px {}", var!(space-2xl));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -596,15 +580,19 @@ class! {
         :hover {
             background: var!(accent-subtle);
         }
+        :active {
+            background: "transparent";
+            color: var!(primary);
+            border-color: var!(primary);
+        }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(ring));
         }
         @media ((max-width: 767px)) {
             max-width: "100%";
             padding: format!("{} {}", var!(space-lg), var!(space-xl));
             font-size: var!(font-md);
-            border-radius: var!(radius-md);
             box-shadow: "none";
             flex-shrink: "0";
         }
@@ -621,7 +609,6 @@ class! {
         color: var!(text-success);
         border: format!("1px solid {}", var!(border-success));
         padding: format!("{} {}", var!(space-md), var!(space-2xl));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -638,11 +625,15 @@ class! {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-success));
         }
+        :active {
+            background: var!(bg-success);
+            color: var!(text-success);
+            border-color: var!(border-success);
+        }
         @media ((max-width: 767px)) {
             max-width: "100%";
             padding: format!("{} {}", var!(space-md), var!(space-xl));
             font-size: var!(font-md);
-            border-radius: var!(radius-md);
             box-shadow: "none";
             flex-shrink: "0";
         }
@@ -659,7 +650,6 @@ class! {
         color: var!(text-error);
         border: format!("1px solid {}", var!(border-error));
         padding: format!("0px {}", var!(space-2xl));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -677,11 +667,15 @@ class! {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
         }
+        :active {
+            background: var!(bg-error);
+            color: var!(text-error);
+            border-color: var!(border-error);
+        }
         @media ((max-width: 767px)) {
             max-width: "100%";
             padding: format!("{} {}", var!(space-md), var!(space-xl));
             font-size: var!(font-md);
-            border-radius: var!(radius-md);
             box-shadow: "none";
             flex-shrink: "0";
         }
@@ -694,11 +688,10 @@ class! {
         gap: var!(space-sm);
         width: "100%";
         flex: "1";
-        background: var!(accent);
-        color: var!(text-on-accent);
+        background: var!(primary);
+        color: var!(primary-foreground);
         border: "1px solid transparent";
         padding: format!("{} {}", var!(space-md), var!(space-2xl));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -715,14 +708,19 @@ class! {
         :hover {
             background: var!(accent-hover);
         }
+        :active {
+            background: var!(primary);
+            color: var!(primary-foreground);
+            border-color: "transparent";
+        }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+            box-shadow: format!("0 0 0 3px {}, {}", var!(ring), var!(shadow-accent-sm));
         }
         :disabled {
             background: var!(accent-disabled);
             cursor: "not-allowed";
-            opacity: "0.55";
+            opacity: "1";
             box-shadow: "none";
         }
     }
@@ -735,16 +733,18 @@ class! {
         color: "inherit";
         border: "none";
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border-radius: var!(radius-sm);
         cursor: "pointer";
         font-size: "20px";
         font-weight: "400";
         vertical-align: "middle";
         outline: "none";
-        opacity: "0.6";
+        opacity: "1";
         flex-shrink: "0";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
         :hover {
+            opacity: "1";
+        }
+        :active {
             opacity: "1";
         }
         :focus {
@@ -763,7 +763,6 @@ class! {
         gap: var!(gap-element);
         margin-top: var!(gap-component);
     }
-
 
     pub(crate) c_button_controls_auto {
         display: "flex";
@@ -786,8 +785,7 @@ class! {
         padding: format!("0px {}", var!(space-xl));
         background: var!(accent);
         color: var!(text-on-accent);
-        border: "1px solid transparent";
-        border-radius: var!(radius-md);
+        border: format!("1px solid {}", var!(accent));
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -796,50 +794,23 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         box-sizing: "border-box";
-        box-shadow: var!(shadow-accent-sm);
-        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-hover);
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
         :disabled {
             background: var!(accent-disabled);
             cursor: "not-allowed";
-            opacity: "0.55";
-            box-shadow: "none";
+            opacity: "1";
         }
-    }
-
-    pub(crate) c_euv_button_secondary_md {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        gap: var!(space-sm);
-        flex: "1 1 120px";
-        height: "42px";
-        padding: format!("0px {}", var!(space-xl));
-        background: "transparent";
-        color: var!(accent);
-        border: format!("1px solid {}", var!(accent));
-        border-radius: var!(radius-md);
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        outline: "none";
-        white-space: "nowrap";
-        user-select: "none";
-        -webkit-user-select: "none";
-        box-sizing: "border-box";
-        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-subtle);
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+        :active {
+            background: var!(accent);
+            color: var!(text-on-accent);
+            border-color: var!(accent);
         }
     }
 
@@ -852,9 +823,8 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-xl));
         background: "transparent";
-        color: var!(text-secondary);
-        border: format!("1px solid {}", var!(border-card));
-        border-radius: var!(radius-md);
+        color: var!(foreground);
+        border: format!("1px solid {}", var!(border));
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -873,35 +843,10 @@ class! {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
-    }
-
-    pub(crate) c_euv_button_danger_md {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        gap: var!(space-sm);
-        flex: "1 1 120px";
-        height: "42px";
-        padding: format!("0px {}", var!(space-xl));
-        background: var!(bg-error);
-        color: var!(text-error);
-        border: format!("1px solid {}", var!(border-error));
-        border-radius: var!(radius-md);
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        outline: "none";
-        white-space: "nowrap";
-        user-select: "none";
-        -webkit-user-select: "none";
-        box-sizing: "border-box";
-        transition: format!("background {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: "rgba(220, 38, 38, 0.12)";
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+        :active {
+            background: "transparent";
+            color: var!(foreground);
+            border-color: var!(border);
         }
     }
 
@@ -913,24 +858,20 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        min-width: "52px";
         color: var!(text-on-accent);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border: "1.5px solid transparent";
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        border: format!("1px solid {}", var!(accent));
+        font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
         text-align: "center";
-        background: var!(accent-gradient);
+        background: var!(accent);
         :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
         @media ((max-width: 767px)) {
-            padding: format!("{} {}", var!(space-xs), var!(space-sm));
+            padding: format!("{} {}", var!(space-2xs), var!(space-xs));
             font-size: var!(font-xs);
         }
     }
@@ -939,78 +880,45 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        min-width: "52px";
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
+        color: var!(foreground);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
         text-align: "center";
         background: "transparent";
-        border: "1.5px solid";
+        border: format!("1.5px solid {}", var!(border-subtle));
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         @media ((max-width: 767px)) {
-            padding: format!("{} {}", var!(space-xs), var!(space-sm));
+            padding: format!("{} {}", var!(space-2xs), var!(space-xs));
             font-size: var!(font-xs);
         }
     }
 
-    pub(crate) c_badge_success {
-        display: "inline-block";
-        color: var!(text-success);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
+    pub(crate) c_euv_tag_solid_black {
+        display: "inline-flex";
+        align-items: "center";
+        justify-content: "center";
+        color: var!(text-on-accent);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: var!(bg-success);
-        border: format!("1px solid {}", var!(border-success));
+        background: var!(accent);
+        border: format!("1px solid {}", var!(accent));
     }
 
-    pub(crate) c_badge_error {
-        display: "inline-block";
-        color: var!(text-error);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
+    pub(crate) c_euv_tag_solid_white {
+        display: "inline-flex";
+        align-items: "center";
+        justify-content: "center";
+        color: var!(text-primary);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: var!(bg-error);
-        border: format!("1px solid {}", var!(border-error));
-    }
-
-    pub(crate) c_badge_warning {
-        display: "inline-block";
-        color: var!(text-warning);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: var!(bg-warning);
-        border: format!("1px solid {}", var!(border-warning));
-    }
-
-    pub(crate) c_badge_info {
-        display: "inline-block";
-        color: var!(text-info);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: var!(bg-info);
-        border: format!("1px solid {}", var!(border-info));
+        background: var!(bg-primary);
+        border: format!("1.5px solid {}", var!(accent));
     }
 
     pub(crate) c_badge_dot {
@@ -1033,104 +941,31 @@ class! {
     // Euv Tag Variants (semantic colour tags)
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_euv_tag_solid_purple {
+    pub(crate) c_euv_tag_outline_black {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        color: var!(color-purple);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
+        color: var!(accent);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: "rgba(124, 58, 237, 0.08)";
-        border: format!("1px solid {}", var!(border-pink));
-    }
-
-    pub(crate) c_euv_tag_outline_success {
-        display: "inline-flex";
-        justify-content: "center";
-        align-items: "center";
-        color: var!(text-success);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
         background: "transparent";
-        border: format!("1.5px solid {}", var!(text-success));
+        border: format!("1.5px solid {}", var!(accent));
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
-    pub(crate) c_euv_tag_outline_error {
+    pub(crate) c_euv_tag_outline_white {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        color: var!(text-error);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
+        color: var!(foreground);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
         background: "transparent";
-        border: format!("1.5px solid {}", var!(text-error));
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-    }
-
-    pub(crate) c_euv_tag_outline_warning {
-        display: "inline-flex";
-        justify-content: "center";
-        align-items: "center";
-        color: var!(text-warning);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: "transparent";
-        border: format!("1.5px solid {}", var!(text-warning));
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-    }
-
-    pub(crate) c_euv_tag_outline_info {
-        display: "inline-flex";
-        justify-content: "center";
-        align-items: "center";
-        color: var!(text-info);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: "transparent";
-        border: format!("1.5px solid {}", var!(text-info));
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-    }
-
-    pub(crate) c_euv_tag_outline_purple {
-        display: "inline-flex";
-        justify-content: "center";
-        align-items: "center";
-        color: var!(color-purple);
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-pill);
-        font-size: var!(font-sm);
-        font-weight: "600";
-        cursor: "pointer";
-        letter-spacing: "0.03em";
-        text-transform: "uppercase";
-        background: "transparent";
-        border: format!("1.5px solid {}", var!(color-purple));
+        border: format!("1.5px solid {}", var!(border-subtle));
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
@@ -1163,7 +998,6 @@ class! {
         justify-content: "center";
         align-items: "center";
         padding: format!("0px {}", var!(space-lg));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -1189,7 +1023,12 @@ class! {
         :disabled {
             background: var!(accent-disabled);
             cursor: "not-allowed";
-            opacity: "0.55";
+            opacity: "1";
+        }
+        :active {
+            background: var!(accent);
+            color: var!(text-on-accent);
+            border-color: "none";
         }
     }
 
@@ -1199,11 +1038,16 @@ class! {
         border: format!("1px solid {}", var!(border-error));
         transition: format!("background {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            background: "rgba(220, 38, 38, 0.12)";
+            background: var!(accent-muted);
         }
         :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-error));
+        }
+        :active {
+            background: var!(bg-error);
+            color: var!(text-error);
+            border-color: var!(border-error);
         }
     }
 
@@ -1219,12 +1063,17 @@ class! {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
+        :active {
+            background: "transparent";
+            color: var!(accent);
+            border-color: var!(accent);
+        }
     }
 
     pub(crate) c_inline_input_button_outline {
         background: "transparent";
-        color: var!(text-secondary);
-        border: format!("1px solid {}", var!(border-card));
+        color: var!(muted-foreground);
+        border: format!("1px solid {}", var!(border));
         transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-muted);
@@ -1233,7 +1082,12 @@ class! {
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(ring));
+        }
+        :active {
+            background: "transparent";
+            color: var!(muted-foreground);
+            border-color: var!(border);
         }
     }
 
@@ -1242,7 +1096,6 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
@@ -1266,7 +1119,6 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -1279,7 +1131,6 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -1315,7 +1166,7 @@ class! {
     pub(crate) c_form_grid {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: format!("0px {}", var!(gap-component));
+        gap: var!(gap-component);
         @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
@@ -1326,7 +1177,6 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -1334,14 +1184,10 @@ class! {
         cursor: "pointer";
         appearance: "none";
         color: var!(text-primary);
-        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")";
+        background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='currentColor' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")";
         background-repeat: "no-repeat";
         background-position: "right 14px center";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            border-color: var!(accent-border);
-            background: var!(accent-muted);
-        }
         :focus {
             outline: "none";
             border-color: var!(accent);
@@ -1355,7 +1201,6 @@ class! {
         max-width: "100%";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -1383,7 +1228,6 @@ class! {
         max-width: "100%";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -1410,7 +1254,7 @@ class! {
     pub(crate) c_textarea_counter_text {
         font-size: var!(font-sm);
         color: "inherit";
-        opacity: "0.5";
+        opacity: "1";
     }
 
     pub(crate) c_field_error_text {
@@ -1434,41 +1278,41 @@ class! {
     pub(crate) c_error_box {
         margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-error);
-        color: var!(text-error);
-        border-radius: var!(radius-md);
+        background: var!(accent-muted);
+        color: var!(text-primary);
         font-size: var!(font-base);
-        border: format!("1px solid {}", var!(border-error));
+        border: format!("1px solid {}", var!(border));
+        box-sizing: "border-box";
     }
 
     pub(crate) c_success_box {
-        margin-top: var!(gap-component);
+        margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-success);
-        color: var!(text-success);
-        border-radius: var!(radius-md);
-        border: format!("1px solid {}", var!(border-success));
+        background: var!(accent-muted);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        box-sizing: "border-box";
     }
 
     pub(crate) c_warning_box {
-        margin-top: var!(gap-component);
+        margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-warning);
-        color: var!(text-warning);
-        border-radius: var!(radius-md);
-        border: format!("1px solid {}", var!(border-warning));
+        background: var!(accent-muted);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        box-sizing: "border-box";
     }
 
     pub(crate) c_info_box {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: "rgba(3, 105, 161, 0.06)";
-        color: var!(text-info);
-        border-radius: var!(radius-md);
-        border: format!("1px solid {}", var!(border-info));
+        background: var!(accent-muted);
+        color: var!(text-primary);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        box-sizing: "border-box";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1510,7 +1354,7 @@ class! {
     pub(crate) c_badge_hint {
         margin-bottom: var!(gap-component);
         color: "inherit";
-        opacity: "0.7";
+        opacity: "1";
         font-size: var!(font-base);
     }
 
@@ -1562,7 +1406,7 @@ class! {
         text-decoration: "none";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
         :hover {
-            opacity: "0.7";
+            opacity: "1";
         }
     }
 
@@ -1576,30 +1420,29 @@ class! {
 
     pub(crate) c_camera_video_active {
         width: "100%";
-        border-radius: var!(radius-lg);
         background: "#000";
         aspect-ratio: "16 / 9";
         object-fit: "cover";
         border: format!("2px solid {}", var!(accent));
         box-shadow: var!(shadow-accent-sm);
+        box-sizing: "border-box";
     }
 
     pub(crate) c_camera_video_hidden {
         width: "100%";
-        border-radius: var!(radius-lg);
         aspect-ratio: "16 / 9";
         display: "none";
     }
 
     pub(crate) c_camera_video_placeholder {
         width: "100%";
-        border-radius: var!(radius-lg);
         background: var!(bg-input);
         aspect-ratio: "16 / 9";
         border: format!("2px dashed {}", var!(border-input));
         display: "flex";
         align-items: "center";
         justify-content: "center";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_camera_placeholder_content {
@@ -1611,13 +1454,13 @@ class! {
 
     pub(crate) c_camera_placeholder_icon {
         font-size: var!(font-4xl);
-        opacity: "0.4";
+        opacity: "1";
     }
 
     pub(crate) c_camera_placeholder_text {
         font-size: var!(font-base);
         color: "inherit";
-        opacity: "0.5";
+        opacity: "1";
     }
 
     pub(crate) c_camera_controls {
@@ -1632,19 +1475,19 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-error);
         color: var!(text-error);
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         border: format!("1px solid {}", var!(border-error));
         word-break: "break-all";
         overflow-wrap: "break-word";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_camera_scan_result_box {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-success);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
+        box-sizing: "border-box";
     }
 
     pub(crate) c_camera_scan_result_label {
@@ -1698,7 +1541,6 @@ class! {
         width: "42px";
         height: "42px";
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         padding: "2px";
         background: "transparent";
@@ -1715,12 +1557,11 @@ class! {
         color: "inherit";
         min-width: "28px";
         text-align: "center";
-        opacity: "0.7";
+        opacity: "1";
     }
 
     pub(crate) c_canvas_preview_container {
         margin: format!("{} 0", var!(space-lg));
-        border-radius: var!(radius-lg);
         overflow: "hidden";
         border: format!("2px solid {}", var!(border-input));
         background: CANVAS_BACKGROUND_COLOR;
@@ -1728,6 +1569,7 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_canvas_placeholder {
@@ -1755,6 +1597,7 @@ class! {
         left: "0";
         z-index: "10002";
         padding: format!("env(safe-area-inset-top, 0px) {} env(safe-area-inset-bottom, 0px) {}", var!(space-md), var!(space-md));
+        box-sizing: "border-box";
     }
 
     pub(crate) c_canvas_drawing_fullscreen_wrapper {
@@ -1768,7 +1611,6 @@ class! {
 
     pub(crate) c_canvas_drawing_fullscreen {
         border: format!("2px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         display: "block";
         cursor: "crosshair";
         touch-action: "none";
@@ -1776,21 +1618,43 @@ class! {
 
     pub(crate) c_canvas_fullscreen_toolbar {
         display: "flex";
-        align-items: "center";
+        flex-direction: "column";
+        align-items: "stretch";
         width: "100%";
-        padding: format!("0px {}", var!(space-sm));
-        height: var!(mobile-header-height);
+        padding: format!("{} {}", var!(space-xs), var!(space-sm));
         background: var!(bg-card);
         flex-shrink: "0";
+        gap: var!(space-xs);
+    }
+
+    pub(crate) c_canvas_fullscreen_toolbar_row_top {
+        display: "flex";
+        align-items: "center";
+        width: "100%";
         gap: var!(space-sm);
     }
 
-    pub(crate) c_canvas_fullscreen_toolbar_center {
+    pub(crate) c_canvas_fullscreen_toolbar_color_wrapper {
         display: "flex";
         align-items: "center";
+        justify-content: "center";
         flex: "1";
-        gap: var!(space-sm);
         min-width: "0";
+    }
+
+    pub(crate) c_canvas_color_input_fullscreen {
+        width: "100%";
+        height: "42px";
+        border: format!("1px solid {}", var!(border-input));
+        cursor: "pointer";
+        padding: format!("{}", var!(space-xs));
+        background: "transparent";
+    }
+
+    pub(crate) c_canvas_fullscreen_toolbar_row_bottom {
+        display: "flex";
+        align-items: "center";
+        width: "100%";
     }
 
     pub(crate) c_canvas_fullscreen_range_input {
@@ -1807,13 +1671,17 @@ class! {
         color: var!(accent);
         border: format!("1px solid {}", var!(accent));
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         font-size: var!(font-xs);
         font-weight: "500";
         outline: "none";
         white-space: "nowrap";
         flex-shrink: "0";
+        :active {
+            background: "transparent";
+            color: var!(accent);
+            border-color: var!(accent);
+        }
     }
 
     pub(crate) c_canvas_fullscreen_toolbar_button {
@@ -1827,9 +1695,9 @@ class! {
 
     pub(crate) c_custom_attrs_demo {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-input));
         color: "inherit";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_demo_text {
@@ -1839,7 +1707,7 @@ class! {
 
     pub(crate) c_demo_text_muted {
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         font-size: "13px";
         margin-bottom: var!(gap-component);
     }
@@ -1854,9 +1722,9 @@ class! {
         gap: var!(gap-component);
         padding: var!(space-xl);
         background: var!(bg-loading);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-loading));
         margin-top: var!(gap-component);
+        box-sizing: "border-box";
     }
 
     pub(crate) c_spinner {
@@ -1893,8 +1761,8 @@ class! {
         margin-top: var!(gap-component);
         padding: var!(space-lg);
         background: var!(bg-error);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-error));
+        box-sizing: "border-box";
     }
 
     pub(crate) c_error_icon {
@@ -1920,8 +1788,8 @@ class! {
         margin-top: var!(gap-component);
         padding: var!(space-lg);
         background: var!(bg-success);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
+        box-sizing: "border-box";
     }
 
     pub(crate) c_data_pre {
@@ -1935,7 +1803,7 @@ class! {
 
     pub(crate) c_fetch_hint {
         color: "inherit";
-        opacity: "0.7";
+        opacity: "1";
         font-size: var!(font-base);
         margin-bottom: var!(gap-component);
     }
@@ -1947,7 +1815,6 @@ class! {
     pub(crate) c_toggle_content {
         margin-top: var!(gap-component);
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
     }
@@ -1967,7 +1834,6 @@ class! {
 
     pub(crate) c_role_guest {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-warning));
     }
 
@@ -1978,7 +1844,6 @@ class! {
 
     pub(crate) c_role_user {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-info));
     }
 
@@ -1989,7 +1854,6 @@ class! {
 
     pub(crate) c_role_admin {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
     }
 
@@ -2016,9 +1880,8 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-xl));
         cursor: "pointer";
         border-bottom: format!("2px solid {}", var!(accent));
-        color: var!(accent);
-        background: var!(accent-subtle);
-        border-radius: format!("{} {} 0px 0px", var!(radius-sm), var!(radius-sm));
+        color: var!(text-on-accent);
+        background: var!(accent);
         font-size: var!(font-base);
         font-weight: "500";
         transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
@@ -2030,7 +1893,6 @@ class! {
         border-bottom: "2px solid transparent";
         color: "inherit";
         background: "transparent";
-        border-radius: format!("{} {} 0px 0px", var!(radius-sm), var!(radius-sm));
         font-size: var!(font-base);
         font-weight: "500";
         transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
@@ -2052,7 +1914,7 @@ class! {
 
     pub(crate) c_tab_text_muted {
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         font-size: "13px";
     }
 
@@ -2072,8 +1934,6 @@ class! {
         align-items: "center";
         padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-bottom: format!("1px solid {}", var!(border-subtle));
-        border-radius: var!(radius-sm);
-        margin-bottom: var!(gap-element);
         gap: var!(gap-component);
         background: var!(bg-list-even);
         @media ((max-width: 767px)) {
@@ -2087,7 +1947,6 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -2112,7 +1971,6 @@ class! {
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(text-error));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -2151,8 +2009,6 @@ class! {
         align-items: "center";
         padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-bottom: format!("1px solid {}", var!(border-subtle));
-        border-radius: var!(radius-sm);
-        margin-bottom: var!(gap-element);
         gap: var!(gap-component);
         background: var!(bg-list-even);
     }
@@ -2163,8 +2019,6 @@ class! {
         align-items: "center";
         padding: format!("{} {}", var!(gap-component), var!(space-lg));
         border-bottom: format!("1px solid {}", var!(border-subtle));
-        border-radius: var!(radius-sm);
-        margin-bottom: var!(gap-element);
         gap: var!(gap-component);
         background: var!(bg-list-odd);
     }
@@ -2177,6 +2031,8 @@ class! {
         white-space: "nowrap";
         font-size: var!(font-base);
         color: "inherit";
+        display: "flex";
+        align-items: "center";
     }
 
     pub(crate) c_list_item_button {
@@ -2191,7 +2047,6 @@ class! {
     pub(crate) c_log_container {
         background: var!(bg-console);
         padding: format!("0px {}", var!(space-sm));
-        border-radius: var!(radius-md);
         font-family: "ui-monospace, monospace";
         font-size: "13px";
         margin-top: "0px";
@@ -2246,7 +2101,7 @@ class! {
 
     pub(crate) c_not_found_text {
         color: "inherit";
-        opacity: "0.7";
+        opacity: "1";
         font-size: var!(font-lg);
         margin-bottom: var!(space-3xl);
     }
@@ -2316,7 +2171,6 @@ class! {
     pub(crate) c_event_mouse_area {
         min-height: "120px";
         padding: var!(space-xl);
-        border-radius: var!(radius-md);
         border: format!("2px dashed {}", var!(border-accent-light));
         cursor: "crosshair";
         text-align: "center";
@@ -2327,7 +2181,6 @@ class! {
     pub(crate) c_event_drag_zone {
         min-height: "100px";
         padding: var!(space-xl);
-        border-radius: var!(radius-md);
         border: format!("2px dashed {}", var!(border-warning));
         text-align: "center";
         user-select: "none";
@@ -2337,7 +2190,6 @@ class! {
     pub(crate) c_event_drag_zone_active {
         min-height: "100px";
         padding: var!(space-xl);
-        border-radius: var!(radius-md);
         border: format!("2px dashed {}", var!(border-success));
         text-align: "center";
         user-select: "none";
@@ -2349,7 +2201,6 @@ class! {
         padding: format!("{} {}", var!(space-sm), var!(space-xl));
         background: var!(accent);
         color: var!(text-on-accent);
-        border-radius: var!(radius-sm);
         font-size: var!(font-base);
         font-weight: "500";
         cursor: "grab";
@@ -2359,7 +2210,6 @@ class! {
     pub(crate) c_event_wheel_zone {
         min-height: "120px";
         padding: var!(space-xl);
-        border-radius: var!(radius-md);
         border: format!("2px dashed {}", var!(border-success));
         text-align: "center";
         overflow: "auto";
@@ -2368,15 +2218,13 @@ class! {
 
     pub(crate) c_event_clipboard_area {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
-        border: format!("1px solid {}", var!(border-pink));
-        color: var!(text-pink);
+        border: format!("1px solid {}", var!(border));
+        color: var!(text-primary);
     }
 
     pub(crate) c_event_touch_zone {
         min-height: "120px";
         padding: var!(space-xl);
-        border-radius: var!(radius-md);
         border: format!("2px dashed {}", var!(accent));
         text-align: "center";
         touch-action: "none";
@@ -2386,14 +2234,12 @@ class! {
 
     pub(crate) c_event_form_area {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-info));
         color: var!(text-info);
     }
 
     pub(crate) c_event_media_area {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
         color: var!(text-success);
         max-width: "100%";
@@ -2407,7 +2253,6 @@ class! {
 
     pub(crate) c_event_video_area {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-warning));
         color: var!(text-warning);
         width: "100%";
@@ -2417,12 +2262,10 @@ class! {
     pub(crate) c_event_video {
         width: "100%";
         max-width: "100%";
-        border-radius: var!(radius-sm);
     }
 
     pub(crate) c_event_image_area {
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
         width: "100%";
@@ -2434,14 +2277,13 @@ class! {
         width: "200px";
         max-width: "100%";
         object-fit: "contain";
-        border-radius: var!(radius-lg);
     }
 
     pub(crate) c_event_url_text {
         text-align: "center";
         font-size: var!(font-sm);
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         font-family: "ui-monospace, monospace";
         word-break: "break-all";
     }
@@ -2454,7 +2296,6 @@ class! {
         text-align: "center";
         padding: var!(space-xl);
         margin: format!("{} 0px", var!(gap-component));
-        border-radius: var!(radius-lg);
         border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
     }
@@ -2481,7 +2322,6 @@ class! {
         padding: var!(space-md);
         margin-top: var!(gap-component);
         background: var!(bg-warning);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-warning));
         font-size: var!(font-lg);
         font-weight: "600";
@@ -2535,19 +2375,18 @@ class! {
 
     pub(crate) c_modal_content {
         background: var!(bg-modal);
-        border-radius: var!(radius-xl);
         padding: "0px";
         max-width: "480px";
         width: "90%";
         box-shadow: var!(shadow-modal);
-        border: format!("1px solid {}", var!(glass-border));
+        border: format!("1px solid {}", var!(border));
         animation: format!("euv-scale-in-modal {} {}", var!(duration-modal-content), var!(ease-bounce));
         overflow: "hidden";
         color: var!(text-card);
+        box-sizing: "border-box";
         @media ((max-width: 767px)) {
             max-width: "100%";
             width: "calc(100% - 32px)";
-            border-radius: var!(radius-xl);
             max-height: "85vh";
             overflow-y: "auto";
         }
@@ -2555,19 +2394,18 @@ class! {
 
     pub(crate) c_modal_content_closing {
         background: var!(bg-modal);
-        border-radius: var!(radius-xl);
         padding: "0px";
         max-width: "480px";
         width: "90%";
         box-shadow: var!(shadow-modal);
-        border: format!("1px solid {}", var!(glass-border));
+        border: format!("1px solid {}", var!(border));
         animation: format!("euv-scale-out-modal {} {}", var!(duration-modal-content), var!(ease-in));
         overflow: "hidden";
         color: var!(text-card);
+        box-sizing: "border-box";
         @media ((max-width: 767px)) {
             max-width: "100%";
             width: "calc(100% - 32px)";
-            border-radius: var!(radius-xl);
             max-height: "85vh";
             overflow-y: "auto";
         }
@@ -2607,7 +2445,6 @@ class! {
     pub(crate) c_anim_fade_in {
         margin-top: var!(gap-component);
         padding: var!(space-xl);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         animation: format!("euv-fade-in 0.5s {}", var!(ease-out));
         font-size: var!(font-base);
@@ -2634,7 +2471,7 @@ class! {
     pub(crate) c_anim_spin_stopped {
         font-size: var!(font-5xl);
         display: "inline-block";
-        opacity: "0.4";
+        opacity: "1";
         @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
@@ -2661,7 +2498,7 @@ class! {
     pub(crate) c_anim_pulse_stopped {
         font-size: var!(font-5xl);
         display: "inline-block";
-        opacity: "0.4";
+        opacity: "1";
         color: var!(text-danger);
         @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
@@ -2672,29 +2509,26 @@ class! {
         width: "100%";
         height: "12px";
         background: var!(bg-progress);
-        border-radius: var!(radius-pill);
         margin: format!("{} 0px", var!(space-lg));
         overflow: "hidden";
     }
 
     pub(crate) c_progress_bar_running {
         height: "100%";
-        border-radius: var!(radius-pill);
         background: var!(accent);
         animation: format!("euv-progress 1.6s {} forwards", var!(ease-in-out));
     }
 
     pub(crate) c_progress_bar_stopped {
         height: "100%";
-        border-radius: var!(radius-pill);
         background: var!(accent);
         width: "0%";
     }
 
-    pub(crate) c_anim_color_box {
+    pub(crate) c_anim_scale_box {
         margin: format!("{} 0px", var!(gap-component));
         padding: var!(space-xl);
-        border-radius: var!(radius-lg);
+        background: var!(accent);
         color: var!(text-on-accent);
         text-align: "center";
         font-weight: "600";
@@ -2710,7 +2544,7 @@ class! {
     pub(crate) c_browser_api_row {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: format!("0px {}", var!(gap-component));
+        gap: var!(gap-component);
         margin-bottom: var!(gap-component);
         @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
@@ -2727,7 +2561,6 @@ class! {
     pub(crate) c_browser_result_box {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         font-size: var!(font-base);
         word-break: "break-all";
@@ -2757,7 +2590,6 @@ class! {
         flex-direction: "column";
         gap: var!(space-xs);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-input));
         color: "inherit";
     }
@@ -2766,7 +2598,7 @@ class! {
         font-size: var!(font-sm);
         font-weight: "600";
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         text-transform: "uppercase";
         letter-spacing: "0.05em";
     }
@@ -2788,16 +2620,15 @@ class! {
         right: "-8px";
         min-width: "18px";
         height: "18px";
-        border-radius: "9px";
-        background: var!(bg-console-badge);
-        color: var!(text-on-accent);
+        background: var!(bg-primary);
+        color: var!(foreground);
         font-size: "10px";
         font-weight: "600";
         display: "flex";
         align-items: "center";
         justify-content: "center";
         padding: format!("0px {}", var!(space-xs));
-        box-shadow: "0px 2px 6px rgba(239, 68, 68, 0.3)";
+        border: format!("1px solid {}", var!(primary));
         pointer-events: "none";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
     }
@@ -2835,7 +2666,6 @@ class! {
         display: "flex";
         flex-direction: "column";
         border-top: format!("3px solid {}", var!(border-console-accent));
-        border-radius: format!("{} {} 0px 0px", var!(radius-xl), var!(radius-xl));
         box-shadow: var!(shadow-console-panel);
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
@@ -2899,7 +2729,6 @@ class! {
     pub(crate) c_vconsole_title_dot {
         width: "8px";
         height: "8px";
-        border-radius: var!(space-xs);
         background: var!(text-console-log-latest);
         display: "inline-block";
         animation: "euv-pulse 2s ease-in-out infinite";
@@ -2915,11 +2744,10 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        background: var!(bg-error);
-        color: var!(text-error);
-        border: format!("1px solid {}", var!(border-error));
+        background: var!(bg-console-button);
+        color: var!(text-console-button-text);
+        border: format!("1px solid {}", var!(border-console));
         padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
         cursor: "pointer";
         font-size: var!(font-sm);
         font-weight: "500";
@@ -2932,7 +2760,12 @@ class! {
         outline: "none";
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+            box-shadow: format!("0 0 0 3px {}", var!(border-console));
+        }
+        :active {
+            background: var!(bg-console-button);
+            color: var!(text-console-button-text);
+            border-color: var!(border-console);
         }
     }
 
@@ -2944,7 +2777,6 @@ class! {
         color: var!(text-console-button);
         border: format!("1px solid {}", var!(border-console-button));
         padding: format!("{} {}", var!(space-xs), var!(space-md));
-        border-radius: var!(radius-sm);
         cursor: "pointer";
         font-size: "16px";
         font-weight: "400";
@@ -2963,6 +2795,11 @@ class! {
         :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(border-console-button));
+        }
+        :active {
+            background: "transparent";
+            color: var!(text-console-button);
+            border-color: var!(border-console-button);
         }
     }
 
@@ -3039,21 +2876,53 @@ class! {
     pub(crate) c_vconsole_filter_bar {
         display: "flex";
         gap: var!(space-sm);
-        padding: format!("{} {}", var!(space-sm), var!(space-xl));
-        background: var!(bg-console-filter);
+        padding: format!("{} {}", var!(space-xs), var!(space-lg));
+        background: var!(bg-console);
         border-bottom: format!("1px solid {}", var!(border-console));
         flex-shrink: "0";
+    }
+
+    pub(crate) c_vconsole_filter_badge {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(text-console-filter-active);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        border: format!("1px solid {}", var!(bg-console-filter-active));
+        font-size: var!(font-xs);
+        font-weight: "600";
+        cursor: "pointer";
+        text-align: "center";
+        background: var!(bg-console-filter-active);
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 3px {}", var!(border-console));
+        }
+    }
+
+    pub(crate) c_vconsole_filter_badge_outline {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        color: var!(text-console-filter-inactive);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
+        font-weight: "600";
+        cursor: "pointer";
+        text-align: "center";
+        background: "transparent";
+        border: format!("1.5px solid {}", var!(border-console-filter-inactive));
     }
 
     pub(crate) c_vconsole_level_badge {
         display: "inline-block";
         padding: "2px 7px";
-        border-radius: var!(space-xs);
         font-size: "10px";
         font-weight: "600";
         margin-right: var!(space-sm);
         letter-spacing: "0.05em";
-        color: "inherit";
+        color: var!(foreground);
+        border: "1px solid currentColor";
     }
 
     pub(crate) c_vconsole_badge_log {
@@ -3084,7 +2953,7 @@ class! {
         position: "sticky";
         top: "0px";
         z-index: "100";
-        border-bottom: format!("1px solid {}", var!(glass-border));
+        border-bottom: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_mobile_header_left {
@@ -3104,7 +2973,6 @@ class! {
     pub(crate) c_mobile_menu_button {
         width: "40px";
         height: "40px";
-        border-radius: var!(radius-md);
         background: "transparent";
         border: "none";
         cursor: "pointer";
@@ -3115,12 +2983,15 @@ class! {
         justify-content: "center";
         color: var!(text-primary);
         padding: "0px";
+        :active {
+            background: "transparent";
+            color: var!(text-primary);
+        }
     }
 
     pub(crate) c_mobile_theme_button {
         width: "40px";
         height: "40px";
-        border-radius: var!(radius-md);
         background: "transparent";
         border: "none";
         cursor: "pointer";
@@ -3128,12 +2999,14 @@ class! {
         align-items: "center";
         justify-content: "center";
         padding: "0px";
+        :active {
+            background: "transparent";
+        }
     }
 
     pub(crate) c_mobile_menu_button_active {
         width: "40px";
         height: "40px";
-        border-radius: var!(radius-md);
         background: var!(accent-subtle);
         border: "none";
         cursor: "pointer";
@@ -3144,12 +3017,15 @@ class! {
         justify-content: "center";
         color: var!(accent);
         padding: "0px";
+        :active {
+            background: var!(accent-subtle);
+            color: var!(accent);
+        }
     }
 
     pub(crate) c_mobile_drawer_close_button {
         width: "32px";
         height: "32px";
-        border-radius: var!(radius-sm);
         background: "transparent";
         border: "none";
         cursor: "pointer";
@@ -3163,6 +3039,9 @@ class! {
         transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
         :hover {
             color: var!(text-primary);
+        }
+        :active {
+            color: var!(text-muted);
         }
     }
 
@@ -3200,8 +3079,6 @@ class! {
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         box-shadow: var!(shadow-drawer);
-        border-top-right-radius: var!(radius-xl);
-        border-bottom-right-radius: var!(radius-xl);
         overflow: "hidden";
     }
 
@@ -3219,6 +3096,7 @@ class! {
     }
 
     pub(crate) c_mobile_main {
+        width: "100%";
         flex: "1";
         padding: format!("{} {} calc({} + env(safe-area-inset-bottom, 0px)) {}", var!(space-lg), var!(padding-main-horizontal-mobile), var!(space-lg), var!(padding-main-horizontal-mobile));
         background: var!(bg-primary);
@@ -3292,7 +3170,6 @@ class! {
     pub(crate) c_keep_alive_form_preview {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(gap-component), var!(space-lg));
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
         background: var!(accent-muted);
     }
@@ -3312,7 +3189,6 @@ class! {
         width: "100%";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         background: var!(bg-input);
@@ -3349,7 +3225,6 @@ class! {
         align-items: "center";
         gap: format!("{}", var!(space-md));
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border-radius: var!(radius-sm);
         background: var!(bg-input);
         margin: format!("{} 0px", var!(space-sm));
         font-size: var!(font-base);
@@ -3370,7 +3245,6 @@ class! {
 
     pub(crate) c_file_upload_drop_zone {
         border: format!("2px dashed {}", var!(border-input));
-        border-radius: var!(radius-lg);
         padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
@@ -3379,7 +3253,6 @@ class! {
 
     pub(crate) c_file_upload_drop_zone_active {
         border: format!("2px dashed {}", var!(accent));
-        border-radius: var!(radius-lg);
         padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
@@ -3402,7 +3275,7 @@ class! {
     pub(crate) c_file_upload_drop_hint {
         font-size: "13px";
         color: "inherit";
-        opacity: "0.5";
+        opacity: "1";
         margin: "0px";
     }
 
@@ -3416,9 +3289,7 @@ class! {
         gap: var!(gap-component);
         margin-top: var!(gap-component);
         padding: format!("{} {} {} {}", var!(space-lg), var!(space-lg), var!(gap-component), var!(space-lg));
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-accent-light));
-        background: var!(accent-muted);
     }
 
     pub(crate) c_binding_child_label {
@@ -3433,7 +3304,6 @@ class! {
         color: "inherit";
         font-size: var!(font-md);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border-radius: var!(radius-sm);
         background: var!(accent-subtle);
         font-weight: "500";
     }
@@ -3442,10 +3312,9 @@ class! {
         display: "flex";
         flex-direction: "column";
         gap: var!(gap-component);
+        margin-top: var!(gap-component);
         padding: format!("{} {} {} {}", var!(space-lg), var!(space-lg), var!(gap-component), var!(space-lg));
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
-        background: var!(bg-success);
     }
 
     pub(crate) c_binding_section_title {
@@ -3483,7 +3352,6 @@ class! {
     pub(crate) c_binding_color_preview {
         width: "100%";
         height: "80px";
-        border-radius: var!(radius-md);
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -3496,7 +3364,7 @@ class! {
         font-size: var!(font-xl);
         font-weight: "700";
         color: var!(text-on-accent);
-        text-shadow: "0px 1px 3px rgba(0, 0, 0, 0.5)";
+        text-shadow: format!("0px 1px 3px {}", var!(border-loading));
         letter-spacing: "0.02em";
     }
 
@@ -3537,7 +3405,6 @@ class! {
         font-weight: "600";
         color: var!(accent);
         padding: format!("1px {}", var!(space-sm));
-        border-radius: var!(space-xs);
         background: var!(accent-subtle);
     }
 
@@ -3552,7 +3419,6 @@ class! {
         font-weight: "500";
         color: var!(text-error);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border-radius: var!(radius-sm);
         background: var!(bg-error);
         border: format!("1px solid {}", var!(border-error));
         margin-bottom: "0px";
@@ -3576,6 +3442,38 @@ class! {
         margin: "0px"
     }
 
+    pub(crate) c_binding_compact_button {
+        display: "inline-flex";
+        justify-content: "center";
+        align-items: "center";
+        height: "42px";
+        padding: format!("0px {}", var!(space-md));
+        background: var!(accent);
+        color: var!(text-on-accent);
+        border: format!("1px solid {}", var!(accent));
+        cursor: "pointer";
+        font-size: var!(font-sm);
+        font-weight: "600";
+        outline: "none";
+        white-space: "nowrap";
+        user-select: "none";
+        -webkit-user-select: "none";
+        box-sizing: "border-box";
+        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        :hover {
+            background: var!(accent-hover);
+        }
+        :focus-visible {
+            outline: "none";
+            box-shadow: format!("0 0 0 2px {}", var!(accent-border));
+        }
+        :active {
+            background: var!(accent);
+            color: var!(text-on-accent);
+            border-color: var!(accent);
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Custom Attrs - Dynamic Style
     // ═══════════════════════════════════════════════════════════════════════════
@@ -3583,7 +3481,6 @@ class! {
     pub(crate) c_attrs_dynamic_demo(prop_key: &str, prop_value: &str) {
         { prop_key }: prop_value;
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-input));
         color: "inherit";
         margin-top: var!(space-md);
@@ -3603,7 +3500,6 @@ class! {
     pub(crate) c_dynamic_component_panel {
         display: "block";
         padding: var!(space-lg);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-primary);
         min-height: "36px";
@@ -3619,7 +3515,6 @@ class! {
 
     pub(crate) c_dynamic_component_inline {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border-radius: var!(radius-sm);
         background: var!(accent-subtle);
         border: format!("1px solid {}", var!(accent-border));
         color: var!(accent);
@@ -3629,7 +3524,6 @@ class! {
 
     pub(crate) c_dynamic_component_inline_alt {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border-radius: var!(radius-sm);
         background: var!(bg-success);
         border: format!("1px solid {}", var!(border-success));
         color: var!(text-positive);
@@ -3672,32 +3566,24 @@ class! {
     }
 
     pub(crate) c_virtual_list_container {
-        flex: "1";
-        min-height: "0px";
+        height: "400px";
         overflow-y: "auto";
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         background: var!(bg-input);
     }
 
     pub(crate) c_virtual_list_card {
         background: var!(bg-card);
-        border-radius: var!(radius-lg);
         padding: var!(space-xl);
         margin-top: "0px";
         margin-bottom: var!(gap-section);
-        box-shadow: var!(shadow-card);
         border: format!("1px solid {}", var!(border-card));
         color: var!(text-card);
-        transition: format!("box-shadow {} {}", var!(duration-normal), var!(ease-out));
         display: "flex";
         flex-direction: "column";
-        flex: "1";
-        min-height: "0px";
         @media ((max-width: 767px)) {
             padding: var!(space-lg);
             margin-bottom: var!(gap-section-mobile);
-            border-radius: var!(radius-lg);
         }
     }
 
@@ -3708,6 +3594,8 @@ class! {
         gap: var!(space-lg);
         border-bottom: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-list-even);
+        height: "100%";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_virtual_list_row_odd {
@@ -3717,6 +3605,8 @@ class! {
         gap: var!(space-lg);
         border-bottom: format!("1px solid {}", var!(border-subtle));
         background: var!(bg-list-odd);
+        height: "100%";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_virtual_list_row_index {
@@ -3726,6 +3616,8 @@ class! {
         color: var!(accent);
         font-family: "ui-monospace, monospace";
         flex-shrink: "0";
+        display: "flex";
+        align-items: "center";
     }
 
     pub(crate) c_virtual_list_row_label {
@@ -3737,17 +3629,21 @@ class! {
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
+        display: "flex";
+        align-items: "center";
     }
 
     pub(crate) c_virtual_list_row_description {
         font-size: "13px";
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
         flex: "1";
         min-width: "0px";
+        display: "flex";
+        align-items: "center";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -3806,11 +3702,10 @@ class! {
         align-items: "center";
     }
 
-
     pub(crate) c_grid_2col {
         display: "grid";
         grid-template-columns: "1fr 1fr";
-        gap: format!("0px {}", var!(gap-component));
+        gap: var!(gap-component);
         @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
@@ -3845,7 +3740,7 @@ class! {
 
     pub(crate) c_hint {
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         font-size: "13px";
         margin-bottom: var!(gap-component);
     }
@@ -3860,6 +3755,11 @@ class! {
         color: var!(text-on-accent);
         border: "none";
         box-shadow: format!("inset 0 0 0 1px {}, {}", var!(text-error), var!(shadow-accent-sm));
+        :active {
+            background: var!(text-error);
+            color: var!(text-on-accent);
+            border-color: "none";
+        }
     }
 
     pub(crate) c_net_action_button {
@@ -3878,13 +3778,13 @@ class! {
 
     pub(crate) c_net_message_count {
         color: "inherit";
-        opacity: "0.6";
+        opacity: "1";
         font-size: var!(font-sm);
     }
 
     pub(crate) c_net_messages_empty {
         color: "inherit";
-        opacity: "0.5";
+        opacity: "1";
         padding: var!(space-xl);
         text-align: "center";
         font-size: var!(font-base);
@@ -3902,7 +3802,6 @@ class! {
         gap: var!(gap-element);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
         background: var!(bg-loading);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-loading));
     }
 
@@ -3940,7 +3839,6 @@ class! {
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
@@ -3969,7 +3867,6 @@ class! {
         gap: var!(gap-element);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
         background: var!(bg-loading);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-loading));
         min-width: "0px";
     }
@@ -3998,7 +3895,6 @@ class! {
         gap: var!(gap-element);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
         background: var!(bg-success);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-success));
         margin-left: "auto";
         max-width: "80%";
@@ -4010,7 +3906,6 @@ class! {
         gap: var!(gap-element);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
         background: var!(bg-loading);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-loading));
         margin-right: "auto";
         max-width: "80%";
@@ -4021,7 +3916,7 @@ class! {
         font-weight: "600";
         white-space: "nowrap";
         flex-shrink: "0";
-        opacity: "0.7";
+        opacity: "1";
     }
 
     pub(crate) c_ws_message_content {
@@ -4049,7 +3944,7 @@ class! {
 
     pub(crate) c_tag_desc {
         font-size: var!(font-sm);
-        color: var!(text-tertiary);
+        color: var!(foreground);
         margin: "0px";
         margin-bottom: var!(space-sm);
     }
@@ -4057,7 +3952,6 @@ class! {
     pub(crate) c_tag_demo_box {
         background: var!(bg-loading);
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
     }
 
@@ -4083,7 +3977,7 @@ class! {
 
     pub(crate) c_tag_demo_muted {
         font-size: var!(font-sm);
-        color: var!(text-tertiary);
+        color: var!(foreground);
         margin: "0px";
     }
 
@@ -4091,14 +3985,12 @@ class! {
         background: var!(accent-subtle);
         color: var!(accent);
         padding: format!("0px {}", var!(space-xs));
-        border-radius: var!(radius-sm);
     }
 
     pub(crate) c_tag_demo_mark {
-        background: var!(badge-bg-warning);
-        color: var!(text-primary);
+        background: var!(accent);
+        color: var!(text-on-accent);
         padding: format!("0px {}", var!(space-xs));
-        border-radius: var!(radius-sm);
     }
 
     pub(crate) c_tag_demo_code {
@@ -4106,7 +3998,6 @@ class! {
         background: var!(bg-loading);
         color: var!(accent);
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        border-radius: var!(radius-sm);
         font-size: var!(font-sm);
     }
 
@@ -4114,7 +4005,6 @@ class! {
         font-family: "monospace";
         background: var!(bg-loading);
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-sm);
         padding: format!("0px {}", var!(space-xs));
         font-size: var!(font-sm);
         box-shadow: format!("0 1px 0 {}", var!(border-loading));
@@ -4139,10 +4029,10 @@ class! {
         font-family: "monospace";
         background: var!(bg-loading);
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: var!(space-md);
         font-size: var!(font-sm);
-        overflow-x: "auto";
+        white-space: "pre-wrap";
+        word-break: "break-all";
         margin: "0px";
     }
 
@@ -4151,19 +4041,19 @@ class! {
         margin: "0px";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(bg-loading);
-        border-radius: var!(radius-md);
         color: "inherit";
         font-style: "italic";
+        box-sizing: "border-box";
     }
 
     pub(crate) c_tag_figure_placeholder {
         background: var!(bg-loading);
         border: format!("1px dashed {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: format!("{} {}", var!(space-xl), var!(space-md));
         text-align: "center";
-        color: var!(text-tertiary);
+        color: var!(foreground);
         font-size: var!(font-sm);
+        box-sizing: "border-box";
     }
 
     pub(crate) c_heading_h1 {
@@ -4234,19 +4124,23 @@ class! {
     pub(crate) c_tag_demo_dd {
         margin: "0px";
         margin-left: var!(space-xl);
-        color: var!(text-tertiary);
+        color: var!(foreground);
     }
 
     pub(crate) c_tag_demo_table {
         width: "100%";
         border-collapse: "collapse";
         margin: "0px";
+        table-layout: "fixed";
+        display: "block";
+        max-width: "100%";
+        overflow-x: "auto";
     }
 
     pub(crate) c_tag_demo_caption {
         font-size: var!(font-sm);
         font-weight: "600";
-        color: var!(text-tertiary);
+        color: var!(foreground);
         text-align: "left";
         margin-bottom: var!(space-sm);
     }
@@ -4270,39 +4164,33 @@ class! {
 
     pub(crate) c_tag_demo_img {
         max-width: "100%";
-        border-radius: var!(radius-md);
     }
 
     pub(crate) c_tag_demo_iframe {
         width: "100%";
         height: "120px";
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
     }
 
     pub(crate) c_tag_demo_embed {
         width: "100%";
         height: "120px";
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
     }
 
     pub(crate) c_tag_demo_canvas {
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         background: var!(bg-loading);
     }
 
     pub(crate) c_tag_demo_svg {
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         background: var!(bg-loading);
     }
 
     pub(crate) c_tag_demo_video {
         width: "100%";
         max-width: "100%";
-        border-radius: var!(radius-md);
         background: var!(bg-loading);
     }
 
@@ -4310,7 +4198,6 @@ class! {
         display: "block";
         width: "100%";
         max-width: "100%";
-        border-radius: var!(radius-md);
     }
 
     pub(crate) c_tag_button_row {
@@ -4323,7 +4210,7 @@ class! {
     pub(crate) c_tag_demo_form {
         display: "flex";
         flex-direction: "column";
-        gap: "0px";
+        gap: var!(gap-component);
     }
 
     pub(crate) c_tag_form_row {
@@ -4337,7 +4224,6 @@ class! {
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
@@ -4352,6 +4238,36 @@ class! {
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
             background: var!(accent-muted);
         }
+        ::-webkit-slider-runnable-track {
+            height: "4px";
+            background: var!(border-input);
+            border: "none";
+            border-radius: "2px";
+        }
+        ::-webkit-slider-thumb {
+            width: "16px";
+            height: "16px";
+            background: var!(accent);
+            border: "none";
+            border-radius: "50%";
+            cursor: "pointer";
+            -webkit-appearance: "none";
+            margin-top: "-6px";
+        }
+        ::-moz-range-track {
+            height: "4px";
+            background: var!(border-input);
+            border: "none";
+            border-radius: "2px";
+        }
+        ::-moz-range-thumb {
+            width: "16px";
+            height: "16px";
+            background: var!(accent);
+            border: "none";
+            border-radius: "50%";
+            cursor: "pointer";
+        }
     }
 
     pub(crate) c_tag_demo_input_color {
@@ -4359,7 +4275,6 @@ class! {
         height: "32px";
         padding: "2px";
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         cursor: "pointer";
         background: "transparent";
     }
@@ -4370,7 +4285,6 @@ class! {
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
@@ -4394,7 +4308,6 @@ class! {
         background: var!(bg-input);
         color: var!(text-primary);
         border: format!("1px solid {}", var!(border-input));
-        border-radius: var!(radius-md);
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
@@ -4414,19 +4327,51 @@ class! {
     pub(crate) c_tag_demo_progress {
         width: "200px";
         height: "8px";
-        border-radius: var!(radius-md);
         vertical-align: "middle";
+        background: var!(bg-input);
+        border: "none";
+        border-radius: "4px";
+        overflow: "hidden";
+        ::-webkit-progress-bar {
+            background: var!(bg-input);
+        }
+        ::-webkit-progress-value {
+            background: var!(accent);
+        }
+        ::-moz-progress-bar {
+            background: var!(accent);
+        }
     }
 
     pub(crate) c_tag_demo_meter {
         width: "200px";
         height: "8px";
         vertical-align: "middle";
+        background: var!(bg-input);
+        border: "none";
+        border-radius: "4px";
+        overflow: "hidden";
+        ::-webkit-meter-bar {
+            background: var!(bg-input);
+            border: "none";
+            border-radius: "4px";
+        }
+        ::-webkit-meter-optimum-value {
+            background: var!(accent);
+        }
+        ::-webkit-meter-suboptimum-value {
+            background: var!(accent);
+        }
+        ::-webkit-meter-even-less-good-value {
+            background: var!(accent);
+        }
+        ::-moz-meter-bar {
+            background: var!(accent);
+        }
     }
 
     pub(crate) c_tag_demo_fieldset {
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: var!(space-md);
         margin: "0px";
     }
@@ -4434,7 +4379,7 @@ class! {
     pub(crate) c_tag_demo_legend {
         font-weight: "600";
         font-size: var!(font-sm);
-        color: var!(text-secondary);
+        color: var!(foreground);
         padding: format!("0px {}", var!(space-sm));
     }
 
@@ -4448,7 +4393,6 @@ class! {
 
     pub(crate) c_tag_demo_details {
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: var!(space-md);
         background: var!(bg-loading);
     }
@@ -4463,7 +4407,6 @@ class! {
 
     pub(crate) c_tag_demo_dialog {
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: var!(space-md);
         background: var!(bg-loading);
         color: "inherit";
@@ -4482,7 +4425,6 @@ class! {
 
     pub(crate) c_sticky_scroll_area {
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         height: "300px";
         overflow-y: "auto";
         padding: var!(space-lg);
@@ -4499,7 +4441,6 @@ class! {
         font-weight: "700";
         font-size: var!(font-lg);
         text-align: "center";
-        border-radius: var!(radius-md);
         margin-bottom: var!(gap-component);
         z-index: "10";
     }
@@ -4511,9 +4452,8 @@ class! {
         font-weight: "700";
         font-size: var!(font-lg);
         text-align: "center";
-        border-radius: var!(radius-md);
         margin-bottom: var!(gap-component);
-        opacity: "0.6";
+        opacity: "1";
     }
 
     pub(crate) c_sticky_paragraph {
@@ -4525,9 +4465,9 @@ class! {
     pub(crate) c_sticky_glass_demo {
         position: "relative";
         height: "320px";
-        border-radius: var!(radius-lg);
         overflow: "hidden";
-        background: format!("linear-gradient(135deg, {}, {}, {})", var!(accent), var!(color-success), var!(color-warning));
+        background: var!(muted);
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-xl);
         margin-top: var!(gap-component);
     }
@@ -4536,7 +4476,7 @@ class! {
         position: "absolute";
         border-radius: "50%";
         filter: "blur(40px)";
-        opacity: "0.7";
+        opacity: "1";
     }
 
     pub(crate) c_sticky_glass_circle_first {
@@ -4550,7 +4490,7 @@ class! {
     pub(crate) c_sticky_glass_circle_second {
         width: "120px";
         height: "120px";
-        background: var!(color-success);
+        background: var!(muted-foreground);
         top: "100px";
         right: "50px";
     }
@@ -4558,27 +4498,23 @@ class! {
     pub(crate) c_sticky_glass_circle_third {
         width: "100px";
         height: "100px";
-        background: var!(color-warning);
+        background: var!(border);
         bottom: "30px";
         left: "50%";
     }
 
     pub(crate) c_sticky_glass_card {
         position: "relative";
-        background: "rgba(255, 255, 255, 0.15)";
-        backdrop-filter: "blur(16px)";
-        -webkit-backdrop-filter: "blur(16px)";
-        border-radius: var!(radius-lg);
-        border: "1px solid rgba(255, 255, 255, 0.25)";
+        background: var!(card);
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-xl);
         z-index: "2";
     }
 
     pub(crate) c_sticky_glass_card_no_blur {
         position: "relative";
-        background: "rgba(255, 255, 255, 0.5)";
-        border-radius: var!(radius-lg);
-        border: format!("1px solid {}", var!(border-loading));
+        background: var!(card);
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-xl);
         z-index: "2";
     }
@@ -4587,13 +4523,13 @@ class! {
         margin: format!("0px 0px {} 0px", var!(space-sm));
         font-size: var!(font-xl);
         font-weight: "700";
-        color: "rgba(255, 255, 255, 0.95)";
+        color: var!(foreground);
     }
 
     pub(crate) c_sticky_glass_text {
         margin: "0px";
         font-size: var!(font-base);
-        color: "rgba(255, 255, 255, 0.8)";
+        color: var!(muted-foreground);
     }
 
     pub(crate) c_sticky_slider_row {
@@ -4615,7 +4551,6 @@ class! {
         -webkit-appearance: "none";
         appearance: "none";
         background: var!(bg-progress);
-        border-radius: var!(radius-pill);
         outline: "none";
         cursor: "pointer";
     }
@@ -4623,7 +4558,6 @@ class! {
     pub(crate) c_sticky_blur_demo {
         position: "relative";
         height: "200px";
-        border-radius: var!(radius-lg);
         overflow: "hidden";
         margin-top: var!(gap-component);
     }
@@ -4631,8 +4565,8 @@ class! {
     pub(crate) c_sticky_blur_background {
         position: "absolute";
         inset: "0px";
-        background: format!("repeating-linear-gradient(45deg, {}, {} 10px, {} 10px, {} 20px)", var!(accent), var!(accent-disabled), var!(accent-disabled), var!(accent));
-        opacity: "0.3";
+        background: var!(muted);
+        opacity: "1";
     }
 
     pub(crate) c_sticky_blur_overlay {
@@ -4642,8 +4576,7 @@ class! {
         align-items: "center";
         justify-content: "center";
         padding: var!(space-xl);
-        background: "rgba(255, 255, 255, 0.12)";
-        border-radius: var!(radius-lg);
+        background: var!(bg-glass);
         will-change: "backdrop-filter";
     }
 
@@ -4666,7 +4599,7 @@ class! {
         height: "160px";
         border-radius: "50%";
         will-change: "transform";
-        box-shadow: format!("0px 0px 0px 4px {}, 0px 4px 12px rgba(0, 0, 0, 0.15)", var!(border-loading));
+        box-shadow: format!("0px 0px 0px 4px {}, 0px 4px 12px {}", var!(border-loading), var!(border-loading));
     }
 
     pub(crate) c_sticky_text_demo {
@@ -4697,7 +4630,7 @@ class! {
         font-size: var!(font-3xl);
         font-weight: "800";
         color: var!(text-secondary);
-        text-shadow: format!("1px 1px 1px {}, -1px -1px 1px {}", var!(bg-primary), "rgba(255, 255, 255, 0.3)");
+        text-shadow: format!("1px 1px 1px {}, -1px -1px 1px {}", var!(bg-primary), var!(border-loading));
         transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
     }
 
@@ -4782,7 +4715,6 @@ class! {
         justify-content: "center";
         font-weight: "700";
         font-size: var!(font-sm);
-        border-radius: var!(radius-md);
         border: format!("1px solid {}", var!(border-loading));
     }
 
@@ -4790,11 +4722,10 @@ class! {
         height: "200px";
         overflow-y: "auto";
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: var!(space-lg);
         background: var!(bg-loading);
         margin-top: var!(gap-component);
-        background-image: format!("linear-gradient({} 30%, transparent), linear-gradient(transparent, {} 70%), radial-gradient(farthest-side at 50% 0, rgba(0,0,0,0.12), transparent), radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,0.12), transparent)", var!(bg-card), var!(bg-card));
+        background-image: format!("linear-gradient({} 30%, transparent), linear-gradient(transparent, {} 70%), radial-gradient(farthest-side at 50% 0, {}, transparent), radial-gradient(farthest-side at 50% 100%, {}, transparent)", var!(bg-card), var!(bg-card), var!(border-loading), var!(border-loading));
         background-position: "0px 0px, 0px 100%, 0px 0px, 0px 100%";
         background-repeat: "no-repeat";
         background-size: "100% 40px, 100% 40px, 100% 14px, 100% 14px";
@@ -4805,7 +4736,6 @@ class! {
         height: "200px";
         overflow-y: "auto";
         border: format!("1px solid {}", var!(border-loading));
-        border-radius: var!(radius-md);
         padding: var!(space-lg);
         background: var!(bg-loading);
         margin-top: var!(gap-component);
@@ -4818,16 +4748,21 @@ class! {
     pub(crate) c_home_hero {
         position: "relative";
         text-align: "center";
-        padding: format!("{} {} {} {}", var!(space-5xl), var!(space-xl), var!(space-5xl), var!(space-xl));
+        padding: format!("{} {} {} {}", var!(space-4xl), var!(space-xl), var!(space-4xl), var!(space-xl));
         margin-bottom: var!(space-xl);
-        border-radius: var!(radius-xl);
-        overflow: "hidden";
         background: var!(bg-card);
         border: format!("1px solid {}", var!(border-card));
-        box-shadow: var!(shadow-card);
+        overflow: "hidden";
+        flex: "1";
+        display: "flex";
+        flex-direction: "column";
+        justify-content: "center";
+        min-height: "320px";
         @media ((max-width: 767px)) {
-            padding: format!("{} {} {} {}", var!(space-3xl), var!(space-lg), var!(space-3xl), var!(space-lg));
+            padding: format!("{} {} {} {}", var!(space-2xl), var!(space-lg), var!(space-2xl), var!(space-lg));
             margin-bottom: var!(space-lg);
+            flex: "0 0 auto";
+            min-height: "auto";
         }
     }
 
@@ -4836,12 +4771,11 @@ class! {
         top: "-50%";
         left: "50%";
         transform: "translateX(-50%)";
-        width: "600px";
-        height: "600px";
+        width: "100%";
+        max-width: "400px";
+        aspect-ratio: "1 / 1";
         border-radius: "50%";
-        background: var!(accent-gradient);
-        opacity: "0.06";
-        filter: "blur(80px)";
+        background: "transparent";
         pointer-events: "none";
     }
 
@@ -4862,7 +4796,6 @@ class! {
         justify-content: "center";
         align-items: "center";
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        border-radius: var!(radius-pill);
         background: var!(accent-subtle);
         color: var!(accent);
         font-size: var!(font-xs);
@@ -4876,12 +4809,8 @@ class! {
         font-weight: "800";
         letter-spacing: "-0.03em";
         margin: "0px";
-        background: var!(accent-gradient);
-        -webkit-background-clip: "text";
-        -webkit-text-fill-color: "transparent";
-        background-clip: "text";
+        color: var!(foreground);
         margin-bottom: var!(space-xs);
-        filter: "drop-shadow(0 2px 8px rgba(79, 70, 229, 0.15))";
         @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
@@ -4911,21 +4840,25 @@ class! {
         align-items: "center";
         gap: var!(space-sm);
         padding: format!("{} {}", var!(space-sm), var!(space-2xl));
-        border-radius: var!(radius-lg);
-        background: var!(accent-gradient);
-        color: var!(text-on-accent);
+        background: var!(accent);
+        color: var!(primary-foreground);
         font-size: var!(font-base);
         font-weight: "600";
         text-decoration: "none";
         border: "1.5px solid transparent";
         cursor: "pointer";
-        box-shadow: var!(shadow-accent-sm);
+        box-shadow: var!(shadow-sm);
         letter-spacing: "0.01em";
         vertical-align: "middle";
         min-height: "36px";
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
+            box-shadow: format!("0 0 0 3px {}", var!(ring));
+        }
+        :active {
+            background: var!(accent);
+            color: var!(primary-foreground);
+            border-color: "1.5px solid transparent";
         }
     }
 
@@ -4935,7 +4868,6 @@ class! {
         align-items: "center";
         gap: var!(space-sm);
         padding: format!("{} {}", var!(space-sm), var!(space-2xl));
-        border-radius: var!(radius-lg);
         background: "transparent";
         color: var!(accent);
         font-size: var!(font-base);
@@ -4950,6 +4882,11 @@ class! {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(accent-border));
         }
+        :active {
+            background: "transparent";
+            color: var!(accent);
+            border-color: var!(accent-border);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -4961,6 +4898,7 @@ class! {
         grid-template-columns: "repeat(4, 1fr)";
         gap: var!(space-md);
         margin-bottom: var!(space-xl);
+        min-width: "0px";
         @media ((max-width: 767px)) {
             grid-template-columns: "repeat(2, 1fr)";
             gap: var!(space-sm);
@@ -4973,10 +4911,10 @@ class! {
         align-items: "center";
         gap: var!(space-xs);
         padding: format!("{} {}", var!(space-lg), var!(space-md));
-        border-radius: var!(radius-lg);
         background: var!(bg-card);
         border: format!("1px solid {}", var!(border-card));
-        box-shadow: var!(shadow-card);
+        min-width: "0px";
+        overflow: "hidden";
     }
 
     pub(crate) c_home_stat_icon {
@@ -4986,10 +4924,7 @@ class! {
     pub(crate) c_home_stat_value {
         font-size: var!(font-xl);
         font-weight: "800";
-        background: var!(accent-gradient);
-        -webkit-background-clip: "text";
-        -webkit-text-fill-color: "transparent";
-        background-clip: "text";
+        color: var!(foreground);
         letter-spacing: "-0.01em";
     }
 
@@ -5027,6 +4962,7 @@ class! {
         display: "grid";
         grid-template-columns: "repeat(2, 1fr)";
         gap: var!(space-md);
+        min-width: "0px";
         @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
@@ -5037,11 +4973,23 @@ class! {
         flex-direction: "column";
         gap: var!(space-sm);
         padding: "0px";
+        min-width: "0px";
+        overflow: "hidden";
+    }
+
+    pub(crate) c_feature_header {
+        display: "flex";
+        align-items: "center";
+        gap: var!(space-sm);
     }
 
     pub(crate) c_feature_icon {
         font-size: var!(font-2xl);
-        margin-bottom: var!(space-xs);
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        line-height: "1";
+        flex-shrink: "0";
     }
 
     pub(crate) c_feature_name {
@@ -5049,7 +4997,9 @@ class! {
         font-weight: "600";
         color: var!(text-primary);
         margin: "0px";
-        margin-bottom: var!(space-xs);
+        overflow: "hidden";
+        text-overflow: "ellipsis";
+        white-space: "nowrap";
     }
 
     pub(crate) c_feature_desc {
@@ -5063,24 +5013,22 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_text_gradient {
-        background: var!(accent-gradient);
-        -webkit-background-clip: "text";
-        -webkit-text-fill-color: "transparent";
-        background-clip: "text";
+        color: var!(foreground);
+        font-weight: "600";
     }
 
     pub(crate) c_glass {
         background: var!(bg-glass);
         backdrop-filter: var!(glass-blur-md);
         -webkit-backdrop-filter: var!(glass-blur-md);
-        border: format!("1px solid {}", var!(glass-border));
+        border: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_glass_heavy {
         background: var!(bg-glass-heavy);
         backdrop-filter: var!(glass-blur-lg);
         -webkit-backdrop-filter: var!(glass-blur-lg);
-        border: format!("1px solid {}", var!(glass-border));
+        border: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_focus_ring {

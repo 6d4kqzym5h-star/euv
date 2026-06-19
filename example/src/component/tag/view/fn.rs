@@ -2,8 +2,7 @@ use crate::*;
 
 /// A tag component for displaying semantic status indicators.
 ///
-/// Supports solid and outline variants across five semantic colour types.
-/// Replaces the previous `my_badge` component with a more structured API.
+/// Supports solid and outline variants across black and white colour types.
 ///
 /// # Arguments
 ///
@@ -22,74 +21,32 @@ pub(crate) fn euv_tag(node: VirtualNode<EuvTagProps>) -> VirtualNode {
     }: EuvTagProps = node.try_get_props().unwrap_or_default();
     match variant {
         EuvTagVariant::Solid => match color {
-            EuvTagColor::Success => html! {
+            EuvTagColor::Black => html! {
                 span {
-                    class: c_badge_success()
+                    class: c_euv_tag_solid_black()
                     onclick: on_click
                     text
                 }
             },
-            EuvTagColor::Error => html! {
+            EuvTagColor::White => html! {
                 span {
-                    class: c_badge_error()
-                    onclick: on_click
-                    text
-                }
-            },
-            EuvTagColor::Warning => html! {
-                span {
-                    class: c_badge_warning()
-                    onclick: on_click
-                    text
-                }
-            },
-            EuvTagColor::Info => html! {
-                span {
-                    class: c_badge_info()
-                    onclick: on_click
-                    text
-                }
-            },
-            EuvTagColor::Purple => html! {
-                span {
-                    class: c_euv_tag_solid_purple()
+                    class: c_euv_tag_solid_white()
                     onclick: on_click
                     text
                 }
             },
         },
         EuvTagVariant::Outline => match color {
-            EuvTagColor::Success => html! {
+            EuvTagColor::Black => html! {
                 span {
-                    class: c_euv_tag_outline_success()
+                    class: c_euv_tag_outline_black()
                     onclick: on_click
                     text
                 }
             },
-            EuvTagColor::Error => html! {
+            EuvTagColor::White => html! {
                 span {
-                    class: c_euv_tag_outline_error()
-                    onclick: on_click
-                    text
-                }
-            },
-            EuvTagColor::Warning => html! {
-                span {
-                    class: c_euv_tag_outline_warning()
-                    onclick: on_click
-                    text
-                }
-            },
-            EuvTagColor::Info => html! {
-                span {
-                    class: c_euv_tag_outline_info()
-                    onclick: on_click
-                    text
-                }
-            },
-            EuvTagColor::Purple => html! {
-                span {
-                    class: c_euv_tag_outline_purple()
+                    class: c_euv_tag_outline_white()
                     onclick: on_click
                     text
                 }

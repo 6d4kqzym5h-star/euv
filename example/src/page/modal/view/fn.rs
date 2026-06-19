@@ -124,7 +124,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             "Confirm"
                         }
                         euv_button {
-                            variant: EuvButtonVariant::Secondary
+                            variant: EuvButtonVariant::Primary
                             label: "Cancel"
                             onclick: modal_on_cancel_confirm(state)
                             "Cancel"
@@ -173,7 +173,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             "Submit"
                         }
                         euv_button {
-                            variant: EuvButtonVariant::Secondary
+                            variant: EuvButtonVariant::Primary
                             label: "Cancel"
                             onclick: modal_on_cancel_form(state)
                             "Cancel"

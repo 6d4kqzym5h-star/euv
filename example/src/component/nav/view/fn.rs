@@ -254,12 +254,6 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                icon: "📌"
-                label: "Sticky"
-                target: "/sticky"
-            }
-            nav_item {
-                route_signal: route_signal
                 icon: "🔌"
                 label: "WebSocket"
                 target: "/websocket"
@@ -463,13 +457,6 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
                 icon: "📡"
                 label: "SSE"
                 target: "/sse"
-            }
-            mobile_nav_item {
-                route_signal: route_signal
-                drawer_open: drawer_open
-                icon: "📌"
-                label: "Sticky"
-                target: "/sticky"
             }
             mobile_nav_item {
                 route_signal: route_signal

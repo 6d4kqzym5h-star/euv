@@ -1,14 +1,12 @@
 use crate::*;
 
-/// A badge component for displaying status indicators.
+/// A badge component for displaying status indicators with black/white colour scheme.
 ///
-/// Supports an optional `outline` attribute. When present, the badge renders
-/// with a transparent background and a colored border instead of a solid fill.
+/// Supports solid (accent background) and outline (transparent with border) variants.
 ///
 /// # Arguments
 ///
-/// - `MyBadgeProps` - The typed props containing color, text, outline, and on_click.
-/// - `VirtualNode` - The children nodes.
+/// - `VirtualNode<MyBadgeProps>` - The props node containing text, outline, and on_click.
 ///
 /// # Returns
 ///
@@ -16,7 +14,6 @@ use crate::*;
 #[component]
 pub(crate) fn my_badge(node: VirtualNode<MyBadgeProps>) -> VirtualNode {
     let MyBadgeProps {
-        color,
         text,
         outline,
         on_click,
@@ -25,10 +22,6 @@ pub(crate) fn my_badge(node: VirtualNode<MyBadgeProps>) -> VirtualNode {
         html! {
             span {
                 class: c_badge_outline()
-                style: {
-                    color: { color };
-                    border-color: { color };
-                }
                 onclick: on_click
                 text
             }
@@ -37,9 +30,6 @@ pub(crate) fn my_badge(node: VirtualNode<MyBadgeProps>) -> VirtualNode {
         html! {
             span {
                 class: c_badge()
-                style: {
-                    background: { color };
-                }
                 onclick: on_click
                 text
             }

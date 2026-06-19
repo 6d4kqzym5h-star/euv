@@ -61,14 +61,14 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                         }
                     } else {
                         euv_button {
-                            variant: EuvButtonVariant::Danger
+                            variant: EuvButtonVariant::Primary
                             label: "Pause"
                             onclick: stopwatch_on_pause(stopwatch)
                             "Pause"
                         }
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Reset"
                         onclick: stopwatch_on_reset(stopwatch)
                         "Reset"
@@ -115,14 +115,14 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                         }
                     } else {
                         euv_button {
-                            variant: EuvButtonVariant::Danger
+                            variant: EuvButtonVariant::Primary
                             label: "Pause"
                             onclick: countdown_on_pause(countdown)
                             "Pause"
                         }
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Reset"
                         onclick: countdown_on_reset(countdown)
                         "Reset"

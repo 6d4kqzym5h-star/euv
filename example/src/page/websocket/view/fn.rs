@@ -29,7 +29,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     "A random UUID is generated for each session. Click Connect to establish a real-time bidirectional connection. Ping messages are sent automatically to keep the connection alive."
                 }
                 div {
-                    class: c_button_controls_auto()
+                    class: c_button_controls()
                     if { state.get_connecting().get() } {
                         euv_button {
                             variant: EuvButtonVariant::Primary
@@ -39,7 +39,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                         }
                     } else if { state.get_connected().get() } {
                         euv_button {
-                            variant: EuvButtonVariant::Danger
+                            variant: EuvButtonVariant::Primary
                             label: "Close"
                             onclick: websocket_on_disconnect(state)
                             "Close"
@@ -55,7 +55,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                 }
                 if { !state.get_error().get().is_empty() } {
                     div {
-                        class: c_camera_error_box()
+                        class: c_error_box()
                         state.get_error()
                     }
                 }

@@ -142,7 +142,7 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Clear"
                         onclick: file_upload_on_clear(state)
                         "Clear"

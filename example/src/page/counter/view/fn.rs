@@ -30,7 +30,7 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
                     " clicks."
                 }
                 div {
-                    class: c_button_controls_auto()
+                    class: c_button_controls()
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Add"
@@ -38,13 +38,13 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
                         "Add"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Subtract"
                         onclick: counter_on_decrement(count)
                         "Subtract"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Danger
+                        variant: EuvButtonVariant::Primary
                         label: "Reset"
                         onclick: counter_on_reset(count)
                         "Reset"

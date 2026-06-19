@@ -42,19 +42,3 @@ pub(crate) fn progress_on_reset(state: UseProgress) -> Option<Rc<dyn Fn(Event)>>
         state.get_running().set(false);
     }))
 }
-
-/// Creates a click event handler that cycles to the next animation color.
-///
-/// # Arguments
-///
-/// - `Signal<i32>` - The color index signal (0-4).
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A click handler to advance the color index.
-pub(crate) fn color_cycle_on_next(color_index: Signal<i32>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_: Event| {
-        let current: i32 = color_index.get();
-        color_index.set((current + 1) % 5);
-    }))
-}

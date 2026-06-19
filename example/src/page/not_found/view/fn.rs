@@ -16,13 +16,16 @@ pub(crate) fn page_not_found(node: VirtualNode<PageNotFoundProps>) -> VirtualNod
                 title: "404 Not Found"
                 subtitle: "The page you are looking for does not exist."
             }
-            div {
-                class: c_button_controls()
-                euv_button {
-                    variant: EuvButtonVariant::Primary
-                    label: "Back to Home"
-                    onclick: not_found_on_go_home()
-                    "Back to Home"
+            euv_card {
+                title: "Navigation"
+                div {
+                    class: c_button_controls()
+                    euv_button {
+                        variant: EuvButtonVariant::Primary
+                        label: "Back to Home"
+                        onclick: not_found_on_go_home()
+                        "Back to Home"
+                    }
                 }
             }
         }

@@ -62,7 +62,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                             div {
                                 class: c_list_item_button()
                                 euv_button {
-                                    variant: EuvButtonVariant::Danger
+                                    variant: EuvButtonVariant::Primary
                                     label: "Remove"
                                     onclick: todo_list_on_remove(state.get_items(), index)
                                     "Remove"

@@ -35,7 +35,7 @@ pub(crate) fn fetch_on_fetch(state: UseFetch) -> Option<Rc<dyn Fn(Event)>> {
         let loading_signal: Signal<bool> = state.get_loading();
         spawn_local(async move {
             let window: Window = window().expect("no global window exists");
-            let promise: Promise = window.fetch_with_str("https://ltpp.vip/log/info");
+            let promise: Promise = window.fetch_with_str(ASYNC_FETCH_URL);
             let future: JsFuture = JsFuture::from(promise);
             match future.await {
                 Ok(response) => {

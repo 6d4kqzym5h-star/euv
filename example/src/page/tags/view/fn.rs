@@ -421,7 +421,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                     div {
                         class: c_tag_demo_box()
                         euv_button {
-                            variant: EuvButtonVariant::Secondary
+                            variant: EuvButtonVariant::Primary
                             label: "Toggle Dialog"
                             onclick: use_section_toggle(dialog_open)
                             if { dialog_open.get() } {
@@ -1906,7 +1906,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         div {
                             class: c_tag_button_row()
                             euv_button {
-                                variant: EuvButtonVariant::Secondary
+                                variant: EuvButtonVariant::Primary
                                 label: TAGS_BUTTON_CLICK
                                 TAGS_BUTTON_CLICK
                             }
@@ -1916,7 +1916,7 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                                 TAGS_BUTTON_SUBMIT
                             }
                             euv_button {
-                                variant: EuvButtonVariant::Secondary
+                                variant: EuvButtonVariant::Primary
                                 label: TAGS_BUTTON_RESET
                                 TAGS_BUTTON_RESET
                             }
@@ -1968,14 +1968,14 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         class: c_tag_demo_menu()
                         li {
                             euv_button {
-                                variant: EuvButtonVariant::Secondary
+                                variant: EuvButtonVariant::Primary
                                 label: TAGS_MENU_COMMAND_FIRST
                                 TAGS_MENU_COMMAND_FIRST
                             }
                         }
                         li {
                             euv_button {
-                                variant: EuvButtonVariant::Secondary
+                                variant: EuvButtonVariant::Primary
                                 label: TAGS_MENU_COMMAND_SECOND
                                 TAGS_MENU_COMMAND_SECOND
                             }

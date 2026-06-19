@@ -137,12 +137,15 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         div {
                             class: c_feature_card()
                             div {
-                                class: c_feature_icon()
-                                "⚡"
-                            }
-                            h4 {
-                                class: c_feature_name()
-                                "Signal-Based Reactivity"
+                                class: c_feature_header()
+                                div {
+                                    class: c_feature_icon()
+                                    "⚡"
+                                }
+                                h4 {
+                                    class: c_feature_name()
+                                    "Signal-Based Reactivity"
+                                }
                             }
                             p {
                                 class: c_feature_desc()
@@ -155,12 +158,15 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         div {
                             class: c_feature_card()
                             div {
-                                class: c_feature_icon()
-                                "🌲"
-                            }
-                            h4 {
-                                class: c_feature_name()
-                                "Efficient Diffing"
+                                class: c_feature_header()
+                                div {
+                                    class: c_feature_icon()
+                                    "🌲"
+                                }
+                                h4 {
+                                    class: c_feature_name()
+                                    "Efficient Diffing"
+                                }
                             }
                             p {
                                 class: c_feature_desc()
@@ -173,12 +179,15 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         div {
                             class: c_feature_card()
                             div {
-                                class: c_feature_icon()
-                                "🏗️"
-                            }
-                            h4 {
-                                class: c_feature_name()
-                                "Declarative Syntax"
+                                class: c_feature_header()
+                                div {
+                                    class: c_feature_icon()
+                                    "🏗️"
+                                }
+                                h4 {
+                                    class: c_feature_name()
+                                    "Declarative Syntax"
+                                }
                             }
                             p {
                                 class: c_feature_desc()
@@ -191,12 +200,15 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                         div {
                             class: c_feature_card()
                             div {
-                                class: c_feature_icon()
-                                "🌐"
-                            }
-                            h4 {
-                                class: c_feature_name()
-                                "WebAssembly Powered"
+                                class: c_feature_header()
+                                div {
+                                    class: c_feature_icon()
+                                    "🌐"
+                                }
+                                h4 {
+                                    class: c_feature_name()
+                                    "WebAssembly Powered"
+                                }
                             }
                             p {
                                 class: c_feature_desc()

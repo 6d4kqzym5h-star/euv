@@ -185,9 +185,6 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
             "/sse" => {
                 page_sse {}
             }
-            "/sticky" => {
-                page_sticky {}
-            }
             "/websocket" => {
                 page_websocket {}
             }

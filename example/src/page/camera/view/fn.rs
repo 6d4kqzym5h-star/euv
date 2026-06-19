@@ -80,16 +80,16 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_button_controls_auto()
+                    class: c_button_controls()
                     if { state.get_camera_open().get() } {
                         euv_button {
-                            variant: EuvButtonVariant::Danger
+                            variant: EuvButtonVariant::Primary
                             label: "Close"
                             onclick: camera_on_close(state)
                             "Close"
                         }
                         euv_button {
-                            variant: EuvButtonVariant::Secondary
+                            variant: EuvButtonVariant::Primary
                             label: "Switch"
                             onclick: camera_on_switch(state)
                             if { matches!(state.get_facing().get(), CameraFacing::User) } { CAMERA_SWITCH_TO_REAR_LABEL } else { CAMERA_SWITCH_TO_FRONT_LABEL }

@@ -44,7 +44,7 @@ fn counter_tab() -> VirtualNode {
             div {
                 class: c_keep_alive_counter_controls()
                 euv_button {
-                    variant: EuvButtonVariant::Secondary
+                    variant: EuvButtonVariant::Primary
                     label: "-1"
                     onclick: keep_alive_counter_on_decrement(count)
                     "-1"
@@ -56,7 +56,7 @@ fn counter_tab() -> VirtualNode {
                     "+1"
                 }
                 euv_button {
-                    variant: EuvButtonVariant::Outline
+                    variant: EuvButtonVariant::Primary
                     label: "Reset"
                     onclick: keep_alive_counter_on_reset(count)
                     "Reset"
@@ -220,14 +220,14 @@ fn timer_tab() -> VirtualNode {
                     }
                 } else {
                     euv_button {
-                        variant: EuvButtonVariant::Danger
+                        variant: EuvButtonVariant::Primary
                         label: "Pause"
                         onclick: keep_alive_timer_on_pause(running, handle)
                         "Pause"
                     }
                 }
                 euv_button {
-                    variant: EuvButtonVariant::Secondary
+                    variant: EuvButtonVariant::Primary
                     label: "Reset"
                     onclick: keep_alive_timer_on_reset(elapsed, running, handle)
                     "Reset"

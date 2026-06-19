@@ -28,7 +28,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                     "Enter the SSE endpoint URL and click Connect to start receiving server-sent events."
                 }
                 div {
-                    class: c_button_controls_auto()
+                    class: c_button_controls()
                     if { state.get_connecting().get() } {
                         euv_button {
                             variant: EuvButtonVariant::Primary
@@ -38,7 +38,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                         }
                     } else if { state.get_connected().get() } {
                         euv_button {
-                            variant: EuvButtonVariant::Danger
+                            variant: EuvButtonVariant::Primary
                             label: "Close"
                             onclick: sse_on_disconnect(state)
                             "Close"
@@ -54,7 +54,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                 }
                 if { !state.get_error().get().is_empty() } {
                     div {
-                        class: c_camera_error_box()
+                        class: c_error_box()
                         state.get_error()
                     }
                 }

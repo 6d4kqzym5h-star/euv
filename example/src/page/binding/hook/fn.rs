@@ -62,7 +62,7 @@ pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
         use_signal(|| 79),
         use_signal(|| 70),
         use_signal(|| 229),
-        use_signal(|| "#4f46e5".to_string()),
+        use_signal(|| "#000000".to_string()),
     );
     let celsius: Signal<f64> = state.get_celsius();
     let fahrenheit: Signal<f64> = state.get_fahrenheit();

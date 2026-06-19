@@ -50,7 +50,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                     "+1"
                 }
                 euv_button {
-                    variant: EuvButtonVariant::Secondary
+                    variant: EuvButtonVariant::Primary
                     label: "Reset"
                     onclick: on_reset
                     disabled: disabled
@@ -116,9 +116,8 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                     count_value
                 }
             }
-            euv_button {
-                variant: EuvButtonVariant::Danger
-                label: "-1"
+            button {
+                class: c_binding_compact_button()
                 onclick: two_way_on_decrement(count_signal)
                 "-"
             }
@@ -361,24 +360,27 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                         class: c_binding_child_label()
                         "Typed Props Controls"
                     }
-                    euv_button {
-                        variant: EuvButtonVariant::Secondary
-                        label: "Toggle"
-                        onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
-                        if { typed_state.get_disabled().get() } {
-                            "Enable"
-                        } else {
-                            "Disable"
-                        }
-                    }
                     div {
-                        class: c_binding_typed_prop_group()
-                        label {
-                            class: c_form_label()
-                            "Max: "
-                            span {
-                                class: c_binding_typed_prop_value()
-                                typed_state.get_max_count()
+                        class: c_button_controls()
+                        euv_button {
+                            variant: EuvButtonVariant::Primary
+                            label: "Toggle"
+                            onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
+                            if { typed_state.get_disabled().get() } {
+                                "Enable"
+                            } else {
+                                "Disable"
+                            }
+                        }
+                        div {
+                            class: c_binding_typed_prop_group()
+                            label {
+                                class: c_form_label()
+                                "Max: "
+                                span {
+                                    class: c_binding_typed_prop_value()
+                                    typed_state.get_max_count()
+                                }
                             }
                         }
                     }
@@ -431,12 +433,11 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                             two_way_state.get_shared_count()
                         }
                     }
-                    euv_button {
-                        variant: EuvButtonVariant::Primary
-                        label: "+1"
-                        onclick: two_way_on_increment(two_way_state.get_shared_count())
-                        "+"
-                    }
+            button {
+                class: c_binding_compact_button()
+                onclick: two_way_on_increment(two_way_state.get_shared_count())
+                "+"
+            }
                 }
                 { child_input(two_way_state.get_shared_text(), two_way_state.get_shared_count()) }
             }

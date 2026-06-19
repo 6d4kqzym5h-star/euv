@@ -14,7 +14,7 @@ use crate::*;
 pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNode {
     let DesktopLayoutProps {
         route_signal,
-        theme_signal: _,
+        theme_signal,
         root_class_signal,
         panel_open,
     }: DesktopLayoutProps = node.try_get_props().unwrap_or_default();
@@ -43,6 +43,16 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 build_desktop_nav_items {
                     route_signal: route_signal
                 }
+                div {
+                    class: c_nav_theme_toggle()
+                    button {
+                        class: c_nav_theme_button()
+                        onclick: toggle_theme(theme_signal)
+                        div {
+                            class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
+                        }
+                    }
+                }
                 a {
                     href: GITHUB_URL
                     target: "_blank"
@@ -53,15 +63,11 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                     }
                     span {
                         class: c_nav_footer_text()
-                        "Built with"
-                    }
-                    span {
-                        class: c_nav_footer_brand()
-                        BRAND_NAME
-                    }
-                    span {
-                        class: c_nav_footer_badge()
-                        "WASM"
+                        "Built with "
+                        span {
+                            class: c_nav_footer_brand()
+                            "Euv & Wasm"
+                        }
                     }
                 }
             }
@@ -157,12 +163,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 div {
                     class: c_mobile_nav_drawer_header()
                     div {
-                        class: c_mobile_header_left()
-                        button {
-                            class: if { drawer_open.get() } { c_mobile_menu_button_active() } else { c_mobile_menu_button() }
-                            onclick: use_drawer_toggle(drawer_open)
-                            "☰"
-                        }
+                        class: c_mobile_header_logo()
                         a {
                             href: GITHUB_URL
                             target: "_blank"
@@ -201,15 +202,11 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     }
                     span {
                         class: c_nav_footer_text()
-                        "Built with"
-                    }
-                    span {
-                        class: c_nav_footer_brand()
-                        BRAND_NAME
-                    }
-                    span {
-                        class: c_nav_footer_badge()
-                        "WASM"
+                        "Built with "
+                        span {
+                            class: c_nav_footer_brand()
+                            "Euv & Wasm"
+                        }
                     }
                 }
             }

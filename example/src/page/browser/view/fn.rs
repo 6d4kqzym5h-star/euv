@@ -55,13 +55,13 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         "Set"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Get"
                         onclick: local_storage_on_get(state)
                         "Get"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Danger
+                        variant: EuvButtonVariant::Primary
                         label: "Remove"
                         onclick: local_storage_on_remove(state)
                         "Remove"
@@ -117,13 +117,13 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         "Set"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Get"
                         onclick: session_storage_on_get(state)
                         "Get"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Danger
+                        variant: EuvButtonVariant::Primary
                         label: "Remove"
                         onclick: session_storage_on_remove(state)
                         "Remove"
@@ -166,7 +166,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         "Copy"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Paste"
                         onclick: clipboard_on_paste(state)
                         "Paste"
@@ -314,13 +314,13 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         "log"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Warn"
                         onclick: console_on_warn(state.get_console_input())
                         "warn"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Danger
+                        variant: EuvButtonVariant::Primary
                         label: "Error"
                         onclick: console_on_error(state.get_console_input())
                         "error"

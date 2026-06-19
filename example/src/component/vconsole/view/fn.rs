@@ -157,29 +157,41 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                 }
                 div {
                     class: c_vconsole_filter_bar()
-                    my_badge {
-                        color: var!(accent)
-                        text: "All"
-                        outline: { filter_signal.get() != LogFilter::All }
-                        on_click: vconsole_on_filter_all(filter_signal)
+                    span {
+                        class: if { filter_signal.get() == LogFilter::All } {
+                            c_vconsole_filter_badge()
+                        } else {
+                            c_vconsole_filter_badge_outline()
+                        }
+                        onclick: vconsole_on_filter_all(filter_signal)
+                        "All"
                     }
-                    my_badge {
-                        color: var!(badge-bg-success)
-                        text: "Log"
-                        outline: { filter_signal.get() != LogFilter::Log }
-                        on_click: vconsole_on_filter_log(filter_signal)
+                    span {
+                        class: if { filter_signal.get() == LogFilter::Log } {
+                            c_vconsole_filter_badge()
+                        } else {
+                            c_vconsole_filter_badge_outline()
+                        }
+                        onclick: vconsole_on_filter_log(filter_signal)
+                        "Log"
                     }
-                    my_badge {
-                        color: var!(badge-bg-warning)
-                        text: "Warn"
-                        outline: { filter_signal.get() != LogFilter::Warn }
-                        on_click: vconsole_on_filter_warn(filter_signal)
+                    span {
+                        class: if { filter_signal.get() == LogFilter::Warn } {
+                            c_vconsole_filter_badge()
+                        } else {
+                            c_vconsole_filter_badge_outline()
+                        }
+                        onclick: vconsole_on_filter_warn(filter_signal)
+                        "Warn"
                     }
-                    my_badge {
-                        color: var!(badge-bg-error)
-                        text: "Error"
-                        outline: { filter_signal.get() != LogFilter::Error }
-                        on_click: vconsole_on_filter_error(filter_signal)
+                    span {
+                        class: if { filter_signal.get() == LogFilter::Error } {
+                            c_vconsole_filter_badge()
+                        } else {
+                            c_vconsole_filter_badge_outline()
+                        }
+                        onclick: vconsole_on_filter_error(filter_signal)
+                        "Error"
                     }
                 }
                 div {

@@ -1,6 +1,6 @@
 use crate::*;
 
-/// A versatile button component supporting multiple variants and states.
+/// A versatile button component supporting primary and outline variants.
 ///
 /// Renders a styled `<button>` element whose appearance is determined by the
 /// `variant` and `disabled` props. When children are provided they replace
@@ -35,25 +35,9 @@ pub(crate) fn euv_button(node: VirtualNode<EuvButtonProps>) -> VirtualNode {
                 content
             }
         },
-        EuvButtonVariant::Secondary => html! {
-            button {
-                class: c_euv_button_secondary_md()
-                disabled: disabled.get()
-                onclick: click_handler
-                content
-            }
-        },
         EuvButtonVariant::Outline => html! {
             button {
                 class: c_euv_button_outline_md()
-                disabled: disabled.get()
-                onclick: click_handler
-                content
-            }
-        },
-        EuvButtonVariant::Danger => html! {
-            button {
-                class: c_euv_button_danger_md()
                 disabled: disabled.get()
                 onclick: click_handler
                 content

@@ -70,8 +70,6 @@ pub(crate) fn use_system_theme_change(theme_signal: Signal<String>) {
 pub(crate) fn use_theme(mobile_signal: Signal<bool>) -> ThemeState {
     let theme: Signal<String> = use_signal(detect_system_theme);
     use_system_theme_change(theme);
-    c_theme_light();
-    c_theme_dark();
     let initial_theme: String = theme.get();
     let initial_mobile: bool = mobile_signal.get();
     let initial_root: &'static str = if initial_mobile {

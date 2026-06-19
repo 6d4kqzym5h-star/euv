@@ -106,22 +106,37 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                 div {
                     class: c_canvas_fullscreen_toolbar()
                     div {
-                        class: c_canvas_fullscreen_toolbar_button()
-                        euv_button {
-                            variant: EuvButtonVariant::Danger
-                            label: "Clear"
-                            onclick: canvas_on_clear(state)
-                            "Clear"
+                        class: c_canvas_fullscreen_toolbar_row_top()
+                        div {
+                            class: c_canvas_fullscreen_toolbar_button()
+                            euv_button {
+                                variant: EuvButtonVariant::Primary
+                                label: "Clear"
+                                onclick: canvas_on_clear(state)
+                                "Clear"
+                            }
+                        }
+                        div {
+                            class: c_canvas_fullscreen_toolbar_color_wrapper()
+                            input {
+                                type: "color"
+                                class: c_canvas_color_input_fullscreen()
+                                value: state.get_stroke_color().get()
+                                oninput: on_color_input
+                            }
+                        }
+                        div {
+                            class: c_canvas_fullscreen_toolbar_button()
+                            euv_button {
+                                variant: EuvButtonVariant::Primary
+                                label: CANVAS_FULLSCREEN_EXIT_LABEL
+                                onclick: canvas_on_exit_fullscreen(state)
+                                CANVAS_FULLSCREEN_EXIT_LABEL
+                            }
                         }
                     }
                     div {
-                        class: c_canvas_fullscreen_toolbar_center()
-                        input {
-                            type: "color"
-                            class: c_canvas_color_input()
-                            value: state.get_stroke_color().get()
-                            oninput: on_color_input
-                        }
+                        class: c_canvas_fullscreen_toolbar_row_bottom()
                         input {
                             type: "range"
                             class: c_canvas_fullscreen_range_input()
@@ -130,15 +145,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                             step: CANVAS_LINE_WIDTH_STEP_ATTR
                             value: state.get_line_width().get().to_string()
                             oninput: canvas_on_line_width_input(state)
-                        }
-                    }
-                    div {
-                        class: c_canvas_fullscreen_toolbar_button()
-                        euv_button {
-                            variant: EuvButtonVariant::Secondary
-                            label: CANVAS_FULLSCREEN_EXIT_LABEL
-                            onclick: canvas_on_exit_fullscreen(state)
-                            CANVAS_FULLSCREEN_EXIT_LABEL
                         }
                     }
                 }

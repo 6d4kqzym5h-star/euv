@@ -12,7 +12,6 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
     let spin_active: Signal<bool> = use_signal(|| false);
     let pulse_active: Signal<bool> = use_signal(|| false);
     let progress: UseProgress = use_progress();
-    let color_index: Signal<i32> = use_signal(|| 0);
     let scale_active: Signal<bool> = use_signal(|| false);
     html! {
         div {
@@ -45,7 +44,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { spin_active.get() } { EuvButtonVariant::Danger } else { EuvButtonVariant::Primary }
+                        variant: if { spin_active.get() } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
                         label: "Toggle"
                         onclick: use_toggle(spin_active)
                         if { spin_active.get() } { "Stop Spin" } else { "Start Spin" }
@@ -64,7 +63,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { pulse_active.get() } { EuvButtonVariant::Danger } else { EuvButtonVariant::Primary }
+                        variant: if { pulse_active.get() } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
                         label: "Toggle"
                         onclick: use_toggle(pulse_active)
                         if { pulse_active.get() } { "Stop Pulse" } else { "Start Pulse" }
@@ -81,7 +80,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
             euv_card {
                 title: "Progress Bar"
                 div {
-                    class: c_button_controls_auto()
+                    class: c_button_controls()
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Start"
@@ -89,7 +88,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         "Start"
                     }
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
+                        variant: EuvButtonVariant::Primary
                         label: "Reset"
                         onclick: progress_on_reset(progress)
                         "Reset"
@@ -103,50 +102,22 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 }
             }
             euv_card {
-                title: "Color Cycle"
+                title: "Size Scale"
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: EuvButtonVariant::Secondary
-                        label: "Next"
-                        onclick: color_cycle_on_next(color_index)
-                        "Next Color"
+                        variant: if { scale_active.get() } { EuvButtonVariant::Outline } else { EuvButtonVariant::Primary }
+                        label: "Toggle"
+                        onclick: use_toggle(scale_active)
+                        if { scale_active.get() } { "Restore" } else { "Shrink" }
                     }
                 }
                 div {
-                    class: c_anim_color_box()
-                    style: { background: get_anim_color(color_index.get()); transition: "background 0.5s ease, transform 0.3s ease"; transform: if { scale_active.get() } { "scale(0.85)" } else { "scale(1)" }; }
-                    onclick: use_toggle(scale_active)
+                    class: c_anim_scale_box()
+                    style: { transition: "transform 0.3s ease"; transform: if { scale_active.get() } { "scale(0.85)" } else { "scale(1)" }; }
                     "Click me to shrink!"
                 }
             }
         }
     }
-}
-
-/// Returns a CSS variable reference string based on the animation color index.
-///
-/// Uses theme-aware CSS variables so colors adapt to light/dark mode.
-///
-/// # Arguments
-///
-/// - `i32` - The color index (0-4).
-///
-/// # Returns
-///
-/// - `&'static str` - The CSS variable reference string.
-fn get_anim_color(index: i32) -> &'static str {
-    let colors: Vec<&'static str> = vec![
-        "var(--accent)",
-        "var(--color-success)",
-        "var(--color-warning)",
-        "var(--color-error)",
-        "var(--color-purple)",
-    ];
-    let safe_index: usize = if index >= 0 && (index as usize) < colors.len() {
-        index as usize
-    } else {
-        0
-    };
-    colors[safe_index]
 }

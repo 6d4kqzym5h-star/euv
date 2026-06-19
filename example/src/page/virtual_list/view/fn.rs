@@ -32,7 +32,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
     let visible_count: usize = visible_end - visible_start;
     html! {
         div {
-            class: c_page_container_wide()
+            class: c_page_container()
             euv_header {
                 icon: "📊"
                 title: "Virtual List"

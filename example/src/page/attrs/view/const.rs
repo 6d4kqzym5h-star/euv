@@ -17,13 +17,13 @@ pub(crate) const DYNAMIC_VALUE_INPUT_ID: &str = "attrs-dynamic-value";
 pub(crate) const CLASS_DYNAMIC_PROP_KEY: &str = "background-color";
 
 /// The default CSS property value for the class macro dynamic key demo.
-pub(crate) const CLASS_DYNAMIC_PROP_VALUE: &str = "#dbeafe";
+pub(crate) const CLASS_DYNAMIC_PROP_VALUE: &str = "#000000";
 
 /// The placeholder text for the CSS property key input.
 pub(crate) const CLASS_KEY_PLACEHOLDER: &str = "Enter CSS prop key (e.g. background-color)";
 
 /// The placeholder text for the CSS property value input.
-pub(crate) const CLASS_VALUE_PLACEHOLDER: &str = "Enter CSS prop value (e.g. #dbeafe)";
+pub(crate) const CLASS_VALUE_PLACEHOLDER: &str = "Enter CSS prop value (e.g. #000000)";
 
 /// The HTML id for the CSS property key input element.
 pub(crate) const CLASS_KEY_INPUT_ID: &str = "attrs-class-key";
