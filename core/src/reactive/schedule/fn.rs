@@ -19,7 +19,7 @@ fn with_dispatch_function<F, R>(callback: F) -> R
 where
     F: FnOnce(&Function) -> R,
 {
-    DISPATCH_CLOSURE.with(|dispatch_closure| {
+    DISPATCH_CLOSURE.with(|dispatch_closure: &Closure<dyn FnMut()>| {
         let dispatch_function: &Function = dispatch_closure.as_ref().unchecked_ref::<Function>();
         callback(dispatch_function)
     })
@@ -52,7 +52,7 @@ pub fn schedule_update(dependents: &[usize]) {
             return;
         }
     };
-    let queued_microtask: bool = with_dispatch_function(|dispatch_function| {
+    let queued_microtask: bool = with_dispatch_function(|dispatch_function: &Function| {
         let queue_microtask_value: JsValue =
             Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
                 .unwrap_or(JsValue::UNDEFINED);
@@ -64,7 +64,7 @@ pub fn schedule_update(dependents: &[usize]) {
     if queued_microtask {
         return;
     }
-    let scheduled: bool = with_dispatch_function(|dispatch_function| {
+    let scheduled: bool = with_dispatch_function(|dispatch_function: &Function| {
         window_value
             .set_timeout_with_callback_and_timeout_and_arguments_0(dispatch_function, 0)
             .is_ok()
@@ -72,7 +72,7 @@ pub fn schedule_update(dependents: &[usize]) {
     if scheduled {
         return;
     }
-    let requested_frame: bool = with_dispatch_function(|dispatch_function| {
+    let requested_frame: bool = with_dispatch_function(|dispatch_function: &Function| {
         window_value
             .request_animation_frame(dispatch_function)
             .is_ok()

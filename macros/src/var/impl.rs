@@ -101,8 +101,15 @@ impl ToTokens for VarsDef {
                     .iter()
                     .map(|(key, value): &(String, VarsValue)| match value {
                         VarsValue::Expr(expr) => {
-                            let key_sep: String = format!("{key}{CSS_PROP_SEPARATOR}");
-                            quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                            if is_static_string_expr(expr) {
+                                let value_str: String = expr_to_string(expr);
+                                let prop_str: String =
+                                    format!("{key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}");
+                                quote! { #prop_str.to_string() }
+                            } else {
+                                let key_sep: String = format!("{key}{CSS_PROP_SEPARATOR}");
+                                quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                            }
                         }
                     })
                     .collect();
@@ -142,13 +149,19 @@ impl ToTokens for VarsDef {
                     let css_string_parts: Vec<proc_macro2::TokenStream> = self
                         .get_vars()
                         .iter()
-                    .map(|(key, value): &(String, VarsValue)| match value {
-                        VarsValue::Expr(expr) => {
-                            let key_sep: String = format!("{key}{CSS_PROP_SEPARATOR}");
-                            quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
-                        }
-                    })
-                    .collect();
+                        .map(|(key, value): &(String, VarsValue)| match value {
+                            VarsValue::Expr(expr) => {
+                                if is_static_string_expr(expr) {
+                                    let value_str: String = expr_to_string(expr);
+                                    let prop_str: String = format!("{key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}");
+                                    quote! { #prop_str.to_string() }
+                                } else {
+                                    let key_sep: String = format!("{key}{CSS_PROP_SEPARATOR}");
+                                    quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                                }
+                            }
+                        })
+                        .collect();
                     quote! { [#(#css_string_parts), *].concat() }
                 };
                 emit_once_lock_fn(

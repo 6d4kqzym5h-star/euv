@@ -1,26 +1,13 @@
 use crate::*;
 
-/// A RAII wrapper around a raw pointer that frees the allocation on drop.
-///
-/// Used to ensure heap allocations captured by closures are properly freed
-/// when the closure is dropped (e.g., when a DynamicNode is cleaned up).
-///
-/// # Safety
-///
-/// The pointer must have been allocated via `Box::into_raw`. Only one
-/// `OwnedPtr` should exist per allocation (no aliasing ownership).
-struct OwnedPtr<T> {
-    ptr: *mut T,
-}
-
 impl<T> OwnedPtr<T> {
     /// Creates a new `OwnedPtr` from a `Box::into_raw` pointer.
-    fn new(ptr: *mut T) -> Self {
+    pub(crate) fn new(ptr: *mut T) -> Self {
         Self { ptr }
     }
 
     /// Returns the raw pointer for direct access.
-    fn get(&self) -> *mut T {
+    pub(crate) fn get(&self) -> *mut T {
         self.ptr
     }
 }

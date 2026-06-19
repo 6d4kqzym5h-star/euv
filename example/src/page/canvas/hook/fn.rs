@@ -775,6 +775,15 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
     }))
 }
 
+/// Listens for browser `popstate` events and exits fullscreen drawing mode.
+///
+/// When the user presses the browser back button while the canvas page is in
+/// fullscreen drawing mode, this hook exits fullscreen so the history entry
+/// is consumed without leaving the UI in an inconsistent state.
+///
+/// # Arguments
+///
+/// - `UseCanvas` - The canvas state containing the fullscreen signal.
 pub(crate) fn use_fullscreen_popstate(state: UseCanvas) {
     use_window_event("popstate", move || {
         if state.get_fullscreen().get() {

@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.7.0"
+version = "0.7.1"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -47,7 +47,7 @@ console_error_panic_hook = "0.1.7"
 clap = { version = "4.6.1", features = ["derive"] }
 serde = { version = "1.0.228", features = ["derive"] }
 qrcode = { version = "0.14.1", default-features = false }
-syn = { version = "2.0.117", features = ["full", "extra-traits"] }
+syn = { version = "2.0.118", features = ["full", "extra-traits"] }
 notify = { version = "8.2.0", default-features = false, features = [
     "macos_fsevent",
 ] }

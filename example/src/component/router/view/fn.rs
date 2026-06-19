@@ -18,14 +18,39 @@ pub(crate) fn current_route() -> String {
 
 /// Navigates to a new hash-based route.
 ///
+/// Always defers the actual `location.set_hash()` call to `queueMicrotask`
+/// to prevent synchronous `hashchange` dispatch while any caller frame is still
+/// on the stack. This avoids wasm_bindgen's `"closure invoked recursively
+/// or after being dropped"` error which occurs when `set_hash()` fires
+/// `hashchange` synchronously and the handler (or the reactive update chain
+/// it triggers) calls `navigate()` again before the original dispatch finishes.
+///
+/// On mobile, this pattern is especially common because `close_drawer_and_navigate`
+/// calls `history.back()` which synchronously dispatches `popstate`, whose
+/// handler calls `navigate()` while the `popstate` proxy Closure is still active.
+///
+/// Multiple rapid `navigate()` calls before the microtask fires are coalesced:
+/// only the **last** target route wins, as earlier routes were superseded by
+/// a more recent navigation intent.
+///
 /// # Arguments
 ///
 /// - `&str` - The target route path.
 pub(crate) fn navigate(route: &str) {
+    DEFERRED_NAVIGATION.with(|cell: &Cell<Option<String>>| cell.set(Some(route.to_string())));
+    let deferred_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let target_route: Option<String> =
+            DEFERRED_NAVIGATION.with(|cell: &Cell<Option<String>>| cell.take());
+        if let Some(route_value) = target_route {
+            let nav_window: Window = web_sys::window().expect("no global window exists");
+            let nav_location: Location = nav_window.location();
+            let nav_new_hash: String = format!("#{}", route_value);
+            let _ = nav_location.set_hash(&nav_new_hash);
+        }
+    }));
     let window: Window = window().expect("no global window exists");
-    let location: Location = window.location();
-    let new_hash: String = format!("#{}", route);
-    let _ = location.set_hash(&new_hash);
+    window.queue_microtask(deferred_closure.as_ref().unchecked_ref::<Function>());
+    deferred_closure.forget();
 }
 
 /// Creates a link click handler that navigates to the given route.

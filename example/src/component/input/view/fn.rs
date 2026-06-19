@@ -35,6 +35,7 @@ pub(crate) fn euv_input(node: VirtualNode<EuvInputProps>) -> VirtualNode {
                 value: value
                 autocomplete: autocomplete
                 class: c_euv_input()
+                onfocus: on_focus_scroll_into_view()
             }
         }
     }

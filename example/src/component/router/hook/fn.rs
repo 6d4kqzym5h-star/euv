@@ -28,12 +28,23 @@ pub(crate) fn use_scroll_to_top(route_signal: Signal<String>) {
 /// route on every hash change and writes it into the provided signal.
 /// The listener is automatically removed when the hook context is cleared.
 ///
+/// Increments `WINDOW_EVENT_DEPTH` before dispatching and decrements it
+/// after, so that any code that checks re-entrancy can detect that it is
+/// running within a window event handler context.
+///
+/// Note: `navigate()` always defers `set_hash()` to a microtask, so by the
+/// time the `hashchange` fires, all caller frames have already unwound and
+/// there is no risk of recursive Closure invocation. The handler only needs
+/// to update the route signal with the current URL hash value.
+///
 /// # Arguments
 ///
 /// - `Signal<String>` - The reactive signal that holds the current route and will be updated on each hash change.
 pub(crate) fn use_hash_change(route_signal: Signal<String>) {
     use_window_event("hashchange", move || {
+        WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() + 1));
         route_signal.set(current_route());
+        WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
     });
 }
 
@@ -66,6 +77,7 @@ pub(crate) fn use_overlay_history(
         was_drawer_open.set(is_open);
     });
     use_window_event("popstate", move || {
+        WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() + 1));
         if BACK_PENDING.with(|flag: &Cell<bool>| flag.get()) {
             BACK_PENDING.with(|flag: &Cell<bool>| flag.set(false));
             let pending_route: Option<String> =
@@ -73,19 +85,23 @@ pub(crate) fn use_overlay_history(
             if let Some(route) = pending_route {
                 navigate(&route);
             }
+            WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
             return;
         }
         if let Some(closer) = modal_pop_closer() {
             closer();
+            WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
             return;
         }
         if panel_open.get() {
             panel_open.set(false);
+            WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
             return;
         }
         if drawer_open.get() {
             drawer_open.set(false);
         }
+        WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
     });
 }
 

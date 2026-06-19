@@ -398,7 +398,7 @@ impl ToTokens for HtmlNode {
             HtmlNode::Element(element) => element.to_tokens(tokens),
             HtmlNode::Text(text) => {
                 tokens.extend(quote! {
-                    ::euv::VirtualNode::Text(::euv::TextNode::new(#text.to_string(), None))
+                    ::euv::VirtualNode::Text(::euv::TextNode::new(#text.into(), None))
                 });
             }
             HtmlNode::Expr(expr) => {

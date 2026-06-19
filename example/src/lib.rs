@@ -20,7 +20,7 @@ use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys:
 use {
     compare_version::{CompareVersion, VersionLevel},
     lombok_macros::{Data, New},
-    qrcode::{QrCode, render::svg},
+    qrcode::{QrCode, render::svg, types::QrError},
     serde::{Deserialize, Serialize},
 };
 

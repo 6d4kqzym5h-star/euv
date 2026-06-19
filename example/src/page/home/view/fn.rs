@@ -34,11 +34,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             class: c_home_hero_badge()
                             version.clone()
                         }
-                        euv_tag {
-                            color: EuvTagColor::Success
-                            variant: EuvTagVariant::Solid
-                            text: "WASM"
-                        }
                     }
                     p {
                         class: c_home_hero_subtitle()

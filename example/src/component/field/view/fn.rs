@@ -48,6 +48,7 @@ pub(crate) fn euv_field(node: VirtualNode<EuvFieldProps>) -> VirtualNode {
                 autocomplete: autocomplete
                 class: if { has_error } { c_euv_input_error() } else { c_euv_input_no_transition() }
                 oninput: handler
+                onfocus: on_focus_scroll_into_view()
             }
             if { has_error } {
                 p {

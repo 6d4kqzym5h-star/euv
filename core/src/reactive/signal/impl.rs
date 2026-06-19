@@ -191,7 +191,7 @@ where
     pub(crate) fn remove_dependent(&self, dynamic_id: usize) {
         get_signal_inner_ref::<T>(self.get_inner())
             .get_mut_dependents()
-            .retain(|id| *id != dynamic_id);
+            .retain(|id: &usize| *id != dynamic_id);
     }
 
     /// Returns the list of dependent dynamic node IDs for this signal.

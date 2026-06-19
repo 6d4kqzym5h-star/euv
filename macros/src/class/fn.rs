@@ -336,16 +336,6 @@ pub(crate) fn parse_block_content(input: ParseStream) -> syn::Result<BlockConten
     })
 }
 
-/// Intermediate result from parsing a block's content.
-pub(crate) struct BlockContent {
-    /// The CSS properties in this block.
-    pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
-    /// The nested selector blocks.
-    pub(crate) selector_blocks: Vec<SelectorBlock>,
-    /// The nested at-rule blocks.
-    pub(crate) at_rule_blocks: Vec<AtRuleBlock>,
-}
-
 /// Checks whether the current position in the parse stream starts an at-rule.
 ///
 /// An at-rule starts with `@` followed by an identifier and then
@@ -491,8 +481,15 @@ pub(crate) fn properties_to_tokens(
         .map(|(key, value): &(ClassPropKey, ClassPropValue)| match value {
             ClassPropValue::Expr(expr) => match key {
                 ClassPropKey::Static(static_key) => {
-                    let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
-                    quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                    if is_static_string_expr(expr) {
+                        let value_str: String = expr_to_string(expr);
+                        let prop_str: String =
+                            format!("{static_key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}");
+                        quote! { #prop_str.to_string() }
+                    } else {
+                        let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
+                        quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
+                    }
                 }
                 ClassPropKey::Dynamic(_) => {
                     let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);

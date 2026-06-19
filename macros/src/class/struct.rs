@@ -165,6 +165,17 @@ pub(crate) struct ClassInput {
     pub(crate) classes: Vec<ClassDef>,
 }
 
+/// Intermediate result from parsing a block's content.
+#[derive(Clone, Data, Debug, New)]
+pub(crate) struct BlockContent {
+    /// The CSS properties in this block.
+    pub(crate) properties: Vec<(ClassPropKey, ClassPropValue)>,
+    /// The nested selector blocks.
+    pub(crate) selector_blocks: Vec<SelectorBlock>,
+    /// The nested at-rule blocks.
+    pub(crate) at_rule_blocks: Vec<AtRuleBlock>,
+}
+
 /// Parameters for `emit_once_lock_fn`.
 ///
 /// Bundles the values needed to generate a `OnceLock`-based static function body

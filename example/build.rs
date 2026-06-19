@@ -2,18 +2,31 @@ use std::{env::var, fs::read_to_string, fs::write, path::PathBuf};
 
 use {chrono::Local, toml::Table};
 
+/// Environment variable key passed to rustc for the package name.
 const ENV_KEY_EUV_PACKAGE_NAME_KEY: &str = "EUV_PACKAGE_NAME";
+/// Environment variable key passed to rustc for the package version.
 const ENV_KEY_EUV_VERSION_KEY: &str = "EUV_VERSION";
+/// Environment variable key passed to rustc for the package description.
 const ENV_KEY_EUV_DESCRIPTION_KEY: &str = "EUV_DESCRIPTION";
+/// Environment variable key passed to rustc for the package repository URL.
 const ENV_KEY_EUV_REPOSITORY_KEY: &str = "EUV_REPOSITORY";
+/// Environment variable key passed to rustc for the package authors.
 const ENV_KEY_EUV_AUTHORS_KEY: &str = "EUV_AUTHORS";
+/// Environment variable key passed to rustc for the package license.
 const ENV_KEY_EUV_LICENSE_KEY: &str = "EUV_LICENSE";
+/// Environment variable key passed to rustc for the Rust edition.
 const ENV_KEY_EUV_EDITION_KEY: &str = "EUV_EDITION";
+/// Environment variable key passed to rustc for the repository name.
 const ENV_KEY_EUV_REPOSITORY_NAME_KEY: &str = "EUV_REPOSITORY_NAME";
+/// Environment variable key passed to rustc for the build time string.
 const ENV_KEY_EUV_BUILD_TIME_KEY: &str = "EUV_BUILD_TIME";
+/// Environment variable key passed to rustc for the build date string.
 const ENV_KEY_EUV_BUILD_DATE_KEY: &str = "EUV_BUILD_DATE";
+/// Environment variable key passed to rustc for the build clock string.
 const ENV_KEY_EUV_BUILD_CLOCK_KEY: &str = "EUV_BUILD_CLOCK";
+/// Environment variable key passed to rustc for the build timestamp.
 const ENV_KEY_EUV_BUILD_TIMESTAMP_KEY: &str = "EUV_BUILD_TIMESTAMP";
+/// File name of the build state marker written to `OUT_DIR`.
 const BUILD_STATE_FILE_NAME: &str = ".euv_build_state";
 
 fn main() {

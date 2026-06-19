@@ -96,3 +96,51 @@ pub(crate) fn on_change_checked(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)
         }
     }))
 }
+
+/// Creates a focus event handler that scrolls the focused input into view.
+///
+/// On mobile devices, focusing an input can open the virtual keyboard and obscure
+/// the field. This handler waits briefly for the keyboard to appear, then checks
+/// whether the input's bottom edge is below the visible viewport (using
+/// `VisualViewport` when available). If so, it scrolls the page just enough to
+/// leave a small gap between the input and the keyboard.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A focus handler.
+pub(crate) fn on_focus_scroll_into_view() -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
+        let Some(target) = event.target() else {
+            return;
+        };
+        let Ok(element) = target.dyn_into::<HtmlElement>() else {
+            return;
+        };
+        let window: Window = window().expect("no global window exists");
+        let element_clone: HtmlElement = element.clone();
+        let window_clone: Window = window.clone();
+        let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            let rect: DomRect = element_clone.get_bounding_client_rect();
+            let input_bottom: f64 = rect.bottom();
+            let viewport_height: f64 = window_clone
+                .visual_viewport()
+                .map(|viewport: VisualViewport| viewport.height())
+                .unwrap_or_else(|| {
+                    window_clone
+                        .inner_height()
+                        .map(|height: JsValue| height.as_f64().unwrap_or(0.0))
+                        .unwrap_or(0.0)
+                });
+            let visible_bottom: f64 = viewport_height - KEYBOARD_FOCUS_GAP;
+            if input_bottom > visible_bottom {
+                let scroll_amount: f64 = input_bottom - visible_bottom;
+                window_clone.scroll_by_with_x_and_y(0.0, scroll_amount);
+            }
+        }));
+        let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+            closure.as_ref().unchecked_ref::<Function>(),
+            FOCUS_SCROLL_DELAY_MILLIS,
+        );
+        closure.forget();
+    }))
+}

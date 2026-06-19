@@ -1,5 +1,19 @@
 use crate::*;
 
+/// A RAII wrapper around a raw pointer that frees the allocation on drop.
+///
+/// Used to ensure heap allocations captured by closures are properly freed
+/// when the closure is dropped (e.g., when a DynamicNode is cleaned up).
+///
+/// # Safety
+///
+/// The pointer must have been allocated via `Box::into_raw`. Only one
+/// `OwnedPtr` should exist per allocation (no aliasing ownership).
+pub(crate) struct OwnedPtr<T> {
+    /// The raw pointer owned by this wrapper.
+    pub(crate) ptr: *mut T,
+}
+
 /// Manages the rendering of virtual DOM nodes to the real DOM.
 ///
 /// Maintains a mapping between virtual nodes and real DOM elements,

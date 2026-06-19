@@ -192,14 +192,22 @@ impl ToTokens for ClassDef {
                     let ClassPropValue::Expr(expr) = value;
                     match key {
                         ClassPropKey::Static(static_key) => {
-                            let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
-                            all_css_parts.push(
-                                quote! { #key_sep.to_string() + &(#expr) + #CSS_DECL_TERMINATOR },
-                            );
+                            if is_static_string_expr(expr) {
+                                let value_str: String = expr_to_string(expr);
+                                let prop_str: String = format!(
+                                    "{static_key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
+                                );
+                                all_css_parts.push(quote! { #prop_str.to_string() });
+                            } else {
+                                let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
+                                all_css_parts.push(
+                                    quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR },
+                                );
+                            }
                         }
                         ClassPropKey::Dynamic(_) => {
                             let key_token: proc_macro2::TokenStream = class_prop_key_to_tokens(key);
-                            all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr) + #CSS_DECL_TERMINATOR });
+                            all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
                         }
                     }
                 }
@@ -322,8 +330,17 @@ impl ToTokens for ClassDef {
                         let ClassPropValue::Expr(expr) = value;
                         match key {
                             ClassPropKey::Static(static_key) => {
-                                let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
-                                all_css_parts.push(quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                                if is_static_string_expr(expr) {
+                                    let value_str: String = expr_to_string(expr);
+                                    let prop_str: String = format!(
+                                        "{static_key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
+                                    );
+                                    all_css_parts.push(quote! { #prop_str.to_string() });
+                                } else {
+                                    let key_sep: String =
+                                        format!("{static_key}{CSS_PROP_SEPARATOR}");
+                                    all_css_parts.push(quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                                }
                             }
                             ClassPropKey::Dynamic(_) => {
                                 let key_token: proc_macro2::TokenStream =

@@ -116,7 +116,7 @@ impl ToTokens for ComputedInput {
                     param, param_type,
                 ) {
                     (Some(name), Some(ty)) => quote! { let #name: #ty = #signal.get(); },
-                    (Some(name), None) => quote! { let #name: _ = #signal.get(); },
+                    (Some(name), None) => quote! { let #name = #signal.get(); },
                     (None, Some(ty)) => quote! { let _: #ty = #signal.get(); },
                     (None, None) => quote! { let _ = #signal.get(); },
                 },

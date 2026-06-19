@@ -214,7 +214,8 @@ fn encode_svg_for_data_url(raw: &str) -> String {
 ///
 /// - `String` - A URL-encoded SVG data URL of the QR code.
 pub(crate) fn generate_qr_code_data_url(content: &str) -> String {
-    let code: QrCode = QrCode::new(content).unwrap_or_else(|_| QrCode::new("error").unwrap());
+    let code: QrCode =
+        QrCode::new(content).unwrap_or_else(|_: QrError| QrCode::new("error").unwrap());
     let svg_string: String = code
         .render::<svg::Color>()
         .min_dimensions(QR_CODE_MIN_DIMENSION, QR_CODE_MIN_DIMENSION)
