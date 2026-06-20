@@ -150,9 +150,9 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         label: "Toggle"
                         onclick: use_toggle(scale_active)
                         if { scale_active.get() } {
-                            "Restore"
+                            "Click me to restore!"
                         } else {
-                            "Shrink"
+                            "Click me to shrink!"
                         }
                     }
                 }
@@ -165,7 +165,6 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                             "scale(1)"
                         };
                     }
-                    "Shrink!"
                 }
             }
         }

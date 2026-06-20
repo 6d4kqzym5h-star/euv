@@ -1977,10 +1977,6 @@ class! {
         margin: format!("{} 0px", var!(gap-component));
         padding: var!(space-xl);
         background: var!(accent);
-        color: var!(text-on-accent);
-        text-align: "center";
-        font-weight: "600";
-        font-size: var!(font-lg);
         cursor: "pointer";
         transition: format!("transform {} {}", var!(duration-normal), var!(ease-out));
     }
@@ -2989,7 +2985,8 @@ class! {
 
     pub(crate) c_virtual_list_container {
         flex: "1";
-        height: "460px";
+        height: "666px";
+        max-height: "666px";
         overflow-y: "auto";
         background: var!(background);
     }
