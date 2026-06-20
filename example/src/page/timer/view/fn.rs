@@ -47,7 +47,9 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                     class: c_timer_display()
                     span {
                         class: c_timer_value()
-                        { format_time(stopwatch.get_seconds().get()) }
+                        {
+                            format_time(stopwatch.get_seconds().get())
+                        }
                     }
                 }
                 div {
@@ -101,7 +103,9 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                     class: c_timer_display()
                     span {
                         class: c_timer_value()
-                        { format_time(countdown.get_remaining().get()) }
+                        {
+                            format_time(countdown.get_remaining().get())
+                        }
                     }
                 }
                 div {

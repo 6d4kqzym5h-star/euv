@@ -1620,12 +1620,14 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                                 "range:"
                             }
                             input {
-                                class: c_tag_demo_input()
+                                class: c_tag_demo_input_range()
                                 id: TAGS_INPUT_RANGE_ID
                                 type: TAGS_INPUT_TYPE_RANGE
                                 min: TAGS_RANGE_MIN
                                 max: TAGS_RANGE_MAX
                                 value: TAGS_RANGE_VALUE
+                                style: format!("--value: {}%", TAGS_RANGE_VALUE)
+                                oninput: range_on_input_update_style()
                             }
                         }
                         div {

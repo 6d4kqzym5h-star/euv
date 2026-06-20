@@ -82,7 +82,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                             for index in { render_start..render_end } {
                                 div {
                                     key: index.to_string()
-                                    class: if index % 2 == 0 { c_virtual_list_row_even() } else { c_virtual_list_row_odd() }
+                                    class: c_virtual_list_row()
                                     style: format!("height: {}px; box-sizing: border-box;", VIRTUAL_LIST_ITEM_HEIGHT)
                                     span {
                                         class: c_virtual_list_row_index()

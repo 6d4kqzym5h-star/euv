@@ -26,10 +26,18 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { box_visible.get() } { EuvButtonVariant::Outline } else { EuvButtonVariant::Primary }
+                        variant: if { box_visible.get() } {
+                            EuvButtonVariant::Outline
+                        } else {
+                            EuvButtonVariant::Primary
+                        }
                         label: "Toggle"
                         onclick: use_toggle(box_visible)
-                        if { box_visible.get() } { "Hide Element" } else { "Show Element" }
+                        if { box_visible.get() } {
+                            "Hide Element"
+                        } else {
+                            "Show Element"
+                        }
                     }
                 }
                 if { box_visible.get() } {
@@ -44,16 +52,28 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { spin_active.get() } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { spin_active.get() } {
+                            EuvButtonVariant::Outline
+                        } else {
+                            EuvButtonVariant::Primary
+                        }
                         label: "Toggle"
                         onclick: use_toggle(spin_active)
-                        if { spin_active.get() } { "Stop Spin" } else { "Start Spin" }
+                        if { spin_active.get() } {
+                            "Stop Spin"
+                        } else {
+                            "Start Spin"
+                        }
                     }
                 }
                 div {
                     class: c_anim_spin_container()
                     div {
-                        class: if { spin_active.get() } { c_anim_spin() } else { c_anim_spin_stopped() }
+                        class: if { spin_active.get() } {
+                            c_anim_spin()
+                        } else {
+                            c_anim_spin_stopped()
+                        }
                         "⟳"
                     }
                 }
@@ -63,16 +83,28 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { pulse_active.get() } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { pulse_active.get() } {
+                            EuvButtonVariant::Outline
+                        } else {
+                            EuvButtonVariant::Primary
+                        }
                         label: "Toggle"
                         onclick: use_toggle(pulse_active)
-                        if { pulse_active.get() } { "Stop Pulse" } else { "Start Pulse" }
+                        if { pulse_active.get() } {
+                            "Stop Pulse"
+                        } else {
+                            "Start Pulse"
+                        }
                     }
                 }
                 div {
                     class: c_anim_pulse_container()
                     div {
-                        class: if { pulse_active.get() } { c_anim_pulse() } else { c_anim_pulse_stopped() }
+                        class: if { pulse_active.get() } {
+                            c_anim_pulse()
+                        } else {
+                            c_anim_pulse_stopped()
+                        }
                         "♥"
                     }
                 }
@@ -97,7 +129,11 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_progress_container()
                     div {
-                        class: if { progress.get_running().get() } { c_progress_bar_running() } else { c_progress_bar_stopped() }
+                        class: if { progress.get_running().get() } {
+                            c_progress_bar_running()
+                        } else {
+                            c_progress_bar_stopped()
+                        }
                     }
                 }
             }
@@ -106,16 +142,30 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { scale_active.get() } { EuvButtonVariant::Outline } else { EuvButtonVariant::Primary }
+                        variant: if { scale_active.get() } {
+                            EuvButtonVariant::Outline
+                        } else {
+                            EuvButtonVariant::Primary
+                        }
                         label: "Toggle"
                         onclick: use_toggle(scale_active)
-                        if { scale_active.get() } { "Restore" } else { "Shrink" }
+                        if { scale_active.get() } {
+                            "Restore"
+                        } else {
+                            "Shrink"
+                        }
                     }
                 }
                 div {
                     class: c_anim_scale_box()
-                    style: { transition: "transform 0.3s ease"; transform: if { scale_active.get() } { "scale(0.85)" } else { "scale(1)" }; }
-                    "Click me to shrink!"
+                    style: {
+                        transition: "transform 0.3s ease"; transform: if { scale_active.get() } {
+                            "scale(0.85)"
+                        } else {
+                            "scale(1)"
+                        };
+                    }
+                    "Shrink!"
                 }
             }
         }

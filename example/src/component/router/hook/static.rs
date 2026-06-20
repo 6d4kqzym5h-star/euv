@@ -17,6 +17,12 @@ thread_local! {
     /// modal is dismissed first instead of navigating away.
     pub(crate) static MODAL_STACK: ModalStack =
         const { RefCell::new(Vec::new()) };
+    /// A unified stack of all open overlays (modals, panels, drawers) in the order
+    /// they were opened. The topmost entry is the most recently opened overlay.
+    /// On a system back gesture the topmost entry is popped and its close callback
+    /// is invoked, so overlays close in reverse opening order regardless of type.
+    pub(crate) static OVERLAY_STACK: OverlayStack =
+        const { RefCell::new(Vec::new()) };
     /// Depth counter for re-entrant `hashchange` / `popstate` event dispatch.
     ///
     /// Incremented before each window event proxy callback runs (`hashchange`,

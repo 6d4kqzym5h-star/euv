@@ -8,7 +8,6 @@ class! {
     pub(crate) c_app_root {
         display: "flex";
         height: "100%";
-        overflow: "hidden";
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(background);
         color: var!(foreground);
@@ -32,10 +31,9 @@ class! {
         flex-direction: "column";
         width: "100%";
         height: "100%";
-        overflow: "hidden";
         gap: var!(space-sm);
         font-family: "system-ui, -apple-system, sans-serif";
-        background: var!(bg-nav);
+        background: var!(background);
         color: var!(foreground);
         padding: format!("env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)");
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
@@ -57,10 +55,10 @@ class! {
 
     pub(crate) c_app_nav {
         width: var!(nav-width);
-        background: var!(bg-nav);
+        background: var!(background);
         backdrop-filter: var!(glass-blur-md);
         -webkit-backdrop-filter: var!(glass-blur-md);
-        border-right: format!("1px solid {}", var!(border));
+        border-left: format!("2px solid {}", var!(border));
         display: "flex";
         flex-direction: "column";
         height: "100%";
@@ -72,8 +70,8 @@ class! {
 
     pub(crate) c_nav_header {
         padding: format!("{} {}", var!(space-xl), var!(space-xl));
-        margin: "0px";
-        border-bottom: format!("1px solid {}", var!(border-subtle));
+        width: "100%";
+        box-sizing: "border-box";
         font-size: var!(font-xl);
         font-weight: "700";
         color: var!(foreground);
@@ -84,8 +82,15 @@ class! {
         flex-shrink: "0";
         text-decoration: "none";
         cursor: "pointer";
-        @media ((max-width: 767px)) {
-            border-bottom: "none";
+        position: "relative";
+        ::after {
+            content: "''";
+            position: "absolute";
+            bottom: "0px";
+            left: var!(space-lg);
+            right: var!(space-lg);
+            height: "1px";
+            background: format!("linear-gradient(90deg, transparent, {}, transparent)", var!(border));
         }
     }
 
@@ -101,7 +106,7 @@ class! {
         background: var!(accent);
         align-items: "center";
         justify-content: "center";
-        color: var!(primary-foreground);
+        color: var!(text-on-accent);
         font-weight: "700";
         border: "none";
         cursor: "pointer";
@@ -128,9 +133,6 @@ class! {
         }
     }
 
-    pub(crate) c_euv_logo_fab_hover {
-        box-shadow: var!(shadow-accent-lg);
-    }
 
     pub(crate) c_nav_section_label {
         padding: format!("{} {} {} {}", var!(space-md), var!(space-xl), var!(space-xs), var!(space-xl));
@@ -213,7 +215,7 @@ class! {
         padding: format!("{} {}", var!(space-lg), var!(space-xl));
         position: "relative";
         font-size: var!(font-xs);
-        color: var!(text-muted);
+        color: var!(muted-foreground);
         flex-shrink: "0";
         text-decoration: "none";
         display: "flex";
@@ -233,7 +235,7 @@ class! {
         left: var!(space-lg);
         right: var!(space-lg);
         height: "1px";
-        background: format!("linear-gradient(90deg, transparent, {}, transparent)", var!(border-subtle));
+        background: format!("linear-gradient(90deg, transparent, {}, transparent)", var!(border));
     }
 
     pub(crate) c_nav_footer_text {
@@ -246,10 +248,6 @@ class! {
         color: var!(accent);
     }
 
-    pub(crate) c_nav_footer_badge {
-        font-weight: "700";
-        color: var!(accent);
-    }
 
     pub(crate) c_nav_item_active {
         display: "flex";
@@ -278,7 +276,7 @@ class! {
         :hover {
             background: var!(accent-muted);
             color: var!(accent);
-            box-shadow: format!("inset 0 0 0 1px {}", var!(foreground));
+            box-shadow: format!("inset 4px 0 0 0 {}", var!(foreground));
         }
     }
 
@@ -306,10 +304,9 @@ class! {
         width: "0px";
         display: "flex";
         flex-direction: "column";
-        align-items: "center";
-        min-width: "0px";
+        align-items: "stretch";
         min-height: "100%";
-        padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(padding-main-top), var!(padding-main-horizontal), var!(space-3xl), var!(padding-main-horizontal));
+        padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-top), var!(padding-main-horizontal));
         background: var!(background);
         overflow: "auto";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
@@ -336,50 +333,28 @@ class! {
         }
     }
 
+    pub(crate) c_page_router {
+        flex: "1";
+        min-height: "0px";
+        display: "flex";
+        flex-direction: "column";
+    }
+
     pub(crate) c_page_container {
         width: "100%";
         max-width: var!(content-max-width);
+        margin: "0px auto";
         display: "flex";
         flex-direction: "column";
         flex: "1";
-        min-width: "0px";
         min-height: "0px";
         padding-bottom: var!(space-4xl);
-    }
-
-    pub(crate) c_page_container_wide {
-        width: "100%";
-        max-width: var!(content-max-width);
-        display: "flex";
-        flex-direction: "column";
-        min-width: "0px";
-        min-height: "0px";
-        padding-bottom: var!(space-4xl);
-    }
-
-    pub(crate) c_header {
-        margin-bottom: var!(gap-page-header);
-    }
-
-    pub(crate) c_page_title {
-        font-size: var!(font-3xl);
-        font-weight: "700";
-        color: var!(foreground);
-        margin-bottom: var!(gap-page-title);
-        letter-spacing: "-0.02em";
+        gap: var!(page-block-gap);
         @media ((max-width: 767px)) {
-            font-size: var!(font-2xl);
+            gap: var!(page-block-gap-mobile);
         }
     }
 
-    pub(crate) c_page_subtitle {
-        font-size: var!(font-lg);
-        color: var!(muted-foreground);
-        opacity: "1";
-        @media ((max-width: 767px)) {
-            font-size: var!(font-base);
-        }
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Page Hero Banner (unified header with emoji icon)
@@ -388,15 +363,7 @@ class! {
     pub(crate) c_page_hero {
         position: "relative";
         text-align: "center";
-        padding: format!("{} {} {} {}", var!(space-4xl), var!(space-xl), var!(space-4xl), var!(space-xl));
-        margin-bottom: var!(space-xl);
-        background: var!(card);
-        border: format!("1px solid {}", var!(border-card));
         box-sizing: "border-box";
-        @media ((max-width: 767px)) {
-            padding: format!("{} {} {} {}", var!(space-2xl), var!(space-lg), var!(space-2xl), var!(space-lg));
-            margin-bottom: var!(space-lg);
-        }
     }
 
     pub(crate) c_page_hero_glow {
@@ -405,6 +372,7 @@ class! {
         left: "50%";
         transform: "translateX(-50%)";
         width: "400px";
+        max-width: "100%";
         height: "400px";
         border-radius: "50%";
         background: "transparent";
@@ -440,6 +408,7 @@ class! {
         font-size: var!(font-lg);
         color: var!(muted-foreground);
         margin: "0px auto";
+        margin-bottom: var!(space-sm);
         max-width: "560px";
         opacity: "1";
         @media ((max-width: 767px)) {
@@ -452,37 +421,10 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_card {
-        background: var!(card);
-        padding: var!(space-xl);
-        margin-top: "0px";
-        margin-bottom: var!(gap-section);
-        border: format!("1px solid {}", var!(border-card));
-        color: var!(card-foreground);
+        color: var!(foreground);
         box-sizing: "border-box";
-        @media ((max-width: 767px)) {
-            padding: var!(space-lg);
-            margin-bottom: var!(gap-section-mobile);
-        }
     }
 
-    pub(crate) c_card_elevated {
-        background: var!(card);
-        padding: var!(space-xl);
-        margin-top: "0px";
-        margin-bottom: var!(gap-section);
-        border: format!("1px solid {}", var!(border-card));
-        color: var!(card-foreground);
-        box-sizing: "border-box";
-        @media ((max-width: 767px)) {
-            padding: var!(space-lg);
-            margin-bottom: var!(gap-section-mobile);
-        }
-    }
-
-    pub(crate) c_card_interactive {
-        c_card();
-        cursor: "pointer";
-    }
 
     pub(crate) c_card_title {
         margin-top: "0px";
@@ -491,7 +433,7 @@ class! {
         font-size: var!(font-lg);
         font-weight: "600";
         padding-bottom: var!(gap-component);
-        border-bottom: format!("1px solid {}", var!(border-card-title));
+        border-bottom: format!("1px solid {}", var!(border));
         letter-spacing: "-0.01em";
         @media ((max-width: 767px)) {
             font-size: var!(font-md);
@@ -509,8 +451,8 @@ class! {
         gap: var!(space-sm);
         width: "100%";
         height: "42px";
-        background: var!(primary);
-        color: var!(primary-foreground);
+        background: var!(accent);
+        color: var!(text-on-accent);
         border: "1px solid transparent";
         padding: format!("0px {}", var!(space-2xl));
         cursor: "pointer";
@@ -532,17 +474,17 @@ class! {
             box-shadow: format!("0 0 0 3px {}, {}", var!(ring), var!(shadow-accent-sm));
         }
         :disabled {
-            background: var!(accent-disabled);
+            background: var!(muted-foreground);
             cursor: "not-allowed";
             opacity: "1";
             box-shadow: "none";
         }
         :hover {
-            background: var!(accent-hover);
+            background: var!(accent);
         }
         :active {
-            background: var!(primary);
-            color: var!(primary-foreground);
+            background: var!(accent);
+            color: var!(text-on-accent);
             border-color: "transparent";
         }
         @media ((max-width: 767px)) {
@@ -553,177 +495,6 @@ class! {
         }
     }
 
-    pub(crate) c_secondary_button {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        gap: var!(space-sm);
-        width: "100%";
-        height: "42px";
-        background: "transparent";
-        color: var!(primary);
-        border: format!("1px solid {}", var!(primary));
-        padding: format!("0px {}", var!(space-2xl));
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        letter-spacing: "0.02em";
-        text-align: "center";
-        outline: "none";
-        box-sizing: "border-box";
-        white-space: "nowrap";
-        overflow: "hidden";
-        text-overflow: "ellipsis";
-        user-select: "none";
-        -webkit-user-select: "none";
-        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-subtle);
-        }
-        :active {
-            background: "transparent";
-            color: var!(primary);
-            border-color: var!(primary);
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(ring));
-        }
-        @media ((max-width: 767px)) {
-            max-width: "100%";
-            padding: format!("{} {}", var!(space-lg), var!(space-xl));
-            font-size: var!(font-md);
-            box-shadow: "none";
-            flex-shrink: "0";
-        }
-    }
-
-    pub(crate) c_accent_button {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        gap: var!(space-sm);
-        width: "100%";
-        flex: "1";
-        background: var!(bg-success);
-        color: var!(text-success);
-        border: format!("1px solid {}", var!(border-success));
-        padding: format!("{} {}", var!(space-md), var!(space-2xl));
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        letter-spacing: "0.02em";
-        text-align: "center";
-        outline: "none";
-        white-space: "nowrap";
-        overflow: "hidden";
-        text-overflow: "ellipsis";
-        user-select: "none";
-        -webkit-user-select: "none";
-        vertical-align: "middle";
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-success));
-        }
-        :active {
-            background: var!(bg-success);
-            color: var!(text-success);
-            border-color: var!(border-success);
-        }
-        @media ((max-width: 767px)) {
-            max-width: "100%";
-            padding: format!("{} {}", var!(space-md), var!(space-xl));
-            font-size: var!(font-md);
-            box-shadow: "none";
-            flex-shrink: "0";
-        }
-    }
-
-    pub(crate) c_danger_button {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        gap: var!(space-sm);
-        width: "100%";
-        height: "42px";
-        background: var!(bg-error);
-        color: var!(text-error);
-        border: format!("1px solid {}", var!(border-error));
-        padding: format!("0px {}", var!(space-2xl));
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        letter-spacing: "0.02em";
-        text-align: "center";
-        outline: "none";
-        box-sizing: "border-box";
-        white-space: "nowrap";
-        overflow: "hidden";
-        text-overflow: "ellipsis";
-        user-select: "none";
-        -webkit-user-select: "none";
-        vertical-align: "middle";
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
-        }
-        :active {
-            background: var!(bg-error);
-            color: var!(text-error);
-            border-color: var!(border-error);
-        }
-        @media ((max-width: 767px)) {
-            max-width: "100%";
-            padding: format!("{} {}", var!(space-md), var!(space-xl));
-            font-size: var!(font-md);
-            box-shadow: "none";
-            flex-shrink: "0";
-        }
-    }
-
-    pub(crate) c_modal_primary_button {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        gap: var!(space-sm);
-        width: "100%";
-        flex: "1";
-        background: var!(primary);
-        color: var!(primary-foreground);
-        border: "1px solid transparent";
-        padding: format!("{} {}", var!(space-md), var!(space-2xl));
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        letter-spacing: "0.02em";
-        text-align: "center";
-        outline: "none";
-        box-shadow: var!(shadow-accent-sm);
-        white-space: "nowrap";
-        overflow: "hidden";
-        text-overflow: "ellipsis";
-        user-select: "none";
-        -webkit-user-select: "none";
-        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-hover);
-        }
-        :active {
-            background: var!(primary);
-            color: var!(primary-foreground);
-            border-color: "transparent";
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(ring), var!(shadow-accent-sm));
-        }
-        :disabled {
-            background: var!(accent-disabled);
-            cursor: "not-allowed";
-            opacity: "1";
-            box-shadow: "none";
-        }
-    }
 
     pub(crate) c_modal_close_button {
         display: "flex";
@@ -764,12 +535,6 @@ class! {
         margin-top: var!(gap-component);
     }
 
-    pub(crate) c_button_controls_auto {
-        display: "flex";
-        flex-wrap: "wrap";
-        gap: var!(gap-element);
-        margin-top: var!(gap-component);
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Euv Button Variants
@@ -785,7 +550,6 @@ class! {
         padding: format!("0px {}", var!(space-xl));
         background: var!(accent);
         color: var!(text-on-accent);
-        border: format!("1px solid {}", var!(accent));
         cursor: "pointer";
         font-size: var!(font-base);
         font-weight: "500";
@@ -794,23 +558,22 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         box-sizing: "border-box";
-        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            background: var!(accent-hover);
+            background: var!(accent);
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         :disabled {
-            background: var!(accent-disabled);
+            background: var!(muted-foreground);
             cursor: "not-allowed";
             opacity: "1";
         }
         :active {
             background: var!(accent);
             color: var!(text-on-accent);
-            border-color: var!(accent);
+            border-color: var!(text-on-accent);
         }
     }
 
@@ -836,12 +599,12 @@ class! {
         transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-muted);
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             color: var!(accent);
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         :active {
             background: "transparent";
@@ -868,7 +631,7 @@ class! {
         background: var!(accent);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-2xs), var!(space-xs));
@@ -887,7 +650,7 @@ class! {
         cursor: "pointer";
         text-align: "center";
         background: "transparent";
-        border: format!("1.5px solid {}", var!(border-subtle));
+        border: format!("1.5px solid {}", var!(border));
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-2xs), var!(space-xs));
@@ -912,30 +675,15 @@ class! {
         display: "inline-flex";
         align-items: "center";
         justify-content: "center";
-        color: var!(text-primary);
+        color: var!(foreground);
         padding: format!("{} {}", var!(space-2xs), var!(space-sm));
         font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        background: var!(bg-primary);
+        background: var!(background);
         border: format!("1.5px solid {}", var!(accent));
     }
 
-    pub(crate) c_badge_dot {
-        align-items: "center";
-        gap: var!(space-xs);
-        color: var!(text-muted);
-        font-size: var!(font-sm);
-        font-weight: "500";
-    }
-
-    pub(crate) c_badge_dot_indicator {
-        width: "6px";
-        height: "6px";
-        border-radius: "50%";
-        background: var!(accent);
-        animation: "euv-pulse-soft 2s ease-in-out infinite";
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Euv Tag Variants (semantic colour tags)
@@ -965,7 +713,7 @@ class! {
         font-weight: "600";
         cursor: "pointer";
         background: "transparent";
-        border: format!("1.5px solid {}", var!(border-subtle));
+        border: format!("1.5px solid {}", var!(border));
         transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
@@ -991,125 +739,27 @@ class! {
         gap: var!(gap-component);
     }
 
-    pub(crate) c_inline_input_button {
-        flex-shrink: "0";
-        height: "42px";
-        display: "inline-flex";
-        justify-content: "center";
-        align-items: "center";
-        padding: format!("0px {}", var!(space-lg));
-        cursor: "pointer";
-        font-size: var!(font-base);
-        font-weight: "500";
-        outline: "none";
-        white-space: "nowrap";
-        user-select: "none";
-        -webkit-user-select: "none";
-        box-sizing: "border-box";
-    }
-
-    pub(crate) c_inline_input_button_primary {
-        background: var!(accent);
-        color: var!(text-on-accent);
-        border: "none";
-        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-hover);
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(accent-border), var!(shadow-accent-sm));
-        }
-        :disabled {
-            background: var!(accent-disabled);
-            cursor: "not-allowed";
-            opacity: "1";
-        }
-        :active {
-            background: var!(accent);
-            color: var!(text-on-accent);
-            border-color: "none";
-        }
-    }
-
-    pub(crate) c_inline_input_button_danger {
-        background: var!(bg-error);
-        color: var!(text-error);
-        border: format!("1px solid {}", var!(border-error));
-        transition: format!("background {} {}, border-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-muted);
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
-        }
-        :active {
-            background: var!(bg-error);
-            color: var!(text-error);
-            border-color: var!(border-error);
-        }
-    }
-
-    pub(crate) c_inline_input_button_secondary {
-        background: "transparent";
-        color: var!(accent);
-        border: format!("1px solid {}", var!(accent));
-        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-subtle);
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
-        }
-        :active {
-            background: "transparent";
-            color: var!(accent);
-            border-color: var!(accent);
-        }
-    }
-
-    pub(crate) c_inline_input_button_outline {
-        background: "transparent";
-        color: var!(muted-foreground);
-        border: format!("1px solid {}", var!(border));
-        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            background: var!(accent-muted);
-            border-color: var!(accent-border);
-            color: var!(accent);
-        }
-        :focus-visible {
-            outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(ring));
-        }
-        :active {
-            background: "transparent";
-            color: var!(muted-foreground);
-            border-color: var!(border);
-        }
-    }
 
     pub(crate) c_euv_input {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "40px";
         box-sizing: "border-box";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
-        background: var!(bg-input);
-        color: var!(text-primary);
+        background: var!(background);
+        color: var!(foreground);
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -1118,29 +768,31 @@ class! {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "40px";
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
-        color: var!(text-primary);
+        color: var!(foreground);
     }
 
     pub(crate) c_euv_input_error {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        border: format!("1px solid {}", var!(text-error));
+        border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
+        line-height: "40px";
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
-        color: var!(text-primary);
+        color: var!(foreground);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
-            border-color: var!(text-error);
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+            border-color: var!(foreground);
+            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
@@ -1163,27 +815,19 @@ class! {
         gap: var!(gap-element);
     }
 
-    pub(crate) c_form_grid {
-        display: "grid";
-        grid-template-columns: "1fr 1fr";
-        gap: var!(gap-component);
-        @media ((max-width: 767px)) {
-            grid-template-columns: "1fr";
-        }
-    }
 
     pub(crate) c_select_input {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
         cursor: "pointer";
         appearance: "none";
-        color: var!(text-primary);
+        color: var!(foreground);
         background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='currentColor' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")";
         background-repeat: "no-repeat";
         background-position: "right 14px center";
@@ -1191,7 +835,7 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -1200,25 +844,25 @@ class! {
         width: "100%";
         max-width: "100%";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
         resize: "vertical";
         overflow-x: "hidden";
         word-wrap: "break-word";
         font-family: "inherit";
-        color: var!(text-primary);
+        color: var!(foreground);
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -1227,21 +871,21 @@ class! {
         width: "100%";
         max-width: "100%";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border: format!("1px solid {}", var!(text-error));
+        border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
         resize: "vertical";
         overflow-x: "hidden";
         word-wrap: "break-word";
         font-family: "inherit";
-        color: var!(text-primary);
+        color: var!(foreground);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
-            border-color: var!(text-error);
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+            border-color: var!(foreground);
+            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
@@ -1258,18 +902,12 @@ class! {
     }
 
     pub(crate) c_field_error_text {
-        color: var!(text-error);
+        color: var!(foreground);
         font-size: "13px";
         margin-top: var!(space-xs);
         margin-bottom: var!(space-sm);
     }
 
-    pub(crate) c_form_group {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(space-sm);
-        margin-bottom: var!(gap-component);
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Status Boxes
@@ -1277,11 +915,9 @@ class! {
 
     pub(crate) c_error_box {
         margin: format!("{} 0px", var!(gap-component));
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(accent-muted);
-        color: var!(text-primary);
+        color: var!(foreground);
         font-size: var!(font-base);
-        border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
 
@@ -1289,31 +925,12 @@ class! {
         margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(accent-muted);
-        color: var!(text-primary);
+        color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
     }
 
-    pub(crate) c_warning_box {
-        margin: format!("{} 0px", var!(gap-component));
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(accent-muted);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border));
-        font-size: var!(font-base);
-        box-sizing: "border-box";
-    }
-
-    pub(crate) c_info_box {
-        margin-top: var!(gap-component);
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(accent-muted);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border));
-        font-size: var!(font-base);
-        box-sizing: "border-box";
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Counter / Signals Demo
@@ -1379,7 +996,7 @@ class! {
     pub(crate) c_info_label {
         font-size: var!(font-sm);
         font-weight: "500";
-        color: var!(text-muted);
+        color: var!(muted-foreground);
         min-width: "72px";
         flex-shrink: "0";
         letter-spacing: "0.02em";
@@ -1389,9 +1006,8 @@ class! {
         c_text_ellipsis();
         font-size: var!(font-base);
         font-weight: "600";
-        color: var!(text-primary);
+        color: var!(foreground);
         font-family: "ui-monospace, monospace";
-        min-width: "0px";
         flex: "1";
     }
 
@@ -1401,7 +1017,6 @@ class! {
         font-weight: "600";
         color: var!(accent);
         font-family: "ui-monospace, monospace";
-        min-width: "0px";
         flex: "1";
         text-decoration: "none";
         transition: format!("opacity {} {}", var!(duration-fast), var!(ease-out));
@@ -1436,9 +1051,9 @@ class! {
 
     pub(crate) c_camera_video_placeholder {
         width: "100%";
-        background: var!(bg-input);
+        background: var!(background);
         aspect-ratio: "16 / 9";
-        border: format!("2px dashed {}", var!(border-input));
+        border: format!("2px dashed {}", var!(border));
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -1463,20 +1078,14 @@ class! {
         opacity: "1";
     }
 
-    pub(crate) c_camera_controls {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-element);
-        margin-top: var!(gap-component);
-    }
 
     pub(crate) c_camera_error_box {
         margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-error);
-        color: var!(text-error);
+        background: var!(background);
+        color: var!(foreground);
         font-size: var!(font-base);
-        border: format!("1px solid {}", var!(border-error));
+        border: format!("1px solid {}", var!(border));
         word-break: "break-all";
         overflow-wrap: "break-word";
         box-sizing: "border-box";
@@ -1485,15 +1094,15 @@ class! {
     pub(crate) c_camera_scan_result_box {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-success);
-        border: format!("1px solid {}", var!(border-success));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
 
     pub(crate) c_camera_scan_result_label {
         font-size: var!(font-sm);
         font-weight: "600";
-        color: var!(text-success);
+        color: var!(foreground);
         margin-bottom: var!(space-xs);
     }
 
@@ -1504,66 +1113,16 @@ class! {
         overflow-wrap: "break-word";
     }
 
-    pub(crate) c_camera_scan_result_link {
-        display: "inline-block";
-        margin-top: var!(space-sm);
-        color: var!(accent);
-        font-weight: "500";
-        text-decoration: "underline";
-        cursor: "pointer";
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Canvas Drawing Board
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_canvas_toolbar {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-element);
-        margin-bottom: var!(gap-component);
-    }
-
-    pub(crate) c_canvas_toolbar_row {
-        display: "flex";
-        align-items: "center";
-        gap: var!(space-md);
-    }
-
-    pub(crate) c_canvas_toolbar_label {
-        font-size: var!(font-sm);
-        font-weight: "600";
-        color: "inherit";
-        min-width: "36px";
-    }
-
-    pub(crate) c_canvas_color_input {
-        width: "42px";
-        height: "42px";
-        border: format!("1px solid {}", var!(border-input));
-        cursor: "pointer";
-        padding: "2px";
-        background: "transparent";
-    }
-
-    pub(crate) c_canvas_range_input {
-        flex: "1";
-        cursor: "pointer";
-        accent-color: var!(accent);
-    }
-
-    pub(crate) c_canvas_width_value {
-        font-size: var!(font-sm);
-        color: "inherit";
-        min-width: "28px";
-        text-align: "center";
-        opacity: "1";
-    }
 
     pub(crate) c_canvas_preview_container {
         margin: format!("{} 0", var!(space-lg));
         overflow: "hidden";
-        border: format!("2px solid {}", var!(border-input));
+        border: format!("2px solid {}", var!(border));
         background: CANVAS_BACKGROUND_COLOR;
         aspect-ratio: "9 / 16";
         display: "flex";
@@ -1573,7 +1132,7 @@ class! {
     }
 
     pub(crate) c_canvas_placeholder {
-        color: var!(text-muted);
+        color: var!(muted-foreground);
         font-size: var!(font-sm);
         text-align: "center";
         padding: var!(space-lg);
@@ -1589,7 +1148,7 @@ class! {
     pub(crate) c_canvas_container_fullscreen {
         width: "100vw";
         height: "100%";
-        background: var!(bg-card);
+        background: var!(background);
         display: "flex";
         flex-direction: "column";
         position: "fixed";
@@ -1610,7 +1169,7 @@ class! {
     }
 
     pub(crate) c_canvas_drawing_fullscreen {
-        border: format!("2px solid {}", var!(border-input));
+        border: format!("2px solid {}", var!(border));
         display: "block";
         cursor: "crosshair";
         touch-action: "none";
@@ -1622,7 +1181,7 @@ class! {
         align-items: "stretch";
         width: "100%";
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        background: var!(bg-card);
+        background: var!(background);
         flex-shrink: "0";
         gap: var!(space-xs);
     }
@@ -1645,7 +1204,7 @@ class! {
     pub(crate) c_canvas_color_input_fullscreen {
         width: "100%";
         height: "42px";
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         cursor: "pointer";
         padding: format!("{}", var!(space-xs));
         background: "transparent";
@@ -1661,28 +1220,46 @@ class! {
         flex: "1 1 0%";
         min-width: "120px";
         cursor: "pointer";
-        accent-color: var!(accent);
-    }
-
-    pub(crate) c_canvas_fullscreen_button {
-        justify-content: "center";
-        align-items: "center";
+        -webkit-appearance: "none";
+        appearance: "none";
         background: "transparent";
-        color: var!(accent);
-        border: format!("1px solid {}", var!(accent));
-        padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        cursor: "pointer";
-        font-size: var!(font-xs);
-        font-weight: "500";
+        border: "none";
         outline: "none";
-        white-space: "nowrap";
-        flex-shrink: "0";
-        :active {
-            background: "transparent";
-            color: var!(accent);
-            border-color: var!(accent);
+        height: "24px";
+        ::-webkit-slider-runnable-track {
+            height: "6px";
+            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-slider-thumb {
+            width: "20px";
+            height: "20px";
+            background: var!(background);
+            border: format!("2px solid {}", var!(accent));
+            border-radius: "50%";
+            cursor: "pointer";
+            -webkit-appearance: "none";
+            margin-top: "-7px";
+            box-shadow: var!(shadow-sm);
+        }
+        ::-moz-range-track {
+            height: "6px";
+            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-moz-range-thumb {
+            width: "20px";
+            height: "20px";
+            background: var!(background);
+            border: format!("2px solid {}", var!(accent));
+            border-radius: "50%";
+            cursor: "pointer";
+            box-shadow: var!(shadow-sm);
         }
     }
+
 
     pub(crate) c_canvas_fullscreen_toolbar_button {
         flex: "0 0 auto";
@@ -1695,7 +1272,7 @@ class! {
 
     pub(crate) c_custom_attrs_demo {
         padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         color: "inherit";
         box-sizing: "border-box";
     }
@@ -1709,7 +1286,7 @@ class! {
         color: "inherit";
         opacity: "1";
         font-size: "13px";
-        margin-bottom: var!(gap-component);
+        margin-bottom: "0px";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1719,10 +1296,11 @@ class! {
     pub(crate) c_loading_container {
         display: "flex";
         align-items: "center";
+        justify-content: "center";
         gap: var!(gap-component);
         padding: var!(space-xl);
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         margin-top: var!(gap-component);
         box-sizing: "border-box";
     }
@@ -1730,7 +1308,7 @@ class! {
     pub(crate) c_spinner {
         width: "28px";
         height: "28px";
-        border: format!("3px solid {}", var!(border-loading));
+        border: format!("3px solid {}", var!(border));
         border-top: format!("3px solid {}", var!(accent));
         border-radius: "50%";
         flex-shrink: "0";
@@ -1744,13 +1322,13 @@ class! {
     }
 
     pub(crate) c_loading_title {
-        color: var!(text-loading-title);
+        color: var!(foreground);
         font-size: var!(font-md);
         font-weight: "500";
     }
 
     pub(crate) c_loading_subtitle {
-        color: var!(text-muted);
+        color: var!(muted-foreground);
         font-size: "13px";
     }
 
@@ -1760,8 +1338,8 @@ class! {
         gap: var!(gap-element);
         margin-top: var!(gap-component);
         padding: var!(space-lg);
-        background: var!(bg-error);
-        border: format!("1px solid {}", var!(border-error));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
 
@@ -1769,31 +1347,30 @@ class! {
         width: "20px";
         height: "20px";
         border-radius: "50%";
-        background: var!(bg-error-icon);
+        background: var!(background);
         display: "flex";
         align-items: "center";
         justify-content: "center";
         flex-shrink: "0";
-        color: var!(text-error);
+        color: var!(foreground);
         font-size: var!(font-sm);
         font-weight: "700";
     }
 
     pub(crate) c_error_text {
-        color: var!(text-error);
+        color: var!(foreground);
         font-size: var!(font-base);
     }
 
     pub(crate) c_data_box {
         margin-top: var!(gap-component);
         padding: var!(space-lg);
-        background: var!(bg-success);
-        border: format!("1px solid {}", var!(border-success));
+        background: var!(background);
         box-sizing: "border-box";
     }
 
     pub(crate) c_data_pre {
-        color: var!(text-success);
+        color: var!(foreground);
         font-size: "13px";
         margin: "0px";
         white-space: "pre-wrap";
@@ -1815,7 +1392,7 @@ class! {
     pub(crate) c_toggle_content {
         margin-top: var!(gap-component);
         padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-accent-light));
+        border: format!("1px solid {}", var!(border));
         color: "inherit";
     }
 
@@ -1832,33 +1409,18 @@ class! {
         margin-bottom: var!(gap-component);
     }
 
-    pub(crate) c_role_guest {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-warning));
-    }
-
     pub(crate) c_role_guest_text {
-        color: var!(text-warning);
+        color: var!(foreground);
         font-size: var!(font-base);
-    }
-
-    pub(crate) c_role_user {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-info));
     }
 
     pub(crate) c_role_user_text {
-        color: var!(text-info);
+        color: var!(foreground);
         font-size: var!(font-base);
     }
 
-    pub(crate) c_role_admin {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-success));
-    }
-
     pub(crate) c_role_admin_text {
-        color: var!(text-success);
+        color: var!(foreground);
         font-size: var!(font-base);
     }
 
@@ -1868,7 +1430,7 @@ class! {
 
     pub(crate) c_tab_bar {
         display: "flex";
-        border-bottom: format!("1px solid {}", var!(border-input));
+        border-bottom: format!("1px solid {}", var!(border));
         margin-bottom: var!(gap-component);
         gap: var!(gap-element);
         @media ((max-width: 767px)) {
@@ -1928,64 +1490,49 @@ class! {
     // List
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_list_input_row {
-        display: "flex";
-        justify-content: "space-between";
-        align-items: "center";
-        padding: format!("{} {}", var!(gap-component), var!(space-lg));
-        border-bottom: format!("1px solid {}", var!(border-subtle));
-        gap: var!(gap-component);
-        background: var!(bg-list-even);
-        @media ((max-width: 767px)) {
-            flex-wrap: "wrap";
-        }
-    }
 
     pub(crate) c_list_input {
         flex: "1";
-        min-width: "0px";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
-        color: var!(text-primary);
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        color: var!(foreground);
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
 
     pub(crate) c_list_input_error {
         flex: "1";
-        min-width: "0px";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        border: format!("1px solid {}", var!(text-error));
+        border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(bg-input);
+        background: var!(background);
         outline: "none";
-        color: var!(text-primary);
+        color: var!(foreground);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
-            border-color: var!(text-error);
-            box-shadow: format!("0 0 0 3px {}", var!(border-error));
+            border-color: var!(foreground);
+            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
     pub(crate) c_list_error_text {
-        color: var!(text-error);
+        color: var!(foreground);
         font-size: "13px";
         margin-top: var!(gap-element);
         margin-bottom: var!(gap-element);
@@ -2003,29 +1550,17 @@ class! {
         margin-top: var!(gap-component);
     }
 
-    pub(crate) c_list_item_even {
+    pub(crate) c_list_item {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(gap-component), var!(space-lg));
-        border-bottom: format!("1px solid {}", var!(border-subtle));
         gap: var!(gap-component);
-        background: var!(bg-list-even);
-    }
-
-    pub(crate) c_list_item_odd {
-        display: "flex";
-        justify-content: "space-between";
-        align-items: "center";
-        padding: format!("{} {}", var!(gap-component), var!(space-lg));
-        border-bottom: format!("1px solid {}", var!(border-subtle));
-        gap: var!(gap-component);
-        background: var!(bg-list-odd);
+        background: var!(background);
+        min-height: var!(min-height-base);
     }
 
     pub(crate) c_list_item_text {
         flex: "1";
-        min-width: "0px";
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
@@ -2045,72 +1580,25 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_log_container {
-        background: var!(bg-console);
+        background: var!(background);
         padding: format!("0px {}", var!(space-sm));
         font-family: "ui-monospace, monospace";
         font-size: "13px";
         margin-top: "0px";
-        color: var!(text-console);
+        color: var!(foreground);
     }
 
     pub(crate) c_log_item {
         padding: format!("{} 0px", var!(space-sm));
-        border-bottom: format!("1px solid {}", var!(border-console));
         font-size: "13px";
-        color: var!(text-console);
+        color: var!(foreground);
     }
 
-    pub(crate) c_log_empty {
-        color: var!(text-muted);
-        font-size: "13px";
-        text-align: "center";
-        padding: var!(space-lg);
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // 404 Not Found
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_not_found_container {
-        text-align: "center";
-        padding: format!("{} {}", var!(space-7xl), var!(space-xl));
-        max-width: "480px";
-        margin: "0px auto";
-        @media ((max-width: 767px)) {
-            padding: format!("{} {}", var!(space-4xl), var!(space-xl));
-        }
-    }
-
-    pub(crate) c_not_found_code {
-        font-size: var!(font-6xl);
-        font-weight: "800";
-        color: var!(text-muted);
-        margin-bottom: var!(space-md);
-        letter-spacing: "-0.04em";
-        @media ((max-width: 767px)) {
-            font-size: "56px";
-        }
-    }
-
-    pub(crate) c_not_found_title {
-        font-size: var!(font-2xl);
-        font-weight: "600";
-        color: "inherit";
-        margin-bottom: var!(space-md);
-    }
-
-    pub(crate) c_not_found_text {
-        color: "inherit";
-        opacity: "1";
-        font-size: var!(font-lg);
-        margin-bottom: var!(space-3xl);
-    }
-
-    pub(crate) c_not_found_actions {
-        display: "flex";
-        justify-content: "center";
-        margin-top: var!(space-xl);
-    }
 
     pub(crate) c_render_count_text {
         font-size: var!(font-lg);
@@ -2154,7 +1642,7 @@ class! {
     pub(crate) c_event_info_label {
         font-size: var!(font-base);
         font-weight: "600";
-        color: var!(text-secondary);
+        color: var!(foreground);
         flex-shrink: "0";
     }
 
@@ -2164,14 +1652,13 @@ class! {
         font-weight: "600";
         color: var!(accent);
         font-family: "ui-monospace, monospace";
-        min-width: "0px";
         flex: "1";
     }
 
     pub(crate) c_event_mouse_area {
         min-height: "120px";
-        padding: var!(space-xl);
-        border: format!("2px dashed {}", var!(border-accent-light));
+        padding: format!("{} 0px", var!(space-xl));
+        border: format!("2px dashed {}", var!(border));
         cursor: "crosshair";
         text-align: "center";
         user-select: "none";
@@ -2180,20 +1667,20 @@ class! {
 
     pub(crate) c_event_drag_zone {
         min-height: "100px";
-        padding: var!(space-xl);
-        border: format!("2px dashed {}", var!(border-warning));
+        padding: format!("{} 0px", var!(space-xl));
+        border: format!("2px dashed {}", var!(border));
         text-align: "center";
         user-select: "none";
-        color: var!(text-warning);
+        color: var!(foreground);
     }
 
     pub(crate) c_event_drag_zone_active {
         min-height: "100px";
-        padding: var!(space-xl);
-        border: format!("2px dashed {}", var!(border-success));
+        padding: format!("{} 0px", var!(space-xl));
+        border: format!("2px dashed {}", var!(border));
         text-align: "center";
         user-select: "none";
-        color: var!(text-success);
+        color: var!(foreground);
     }
 
     pub(crate) c_event_drag_item {
@@ -2209,22 +1696,22 @@ class! {
 
     pub(crate) c_event_wheel_zone {
         min-height: "120px";
-        padding: var!(space-xl);
-        border: format!("2px dashed {}", var!(border-success));
+        padding: format!("{} 0px", var!(space-xl));
+        border: format!("2px dashed {}", var!(border));
         text-align: "center";
         overflow: "auto";
-        color: var!(text-success);
+        color: var!(foreground);
     }
 
     pub(crate) c_event_clipboard_area {
-        padding: var!(space-lg);
+        padding: format!("{} 0px", var!(space-lg));
         border: format!("1px solid {}", var!(border));
-        color: var!(text-primary);
+        color: var!(foreground);
     }
 
     pub(crate) c_event_touch_zone {
         min-height: "120px";
-        padding: var!(space-xl);
+        padding: format!("{} 0px", var!(space-xl));
         border: format!("2px dashed {}", var!(accent));
         text-align: "center";
         touch-action: "none";
@@ -2233,15 +1720,13 @@ class! {
     }
 
     pub(crate) c_event_form_area {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-info));
-        color: var!(text-info);
+        padding: format!("{} 0px", var!(space-lg));
+        color: var!(foreground);
     }
 
     pub(crate) c_event_media_area {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-success));
-        color: var!(text-success);
+        padding: format!("{} 0px", var!(space-lg));
+        color: var!(foreground);
         max-width: "100%";
         overflow: "hidden";
     }
@@ -2252,9 +1737,7 @@ class! {
     }
 
     pub(crate) c_event_video_area {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-warning));
-        color: var!(text-warning);
+        color: var!(foreground);
         width: "100%";
         overflow: "hidden";
     }
@@ -2265,18 +1748,21 @@ class! {
     }
 
     pub(crate) c_event_image_area {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-accent-light));
+        padding: format!("{} 0px", var!(space-lg));
         color: "inherit";
         width: "100%";
         overflow: "hidden";
-        text-align: "center";
+        display: "flex";
+        flex-direction: "column";
+        align-items: "center";
+        gap: var!(space-md);
     }
 
     pub(crate) c_event_image {
         width: "200px";
         max-width: "100%";
         object-fit: "contain";
+        display: "block";
     }
 
     pub(crate) c_event_url_text {
@@ -2286,6 +1772,7 @@ class! {
         opacity: "1";
         font-family: "ui-monospace, monospace";
         word-break: "break-all";
+        width: "100%";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2296,7 +1783,6 @@ class! {
         text-align: "center";
         padding: var!(space-xl);
         margin: format!("{} 0px", var!(gap-component));
-        border: format!("1px solid {}", var!(border-accent-light));
         color: "inherit";
     }
 
@@ -2321,11 +1807,11 @@ class! {
         text-align: "center";
         padding: var!(space-md);
         margin-top: var!(gap-component);
-        background: var!(bg-warning);
-        border: format!("1px solid {}", var!(border-warning));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-lg);
         font-weight: "600";
-        color: var!(text-warning);
+        color: var!(foreground);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2352,29 +1838,9 @@ class! {
         }
     }
 
-    pub(crate) c_modal_overlay_closing {
-        position: "fixed";
-        top: "0px";
-        left: "0px";
-        width: "100%";
-        height: "100%";
-        background: var!(bg-overlay);
-        backdrop-filter: var!(glass-blur-sm);
-        -webkit-backdrop-filter: var!(glass-blur-sm);
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        z-index: "1000";
-        animation: format!("euv-fade-out {} {}", var!(duration-modal-overlay), var!(ease-out));
-        pointer-events: "none";
-        @media ((max-width: 767px)) {
-            align-items: "center";
-            justify-content: "center";
-        }
-    }
 
     pub(crate) c_modal_content {
-        background: var!(bg-modal);
+        background: var!(background);
         padding: "0px";
         max-width: "480px";
         width: "90%";
@@ -2382,7 +1848,7 @@ class! {
         border: format!("1px solid {}", var!(border));
         animation: format!("euv-scale-in-modal {} {}", var!(duration-modal-content), var!(ease-bounce));
         overflow: "hidden";
-        color: var!(text-card);
+        color: var!(foreground);
         box-sizing: "border-box";
         @media ((max-width: 767px)) {
             max-width: "100%";
@@ -2392,31 +1858,13 @@ class! {
         }
     }
 
-    pub(crate) c_modal_content_closing {
-        background: var!(bg-modal);
-        padding: "0px";
-        max-width: "480px";
-        width: "90%";
-        box-shadow: var!(shadow-modal);
-        border: format!("1px solid {}", var!(border));
-        animation: format!("euv-scale-out-modal {} {}", var!(duration-modal-content), var!(ease-in));
-        overflow: "hidden";
-        color: var!(text-card);
-        box-sizing: "border-box";
-        @media ((max-width: 767px)) {
-            max-width: "100%";
-            width: "calc(100% - 32px)";
-            max-height: "85vh";
-            overflow-y: "auto";
-        }
-    }
 
     pub(crate) c_modal_header {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
         padding: format!("{} {}", var!(space-md), var!(space-xl));
-        border-bottom: format!("1px solid {}", var!(border-card-title));
+        border-bottom: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_modal_title {
@@ -2445,7 +1893,7 @@ class! {
     pub(crate) c_anim_fade_in {
         margin-top: var!(gap-component);
         padding: var!(space-xl);
-        border: format!("1px solid {}", var!(border-accent-light));
+        border: format!("1px solid {}", var!(border));
         animation: format!("euv-fade-in 0.5s {}", var!(ease-out));
         font-size: var!(font-base);
         color: "inherit";
@@ -2489,7 +1937,7 @@ class! {
         font-size: var!(font-5xl);
         animation: "euv-pulse 1.5s ease-in-out infinite";
         display: "inline-block";
-        color: var!(text-danger);
+        color: var!(foreground);
         @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
@@ -2499,7 +1947,7 @@ class! {
         font-size: var!(font-5xl);
         display: "inline-block";
         opacity: "1";
-        color: var!(text-danger);
+        color: var!(foreground);
         @media ((max-width: 767px)) {
             font-size: var!(font-4xl);
         }
@@ -2508,7 +1956,7 @@ class! {
     pub(crate) c_progress_container {
         width: "100%";
         height: "12px";
-        background: var!(bg-progress);
+        background: var!(background);
         margin: format!("{} 0px", var!(space-lg));
         overflow: "hidden";
     }
@@ -2560,8 +2008,6 @@ class! {
 
     pub(crate) c_browser_result_box {
         margin-top: var!(gap-component);
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border: format!("1px solid {}", var!(border-accent-light));
         font-size: var!(font-base);
         word-break: "break-all";
         color: "inherit";
@@ -2589,8 +2035,6 @@ class! {
         display: "flex";
         flex-direction: "column";
         gap: var!(space-xs);
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
         color: "inherit";
     }
 
@@ -2620,7 +2064,7 @@ class! {
         right: "-8px";
         min-width: "18px";
         height: "18px";
-        background: var!(bg-primary);
+        background: var!(background);
         color: var!(foreground);
         font-size: "10px";
         font-weight: "600";
@@ -2628,14 +2072,11 @@ class! {
         align-items: "center";
         justify-content: "center";
         padding: format!("0px {}", var!(space-xs));
-        border: format!("1px solid {}", var!(primary));
+        border: format!("1px solid {}", var!(accent));
         pointer-events: "none";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
     }
 
-    pub(crate) c_vconsole_badge_hidden {
-        display: "none";
-    }
 
     pub(crate) c_vconsole_overlay {
         position: "fixed";
@@ -2661,11 +2102,11 @@ class! {
         left: "0px";
         right: "0px";
         height: "calc(76vh - env(safe-area-inset-bottom, 0px))";
-        background: var!(bg-console);
+        background: var!(background);
         z-index: "10001";
         display: "flex";
         flex-direction: "column";
-        border-top: format!("3px solid {}", var!(border-console-accent));
+        border-top: format!("3px solid {}", var!(accent));
         box-shadow: var!(shadow-console-panel);
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
@@ -2710,13 +2151,13 @@ class! {
         justify-content: "space-between";
         align-items: "center";
         padding: format!("{} {}", var!(space-md), var!(space-xl));
-        background: var!(bg-console-header);
-        border-bottom: format!("1px solid {}", var!(border-console));
+        background: var!(background);
+        border-bottom: format!("1px solid {}", var!(border));
         flex-shrink: "0";
     }
 
     pub(crate) c_vconsole_title {
-        color: var!(text-console-title);
+        color: var!(foreground);
         font-size: var!(font-md);
         font-weight: "600";
         margin: "0px";
@@ -2729,7 +2170,7 @@ class! {
     pub(crate) c_vconsole_title_dot {
         width: "8px";
         height: "8px";
-        background: var!(text-console-log-latest);
+        background: var!(accent);
         display: "inline-block";
         animation: "euv-pulse 2s ease-in-out infinite";
     }
@@ -2744,9 +2185,9 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        background: var!(bg-console-button);
-        color: var!(text-console-button-text);
-        border: format!("1px solid {}", var!(border-console));
+        background: var!(accent);
+        color: var!(text-on-accent);
+        border: format!("1px solid {}", var!(border));
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         cursor: "pointer";
         font-size: var!(font-sm);
@@ -2760,12 +2201,12 @@ class! {
         outline: "none";
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-console));
+            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
         :active {
-            background: var!(bg-console-button);
-            color: var!(text-console-button-text);
-            border-color: var!(border-console);
+            background: var!(accent);
+            color: var!(text-on-accent);
+            border-color: var!(border);
         }
     }
 
@@ -2774,8 +2215,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         background: "transparent";
-        color: var!(text-console-button);
-        border: format!("1px solid {}", var!(border-console-button));
+        color: var!(foreground);
+        border: format!("1px solid {}", var!(border));
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         cursor: "pointer";
         font-size: "16px";
@@ -2788,18 +2229,18 @@ class! {
         outline: "none";
         transition: format!("all {} {}", var!(duration-fast), var!(ease-out));
         :hover {
-            border-color: var!(text-console-close-hover);
-            color: var!(text-console-close-hover);
-            background: var!(bg-console-close-hover);
+            border-color: var!(foreground);
+            color: var!(foreground);
+            background: var!(background);
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-console-button));
+            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
         :active {
             background: "transparent";
-            color: var!(text-console-button);
-            border-color: var!(border-console-button);
+            color: var!(foreground);
+            border-color: var!(border);
         }
     }
 
@@ -2813,37 +2254,29 @@ class! {
 
     pub(crate) c_vconsole_log_item {
         padding: format!("{} 0px", var!(space-xs));
-        border-bottom: format!("1px solid {}", var!(border-console));
-        color: var!(text-console);
+        border-bottom: format!("1px solid {}", var!(border));
+        color: var!(foreground);
         font-size: "13px";
         word-break: "break-all";
     }
 
     pub(crate) c_vconsole_log_latest {
-        color: var!(text-console-log-latest);
+        color: var!(accent);
         font-weight: "500";
     }
 
     pub(crate) c_vconsole_log_warn {
-        color: var!(text-console-warn);
+        color: var!(foreground);
     }
 
-    pub(crate) c_vconsole_log_warn_latest {
-        color: var!(text-console-warn-latest);
-        font-weight: "500";
-    }
 
     pub(crate) c_vconsole_log_error {
-        color: var!(text-console-error);
+        color: var!(foreground);
     }
 
-    pub(crate) c_vconsole_log_error_latest {
-        color: var!(text-console-error-latest);
-        font-weight: "500";
-    }
 
     pub(crate) c_vconsole_empty {
-        color: var!(text-console-empty);
+        color: var!(muted-foreground);
         font-size: "13px";
         text-align: "center";
         padding: format!("{} 0px", var!(space-4xl));
@@ -2868,7 +2301,7 @@ class! {
     }
 
     pub(crate) c_vconsole_count {
-        color: var!(text-console-empty);
+        color: var!(muted-foreground);
         font-size: var!(font-sm);
         font-weight: "400";
     }
@@ -2877,8 +2310,8 @@ class! {
         display: "flex";
         gap: var!(space-sm);
         padding: format!("{} {}", var!(space-xs), var!(space-lg));
-        background: var!(bg-console);
-        border-bottom: format!("1px solid {}", var!(border-console));
+        background: var!(background);
+        border-bottom: format!("1px solid {}", var!(border));
         flex-shrink: "0";
     }
 
@@ -2886,17 +2319,17 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        color: var!(text-console-filter-active);
+        color: var!(text-on-accent);
         padding: format!("{} {}", var!(space-2xs), var!(space-sm));
-        border: format!("1px solid {}", var!(bg-console-filter-active));
+        border: format!("1px solid {}", var!(accent));
         font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
         text-align: "center";
-        background: var!(bg-console-filter-active);
+        background: var!(accent);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border-console));
+            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
@@ -2904,14 +2337,14 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        color: var!(text-console-filter-inactive);
+        color: var!(foreground);
         padding: format!("{} {}", var!(space-2xs), var!(space-sm));
         font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
         text-align: "center";
         background: "transparent";
-        border: format!("1.5px solid {}", var!(border-console-filter-inactive));
+        border: format!("1.5px solid {}", var!(border));
     }
 
     pub(crate) c_vconsole_level_badge {
@@ -2926,15 +2359,15 @@ class! {
     }
 
     pub(crate) c_vconsole_badge_log {
-        background: var!(bg-console-badge-log);
+        background: var!(background);
     }
 
     pub(crate) c_vconsole_badge_warn {
-        background: var!(bg-console-badge-warn);
+        background: var!(background);
     }
 
     pub(crate) c_vconsole_badge_error {
-        background: var!(bg-console-badge-error);
+        background: var!(background);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2946,7 +2379,7 @@ class! {
         align-items: "center";
         justify-content: "space-between";
         padding: format!("{} {}", var!(space-sm), var!(space-lg));
-        background: var!(bg-nav);
+        background: var!(background);
         backdrop-filter: var!(glass-blur-md);
         -webkit-backdrop-filter: var!(glass-blur-md);
         flex-shrink: "0";
@@ -2967,7 +2400,7 @@ class! {
         align-items: "center";
         gap: format!("{}", var!(space-sm));
         text-decoration: "none";
-        color: var!(text-primary);
+        color: var!(foreground);
     }
 
     pub(crate) c_mobile_menu_button {
@@ -2981,11 +2414,11 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        color: var!(text-primary);
+        color: var!(foreground);
         padding: "0px";
         :active {
             background: "transparent";
-            color: var!(text-primary);
+            color: var!(foreground);
         }
     }
 
@@ -3007,7 +2440,7 @@ class! {
     pub(crate) c_mobile_menu_button_active {
         width: "40px";
         height: "40px";
-        background: var!(accent-subtle);
+        background: var!(background);
         border: "none";
         cursor: "pointer";
         font-size: "22px";
@@ -3018,7 +2451,7 @@ class! {
         color: var!(accent);
         padding: "0px";
         :active {
-            background: var!(accent-subtle);
+            background: var!(background);
             color: var!(accent);
         }
     }
@@ -3034,14 +2467,14 @@ class! {
         display: "flex";
         align-items: "center";
         justify-content: "center";
-        color: var!(text-muted);
+        color: var!(muted-foreground);
         padding: "0px";
         transition: format!("color {} {}", var!(duration-fast), var!(ease-out));
         :hover {
-            color: var!(text-primary);
+            color: var!(foreground);
         }
         :active {
-            color: var!(text-muted);
+            color: var!(muted-foreground);
         }
     }
 
@@ -3069,7 +2502,7 @@ class! {
         left: "0px";
         width: "280px";
         height: "100%";
-        background: var!(bg-nav);
+        background: var!(background);
         backdrop-filter: var!(glass-blur-lg);
         -webkit-backdrop-filter: var!(glass-blur-lg);
         z-index: "201";
@@ -3099,7 +2532,7 @@ class! {
         width: "100%";
         flex: "1";
         padding: format!("{} {} calc({} + env(safe-area-inset-bottom, 0px)) {}", var!(space-lg), var!(padding-main-horizontal-mobile), var!(space-lg), var!(padding-main-horizontal-mobile));
-        background: var!(bg-primary);
+        background: var!(background);
         overflow-y: "auto";
         scrollbar-width: "none";
         ::-webkit-scrollbar {
@@ -3119,7 +2552,7 @@ class! {
 
     pub(crate) c_keep_alive_tab_bar {
         display: "flex";
-        border-bottom: format!("1px solid {}", var!(border-input));
+        border-bottom: format!("1px solid {}", var!(border));
         margin-bottom: var!(gap-component);
         gap: var!(gap-element);
     }
@@ -3170,7 +2603,7 @@ class! {
     pub(crate) c_keep_alive_form_preview {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(gap-component), var!(space-lg));
-        border: format!("1px solid {}", var!(border-accent-light));
+        border: format!("1px solid {}", var!(border));
         background: var!(accent-muted);
     }
 
@@ -3185,21 +2618,6 @@ class! {
     // File Upload
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_file_upload_input {
-        width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border: format!("1px solid {}", var!(border-input));
-        font-size: var!(font-base);
-        box-sizing: "border-box";
-        background: var!(bg-input);
-        color: var!(text-primary);
-        cursor: "pointer";
-        transition: format!("border-color {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
-        :hover {
-            border-color: var!(accent-border);
-            background: var!(accent-muted);
-        }
-    }
 
     pub(crate) c_file_upload_input_hidden {
         position: "absolute";
@@ -3216,8 +2634,8 @@ class! {
     pub(crate) c_file_upload_options {
         margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} 0px", var!(gap-component));
-        border-top: format!("1px solid {}", var!(border-subtle));
-        border-bottom: format!("1px solid {}", var!(border-subtle));
+        border-top: format!("1px solid {}", var!(border));
+        border-bottom: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_file_upload_item {
@@ -3225,7 +2643,7 @@ class! {
         align-items: "center";
         gap: format!("{}", var!(space-md));
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-input);
+        background: var!(background);
         margin: format!("{} 0px", var!(space-sm));
         font-size: var!(font-base);
         color: "inherit";
@@ -3244,7 +2662,7 @@ class! {
     }
 
     pub(crate) c_file_upload_drop_zone {
-        border: format!("2px dashed {}", var!(border-input));
+        border: format!("2px dashed {}", var!(border));
         padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
@@ -3288,8 +2706,6 @@ class! {
         flex-direction: "column";
         gap: var!(gap-component);
         margin-top: var!(gap-component);
-        padding: format!("{} {} {} {}", var!(space-lg), var!(space-lg), var!(gap-component), var!(space-lg));
-        border: format!("1px solid {}", var!(border-accent-light));
     }
 
     pub(crate) c_binding_child_label {
@@ -3300,21 +2716,12 @@ class! {
         letter-spacing: "0.05em";
     }
 
-    pub(crate) c_binding_child_message {
-        color: "inherit";
-        font-size: var!(font-md);
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(accent-subtle);
-        font-weight: "500";
-    }
 
     pub(crate) c_binding_parent_box {
         display: "flex";
         flex-direction: "column";
         gap: var!(gap-component);
         margin-top: var!(gap-component);
-        padding: format!("{} {} {} {}", var!(space-lg), var!(space-lg), var!(gap-component), var!(space-lg));
-        border: format!("1px solid {}", var!(border-success));
     }
 
     pub(crate) c_binding_section_title {
@@ -3356,7 +2763,6 @@ class! {
         align-items: "center";
         justify-content: "center";
         margin-bottom: var!(gap-component);
-        border: format!("1px solid {}", var!(border-subtle));
     }
 
     pub(crate) c_binding_color_hex {
@@ -3364,7 +2770,7 @@ class! {
         font-size: var!(font-xl);
         font-weight: "700";
         color: var!(text-on-accent);
-        text-shadow: format!("0px 1px 3px {}", var!(border-loading));
+        text-shadow: format!("0px 1px 3px {}", var!(border));
         letter-spacing: "0.02em";
     }
 
@@ -3383,11 +2789,56 @@ class! {
 
     pub(crate) c_binding_slider {
         flex: "1";
-        height: "6px";
+        height: "24px";
+        padding: "0px";
         cursor: "pointer";
-        accent-color: var!(accent);
-        will-change: "auto";
-        touch-action: "pan-x";
+        -webkit-appearance: "none";
+        appearance: "none";
+        background: "transparent";
+        border: "none";
+        outline: "none";
+        ::-webkit-slider-runnable-track {
+            height: "6px";
+            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-slider-thumb {
+            width: "20px";
+            height: "20px";
+            background: var!(background);
+            border: format!("2px solid {}", var!(accent));
+            border-radius: "50%";
+            cursor: "pointer";
+            -webkit-appearance: "none";
+            margin-top: "-7px";
+            box-shadow: var!(shadow-sm);
+            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        }
+        : active::-webkit-slider-thumb {
+            transform: "scale(0.92)";
+            box-shadow: format!("0 0 0 4px {}", var!(accent));
+        }
+        ::-moz-range-track {
+            height: "6px";
+            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-moz-range-thumb {
+            width: "20px";
+            height: "20px";
+            background: var!(background);
+            border: format!("2px solid {}", var!(accent));
+            border-radius: "50%";
+            cursor: "pointer";
+            box-shadow: var!(shadow-sm);
+            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        }
+        : active::-moz-range-thumb {
+            transform: "scale(0.92)";
+            box-shadow: format!("0 0 0 4px {}", var!(accent));
+        }
     }
 
     pub(crate) c_binding_slider_value {
@@ -3405,7 +2856,7 @@ class! {
         font-weight: "600";
         color: var!(accent);
         padding: format!("1px {}", var!(space-sm));
-        background: var!(accent-subtle);
+        background: var!(background);
     }
 
     pub(crate) c_binding_typed_prop_group {
@@ -3417,18 +2868,13 @@ class! {
     pub(crate) c_binding_typed_warning {
         font-size: "13px";
         font-weight: "500";
-        color: var!(text-error);
+        color: var!(foreground);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-error);
-        border: format!("1px solid {}", var!(border-error));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         margin-bottom: "0px";
     }
 
-    pub(crate) c_binding_callback_form {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-component);
-    }
 
     pub(crate) c_binding_form_label {
         display: "block";
@@ -3461,11 +2907,11 @@ class! {
         box-sizing: "border-box";
         transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            background: var!(accent-hover);
+            background: var!(accent);
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 2px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 2px {}", var!(accent));
         }
         :active {
             background: var!(accent);
@@ -3479,9 +2925,12 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_attrs_dynamic_demo(prop_key: &str, prop_value: &str) {
-        { prop_key }: prop_value;
+        {
+            prop_key
+        }
+        : prop_value;
         padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         color: "inherit";
         margin-top: var!(space-md);
     }
@@ -3499,37 +2948,11 @@ class! {
 
     pub(crate) c_dynamic_component_panel {
         display: "block";
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border-subtle));
-        background: var!(bg-primary);
-        min-height: "36px";
+        background: var!(background);
+        min-height: var!(min-height-sm);
         margin-top: var!(gap-component);
     }
 
-    pub(crate) c_dynamic_component_panel_title {
-        margin: format!("0px 0px {} 0px", var!(gap-component));
-        font-size: var!(font-lg);
-        font-weight: "600";
-        color: var!(text-primary);
-    }
-
-    pub(crate) c_dynamic_component_inline {
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(accent-subtle);
-        border: format!("1px solid {}", var!(accent-border));
-        color: var!(accent);
-        font-weight: "500";
-        font-size: var!(font-base);
-    }
-
-    pub(crate) c_dynamic_component_inline_alt {
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-success);
-        border: format!("1px solid {}", var!(border-success));
-        color: var!(text-positive);
-        font-weight: "500";
-        font-size: var!(font-base);
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Virtual List
@@ -3540,7 +2963,7 @@ class! {
         gap: var!(gap-component);
         padding: format!("{} 0px", var!(gap-component));
         margin-bottom: var!(gap-component);
-        border-bottom: format!("1px solid {}", var!(border-subtle));
+        border-bottom: format!("1px solid {}", var!(border));
         flex-wrap: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -3556,7 +2979,6 @@ class! {
         overflow: "hidden";
         text-overflow: "ellipsis";
         white-space: "nowrap";
-        min-width: "0px";
     }
 
     pub(crate) c_virtual_list_status_value {
@@ -3566,45 +2988,31 @@ class! {
     }
 
     pub(crate) c_virtual_list_container {
-        height: "400px";
+        flex: "1";
+        min-height: "0px";
         overflow-y: "auto";
-        border: format!("1px solid {}", var!(border-input));
-        background: var!(bg-input);
+        background: var!(background);
     }
 
     pub(crate) c_virtual_list_card {
-        background: var!(bg-card);
+        flex: "1";
+        min-height: "0px";
+        background: var!(background);
         padding: var!(space-xl);
-        margin-top: "0px";
-        margin-bottom: var!(gap-section);
-        border: format!("1px solid {}", var!(border-card));
-        color: var!(text-card);
+        color: var!(foreground);
         display: "flex";
         flex-direction: "column";
         @media ((max-width: 767px)) {
             padding: var!(space-lg);
-            margin-bottom: var!(gap-section-mobile);
         }
     }
 
-    pub(crate) c_virtual_list_row_even {
+    pub(crate) c_virtual_list_row {
         display: "flex";
         align-items: "center";
         padding: format!("0px {}", var!(space-lg));
         gap: var!(space-lg);
-        border-bottom: format!("1px solid {}", var!(border-subtle));
-        background: var!(bg-list-even);
-        height: "100%";
-        box-sizing: "border-box";
-    }
-
-    pub(crate) c_virtual_list_row_odd {
-        display: "flex";
-        align-items: "center";
-        padding: format!("0px {}", var!(space-lg));
-        gap: var!(space-lg);
-        border-bottom: format!("1px solid {}", var!(border-subtle));
-        background: var!(bg-list-odd);
+        background: var!(background);
         height: "100%";
         box-sizing: "border-box";
     }
@@ -3641,7 +3049,6 @@ class! {
         text-overflow: "ellipsis";
         white-space: "nowrap";
         flex: "1";
-        min-width: "0px";
         display: "flex";
         align-items: "center";
     }
@@ -3650,23 +3057,6 @@ class! {
     // Unified Layout Primitives
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_section_stack {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-section);
-        @media ((max-width: 767px)) {
-            gap: var!(gap-section-mobile);
-        }
-    }
-
-    pub(crate) c_component_stack {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-component);
-        @media ((max-width: 767px)) {
-            gap: var!(gap-component-mobile);
-        }
-    }
 
     pub(crate) c_element_stack {
         display: "flex";
@@ -3674,42 +3064,6 @@ class! {
         gap: var!(gap-element);
     }
 
-    pub(crate) c_cluster {
-        display: "flex";
-        gap: var!(gap-element);
-        flex-wrap: "wrap";
-        align-items: "center";
-        @media ((max-width: 767px)) {
-            flex-wrap: "wrap";
-        }
-    }
-
-    pub(crate) c_cluster_center {
-        display: "flex";
-        gap: var!(gap-element);
-        flex-wrap: "wrap";
-        align-items: "center";
-        justify-content: "center";
-        @media ((max-width: 767px)) {
-            flex-wrap: "wrap";
-        }
-    }
-
-    pub(crate) c_inline_cluster {
-        display: "flex";
-        gap: var!(gap-inline);
-        flex-wrap: "wrap";
-        align-items: "center";
-    }
-
-    pub(crate) c_grid_2col {
-        display: "grid";
-        grid-template-columns: "1fr 1fr";
-        gap: var!(gap-component);
-        @media ((max-width: 767px)) {
-            grid-template-columns: "1fr";
-        }
-    }
 
     pub(crate) c_switcher {
         display: "flex";
@@ -3733,10 +3087,6 @@ class! {
     // Unified Description / Hint Text
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_description {
-        color: "inherit";
-        margin-bottom: var!(gap-element);
-    }
 
     pub(crate) c_hint {
         color: "inherit";
@@ -3749,38 +3099,6 @@ class! {
     // Network Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_net_disconnect_button {
-        c_primary_button();
-        background: var!(text-error);
-        color: var!(text-on-accent);
-        border: "none";
-        box-shadow: format!("inset 0 0 0 1px {}, {}", var!(text-error), var!(shadow-accent-sm));
-        :active {
-            background: var!(text-error);
-            color: var!(text-on-accent);
-            border-color: "none";
-        }
-    }
-
-    pub(crate) c_net_action_button {
-        min-width: "0px";
-        max-width: "120px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        flex-shrink: "0";
-    }
-
-    pub(crate) c_net_messages_header {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-element);
-        margin-bottom: var!(gap-component);
-    }
-
-    pub(crate) c_net_message_count {
-        color: "inherit";
-        opacity: "1";
-        font-size: var!(font-sm);
-    }
 
     pub(crate) c_net_messages_empty {
         color: "inherit";
@@ -3801,8 +3119,8 @@ class! {
         align-items: "baseline";
         gap: var!(gap-element);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_net_message_index {
@@ -3824,107 +3142,39 @@ class! {
     // WebSocket Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_ws_send_row {
-        display: "flex";
-        justify-content: "space-between";
-        align-items: "center";
-        gap: var!(gap-component);
-    }
 
     pub(crate) c_ws_message_input {
         flex: "1";
-        min-width: "0px";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        background: var!(bg-input);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border-input));
+        background: var!(background);
+        color: var!(foreground);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
 
-    pub(crate) c_ws_messages_list {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(space-xs);
-    }
-
-    pub(crate) c_ws_message_item {
-        display: "flex";
-        align-items: "baseline";
-        gap: var!(gap-element);
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
-        min-width: "0px";
-    }
-
-    pub(crate) c_ws_message_data {
-        color: "inherit";
-        font-size: var!(font-base);
-        overflow: "hidden";
-        text-overflow: "ellipsis";
-        white-space: "nowrap";
-        flex: "1";
-        min-width: "0px";
-    }
 
     pub(crate) c_ws_message_time {
-        color: var!(text-tertiary);
+        color: var!(foreground);
         font-size: var!(font-sm);
         white-space: "nowrap";
         flex-shrink: "0";
         margin-left: "auto";
     }
 
-    pub(crate) c_ws_message_sent {
-        display: "flex";
-        align-items: "flex-start";
-        gap: var!(gap-element);
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-success);
-        border: format!("1px solid {}", var!(border-success));
-        margin-left: "auto";
-        max-width: "80%";
-    }
-
-    pub(crate) c_ws_message_received {
-        display: "flex";
-        align-items: "flex-start";
-        gap: var!(gap-element);
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
-        margin-right: "auto";
-        max-width: "80%";
-    }
-
-    pub(crate) c_ws_message_direction {
-        font-size: var!(font-sm);
-        font-weight: "600";
-        white-space: "nowrap";
-        flex-shrink: "0";
-        opacity: "1";
-    }
-
-    pub(crate) c_ws_message_content {
-        color: "inherit";
-        font-size: var!(font-base);
-        word-break: "break-all";
-        overflow-wrap: "break-word";
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // HTML5 Tags Demo
@@ -3950,39 +3200,31 @@ class! {
     }
 
     pub(crate) c_tag_demo_box {
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        background: var!(background);
     }
 
     pub(crate) c_tag_demo_text {
-        margin: "0px";
+        margin: format!("0px 0px {} 0px", var!(space-sm));
         color: "inherit";
         font-size: var!(font-base);
     }
 
-    pub(crate) c_tag_demo_label {
-        font-weight: "600";
-        font-size: var!(font-base);
-        margin: "0px";
-        color: "inherit";
-    }
 
     pub(crate) c_tag_demo_heading {
         font-weight: "600";
         font-size: var!(font-base);
-        margin: format!("0px 0px {} 0px", var!(space-xs));
+        margin: format!("0px 0px {} 0px", var!(space-sm));
         color: "inherit";
     }
 
     pub(crate) c_tag_demo_muted {
         font-size: var!(font-sm);
         color: var!(foreground);
-        margin: "0px";
+        margin: format!("0px 0px {} 0px", var!(space-sm));
     }
 
     pub(crate) c_tag_demo_highlight {
-        background: var!(accent-subtle);
+        background: var!(background);
         color: var!(accent);
         padding: format!("0px {}", var!(space-xs));
     }
@@ -3995,7 +3237,7 @@ class! {
 
     pub(crate) c_tag_demo_code {
         font-family: "monospace";
-        background: var!(bg-loading);
+        background: var!(background);
         color: var!(accent);
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
         font-size: var!(font-sm);
@@ -4003,11 +3245,11 @@ class! {
 
     pub(crate) c_tag_demo_kbd {
         font-family: "monospace";
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         padding: format!("0px {}", var!(space-xs));
         font-size: var!(font-sm);
-        box-shadow: format!("0 1px 0 {}", var!(border-loading));
+        box-shadow: format!("0 1px 0 {}", var!(border));
     }
 
     pub(crate) c_tag_nav_link {
@@ -4021,14 +3263,14 @@ class! {
 
     pub(crate) c_tag_hr {
         border: "none";
-        border-top: format!("1px solid {}", var!(border-loading));
+        border-top: format!("1px solid {}", var!(border));
         margin: format!("{} 0px", var!(space-sm));
     }
 
     pub(crate) c_tag_demo_pre {
         font-family: "monospace";
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-md);
         font-size: var!(font-sm);
         white-space: "pre-wrap";
@@ -4040,15 +3282,15 @@ class! {
         border-left: format!("4px solid {}", var!(accent));
         margin: "0px";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-loading);
+        background: var!(background);
         color: "inherit";
         font-style: "italic";
         box-sizing: "border-box";
     }
 
     pub(crate) c_tag_figure_placeholder {
-        background: var!(bg-loading);
-        border: format!("1px dashed {}", var!(border-loading));
+        background: var!(background);
+        border: format!("1px dashed {}", var!(border));
         padding: format!("{} {}", var!(space-xl), var!(space-md));
         text-align: "center";
         color: var!(foreground);
@@ -4148,8 +3390,8 @@ class! {
     pub(crate) c_tag_demo_th {
         text-align: "left";
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(bg-loading);
-        border: format!("1px solid {}", var!(border-loading));
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
         font-weight: "600";
         color: "inherit";
         font-size: var!(font-sm);
@@ -4157,7 +3399,7 @@ class! {
 
     pub(crate) c_tag_demo_td {
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border: format!("1px solid {}", var!(border-loading));
+        border: format!("1px solid {}", var!(border));
         color: "inherit";
         font-size: var!(font-sm);
     }
@@ -4169,29 +3411,29 @@ class! {
     pub(crate) c_tag_demo_iframe {
         width: "100%";
         height: "120px";
-        border: format!("1px solid {}", var!(border-loading));
+        border: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_tag_demo_embed {
         width: "100%";
         height: "120px";
-        border: format!("1px solid {}", var!(border-loading));
+        border: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_tag_demo_canvas {
-        border: format!("1px solid {}", var!(border-loading));
-        background: var!(bg-loading);
+        border: format!("1px solid {}", var!(border));
+        background: var!(background);
     }
 
     pub(crate) c_tag_demo_svg {
-        border: format!("1px solid {}", var!(border-loading));
-        background: var!(bg-loading);
+        border: format!("1px solid {}", var!(border));
+        background: var!(background);
     }
 
     pub(crate) c_tag_demo_video {
         width: "100%";
         max-width: "100%";
-        background: var!(bg-loading);
+        background: var!(background);
     }
 
     pub(crate) c_tag_demo_audio {
@@ -4213,34 +3455,32 @@ class! {
         gap: var!(gap-component);
     }
 
-    pub(crate) c_tag_form_row {
-        margin: format!("{} 0px", var!(gap-element));
-    }
 
     pub(crate) c_tag_demo_input {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        background: var!(bg-input);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border-input));
+        background: var!(background);
+        color: var!(foreground);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "40px";
         box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
         ::-webkit-slider-runnable-track {
             height: "4px";
-            background: var!(border-input);
+            background: var!(border);
             border: "none";
             border-radius: "2px";
         }
@@ -4256,7 +3496,7 @@ class! {
         }
         ::-moz-range-track {
             height: "4px";
-            background: var!(border-input);
+            background: var!(border);
             border: "none";
             border-radius: "2px";
         }
@@ -4270,56 +3510,112 @@ class! {
         }
     }
 
+    pub(crate) c_tag_demo_input_range {
+        width: "100%";
+        height: "24px";
+        padding: "0px";
+        background: "transparent";
+        border: "none";
+        outline: "none";
+        -webkit-appearance: "none";
+        appearance: "none";
+        cursor: "pointer";
+        ::-webkit-slider-runnable-track {
+            height: "6px";
+            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-webkit-slider-thumb {
+            width: "20px";
+            height: "20px";
+            background: var!(background);
+            border: format!("2px solid {}", var!(accent));
+            border-radius: "50%";
+            cursor: "pointer";
+            -webkit-appearance: "none";
+            margin-top: "-7px";
+            box-shadow: var!(shadow-sm);
+            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        }
+        : active::-webkit-slider-thumb {
+            transform: "scale(0.92)";
+            box-shadow: format!("0 0 0 4px {}", var!(accent));
+        }
+        ::-moz-range-track {
+            height: "6px";
+            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
+            border-radius: "3px";
+            border: "none";
+        }
+        ::-moz-range-thumb {
+            width: "20px";
+            height: "20px";
+            background: var!(background);
+            border: format!("2px solid {}", var!(accent));
+            border-radius: "50%";
+            cursor: "pointer";
+            box-shadow: var!(shadow-sm);
+            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
+        }
+        : active::-moz-range-thumb {
+            transform: "scale(0.92)";
+            box-shadow: format!("0 0 0 4px {}", var!(accent));
+        }
+    }
+
     pub(crate) c_tag_demo_input_color {
         width: "40px";
         height: "32px";
         padding: "2px";
-        border: format!("1px solid {}", var!(border-input));
+        border: format!("1px solid {}", var!(border));
         cursor: "pointer";
         background: "transparent";
     }
 
     pub(crate) c_tag_demo_textarea {
         width: "100%";
+        min-height: "80px";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-input);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border-input));
+        background: var!(background);
+        color: var!(foreground);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
         resize: "vertical";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
 
     pub(crate) c_tag_demo_select {
         width: "100%";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(bg-input);
-        color: var!(text-primary);
-        border: format!("1px solid {}", var!(border-input));
+        height: "42px";
+        padding: format!("0px {}", var!(space-lg));
+        background: var!(background);
+        color: var!(foreground);
+        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
-            border-color: var!(accent-border);
+            border-color: var!(accent);
             background: var!(accent-muted);
         }
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -4328,12 +3624,12 @@ class! {
         width: "200px";
         height: "8px";
         vertical-align: "middle";
-        background: var!(bg-input);
+        background: var!(background);
         border: "none";
         border-radius: "4px";
         overflow: "hidden";
         ::-webkit-progress-bar {
-            background: var!(bg-input);
+            background: var!(background);
         }
         ::-webkit-progress-value {
             background: var!(accent);
@@ -4347,12 +3643,12 @@ class! {
         width: "200px";
         height: "8px";
         vertical-align: "middle";
-        background: var!(bg-input);
+        background: var!(background);
         border: "none";
         border-radius: "4px";
         overflow: "hidden";
         ::-webkit-meter-bar {
-            background: var!(bg-input);
+            background: var!(background);
             border: "none";
             border-radius: "4px";
         }
@@ -4371,7 +3667,7 @@ class! {
     }
 
     pub(crate) c_tag_demo_fieldset {
-        border: format!("1px solid {}", var!(border-loading));
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-md);
         margin: "0px";
     }
@@ -4392,9 +3688,9 @@ class! {
     }
 
     pub(crate) c_tag_demo_details {
-        border: format!("1px solid {}", var!(border-loading));
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-md);
-        background: var!(bg-loading);
+        background: var!(background);
     }
 
     pub(crate) c_tag_demo_summary {
@@ -4406,9 +3702,9 @@ class! {
     }
 
     pub(crate) c_tag_demo_dialog {
-        border: format!("1px solid {}", var!(border-loading));
+        border: format!("1px solid {}", var!(border));
         padding: var!(space-md);
-        background: var!(bg-loading);
+        background: var!(background);
         color: "inherit";
     }
 
@@ -4416,330 +3712,6 @@ class! {
     // Sticky & CSS Effects Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_sticky_controls {
-        display: "flex";
-        gap: var!(space-md);
-        margin-bottom: var!(gap-component);
-        flex-wrap: "wrap";
-    }
-
-    pub(crate) c_sticky_scroll_area {
-        border: format!("1px solid {}", var!(border-loading));
-        height: "300px";
-        overflow-y: "auto";
-        padding: var!(space-lg);
-        background: var!(bg-loading);
-        margin-top: var!(gap-component);
-    }
-
-    pub(crate) c_sticky_header {
-        position: "sticky";
-        top: "0px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(accent);
-        color: var!(text-on-accent);
-        font-weight: "700";
-        font-size: var!(font-lg);
-        text-align: "center";
-        margin-bottom: var!(gap-component);
-        z-index: "10";
-    }
-
-    pub(crate) c_sticky_header_relative {
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(accent-disabled);
-        color: var!(text-on-accent);
-        font-weight: "700";
-        font-size: var!(font-lg);
-        text-align: "center";
-        margin-bottom: var!(gap-component);
-        opacity: "1";
-    }
-
-    pub(crate) c_sticky_paragraph {
-        margin: format!("0px 0px {} 0px", var!(space-md));
-        font-size: var!(font-base);
-        color: var!(text-secondary);
-    }
-
-    pub(crate) c_sticky_glass_demo {
-        position: "relative";
-        height: "320px";
-        overflow: "hidden";
-        background: var!(muted);
-        border: format!("1px solid {}", var!(border));
-        padding: var!(space-xl);
-        margin-top: var!(gap-component);
-    }
-
-    pub(crate) c_sticky_glass_circle {
-        position: "absolute";
-        border-radius: "50%";
-        filter: "blur(40px)";
-        opacity: "1";
-    }
-
-    pub(crate) c_sticky_glass_circle_first {
-        width: "150px";
-        height: "150px";
-        background: var!(accent);
-        top: "20px";
-        left: "30px";
-    }
-
-    pub(crate) c_sticky_glass_circle_second {
-        width: "120px";
-        height: "120px";
-        background: var!(muted-foreground);
-        top: "100px";
-        right: "50px";
-    }
-
-    pub(crate) c_sticky_glass_circle_third {
-        width: "100px";
-        height: "100px";
-        background: var!(border);
-        bottom: "30px";
-        left: "50%";
-    }
-
-    pub(crate) c_sticky_glass_card {
-        position: "relative";
-        background: var!(card);
-        border: format!("1px solid {}", var!(border));
-        padding: var!(space-xl);
-        z-index: "2";
-    }
-
-    pub(crate) c_sticky_glass_card_no_blur {
-        position: "relative";
-        background: var!(card);
-        border: format!("1px solid {}", var!(border));
-        padding: var!(space-xl);
-        z-index: "2";
-    }
-
-    pub(crate) c_sticky_glass_title {
-        margin: format!("0px 0px {} 0px", var!(space-sm));
-        font-size: var!(font-xl);
-        font-weight: "700";
-        color: var!(foreground);
-    }
-
-    pub(crate) c_sticky_glass_text {
-        margin: "0px";
-        font-size: var!(font-base);
-        color: var!(muted-foreground);
-    }
-
-    pub(crate) c_sticky_slider_row {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(space-sm);
-        margin-bottom: var!(gap-component);
-    }
-
-    pub(crate) c_sticky_slider_label {
-        font-size: var!(font-sm);
-        font-weight: "600";
-        color: var!(text-secondary);
-    }
-
-    pub(crate) c_sticky_slider {
-        width: "100%";
-        height: "6px";
-        -webkit-appearance: "none";
-        appearance: "none";
-        background: var!(bg-progress);
-        outline: "none";
-        cursor: "pointer";
-    }
-
-    pub(crate) c_sticky_blur_demo {
-        position: "relative";
-        height: "200px";
-        overflow: "hidden";
-        margin-top: var!(gap-component);
-    }
-
-    pub(crate) c_sticky_blur_background {
-        position: "absolute";
-        inset: "0px";
-        background: var!(muted);
-        opacity: "1";
-    }
-
-    pub(crate) c_sticky_blur_overlay {
-        position: "absolute";
-        inset: "0px";
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        padding: var!(space-xl);
-        background: var!(bg-glass);
-        will-change: "backdrop-filter";
-    }
-
-    pub(crate) c_sticky_blur_text {
-        font-size: var!(font-lg);
-        font-weight: "600";
-        color: var!(text-primary);
-        text-align: "center";
-    }
-
-    pub(crate) c_sticky_gradient_demo {
-        display: "flex";
-        justify-content: "center";
-        align-items: "center";
-        margin-top: var!(gap-component);
-    }
-
-    pub(crate) c_sticky_gradient_wheel {
-        width: "160px";
-        height: "160px";
-        border-radius: "50%";
-        will-change: "transform";
-        box-shadow: format!("0px 0px 0px 4px {}, 0px 4px 12px {}", var!(border-loading), var!(border-loading));
-    }
-
-    pub(crate) c_sticky_text_demo {
-        display: "flex";
-        flex-direction: "column";
-        align-items: "center";
-        gap: var!(space-lg);
-        padding: format!("{} 0px", var!(space-xl));
-    }
-
-    pub(crate) c_sticky_text_glow {
-        font-size: var!(font-3xl);
-        font-weight: "800";
-        color: var!(accent);
-        text-shadow: format!("0px 0px 10px {}, 0px 0px 20px {}, 0px 0px 40px {}", var!(accent), var!(accent), var!(accent));
-        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_text_neon {
-        font-size: var!(font-3xl);
-        font-weight: "800";
-        color: var!(color-success);
-        text-shadow: format!("0px 0px 7px {}, 0px 0px 10px {}, 0px 0px 21px {}, 0px 0px 42px {}", var!(color-success), var!(color-success), var!(color-success), var!(color-success));
-        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_text_emboss {
-        font-size: var!(font-3xl);
-        font-weight: "800";
-        color: var!(text-secondary);
-        text-shadow: format!("1px 1px 1px {}, -1px -1px 1px {}", var!(bg-primary), var!(border-loading));
-        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_text_plain {
-        font-size: var!(font-3xl);
-        font-weight: "800";
-        color: var!(text-secondary);
-        transition: format!("text-shadow {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_clip_demo {
-        display: "flex";
-        justify-content: "center";
-        gap: var!(space-xl);
-        flex-wrap: "wrap";
-        padding: format!("{} 0px", var!(space-xl));
-    }
-
-    pub(crate) c_sticky_clip_hexagon {
-        width: "80px";
-        height: "80px";
-        background: var!(accent);
-        color: var!(text-on-accent);
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        font-weight: "700";
-        font-size: var!(font-sm);
-        clip-path: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
-        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_clip_diamond {
-        width: "80px";
-        height: "80px";
-        background: var!(color-success);
-        color: var!(text-on-accent);
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        font-weight: "700";
-        font-size: var!(font-sm);
-        clip-path: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
-        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_clip_star {
-        width: "80px";
-        height: "80px";
-        background: var!(color-warning);
-        color: var!(text-on-accent);
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        font-weight: "700";
-        font-size: var!(font-sm);
-        clip-path: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)";
-        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_clip_message {
-        width: "80px";
-        height: "80px";
-        background: var!(color-error);
-        color: var!(text-on-accent);
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        font-weight: "700";
-        font-size: var!(font-sm);
-        clip-path: "polygon(0% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 100%, 50% 75%, 0% 75%)";
-        transition: format!("clip-path {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_sticky_clip_square {
-        width: "80px";
-        height: "80px";
-        background: var!(bg-loading);
-        color: var!(text-secondary);
-        display: "flex";
-        align-items: "center";
-        justify-content: "center";
-        font-weight: "700";
-        font-size: var!(font-sm);
-        border: format!("1px solid {}", var!(border-loading));
-    }
-
-    pub(crate) c_sticky_scroll_shadow {
-        height: "200px";
-        overflow-y: "auto";
-        border: format!("1px solid {}", var!(border-loading));
-        padding: var!(space-lg);
-        background: var!(bg-loading);
-        margin-top: var!(gap-component);
-        background-image: format!("linear-gradient({} 30%, transparent), linear-gradient(transparent, {} 70%), radial-gradient(farthest-side at 50% 0, {}, transparent), radial-gradient(farthest-side at 50% 100%, {}, transparent)", var!(bg-card), var!(bg-card), var!(border-loading), var!(border-loading));
-        background-position: "0px 0px, 0px 100%, 0px 0px, 0px 100%";
-        background-repeat: "no-repeat";
-        background-size: "100% 40px, 100% 40px, 100% 14px, 100% 14px";
-        background-attachment: "local, local, scroll, scroll";
-    }
-
-    pub(crate) c_sticky_scroll_no_shadow {
-        height: "200px";
-        overflow-y: "auto";
-        border: format!("1px solid {}", var!(border-loading));
-        padding: var!(space-lg);
-        background: var!(bg-loading);
-        margin-top: var!(gap-component);
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Home Page — Hero Section
@@ -4748,18 +3720,13 @@ class! {
     pub(crate) c_home_hero {
         position: "relative";
         text-align: "center";
-        padding: format!("{} {} {} {}", var!(space-4xl), var!(space-xl), var!(space-4xl), var!(space-xl));
         margin-bottom: var!(space-xl);
-        background: var!(bg-card);
-        border: format!("1px solid {}", var!(border-card));
-        overflow: "hidden";
+        background: var!(background);
         flex: "1";
         display: "flex";
         flex-direction: "column";
         justify-content: "center";
-        min-height: "320px";
         @media ((max-width: 767px)) {
-            padding: format!("{} {} {} {}", var!(space-2xl), var!(space-lg), var!(space-2xl), var!(space-lg));
             margin-bottom: var!(space-lg);
             flex: "0 0 auto";
             min-height: "auto";
@@ -4796,12 +3763,12 @@ class! {
         justify-content: "center";
         align-items: "center";
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        background: var!(accent-subtle);
+        background: var!(background);
         color: var!(accent);
         font-size: var!(font-xs);
         font-weight: "600";
         letter-spacing: "0.05em";
-        border: format!("1px solid {}", var!(accent-border));
+        border: format!("1px solid {}", var!(accent));
     }
 
     pub(crate) c_home_hero_title {
@@ -4818,7 +3785,7 @@ class! {
 
     pub(crate) c_home_hero_subtitle {
         font-size: var!(font-lg);
-        color: var!(text-secondary);
+        color: var!(foreground);
         margin: "0px auto";
         max-width: "520px";
         margin-bottom: var!(space-lg);
@@ -4841,7 +3808,7 @@ class! {
         gap: var!(space-sm);
         padding: format!("{} {}", var!(space-sm), var!(space-2xl));
         background: var!(accent);
-        color: var!(primary-foreground);
+        color: var!(text-on-accent);
         font-size: var!(font-base);
         font-weight: "600";
         text-decoration: "none";
@@ -4850,14 +3817,14 @@ class! {
         box-shadow: var!(shadow-sm);
         letter-spacing: "0.01em";
         vertical-align: "middle";
-        min-height: "36px";
+        min-height: var!(min-height-sm);
         :focus-visible {
             outline: "none";
             box-shadow: format!("0 0 0 3px {}", var!(ring));
         }
         :active {
             background: var!(accent);
-            color: var!(primary-foreground);
+            color: var!(text-on-accent);
             border-color: "1.5px solid transparent";
         }
     }
@@ -4873,19 +3840,19 @@ class! {
         font-size: var!(font-base);
         font-weight: "600";
         text-decoration: "none";
-        border: format!("1.5px solid {}", var!(accent-border));
+        border: format!("1.5px solid {}", var!(accent));
         cursor: "pointer";
         letter-spacing: "0.01em";
         vertical-align: "middle";
-        min-height: "36px";
+        min-height: var!(min-height-sm);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent-border));
+            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         :active {
             background: "transparent";
             color: var!(accent);
-            border-color: var!(accent-border);
+            border-color: var!(accent);
         }
     }
 
@@ -4898,7 +3865,6 @@ class! {
         grid-template-columns: "repeat(4, 1fr)";
         gap: var!(space-md);
         margin-bottom: var!(space-xl);
-        min-width: "0px";
         @media ((max-width: 767px)) {
             grid-template-columns: "repeat(2, 1fr)";
             gap: var!(space-sm);
@@ -4909,12 +3875,9 @@ class! {
         display: "flex";
         flex-direction: "column";
         align-items: "center";
+        justify-content: "center";
         gap: var!(space-xs);
-        padding: format!("{} {}", var!(space-lg), var!(space-md));
-        background: var!(bg-card);
-        border: format!("1px solid {}", var!(border-card));
-        min-width: "0px";
-        overflow: "hidden";
+        background: var!(background);
     }
 
     pub(crate) c_home_stat_icon {
@@ -4930,7 +3893,7 @@ class! {
 
     pub(crate) c_home_stat_label {
         font-size: var!(font-sm);
-        color: var!(text-muted);
+        color: var!(muted-foreground);
         font-weight: "500";
     }
 
@@ -4938,14 +3901,12 @@ class! {
     // Home Page — Section & Feature Cards
     // ═══════════════════════════════════════════════════════════════════════════
 
-    pub(crate) c_home_section {
-        margin-bottom: var!(space-xl);
-    }
+    pub(crate) c_home_section {}
 
     pub(crate) c_home_section_title {
         font-size: var!(font-2xl);
         font-weight: "700";
-        color: var!(text-primary);
+        color: var!(foreground);
         margin: "0px";
         margin-bottom: var!(gap-component);
         letter-spacing: "-0.02em";
@@ -4953,16 +3914,15 @@ class! {
 
     pub(crate) c_home_section_desc {
         font-size: var!(font-base);
-        color: var!(text-secondary);
+        color: var!(foreground);
         margin: "0px";
-        margin-bottom: var!(space-lg);
+        margin-bottom: var!(space-2xl);
     }
 
     pub(crate) c_home_feature_grid {
         display: "grid";
         grid-template-columns: "repeat(2, 1fr)";
         gap: var!(space-md);
-        min-width: "0px";
         @media ((max-width: 767px)) {
             grid-template-columns: "1fr";
         }
@@ -4973,7 +3933,6 @@ class! {
         flex-direction: "column";
         gap: var!(space-sm);
         padding: "0px";
-        min-width: "0px";
         overflow: "hidden";
     }
 
@@ -4995,7 +3954,7 @@ class! {
     pub(crate) c_feature_name {
         font-size: var!(font-lg);
         font-weight: "600";
-        color: var!(text-primary);
+        color: var!(foreground);
         margin: "0px";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -5004,47 +3963,11 @@ class! {
 
     pub(crate) c_feature_desc {
         font-size: var!(font-sm);
-        color: var!(text-secondary);
+        color: var!(foreground);
         margin: "0px";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Global Utilities
     // ═══════════════════════════════════════════════════════════════════════════
-
-    pub(crate) c_text_gradient {
-        color: var!(foreground);
-        font-weight: "600";
-    }
-
-    pub(crate) c_glass {
-        background: var!(bg-glass);
-        backdrop-filter: var!(glass-blur-md);
-        -webkit-backdrop-filter: var!(glass-blur-md);
-        border: format!("1px solid {}", var!(border));
-    }
-
-    pub(crate) c_glass_heavy {
-        background: var!(bg-glass-heavy);
-        backdrop-filter: var!(glass-blur-lg);
-        -webkit-backdrop-filter: var!(glass-blur-lg);
-        border: format!("1px solid {}", var!(border));
-    }
-
-    pub(crate) c_focus_ring {
-        outline: "none";
-        box-shadow: format!("0 0 0 3px {}", var!(accent-border));
-    }
-
-    pub(crate) c_animate_fade_in {
-        animation: format!("euv-fade-in {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_animate_slide_up {
-        animation: format!("euv-slide-up-enter {} {}", var!(duration-normal), var!(ease-out));
-    }
-
-    pub(crate) c_animate_scale_in {
-        animation: format!("euv-scale-in-modal {} {}", var!(duration-slower), var!(ease-bounce));
-    }
 }

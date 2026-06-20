@@ -150,5 +150,11 @@ pub(crate) const CHAR_LETTER_R: char = 'r';
 /// The letter `s`, used in keyword detection.
 pub(crate) const CHAR_LETTER_S: char = 's';
 
+/// The comma character.
+pub(crate) const CHAR_COMMA: char = ',';
+
+/// The semicolon character.
+pub(crate) const CHAR_SEMICOLON: char = ';';
+
 /// The letter `t`, used in keyword detection.
 pub(crate) const CHAR_LETTER_T: char = 't';

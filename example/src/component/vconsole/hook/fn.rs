@@ -126,7 +126,10 @@ pub(crate) fn get_log_level_badge(level: LogLevel) -> String {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that opens the panel.
 pub(crate) fn vconsole_fab_on_click(panel_open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        overlay_push_state();
+        let closer: Rc<dyn Fn()> = Rc::new(move || {
+            panel_open.set(false);
+        });
+        overlay_stack_push(closer);
         panel_open.set(true);
     }))
 }

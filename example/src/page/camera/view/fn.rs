@@ -38,7 +38,11 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                     class: c_camera_video_container()
                     video {
                         id: CAMERA_VIDEO_ID
-                        class: if { state.get_camera_open().get() } { c_camera_video_active() } else { c_camera_video_hidden() }
+                        class: if { state.get_camera_open().get() } {
+                            c_camera_video_active()
+                        } else {
+                            c_camera_video_hidden()
+                        }
                         autoplay: CAMERA_VIDEO_AUTOPLAY
                         playsinline: CAMERA_VIDEO_PLAYSINLINE
                     }
@@ -92,7 +96,11 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Switch"
                             onclick: camera_on_switch(state)
-                            if { matches!(state.get_facing().get(), CameraFacing::User) } { CAMERA_SWITCH_TO_REAR_LABEL } else { CAMERA_SWITCH_TO_FRONT_LABEL }
+                            if { matches!(state.get_facing().get(), CameraFacing::User) } {
+                                CAMERA_SWITCH_TO_REAR_LABEL
+                            } else {
+                                CAMERA_SWITCH_TO_FRONT_LABEL
+                            }
                         }
                     } else if { state.get_camera_loading().get() } {
                         euv_button {

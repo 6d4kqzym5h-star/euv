@@ -49,7 +49,11 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                         class: c_nav_theme_button()
                         onclick: toggle_theme(theme_signal)
                         div {
-                            class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
+                            class: if { theme_signal.get() == THEME_DARK } {
+                                c_theme_icon_sun()
+                            } else {
+                                c_theme_icon_moon()
+                            }
                         }
                     }
                 }
@@ -104,11 +108,11 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
         drawer_open,
     }: MobileLayoutProps = node.try_get_props().unwrap_or_default();
     let on_overlay_click = move |_: Event| {
-        overlay_back(None);
+        overlay_stack_close();
         drawer_open.set(false);
     };
     let on_drawer_close_click = move |_: Event| {
-        overlay_back(None);
+        overlay_stack_close();
         drawer_open.set(false);
     };
     html! {
@@ -116,32 +120,40 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
             class: root_class_signal
             header {
                 class: c_mobile_header()
-                    div {
-                        class: c_mobile_header_left()
-                        button {
-                            class: if { drawer_open.get() } { c_mobile_menu_button_active() } else { c_mobile_menu_button() }
-                            onclick: use_drawer_toggle(drawer_open)
-                            "☰"
+                div {
+                    class: c_mobile_header_left()
+                    button {
+                        class: if { drawer_open.get() } {
+                            c_mobile_menu_button_active()
+                        } else {
+                            c_mobile_menu_button()
                         }
-                        a {
-                            href: GITHUB_URL
-                            target: "_blank"
-                            onclick: external_link_handler(GITHUB_URL.to_string())
-                            class: c_mobile_header_logo()
-                            euv_logo {
-                                variant: LogoButtonVariant::Nav
-                            }
-                            span {
-                                class: c_nav_brand_title()
-                                BRAND_NAME
-                            }
+                        onclick: use_drawer_toggle(drawer_open)
+                        "☰"
+                    }
+                    a {
+                        href: GITHUB_URL
+                        target: "_blank"
+                        onclick: external_link_handler(GITHUB_URL.to_string())
+                        class: c_mobile_header_logo()
+                        euv_logo {
+                            variant: LogoButtonVariant::Nav
+                        }
+                        span {
+                            class: c_nav_brand_title()
+                            BRAND_NAME
                         }
                     }
+                }
                 button {
                     class: c_mobile_theme_button()
                     onclick: toggle_theme(theme_signal)
                     div {
-                        class: if { theme_signal.get() == THEME_DARK } { c_theme_icon_sun() } else { c_theme_icon_moon() }
+                        class: if { theme_signal.get() == THEME_DARK } {
+                            c_theme_icon_sun()
+                        } else {
+                            c_theme_icon_moon()
+                        }
                     }
                 }
             }
@@ -155,11 +167,19 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 panel_open
             }
             div {
-                class: if { drawer_open.get() } { c_mobile_overlay().to_string() } else { format!("{} {}", c_mobile_overlay().get_name(), c_mobile_overlay_hidden().get_name()) }
+                class: if { drawer_open.get() } {
+                    c_mobile_overlay().to_string()
+                } else {
+                    format!("{} {}", c_mobile_overlay().get_name(), c_mobile_overlay_hidden().get_name())
+                }
                 onclick: on_overlay_click
             }
             nav {
-                class: if { drawer_open.get() } { c_mobile_nav_drawer().to_string() } else { format!("{} {}", c_mobile_nav_drawer().get_name(), c_mobile_nav_drawer_closed().get_name()) }
+                class: if { drawer_open.get() } {
+                    c_mobile_nav_drawer().to_string()
+                } else {
+                    format!("{} {}", c_mobile_nav_drawer().get_name(), c_mobile_nav_drawer_closed().get_name())
+                }
                 div {
                     class: c_mobile_nav_drawer_header()
                     div {
@@ -235,7 +255,7 @@ pub(crate) fn app() -> VirtualNode {
     load_cache_update(use_cache_update());
     use_hash_change(route_signal);
     use_scroll_to_top(route_signal);
-    use_overlay_history(panel_open, drawer_open, mobile_signal);
+    use_overlay_history(drawer_open, mobile_signal);
     use_scroll_drawer_to_active(drawer_open);
     use_safe_area_fix();
     html! {

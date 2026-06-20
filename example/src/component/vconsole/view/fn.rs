@@ -102,14 +102,14 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
     }: VconsoleDrawerProps = node.try_get_props().unwrap_or_default();
     let filter_signal: Signal<LogFilter> = use_signal(|| LogFilter::All);
     let on_overlay_click = move |_: Event| {
-        overlay_back(None);
+        overlay_stack_close();
         panel_open.set(false);
     };
     let on_clear_click = move |_: Event| {
         Console::clear();
     };
     let on_close_click = move |_: Event| {
-        overlay_back(None);
+        overlay_stack_close();
         panel_open.set(false);
     };
     html! {

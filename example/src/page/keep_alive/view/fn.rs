@@ -152,7 +152,9 @@ fn form_tab() -> VirtualNode {
                     }
                     p {
                         class: c_keep_alive_demo_text()
-                        { format!("Name: {} | Email: {} | Message: {}", name.get(), email.get(), message.get()) }
+                        {
+                            format!("Name: {} | Email: {} | Message: {}", name.get(), email.get(), message.get())
+                        }
                     }
                 }
             }
@@ -206,7 +208,9 @@ fn timer_tab() -> VirtualNode {
                 class: c_keep_alive_counter_display()
                 span {
                     class: c_keep_alive_counter_value()
-                    { format_time(elapsed.get()) }
+                    {
+                        format_time(elapsed.get())
+                    }
                 }
             }
             div {
@@ -381,32 +385,68 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                 div {
                     class: c_keep_alive_tab_bar()
                     div {
-                        class: if { tab.get() == "counter" } { c_tab_item_active() } else { c_tab_item_inactive() }
+                        class: if { tab.get() == "counter" } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
                         onclick: keep_alive_tab_on_select(tab, "counter")
                         "Counter"
                     }
                     div {
-                        class: if { tab.get() == "form" } { c_tab_item_active() } else { c_tab_item_inactive() }
+                        class: if { tab.get() == "form" } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
                         onclick: keep_alive_tab_on_select(tab, "form")
                         "Form"
                     }
                     div {
-                        class: if { tab.get() == "timer" } { c_tab_item_active() } else { c_tab_item_inactive() }
+                        class: if { tab.get() == "timer" } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
                         onclick: keep_alive_tab_on_select(tab, "timer")
                         "Timer"
                     }
                 }
                 div {
-                    style: { display: if { tab.get() == "counter" } { "block".to_string() } else { "none".to_string() }; }
-                    { counter_tab() }
+                    style: {
+                        display: if { tab.get() == "counter" } {
+                            "block".to_string()
+                        } else {
+                            "none".to_string()
+                        };
+                    }
+                    {
+                        counter_tab()
+                    }
                 }
                 div {
-                    style: { display: if { tab.get() == "form" } { "block".to_string() } else { "none".to_string() }; }
-                    { form_tab() }
+                    style: {
+                        display: if { tab.get() == "form" } {
+                            "block".to_string()
+                        } else {
+                            "none".to_string()
+                        };
+                    }
+                    {
+                        form_tab()
+                    }
                 }
                 div {
-                    style: { display: if { tab.get() == "timer" } { "block".to_string() } else { "none".to_string() }; }
-                    { timer_tab() }
+                    style: {
+                        display: if { tab.get() == "timer" } {
+                            "block".to_string()
+                        } else {
+                            "none".to_string()
+                        };
+                    }
+                    {
+                        timer_tab()
+                    }
                 }
             }
             euv_card {

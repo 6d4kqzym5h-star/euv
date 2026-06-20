@@ -32,25 +32,41 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                 div {
                     class: c_dynamic_component_tab_bar()
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_DIV } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { tag_name_opt.get() == TAG_NAME_DIV } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: TAG_OPTION_DIV_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_DIV)
                         TAG_OPTION_DIV_LABEL
                     }
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_SPAN } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { tag_name_opt.get() == TAG_NAME_SPAN } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: TAG_OPTION_SPAN_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_SPAN)
                         TAG_OPTION_SPAN_LABEL
                     }
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_EUV_CARD } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { tag_name_opt.get() == TAG_NAME_EUV_CARD } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: TAG_OPTION_EUV_CARD_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_EUV_CARD)
                         TAG_OPTION_EUV_CARD_LABEL
                     }
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_BADGE } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { tag_name_opt.get() == TAG_NAME_BADGE } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: TAG_OPTION_BADGE_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_BADGE)
                         TAG_OPTION_BADGE_LABEL
@@ -82,14 +98,18 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                 title: "Result"
                 p {
                     class: c_demo_text_muted()
-                    { format!("Current tag: {}", tag_name_opt.get()) }
+                    format!("Current tag: {}", tag_name_opt.get())
                 }
                 div {
                     class: c_dynamic_component_panel()
-                    { tag_name_opt.get() } {
+                    {
+                        tag_name_opt.get()
+                    } {
                         title: "Dynamic euv_card"
                         onclick: badge_on_click("Dynamic Badge", LogLevel::Log)
-                        { content.get() }
+                        {
+                            content.get()
+                        }
                     }
                 }
             }

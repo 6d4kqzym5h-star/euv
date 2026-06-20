@@ -753,6 +753,22 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
         .and_then(|value: JsValue| value.as_string())
         .and_then(|string: String| string.parse::<f64>().ok())
         .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH);
+        if let Some(target) = event.target()
+            && let Ok(input) = target.dyn_into::<HtmlInputElement>()
+        {
+            let min = input.min().parse::<f64>().unwrap_or(1.0);
+            let max = input.max().parse::<f64>().unwrap_or(30.0);
+            let range = max - min;
+            let percent = if range > 0.0 {
+                ((new_width - min) / range * 100.0).clamp(0.0, 100.0)
+            } else {
+                0.0
+            };
+            input
+                .style()
+                .set_property("--value", &format!("{}%", percent))
+                .unwrap_or(());
+        }
         pending_value.set(new_width);
         if raf_id.get().is_some() {
             return;

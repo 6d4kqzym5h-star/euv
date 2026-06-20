@@ -28,7 +28,11 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                         autocomplete: LIST_AUTOCOMPLETE_OFF
                         placeholder: LIST_NEW_ITEM_PLACEHOLDER
                         value: state.get_new_item()
-                        class: if { state.get_add_error().get().is_empty() } { c_list_input() } else { c_list_input_error() }
+                        class: if { state.get_add_error().get().is_empty() } {
+                            c_list_input()
+                        } else {
+                            c_list_input_error()
+                        }
                         oninput: todo_list_on_input_new_item(state)
                     }
                     div {
@@ -53,7 +57,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                     for (index, item) in { state.get_items().get().iter().enumerate() } {
                         li {
                             key: index.to_string()
-                            class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
+                            class: c_list_item()
                             data_index: index.to_string()
                             span {
                                 class: c_list_item_text()

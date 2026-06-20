@@ -48,31 +48,26 @@ pub(crate) fn use_hash_change(route_signal: Signal<String>) {
     });
 }
 
-/// Manages browser history for overlay panels (vconsole, drawer) so that
-/// the back button closes the topmost overlay instead of navigating away.
+/// Manages browser history for all overlays (modals, panels, drawers) so that
+/// the back button closes the most recently opened overlay instead of navigating away.
 ///
-/// Pushes a `pushState` entry when the drawer opens on mobile and
-/// consumes that entry via `history.back()` when the overlay closes.
-/// A `popstate` listener dispatches the back event to the correct
-/// overlay signal.
+/// Uses a unified `OVERLAY_STACK` that records every overlay in the order it was opened.
+/// A `popstate` listener pops the topmost entry and invokes its close callback, so
+/// overlays close in reverse opening order regardless of type.
 ///
 /// # Arguments
 ///
-/// - `Signal<bool>` - The reactive signal controlling vconsole panel visibility.
 /// - `Signal<bool>` - The reactive signal controlling the nav drawer visibility.
 /// - `Signal<bool>` - The reactive signal tracking whether the viewport is mobile-sized.
-pub(crate) fn use_overlay_history(
-    panel_open: Signal<bool>,
-    drawer_open: Signal<bool>,
-    mobile_signal: Signal<bool>,
-) {
+pub(crate) fn use_overlay_history(drawer_open: Signal<bool>, mobile_signal: Signal<bool>) {
     let was_drawer_open: Signal<bool> = use_signal(|| false);
     watch!(drawer_open, |is_open: bool| {
         let previous: bool = was_drawer_open.get();
         if is_open && !previous && mobile_signal.get() {
-            let window: Window = window().expect("no global window exists");
-            let history: History = window.history().expect("no history object exists");
-            let _ = history.push_state(&JsValue::NULL, "");
+            let closer: Rc<dyn Fn()> = Rc::new(move || {
+                drawer_open.set(false);
+            });
+            overlay_stack_push(closer);
         }
         was_drawer_open.set(is_open);
     });
@@ -88,18 +83,10 @@ pub(crate) fn use_overlay_history(
             WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
             return;
         }
-        if let Some(closer) = modal_pop_closer() {
+        if let Some(closer) = overlay_stack_pop() {
             closer();
             WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
             return;
-        }
-        if panel_open.get() {
-            panel_open.set(false);
-            WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
-            return;
-        }
-        if drawer_open.get() {
-            drawer_open.set(false);
         }
         WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
     });
@@ -132,13 +119,71 @@ pub(crate) fn overlay_back(navigate_target: Option<String>) {
     let _ = history.back();
 }
 
+/// Pushes an overlay close callback onto the unified `OVERLAY_STACK` and
+/// pushes a browser history entry so the back button dismisses it.
+///
+/// Call this whenever any overlay (modal, panel, or drawer) opens.
+///
+/// # Arguments
+///
+/// - `Rc<dyn Fn()>` - The callback that closes the overlay (e.g., sets its visibility signal to `false`).
+pub(crate) fn overlay_stack_push(closer: Rc<dyn Fn()>) {
+    OVERLAY_STACK.with(|stack: &OverlayStack| {
+        stack.borrow_mut().push(OverlayEntry { closer });
+    });
+    overlay_push_state();
+}
+
+/// Pops the most recently opened overlay from the unified `OVERLAY_STACK` and
+/// returns its close callback, without invoking it.
+///
+/// Also synchronizes the `MODAL_STACK` by removing the matching entry if the
+/// popped overlay is a modal.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn()>>` - The topmost overlay's close callback, or `None` if no overlay is open.
+pub(crate) fn overlay_stack_pop() -> Option<Rc<dyn Fn()>> {
+    let closer: Option<Rc<dyn Fn()>> = OVERLAY_STACK.with(|stack: &OverlayStack| {
+        stack
+            .borrow_mut()
+            .pop()
+            .map(|entry: OverlayEntry| entry.closer)
+    });
+    if let Some(ref c) = closer {
+        MODAL_STACK.with(|stack: &ModalStack| {
+            let mut entries = stack.borrow_mut();
+            if let Some(index) = entries
+                .iter()
+                .rposition(|(_, closer): &ModalStackEntry| Rc::ptr_eq(closer, c))
+            {
+                entries.remove(index);
+            }
+        });
+    }
+    closer
+}
+
+/// Closes the most recently opened overlay via the UI and consumes one
+/// browser history entry.
+///
+/// Pops the top entry from `OVERLAY_STACK` and calls `overlay_back` so that
+/// the history count stays in sync. Use this when the user dismisses an overlay
+/// through a close button, overlay click, or confirm/cancel action.
+pub(crate) fn overlay_stack_close() {
+    OVERLAY_STACK.with(|stack: &OverlayStack| {
+        stack.borrow_mut().pop();
+    });
+    overlay_back(None);
+}
+
 /// Registers an open modal by pushing it onto the global modal stack and
 /// adding a browser history entry, enabling nested modals.
 ///
 /// The stack is ordered with the most recently opened modal on top. When the
 /// user triggers a system back gesture (or presses the browser back button),
-/// the `popstate` handler in `use_overlay_history` pops the topmost entry and
-/// invokes its close callback, so the most recently opened modal is dismissed
+/// the `popstate` handler pops the topmost entry from `OVERLAY_STACK` and
+/// invokes its close callback, so the most recently opened overlay is dismissed
 /// first instead of navigating to the previous page.
 ///
 /// If the given visibility signal is already on the stack, this is a no-op so
@@ -168,28 +213,8 @@ pub(crate) fn modal_push(visible: Signal<bool>, closer: Rc<dyn Fn()>) {
     if already_open {
         return;
     }
-    MODAL_STACK.with(|stack: &ModalStack| stack.borrow_mut().push((visible, closer)));
-    overlay_push_state();
-}
-
-/// Pops the most recently opened modal from the global modal stack and returns
-/// its close callback, without invoking it.
-///
-/// Used by the `popstate` handler to obtain the closer for the topmost
-/// (most recently opened) modal so it can dismiss that modal in response to a
-/// system back gesture. This is what makes nested modals close one layer at a
-/// time, newest first.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn()>>` - The topmost modal's close callback, or `None` if no modal is open.
-pub(crate) fn modal_pop_closer() -> Option<Rc<dyn Fn()>> {
-    MODAL_STACK.with(|stack: &ModalStack| {
-        stack
-            .borrow_mut()
-            .pop()
-            .map(|(_, closer): ModalStackEntry| closer)
-    })
+    MODAL_STACK.with(|stack: &ModalStack| stack.borrow_mut().push((visible, closer.clone())));
+    overlay_stack_push(closer);
 }
 
 /// Closes a modal that was opened via [`modal_push`] when the user dismisses
@@ -199,7 +224,7 @@ pub(crate) fn modal_pop_closer() -> Option<Rc<dyn Fn()>> {
 /// Removes the entry matching the given visibility signal from the global
 /// stack (by identity, not necessarily the top, so nested modals stay
 /// consistent) and consumes one matching browser history entry via
-/// `history.back()`, keeping the history count in sync so a subsequent back
+/// `overlay_stack_close`, keeping the history count in sync so a subsequent back
 /// gesture behaves correctly.
 ///
 /// # Arguments
@@ -219,7 +244,7 @@ pub(crate) fn modal_close_via_ui(visible: Signal<bool>) {
         }
     });
     if removed {
-        overlay_back(None);
+        overlay_stack_close();
     }
 }
 
@@ -236,6 +261,9 @@ pub(crate) fn modal_close_via_ui(visible: Signal<bool>) {
 /// - `Signal<bool>` - The reactive signal controlling the mobile nav drawer visibility.
 /// - `String` - The target route path to navigate to after the drawer closes.
 pub(crate) fn close_drawer_and_navigate(drawer_open: Signal<bool>, route: String) {
+    OVERLAY_STACK.with(|stack: &OverlayStack| {
+        stack.borrow_mut().pop();
+    });
     overlay_back(Some(route));
     drawer_open.set(false);
 }

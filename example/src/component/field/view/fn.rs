@@ -46,14 +46,20 @@ pub(crate) fn euv_field(node: VirtualNode<EuvFieldProps>) -> VirtualNode {
                 placeholder: placeholder
                 value: value
                 autocomplete: autocomplete
-                class: if { has_error } { c_euv_input_error() } else { c_euv_input_no_transition() }
+                class: if { has_error } {
+                    c_euv_input_error()
+                } else {
+                    c_euv_input_no_transition()
+                }
                 oninput: handler
                 onfocus: on_focus_scroll_into_view()
             }
             if { has_error } {
                 p {
                     class: c_field_error_text()
-                    { error.as_ref().unwrap().get() }
+                    {
+                        error.as_ref().unwrap().get()
+                    }
                 }
             }
         }

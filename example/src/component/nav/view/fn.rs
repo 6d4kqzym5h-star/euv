@@ -26,7 +26,11 @@ pub(crate) fn nav_item(node: VirtualNode<NavItemProps>) -> VirtualNode {
         a {
             href: format!("#{target_string}")
             target: "_blank"
-            class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
+            class: if { is_active } {
+                c_nav_item_active()
+            } else {
+                c_nav_item_inactive()
+            }
             onclick: on_nav_click
             span {
                 class: c_nav_item_icon()
@@ -71,7 +75,11 @@ pub(crate) fn mobile_nav_item(node: VirtualNode<MobileNavItemProps>) -> VirtualN
         a {
             href: format!("#{target_string}")
             target: "_blank"
-            class: if { is_active } { c_nav_item_active() } else { c_nav_item_inactive() }
+            class: if { is_active } {
+                c_nav_item_active()
+            } else {
+                c_nav_item_inactive()
+            }
             onclick: on_mobile_nav_click
             span {
                 class: c_nav_item_icon()

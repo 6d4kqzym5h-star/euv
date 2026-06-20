@@ -63,7 +63,7 @@ pub(crate) fn use_drawer_toggle(drawer_open: Signal<bool>) -> Option<Rc<dyn Fn(E
     Some(Rc::new(move |_: Event| {
         let is_open: bool = drawer_open.get();
         if is_open {
-            overlay_back(None);
+            overlay_stack_close();
         }
         drawer_open.set(!is_open);
     }))

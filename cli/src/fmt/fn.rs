@@ -55,11 +55,53 @@ fn format_euv_macros(source: &str) -> String {
                 position += 1;
                 position = skip_whitespace_and_comments(&chars, position, len, &mut result);
                 if position < len && chars[position] == CHAR_BRACE_LEFT {
+                    if !result.ends_with(CHAR_SPACE) {
+                        result.push(CHAR_SPACE);
+                    }
                     let (body_content, end_pos) = extract_brace_content(&chars, position);
                     let formatted_body: String = format_macro_body(&body_content);
-                    result.push(CHAR_BRACE_LEFT);
-                    result.push_str(&formatted_body);
-                    result.push(CHAR_BRACE_RIGHT);
+                    if formatted_body.trim().is_empty() {
+                        result.push(CHAR_BRACE_LEFT);
+                        result.push(CHAR_BRACE_RIGHT);
+                    } else {
+                        let trimmed_body: &str = formatted_body.trim();
+                        let last_newline_pos: usize =
+                            result.rfind(CHAR_NEWLINE).map(|i| i + 1).unwrap_or(0);
+                        let macro_indent: usize = result[last_newline_pos..]
+                            .chars()
+                            .take_while(|&c| c == CHAR_SPACE)
+                            .count();
+                        let min_indent: usize = body_content
+                            .lines()
+                            .filter(|line| !line.trim().is_empty())
+                            .map(|line| line.chars().take_while(|c| c.is_whitespace()).count())
+                            .min()
+                            .unwrap_or(0);
+                        let base_indent: usize = if min_indent > 0 {
+                            min_indent
+                        } else {
+                            macro_indent + 4
+                        };
+                        let indent_str: String = " ".repeat(base_indent);
+                        let indented_body: String = trimmed_body
+                            .lines()
+                            .map(|line| {
+                                if line.trim().is_empty() {
+                                    line.to_string()
+                                } else {
+                                    format!("{}{}", indent_str, line)
+                                }
+                            })
+                            .collect::<Vec<String>>()
+                            .join("\n");
+                        let outer_indent_str: String = " ".repeat(macro_indent);
+                        result.push(CHAR_BRACE_LEFT);
+                        result.push(CHAR_NEWLINE);
+                        result.push_str(&indented_body);
+                        result.push(CHAR_NEWLINE);
+                        result.push_str(&outer_indent_str);
+                        result.push(CHAR_BRACE_RIGHT);
+                    }
                     position = end_pos;
                     continue;
                 }
@@ -419,7 +461,12 @@ fn extract_block_comment(chars: &[char], start: usize, len: usize) -> (String, u
     (result, position)
 }
 
-/// Formats the body of a euv macro invocation.
+fn format_macro_body(body: &str) -> String {
+    let raw: String = format_macro_body_raw(body);
+    add_indentation(&raw)
+}
+
+/// Formats the body of a euv macro invocation without adding indentation.
 ///
 /// Uses a single-pass scanner that tracks context to apply formatting rules:
 ///
@@ -438,7 +485,7 @@ fn extract_block_comment(chars: &[char], start: usize, len: usize) -> (String, u
 /// # Returns
 ///
 /// - `String` - The formatted macro body text.
-fn format_macro_body(body: &str) -> String {
+fn format_macro_body_raw(body: &str) -> String {
     let chars: Vec<char> = body.chars().collect();
     let len: usize = chars.len();
     let mut result: String = String::new();
@@ -664,17 +711,12 @@ fn format_macro_body(body: &str) -> String {
             if trimmed_inner.is_empty() {
                 result.push(CHAR_BRACE_LEFT);
                 result.push(CHAR_BRACE_RIGHT);
-            } else if inner.contains(CHAR_NEWLINE) {
-                let formatted_inner: String = format_macro_body(&inner);
-                result.push(CHAR_BRACE_LEFT);
-                result.push_str(&formatted_inner);
-                result.push(CHAR_BRACE_RIGHT);
             } else {
-                let formatted_inner: String = format_macro_body(trimmed_inner);
+                let formatted_inner: String = format_macro_body_raw(trimmed_inner);
                 result.push(CHAR_BRACE_LEFT);
-                result.push(CHAR_SPACE);
+                result.push(CHAR_NEWLINE);
                 result.push_str(&formatted_inner);
-                result.push(CHAR_SPACE);
+                result.push(CHAR_NEWLINE);
                 result.push(CHAR_BRACE_RIGHT);
             }
             position = end;
@@ -695,6 +737,21 @@ fn format_macro_body(body: &str) -> String {
             if position < len && chars[position] == CHAR_BRACE_LEFT {
                 result.push(CHAR_SPACE);
             } else if had_whitespace {
+                let next_pos: usize = position;
+                if next_pos < len && is_ident_char(chars[next_pos]) {
+                    let mut ident_end: usize = next_pos;
+                    while ident_end < len && is_ident_char(chars[ident_end]) {
+                        ident_end += 1;
+                    }
+                    let after_ident: usize = skip_spaces_on_same_line(&chars, ident_end, len);
+                    if after_ident < len
+                        && chars[after_ident] == CHAR_COLON
+                        && (after_ident + 1 >= len || chars[after_ident + 1] != CHAR_COLON)
+                    {
+                        result.push(CHAR_NEWLINE);
+                        continue;
+                    }
+                }
                 let ws: String = chars[ws_start..position].iter().collect();
                 result.push_str(&ws);
             }
@@ -703,6 +760,138 @@ fn format_macro_body(body: &str) -> String {
         result.push(chars[position]);
         position += 1;
     }
+    result
+}
+
+/// Adds 4-space indentation to each line based on brace depth.
+///
+/// String literals and comments are skipped so braces inside them do not affect depth.
+/// The first non-empty line receives a base indent of 4 spaces (depth 1).
+///
+/// # Arguments
+///
+/// - `&str` - The raw formatted macro body text.
+///
+/// # Returns
+///
+/// - `String` - The indented macro body text.
+fn add_indentation(body: &str) -> String {
+    let chars: Vec<char> = body.chars().collect();
+    let len: usize = chars.len();
+    let mut result: String = String::new();
+    let mut depth: i32 = 0;
+    let mut i: usize = 0;
+
+    while i < len {
+        if chars[i] == CHAR_DOUBLE_QUOTE || chars[i] == CHAR_SINGLE_QUOTE {
+            let quote: char = chars[i];
+            result.push(chars[i]);
+            i += 1;
+            while i < len {
+                if chars[i] == CHAR_SLASH_BACK && i + 1 < len {
+                    result.push(chars[i]);
+                    result.push(chars[i + 1]);
+                    i += 2;
+                    continue;
+                }
+                result.push(chars[i]);
+                if chars[i] == quote {
+                    i += 1;
+                    break;
+                }
+                i += 1;
+            }
+            continue;
+        }
+
+        if i + 1 < len && chars[i] == CHAR_SLASH_FORWARD && chars[i + 1] == CHAR_SLASH_FORWARD {
+            while i < len && chars[i] != CHAR_NEWLINE {
+                result.push(chars[i]);
+                i += 1;
+            }
+            continue;
+        }
+
+        if i + 1 < len && chars[i] == CHAR_SLASH_FORWARD && chars[i + 1] == CHAR_ASTERISK {
+            result.push(chars[i]);
+            result.push(chars[i + 1]);
+            i += 2;
+            while i + 1 < len {
+                if chars[i] == CHAR_ASTERISK && chars[i + 1] == CHAR_SLASH_FORWARD {
+                    result.push(chars[i]);
+                    result.push(chars[i + 1]);
+                    i += 2;
+                    break;
+                }
+                result.push(chars[i]);
+                i += 1;
+            }
+            continue;
+        }
+
+        if chars[i] == CHAR_NEWLINE {
+            result.push(CHAR_NEWLINE);
+            i += 1;
+            while i < len && (chars[i] == CHAR_SPACE || chars[i] == CHAR_TAB) {
+                i += 1;
+            }
+            if i >= len || chars[i] == CHAR_NEWLINE || chars[i] == CHAR_CARRIAGE_RETURN {
+                continue;
+            }
+            let mut closing_count: i32 = 0;
+            let mut j: usize = i;
+            while j < len && chars[j] == CHAR_BRACE_RIGHT {
+                closing_count += 1;
+                j += 1;
+            }
+            let indent_depth: i32 = (depth - closing_count).max(0);
+            for _ in 0..indent_depth * 4 {
+                result.push(CHAR_SPACE);
+            }
+            continue;
+        }
+
+        if chars[i] == CHAR_BRACE_LEFT {
+            depth += 1;
+            result.push(CHAR_BRACE_LEFT);
+            i += 1;
+            continue;
+        }
+
+        if chars[i] == CHAR_BRACE_RIGHT {
+            depth -= 1;
+            result.push(CHAR_BRACE_RIGHT);
+            i += 1;
+            let mut j: usize = i;
+            while j < len && (chars[j] == CHAR_SPACE || chars[j] == CHAR_TAB) {
+                j += 1;
+            }
+            if j < len
+                && chars[j] != CHAR_BRACE_RIGHT
+                && chars[j] != CHAR_BRACE_LEFT
+                && chars[j] != CHAR_NEWLINE
+                && chars[j] != CHAR_CARRIAGE_RETURN
+                && chars[j] != CHAR_RIGHT_PAREN
+                && chars[j] != CHAR_COMMA
+                && chars[j] != CHAR_SEMICOLON
+            {
+                let next_chars: String = chars[j..(j + 4).min(len)].iter().collect();
+                if next_chars != "else" {
+                    result.push(CHAR_NEWLINE);
+                    let indent_depth: i32 = depth.max(0);
+                    for _ in 0..indent_depth * 4 {
+                        result.push(CHAR_SPACE);
+                    }
+                    i = j;
+                }
+            }
+            continue;
+        }
+
+        result.push(chars[i]);
+        i += 1;
+    }
+
     result
 }
 
@@ -1217,4 +1406,268 @@ async fn format_file(path: &Path, mode: &FmtMode) -> Result<bool> {
         }
     }
     Ok(fmt_result.get_changed())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_simple_if() {
+        let input = "if{a}{b}";
+        let expected = "if { a } {\n    b\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_if_with_else() {
+        let input = "if{a}{b}else{c}";
+        let expected = "if { a } {\n    b\n} else {\n    c\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_if_else_if_else() {
+        let input = "if{a}{b}else if{c}{d}else{e}";
+        let expected = "if { a } {\n    b\n} else if { c } {\n    d\n} else {\n    e\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_nested_if() {
+        let input = "if{a}{if{b}{c}}";
+        let expected = "if { a } {\n    if { b } {\n        c\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_match_single_arm() {
+        let input = "match{a}{\"b\"=>{c}}";
+        let expected = "match { a } {\n    \"b\" => {\n        c\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_match_multiple_arms() {
+        let input = "match{a}{\"b\"=>{c}\"d\"=>{e}}";
+        let expected =
+            "match { a } {\n    \"b\" => {\n        c\n    }\n    \"d\" => {\n        e\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_for_loop() {
+        let input = "for i in {a}{b}";
+        let expected = "for i in { a } {\n    b\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_simple_div() {
+        let input = "div{a}";
+        let expected = "div {\n    a\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_nested_div() {
+        let input = "div{a{b}c}";
+        let expected = "div {\n    a {\n        b\n    }\n    c\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_empty_block() {
+        let input = "div{}";
+        let expected = "div {}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_bare_empty_block() {
+        let input = "{}";
+        let expected = "{}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_string_in_body() {
+        let input = "div{\"hello\"}";
+        let expected = "div {\n    \"hello\"\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_braces_in_string() {
+        let input = "div{\"hello { world }\"}";
+        let expected = "div {\n    \"hello { world }\"\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_comment_in_body() {
+        let input = "div{// comment\n    a\n}";
+        let expected = "div {\n    // comment\n    a\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_class_macro() {
+        let input = "class!{c_app_root{display:\"flex\"}}";
+        let expected = "class!{\n    c_app_root {\n        display: \"flex\"\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_vars_macro() {
+        let input = "vars!{a:\"1\";b:\"2\"}";
+        let expected = "vars!{\n    a: \"1\";b: \"2\"\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_deeply_nested() {
+        let input = "div{a{div{b{div{c}}}}}";
+        let expected = concat!(
+            "div {\n",
+            "    a {\n",
+            "        div {\n",
+            "            b {\n",
+            "                div {\n",
+            "                    c\n",
+            "                }\n",
+            "            }\n",
+            "        }\n",
+            "    }\n",
+            "}"
+        );
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_multiple_siblings() {
+        let input = "div{a\n    b\n    c}";
+        let expected = "div {\n    a\n    b\n    c\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_if_with_complex_condition() {
+        let input = "if{a>0}{b}";
+        let expected = "if { a>0 } {\n    b\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_watch_macro() {
+        let input = "watch!{signal=>{callback}}";
+        let expected = "watch!{\n    signal => {\n        callback\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_pseudo_selector() {
+        let input = "div{:hover{color:\"red\"}}";
+        let expected = "div {\n    :hover {\n        color: \"red\"\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_media_query() {
+        let input = "div{@media{(max-width: 767px){display:\"none\"}}}";
+        let expected = "div {\n    @media {\n        (max-width: 767px){\n            display: \"none\"\n        }\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_block_comment() {
+        let input = "div{/* comment */a}";
+        let expected = "div {\n    /* comment */a\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_escape_in_string() {
+        let input = "div{\"hello \\\"world\\\"\"}";
+        let expected = "div {\n    \"hello \\\"world\\\"\"\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_attribute_with_if() {
+        let input = "class:if{a}{b}else{c}";
+        let expected = "class: if { a } {\n    b\n} else {\n    c\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_nested_match_in_if() {
+        let input = "if{a}{match{b}{\"c\"=>{d}}}";
+        let expected =
+            "if { a } {\n    match { b } {\n        \"c\" => {\n            d\n        }\n    }\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_empty_line_preservation() {
+        let input = "div{a\n\n    b}";
+        let expected = "div {\n    a\n\n    b\n}";
+        assert_eq!(format_macro_body(input), expected);
+    }
+
+    #[test]
+    fn test_format_euv_macros_html() {
+        let input = "html! {if{a}{b}}";
+        let expected = "html! {\n    if { a } {\n        b\n    }\n}";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_format_euv_macros_class() {
+        let input = "class! {c{display:\"flex\"}}";
+        let expected = "class! {\n    c {\n        display: \"flex\"\n    }\n}";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_format_euv_macros_vars() {
+        let input = "vars! {a:\"1\"}";
+        let expected = "vars! {\n    a: \"1\"\n}";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_format_euv_macros_watch() {
+        let input = "watch! {s => {f}}";
+        let expected = "watch! {\n    s => {\n        f\n    }\n}";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_format_euv_macros_no_leading_blank_lines() {
+        let input = "    html! {\n            div {\n                class: c_euv_input_wrapper()\n                label {\n                    for: id\n                    class: c_form_label()\n                    label_string\n                }\n                input {\n                    id: id\n                    name: id\n                    type: \"text\"\n                    placeholder: placeholder\n                    value: value\n                    autocomplete: autocomplete\n                    class: c_euv_input()\n                    onfocus: on_focus_scroll_into_view()\n                }\n            }\n        }";
+        let expected = "    html! {\n            div {\n                class: c_euv_input_wrapper()\n                label {\n                    for: id\n                    class: c_form_label()\n                    label_string\n                }\n                input {\n                    id: id\n                    name: id\n                    type: \"text\"\n                    placeholder: placeholder\n                    value: value\n                    autocomplete: autocomplete\n                    class: c_euv_input()\n                    onfocus: on_focus_scroll_into_view()\n                }\n            }\n    }";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_sibling_elements() {
+        let input = "html! {\n    vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
+        let expected = "html! {\n    vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_sibling_elements_with_indent() {
+        let input = "    html! {\n            vconsole_fab {\n                panel_open: panel_open\n                console_signal: console_signal\n            }\n            vconsole_drawer {\n                console_signal: console_signal\n                panel_open: panel_open\n            }\n        }";
+        let expected = "    html! {\n            vconsole_fab {\n                panel_open: panel_open\n                console_signal: console_signal\n            }\n            vconsole_drawer {\n                console_signal: console_signal\n                panel_open: panel_open\n            }\n    }";
+        assert_eq!(format_euv_macros(input), expected);
+    }
+
+    #[test]
+    fn test_sibling_elements_compressed() {
+        let input = "html!{vconsole_fab{panel_open:panel_open console_signal:console_signal}vconsole_drawer{console_signal:console_signal panel_open:panel_open}}";
+        let expected = "html! {\n    vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
+        assert_eq!(format_euv_macros(input), expected);
+    }
 }

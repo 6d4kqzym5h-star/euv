@@ -976,12 +976,12 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 title: "Clipboard Events"
                 div {
                     class: c_event_clipboard_area()
-                        input {
-                            id: EVENT_CLIPBOARD_ID
-                            name: EVENT_CLIPBOARD_NAME
-                            type: EVENT_TEXT_TYPE
-                            autocomplete: EVENT_AUTOCOMPLETE_OFF
-                            placeholder: EVENT_CLIPBOARD_PLACEHOLDER
+                    input {
+                        id: EVENT_CLIPBOARD_ID
+                        name: EVENT_CLIPBOARD_NAME
+                        type: EVENT_TEXT_TYPE
+                        autocomplete: EVENT_AUTOCOMPLETE_OFF
+                        placeholder: EVENT_CLIPBOARD_PLACEHOLDER
                         class: c_euv_input()
                         value: "Sample text for clipboard"
                         oncopy: on_copy
@@ -1118,10 +1118,13 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 }
                             }
                         }
-                        euv_button {
-                            variant: EuvButtonVariant::Primary
-                            label: "Submit"
-                            "Submit"
+                        div {
+                            class: c_button_controls()
+                            euv_button {
+                                variant: EuvButtonVariant::Primary
+                                label: "Submit"
+                                "Submit"
+                            }
                         }
                     }
                 }

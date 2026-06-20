@@ -64,6 +64,9 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
     let on_canvas_touch_cancel = move |event: Event| {
         stop_drawing_multi_touch(state, &event);
     };
+    let initial_line_width = state.get_line_width().get();
+    let initial_line_width_percent =
+        ((initial_line_width - 1.0) / 29.0 * 100.0).clamp(0.0, 100.0) as i32;
     html! {
         div {
             class: c_page_container()
@@ -143,7 +146,8 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                             min: CANVAS_MIN_LINE_WIDTH_ATTR
                             max: CANVAS_MAX_LINE_WIDTH_ATTR
                             step: CANVAS_LINE_WIDTH_STEP_ATTR
-                            value: state.get_line_width().get().to_string()
+                            value: initial_line_width.to_string()
+                            style: format!("--value: {}%", initial_line_width_percent)
                             oninput: canvas_on_line_width_input(state)
                         }
                     }

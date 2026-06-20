@@ -36,7 +36,7 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
                     for index in { 0..100 } {
                         li {
                             key: index.to_string()
-                            class: if { index % 2 == 0 } { c_list_item_even() } else { c_list_item_odd() }
+                            class: c_list_item()
                             data_index: index.to_string()
                             span {
                                 class: c_list_item_text()

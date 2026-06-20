@@ -13,9 +13,16 @@ use crate::*;
 /// Panics if `window()` or `document()` is unavailable on the current platform.
 pub(crate) fn inject_app_global_css() {
     let global: &str = concat!(
-        "html, body, #app { height: 100%; margin: 0; padding: 0; overflow: hidden; background: ",
-        var!("bg-primary"),
-        "; } * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }"
+        "html, body, #app { height: 100%; margin: 0; padding: 0; background: ",
+        var!(background),
+        "; } ",
+        "* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; border: 0; font: inherit; vertical-align: baseline; } ",
+        "html { line-height: 1.5; -webkit-text-size-adjust: 100%; } ",
+        "ol, ul { list-style: none; } ",
+        "img, picture, video, canvas, svg { display: block; max-width: 100%; } ",
+        "input, button, textarea, select { font: inherit; color: inherit; background: transparent; } ",
+        "button { cursor: pointer; } ",
+        "a { text-decoration: none; color: inherit; }"
     );
     let scrollbar: &str = concat!(
         "* { scrollbar-width: thin; } ",
@@ -46,11 +53,11 @@ pub(crate) fn inject_app_global_css() {
     );
     let a11y_css: &str = concat!(
         ":focus-visible { outline: none; box-shadow: 0 0 0 3px ",
-        var!("accent-border"),
+        var!(accent),
         "; } ",
         "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; } } ",
         "@media (hover: none) and (pointer: coarse) { * { -webkit-tap-highlight-color: transparent; } .c_card:hover, .c_home_stat_card:hover { transform: none !important; box-shadow: ",
-        var!("shadow-card"),
+        var!(shadow - sm),
         " !important; } .c_home_btn_primary:hover, .c_home_btn_secondary:hover { transform: none !important; } } ",
     );
     Css::inject_css(global);

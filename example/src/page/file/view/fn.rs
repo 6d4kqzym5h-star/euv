@@ -25,7 +25,9 @@ fn build_file_list(state: UseFileUpload) -> VirtualNode {
                     class: c_file_upload_item()
                     span {
                         class: c_file_upload_item_index()
-                        { format!("#{}", index + 1) }
+                        {
+                            format!("#{}", index + 1)
+                        }
                     }
                     span {
                         class: c_file_upload_item_name()
@@ -51,7 +53,11 @@ fn build_drop_zone(state: UseFileUpload) -> VirtualNode {
     let is_drag_over: bool = state.get_drag_over().get();
     html! {
         div {
-            class: if { is_drag_over } { c_file_upload_drop_zone_active() } else { c_file_upload_drop_zone() }
+            class: if { is_drag_over } {
+                c_file_upload_drop_zone_active()
+            } else {
+                c_file_upload_drop_zone()
+            }
             ondragenter: file_upload_on_drag_enter(state)
             ondragleave: file_upload_on_drag_leave(state)
             ondragover: file_upload_on_drag_over(state)

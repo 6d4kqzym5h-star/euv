@@ -144,3 +144,34 @@ pub(crate) fn on_focus_scroll_into_view() -> Option<Rc<dyn Fn(Event)>> {
         closure.forget();
     }))
 }
+
+/// Creates an input event handler that updates the `--value` CSS custom
+/// property on a range slider element, enabling a dual-color track gradient.
+///
+/// The percentage is calculated from the input's current value relative to
+/// its `min` and `max` attributes.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - An input handler suitable for `oninput:`.
+pub(crate) fn range_on_input_update_style() -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
+        if let Some(target) = event.target()
+            && let Ok(input) = target.dyn_into::<HtmlInputElement>()
+        {
+            let value = input.value().parse::<f64>().unwrap_or(0.0);
+            let min = input.min().parse::<f64>().unwrap_or(0.0);
+            let max = input.max().parse::<f64>().unwrap_or(100.0);
+            let range = max - min;
+            let percent = if range > 0.0 {
+                ((value - min) / range * 100.0).clamp(0.0, 100.0)
+            } else {
+                0.0
+            };
+            input
+                .style()
+                .set_property("--value", &format!("{}%", percent))
+                .unwrap_or(());
+        }
+    }))
+}

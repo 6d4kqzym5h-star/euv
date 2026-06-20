@@ -209,7 +209,13 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             let parsed: i32 = input.value().parse().unwrap_or_default();
-            pending_value.set(parsed.clamp(0, 255));
+            let clamped = parsed.clamp(0, 255);
+            let percent = (clamped as f64 / 255.0 * 100.0).clamp(0.0, 100.0);
+            input
+                .style()
+                .set_property("--value", &format!("{}%", percent))
+                .unwrap_or(());
+            pending_value.set(clamped);
             if raf_id.get().is_some() {
                 return;
             }

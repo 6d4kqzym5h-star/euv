@@ -56,7 +56,9 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                     "Selected: "
                     span {
                         class: c_event_highlight()
-                        { state.get_selected_fruit().get() }
+                        {
+                            state.get_selected_fruit().get()
+                        }
                     }
                 }
             }
@@ -141,7 +143,11 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         id: SELECT_FEEDBACK_ID
                         name: SELECT_FEEDBACK_NAME
                         autocomplete: SELECT_AUTOCOMPLETE_OFF
-                        class: if { state.get_textarea_error().get().is_empty() } { c_textarea_input() } else { c_textarea_input_error() }
+                        class: if { state.get_textarea_error().get().is_empty() } {
+                            c_textarea_input()
+                        } else {
+                            c_textarea_input_error()
+                        }
                         placeholder: SELECT_FEEDBACK_PLACEHOLDER
                         value: state.get_textarea_content()
                         oninput: select_on_input_textarea(state)
@@ -158,7 +164,9 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                     class: c_textarea_counter()
                     span {
                         class: c_textarea_counter_text()
-                        { format!("{} / 200 characters", state.get_textarea_content().get().len()) }
+                        {
+                            format!("{} / 200 characters", state.get_textarea_content().get().len())
+                        }
                     }
                 }
                 div {

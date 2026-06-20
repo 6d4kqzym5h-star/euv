@@ -24,7 +24,11 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { show_details.get() } { EuvButtonVariant::Outline } else { EuvButtonVariant::Primary }
+                        variant: if { show_details.get() } {
+                            EuvButtonVariant::Outline
+                        } else {
+                            EuvButtonVariant::Primary
+                        }
                         label: "Toggle"
                         onclick: use_toggle(show_details)
                         "Toggle"
@@ -53,19 +57,31 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_role_button_row()
                     euv_button {
-                        variant: if { user_type.get() == "guest" } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { user_type.get() == "guest" } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: "Guest"
                         onclick: user_type_on_select(user_type, "guest")
                         "Guest"
                     }
                     euv_button {
-                        variant: if { user_type.get() == "user" } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { user_type.get() == "user" } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: "User"
                         onclick: user_type_on_select(user_type, "user")
                         "User"
                     }
                     euv_button {
-                        variant: if { user_type.get() == "admin" } { EuvButtonVariant::Primary } else { EuvButtonVariant::Outline }
+                        variant: if { user_type.get() == "admin" } {
+                            EuvButtonVariant::Primary
+                        } else {
+                            EuvButtonVariant::Outline
+                        }
                         label: "Admin"
                         onclick: user_type_on_select(user_type, "admin")
                         "Admin"
@@ -74,7 +90,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 match { user_type.get().as_str() } {
                     "guest" => {
                         div {
-                            class: c_role_guest()
                             p {
                                 class: c_role_guest_text()
                                 "Welcome, guest! Please sign in to access more features."
@@ -83,7 +98,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                     }
                     "user" => {
                         div {
-                            class: c_role_user()
                             p {
                                 class: c_role_user_text()
                                 "Hello, user! You have standard access."
@@ -92,7 +106,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                     }
                     _ => {
                         div {
-                            class: c_role_admin()
                             p {
                                 class: c_role_admin_text()
                                 "Welcome, administrator! You have full access."
@@ -106,17 +119,29 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_tab_bar()
                     div {
-                        class: if { tab.get() == "info" } { c_tab_item_active() } else { c_tab_item_inactive() }
+                        class: if { tab.get() == "info" } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
                         onclick: tab_on_select(tab, "info")
                         "Info"
                     }
                     div {
-                        class: if { tab.get() == "settings" } { c_tab_item_active() } else { c_tab_item_inactive() }
+                        class: if { tab.get() == "settings" } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
                         onclick: tab_on_select(tab, "settings")
                         "Settings"
                     }
                     div {
-                        class: if { tab.get() == "about" } { c_tab_item_active() } else { c_tab_item_inactive() }
+                        class: if { tab.get() == "about" } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
                         onclick: tab_on_select(tab, "about")
                         "About"
                     }

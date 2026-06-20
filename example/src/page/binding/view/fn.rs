@@ -32,12 +32,16 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                 "Props received: disabled="
                 span {
                     class: c_binding_typed_prop_value()
-                    { disabled.get().to_string() }
+                    {
+                        disabled.get().to_string()
+                    }
                 }
                 ", max_count="
                 span {
                     class: c_binding_typed_prop_value()
-                    { max_count.get().to_string() }
+                    {
+                        max_count.get().to_string()
+                    }
                 }
             }
             div {
@@ -219,7 +223,11 @@ pub(crate) fn color_mixer(
             class: c_binding_color_mixer()
             div {
                 class: c_binding_color_preview()
-                style: { background: { &hex_value }; }
+                style: {
+                    background: {
+                        &hex_value
+                    };
+                }
                 span {
                     class: c_binding_color_hex()
                     hex_value
@@ -227,12 +235,14 @@ pub(crate) fn color_mixer(
             }
             div {
                 class: c_binding_slider_row()
-                    label {
-                        for: COLOR_MIXER_RED_ID
-                        class: c_binding_slider_label()
-                        style: { color: var!(color-red-channel); }
-                        "R"
+                label {
+                    for: COLOR_MIXER_RED_ID
+                    class: c_binding_slider_label()
+                    style: {
+                        color: var!(accent);
                     }
+                    "R"
+                }
                 input {
                     id: COLOR_MIXER_RED_ID
                     name: COLOR_MIXER_RED_NAME
@@ -241,6 +251,7 @@ pub(crate) fn color_mixer(
                     min: COLOR_MIXER_MIN
                     max: COLOR_MIXER_MAX
                     value: red_value.to_string()
+                    style: format!("--value: {}%", (red_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(red_signal)
                 }
@@ -251,12 +262,14 @@ pub(crate) fn color_mixer(
             }
             div {
                 class: c_binding_slider_row()
-                    label {
-                        for: COLOR_MIXER_GREEN_ID
-                        class: c_binding_slider_label()
-                        style: { color: var!(color-green-channel); }
-                        "G"
+                label {
+                    for: COLOR_MIXER_GREEN_ID
+                    class: c_binding_slider_label()
+                    style: {
+                        color: var!(accent);
                     }
+                    "G"
+                }
                 input {
                     id: COLOR_MIXER_GREEN_ID
                     name: COLOR_MIXER_GREEN_NAME
@@ -265,6 +278,7 @@ pub(crate) fn color_mixer(
                     min: COLOR_MIXER_MIN
                     max: COLOR_MIXER_MAX
                     value: green_value.to_string()
+                    style: format!("--value: {}%", (green_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(green_signal)
                 }
@@ -275,12 +289,14 @@ pub(crate) fn color_mixer(
             }
             div {
                 class: c_binding_slider_row()
-                    label {
-                        for: COLOR_MIXER_BLUE_ID
-                        class: c_binding_slider_label()
-                        style: { color: var!(color-blue-channel); }
-                        "B"
+                label {
+                    for: COLOR_MIXER_BLUE_ID
+                    class: c_binding_slider_label()
+                    style: {
+                        color: var!(accent);
                     }
+                    "B"
+                }
                 input {
                     id: COLOR_MIXER_BLUE_ID
                     name: COLOR_MIXER_BLUE_NAME
@@ -289,6 +305,7 @@ pub(crate) fn color_mixer(
                     min: COLOR_MIXER_MIN
                     max: COLOR_MIXER_MAX
                     value: blue_value.to_string()
+                    style: format!("--value: {}%", (blue_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(blue_signal)
                 }
@@ -372,15 +389,15 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                                 "Disable"
                             }
                         }
-                        div {
-                            class: c_binding_typed_prop_group()
-                            label {
-                                class: c_form_label()
-                                "Max: "
-                                span {
-                                    class: c_binding_typed_prop_value()
-                                    typed_state.get_max_count()
-                                }
+                    }
+                    div {
+                        class: c_binding_typed_prop_group()
+                        label {
+                            class: c_form_label()
+                            "Max: "
+                            span {
+                                class: c_binding_typed_prop_value()
+                                typed_state.get_max_count()
                             }
                         }
                     }
@@ -433,13 +450,15 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                             two_way_state.get_shared_count()
                         }
                     }
-            button {
-                class: c_binding_compact_button()
-                onclick: two_way_on_increment(two_way_state.get_shared_count())
-                "+"
-            }
+                    button {
+                        class: c_binding_compact_button()
+                        onclick: two_way_on_increment(two_way_state.get_shared_count())
+                        "+"
+                    }
                 }
-                { child_input(two_way_state.get_shared_text(), two_way_state.get_shared_count()) }
+                {
+                    child_input(two_way_state.get_shared_text(), two_way_state.get_shared_count())
+                }
             }
             euv_card {
                 title: "Cross-Component Reactive Binding (watch!)"
@@ -455,7 +474,9 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     class: c_hint()
                     "Edit either field — the other updates reactively via watch!"
                 }
-                { temperature_converter(cross_state.get_celsius(), cross_state.get_fahrenheit()) }
+                {
+                    temperature_converter(cross_state.get_celsius(), cross_state.get_fahrenheit())
+                }
                 h4 {
                     class: c_binding_section_title()
                     "Color Mixer"
@@ -464,7 +485,9 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     class: c_hint()
                     "Adjust RGB sliders — the hex color updates reactively via watch!"
                 }
-                { color_mixer(cross_state.get_red(), cross_state.get_green(), cross_state.get_blue(), cross_state.get_hex_color()) }
+                {
+                    color_mixer(cross_state.get_red(), cross_state.get_green(), cross_state.get_blue(), cross_state.get_hex_color())
+                }
             }
         }
     }

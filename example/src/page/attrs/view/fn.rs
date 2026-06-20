@@ -63,7 +63,10 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                     }
                 }
                 div {
-                    { dynamic_key.get() }: dynamic_value
+                    {
+                        dynamic_key.get()
+                    }
+                    : dynamic_value
                     class: c_custom_attrs_demo()
                     p {
                         class: c_demo_text()
@@ -72,7 +75,9 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                     if { !dynamic_key.get().is_empty() } {
                         p {
                             class: c_demo_text_muted()
-                            { format!("{}=\"{}\"", dynamic_key.get(), dynamic_value.get()) }
+                            {
+                                format!("{}=\"{}\"", dynamic_key.get(), dynamic_value.get())
+                            }
                         }
                     } else {
                         p {
@@ -129,7 +134,9 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                     if { !class_prop_key.get().is_empty() } {
                         p {
                             class: c_demo_text_muted()
-                            { format!("{}: {}", class_prop_key.get(), class_prop_value.get()) }
+                            {
+                                format!("{}: {}", class_prop_key.get(), class_prop_value.get())
+                            }
                         }
                     } else {
                         p {
