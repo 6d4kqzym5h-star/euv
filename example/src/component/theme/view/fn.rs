@@ -21,7 +21,7 @@ vars! {
         // ─── Destructive ───
 
         // ─── Border & Input ───
-        border: "rgba(0, 0, 0, 0.12)";
+        border: "#000000";
         ring: "#000000";
 
 
@@ -229,7 +229,7 @@ vars! {
         // ─── Destructive ───
 
         // ─── Border & Input ───
-        border: "rgba(255, 255, 255, 0.14)";
+        border: "#ffffff";
         ring: "#ffffff";
 
 

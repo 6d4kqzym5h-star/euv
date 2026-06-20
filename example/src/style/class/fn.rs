@@ -133,7 +133,6 @@ class! {
         }
     }
 
-
     pub(crate) c_nav_section_label {
         padding: format!("{} {} {} {}", var!(space-md), var!(space-xl), var!(space-xs), var!(space-xl));
         margin: "0px";
@@ -177,7 +176,7 @@ class! {
         cursor: "pointer";
         outline: "none";
         background: "transparent";
-        border: format!("1px solid {}", var!(border));
+        border: format!("1px dashed {}", var!(border));
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -248,7 +247,6 @@ class! {
         color: var!(accent);
     }
 
-
     pub(crate) c_nav_item_active {
         display: "flex";
         align-items: "center";
@@ -259,7 +257,6 @@ class! {
         color: var!(text-on-accent);
         font-weight: "600";
         background: var!(accent);
-        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_nav_item_inactive {
@@ -272,7 +269,6 @@ class! {
         color: var!(foreground);
         font-weight: "400";
         background: "transparent";
-        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-muted);
             color: var!(accent);
@@ -301,13 +297,11 @@ class! {
 
     pub(crate) c_app_main {
         flex: "1";
-        width: "0px";
         display: "flex";
         flex-direction: "column";
         align-items: "stretch";
         min-height: "100%";
         padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-top), var!(padding-main-horizontal));
-        background: var!(background);
         overflow: "auto";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar {
@@ -355,7 +349,6 @@ class! {
         }
     }
 
-
     // ═══════════════════════════════════════════════════════════════════════════
     // Page Hero Banner (unified header with emoji icon)
     // ═══════════════════════════════════════════════════════════════════════════
@@ -386,7 +379,7 @@ class! {
 
     pub(crate) c_page_hero_icon {
         font-size: "48px";
-        margin-bottom: var!(space-md);
+        padding-bottom: var!(space-md);
         @media ((max-width: 767px)) {
             font-size: "40px";
         }
@@ -425,7 +418,6 @@ class! {
         box-sizing: "border-box";
     }
 
-
     pub(crate) c_card_title {
         margin-top: "0px";
         margin-bottom: var!(gap-component);
@@ -433,7 +425,7 @@ class! {
         font-size: var!(font-lg);
         font-weight: "600";
         padding-bottom: var!(gap-component);
-        border-bottom: format!("1px solid {}", var!(border));
+        border-bottom: format!("1px dashed {}", var!(border));
         letter-spacing: "-0.01em";
         @media ((max-width: 767px)) {
             font-size: var!(font-md);
@@ -495,7 +487,6 @@ class! {
         }
     }
 
-
     pub(crate) c_modal_close_button {
         display: "flex";
         justify-content: "center";
@@ -534,7 +525,6 @@ class! {
         gap: var!(gap-element);
         margin-top: var!(gap-component);
     }
-
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Euv Button Variants
@@ -663,8 +653,8 @@ class! {
         align-items: "center";
         justify-content: "center";
         color: var!(text-on-accent);
-        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
-        font-size: var!(font-xs);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        font-size: var!(font-sm);
         font-weight: "600";
         cursor: "pointer";
         background: var!(accent);
@@ -680,10 +670,8 @@ class! {
         font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        background: var!(background);
         border: format!("1.5px solid {}", var!(accent));
     }
-
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Euv Tag Variants (semantic colour tags)
@@ -708,8 +696,8 @@ class! {
         justify-content: "center";
         align-items: "center";
         color: var!(foreground);
-        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
-        font-size: var!(font-xs);
+        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        font-size: var!(font-sm);
         font-weight: "600";
         cursor: "pointer";
         background: "transparent";
@@ -739,7 +727,6 @@ class! {
         gap: var!(gap-component);
     }
 
-
     pub(crate) c_euv_input {
         width: "100%";
         height: "42px";
@@ -750,7 +737,6 @@ class! {
         box-sizing: "border-box";
         transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
-        background: var!(background);
         color: var!(foreground);
         :hover {
             border-color: var!(accent);
@@ -772,7 +758,6 @@ class! {
         font-size: var!(font-base);
         line-height: "40px";
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         color: var!(foreground);
     }
@@ -785,7 +770,6 @@ class! {
         font-size: var!(font-base);
         line-height: "40px";
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         color: var!(foreground);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
@@ -815,7 +799,6 @@ class! {
         gap: var!(gap-element);
     }
 
-
     pub(crate) c_select_input {
         width: "100%";
         height: "42px";
@@ -823,7 +806,6 @@ class! {
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         cursor: "pointer";
         appearance: "none";
@@ -847,7 +829,6 @@ class! {
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         resize: "vertical";
         overflow-x: "hidden";
@@ -874,7 +855,6 @@ class! {
         border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         resize: "vertical";
         overflow-x: "hidden";
@@ -908,7 +888,6 @@ class! {
         margin-bottom: var!(space-sm);
     }
 
-
     // ═══════════════════════════════════════════════════════════════════════════
     // Status Boxes
     // ═══════════════════════════════════════════════════════════════════════════
@@ -930,7 +909,6 @@ class! {
         font-size: var!(font-base);
         box-sizing: "border-box";
     }
-
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Counter / Signals Demo
@@ -1051,7 +1029,6 @@ class! {
 
     pub(crate) c_camera_video_placeholder {
         width: "100%";
-        background: var!(background);
         aspect-ratio: "16 / 9";
         border: format!("2px dashed {}", var!(border));
         display: "flex";
@@ -1078,11 +1055,9 @@ class! {
         opacity: "1";
     }
 
-
     pub(crate) c_camera_error_box {
         margin: format!("{} 0px", var!(gap-component));
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(background);
         color: var!(foreground);
         font-size: var!(font-base);
         border: format!("1px solid {}", var!(border));
@@ -1094,7 +1069,6 @@ class! {
     pub(crate) c_camera_scan_result_box {
         margin-top: var!(gap-component);
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(background);
         border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
@@ -1113,11 +1087,9 @@ class! {
         overflow-wrap: "break-word";
     }
 
-
     // ═══════════════════════════════════════════════════════════════════════════
     // Canvas Drawing Board
     // ═══════════════════════════════════════════════════════════════════════════
-
 
     pub(crate) c_canvas_preview_container {
         margin: format!("{} 0", var!(space-lg));
@@ -1146,7 +1118,7 @@ class! {
     }
 
     pub(crate) c_canvas_container_fullscreen {
-        width: "100vw";
+        width: "100%";
         height: "100%";
         background: var!(background);
         display: "flex";
@@ -1181,7 +1153,6 @@ class! {
         align-items: "stretch";
         width: "100%";
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        background: var!(background);
         flex-shrink: "0";
         gap: var!(space-xs);
     }
@@ -1260,7 +1231,6 @@ class! {
         }
     }
 
-
     pub(crate) c_canvas_fullscreen_toolbar_button {
         flex: "0 0 auto";
         overflow: "hidden";
@@ -1298,10 +1268,7 @@ class! {
         align-items: "center";
         justify-content: "center";
         gap: var!(gap-component);
-        padding: var!(space-xl);
-        background: var!(background);
-        border: format!("1px solid {}", var!(border));
-        margin-top: var!(gap-component);
+        margin: format!("{} 0px", var!(gap-component));
         box-sizing: "border-box";
     }
 
@@ -1338,7 +1305,6 @@ class! {
         gap: var!(gap-element);
         margin-top: var!(gap-component);
         padding: var!(space-lg);
-        background: var!(background);
         border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
@@ -1347,7 +1313,6 @@ class! {
         width: "20px";
         height: "20px";
         border-radius: "50%";
-        background: var!(background);
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -1363,9 +1328,7 @@ class! {
     }
 
     pub(crate) c_data_box {
-        margin-top: var!(gap-component);
-        padding: var!(space-lg);
-        background: var!(background);
+        margin: format!("{} 0px", var!(gap-component));
         box-sizing: "border-box";
     }
 
@@ -1446,7 +1409,6 @@ class! {
         background: var!(accent);
         font-size: var!(font-base);
         font-weight: "500";
-        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_tab_item_inactive {
@@ -1457,7 +1419,6 @@ class! {
         background: "transparent";
         font-size: var!(font-base);
         font-weight: "500";
-        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-muted);
             color: var!(accent);
@@ -1490,7 +1451,6 @@ class! {
     // List
     // ═══════════════════════════════════════════════════════════════════════════
 
-
     pub(crate) c_list_input {
         flex: "1";
         height: "42px";
@@ -1498,7 +1458,6 @@ class! {
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         color: var!(foreground);
         :hover {
@@ -1520,7 +1479,6 @@ class! {
         border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
         box-sizing: "border-box";
-        background: var!(background);
         outline: "none";
         color: var!(foreground);
         transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
@@ -1555,7 +1513,6 @@ class! {
         justify-content: "space-between";
         align-items: "center";
         gap: var!(gap-component);
-        background: var!(background);
         min-height: var!(min-height-base);
     }
 
@@ -1580,7 +1537,6 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_log_container {
-        background: var!(background);
         padding: format!("0px {}", var!(space-sm));
         font-family: "ui-monospace, monospace";
         font-size: "13px";
@@ -1594,11 +1550,9 @@ class! {
         color: var!(foreground);
     }
 
-
     // ═══════════════════════════════════════════════════════════════════════════
     // 404 Not Found
     // ═══════════════════════════════════════════════════════════════════════════
-
 
     pub(crate) c_render_count_text {
         font-size: var!(font-lg);
@@ -1807,7 +1761,6 @@ class! {
         text-align: "center";
         padding: var!(space-md);
         margin-top: var!(gap-component);
-        background: var!(background);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-lg);
         font-weight: "600";
@@ -1838,7 +1791,6 @@ class! {
         }
     }
 
-
     pub(crate) c_modal_content {
         background: var!(background);
         padding: "0px";
@@ -1857,7 +1809,6 @@ class! {
             overflow-y: "auto";
         }
     }
-
 
     pub(crate) c_modal_header {
         display: "flex";
@@ -1956,7 +1907,6 @@ class! {
     pub(crate) c_progress_container {
         width: "100%";
         height: "12px";
-        background: var!(background);
         margin: format!("{} 0px", var!(space-lg));
         overflow: "hidden";
     }
@@ -2073,7 +2023,6 @@ class! {
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
     }
 
-
     pub(crate) c_vconsole_overlay {
         position: "fixed";
         top: "0px";
@@ -2102,11 +2051,13 @@ class! {
         z-index: "10001";
         display: "flex";
         flex-direction: "column";
-        border-top: format!("3px solid {}", var!(accent));
         box-shadow: var!(shadow-console-panel);
-        padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         overflow: "hidden";
+        padding: format!("{} {}", var!(padding-main-top), var!(padding-main-horizontal));
+        @media ((max-width: 767px)) {
+            padding: format!("{} {}", var!(space-md), var!(padding-main-horizontal-mobile));
+        }
     }
 
     pub(crate) c_vconsole_panel_closed {
@@ -2146,10 +2097,9 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(space-md), var!(space-xl));
-        background: var!(background);
-        border-bottom: format!("1px solid {}", var!(border));
+        border-bottom: format!("1px dashed {}", var!(border));
         flex-shrink: "0";
+        padding-bottom: var!(space-md);
     }
 
     pub(crate) c_vconsole_title {
@@ -2210,9 +2160,7 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        background: "transparent";
         color: var!(foreground);
-        border: format!("1px solid {}", var!(border));
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         cursor: "pointer";
         font-size: "16px";
@@ -2243,14 +2191,15 @@ class! {
     pub(crate) c_vconsole_body {
         flex: "1";
         overflow-y: "auto";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
+        flex-wrap: "wrap";
+        padding-bottom: var!(space-md);
         font-family: "ui-monospace, monospace";
         font-size: "13px";
     }
 
     pub(crate) c_vconsole_log_item {
-        padding: format!("{} 0px", var!(space-xs));
-        border-bottom: format!("1px solid {}", var!(border));
+        padding: format!("{} 0px", var!(space-sm));
+        border-bottom: format!("1px dashed {}", var!(border));
         color: var!(foreground);
         font-size: "13px";
         word-break: "break-all";
@@ -2265,11 +2214,9 @@ class! {
         color: var!(foreground);
     }
 
-
     pub(crate) c_vconsole_log_error {
         color: var!(foreground);
     }
-
 
     pub(crate) c_vconsole_empty {
         color: var!(muted-foreground);
@@ -2305,9 +2252,8 @@ class! {
     pub(crate) c_vconsole_filter_bar {
         display: "flex";
         gap: var!(space-sm);
-        padding: format!("{} {}", var!(space-xs), var!(space-lg));
-        background: var!(background);
-        border-bottom: format!("1px solid {}", var!(border));
+        padding: format!("{} 0px", var!(space-sm));
+        border-bottom: format!("1px dashed {}", var!(border));
         flex-shrink: "0";
     }
 
@@ -2354,18 +2300,6 @@ class! {
         border: "1px solid currentColor";
     }
 
-    pub(crate) c_vconsole_badge_log {
-        background: var!(background);
-    }
-
-    pub(crate) c_vconsole_badge_warn {
-        background: var!(background);
-    }
-
-    pub(crate) c_vconsole_badge_error {
-        background: var!(background);
-    }
-
     // ═══════════════════════════════════════════════════════════════════════════
     // Mobile Layout
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2375,7 +2309,6 @@ class! {
         align-items: "center";
         justify-content: "space-between";
         padding: format!("{} {}", var!(space-sm), var!(space-lg));
-        background: var!(background);
         backdrop-filter: var!(glass-blur-md);
         -webkit-backdrop-filter: var!(glass-blur-md);
         flex-shrink: "0";
@@ -2436,7 +2369,6 @@ class! {
     pub(crate) c_mobile_menu_button_active {
         width: "40px";
         height: "40px";
-        background: var!(background);
         border: "none";
         cursor: "pointer";
         font-size: "22px";
@@ -2497,6 +2429,7 @@ class! {
         top: "0px";
         left: "0px";
         width: "280px";
+        max-width: "100%";
         height: "100%";
         background: var!(background);
         backdrop-filter: var!(glass-blur-lg);
@@ -2522,13 +2455,22 @@ class! {
         padding: format!("0px {}", var!(space-lg));
         height: var!(mobile-header-height);
         flex-shrink: "0";
+        position: "relative";
+        ::after {
+            content: "''";
+            position: "absolute";
+            bottom: "0px";
+            left: var!(space-lg);
+            right: var!(space-lg);
+            height: "1px";
+            background: format!("linear-gradient(90deg, transparent, {}, transparent)", var!(border));
+        }
     }
 
     pub(crate) c_mobile_main {
         width: "100%";
         flex: "1";
         padding: format!("{} {} calc({} + env(safe-area-inset-bottom, 0px)) {}", var!(space-lg), var!(padding-main-horizontal-mobile), var!(space-lg), var!(padding-main-horizontal-mobile));
-        background: var!(background);
         overflow-y: "auto";
         scrollbar-width: "none";
         ::-webkit-scrollbar {
@@ -2614,7 +2556,6 @@ class! {
     // File Upload
     // ═══════════════════════════════════════════════════════════════════════════
 
-
     pub(crate) c_file_upload_input_hidden {
         position: "absolute";
         width: "1px";
@@ -2629,9 +2570,6 @@ class! {
 
     pub(crate) c_file_upload_options {
         margin: format!("{} 0px", var!(gap-component));
-        padding: format!("{} 0px", var!(gap-component));
-        border-top: format!("1px solid {}", var!(border));
-        border-bottom: format!("1px solid {}", var!(border));
     }
 
     pub(crate) c_file_upload_item {
@@ -2639,7 +2577,6 @@ class! {
         align-items: "center";
         gap: format!("{}", var!(space-md));
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(background);
         margin: format!("{} 0px", var!(space-sm));
         font-size: var!(font-base);
         color: "inherit";
@@ -2676,14 +2613,14 @@ class! {
     pub(crate) c_file_upload_drop_icon {
         font-size: var!(font-5xl);
         display: "block";
-        margin-bottom: var!(space-md);
+        padding-bottom: var!(space-md);
     }
 
     pub(crate) c_file_upload_drop_text {
         font-size: var!(font-lg);
         font-weight: "500";
         color: "inherit";
-        margin: format!("0px 0px {} 0px", var!(space-sm));
+        padding-bottom: var!(space-md);
     }
 
     pub(crate) c_file_upload_drop_hint {
@@ -2711,7 +2648,6 @@ class! {
         text-transform: "uppercase";
         letter-spacing: "0.05em";
     }
-
 
     pub(crate) c_binding_parent_box {
         display: "flex";
@@ -2852,7 +2788,6 @@ class! {
         font-weight: "600";
         color: var!(accent);
         padding: format!("1px {}", var!(space-sm));
-        background: var!(background);
     }
 
     pub(crate) c_binding_typed_prop_group {
@@ -2866,11 +2801,9 @@ class! {
         font-weight: "500";
         color: var!(foreground);
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(background);
         border: format!("1px solid {}", var!(border));
         margin-bottom: "0px";
     }
-
 
     pub(crate) c_binding_form_label {
         display: "block";
@@ -2901,7 +2834,6 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         box-sizing: "border-box";
-        transition: format!("background {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent);
         }
@@ -2944,11 +2876,9 @@ class! {
 
     pub(crate) c_dynamic_component_panel {
         display: "block";
-        background: var!(background);
         min-height: var!(min-height-sm);
         margin-top: var!(gap-component);
     }
-
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Virtual List
@@ -2988,13 +2918,11 @@ class! {
         height: "666px";
         max-height: "666px";
         overflow-y: "auto";
-        background: var!(background);
     }
 
     pub(crate) c_virtual_list_card {
         flex: "1";
         min-height: "0px";
-        background: var!(background);
         padding: var!(space-xl);
         color: var!(foreground);
         display: "flex";
@@ -3009,7 +2937,6 @@ class! {
         align-items: "center";
         padding: format!("0px {}", var!(space-lg));
         gap: var!(space-lg);
-        background: var!(background);
         height: "100%";
         box-sizing: "border-box";
     }
@@ -3054,13 +2981,11 @@ class! {
     // Unified Layout Primitives
     // ═══════════════════════════════════════════════════════════════════════════
 
-
     pub(crate) c_element_stack {
         display: "flex";
         flex-direction: "column";
         gap: var!(gap-element);
     }
-
 
     pub(crate) c_switcher {
         display: "flex";
@@ -3084,7 +3009,6 @@ class! {
     // Unified Description / Hint Text
     // ═══════════════════════════════════════════════════════════════════════════
 
-
     pub(crate) c_hint {
         color: "inherit";
         opacity: "1";
@@ -3095,7 +3019,6 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
     // Network Demo
     // ═══════════════════════════════════════════════════════════════════════════
-
 
     pub(crate) c_net_messages_empty {
         color: "inherit";
@@ -3115,9 +3038,7 @@ class! {
         display: "flex";
         align-items: "baseline";
         gap: var!(gap-element);
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(background);
-        border: format!("1px solid {}", var!(border));
+        justify-content: "space-between";
     }
 
     pub(crate) c_net_message_index {
@@ -3139,12 +3060,10 @@ class! {
     // WebSocket Demo
     // ═══════════════════════════════════════════════════════════════════════════
 
-
     pub(crate) c_ws_message_input {
         flex: "1";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        background: var!(background);
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
@@ -3163,7 +3082,6 @@ class! {
         }
     }
 
-
     pub(crate) c_ws_message_time {
         color: var!(foreground);
         font-size: var!(font-sm);
@@ -3171,7 +3089,6 @@ class! {
         flex-shrink: "0";
         margin-left: "auto";
     }
-
 
     // ═══════════════════════════════════════════════════════════════════════════
     // HTML5 Tags Demo
@@ -3196,32 +3113,28 @@ class! {
         margin-bottom: var!(space-sm);
     }
 
-    pub(crate) c_tag_demo_box {
-        background: var!(background);
-    }
+    pub(crate) c_tag_demo_box {}
 
     pub(crate) c_tag_demo_text {
-        margin: format!("0px 0px {} 0px", var!(space-sm));
+        padding-bottom: var!(space-md);
         color: "inherit";
         font-size: var!(font-base);
     }
 
-
     pub(crate) c_tag_demo_heading {
         font-weight: "600";
         font-size: var!(font-base);
-        margin: format!("0px 0px {} 0px", var!(space-sm));
+        padding-bottom: var!(space-md);
         color: "inherit";
     }
 
     pub(crate) c_tag_demo_muted {
         font-size: var!(font-sm);
         color: var!(foreground);
-        margin: format!("0px 0px {} 0px", var!(space-sm));
+        padding-bottom: var!(space-md);
     }
 
     pub(crate) c_tag_demo_highlight {
-        background: var!(background);
         color: var!(accent);
         padding: format!("0px {}", var!(space-xs));
     }
@@ -3234,7 +3147,6 @@ class! {
 
     pub(crate) c_tag_demo_code {
         font-family: "monospace";
-        background: var!(background);
         color: var!(accent);
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
         font-size: var!(font-sm);
@@ -3242,7 +3154,6 @@ class! {
 
     pub(crate) c_tag_demo_kbd {
         font-family: "monospace";
-        background: var!(background);
         border: format!("1px solid {}", var!(border));
         padding: format!("0px {}", var!(space-xs));
         font-size: var!(font-sm);
@@ -3266,9 +3177,6 @@ class! {
 
     pub(crate) c_tag_demo_pre {
         font-family: "monospace";
-        background: var!(background);
-        border: format!("1px solid {}", var!(border));
-        padding: var!(space-md);
         font-size: var!(font-sm);
         white-space: "pre-wrap";
         word-break: "break-all";
@@ -3279,14 +3187,12 @@ class! {
         border-left: format!("4px solid {}", var!(accent));
         margin: "0px";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(background);
         color: "inherit";
         font-style: "italic";
         box-sizing: "border-box";
     }
 
     pub(crate) c_tag_figure_placeholder {
-        background: var!(background);
         border: format!("1px dashed {}", var!(border));
         padding: format!("{} {}", var!(space-xl), var!(space-md));
         text-align: "center";
@@ -3387,7 +3293,6 @@ class! {
     pub(crate) c_tag_demo_th {
         text-align: "left";
         padding: format!("{} {}", var!(space-sm), var!(space-md));
-        background: var!(background);
         border: format!("1px solid {}", var!(border));
         font-weight: "600";
         color: "inherit";
@@ -3419,18 +3324,15 @@ class! {
 
     pub(crate) c_tag_demo_canvas {
         border: format!("1px solid {}", var!(border));
-        background: var!(background);
     }
 
     pub(crate) c_tag_demo_svg {
         border: format!("1px solid {}", var!(border));
-        background: var!(background);
     }
 
     pub(crate) c_tag_demo_video {
         width: "100%";
         max-width: "100%";
-        background: var!(background);
     }
 
     pub(crate) c_tag_demo_audio {
@@ -3452,12 +3354,10 @@ class! {
         gap: var!(gap-component);
     }
 
-
     pub(crate) c_tag_demo_input {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        background: var!(background);
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
@@ -3574,7 +3474,6 @@ class! {
         width: "100%";
         min-height: "80px";
         padding: format!("{} {}", var!(space-md), var!(space-lg));
-        background: var!(background);
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
@@ -3598,7 +3497,6 @@ class! {
         width: "100%";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
-        background: var!(background);
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
@@ -3621,7 +3519,6 @@ class! {
         width: "200px";
         height: "8px";
         vertical-align: "middle";
-        background: var!(background);
         border: "none";
         border-radius: "4px";
         overflow: "hidden";
@@ -3640,7 +3537,6 @@ class! {
         width: "200px";
         height: "8px";
         vertical-align: "middle";
-        background: var!(background);
         border: "none";
         border-radius: "4px";
         overflow: "hidden";
@@ -3684,12 +3580,6 @@ class! {
         gap: var!(space-sm);
     }
 
-    pub(crate) c_tag_demo_details {
-        border: format!("1px solid {}", var!(border));
-        padding: var!(space-md);
-        background: var!(background);
-    }
-
     pub(crate) c_tag_demo_summary {
         cursor: "pointer";
         font-weight: "600";
@@ -3701,14 +3591,12 @@ class! {
     pub(crate) c_tag_demo_dialog {
         border: format!("1px solid {}", var!(border));
         padding: var!(space-md);
-        background: var!(background);
         color: "inherit";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Sticky & CSS Effects Demo
     // ═══════════════════════════════════════════════════════════════════════════
-
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Home Page — Hero Section
@@ -3718,7 +3606,6 @@ class! {
         position: "relative";
         text-align: "center";
         margin-bottom: var!(space-xl);
-        background: var!(background);
         flex: "1";
         display: "flex";
         flex-direction: "column";
@@ -3760,7 +3647,6 @@ class! {
         justify-content: "center";
         align-items: "center";
         padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        background: var!(background);
         color: var!(accent);
         font-size: var!(font-xs);
         font-weight: "600";
@@ -3874,7 +3760,6 @@ class! {
         align-items: "center";
         justify-content: "center";
         gap: var!(space-xs);
-        background: var!(background);
     }
 
     pub(crate) c_home_stat_icon {

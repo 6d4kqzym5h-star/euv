@@ -397,7 +397,6 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                         "A disclosure widget with a summary."
                     }
                     details {
-                        class: c_tag_demo_details()
                         summary {
                             class: c_tag_demo_summary()
                             "Click to expand details"

@@ -77,25 +77,6 @@ pub(crate) fn get_log_item_class(level: LogLevel) -> String {
     }
 }
 
-/// Returns the combined CSS class string for the level badge based on log level.
-///
-/// # Arguments
-///
-/// - `LogLevel` - The log level of the entry.
-///
-/// # Returns
-///
-/// - `String` - The combined CSS class string for the badge.
-pub(crate) fn get_badge_class(level: LogLevel) -> String {
-    let base_name: &'static str = c_vconsole_level_badge().get_name();
-    let badge_class: &'static str = match level {
-        LogLevel::Log => c_vconsole_badge_log().get_name(),
-        LogLevel::Warn => c_vconsole_badge_warn().get_name(),
-        LogLevel::Error => c_vconsole_badge_error().get_name(),
-    };
-    format!("{} {}", base_name, badge_class)
-}
-
 /// Returns the short badge label for a log level.
 ///
 /// # Arguments
