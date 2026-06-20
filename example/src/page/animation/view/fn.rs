@@ -31,13 +31,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: "Toggle"
-                        onclick: use_toggle(box_visible)
-                        if { box_visible.get() } {
+                        label: if { box_visible.get() } {
                             "Hide Element"
                         } else {
                             "Show Element"
                         }
+                        onclick: use_toggle(box_visible)
                     }
                 }
                 if { box_visible.get() } {
@@ -57,13 +56,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: "Toggle"
-                        onclick: use_toggle(spin_active)
-                        if { spin_active.get() } {
+                        label: if { spin_active.get() } {
                             "Stop Spin"
                         } else {
                             "Start Spin"
                         }
+                        onclick: use_toggle(spin_active)
                     }
                 }
                 div {
@@ -88,13 +86,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: "Toggle"
-                        onclick: use_toggle(pulse_active)
-                        if { pulse_active.get() } {
+                        label: if { pulse_active.get() } {
                             "Stop Pulse"
                         } else {
                             "Start Pulse"
                         }
+                        onclick: use_toggle(pulse_active)
                     }
                 }
                 div {
@@ -117,13 +114,11 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         variant: EuvButtonVariant::Primary
                         label: "Start"
                         onclick: progress_on_start(progress)
-                        "Start"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Reset"
                         onclick: progress_on_reset(progress)
-                        "Reset"
                     }
                 }
                 div {
@@ -147,13 +142,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: "Toggle"
-                        onclick: use_toggle(scale_active)
-                        if { scale_active.get() } {
+                        label: if { scale_active.get() } {
                             "Click me to restore!"
                         } else {
                             "Click me to shrink!"
                         }
+                        onclick: use_toggle(scale_active)
                     }
                 }
                 div {

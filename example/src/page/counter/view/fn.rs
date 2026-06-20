@@ -35,19 +35,16 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Add"
                         onclick: counter_on_increment(count)
-                        "Add"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Subtract"
                         onclick: counter_on_decrement(count)
-                        "Subtract"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Reset"
                         onclick: counter_on_reset(count)
-                        "Reset"
                     }
                 }
             }

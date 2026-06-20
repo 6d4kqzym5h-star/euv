@@ -175,7 +175,6 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Submit"
                         onclick: select_on_submit_feedback(state)
-                        "Submit"
                     }
                 }
                 if { !state.get_feedback().get().is_empty() } {

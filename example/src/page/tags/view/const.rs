@@ -102,12 +102,6 @@ pub(crate) const TAGS_BUTTON_SUBMIT: &str = "Submit";
 /// The button label for the form reset action.
 pub(crate) const TAGS_BUTTON_RESET: &str = "Reset";
 
-/// The button label to close the dialog element.
-pub(crate) const TAGS_DIALOG_CLOSE: &str = "Close";
-
-/// The button label to open the dialog element.
-pub(crate) const TAGS_DIALOG_OPEN: &str = "Open";
-
 /// The menu command label for the first item.
 pub(crate) const TAGS_MENU_COMMAND_FIRST: &str = "Command 1";
 

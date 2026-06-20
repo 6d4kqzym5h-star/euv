@@ -113,7 +113,6 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                         variant: EuvButtonVariant::Primary
                         label: "Browse"
                         onclick: file_upload_on_select()
-                        "Browse"
                     }
                 }
                 div {
@@ -151,7 +150,6 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                         variant: EuvButtonVariant::Primary
                         label: "Clear"
                         onclick: file_upload_on_clear(state)
-                        "Clear"
                     }
                 }
             }

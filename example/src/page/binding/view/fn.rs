@@ -51,14 +51,12 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                     label: "+1"
                     onclick: on_increment
                     disabled: disabled
-                    "+1"
                 }
                 euv_button {
                     variant: EuvButtonVariant::Primary
                     label: "Reset"
                     onclick: on_reset
                     disabled: disabled
-                    "Reset"
                 }
             }
             if { disabled.get() } {
@@ -383,11 +381,6 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                             variant: EuvButtonVariant::Primary
                             label: "Toggle"
                             onclick: typed_props_on_toggle_disabled(typed_state.get_disabled())
-                            if { typed_state.get_disabled().get() } {
-                                "Enable"
-                            } else {
-                                "Disable"
-                            }
                         }
                     }
                     div {

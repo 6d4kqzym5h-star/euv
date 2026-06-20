@@ -52,19 +52,16 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Set"
                         onclick: local_storage_on_set(state)
-                        "Set"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Get"
                         onclick: local_storage_on_get(state)
-                        "Get"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Remove"
                         onclick: local_storage_on_remove(state)
-                        "Remove"
                     }
                 }
                 div {
@@ -114,19 +111,16 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Set"
                         onclick: session_storage_on_set(state)
-                        "Set"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Get"
                         onclick: session_storage_on_get(state)
-                        "Get"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Remove"
                         onclick: session_storage_on_remove(state)
-                        "Remove"
                     }
                 }
                 div {
@@ -163,13 +157,11 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Copy"
                         onclick: clipboard_on_copy(state)
-                        "Copy"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Paste"
                         onclick: clipboard_on_paste(state)
-                        "Paste"
                     }
                 }
                 div {
@@ -194,9 +186,8 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     class: c_button_controls()
                     euv_button {
                         variant: EuvButtonVariant::Primary
-                        label: "Refresh"
+                        label: "Refresh Size"
                         onclick: window_on_refresh_size(state)
-                        "Refresh"
                     }
                 }
                 div {
@@ -311,19 +302,16 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Log"
                         onclick: console_on_log(state.get_console_input())
-                        "log"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Warn"
                         onclick: console_on_warn(state.get_console_input())
-                        "warn"
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Error"
                         onclick: console_on_error(state.get_console_input())
-                        "error"
                     }
                 }
             }

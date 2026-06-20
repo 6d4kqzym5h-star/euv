@@ -83,7 +83,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: CANVAS_DRAW_LABEL
                         onclick: canvas_on_draw(state)
-                        CANVAS_DRAW_LABEL
                     }
                 }
                 div {
@@ -116,7 +115,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                                 variant: EuvButtonVariant::Primary
                                 label: "Clear"
                                 onclick: canvas_on_clear(state)
-                                "Clear"
                             }
                         }
                         div {
@@ -134,7 +132,6 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                                 variant: EuvButtonVariant::Primary
                                 label: CANVAS_FULLSCREEN_EXIT_LABEL
                                 onclick: canvas_on_exit_fullscreen(state)
-                                CANVAS_FULLSCREEN_EXIT_LABEL
                             }
                         }
                     }

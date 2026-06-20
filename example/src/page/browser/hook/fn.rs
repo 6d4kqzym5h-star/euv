@@ -124,14 +124,19 @@ pub(crate) fn session_storage_remove(key: &str) {
 pub(crate) async fn clipboard_read_text() -> String {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
-    let clipboard: Clipboard = navigator.clipboard();
-    let promise: Promise = clipboard.read_text();
-    let future: JsFuture = JsFuture::from(promise);
-    match future.await {
-        Ok(value) => value
-            .as_string()
-            .unwrap_or_else(|| "No text content".to_string()),
-        Err(_) => "Failed to read clipboard".to_string(),
+    match Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
+        Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
+            let clipboard: Clipboard = navigator.clipboard();
+            let promise: Promise = clipboard.read_text();
+            let future: JsFuture = JsFuture::from(promise);
+            match future.await {
+                Ok(value) => value
+                    .as_string()
+                    .unwrap_or_else(|| "No text content".to_string()),
+                Err(_) => "Failed to read clipboard".to_string(),
+            }
+        }
+        _ => "Clipboard API not available (requires secure context)".to_string(),
     }
 }
 
@@ -147,10 +152,15 @@ pub(crate) async fn clipboard_read_text() -> String {
 pub(crate) async fn clipboard_write_text(text: &str) -> bool {
     let window: Window = window().expect("no global window exists");
     let navigator: Navigator = window.navigator();
-    let clipboard: Clipboard = navigator.clipboard();
-    let promise: Promise = clipboard.write_text(text);
-    let future: JsFuture = JsFuture::from(promise);
-    future.await.is_ok()
+    match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
+        Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
+            let clipboard: Clipboard = navigator.clipboard();
+            let promise: Promise = clipboard.write_text(text);
+            let future: JsFuture = JsFuture::from(promise);
+            future.await.is_ok()
+        }
+        _ => false,
+    }
 }
 
 /// Reads the browser window inner dimensions.
@@ -384,15 +394,24 @@ pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)
         let result: Signal<String> = state.get_clipboard_result();
         if text.is_empty() {
             result.set("Please enter text to copy".to_string());
-        } else {
-            spawn_local(async move {
-                let success: bool = clipboard_write_text(&text_clone).await;
-                if success {
-                    result.set("Copied to clipboard!".to_string());
-                } else {
-                    result.set("Failed to copy".to_string());
-                }
-            });
+            return;
+        }
+        let window: Window = window().expect("no global window exists");
+        let navigator: Navigator = window.navigator();
+        match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
+            Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
+                spawn_local(async move {
+                    let success: bool = clipboard_write_text(&text_clone).await;
+                    if success {
+                        result.set("Copied to clipboard!".to_string());
+                    } else {
+                        result.set("Failed to copy".to_string());
+                    }
+                });
+            }
+            _ => {
+                result.set("Clipboard API not available (requires secure context)".to_string());
+            }
         }
     }))
 }
@@ -409,10 +428,19 @@ pub(crate) fn clipboard_on_copy(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)
 pub(crate) fn clipboard_on_paste(state: UseBrowserApi) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
         let result: Signal<String> = state.get_clipboard_result();
-        spawn_local(async move {
-            let text: String = clipboard_read_text().await;
-            result.set(format!("Pasted: {}", text));
-        });
+        let window: Window = window().expect("no global window exists");
+        let navigator: Navigator = window.navigator();
+        match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
+            Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
+                spawn_local(async move {
+                    let text: String = clipboard_read_text().await;
+                    result.set(format!("Pasted: {}", text));
+                });
+            }
+            _ => {
+                result.set("Clipboard API not available (requires secure context)".to_string());
+            }
+        }
     }))
 }
 

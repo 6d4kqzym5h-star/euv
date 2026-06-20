@@ -90,31 +90,23 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Close"
                             onclick: camera_on_close(state)
-                            "Close"
                         }
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Switch"
                             onclick: camera_on_switch(state)
-                            if { matches!(state.get_facing().get(), CameraFacing::User) } {
-                                CAMERA_SWITCH_TO_REAR_LABEL
-                            } else {
-                                CAMERA_SWITCH_TO_FRONT_LABEL
-                            }
                         }
                     } else if { state.get_camera_loading().get() } {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Opening..."
                             disabled: state.get_camera_loading()
-                            "Opening..."
                         }
                     } else {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Open"
                             onclick: camera_on_open(state)
-                            "Open"
                         }
                     }
                 }

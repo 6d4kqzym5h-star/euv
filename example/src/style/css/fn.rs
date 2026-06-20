@@ -52,13 +52,9 @@ pub(crate) fn inject_app_global_css() {
         "@keyframes euv-shimmer-soft { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } } ",
     );
     let a11y_css: &str = concat!(
-        ":focus-visible { outline: none; box-shadow: 0 0 0 3px ",
-        var!(accent),
-        "; } ",
+        ":focus-visible { outline: none }",
         "@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-iteration-count: 1 !important; scroll-behavior: auto !important; } } ",
-        "@media (hover: none) and (pointer: coarse) { * { -webkit-tap-highlight-color: transparent; } .c_card:hover, .c_home_stat_card:hover { transform: none !important; box-shadow: ",
-        var!(shadow - sm),
-        " !important; } .c_home_btn_primary:hover, .c_home_btn_secondary:hover { transform: none !important; } } ",
+        "@media (hover: none) and (pointer: coarse) { * { -webkit-tap-highlight-color: transparent; } .c_card:hover, .c_home_stat_card:hover { transform: none !important; } .c_home_btn_primary:hover, .c_home_btn_secondary:hover { transform: none !important; } } ",
     );
     Css::inject_css(global);
     Css::inject_css(scrollbar);

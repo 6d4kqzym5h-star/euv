@@ -232,6 +232,7 @@ fn build_vconsole_log_nodes(
                     key: index.to_string()
                     class: get_log_item_class(entry.get_level())
                     span {
+                        class: get_log_level_badge_class(entry.get_level())
                         get_log_level_badge(entry.get_level())
                     }
                     entry.get_message().clone()

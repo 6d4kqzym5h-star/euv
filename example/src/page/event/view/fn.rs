@@ -1123,7 +1123,6 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                             euv_button {
                                 variant: EuvButtonVariant::Primary
                                 label: "Submit"
-                                "Submit"
                             }
                         }
                     }

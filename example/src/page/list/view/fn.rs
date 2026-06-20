@@ -41,7 +41,6 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Add"
                             onclick: todo_list_on_add(state)
-                            "Add"
                         }
                     }
                 }
@@ -69,7 +68,6 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                                     variant: EuvButtonVariant::Primary
                                     label: "Remove"
                                     onclick: todo_list_on_remove(state.get_items(), index)
-                                    "Remove"
                                 }
                             }
                         }

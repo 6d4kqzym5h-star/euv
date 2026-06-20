@@ -34,21 +34,18 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Wait"
                             disabled: state.get_connecting()
-                            "Wait"
                         }
                     } else if { state.get_connected().get() } {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Close"
                             onclick: sse_on_disconnect(state)
-                            "Close"
                         }
                     } else {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Connect"
                             onclick: sse_on_connect(state)
-                            "Connect"
                         }
                     }
                 }

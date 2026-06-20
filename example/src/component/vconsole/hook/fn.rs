@@ -54,6 +54,25 @@ pub(crate) fn filter_console_entries(
         .collect()
 }
 
+/// Returns the combined CSS class string for a log level badge span based on its level.
+///
+/// # Arguments
+///
+/// - `LogLevel` - The log level of the entry.
+///
+/// # Returns
+///
+/// - `String` - The combined CSS class string.
+pub(crate) fn get_log_level_badge_class(level: LogLevel) -> String {
+    let base_name: &'static str = c_vconsole_level_badge().get_name();
+    let level_class: &'static str = match level {
+        LogLevel::Log => c_vconsole_level_badge_log().get_name(),
+        LogLevel::Warn => c_vconsole_level_badge_warn().get_name(),
+        LogLevel::Error => c_vconsole_level_badge_error().get_name(),
+    };
+    format!("{base_name} {level_class}")
+}
+
 /// Returns the combined CSS class string for a log entry based on its level and recency.
 ///
 /// # Arguments

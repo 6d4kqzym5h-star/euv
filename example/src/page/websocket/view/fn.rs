@@ -35,21 +35,18 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                             variant: EuvButtonVariant::Primary
                             label: "Wait"
                             disabled: state.get_connecting()
-                            "Wait"
                         }
                     } else if { state.get_connected().get() } {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Close"
                             onclick: websocket_on_disconnect(state)
-                            "Close"
                         }
                     } else {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Connect"
                             onclick: websocket_on_connect(state)
-                            "Connect"
                         }
                     }
                 }
@@ -78,7 +75,6 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                                 variant: EuvButtonVariant::Primary
                                 label: "Send"
                                 onclick: websocket_on_send(state)
-                                "Send"
                             }
                         }
                     }

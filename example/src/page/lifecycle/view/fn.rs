@@ -41,7 +41,6 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
                         variant: EuvButtonVariant::Primary
                         label: "Update"
                         onclick: lifecycle_on_trigger(state)
-                        "Update"
                     }
                 }
             }

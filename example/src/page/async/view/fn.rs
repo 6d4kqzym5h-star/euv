@@ -30,7 +30,6 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
                         label: "Fetch"
                         onclick: fetch_on_fetch(fetch)
                         disabled: fetch.get_loading()
-                        "Fetch"
                     }
                 }
                 if { fetch.get_loading().get() } {

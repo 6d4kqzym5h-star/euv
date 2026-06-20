@@ -125,8 +125,6 @@ class! {
         width: "36px";
         height: "36px";
         font-size: var!(font-xl);
-        box-shadow: var!(shadow-console-button);
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         @media ((max-width: 767px)) {
             width: "44px";
             height: "44px";
@@ -182,7 +180,6 @@ class! {
         justify-content: "center";
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(ring));
         }
         :active {
             background: "transparent";
@@ -301,7 +298,7 @@ class! {
         flex-direction: "column";
         align-items: "stretch";
         min-height: "100%";
-        padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-top), var!(padding-main-horizontal));
+        padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-bottom), var!(padding-main-horizontal));
         overflow: "auto";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar {
@@ -318,7 +315,7 @@ class! {
             background: var!(scrollbar-thumb-active);
         }
         @media ((max-width: 767px)) {
-            padding: format!("calc(env(safe-area-inset-top, 0px) + {}) {} calc(env(safe-area-inset-bottom, 0px) + {}) {}", var!(space-md), var!(padding-main-horizontal-mobile), var!(space-3xl), var!(padding-main-horizontal-mobile));
+            padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal-mobile), var!(padding-main-bottom), var!(padding-main-horizontal-mobile));
             align-items: "stretch";
             scrollbar-width: "none";
             ::-webkit-scrollbar {
@@ -329,20 +326,15 @@ class! {
 
     pub(crate) c_page_router {
         flex: "1";
-        min-height: "0px";
         display: "flex";
         flex-direction: "column";
     }
 
     pub(crate) c_page_container {
         width: "100%";
-        max-width: var!(content-max-width);
         margin: "0px auto";
-        display: "flex";
-        flex-direction: "column";
-        flex: "1";
-        min-height: "0px";
-        padding-bottom: var!(space-4xl);
+        max-width: var!(content-max-width);
+        padding: format!("{} 0px {}", var!(padding-main-top), var!(padding-main-bottom));
         gap: var!(page-block-gap);
         @media ((max-width: 767px)) {
             gap: var!(page-block-gap-mobile);
@@ -454,22 +446,18 @@ class! {
         text-align: "center";
         outline: "none";
         box-sizing: "border-box";
-        box-shadow: var!(shadow-accent-sm);
         white-space: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
         user-select: "none";
         -webkit-user-select: "none";
-        transition: format!("background {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}, {}", var!(ring), var!(shadow-accent-sm));
         }
         :disabled {
             background: var!(muted-foreground);
             cursor: "not-allowed";
             opacity: "1";
-            box-shadow: "none";
         }
         :hover {
             background: var!(accent);
@@ -483,7 +471,6 @@ class! {
             max-width: "100%";
             padding: format!("{} {}", var!(space-lg), var!(space-xl));
             font-size: var!(font-md);
-            box-shadow: var!(shadow-accent-sm);
         }
     }
 
@@ -511,7 +498,6 @@ class! {
         }
         :focus {
             outline: "none";
-            box-shadow: "none";
         }
     }
 
@@ -553,7 +539,6 @@ class! {
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         :disabled {
             background: var!(muted-foreground);
@@ -586,7 +571,6 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         box-sizing: "border-box";
-        transition: format!("background {} {}, border-color {} {}, color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             background: var!(accent-muted);
             border-color: var!(accent);
@@ -594,7 +578,6 @@ class! {
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         :active {
             background: "transparent";
@@ -621,7 +604,6 @@ class! {
         background: var!(accent);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-2xs), var!(space-xs));
@@ -641,7 +623,6 @@ class! {
         text-align: "center";
         background: "transparent";
         border: format!("1.5px solid {}", var!(border));
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-2xs), var!(space-xs));
             font-size: var!(font-xs);
@@ -688,7 +669,6 @@ class! {
         cursor: "pointer";
         background: "transparent";
         border: format!("1.5px solid {}", var!(accent));
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
     pub(crate) c_euv_tag_outline_white {
@@ -702,7 +682,6 @@ class! {
         cursor: "pointer";
         background: "transparent";
         border: format!("1.5px solid {}", var!(border));
-        transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -735,7 +714,6 @@ class! {
         font-size: var!(font-base);
         line-height: "40px";
         box-sizing: "border-box";
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         outline: "none";
         color: var!(foreground);
         :hover {
@@ -745,7 +723,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -772,11 +749,9 @@ class! {
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
-        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
             border-color: var!(foreground);
-            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
@@ -813,11 +788,9 @@ class! {
         background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='currentColor' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")";
         background-repeat: "no-repeat";
         background-position: "right 14px center";
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -835,7 +808,6 @@ class! {
         word-wrap: "break-word";
         font-family: "inherit";
         color: var!(foreground);
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -843,7 +815,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -861,11 +832,9 @@ class! {
         word-wrap: "break-word";
         font-family: "inherit";
         color: var!(foreground);
-        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
             border-color: var!(foreground);
-            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
@@ -883,7 +852,7 @@ class! {
 
     pub(crate) c_field_error_text {
         color: var!(foreground);
-        font-size: "13px";
+        font-size: var!(font-base);
         margin-top: var!(space-xs);
         margin-bottom: var!(space-sm);
     }
@@ -902,10 +871,8 @@ class! {
 
     pub(crate) c_success_box {
         margin: format!("{} 0px", var!(gap-component));
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
         background: var!(accent-muted);
         color: var!(foreground);
-        border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
         box-sizing: "border-box";
     }
@@ -1017,7 +984,6 @@ class! {
         aspect-ratio: "16 / 9";
         object-fit: "cover";
         border: format!("2px solid {}", var!(accent));
-        box-shadow: var!(shadow-accent-sm);
         box-sizing: "border-box";
     }
 
@@ -1057,10 +1023,8 @@ class! {
 
     pub(crate) c_camera_error_box {
         margin: format!("{} 0px", var!(gap-component));
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
         color: var!(foreground);
         font-size: var!(font-base);
-        border: format!("1px solid {}", var!(border));
         word-break: "break-all";
         overflow-wrap: "break-word";
         box-sizing: "border-box";
@@ -1212,7 +1176,6 @@ class! {
             cursor: "pointer";
             -webkit-appearance: "none";
             margin-top: "-7px";
-            box-shadow: var!(shadow-sm);
         }
         ::-moz-range-track {
             height: "6px";
@@ -1227,7 +1190,6 @@ class! {
             border: format!("2px solid {}", var!(accent));
             border-radius: "50%";
             cursor: "pointer";
-            box-shadow: var!(shadow-sm);
         }
     }
 
@@ -1241,8 +1203,6 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_custom_attrs_demo {
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border));
         color: "inherit";
         box-sizing: "border-box";
     }
@@ -1255,7 +1215,7 @@ class! {
     pub(crate) c_demo_text_muted {
         color: "inherit";
         opacity: "1";
-        font-size: "13px";
+        font-size: var!(font-base);
         margin-bottom: "0px";
     }
 
@@ -1296,7 +1256,7 @@ class! {
 
     pub(crate) c_loading_subtitle {
         color: var!(muted-foreground);
-        font-size: "13px";
+        font-size: var!(font-base);
     }
 
     pub(crate) c_error_container {
@@ -1334,7 +1294,7 @@ class! {
 
     pub(crate) c_data_pre {
         color: var!(foreground);
-        font-size: "13px";
+        font-size: var!(font-base);
         margin: "0px";
         white-space: "pre-wrap";
         word-break: "break-all";
@@ -1438,7 +1398,7 @@ class! {
     pub(crate) c_tab_text_muted {
         color: "inherit";
         opacity: "1";
-        font-size: "13px";
+        font-size: var!(font-base);
     }
 
     pub(crate) c_tab_text_input {
@@ -1467,7 +1427,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -1481,17 +1440,15 @@ class! {
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
-        transition: format!("border-color {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :focus {
             outline: "none";
             border-color: var!(foreground);
-            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
     pub(crate) c_list_error_text {
         color: var!(foreground);
-        font-size: "13px";
+        font-size: var!(font-base);
         margin-top: var!(gap-element);
         margin-bottom: var!(gap-element);
         padding-left: var!(space-lg);
@@ -1537,16 +1494,15 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_log_container {
-        padding: format!("0px {}", var!(space-sm));
         font-family: "ui-monospace, monospace";
-        font-size: "13px";
+        font-size: var!(font-base);
         margin-top: "0px";
         color: var!(foreground);
     }
 
     pub(crate) c_log_item {
         padding: format!("{} 0px", var!(space-sm));
-        font-size: "13px";
+        font-size: var!(font-base);
         color: var!(foreground);
     }
 
@@ -1796,8 +1752,6 @@ class! {
         padding: "0px";
         max-width: "480px";
         width: "90%";
-        box-shadow: var!(shadow-modal);
-        border: format!("1px solid {}", var!(border));
         animation: format!("euv-scale-in-modal {} {}", var!(duration-modal-content), var!(ease-bounce));
         overflow: "hidden";
         color: var!(foreground);
@@ -1814,8 +1768,7 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        padding: format!("{} {}", var!(space-md), var!(space-xl));
-        border-bottom: format!("1px solid {}", var!(border));
+        padding: format!("{} {} 0px {}", var!(space-md), var!(space-xl), var!(space-xl));
     }
 
     pub(crate) c_modal_title {
@@ -1826,7 +1779,7 @@ class! {
     }
 
     pub(crate) c_modal_body {
-        padding: format!("{} {}", var!(space-md), var!(space-xl));
+        padding: format!("0px {} {} {}", var!(space-xl), var!(space-md), var!(space-xl));
         color: "inherit";
     }
 
@@ -2051,7 +2004,6 @@ class! {
         z-index: "10001";
         display: "flex";
         flex-direction: "column";
-        box-shadow: var!(shadow-console-panel);
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         overflow: "hidden";
         padding: format!("{} {}", var!(padding-main-top), var!(padding-main-horizontal));
@@ -2099,7 +2051,7 @@ class! {
         align-items: "center";
         border-bottom: format!("1px dashed {}", var!(border));
         flex-shrink: "0";
-        padding-bottom: var!(space-md);
+        padding-bottom: var!(padding-main-top);
     }
 
     pub(crate) c_vconsole_title {
@@ -2147,7 +2099,6 @@ class! {
         outline: "none";
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
         :active {
             background: var!(accent);
@@ -2179,7 +2130,6 @@ class! {
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
         :active {
             background: "transparent";
@@ -2194,14 +2144,16 @@ class! {
         flex-wrap: "wrap";
         padding-bottom: var!(space-md);
         font-family: "ui-monospace, monospace";
-        font-size: "13px";
+        font-size: var!(font-base);
     }
 
     pub(crate) c_vconsole_log_item {
+        display: "flex";
+        align-items: "center";
         padding: format!("{} 0px", var!(space-sm));
         border-bottom: format!("1px dashed {}", var!(border));
         color: var!(foreground);
-        font-size: "13px";
+        font-size: var!(font-base);
         word-break: "break-all";
     }
 
@@ -2220,7 +2172,7 @@ class! {
 
     pub(crate) c_vconsole_empty {
         color: var!(muted-foreground);
-        font-size: "13px";
+        font-size: var!(font-base);
         text-align: "center";
         padding: format!("{} 0px", var!(space-4xl));
         overflow: "hidden";
@@ -2271,7 +2223,6 @@ class! {
         background: var!(accent);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(border));
         }
     }
 
@@ -2291,13 +2242,25 @@ class! {
 
     pub(crate) c_vconsole_level_badge {
         display: "inline-block";
-        padding: "2px 7px";
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
         font-size: "10px";
         font-weight: "600";
         margin-right: var!(space-sm);
         letter-spacing: "0.05em";
         color: var!(foreground);
         border: "1px solid currentColor";
+    }
+
+    pub(crate) c_vconsole_level_badge_log {
+        color: var!(accent);
+    }
+
+    pub(crate) c_vconsole_level_badge_warn {
+        color: "#f59e0b";
+    }
+
+    pub(crate) c_vconsole_level_badge_error {
+        color: "#ef4444";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2440,7 +2403,6 @@ class! {
         padding-top: "env(safe-area-inset-top, 0px)";
         padding-bottom: "env(safe-area-inset-bottom, 0px)";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
-        box-shadow: var!(shadow-drawer);
         overflow: "hidden";
     }
 
@@ -2470,7 +2432,7 @@ class! {
     pub(crate) c_mobile_main {
         width: "100%";
         flex: "1";
-        padding: format!("{} {} calc({} + env(safe-area-inset-bottom, 0px)) {}", var!(space-lg), var!(padding-main-horizontal-mobile), var!(space-lg), var!(padding-main-horizontal-mobile));
+        padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal-mobile), var!(padding-main-bottom), var!(padding-main-horizontal-mobile));
         overflow-y: "auto";
         scrollbar-width: "none";
         ::-webkit-scrollbar {
@@ -2546,7 +2508,7 @@ class! {
     }
 
     pub(crate) c_keep_alive_preview_label {
-        font-size: "13px";
+        font-size: var!(font-base);
         font-weight: "600";
         color: var!(accent);
         margin: format!("0px 0px {} 0px", var!(space-xs));
@@ -2576,7 +2538,6 @@ class! {
         display: "flex";
         align-items: "center";
         gap: format!("{}", var!(space-md));
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
         margin: format!("{} 0px", var!(space-sm));
         font-size: var!(font-base);
         color: "inherit";
@@ -2624,7 +2585,7 @@ class! {
     }
 
     pub(crate) c_file_upload_drop_hint {
-        font-size: "13px";
+        font-size: var!(font-base);
         color: "inherit";
         opacity: "1";
         margin: "0px";
@@ -2642,7 +2603,7 @@ class! {
     }
 
     pub(crate) c_binding_child_label {
-        font-size: "13px";
+        font-size: var!(font-base);
         font-weight: "600";
         color: var!(accent);
         text-transform: "uppercase";
@@ -2744,12 +2705,9 @@ class! {
             cursor: "pointer";
             -webkit-appearance: "none";
             margin-top: "-7px";
-            box-shadow: var!(shadow-sm);
-            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         }
         : active::-webkit-slider-thumb {
             transform: "scale(0.92)";
-            box-shadow: format!("0 0 0 4px {}", var!(accent));
         }
         ::-moz-range-track {
             height: "6px";
@@ -2764,17 +2722,14 @@ class! {
             border: format!("2px solid {}", var!(accent));
             border-radius: "50%";
             cursor: "pointer";
-            box-shadow: var!(shadow-sm);
-            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         }
         : active::-moz-range-thumb {
             transform: "scale(0.92)";
-            box-shadow: format!("0 0 0 4px {}", var!(accent));
         }
     }
 
     pub(crate) c_binding_slider_value {
-        font-size: "13px";
+        font-size: var!(font-base);
         font-weight: "500";
         color: "inherit";
         min-width: "32px";
@@ -2784,7 +2739,7 @@ class! {
 
     pub(crate) c_binding_typed_prop_value {
         font-family: "ui-monospace, monospace";
-        font-size: "13px";
+        font-size: var!(font-base);
         font-weight: "600";
         color: var!(accent);
         padding: format!("1px {}", var!(space-sm));
@@ -2797,11 +2752,9 @@ class! {
     }
 
     pub(crate) c_binding_typed_warning {
-        font-size: "13px";
+        font-size: var!(font-base);
         font-weight: "500";
         color: var!(foreground);
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border: format!("1px solid {}", var!(border));
         margin-bottom: "0px";
     }
 
@@ -2839,7 +2792,6 @@ class! {
         }
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 2px {}", var!(accent));
         }
         :active {
             background: var!(accent);
@@ -2888,8 +2840,6 @@ class! {
         display: "flex";
         gap: var!(gap-component);
         padding: format!("{} 0px", var!(gap-component));
-        margin-bottom: var!(gap-component);
-        border-bottom: format!("1px solid {}", var!(border));
         flex-wrap: "nowrap";
         overflow: "hidden";
         text-overflow: "ellipsis";
@@ -2922,7 +2872,6 @@ class! {
 
     pub(crate) c_virtual_list_card {
         flex: "1";
-        min-height: "0px";
         padding: var!(space-xl);
         color: var!(foreground);
         display: "flex";
@@ -2935,7 +2884,6 @@ class! {
     pub(crate) c_virtual_list_row {
         display: "flex";
         align-items: "center";
-        padding: format!("0px {}", var!(space-lg));
         gap: var!(space-lg);
         height: "100%";
         box-sizing: "border-box";
@@ -2966,7 +2914,7 @@ class! {
     }
 
     pub(crate) c_virtual_list_row_description {
-        font-size: "13px";
+        font-size: var!(font-base);
         color: "inherit";
         opacity: "1";
         overflow: "hidden";
@@ -3012,7 +2960,7 @@ class! {
     pub(crate) c_hint {
         color: "inherit";
         opacity: "1";
-        font-size: "13px";
+        font-size: var!(font-base);
         margin-bottom: var!(gap-component);
     }
 
@@ -3069,7 +3017,6 @@ class! {
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -3077,7 +3024,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -3157,7 +3103,6 @@ class! {
         border: format!("1px solid {}", var!(border));
         padding: format!("0px {}", var!(space-xs));
         font-size: var!(font-sm);
-        box-shadow: format!("0 1px 0 {}", var!(border));
     }
 
     pub(crate) c_tag_nav_link {
@@ -3364,7 +3309,6 @@ class! {
         line-height: "40px";
         box-sizing: "border-box";
         outline: "none";
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -3372,7 +3316,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
         ::-webkit-slider-runnable-track {
@@ -3432,12 +3375,9 @@ class! {
             cursor: "pointer";
             -webkit-appearance: "none";
             margin-top: "-7px";
-            box-shadow: var!(shadow-sm);
-            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         }
         : active::-webkit-slider-thumb {
             transform: "scale(0.92)";
-            box-shadow: format!("0 0 0 4px {}", var!(accent));
         }
         ::-moz-range-track {
             height: "6px";
@@ -3452,12 +3392,9 @@ class! {
             border: format!("2px solid {}", var!(accent));
             border-radius: "50%";
             cursor: "pointer";
-            box-shadow: var!(shadow-sm);
-            transition: format!("transform {} {}, box-shadow {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         }
         : active::-moz-range-thumb {
             transform: "scale(0.92)";
-            box-shadow: format!("0 0 0 4px {}", var!(accent));
         }
     }
 
@@ -3480,7 +3417,6 @@ class! {
         box-sizing: "border-box";
         outline: "none";
         resize: "vertical";
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -3488,7 +3424,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -3502,7 +3437,6 @@ class! {
         font-size: var!(font-base);
         box-sizing: "border-box";
         outline: "none";
-        transition: format!("border-color {} {}, box-shadow {} {}, background-color {} {}", var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out), var!(duration-fast), var!(ease-out));
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -3510,7 +3444,6 @@ class! {
         :focus {
             outline: "none";
             border-color: var!(accent);
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
             background: var!(accent-muted);
         }
     }
@@ -3697,13 +3630,11 @@ class! {
         text-decoration: "none";
         border: "1.5px solid transparent";
         cursor: "pointer";
-        box-shadow: var!(shadow-sm);
         letter-spacing: "0.01em";
         vertical-align: "middle";
         min-height: var!(min-height-sm);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(ring));
         }
         :active {
             background: var!(accent);
@@ -3730,7 +3661,6 @@ class! {
         min-height: var!(min-height-sm);
         :focus-visible {
             outline: "none";
-            box-shadow: format!("0 0 0 3px {}", var!(accent));
         }
         :active {
             background: "transparent";

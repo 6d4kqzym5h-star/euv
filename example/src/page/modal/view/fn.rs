@@ -29,7 +29,6 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Open"
                         onclick: modal_on_open_basic(state)
-                        "Open"
                     }
                 }
             }
@@ -45,7 +44,6 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Open"
                         onclick: modal_on_open_confirm(state)
-                        "Ask Confirm"
                     }
                 }
                 if { !state.get_confirm_result().get().is_empty() } {
@@ -67,7 +65,6 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Open"
                         onclick: modal_on_open_form(state)
-                        "Open Form"
                     }
                 }
                 if { !state.get_modal_submitted().get().is_empty() } {
@@ -89,7 +86,6 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Open"
                         onclick: modal_on_open_nested_1(state)
-                        "Open Layer 1"
                     }
                 }
             }
@@ -121,13 +117,11 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Confirm"
                             onclick: modal_on_confirm(state)
-                            "Confirm"
                         }
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Cancel"
                             onclick: modal_on_cancel_confirm(state)
-                            "Cancel"
                         }
                     }
                 }
@@ -170,13 +164,11 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Submit"
                             onclick: modal_on_form_submit(state)
-                            "Submit"
                         }
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Cancel"
                             onclick: modal_on_cancel_form(state)
-                            "Cancel"
                         }
                     }
                 }
@@ -199,7 +191,6 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Open Layer 2"
                             onclick: modal_on_open_nested_2(state)
-                            "Open Layer 2"
                         }
                     }
                 }
@@ -218,7 +209,6 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Open Layer 3"
                             onclick: modal_on_open_nested_3(state)
-                            "Open Layer 3"
                         }
                     }
                 }

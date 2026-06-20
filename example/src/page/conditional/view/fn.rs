@@ -31,7 +31,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         }
                         label: "Toggle"
                         onclick: use_toggle(show_details)
-                        "Toggle"
                     }
                 }
                 if { show_details.get() } {
@@ -64,7 +63,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         }
                         label: "Guest"
                         onclick: user_type_on_select(user_type, "guest")
-                        "Guest"
                     }
                     euv_button {
                         variant: if { user_type.get() == "user" } {
@@ -74,7 +72,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         }
                         label: "User"
                         onclick: user_type_on_select(user_type, "user")
-                        "User"
                     }
                     euv_button {
                         variant: if { user_type.get() == "admin" } {
@@ -84,7 +81,6 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         }
                         label: "Admin"
                         onclick: user_type_on_select(user_type, "admin")
-                        "Admin"
                     }
                 }
                 match { user_type.get().as_str() } {

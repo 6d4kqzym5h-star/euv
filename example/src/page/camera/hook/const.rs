@@ -28,11 +28,5 @@ pub(crate) const CAMERA_URL_PREFIX_HTTP: &str = "http://";
 /// The prefix used to detect secure URL strings in QR code scan results.
 pub(crate) const CAMERA_URL_PREFIX_HTTPS: &str = "https://";
 
-/// The label displayed on the switch camera button when the front camera is active.
-pub(crate) const CAMERA_SWITCH_TO_REAR_LABEL: &str = "Rear";
-
-/// The label displayed on the switch camera button when the rear camera is active.
-pub(crate) const CAMERA_SWITCH_TO_FRONT_LABEL: &str = "Front";
-
 /// The hostname that represents the local loopback device.
 pub(crate) const CAMERA_LOCALHOST_HOSTNAME: &str = "localhost";

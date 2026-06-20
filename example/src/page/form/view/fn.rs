@@ -77,7 +77,6 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
                         variant: EuvButtonVariant::Primary
                         label: "Submit"
                         onclick: form_on_submit(form)
-                        "Submit"
                     }
                 }
                 if { !form.get_submitted().get().is_empty() } {

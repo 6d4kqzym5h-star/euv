@@ -39,7 +39,6 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                         }
                         label: TAG_OPTION_DIV_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_DIV)
-                        TAG_OPTION_DIV_LABEL
                     }
                     euv_button {
                         variant: if { tag_name_opt.get() == TAG_NAME_SPAN } {
@@ -49,7 +48,6 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                         }
                         label: TAG_OPTION_SPAN_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_SPAN)
-                        TAG_OPTION_SPAN_LABEL
                     }
                     euv_button {
                         variant: if { tag_name_opt.get() == TAG_NAME_EUV_CARD } {
@@ -59,7 +57,6 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                         }
                         label: TAG_OPTION_EUV_CARD_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_EUV_CARD)
-                        TAG_OPTION_EUV_CARD_LABEL
                     }
                     euv_button {
                         variant: if { tag_name_opt.get() == TAG_NAME_BADGE } {
@@ -69,7 +66,6 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                         }
                         label: TAG_OPTION_BADGE_LABEL
                         onclick: tag_on_select(tag_name_opt, TAG_NAME_BADGE)
-                        TAG_OPTION_BADGE_LABEL
                     }
                 }
             }

@@ -423,11 +423,6 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             variant: EuvButtonVariant::Primary
                             label: "Toggle Dialog"
                             onclick: use_section_toggle(dialog_open)
-                            if { dialog_open.get() } {
-                                TAGS_DIALOG_CLOSE
-                            } else {
-                                TAGS_DIALOG_OPEN
-                            }
                         }
                         dialog {
                             class: c_tag_demo_dialog()
@@ -1909,17 +1904,14 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             euv_button {
                                 variant: EuvButtonVariant::Primary
                                 label: TAGS_BUTTON_CLICK
-                                TAGS_BUTTON_CLICK
                             }
                             euv_button {
                                 variant: EuvButtonVariant::Primary
                                 label: TAGS_BUTTON_SUBMIT
-                                TAGS_BUTTON_SUBMIT
                             }
                             euv_button {
                                 variant: EuvButtonVariant::Primary
                                 label: TAGS_BUTTON_RESET
-                                TAGS_BUTTON_RESET
                             }
                         }
                     }
@@ -1971,14 +1963,12 @@ pub(crate) fn page_tags(node: VirtualNode<PageTagsProps>) -> VirtualNode {
                             euv_button {
                                 variant: EuvButtonVariant::Primary
                                 label: TAGS_MENU_COMMAND_FIRST
-                                TAGS_MENU_COMMAND_FIRST
                             }
                         }
                         li {
                             euv_button {
                                 variant: EuvButtonVariant::Primary
                                 label: TAGS_MENU_COMMAND_SECOND
-                                TAGS_MENU_COMMAND_SECOND
                             }
                         }
                     }
