@@ -2989,7 +2989,7 @@ class! {
 
     pub(crate) c_virtual_list_container {
         flex: "1";
-        min-height: "0px";
+        height: "460px";
         overflow-y: "auto";
         background: var!(background);
     }
