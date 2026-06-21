@@ -2595,7 +2595,6 @@ class! {
         font-size: var!(font-xl);
         font-weight: "700";
         color: var!(text-on-accent);
-        text-shadow: format!("0px 1px 3px {}", var!(border));
         letter-spacing: "0.02em";
     }
 
