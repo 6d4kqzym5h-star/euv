@@ -84,7 +84,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
 ///
 /// - `VirtualNode` - A styled child input element.
 pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>) -> VirtualNode {
-    let text_value: String = text_signal.get();
+    let _text_value: String = text_signal.get();
     let count_value: i32 = count_signal.get();
     html! {
         div {
@@ -93,22 +93,14 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                 class: c_binding_child_label()
                 "Child Component"
             }
-            div {
-                class: c_element_stack()
-                label {
-                    for: CHILD_INPUT_TEXT_ID
-                    class: c_binding_form_label()
-                    "Edit shared text:"
-                }
-                input {
-                    id: CHILD_INPUT_TEXT_ID
-                    name: CHILD_INPUT_TEXT_NAME
-                    type: BINDING_TEXT_TYPE
-                    autocomplete: BINDING_AUTOCOMPLETE_OFF
-                    value: text_value
-                    class: c_euv_input_no_transition()
-                    oninput: on_input_value(text_signal)
-                }
+            euv_input {
+                id: CHILD_INPUT_TEXT_ID
+                name: CHILD_INPUT_TEXT_NAME
+                label: "Edit shared text:"
+                autocomplete: BINDING_AUTOCOMPLETE_OFF
+                value: text_signal
+                oninput: on_input_value(text_signal)
+                class: c_euv_input_no_transition().clone()
             }
             div {
                 class: c_counter_text()
@@ -164,6 +156,8 @@ pub(crate) fn temperature_converter(
                     value: format!("{:.1}", celsius_value)
                     class: c_euv_input_no_transition()
                     oninput: cross_on_input_celsius(celsius_signal)
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
             }
             span {
@@ -185,6 +179,8 @@ pub(crate) fn temperature_converter(
                     value: format!("{:.1}", fahrenheit_value)
                     class: c_euv_input_no_transition()
                     oninput: cross_on_input_fahrenheit(fahrenheit_signal)
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
             }
         }
@@ -252,6 +248,8 @@ pub(crate) fn color_mixer(
                     style: format!("--value: {}%", (red_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(red_signal)
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
                 span {
                     class: c_binding_slider_value()
@@ -279,6 +277,8 @@ pub(crate) fn color_mixer(
                     style: format!("--value: {}%", (green_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(green_signal)
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
                 span {
                     class: c_binding_slider_value()
@@ -306,6 +306,8 @@ pub(crate) fn color_mixer(
                     style: format!("--value: {}%", (blue_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(blue_signal)
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
                 span {
                     class: c_binding_slider_value()
@@ -344,22 +346,15 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     class: c_demo_text()
                     "Parent passes data to child via props. Child communicates back via callbacks."
                 }
-                div {
-                    class: c_euv_input_wrapper()
-                    label {
-                        for: BINDING_PARENT_MESSAGE_ID
-                        class: c_form_label()
-                        "Parent message: "
-                    }
-                    input {
-                        id: BINDING_PARENT_MESSAGE_ID
-                        name: BINDING_PARENT_MESSAGE_NAME
-                        type: BINDING_TEXT_TYPE
-                        autocomplete: BINDING_AUTOCOMPLETE_OFF
-                        value: props_state.get_parent_message()
-                        class: c_euv_input_no_transition()
-                        oninput: on_input_value(props_state.get_parent_message())
-                    }
+                euv_input {
+                    id: BINDING_PARENT_MESSAGE_ID
+                    name: BINDING_PARENT_MESSAGE_NAME
+                    label: "Parent message: "
+                    input_type: BINDING_TEXT_TYPE
+                    autocomplete: BINDING_AUTOCOMPLETE_OFF
+                    value: props_state.get_parent_message()
+                    oninput: on_input_value(props_state.get_parent_message())
+                    class: c_euv_input_no_transition().clone()
                 }
                 p {
                     class: c_binding_demo_text()

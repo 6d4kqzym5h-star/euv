@@ -574,6 +574,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     class: c_euv_input()
                     onkeydown: on_key_down
                     onkeyup: on_key_up
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
                 div {
                     class: c_event_info_grid()
@@ -1069,6 +1071,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 class: c_euv_input()
                                 oninput: on_euv_input
                                 onchange: on_form_change
+                                onfocus: on_focus_scroll_into_view()
+                                onblur: on_blur_restore_height()
                             }
                         }
                         div {

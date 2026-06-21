@@ -62,12 +62,11 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
                     title: "Send Message"
                     div {
                         class: c_inline_input_row()
-                        input {
-                            type: "text"
-                            class: c_ws_message_input()
+                        euv_input {
                             placeholder: WEBSOCKET_MESSAGE_PLACEHOLDER
-                            value: state.get_message_input().get()
+                            value: state.get_message_input()
                             oninput: on_input_value(state.get_message_input())
+                            class: c_ws_message_input().clone()
                         }
                         div {
                             class: c_inline_input_button_wrap()

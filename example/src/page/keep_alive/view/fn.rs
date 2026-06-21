@@ -93,14 +93,13 @@ fn form_tab() -> VirtualNode {
                     class: c_form_label()
                     "Name"
                 }
-                input {
+                euv_input {
                     id: KEEP_ALIVE_NAME_ID
                     name: KEEP_ALIVE_NAME_NAME
-                    type: KEEP_ALIVE_TEXT_TYPE
+                    input_type: KEEP_ALIVE_TEXT_TYPE
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_NAME
                     placeholder: KEEP_ALIVE_NAME_PLACEHOLDER
-                    value: name.get()
-                    class: c_euv_input()
+                    value: name
                     oninput: on_input_value(name)
                 }
             }
@@ -111,14 +110,13 @@ fn form_tab() -> VirtualNode {
                     class: c_form_label()
                     "Email"
                 }
-                input {
+                euv_input {
                     id: KEEP_ALIVE_EMAIL_ID
                     name: KEEP_ALIVE_EMAIL_NAME
-                    type: KEEP_ALIVE_EMAIL_TYPE
+                    input_type: KEEP_ALIVE_EMAIL_TYPE
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_EMAIL
                     placeholder: KEEP_ALIVE_EMAIL_PLACEHOLDER
-                    value: email.get()
-                    class: c_euv_input()
+                    value: email
                     oninput: on_input_value(email)
                 }
             }

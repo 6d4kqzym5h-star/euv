@@ -34,6 +34,8 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                             c_list_input_error()
                         }
                         oninput: todo_list_on_input_new_item(state)
+                        onfocus: on_focus_scroll_into_view()
+                        onblur: on_blur_restore_height()
                     }
                     div {
                         class: c_inline_input_button_wrap()

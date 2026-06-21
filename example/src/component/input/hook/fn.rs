@@ -119,6 +119,13 @@ pub(crate) fn on_focus_scroll_into_view() -> Option<Rc<dyn Fn(Event)>> {
         let window: Window = window().expect("no global window exists");
         let element_clone: HtmlElement = element.clone();
         let window_clone: Window = window.clone();
+        if let Ok(Some(main_el)) = element.closest("main")
+            && let Ok(main) = main_el.dyn_into::<HtmlElement>()
+        {
+            let _ = main
+                .style()
+                .set_property("padding-bottom", KEYBOARD_EXTRA_PADDING);
+        }
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             let rect: DomRect = element_clone.get_bounding_client_rect();
             let input_bottom: f64 = rect.bottom();
@@ -142,5 +149,30 @@ pub(crate) fn on_focus_scroll_into_view() -> Option<Rc<dyn Fn(Event)>> {
             FOCUS_SCROLL_DELAY_MILLIS,
         );
         closure.forget();
+    }))
+}
+
+/// Creates a blur event handler that restores the page height after input focus.
+///
+/// Removes the temporary `padding-bottom` injected by `on_focus_scroll_into_view`
+/// so that the page returns to its original height once the virtual keyboard
+/// is dismissed.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A blur handler.
+pub(crate) fn on_blur_restore_height() -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |event: Event| {
+        let Some(target) = event.target() else {
+            return;
+        };
+        let Ok(element) = target.dyn_into::<HtmlElement>() else {
+            return;
+        };
+        if let Ok(Some(main_el)) = element.closest("main")
+            && let Ok(main) = main_el.dyn_into::<HtmlElement>()
+        {
+            let _ = main.style().remove_property("padding-bottom");
+        }
     }))
 }

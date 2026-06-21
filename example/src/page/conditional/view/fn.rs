@@ -11,6 +11,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
     let show_details: Signal<bool> = use_signal(|| false);
     let user_type: Signal<String> = use_signal(|| "guest".to_string());
     let tab: Signal<String> = use_signal(|| "info".to_string());
+    let display_name: Signal<String> = use_signal(|| "".to_string());
     html! {
         div {
             class: c_page_container()
@@ -167,7 +168,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                                 id: SETTINGS_DISPLAY_NAME_ID
                                 label: "Display Name"
                                 placeholder: SETTINGS_DISPLAY_NAME_PLACEHOLDER
-                                value: ""
+                                value: display_name
                                 autocomplete: CONDITIONAL_AUTOCOMPLETE_NAME
                             }
                         }

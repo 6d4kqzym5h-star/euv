@@ -94,6 +94,8 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                         value: countdown.get_input()
                         class: c_euv_input()
                         oninput: countdown_on_input(countdown)
+                        onfocus: on_focus_scroll_into_view()
+                        onblur: on_blur_restore_height()
                     }
                 }
                 div {

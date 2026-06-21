@@ -27,10 +27,10 @@ pub(crate) fn euv_field(node: VirtualNode<EuvFieldProps>) -> VirtualNode {
         oninput: custom_oninput,
     }: EuvFieldProps = node.try_get_props().unwrap_or_default();
     let handler: Option<Rc<dyn Fn(Event)>> = custom_oninput.or_else(|| on_input_value(value));
-    let has_error: bool = error
+    let error_state: Signal<String> = error
         .as_ref()
-        .map(|error_signal: &Signal<String>| !error_signal.get().is_empty())
-        .unwrap_or(false);
+        .map(|error_signal: &Signal<String>| *error_signal)
+        .unwrap_or(use_signal(String::new));
     html! {
         div {
             class: c_euv_input_wrapper()
@@ -46,20 +46,19 @@ pub(crate) fn euv_field(node: VirtualNode<EuvFieldProps>) -> VirtualNode {
                 placeholder: placeholder
                 value: value
                 autocomplete: autocomplete
-                class: if { has_error } {
+                class: if { !error_state.get().is_empty() } {
                     c_euv_input_error()
                 } else {
                     c_euv_input_no_transition()
                 }
                 oninput: handler
                 onfocus: on_focus_scroll_into_view()
+                onblur: on_blur_restore_height()
             }
-            if { has_error } {
+            if { !error_state.get().is_empty() } {
                 p {
                     class: c_field_error_text()
-                    {
-                        error.as_ref().unwrap().get()
-                    }
+                    error_state.get()
                 }
             }
         }

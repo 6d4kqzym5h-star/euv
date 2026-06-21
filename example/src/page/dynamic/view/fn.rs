@@ -71,23 +71,14 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
             }
             euv_card {
                 title: "Dynamic Tag Content"
-                div {
-                    class: c_euv_input_wrapper()
-                    label {
-                        for: TAG_CONTENT_INPUT_ID
-                        class: c_form_label()
-                        "Content Text"
-                    }
-                    input {
-                        id: TAG_CONTENT_INPUT_ID
-                        name: TAG_CONTENT_INPUT_ID
-                        type: "text"
-                        placeholder: TAG_CONTENT_PLACEHOLDER
-                        value: content
-                        autocomplete: TAG_AUTOCOMPLETE_OFF
-                        class: c_euv_input()
-                        oninput: content_on_input(content)
-                    }
+                euv_input {
+                    id: TAG_CONTENT_INPUT_ID
+                    name: TAG_CONTENT_INPUT_ID
+                    label: "Content Text"
+                    placeholder: TAG_CONTENT_PLACEHOLDER
+                    value: content
+                    autocomplete: TAG_AUTOCOMPLETE_OFF
+                    oninput: content_on_input(content)
                 }
             }
             euv_card {
