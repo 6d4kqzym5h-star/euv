@@ -1013,8 +1013,6 @@ class! {
 
     pub(crate) c_camera_scan_result_box {
         margin-top: var!(gap-component);
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
 
@@ -1243,8 +1241,6 @@ class! {
         align-items: "center";
         gap: var!(gap-element);
         margin-top: var!(gap-component);
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border));
         box-sizing: "border-box";
     }
 
@@ -1293,8 +1289,6 @@ class! {
 
     pub(crate) c_toggle_content {
         margin-top: var!(gap-component);
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border));
         color: "inherit";
     }
 
@@ -1457,8 +1451,7 @@ class! {
         white-space: "nowrap";
         font-size: var!(font-base);
         color: "inherit";
-        display: "flex";
-        align-items: "center";
+        min-width: "0";
     }
 
     pub(crate) c_list_item_button {
@@ -1690,9 +1683,7 @@ class! {
 
     pub(crate) c_timer_done {
         text-align: "center";
-        padding: var!(space-md);
         margin-top: var!(gap-component);
-        border: format!("1px solid {}", var!(border));
         font-size: var!(font-lg);
         font-weight: "600";
         color: var!(foreground);
@@ -1771,8 +1762,6 @@ class! {
 
     pub(crate) c_anim_fade_in {
         margin-top: var!(gap-component);
-        padding: var!(space-xl);
-        border: format!("1px solid {}", var!(border));
         animation: format!("euv-fade-in 0.5s {}", var!(ease-out));
         font-size: var!(font-base);
         color: "inherit";
@@ -2056,27 +2045,16 @@ class! {
         display: "inline-flex";
         justify-content: "center";
         align-items: "center";
-        background: var!(accent);
-        color: var!(text-on-accent);
-        border: format!("1px solid {}", var!(border));
-        padding: format!("{} {}", var!(space-xs), var!(space-md));
+        color: var!(foreground);
+        padding: format!("{} {}", var!(space-2xs), var!(space-sm));
+        font-size: var!(font-xs);
+        font-weight: "600";
         cursor: "pointer";
-        font-size: var!(font-sm);
-        font-weight: "500";
-        letter-spacing: "0.02em";
         text-align: "center";
-        white-space: "nowrap";
-        user-select: "none";
-        -webkit-user-select: "none";
-        vertical-align: "middle";
-        outline: "none";
+        border: format!("1.5px solid {}", var!(border));
+        margin-left: "auto";
         :focus-visible {
             outline: "none";
-        }
-        :active {
-            background: var!(accent);
-            color: var!(text-on-accent);
-            border-color: var!(border);
         }
     }
 
@@ -2165,6 +2143,7 @@ class! {
         padding: format!("{} 0px", var!(space-sm));
         border-bottom: format!("1px dashed {}", var!(border));
         flex-shrink: "0";
+        align-items: "center";
     }
 
     pub(crate) c_vconsole_filter_badge {
@@ -2434,8 +2413,6 @@ class! {
 
     pub(crate) c_keep_alive_form_preview {
         margin-top: var!(gap-component);
-        padding: format!("{} {}", var!(gap-component), var!(space-lg));
-        border: format!("1px solid {}", var!(border));
         background: var!(accent-muted);
     }
 
@@ -2738,8 +2715,7 @@ class! {
             prop_key
         }
         : prop_value;
-        padding: var!(space-lg);
-        border: format!("1px solid {}", var!(border));
+        margin-top: var!(gap-component);
         color: "inherit";
         margin-top: var!(space-md);
     }
@@ -2931,6 +2907,8 @@ class! {
         font-size: var!(font-base);
         word-break: "break-all";
         overflow-wrap: "break-word";
+        flex: "1";
+        min-width: "0";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2963,497 +2941,6 @@ class! {
         white-space: "nowrap";
         flex-shrink: "0";
         margin-left: "auto";
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // HTML5 Tags Demo
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    pub(crate) c_tag_section {
-        margin-bottom: var!(gap-component);
-    }
-
-    pub(crate) c_tag_group_title {
-        font-size: var!(font-base);
-        font-weight: "700";
-        color: var!(accent);
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-    }
-
-    pub(crate) c_tag_desc {
-        font-size: var!(font-sm);
-        color: var!(foreground);
-        margin: "0px";
-        margin-bottom: var!(space-sm);
-    }
-
-    pub(crate) c_tag_demo_box {
-        width: "100%";
-        max-width: "168px";
-        height: "auto";
-    }
-
-    pub(crate) c_tag_demo_text {
-        padding-bottom: var!(space-md);
-        color: "inherit";
-        font-size: var!(font-base);
-    }
-
-    pub(crate) c_tag_demo_heading {
-        font-weight: "600";
-        font-size: var!(font-base);
-        padding-bottom: var!(space-md);
-        color: "inherit";
-    }
-
-    pub(crate) c_tag_demo_muted {
-        font-size: var!(font-sm);
-        color: var!(foreground);
-        padding-bottom: var!(space-md);
-    }
-
-    pub(crate) c_tag_demo_highlight {
-        color: var!(accent);
-        padding: format!("0px {}", var!(space-xs));
-    }
-
-    pub(crate) c_tag_demo_mark {
-        background: var!(accent);
-        color: var!(text-on-accent);
-        padding: format!("0px {}", var!(space-xs));
-    }
-
-    pub(crate) c_tag_demo_code {
-        font-family: "monospace";
-        color: var!(accent);
-        padding: format!("{} {}", var!(space-xs), var!(space-sm));
-        font-size: var!(font-sm);
-    }
-
-    pub(crate) c_tag_demo_kbd {
-        font-family: "monospace";
-        border: format!("1px solid {}", var!(border));
-        padding: format!("0px {}", var!(space-xs));
-        font-size: var!(font-sm);
-    }
-
-    pub(crate) c_tag_nav_link {
-        color: var!(accent);
-        text-decoration: "none";
-        margin-right: var!(space-md);
-        :hover {
-            text-decoration: "underline";
-        }
-    }
-
-    pub(crate) c_tag_hr {
-        border: "none";
-        border-top: format!("1px solid {}", var!(border));
-        margin: format!("{} 0px", var!(space-sm));
-    }
-
-    pub(crate) c_tag_demo_pre {
-        font-family: "monospace";
-        font-size: var!(font-sm);
-        white-space: "pre-wrap";
-        word-break: "break-all";
-        margin: "0px";
-    }
-
-    pub(crate) c_tag_demo_blockquote {
-        border-left: format!("4px solid {}", var!(accent));
-        margin: "0px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        color: "inherit";
-        font-style: "italic";
-        box-sizing: "border-box";
-    }
-
-    pub(crate) c_tag_figure_placeholder {
-        border: format!("1px dashed {}", var!(border));
-        padding: format!("{} {}", var!(space-xl), var!(space-md));
-        text-align: "center";
-        color: var!(foreground);
-        font-size: var!(font-sm);
-        box-sizing: "border-box";
-    }
-
-    pub(crate) c_heading_h1 {
-        font-size: "2em";
-        font-weight: "700";
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-        color: "inherit";
-    }
-
-    pub(crate) c_heading_h2 {
-        font-size: "1.5em";
-        font-weight: "700";
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-        color: "inherit";
-    }
-
-    pub(crate) c_heading_h3 {
-        font-size: "1.25em";
-        font-weight: "600";
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-        color: "inherit";
-    }
-
-    pub(crate) c_heading_h4 {
-        font-size: "1.1em";
-        font-weight: "600";
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-        color: "inherit";
-    }
-
-    pub(crate) c_heading_h5 {
-        font-size: "1em";
-        font-weight: "600";
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-        color: "inherit";
-    }
-
-    pub(crate) c_heading_h6 {
-        font-size: "0.9em";
-        font-weight: "600";
-        margin: "0px";
-        margin-bottom: var!(space-xs);
-        color: "inherit";
-    }
-
-    pub(crate) c_tag_demo_list {
-        margin: "0px";
-        color: "inherit";
-    }
-
-    pub(crate) c_tag_demo_dl {
-        margin: "0px";
-        color: "inherit";
-    }
-
-    pub(crate) c_tag_demo_dt {
-        font-weight: "600";
-        color: "inherit";
-        margin-top: var!(space-sm);
-    }
-
-    pub(crate) c_tag_demo_dd {
-        margin: "0px";
-        margin-left: var!(space-xl);
-        color: var!(foreground);
-    }
-
-    pub(crate) c_tag_demo_table {
-        width: "100%";
-        border-collapse: "collapse";
-        margin: "0px";
-        table-layout: "fixed";
-        display: "block";
-        max-width: "100%";
-        overflow-x: "auto";
-    }
-
-    pub(crate) c_tag_demo_caption {
-        font-size: var!(font-sm);
-        font-weight: "600";
-        color: var!(foreground);
-        text-align: "left";
-        margin-bottom: var!(space-sm);
-    }
-
-    pub(crate) c_tag_demo_th {
-        text-align: "left";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border: format!("1px solid {}", var!(border));
-        font-weight: "600";
-        color: "inherit";
-        font-size: var!(font-sm);
-    }
-
-    pub(crate) c_tag_demo_td {
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
-        border: format!("1px solid {}", var!(border));
-        color: "inherit";
-        font-size: var!(font-sm);
-    }
-
-    pub(crate) c_tag_demo_img {
-        max-width: "100%";
-    }
-
-    pub(crate) c_tag_demo_iframe {
-        width: "100%";
-        height: "120px";
-        border: format!("1px solid {}", var!(border));
-    }
-
-    pub(crate) c_tag_demo_embed {
-        width: "100%";
-        height: "120px";
-        border: format!("1px solid {}", var!(border));
-    }
-
-    pub(crate) c_tag_demo_canvas {
-        border: format!("1px solid {}", var!(border));
-    }
-
-    pub(crate) c_tag_demo_svg {
-        border: format!("1px solid {}", var!(border));
-    }
-
-    pub(crate) c_tag_demo_video {
-        width: "100%";
-    }
-
-    pub(crate) c_tag_demo_audio {
-        display: "block";
-        width: "100%";
-        max-width: "100%";
-    }
-
-    pub(crate) c_tag_button_row {
-        display: "flex";
-        flex-wrap: "wrap";
-        gap: var!(gap-element);
-        margin: format!("{} 0px", var!(gap-element));
-    }
-
-    pub(crate) c_tag_demo_form {
-        display: "flex";
-        flex-direction: "column";
-        gap: var!(gap-component);
-    }
-
-    pub(crate) c_tag_demo_input {
-        width: "100%";
-        min-height: "42px";
-        padding: format!("0px {}", var!(space-lg));
-        color: var!(foreground);
-        border: format!("1px solid {}", var!(border));
-        font-size: var!(font-base);
-        line-height: "40px";
-        box-sizing: "border-box";
-        outline: "none";
-        :hover {
-            border-color: var!(accent);
-            background: var!(accent-muted);
-        }
-        :focus {
-            outline: "none";
-            border-color: var!(accent);
-            background: var!(accent-muted);
-        }
-        ::-webkit-slider-runnable-track {
-            height: "4px";
-            background: var!(border);
-            border: "none";
-            border-radius: "2px";
-        }
-        ::-webkit-slider-thumb {
-            width: var!(font-sm);
-            height: var!(font-sm);
-            background: var!(accent);
-            border: "none";
-            border-radius: "50%";
-            cursor: "pointer";
-            -webkit-appearance: "none";
-            margin-top: "-6px";
-        }
-        ::-moz-range-track {
-            height: "4px";
-            background: var!(border);
-            border: "none";
-            border-radius: "2px";
-        }
-        ::-moz-range-thumb {
-            width: var!(font-sm);
-            height: var!(font-sm);
-            background: var!(accent);
-            border: "none";
-            border-radius: "50%";
-            cursor: "pointer";
-        }
-    }
-
-    pub(crate) c_tag_demo_input_range {
-        width: "100%";
-        height: "24px";
-        padding: "0px";
-        border: "none";
-        outline: "none";
-        -webkit-appearance: "none";
-        appearance: "none";
-        cursor: "pointer";
-        ::-webkit-slider-runnable-track {
-            height: "6px";
-            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
-            border-radius: "3px";
-            border: "none";
-        }
-        ::-webkit-slider-thumb {
-            width: "20px";
-            height: "20px";
-            background: var!(background);
-            border: format!("2px solid {}", var!(accent));
-            border-radius: "50%";
-            cursor: "pointer";
-            -webkit-appearance: "none";
-            margin-top: "-7px";
-        }
-        : active::-webkit-slider-thumb {
-            transform: "scale(0.92)";
-        }
-        ::-moz-range-track {
-            height: "6px";
-            background: format!("linear-gradient(to right, {} 0%, {} var(--value,50%), {} var(--value,50%), {} 100%)", var!(foreground), var!(foreground), var!(border), var!(border));
-            border-radius: "3px";
-            border: "none";
-        }
-        ::-moz-range-thumb {
-            width: "20px";
-            height: "20px";
-            background: var!(background);
-            border: format!("2px solid {}", var!(accent));
-            border-radius: "50%";
-            cursor: "pointer";
-        }
-        : active::-moz-range-thumb {
-            transform: "scale(0.92)";
-        }
-    }
-
-    pub(crate) c_tag_demo_input_color {
-        width: "40px";
-        height: "32px";
-        padding: "2px";
-        border: format!("1px solid {}", var!(border));
-        cursor: "pointer";
-    }
-
-    pub(crate) c_tag_demo_textarea {
-        width: "100%";
-        min-height: "80px";
-        padding: format!("{} {}", var!(space-md), var!(space-lg));
-        color: var!(foreground);
-        border: format!("1px solid {}", var!(border));
-        font-size: var!(font-base);
-        box-sizing: "border-box";
-        outline: "none";
-        resize: "vertical";
-        :hover {
-            border-color: var!(accent);
-            background: var!(accent-muted);
-        }
-        :focus {
-            outline: "none";
-            border-color: var!(accent);
-            background: var!(accent-muted);
-        }
-    }
-
-    pub(crate) c_tag_demo_select {
-        width: "100%";
-        height: "42px";
-        padding: format!("0px {}", var!(space-lg));
-        color: var!(foreground);
-        border: format!("1px solid {}", var!(border));
-        font-size: var!(font-base);
-        box-sizing: "border-box";
-        outline: "none";
-        :hover {
-            border-color: var!(accent);
-            background: var!(accent-muted);
-        }
-        :focus {
-            outline: "none";
-            border-color: var!(accent);
-            background: var!(accent-muted);
-        }
-    }
-
-    pub(crate) c_tag_demo_progress {
-        width: "200px";
-        height: "8px";
-        vertical-align: "middle";
-        border: "none";
-        border-radius: "4px";
-        overflow: "hidden";
-        ::-webkit-progress-bar {
-            background: var!(background);
-        }
-        ::-webkit-progress-value {
-            background: var!(accent);
-        }
-        ::-moz-progress-bar {
-            background: var!(accent);
-        }
-    }
-
-    pub(crate) c_tag_demo_meter {
-        width: "200px";
-        height: "8px";
-        vertical-align: "middle";
-        border: "none";
-        border-radius: "4px";
-        overflow: "hidden";
-        ::-webkit-meter-bar {
-            background: var!(background);
-            border: "none";
-            border-radius: "4px";
-        }
-        ::-webkit-meter-optimum-value {
-            background: var!(accent);
-        }
-        ::-webkit-meter-suboptimum-value {
-            background: var!(accent);
-        }
-        ::-webkit-meter-even-less-good-value {
-            background: var!(accent);
-        }
-        ::-moz-meter-bar {
-            background: var!(accent);
-        }
-    }
-
-    pub(crate) c_tag_demo_fieldset {
-        border: format!("1px dashed {}", var!(border));
-        padding: var!(space-md);
-        margin: "0px";
-    }
-
-    pub(crate) c_tag_demo_legend {
-        font-weight: "600";
-        font-size: var!(font-sm);
-        color: var!(foreground);
-        padding: format!("0px {}", var!(space-sm));
-    }
-
-    pub(crate) c_tag_demo_menu {
-        margin: "0px";
-        padding: "0px";
-        list-style: "none";
-        display: "flex";
-        gap: var!(space-sm);
-    }
-
-    pub(crate) c_tag_demo_summary {
-        cursor: "pointer";
-        font-weight: "600";
-        font-size: var!(font-base);
-        color: "inherit";
-        list-style: "none";
-    }
-
-    pub(crate) c_tag_demo_dialog {
-        border: format!("1px solid {}", var!(border));
-        padding: var!(space-md);
-        color: "inherit";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

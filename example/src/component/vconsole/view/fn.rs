@@ -144,11 +144,6 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                     div {
                         class: c_vconsole_header_actions()
                         button {
-                            class: c_vconsole_clear_button()
-                            onclick: on_clear_click
-                            "Clear"
-                        }
-                        button {
                             class: c_vconsole_close_button()
                             onclick: on_close_click
                             "×"
@@ -192,6 +187,11 @@ pub(crate) fn vconsole_drawer(node: VirtualNode<VconsoleDrawerProps>) -> Virtual
                         }
                         onclick: vconsole_on_filter_error(filter_signal)
                         "Error"
+                    }
+                    span {
+                        class: c_vconsole_clear_button()
+                        onclick: on_clear_click
+                        "Clear"
                     }
                 }
                 div {

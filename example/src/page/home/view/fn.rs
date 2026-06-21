@@ -13,6 +13,7 @@ use crate::*;
 pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
     let PageHomeProps = node.try_get_props().unwrap_or_default();
     let native_bridge_state: UseNativeBridge = use_native_bridge();
+    load_native_bridge_data(native_bridge_state);
     let version: String = format!("v{EUV_VERSION}");
     html! {
         div {

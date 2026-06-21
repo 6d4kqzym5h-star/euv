@@ -251,7 +251,6 @@ pub(crate) fn app() -> VirtualNode {
     let theme_state: ThemeState = use_theme(mobile_signal);
     let theme_signal: Signal<String> = theme_state.get_theme();
     let root_class_signal: Signal<String> = theme_state.get_root_class();
-    load_native_bridge_data(use_native_bridge());
     load_cache_update(use_cache_update());
     use_hash_change(route_signal);
     use_scroll_to_top(route_signal);

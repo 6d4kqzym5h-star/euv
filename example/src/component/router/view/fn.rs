@@ -181,9 +181,6 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
                 "/canvas" => {
                     page_canvas {}
                 }
-                "/tags" => {
-                    page_tags {}
-                }
                 "/sse" => {
                     page_sse {}
                 }

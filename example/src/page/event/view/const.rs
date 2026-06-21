@@ -72,3 +72,11 @@ pub(crate) const EVENT_PRELOAD_METADATA: &str = "metadata";
 
 /// The HTML alt text for the image event demo.
 pub(crate) const EVENT_IMAGE_ALT: &str = "Event Demo Image";
+
+/// The video source URL for the video event demo.
+pub(crate) const EVENT_VIDEO_SRC: &str =
+    "https://ltpp.vip/github/pages/docs-pages/pages/video/ship.mp4";
+
+/// The audio source URL for the audio demo.
+pub(crate) const EVENT_AUDIO_SRC: &str =
+    "https://ltpp.vip/github/pages/docs-pages/pages/audio/time_boils_the_rain.mp3";

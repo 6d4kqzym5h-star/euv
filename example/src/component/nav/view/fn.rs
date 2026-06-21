@@ -250,12 +250,6 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
             }
             nav_item {
                 route_signal: route_signal
-                icon: "🏷️"
-                label: "Tags"
-                target: "/tags"
-            }
-            nav_item {
-                route_signal: route_signal
                 icon: "📡"
                 label: "SSE"
                 target: "/sse"
@@ -451,13 +445,6 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
                 icon: "🎨"
                 label: "Canvas"
                 target: "/canvas"
-            }
-            mobile_nav_item {
-                route_signal: route_signal
-                drawer_open: drawer_open
-                icon: "🏷️"
-                label: "Tags"
-                target: "/tags"
             }
             mobile_nav_item {
                 route_signal: route_signal
