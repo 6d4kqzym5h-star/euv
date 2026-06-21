@@ -291,8 +291,6 @@ class! {
 
     pub(crate) c_app_main {
         flex: "1";
-        margin-left: "auto";
-        margin-right: "auto";
         height: "100%";
         overflow: "auto";
         padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-bottom), var!(padding-main-horizontal));
