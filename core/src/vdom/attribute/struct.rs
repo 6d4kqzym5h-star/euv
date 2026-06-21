@@ -56,12 +56,10 @@ pub struct Css {
     style: String,
     /// The pseudo-class and pseudo-element rules for this class
     /// (e.g., ":hover", ":focus", ":active", "::before", etc.).
-    #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pseudo_rules: Vec<PseudoRule>,
     /// The media query rules for this class.
-    #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     media_rules: Vec<MediaRule>,

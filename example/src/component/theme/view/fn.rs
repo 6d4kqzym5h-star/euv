@@ -98,13 +98,13 @@ vars! {
         // ═══════════════════════════════════════════════════════════════════════
         // Layout (shadcn/ui aligned)
         // ═══════════════════════════════════════════════════════════════════════
-        padding-main-top: "calc(env(safe-area-inset-top, 0px) + 24px)";
-        padding-main-bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)";
+        padding-main-top: "calc(env(safe-area-inset-top, 0px) + 36px)";
+        padding-main-bottom: "calc(env(safe-area-inset-bottom, 0px) + 36px)";
         padding-main-horizontal: "28px";
         padding-main-horizontal-mobile: "16px";
         gap-page-header: "16px";
         gap-page-title: "6px";
-        min-height-base: "48px";
+        min-height-base: "36px";
         min-height-sm: "36px";
         nav-width: "248px";
         content-max-width: "820px";
@@ -313,7 +313,7 @@ vars! {
         padding-main-horizontal-mobile: "16px";
         gap-page-header: "16px";
         gap-page-title: "6px";
-        min-height-base: "48px";
+        min-height-base: "36px";
         min-height-sm: "36px";
         nav-width: "248px";
         content-max-width: "820px";

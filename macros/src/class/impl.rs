@@ -161,6 +161,66 @@ impl ToTokens for ClassDef {
         let has_extra: bool =
             !self.get_selector_blocks().is_empty() || !self.get_at_rule_blocks().is_empty();
         let has_extends: bool = !self.get_extends().is_empty();
+        let selector_expr: proc_macro2::TokenStream = if has_extends {
+            let parent_pseudo_refs: Vec<proc_macro2::TokenStream> = self
+                .get_extends()
+                .iter()
+                .map(|parent: &ClassExtend| {
+                    let parent_name: &Ident = parent.get_name();
+                    let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
+                    if parent_args.is_empty() {
+                        quote! { #parent_name().get_pseudo_rules().iter().cloned() }
+                    } else {
+                        quote! { #parent_name(#(#parent_args), *).get_pseudo_rules().iter().cloned() }
+                    }
+                })
+                .collect();
+            let self_pseudo: proc_macro2::TokenStream =
+                selector_blocks_to_tokens(self.get_selector_blocks())
+                    .unwrap_or_else(|| quote! { Vec::new() });
+            quote! {
+                {
+                    let mut all_pseudo = Vec::new();
+                    #(all_pseudo.extend(#parent_pseudo_refs);)*
+                    all_pseudo.extend(#self_pseudo);
+                    all_pseudo
+                }
+            }
+        } else if !self.get_selector_blocks().is_empty() {
+            selector_blocks_to_tokens(self.get_selector_blocks()).unwrap()
+        } else {
+            quote! { Vec::new() }
+        };
+        let at_rule_expr: proc_macro2::TokenStream = if has_extends {
+            let parent_media_refs: Vec<proc_macro2::TokenStream> = self
+                .get_extends()
+                .iter()
+                .map(|parent: &ClassExtend| {
+                    let parent_name: &Ident = parent.get_name();
+                    let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
+                    if parent_args.is_empty() {
+                        quote! { #parent_name().get_media_rules().iter().cloned() }
+                    } else {
+                        quote! { #parent_name(#(#parent_args), *).get_media_rules().iter().cloned() }
+                    }
+                })
+                .collect();
+            let self_media: proc_macro2::TokenStream =
+                at_rule_blocks_to_media_tokens(self.get_at_rule_blocks())
+                    .unwrap_or_else(|| quote! { Vec::new() });
+            quote! {
+                {
+                    let mut all_media = Vec::new();
+                    #(all_media.extend(#parent_media_refs);)*
+                    all_media.extend(#self_media);
+                    all_media
+                }
+            }
+        } else if !self.get_at_rule_blocks().is_empty() {
+            at_rule_blocks_to_media_tokens(self.get_at_rule_blocks()).unwrap()
+        } else {
+            quote! { Vec::new() }
+        };
         match self.try_get_params() {
             Some(params) => {
                 let param_defs: Vec<proc_macro2::TokenStream> = params
@@ -217,25 +277,11 @@ impl ToTokens for ClassDef {
                     let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
                     quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)) }
                 };
-                if has_extra {
-                    let selector_expr: proc_macro2::TokenStream =
-                        selector_blocks_to_tokens(self.get_selector_blocks())
-                            .unwrap_or_else(|| quote! { Vec::new() });
-                    let at_rule_expr: proc_macro2::TokenStream =
-                        at_rule_blocks_to_media_tokens(self.get_at_rule_blocks())
-                            .unwrap_or_else(|| quote! { Vec::new() });
-                    tokens.extend(quote! {
-                        #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
-                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #selector_expr, #at_rule_expr)
-                        }
-                    });
-                } else {
-                    tokens.extend(quote! {
-                        #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
-                            ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), Vec::new(), Vec::new())
-                        }
-                    });
-                }
+                tokens.extend(quote! {
+                    #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
+                        ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #selector_expr, #at_rule_expr)
+                    }
+                });
             }
             None => {
                 let name_span: Span = name.span();
@@ -255,20 +301,6 @@ impl ToTokens for ClassDef {
                     )
                     && is_selector_blocks_static(self.get_selector_blocks())
                     && is_at_rule_blocks_static(self.get_at_rule_blocks());
-                let (selector_expr, at_rule_expr): (
-                    proc_macro2::TokenStream,
-                    proc_macro2::TokenStream,
-                ) = if has_extra {
-                    let selector: proc_macro2::TokenStream =
-                        selector_blocks_to_tokens(self.get_selector_blocks())
-                            .unwrap_or_else(|| quote! { Vec::new() });
-                    let at_rule: proc_macro2::TokenStream =
-                        at_rule_blocks_to_media_tokens(self.get_at_rule_blocks())
-                            .unwrap_or_else(|| quote! { Vec::new() });
-                    (selector, at_rule)
-                } else {
-                    (quote! { Vec::new() }, quote! { Vec::new() })
-                };
                 if all_static {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_properties() {

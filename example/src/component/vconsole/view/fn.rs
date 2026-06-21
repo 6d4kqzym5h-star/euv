@@ -230,9 +230,9 @@ fn build_vconsole_log_nodes(
             for (index, entry) in { &filter_console_entries(logs, filter) } {
                 div {
                     key: index.to_string()
-                    class: get_log_item_class(entry.get_level())
+                    class: c_vconsole_log_item()
                     span {
-                        class: get_log_level_badge_class(entry.get_level())
+                        class: c_vconsole_level_badge()
                         get_log_level_badge(entry.get_level())
                     }
                     entry.get_message().clone()

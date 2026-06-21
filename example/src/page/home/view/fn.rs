@@ -20,9 +20,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
             div {
                 class: c_home_hero()
                 div {
-                    class: c_home_hero_glow()
-                }
-                div {
                     class: c_home_hero_content()
                     h1 {
                         class: c_home_hero_title()

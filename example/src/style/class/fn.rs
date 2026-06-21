@@ -173,7 +173,6 @@ class! {
         padding: "0px";
         cursor: "pointer";
         outline: "none";
-        background: "transparent";
         border: format!("1px dashed {}", var!(border));
         display: "flex";
         align-items: "center";
@@ -265,7 +264,6 @@ class! {
         font-size: var!(font-base);
         color: var!(foreground);
         font-weight: "400";
-        background: "transparent";
         :hover {
             background: var!(accent-muted);
             color: var!(accent);
@@ -274,7 +272,6 @@ class! {
     }
 
     pub(crate) c_nav_item_icon {
-        font-size: "16px";
         flex-shrink: "0";
         width: "20px";
         text-align: "center";
@@ -294,12 +291,11 @@ class! {
 
     pub(crate) c_app_main {
         flex: "1";
-        display: "flex";
-        flex-direction: "column";
-        align-items: "stretch";
-        min-height: "100%";
-        padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-bottom), var!(padding-main-horizontal));
+        margin-left: "auto";
+        margin-right: "auto";
+        height: "100%";
         overflow: "auto";
+        padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal), var!(padding-main-bottom), var!(padding-main-horizontal));
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar {
             width: "6px";
@@ -316,7 +312,6 @@ class! {
         }
         @media ((max-width: 767px)) {
             padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal-mobile), var!(padding-main-bottom), var!(padding-main-horizontal-mobile));
-            align-items: "stretch";
             scrollbar-width: "none";
             ::-webkit-scrollbar {
                 width: "0px";
@@ -334,11 +329,6 @@ class! {
         width: "100%";
         margin: "0px auto";
         max-width: var!(content-max-width);
-        padding: format!("{} 0px {}", var!(padding-main-top), var!(padding-main-bottom));
-        gap: var!(page-block-gap);
-        @media ((max-width: 767px)) {
-            gap: var!(page-block-gap-mobile);
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -360,7 +350,6 @@ class! {
         max-width: "100%";
         height: "400px";
         border-radius: "50%";
-        background: "transparent";
         pointer-events: "none";
     }
 
@@ -370,7 +359,7 @@ class! {
     }
 
     pub(crate) c_page_hero_icon {
-        font-size: "48px";
+        font-size: "36px";
         padding-bottom: var!(space-md);
         @media ((max-width: 767px)) {
             font-size: "40px";
@@ -411,8 +400,7 @@ class! {
     }
 
     pub(crate) c_card_title {
-        margin-top: "0px";
-        margin-bottom: var!(gap-component);
+        margin: format!("{} 0px", var!(gap-component));
         color: var!(foreground);
         font-size: var!(font-lg);
         font-weight: "600";
@@ -478,7 +466,6 @@ class! {
         display: "flex";
         justify-content: "center";
         align-items: "center";
-        background: "transparent";
         color: "inherit";
         border: "none";
         padding: format!("{} {}", var!(space-sm), var!(space-md));
@@ -560,7 +547,6 @@ class! {
         flex: "1 1 120px";
         height: "42px";
         padding: format!("0px {}", var!(space-xl));
-        background: "transparent";
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         cursor: "pointer";
@@ -621,7 +607,6 @@ class! {
         font-weight: "600";
         cursor: "pointer";
         text-align: "center";
-        background: "transparent";
         border: format!("1.5px solid {}", var!(border));
         @media ((max-width: 767px)) {
             padding: format!("{} {}", var!(space-2xs), var!(space-xs));
@@ -667,7 +652,6 @@ class! {
         font-size: var!(font-xs);
         font-weight: "600";
         cursor: "pointer";
-        background: "transparent";
         border: format!("1.5px solid {}", var!(accent));
     }
 
@@ -680,7 +664,6 @@ class! {
         font-size: var!(font-sm);
         font-weight: "600";
         cursor: "pointer";
-        background: "transparent";
         border: format!("1.5px solid {}", var!(border));
     }
 
@@ -1142,7 +1125,6 @@ class! {
         border: format!("1px solid {}", var!(border));
         cursor: "pointer";
         padding: format!("{}", var!(space-xs));
-        background: "transparent";
     }
 
     pub(crate) c_canvas_fullscreen_toolbar_row_bottom {
@@ -1157,7 +1139,6 @@ class! {
         cursor: "pointer";
         -webkit-appearance: "none";
         appearance: "none";
-        background: "transparent";
         border: "none";
         outline: "none";
         height: "24px";
@@ -1376,7 +1357,6 @@ class! {
         cursor: "pointer";
         border-bottom: "2px solid transparent";
         color: "inherit";
-        background: "transparent";
         font-size: var!(font-base);
         font-weight: "500";
         :hover {
@@ -2049,9 +2029,7 @@ class! {
         display: "flex";
         justify-content: "space-between";
         align-items: "center";
-        border-bottom: format!("1px dashed {}", var!(border));
         flex-shrink: "0";
-        padding-bottom: var!(padding-main-top);
     }
 
     pub(crate) c_vconsole_title {
@@ -2114,7 +2092,7 @@ class! {
         color: var!(foreground);
         padding: format!("{} {}", var!(space-xs), var!(space-md));
         cursor: "pointer";
-        font-size: "16px";
+        font-size: var!(font-sm);
         font-weight: "400";
         text-align: "center";
         white-space: "nowrap";
@@ -2144,7 +2122,7 @@ class! {
         flex-wrap: "wrap";
         padding-bottom: var!(space-md);
         font-family: "ui-monospace, monospace";
-        font-size: var!(font-base);
+        font-size: var!(font-xs);
     }
 
     pub(crate) c_vconsole_log_item {
@@ -2153,30 +2131,16 @@ class! {
         padding: format!("{} 0px", var!(space-sm));
         border-bottom: format!("1px dashed {}", var!(border));
         color: var!(foreground);
-        font-size: var!(font-base);
+        font-size: var!(font-xs);
         word-break: "break-all";
-    }
-
-    pub(crate) c_vconsole_log_latest {
-        color: var!(accent);
-        font-weight: "500";
-    }
-
-    pub(crate) c_vconsole_log_warn {
-        color: var!(foreground);
-    }
-
-    pub(crate) c_vconsole_log_error {
-        color: var!(foreground);
     }
 
     pub(crate) c_vconsole_empty {
         color: var!(muted-foreground);
-        font-size: var!(font-base);
+        font-size: var!(font-xs);
         text-align: "center";
         padding: format!("{} 0px", var!(space-4xl));
         overflow: "hidden";
-        transition: format!("height {} {}, padding {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
     }
 
     pub(crate) c_vconsole_empty_hidden {
@@ -2187,7 +2151,6 @@ class! {
 
     pub(crate) c_vconsole_log_list {
         overflow: "hidden";
-        transition: format!("height {} {}", var!(duration-normal), var!(ease-out));
     }
 
     pub(crate) c_vconsole_log_list_hidden {
@@ -2236,31 +2199,18 @@ class! {
         font-weight: "600";
         cursor: "pointer";
         text-align: "center";
-        background: "transparent";
         border: format!("1.5px solid {}", var!(border));
     }
 
     pub(crate) c_vconsole_level_badge {
-        display: "inline-block";
         padding: format!("{} {}", var!(space-2xs), var!(space-sm));
-        font-size: "10px";
-        font-weight: "600";
+        font-size: var!(font-xs);
         margin-right: var!(space-sm);
         letter-spacing: "0.05em";
         color: var!(foreground);
         border: "1px solid currentColor";
-    }
-
-    pub(crate) c_vconsole_level_badge_log {
-        color: var!(accent);
-    }
-
-    pub(crate) c_vconsole_level_badge_warn {
-        color: "#f59e0b";
-    }
-
-    pub(crate) c_vconsole_level_badge_error {
-        color: "#ef4444";
+        wrap: "nowrap";
+        flex-shrink: "0";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -2298,7 +2248,6 @@ class! {
     pub(crate) c_mobile_menu_button {
         width: "40px";
         height: "40px";
-        background: "transparent";
         border: "none";
         cursor: "pointer";
         font-size: "22px";
@@ -2317,7 +2266,6 @@ class! {
     pub(crate) c_mobile_theme_button {
         width: "40px";
         height: "40px";
-        background: "transparent";
         border: "none";
         cursor: "pointer";
         display: "flex";
@@ -2350,7 +2298,6 @@ class! {
     pub(crate) c_mobile_drawer_close_button {
         width: "32px";
         height: "32px";
-        background: "transparent";
         border: "none";
         cursor: "pointer";
         font-size: "18px";
@@ -2430,19 +2377,9 @@ class! {
     }
 
     pub(crate) c_mobile_main {
-        width: "100%";
-        flex: "1";
-        padding: format!("{} {} {} {}", var!(padding-main-top), var!(padding-main-horizontal-mobile), var!(padding-main-bottom), var!(padding-main-horizontal-mobile));
-        overflow-y: "auto";
-        scrollbar-width: "none";
+        c_app_main();
         ::-webkit-scrollbar {
             width: "0px";
-        }
-        @media ((min-width: 768px)) {
-            scrollbar-width: "thin";
-            ::-webkit-scrollbar {
-                width: "6px";
-            }
         }
     }
 
@@ -2560,7 +2497,6 @@ class! {
         padding: format!("{} {}", var!(space-4xl), var!(space-xl));
         text-align: "center";
         cursor: "pointer";
-        background: "transparent";
     }
 
     pub(crate) c_file_upload_drop_zone_active {
@@ -2677,7 +2613,7 @@ class! {
     pub(crate) c_binding_slider_label {
         font-size: var!(font-base);
         font-weight: "700";
-        min-width: "16px";
+        min-width: var!(font-sm);
     }
 
     pub(crate) c_binding_slider {
@@ -2687,7 +2623,6 @@ class! {
         cursor: "pointer";
         -webkit-appearance: "none";
         appearance: "none";
-        background: "transparent";
         border: "none";
         outline: "none";
         ::-webkit-slider-runnable-track {
@@ -3325,8 +3260,8 @@ class! {
             border-radius: "2px";
         }
         ::-webkit-slider-thumb {
-            width: "16px";
-            height: "16px";
+            width: var!(font-sm);
+            height: var!(font-sm);
             background: var!(accent);
             border: "none";
             border-radius: "50%";
@@ -3341,8 +3276,8 @@ class! {
             border-radius: "2px";
         }
         ::-moz-range-thumb {
-            width: "16px";
-            height: "16px";
+            width: var!(font-sm);
+            height: var!(font-sm);
             background: var!(accent);
             border: "none";
             border-radius: "50%";
@@ -3354,7 +3289,6 @@ class! {
         width: "100%";
         height: "24px";
         padding: "0px";
-        background: "transparent";
         border: "none";
         outline: "none";
         -webkit-appearance: "none";
@@ -3404,7 +3338,6 @@ class! {
         padding: "2px";
         border: format!("1px solid {}", var!(border));
         cursor: "pointer";
-        background: "transparent";
     }
 
     pub(crate) c_tag_demo_textarea {
@@ -3546,21 +3479,7 @@ class! {
         @media ((max-width: 767px)) {
             margin-bottom: var!(space-lg);
             flex: "0 0 auto";
-            min-height: "auto";
         }
-    }
-
-    pub(crate) c_home_hero_glow {
-        position: "absolute";
-        top: "-50%";
-        left: "50%";
-        transform: "translateX(-50%)";
-        width: "100%";
-        max-width: "400px";
-        aspect-ratio: "1 / 1";
-        border-radius: "50%";
-        background: "transparent";
-        pointer-events: "none";
     }
 
     pub(crate) c_home_hero_content {
@@ -3649,7 +3568,6 @@ class! {
         align-items: "center";
         gap: var!(space-sm);
         padding: format!("{} {}", var!(space-sm), var!(space-2xl));
-        background: "transparent";
         color: var!(accent);
         font-size: var!(font-base);
         font-weight: "600";
@@ -3720,7 +3638,7 @@ class! {
         font-weight: "700";
         color: var!(foreground);
         margin: "0px";
-        margin-bottom: var!(gap-component);
+        margin: format!("{} 0px", var!(gap-component));
         letter-spacing: "-0.02em";
     }
 
