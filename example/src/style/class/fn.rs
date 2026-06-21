@@ -1334,7 +1334,7 @@ class! {
 
     pub(crate) c_tab_bar {
         display: "flex";
-        border-bottom: format!("1px solid {}", var!(border));
+        border-bottom: format!("1px dashed {}", var!(border));
         margin-bottom: var!(gap-component);
         gap: var!(gap-element);
         @media ((max-width: 767px)) {
@@ -1429,8 +1429,7 @@ class! {
     pub(crate) c_list_error_text {
         color: var!(foreground);
         font-size: var!(font-base);
-        margin-top: var!(gap-element);
-        margin-bottom: var!(gap-element);
+        margin: format!("{} 0px", var!(gap-element));
         padding-left: var!(space-lg);
     }
 
@@ -1451,6 +1450,7 @@ class! {
         align-items: "center";
         gap: var!(gap-component);
         min-height: var!(min-height-base);
+        margin: format!("{} 0px", var!(gap-element));
     }
 
     pub(crate) c_list_item_text {
@@ -1594,8 +1594,6 @@ class! {
     }
 
     pub(crate) c_event_clipboard_area {
-        padding: format!("{} 0px", var!(space-lg));
-        border: format!("1px solid {}", var!(border));
         color: var!(foreground);
     }
 
@@ -2389,7 +2387,7 @@ class! {
 
     pub(crate) c_keep_alive_tab_bar {
         display: "flex";
-        border-bottom: format!("1px solid {}", var!(border));
+        border-bottom: format!("1px dashed {}", var!(border));
         margin-bottom: var!(gap-component);
         gap: var!(gap-element);
     }
@@ -2994,7 +2992,11 @@ class! {
         margin-bottom: var!(space-sm);
     }
 
-    pub(crate) c_tag_demo_box {}
+    pub(crate) c_tag_demo_box {
+        width: "100%";
+        max-width: "168px";
+        height: "auto";
+    }
 
     pub(crate) c_tag_demo_text {
         padding-bottom: var!(space-md);
@@ -3426,7 +3428,7 @@ class! {
     }
 
     pub(crate) c_tag_demo_fieldset {
-        border: format!("1px solid {}", var!(border));
+        border: format!("1px dashed {}", var!(border));
         padding: var!(space-md);
         margin: "0px";
     }
@@ -3630,8 +3632,6 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
     // Home Page — Section & Feature Cards
     // ═══════════════════════════════════════════════════════════════════════════
-
-    pub(crate) c_home_section {}
 
     pub(crate) c_home_section_title {
         font-size: var!(font-2xl);

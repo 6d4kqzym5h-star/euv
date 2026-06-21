@@ -118,7 +118,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                 }
             }
             div {
-                class: c_home_section()
                 h2 {
                     class: c_home_section_title()
                     "Features"
@@ -216,7 +215,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                 }
             }
             div {
-                class: c_home_section()
                 h2 {
                     class: c_home_section_title()
                     "Package Info"
@@ -272,7 +270,6 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
             }
             if { !native_bridge_state.get_loading().get() && native_bridge_state.get_available().get() } {
                 div {
-                    class: c_home_section()
                     h2 {
                         class: c_home_section_title()
                         "Native Bridge"
