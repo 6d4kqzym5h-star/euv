@@ -136,6 +136,8 @@ fn form_tab() -> VirtualNode {
                     class: c_textarea_input()
                     rows: KEEP_ALIVE_MESSAGE_ROWS
                     oninput: on_input_value(message)
+                    onfocus: on_focus_scroll_into_view()
+                    onblur: on_blur_restore_height()
                 }
             }
             if { !name.get().is_empty() || !email.get().is_empty() || !message.get().is_empty() } {
