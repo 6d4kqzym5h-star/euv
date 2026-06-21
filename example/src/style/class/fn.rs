@@ -1428,7 +1428,6 @@ class! {
         color: var!(foreground);
         font-size: var!(font-base);
         margin: format!("{} 0px", var!(gap-element));
-        padding-left: var!(space-lg);
     }
 
     pub(crate) c_inline_input_button_wrap {
@@ -3130,7 +3129,6 @@ class! {
 
     pub(crate) c_tag_demo_list {
         margin: "0px";
-        padding-left: var!(space-xl);
         color: "inherit";
     }
 
@@ -3211,7 +3209,6 @@ class! {
 
     pub(crate) c_tag_demo_video {
         width: "100%";
-        max-width: "100%";
     }
 
     pub(crate) c_tag_demo_audio {
@@ -3235,7 +3232,7 @@ class! {
 
     pub(crate) c_tag_demo_input {
         width: "100%";
-        height: "42px";
+        min-height: "42px";
         padding: format!("0px {}", var!(space-lg));
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
