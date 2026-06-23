@@ -122,6 +122,32 @@ impl Parse for ClassInput {
                         }
                         continue;
                     }
+                    // Check if this is an element selector block (e.g. `h1 { ... }`, `input, button { ... }`).
+                    if is_element_selector_block(&content) {
+                        let selector: String = parse_element_selector(&content)?;
+                        let block_content: ParseBuffer<'_>;
+                        braced!(block_content in content);
+                        let inner: BlockContent = parse_block_content(&block_content)?;
+                        selector_blocks.push(SelectorBlock::new(
+                            selector,
+                            inner.properties,
+                            inner.selector_blocks,
+                        ));
+                        continue;
+                    }
+                }
+                // Check for `*` or other element selector blocks not starting with Ident.
+                if is_element_selector_block(&content) {
+                    let selector: String = parse_element_selector(&content)?;
+                    let block_content: ParseBuffer<'_>;
+                    braced!(block_content in content);
+                    let inner: BlockContent = parse_block_content(&block_content)?;
+                    selector_blocks.push(SelectorBlock::new(
+                        selector,
+                        inner.properties,
+                        inner.selector_blocks,
+                    ));
+                    continue;
                 }
                 let css_key: ClassPropKey = parse_class_prop_key(&content)?;
                 content.parse::<Token![:]>()?;
@@ -252,14 +278,15 @@ impl ToTokens for ClassDef {
                     let ClassPropValue::Expr(expr) = value;
                     match key {
                         ClassPropKey::Static(static_key) => {
+                            let key_str: String = reconstruct_ident_from_tokens(static_key);
                             if is_static_string_expr(expr) {
                                 let value_str: String = expr_to_string(expr);
                                 let prop_str: String = format!(
-                                    "{static_key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
+                                    "{key_str}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
                                 );
                                 all_css_parts.push(quote! { #prop_str.to_string() });
                             } else {
-                                let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
+                                let key_sep: String = format!("{key_str}{CSS_PROP_SEPARATOR}");
                                 all_css_parts.push(
                                     quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR },
                                 );
@@ -277,9 +304,14 @@ impl ToTokens for ClassDef {
                     let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
                     quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)) }
                 };
+                let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
+                    quote! { "".to_string() }
+                } else {
+                    quote! { [#(#all_css_parts), *].concat() }
+                };
                 tokens.extend(quote! {
                     #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
-                        ::euv::Css::new(#unique_name_expr, [#(#all_css_parts), *].concat(), #selector_expr, #at_rule_expr)
+                        ::euv::Css::new(#unique_name_expr, #style_expr, #selector_expr, #at_rule_expr)
                     }
                 });
             }
@@ -305,10 +337,11 @@ impl ToTokens for ClassDef {
                     let mut css_string: String = String::new();
                     for (key, value) in self.get_properties() {
                         let ClassPropValue::Expr(expr) = value;
-                        let ClassPropKey::Static(key_str) = key else {
+                        let ClassPropKey::Static(key_tokens) = key else {
                             continue;
                         };
-                        css_string.push_str(key_str);
+                        let key_str: String = reconstruct_ident_from_tokens(key_tokens);
+                        css_string.push_str(&key_str);
                         css_string.push_str(CSS_PROP_SEPARATOR);
                         css_string.push_str(&expr_to_string(expr));
                         css_string.push_str(CSS_DECL_TERMINATOR);
@@ -362,15 +395,15 @@ impl ToTokens for ClassDef {
                         let ClassPropValue::Expr(expr) = value;
                         match key {
                             ClassPropKey::Static(static_key) => {
+                                let key_str: String = reconstruct_ident_from_tokens(static_key);
                                 if is_static_string_expr(expr) {
                                     let value_str: String = expr_to_string(expr);
                                     let prop_str: String = format!(
-                                        "{static_key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
+                                        "{key_str}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
                                     );
                                     all_css_parts.push(quote! { #prop_str.to_string() });
                                 } else {
-                                    let key_sep: String =
-                                        format!("{static_key}{CSS_PROP_SEPARATOR}");
+                                    let key_sep: String = format!("{key_str}{CSS_PROP_SEPARATOR}");
                                     all_css_parts.push(quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
                                 }
                             }
@@ -381,6 +414,11 @@ impl ToTokens for ClassDef {
                             }
                         }
                     }
+                    let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
+                        quote! { "".to_string() }
+                    } else {
+                        quote! { [#(#all_css_parts), *].concat() }
+                    };
                     emit_once_lock_fn(
                         tokens,
                         OnceLockParams {
@@ -388,7 +426,7 @@ impl ToTokens for ClassDef {
                             fn_name_token: &fn_name_token,
                             const_name_token: &const_name_token,
                             class_name_str: &class_name_str,
-                            style_expr: &quote! { [#(#all_css_parts), *].concat() },
+                            style_expr: &style_expr,
                             selector_expr: &selector_expr,
                             at_rule_expr: &at_rule_expr,
                         },

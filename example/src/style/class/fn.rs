@@ -13,6 +13,9 @@ class! {
         color: var!(foreground);
         user-select: "none";
         -webkit-user-select: "none";
+        -webkit-font-smoothing: "antialiased";
+        -moz-osx-font-smoothing: "grayscale";
+        text-rendering: "optimizeLegibility";
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
@@ -23,6 +26,129 @@ class! {
         }
         ::-webkit-scrollbar-thumb:active {
             background: var!(scrollbar-thumb-active);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // CSS Reset — Cross-browser normalization
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        *, *::before, *::after {
+            box-sizing: "border-box";
+        }
+        h1, h2, h3, h4, h5, h6, p, ul, ol, dl, dd, figure, blockquote, pre, hr {
+            margin: "0px";
+            padding: "0px";
+        }
+        ul, ol {
+            list-style: "none";
+            padding: "0px";
+            margin: "0px";
+        }
+        a {
+            color: "inherit";
+            text-decoration: "none";
+        }
+        button {
+            appearance: "none";
+            -webkit-appearance: "none";
+            -moz-appearance: "none";
+            background: "transparent";
+            border: "none";
+            padding: "0px";
+            margin: "0px";
+            font: "inherit";
+            color: "inherit";
+            cursor: "pointer";
+            outline: "none";
+            font-family: "inherit";
+            ::-moz-focus-inner {
+                border: "0px";
+                padding: "0px";
+            }
+        }
+        input, textarea, select, button {
+            font: "inherit";
+            font-family: "inherit";
+            font-size: "inherit";
+            line-height: "normal";
+            margin: "0px";
+            padding: "0px";
+            border: "none";
+            outline: "none";
+            background: "transparent";
+            color: "inherit";
+            appearance: "none";
+            -webkit-appearance: "none";
+            -moz-appearance: "none";
+        }
+        input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="search"], input[type="tel"], input[type="url"] {
+            appearance: "none";
+            -webkit-appearance: "none";
+            -moz-appearance: "none";
+            border-radius: "0px";
+        }
+        input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration {
+            -webkit-appearance: "none";
+            appearance: "none";
+        }
+        input[type="number"] {
+            -moz-appearance: "textfield";
+        }
+        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: "none";
+            appearance: "none";
+            margin: "0px";
+        }
+        textarea {
+            appearance: "none";
+            -webkit-appearance: "none";
+            -moz-appearance: "none";
+            resize: "vertical";
+            font-family: "inherit";
+        }
+        select {
+            appearance: "none";
+            -webkit-appearance: "none";
+            -moz-appearance: "none";
+            background-image: "none";
+            border-radius: "0px";
+        }
+        img, svg, video, canvas, audio, iframe, embed, object {
+            display: "block";
+            max-width: "100%";
+            height: "auto";
+        }
+        table {
+            border-collapse: "collapse";
+            border-spacing: "0px";
+        }
+        hr {
+            border: "none";
+            margin: "0px";
+        }
+        :focus-visible {
+            outline: "none";
+        }
+        : focus:not(: focus-visible) {
+            outline: "none";
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: "inherit";
+            font-size: "inherit";
+        }
+        strong, b {
+            font-weight: "700";
+        }
+        em, i {
+            font-style: "italic";
+        }
+        code, pre, kbd, samp {
+            font-family: "ui-monospace, monospace";
+        }
+        @media ((max-width: 767px)) {
+            input, select, textarea {
+                font-size: "16px";
+            }
         }
     }
 
@@ -347,7 +473,6 @@ class! {
         width: "400px";
         max-width: "100%";
         height: "400px";
-        border-radius: "50%";
         pointer-events: "none";
     }
 
@@ -670,6 +795,7 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_euv_input_wrapper {
+        width: "100%";
         margin: format!("{} 0px", var!(gap-element));
     }
 
@@ -683,20 +809,24 @@ class! {
 
     pub(crate) c_inline_input_row {
         display: "flex";
-        align-items: "stretch";
+        align-items: "center";
         gap: var!(gap-component);
     }
 
     pub(crate) c_euv_input {
         width: "100%";
-        height: "42px";
+        min-height: var!(min-height-base);
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
-        line-height: "40px";
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
+        vertical-align: "middle";
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -710,26 +840,34 @@ class! {
 
     pub(crate) c_euv_input_no_transition {
         width: "100%";
-        height: "42px";
+        min-height: var!(min-height-base);
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
-        line-height: "40px";
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
+        vertical-align: "middle";
     }
 
     pub(crate) c_euv_input_error {
         width: "100%";
-        height: "42px";
+        min-height: var!(min-height-base);
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
-        line-height: "40px";
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
+        vertical-align: "middle";
         :focus {
             outline: "none";
             border-color: var!(foreground);
@@ -757,15 +895,19 @@ class! {
 
     pub(crate) c_select_input {
         width: "100%";
-        height: "42px";
+        min-height: var!(min-height-base);
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         cursor: "pointer";
         appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
         color: var!(foreground);
+        vertical-align: "middle";
         background-image: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='currentColor' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")";
         background-repeat: "no-repeat";
         background-position: "right 14px center";
@@ -782,6 +924,7 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         resize: "vertical";
@@ -789,6 +932,9 @@ class! {
         word-wrap: "break-word";
         font-family: "inherit";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -806,6 +952,7 @@ class! {
         padding: format!("{} {}", var!(space-md), var!(space-lg));
         border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         resize: "vertical";
@@ -813,6 +960,9 @@ class! {
         word-wrap: "break-word";
         font-family: "inherit";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
         :focus {
             outline: "none";
             border-color: var!(foreground);
@@ -1212,7 +1362,7 @@ class! {
     pub(crate) c_spinner {
         width: "28px";
         height: "28px";
-        border: format!("3px solid {}", var!(border));
+        border: format!("3px solid {}", var!(accent-muted));
         border-top: format!("3px solid {}", var!(accent));
         border-radius: "50%";
         flex-shrink: "0";
@@ -1247,7 +1397,6 @@ class! {
     pub(crate) c_error_icon {
         width: "20px";
         height: "20px";
-        border-radius: "50%";
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -1384,14 +1533,20 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_list_input {
+        width: "100%";
         flex: "1";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
+        vertical-align: "middle";
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);
@@ -1404,14 +1559,20 @@ class! {
     }
 
     pub(crate) c_list_input_error {
+        width: "100%";
         flex: "1";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         border: format!("1px solid {}", var!(foreground));
         font-size: var!(font-base);
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
         color: var!(foreground);
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
+        vertical-align: "middle";
         :focus {
             outline: "none";
             border-color: var!(foreground);
@@ -2916,14 +3077,20 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub(crate) c_ws_message_input {
+        width: "100%";
         flex: "1";
         height: "42px";
         padding: format!("0px {}", var!(space-lg));
         color: var!(foreground);
         border: format!("1px solid {}", var!(border));
         font-size: var!(font-base);
+        line-height: "normal";
         box-sizing: "border-box";
         outline: "none";
+        appearance: "none";
+        -webkit-appearance: "none";
+        -moz-appearance: "none";
+        vertical-align: "middle";
         :hover {
             border-color: var!(accent);
             background: var!(accent-muted);

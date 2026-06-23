@@ -37,8 +37,12 @@ pub(crate) fn parse_class_prop_key(input: ParseStream) -> syn::Result<ClassPropK
         let expr: Expr = content.parse()?;
         Ok(ClassPropKey::Dynamic(expr.to_token_stream()))
     } else {
-        let key: String = parse_ident_name(input)?;
-        Ok(ClassPropKey::Static(key))
+        let mut tokens = proc_macro2::TokenStream::new();
+        while !input.peek(Token![:]) && !input.is_empty() {
+            let token: proc_macro2::TokenTree = input.parse()?;
+            tokens.extend(Some(token));
+        }
+        Ok(ClassPropKey::Static(tokens))
     }
 }
 
@@ -54,7 +58,8 @@ pub(crate) fn parse_class_prop_key(input: ParseStream) -> syn::Result<ClassPropK
 pub(crate) fn class_prop_key_to_tokens(key: &ClassPropKey) -> proc_macro2::TokenStream {
     match key {
         ClassPropKey::Static(static_key) => {
-            quote! { #static_key.to_string() }
+            let key_str: String = reconstruct_ident_from_tokens(static_key);
+            quote! { #key_str.to_string() }
         }
         ClassPropKey::Dynamic(expr) => {
             quote! { (#expr).to_string() }
@@ -273,6 +278,150 @@ pub(crate) fn parse_selector(input: ParseStream, initial_colons: usize) -> syn::
     Ok(selector)
 }
 
+/// Checks whether the current position starts an element selector block
+/// (e.g. `h1 { ... }`, `* { ... }`, `input, button { ... }`).
+///
+/// An element selector block starts with `*` or `Ident` and is followed by `{`
+/// before a property-separating `:` (not `::`) or `;`.
+///
+/// # Arguments
+///
+/// - `&ParseStream` - The parse stream to check.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the current position starts an element selector block.
+pub(crate) fn is_element_selector_block(input: ParseStream) -> bool {
+    if input.peek(Token![*]) {
+        return true;
+    }
+    if !input.peek(Ident) {
+        return false;
+    }
+    let forked: ParseBuffer<'_> = input.fork();
+    while !forked.is_empty() {
+        if forked.peek(Brace) {
+            return true;
+        }
+        if forked.peek(Semi) {
+            return false;
+        }
+        if forked.peek(Token![:]) && !forked.peek2(Token![:]) {
+            let _ = forked.parse::<Token![:]>();
+            while !forked.is_empty() {
+                if forked.peek(Semi) || forked.peek(Brace) {
+                    break;
+                }
+                let _ = forked.parse::<TokenTree>();
+            }
+            if forked.peek(Brace) {
+                return true;
+            }
+            return false;
+        }
+        let _ = forked.parse::<TokenTree>();
+    }
+    false
+}
+
+/// Parses an element selector string from the token stream.
+///
+/// Collects all tokens until `{` and reconstructs a valid CSS selector string.
+///
+/// # Arguments
+///
+/// - `ParseStream` - The syn parse stream to read from.
+///
+/// # Returns
+///
+/// - `syn::Result<String>` - The reconstructed CSS selector string.
+pub(crate) fn parse_element_selector(input: ParseStream) -> syn::Result<String> {
+    let mut tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    while !input.peek(Brace) && !input.is_empty() {
+        let token: TokenTree = input.parse()?;
+        tokens.extend(Some(token));
+    }
+    Ok(reconstruct_selector_from_tokens(&tokens))
+}
+
+/// Reconstructs a CSS selector string from a raw `proc_macro2::TokenStream`.
+///
+/// Similar to `reconstruct_media_query` but optimized for CSS selectors:
+/// - Commas are followed by a space
+/// - Identifiers, punctuation, groups, and literals are preserved as-is
+///
+/// # Arguments
+///
+/// - `&proc_macro2::TokenStream` - The raw token stream to reconstruct.
+///
+/// # Returns
+///
+/// - `String` - The reconstructed CSS selector string.
+pub(crate) fn reconstruct_selector_from_tokens(tokens: &proc_macro2::TokenStream) -> String {
+    let mut result: String = String::new();
+    for token in tokens.clone() {
+        match &token {
+            proc_macro2::TokenTree::Ident(ident) => {
+                let raw_name: String = ident.to_string();
+                let clean_name: String = raw_name
+                    .strip_prefix(RAW_IDENT_PREFIX)
+                    .unwrap_or(&raw_name)
+                    .to_string();
+                result.push_str(&clean_name);
+            }
+            proc_macro2::TokenTree::Punct(punct) => {
+                let ch: char = punct.as_char();
+                if ch == CHAR_COMMA {
+                    result.push(CHAR_COMMA);
+                    result.push(CHAR_SPACE);
+                } else {
+                    result.push(ch);
+                }
+            }
+            proc_macro2::TokenTree::Group(group) => match group.delimiter() {
+                proc_macro2::Delimiter::Parenthesis => {
+                    result.push(CHAR_LEFT_PAREN);
+                    let inner: String = reconstruct_selector_from_tokens(&group.stream());
+                    result.push_str(&inner);
+                    result.push(CHAR_RIGHT_PAREN);
+                }
+                proc_macro2::Delimiter::Bracket => {
+                    result.push(CHAR_LEFT_BRACKET);
+                    let inner: String = reconstruct_selector_from_tokens(&group.stream());
+                    result.push_str(&inner);
+                    result.push(CHAR_RIGHT_BRACKET);
+                }
+                _ => {
+                    let inner: String = reconstruct_selector_from_tokens(&group.stream());
+                    result.push_str(&inner);
+                }
+            },
+            proc_macro2::TokenTree::Literal(literal) => {
+                let literal_token_stream: proc_macro2::TokenStream =
+                    proc_macro2::TokenTree::Literal(literal.clone()).into();
+                if let Ok(literal_string) = parse2::<LitStr>(literal_token_stream) {
+                    result.push_str(&literal_string.value());
+                } else {
+                    let literal_text: String = literal.to_string();
+                    if literal_text.starts_with(CHAR_DOUBLE_QUOTE) {
+                        if let Some(stripped) = literal_text
+                            .strip_prefix(CHAR_DOUBLE_QUOTE)
+                            .and_then(|s| s.strip_suffix(CHAR_DOUBLE_QUOTE))
+                        {
+                            result.push_str(stripped);
+                        } else {
+                            result.push_str(&literal_text);
+                        }
+                    } else {
+                        result.push_str(&literal_text);
+                    }
+                }
+            }
+        }
+    }
+    result
+}
+
 /// Parses the content of a selector or at-rule block, handling nested
 /// selector blocks, at-rule blocks, and CSS properties.
 ///
@@ -317,6 +466,18 @@ pub(crate) fn parse_block_content(input: ParseStream) -> syn::Result<BlockConten
         if peek_at_rule(input) {
             let at_rule: AtRuleBlock = parse_at_rule(input)?;
             at_rule_blocks.push(at_rule);
+            continue;
+        }
+        if is_element_selector_block(input) {
+            let selector: String = parse_element_selector(input)?;
+            let block_content: ParseBuffer<'_>;
+            braced!(block_content in input);
+            let inner: BlockContent = parse_block_content(&block_content)?;
+            selector_blocks.push(SelectorBlock::new(
+                selector,
+                inner.properties,
+                inner.selector_blocks,
+            ));
             continue;
         }
         let css_key: ClassPropKey = parse_class_prop_key(input)?;
@@ -481,13 +642,14 @@ pub(crate) fn properties_to_tokens(
         .map(|(key, value): &(ClassPropKey, ClassPropValue)| match value {
             ClassPropValue::Expr(expr) => match key {
                 ClassPropKey::Static(static_key) => {
+                    let key_str: String = reconstruct_ident_from_tokens(static_key);
                     if is_static_string_expr(expr) {
                         let value_str: String = expr_to_string(expr);
                         let prop_str: String =
-                            format!("{static_key}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}");
+                            format!("{key_str}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}");
                         quote! { #prop_str.to_string() }
                     } else {
-                        let key_sep: String = format!("{static_key}{CSS_PROP_SEPARATOR}");
+                        let key_sep: String = format!("{key_str}{CSS_PROP_SEPARATOR}");
                         quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR }
                     }
                 }
@@ -587,10 +749,15 @@ pub(crate) fn at_rule_blocks_to_media_tokens(
             let pseudo_expr: proc_macro2::TokenStream =
                 selector_blocks_to_tokens(block.get_selector_blocks())
                     .unwrap_or_else(|| quote! { Vec::new() });
+            let style_expr: proc_macro2::TokenStream = if style_parts.is_empty() {
+                quote! { "".to_string() }
+            } else {
+                quote! { [#(#style_parts), *].concat() }
+            };
             quote! {
                 ::euv::MediaRule::new(
                     #query.to_string(),
-                    [#(#style_parts), *].concat(),
+                    #style_expr,
                     #pseudo_expr
                 )
             }
@@ -636,10 +803,11 @@ pub(crate) fn at_rule_blocks_to_static_string(at_rule_blocks: &[AtRuleBlock]) ->
         result.push_str(CSS_RULE_OPEN);
         for (key, value) in block.get_properties() {
             let ClassPropValue::Expr(expr) = value;
-            let ClassPropKey::Static(key_str) = key else {
+            let ClassPropKey::Static(key_tokens) = key else {
                 continue;
             };
-            result.push_str(key_str);
+            let key_str: String = reconstruct_ident_from_tokens(key_tokens);
+            result.push_str(&key_str);
             result.push_str(CSS_PROP_SEPARATOR);
             result.push_str(&expr_to_string(expr));
             result.push_str(CSS_DECL_TERMINATOR);
@@ -670,10 +838,11 @@ pub(crate) fn selector_block_to_static_string(block: &SelectorBlock) -> String {
     result.push_str(CSS_RULE_OPEN);
     for (key, value) in block.get_properties() {
         let ClassPropValue::Expr(expr) = value;
-        let ClassPropKey::Static(key_str) = key else {
+        let ClassPropKey::Static(key_tokens) = key else {
             continue;
         };
-        result.push_str(key_str);
+        let key_str: String = reconstruct_ident_from_tokens(key_tokens);
+        result.push_str(&key_str);
         result.push_str(CSS_PROP_SEPARATOR);
         result.push_str(&expr_to_string(expr));
         result.push_str(CSS_DECL_TERMINATOR);
@@ -704,10 +873,11 @@ pub(crate) fn at_rule_block_to_static_string(block: &AtRuleBlock) -> String {
     result.push_str(CSS_RULE_OPEN);
     for (key, value) in block.get_properties() {
         let ClassPropValue::Expr(expr) = value;
-        let ClassPropKey::Static(key_str) = key else {
+        let ClassPropKey::Static(key_tokens) = key else {
             continue;
         };
-        result.push_str(key_str);
+        let key_str: String = reconstruct_ident_from_tokens(key_tokens);
+        result.push_str(&key_str);
         result.push_str(CSS_PROP_SEPARATOR);
         result.push_str(&expr_to_string(expr));
         result.push_str(CSS_DECL_TERMINATOR);
