@@ -175,6 +175,9 @@ pub(crate) fn load_native_bridge_data(state: UseNativeBridge) {
 /// `updating` signal accordingly. Otherwise, logs that the current
 /// version is already the latest.
 ///
+/// If the network request or response parsing fails at any stage,
+/// the function returns early without invoking the bridge.
+///
 /// # Arguments
 ///
 /// - `UseCacheUpdate` - The cache update state to populate.
@@ -186,27 +189,61 @@ pub(crate) fn load_cache_update(state: UseCacheUpdate) {
         let window_value: Window = window().expect("no global window exists");
         let promise: Promise = window_value.fetch_with_str(DOCS_STATUS_URL);
         let future: JsFuture = JsFuture::from(promise);
-        if let Ok(response) = future.await {
-            let response_value: Response = response.dyn_into().unwrap();
-            let text_promise: Promise = response_value.text().unwrap();
-            let text_future: JsFuture = JsFuture::from(text_promise);
-            if let Ok(text) = text_future.await {
-                let text_string: String = text.as_string().unwrap_or_default();
-                Console::log(&text_string);
-                let parsed: DocsStatus =
-                    serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default();
-                doc_status_signal.set(parsed.get_doc_status());
-                version_signal.set(parsed.get_version().clone());
-                if !matches!(
-                    CompareVersion::compare_version(parsed.get_version(), EUV_VERSION),
-                    Ok(VersionLevel::Greater)
-                ) {
-                    Console::log(&format!(
-                        "Current version v{EUV_VERSION} is already the latest version"
-                    ));
-                    return;
-                }
+        let response: JsValue = match future.await {
+            Ok(value) => value,
+            Err(error) => {
+                Console::error(&format!(
+                    "Failed to fetch version status: {}",
+                    error.as_string().unwrap_or_default()
+                ));
+                return;
             }
+        };
+        let response_value: Response = match response.dyn_into() {
+            Ok(value) => value,
+            Err(error) => {
+                Console::error(&format!(
+                    "Failed to convert fetch response: {}",
+                    error.as_string().unwrap_or_default()
+                ));
+                return;
+            }
+        };
+        let text_promise: Promise = match response_value.text() {
+            Ok(promise) => promise,
+            Err(error) => {
+                Console::error(&format!(
+                    "Failed to get response text promise: {}",
+                    error.as_string().unwrap_or_default()
+                ));
+                return;
+            }
+        };
+        let text_future: JsFuture = JsFuture::from(text_promise);
+        let text: JsValue = match text_future.await {
+            Ok(value) => value,
+            Err(error) => {
+                Console::error(&format!(
+                    "Failed to read response text: {}",
+                    error.as_string().unwrap_or_default()
+                ));
+                return;
+            }
+        };
+        let text_string: String = text.as_string().unwrap_or_default();
+        Console::log(&text_string);
+        let parsed: DocsStatus =
+            serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default();
+        doc_status_signal.set(parsed.get_doc_status());
+        version_signal.set(parsed.get_version().clone());
+        if !matches!(
+            CompareVersion::compare_version(parsed.get_version(), EUV_VERSION),
+            Ok(VersionLevel::Greater)
+        ) {
+            Console::log(&format!(
+                "Current version v{EUV_VERSION} is already the latest version"
+            ));
+            return;
         }
         if !is_bridge_available() {
             return;
