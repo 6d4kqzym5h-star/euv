@@ -161,7 +161,7 @@ class! {
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(background);
         color: var!(foreground);
-        padding: format!("env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px)");
+        padding: format!("{} {} {} {}", var!(safe-area-inset-top), var!(safe-area-inset-right), var!(safe-area-inset-bottom), var!(safe-area-inset-left));
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
@@ -1220,7 +1220,7 @@ class! {
         top: "0";
         left: "0";
         z-index: "10002";
-        padding: format!("env(safe-area-inset-top, 0px) {} env(safe-area-inset-bottom, 0px) {}", var!(space-md), var!(space-md));
+        padding: format!("{} {} {} {}", var!(safe-area-inset-top), var!(space-md), var!(safe-area-inset-bottom), var!(space-md));
         box-sizing: "border-box";
     }
 
@@ -2124,7 +2124,7 @@ class! {
         bottom: "0px";
         left: "0px";
         right: "0px";
-        height: "calc(76vh - env(safe-area-inset-bottom, 0px))";
+        height: format!("calc(76vh - {})", var!(safe-area-inset-bottom));
         background: var!(background);
         z-index: "10001";
         display: "flex";
@@ -2143,7 +2143,7 @@ class! {
 
     pub(crate) c_vconsole_fab_hidden {
         position: "fixed";
-        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
+        bottom: format!("calc(20px + {})", var!(safe-area-inset-bottom));
         right: var!(padding-main-horizontal);
         z-index: "9999";
         transform: "translateX(calc(100% + 40px))";
@@ -2151,21 +2151,21 @@ class! {
         pointer-events: "none";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         @media ((max-width: 767px)) {
-            bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
+            bottom: format!("calc(16px + {})", var!(safe-area-inset-bottom));
             right: var!(padding-main-horizontal-mobile);
         }
     }
 
     pub(crate) c_vconsole_fab_visible {
         position: "fixed";
-        bottom: "calc(20px + env(safe-area-inset-bottom, 0px))";
+        bottom: format!("calc(20px + {})", var!(safe-area-inset-bottom));
         right: var!(padding-main-horizontal);
         z-index: "9999";
         transform: "translateX(0)";
         opacity: "1";
         transition: format!("transform {} {}, opacity {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
         @media ((max-width: 767px)) {
-            bottom: "calc(16px + env(safe-area-inset-bottom, 0px))";
+            bottom: format!("calc(16px + {})", var!(safe-area-inset-bottom));
             right: var!(padding-main-horizontal-mobile);
         }
     }
@@ -2482,8 +2482,8 @@ class! {
         z-index: "201";
         display: "flex";
         flex-direction: "column";
-        padding-top: "env(safe-area-inset-top, 0px)";
-        padding-bottom: "env(safe-area-inset-bottom, 0px)";
+        padding-top: var!(safe-area-inset-top);
+        padding-bottom: var!(safe-area-inset-bottom);
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
         overflow: "hidden";
     }

@@ -84,8 +84,12 @@ vars! {
         // ═══════════════════════════════════════════════════════════════════════
         // Layout (shadcn/ui aligned)
         // ═══════════════════════════════════════════════════════════════════════
-        padding-main-top: "calc(env(safe-area-inset-top, 0px) + 24px)";
-        padding-main-bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)";
+        safe-area-inset-top: "env(safe-area-inset-top, 0px)";
+        safe-area-inset-right: "env(safe-area-inset-right, 0px)";
+        safe-area-inset-bottom: "env(safe-area-inset-bottom, 0px)";
+        safe-area-inset-left: "env(safe-area-inset-left, 0px)";
+        padding-main-top: format!("calc({} + 24px)", var!(safe-area-inset-top));
+        padding-main-bottom: format!("calc({} + 24px)", var!(safe-area-inset-bottom));
         padding-main-horizontal: "28px";
         padding-main-horizontal-mobile: "16px";
         gap-page-header: "16px";
@@ -228,8 +232,12 @@ vars! {
         // ═══════════════════════════════════════════════════════════════════════
         // Layout (same as light)
         // ═══════════════════════════════════════════════════════════════════════
-        padding-main-top: "calc(env(safe-area-inset-top, 0px) + 24px)";
-        padding-main-bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)";
+        safe-area-inset-top: "env(safe-area-inset-top, 0px)";
+        safe-area-inset-right: "env(safe-area-inset-right, 0px)";
+        safe-area-inset-bottom: "env(safe-area-inset-bottom, 0px)";
+        safe-area-inset-left: "env(safe-area-inset-left, 0px)";
+        padding-main-top: format!("calc({} + 24px)", var!(safe-area-inset-top));
+        padding-main-bottom: format!("calc({} + 24px)", var!(safe-area-inset-bottom));
         padding-main-horizontal: "28px";
         padding-main-horizontal-mobile: "16px";
         gap-page-header: "16px";
