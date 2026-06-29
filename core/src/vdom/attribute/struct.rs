@@ -112,6 +112,25 @@ pub struct EventAdapter<T> {
     pub(crate) inner: T,
 }
 
+/// Adapts an event with a specific event name into an `AttributeValue`.
+///
+/// This type wraps an event value and its event name, enabling
+/// `Into<AttributeValue>` trait implementation for events.
+/// Used by the `html!` macro for event attributes like `onclick`.
+#[derive(Data, New)]
+pub struct EventNamedAdapter<T> {
+    /// The wrapped event value to be adapted.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) inner: T,
+    /// The event name (e.g., "click", "mouseover").
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) event_name: &'static str,
+}
+
 /// Adapts an arbitrary attribute value expression into an `AttributeValue`.
 ///
 /// Handles the dispatch between event closures and reactive values without
@@ -130,6 +149,25 @@ pub struct AttrValueAdapter<T> {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: T,
+}
+
+/// Adapts a callback with a custom name into an `AttributeValue`.
+///
+/// This type wraps a callback and its custom attribute name, enabling
+/// `Into<AttributeValue>` trait implementation for named callbacks.
+/// Used by the `html!` macro for component callback props.
+#[derive(Data, New)]
+pub struct CallbackNamedAdapter<T> {
+    /// The wrapped callback to be adapted.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) inner: T,
+    /// The custom attribute name (e.g., "on-increment", "on-change").
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) name: &'static str,
 }
 
 /// A `Sync` wrapper for single-threaded global `HashSet` access.

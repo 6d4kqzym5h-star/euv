@@ -20,15 +20,12 @@ impl AttributeValue {
     ///
     /// - `Self` - A `Self::Signal` backed by a `Signal<String>`
     ///   that reactively re-evaluates the attribute value on signal updates.
-    pub fn create_reactive_signal<F>(compute: F) -> Self
+    pub fn reactive<F>(compute: F) -> Self
     where
         F: Fn() -> String + 'static,
     {
-        let attr_signal: Signal<String> =
-            Signal::create(IntoReactiveString::into_reactive_string(compute()));
-        subscribe_attr(attr_signal, move || {
-            IntoReactiveString::into_reactive_string(compute())
-        });
+        let attr_signal: Signal<String> = Signal::create(compute());
+        subscribe_attr(attr_signal, compute);
         Self::Signal(attr_signal)
     }
 
@@ -545,7 +542,7 @@ impl Css {
     /// # Returns
     ///
     /// - `String` - The CSS string (e.g., `"margin: 0 auto; max-width: 800px;"`).
-    pub fn create_style_string<K, V>(props: &[(K, V)]) -> String
+    pub fn style_string<K, V>(props: &[(K, V)]) -> String
     where
         K: AsRef<str>,
         V: AsRef<str>,
@@ -575,7 +572,7 @@ impl Css {
     /// # Returns
     ///
     /// - `String` - The CSS string (e.g., `"margin: 0 auto; max-width: 800px;"`).
-    pub fn create_style_string_owned(props: &[(String, String)]) -> String {
+    pub fn style_string_owned(props: &[(String, String)]) -> String {
         props
             .iter()
             .map(|(key, value): &(String, String)| {

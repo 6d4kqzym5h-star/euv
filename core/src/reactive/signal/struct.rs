@@ -21,7 +21,7 @@ where
     #[set(pub(crate))]
     pub(crate) listeners: Vec<Box<dyn FnMut()>>,
     /// Whether this signal is still active. Set to `false` by `deactivate()`
-    /// (and `clear_signal_listeners_by_addr`) to make subsequent `set()` calls
+    /// (and `clear_signal_listeners`) to make subsequent `set()` calls
     /// complete no-ops (no value update, no listener invocation, no
     /// dispatch scheduling), ensuring stale closures like orphaned
     /// `setInterval` handlers or pending `spawn_local` futures become harmless.

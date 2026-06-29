@@ -69,7 +69,7 @@ fn main() {
         .map(|array: &Vec<toml::Value>| {
             array
                 .iter()
-                .filter_map(|item: &toml::Value| item.as_str().map(|s: &str| s.to_string()))
+                .filter_map(|item: &toml::Value| item.as_str().map(|text: &str| text.to_string()))
                 .collect::<Vec<String>>()
                 .join(", ")
         })

@@ -6,7 +6,7 @@ pub(crate) static NEXT_EUV_ID: AtomicUsize = AtomicUsize::new(0);
 /// Global auto-incrementing ID counter for DynamicNode placeholder elements.
 pub(crate) static NEXT_EUV_DYNAMIC_ID: AtomicUsize = AtomicUsize::new(0);
 
-/// Whether `dispatch_signal_update_callbacks` is currently executing.
+/// Whether `dispatch_updates` is currently executing.
 pub(crate) static SIGNAL_UPDATE_DISPATCHING: AtomicBool = AtomicBool::new(false);
 
 /// Global handler registry, mapping (element_id, event_name) to HandlerEntry.

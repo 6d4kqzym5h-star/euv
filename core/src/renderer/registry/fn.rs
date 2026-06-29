@@ -56,8 +56,8 @@ fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
 /// # Arguments
 ///
 /// - `&'static str` - The event type name to listen for (e.g. `"click"`).
-pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
-    if is_delegated_event(event_name) {
+pub(crate) fn ensure_delegation(event_name: &'static str) {
+    if is_delegated(event_name) {
         return;
     }
     let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
@@ -73,7 +73,7 @@ pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
         true,
     );
     closure.forget();
-    insert_delegated_event(event_name);
+    mark_delegated(event_name);
 }
 
 /// Invokes all active callbacks in the signal update registry.
@@ -90,14 +90,14 @@ pub(crate) fn ensure_delegated_listener(event_name: &'static str) {
 /// After all dispatch passes complete, sweeps the registry to remove entries
 /// that have been marked as `removed`, preventing memory leaks from
 /// accumulated dead DynamicNode entries.
-pub(crate) fn dispatch_signal_update_callbacks() {
+pub(crate) fn dispatch_updates() {
     if SIGNAL_UPDATE_DISPATCHING.load(Ordering::Relaxed) {
         return;
     }
     SIGNAL_UPDATE_DISPATCHING.store(true, Ordering::Relaxed);
     let mut iterations: usize = 0;
     loop {
-        let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
+        let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_update_registry_mut();
         let dirty_keys: Vec<usize> = registry
             .iter()
             .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
@@ -113,7 +113,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             break;
         }
         for key in dirty_keys {
-            let entry: SignalUpdateEntry = match ensure_signal_update_registry_mut().remove(&key) {
+            let entry: SignalUpdateEntry = match ensure_update_registry_mut().remove(&key) {
                 Some(removed_entry) => removed_entry,
                 None => continue,
             };
@@ -141,8 +141,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
                 }
                 continue;
             }
-            let registry: &mut HashMap<usize, SignalUpdateEntry> =
-                ensure_signal_update_registry_mut();
+            let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_update_registry_mut();
             if registry.contains_key(&key) {
                 // Another entry was inserted for this key during callback; free ours.
                 unsafe {
@@ -157,7 +156,7 @@ pub(crate) fn dispatch_signal_update_callbacks() {
             break;
         }
     }
-    sweep_removed_signal_update_entries();
+    sweep_removed_entries();
     SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
 }
 
@@ -166,8 +165,8 @@ pub(crate) fn dispatch_signal_update_callbacks() {
 /// dead DynamicNode entries that are no longer connected to the DOM.
 ///
 /// Called after each dispatch cycle completes to clean up stale entries.
-fn sweep_removed_signal_update_entries() {
-    ensure_signal_update_registry_mut().retain(|_key, entry| {
+fn sweep_removed_entries() {
+    ensure_update_registry_mut().retain(|_key, entry| {
         let slot: &SignalUpdateSlot = unsafe { &**entry };
         if slot.get_removed() {
             unsafe {
@@ -189,8 +188,8 @@ fn sweep_removed_signal_update_entries() {
 /// # Arguments
 ///
 /// - `&[usize]` - The dynamic node IDs to mark as dirty.
-pub(crate) fn mark_slots_dirty_targeted(dynamic_ids: &[usize]) {
-    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_signal_update_registry_mut();
+pub(crate) fn mark_dirty(dynamic_ids: &[usize]) {
+    let registry: &mut HashMap<usize, SignalUpdateEntry> = ensure_update_registry_mut();
     for dynamic_id in dynamic_ids {
         if let Some(entry) = registry.get(dynamic_id) {
             let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
@@ -209,8 +208,8 @@ pub(crate) fn mark_slots_dirty_targeted(dynamic_ids: &[usize]) {
 /// # Returns
 ///
 /// - `bool` - `true` if at least one non-removed dirty slot exists.
-pub(crate) fn has_dirty_slots() -> bool {
-    ensure_signal_update_registry_mut()
+pub(crate) fn has_dirty() -> bool {
+    ensure_update_registry_mut()
         .values()
         .any(|entry: &SignalUpdateEntry| {
             let slot: &SignalUpdateSlot = unsafe { &**entry };
@@ -227,11 +226,11 @@ pub(crate) fn has_dirty_slots() -> bool {
 ///
 /// - `usize` - The unique ID of the `DynamicNode`.
 /// - `Box<dyn FnMut()>` - The callback to invoke on signal updates.
-pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnMut()>) {
+pub(crate) fn register_dynamic(dynamic_id: usize, callback: Box<dyn FnMut()>) {
     let slot: Box<SignalUpdateSlot> = Box::new(SignalUpdateSlot::new(Some(callback), false, true));
     let entry: SignalUpdateEntry = Box::into_raw(slot);
     // If there's an existing entry for this key, free it first.
-    if let Some(old_entry) = ensure_signal_update_registry_mut().insert(dynamic_id, entry) {
+    if let Some(old_entry) = ensure_update_registry_mut().insert(dynamic_id, entry) {
         unsafe {
             let _ = Box::from_raw(old_entry);
         }
@@ -247,10 +246,10 @@ pub(crate) fn register_dynamic_listener(dynamic_id: usize, callback: Box<dyn FnM
 ///
 /// - `usize` - The inner address of the attribute signal.
 /// - `Box<dyn FnMut()>` - The callback to invoke on signal updates.
-pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn FnMut()>) {
+pub(crate) fn register_attr_listener(signal_key: usize, callback: Box<dyn FnMut()>) {
     let slot: Box<SignalUpdateSlot> = Box::new(SignalUpdateSlot::new(Some(callback), false, true));
     let entry: SignalUpdateEntry = Box::into_raw(slot);
-    if let Some(old_entry) = ensure_signal_update_registry_mut().insert(signal_key, entry) {
+    if let Some(old_entry) = ensure_update_registry_mut().insert(signal_key, entry) {
         unsafe {
             let _ = Box::from_raw(old_entry);
         }
@@ -267,7 +266,7 @@ pub(crate) fn register_attr_signal_listener(signal_key: usize, callback: Box<dyn
 /// # Arguments
 ///
 /// - `usize` - The euv ID of the DOM element being removed.
-pub(crate) fn cleanup_element_handlers(euv_id: usize) {
+pub(crate) fn cleanup_element(euv_id: usize) {
     let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
     let keys_to_remove: Vec<(usize, &'static str)> = registry_ref
         .keys()
@@ -302,7 +301,7 @@ pub(crate) fn cleanup_element_handlers(euv_id: usize) {
 ///
 /// - `usize` - The unique ID of the `DynamicNode` being removed.
 pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
-    if let Some(entry) = ensure_signal_update_registry().get(&dynamic_id) {
+    if let Some(entry) = ensure_update_registry().get(&dynamic_id) {
         let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
         slot.set_removed(true);
         slot.set_callback(None);
@@ -312,15 +311,15 @@ pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
 /// Removes the signal update slot for an attribute signal from the registry.
 ///
 /// Attribute signals are registered with the signal's inner address as key
-/// (via `register_attr_signal_listener`). This function marks the slot as
+/// (via `register_attr_listener`). This function marks the slot as
 /// removed and clears its callback, mirroring `cleanup_dynamic_node` but
 /// for attribute-level signals. The entry will be swept on the next dispatch.
 ///
 /// # Arguments
 ///
 /// - `usize` - The inner pointer address of the attribute signal.
-pub(crate) fn cleanup_attr_signal_update_slot(addr: usize) {
-    if let Some(entry) = ensure_signal_update_registry().get(&addr) {
+pub(crate) fn cleanup_attr_slot(addr: usize) {
+    if let Some(entry) = ensure_update_registry().get(&addr) {
         let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
         slot.set_removed(true);
         slot.set_callback(None);
@@ -370,7 +369,7 @@ pub(crate) fn ensure_handler_registry_mut() -> &'static mut HandlerRegistryMap {
 /// # Returns
 ///
 /// - `bool` - Whether the event is non-bubbling.
-pub(crate) fn is_non_bubbling_event(event_name: &str) -> bool {
+pub(crate) fn is_non_bubbling(event_name: &str) -> bool {
     NON_BUBBLING_EVENTS.contains(&event_name)
 }
 
@@ -384,7 +383,7 @@ pub(crate) fn is_non_bubbling_event(event_name: &str) -> bool {
 ///
 /// - `bool` - Whether the event is already delegated.
 #[allow(static_mut_refs)]
-pub(crate) fn is_delegated_event(event_name: &str) -> bool {
+pub(crate) fn is_delegated(event_name: &str) -> bool {
     unsafe {
         if (*DELEGATED_EVENTS.get_0().get()).is_none() {
             return false;
@@ -396,13 +395,13 @@ pub(crate) fn is_delegated_event(event_name: &str) -> bool {
     }
 }
 
-/// Inserts an event name into the delegated events set.
+/// Marks an event name as delegated in the global set.
 ///
 /// # Arguments
 ///
-/// - `&'static str` - The event name to insert.
+/// - `&'static str` - The event name to mark as delegated.
 #[allow(static_mut_refs)]
-pub(crate) fn insert_delegated_event(event_name: &'static str) {
+pub(crate) fn mark_delegated(event_name: &'static str) {
     unsafe {
         if (*DELEGATED_EVENTS.get_0().get()).is_none() {
             (*DELEGATED_EVENTS.get_0().get()) = Some(HashSet::new());
@@ -418,7 +417,7 @@ pub(crate) fn insert_delegated_event(event_name: &'static str) {
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
 #[allow(static_mut_refs)]
-fn ensure_signal_update_registry() -> &'static HashMap<usize, SignalUpdateEntry> {
+fn ensure_update_registry() -> &'static HashMap<usize, SignalUpdateEntry> {
     unsafe {
         if (*SIGNAL_UPDATE_REGISTRY.get_0().get()).is_none() {
             (*SIGNAL_UPDATE_REGISTRY.get_0().get()) = Some(HashMap::new());
@@ -433,7 +432,7 @@ fn ensure_signal_update_registry() -> &'static HashMap<usize, SignalUpdateEntry>
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
 #[allow(static_mut_refs)]
-fn ensure_signal_update_registry_mut() -> &'static mut HashMap<usize, SignalUpdateEntry> {
+fn ensure_update_registry_mut() -> &'static mut HashMap<usize, SignalUpdateEntry> {
     unsafe {
         if (*SIGNAL_UPDATE_REGISTRY.get_0().get()).is_none() {
             (*SIGNAL_UPDATE_REGISTRY.get_0().get()) = Some(HashMap::new());
@@ -448,7 +447,7 @@ fn ensure_signal_update_registry_mut() -> &'static mut HashMap<usize, SignalUpda
 ///
 /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
 #[allow(static_mut_refs)]
-pub(crate) fn ensure_window_event_registry_mut() -> &'static mut WindowEventRegistryMap {
+pub(crate) fn ensure_window_registry_mut() -> &'static mut WindowEventRegistryMap {
     unsafe {
         if (*WINDOW_EVENT_REGISTRY.get_0().get()).is_none() {
             (*WINDOW_EVENT_REGISTRY.get_0().get()) = Some(HashMap::new());
@@ -464,7 +463,7 @@ pub(crate) fn ensure_window_event_registry_mut() -> &'static mut WindowEventRegi
 /// Ensures a single `window.addEventListener` listener exists for the given
 /// event name. The proxy listener dispatches to all registered callbacks
 /// for that event. Returns a unique handler ID that can be used to unregister
-/// the callback later via `unregister_window_event_handler`.
+/// the callback later via `unregister_window_event`.
 ///
 /// # Arguments
 ///
@@ -474,14 +473,14 @@ pub(crate) fn ensure_window_event_registry_mut() -> &'static mut WindowEventRegi
 /// # Returns
 ///
 /// - `usize` - A unique handler ID for later unregistration.
-pub(crate) fn register_window_event_handler<F>(event_name: &str, callback: F) -> usize
+pub(crate) fn register_window_event<F>(event_name: &str, callback: F) -> usize
 where
     F: FnMut() + 'static,
 {
     let handler_id: usize = NEXT_WINDOW_HANDLER_ID.fetch_add(1, Ordering::Relaxed);
     let boxed: Box<Box<dyn FnMut()>> = Box::new(Box::new(callback) as Box<dyn FnMut()>);
     let entry: WindowEventHandlerEntry = (handler_id, Box::into_raw(boxed));
-    let registry: &mut WindowEventRegistryMap = ensure_window_event_registry_mut();
+    let registry: &mut WindowEventRegistryMap = ensure_window_registry_mut();
     let is_new_event: bool = !registry.contains_key(event_name);
     registry
         .entry(event_name.to_string())
@@ -503,9 +502,9 @@ where
 /// # Arguments
 ///
 /// - `&str` - The event name the handler was registered for.
-/// - `usize` - The handler ID returned by `register_window_event_handler`.
-pub(crate) fn unregister_window_event_handler(event_name: &str, handler_id: usize) {
-    let registry: &mut WindowEventRegistryMap = ensure_window_event_registry_mut();
+/// - `usize` - The handler ID returned by `register_window_event`.
+pub(crate) fn unregister_window_event(event_name: &str, handler_id: usize) {
+    let registry: &mut WindowEventRegistryMap = ensure_window_registry_mut();
     if let Some(handlers) = registry.get_mut(event_name) {
         handlers.retain(|(id, ptr): &WindowEventHandlerEntry| {
             if *id == handler_id {
@@ -537,21 +536,20 @@ fn ensure_window_event_listener(event_name: &str) {
         //
         // A callback may, while running, register or unregister handlers for
         // this same event name (e.g. a route change tears down the old page's
-        // hooks and `unregister_window_event_handler` frees an entry, or a new
+        // hooks and `unregister_window_event` frees an entry, or a new
         // page's `use_window_event` pushes one). Mutating the `Vec` mid-iteration
         // would either invalidate references into it or free a `*mut Box<dyn FnMut()>`
         // that we are about to dereference (use-after-free). By snapshotting the
         // IDs and re-looking-up each handler immediately before calling it, we
         // skip any handler that was removed during dispatch and never touch a
         // freed allocation or a reallocated buffer.
-        let handler_ids: Vec<usize> =
-            match ensure_window_event_registry_mut().get(&event_name_owned) {
-                Some(handlers) => handlers.iter().map(|(id, _ptr)| *id).collect(),
-                None => return,
-            };
+        let handler_ids: Vec<usize> = match ensure_window_registry_mut().get(&event_name_owned) {
+            Some(handlers) => handlers.iter().map(|(id, _ptr)| *id).collect(),
+            None => return,
+        };
         for handler_id in handler_ids {
             let callback_ptr: *mut Box<dyn FnMut()> =
-                match ensure_window_event_registry_mut().get(&event_name_owned) {
+                match ensure_window_registry_mut().get(&event_name_owned) {
                     Some(handlers) => match handlers.iter().find(|(id, _ptr)| *id == handler_id) {
                         Some((_id, ptr)) => *ptr,
                         None => continue,

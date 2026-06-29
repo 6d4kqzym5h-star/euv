@@ -15,7 +15,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `&'static mut SignalInner<T>` - A mutable reference to the signal's inner state.
-pub(crate) fn get_signal_inner_ref<T>(addr: usize) -> &'static mut SignalInner<T>
+pub(crate) fn get_signal_inner_mut<T>(addr: usize) -> &'static mut SignalInner<T>
 where
     T: Clone + PartialEq + 'static,
 {
@@ -45,12 +45,12 @@ where
 /// # Arguments
 ///
 /// - `usize` - The inner pointer address of the bridge signal.
-pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
-    let inner: &mut SignalInner<String> = get_signal_inner_ref(addr);
+pub(crate) fn clear_signal_listeners(addr: usize) {
+    let inner: &mut SignalInner<String> = get_signal_inner_mut(addr);
     inner.get_mut_listeners().clear();
     inner.set_alive(false);
     inner.set_value(String::new());
-    cleanup_attr_signal_update_slot(addr);
+    cleanup_attr_slot(addr);
 }
 
 /// Returns whether the signal allocation at `addr` is still present in the
@@ -68,8 +68,8 @@ pub(crate) fn clear_signal_listeners_by_addr(addr: usize) {
 /// # Returns
 ///
 /// - `bool` - `true` if the allocation is still registered (safe to deref).
-pub(crate) fn is_signal_inner_alive(addr: usize) -> bool {
-    signal_inner_registry_mut().contains(&addr)
+pub(crate) fn is_signal_alive(addr: usize) -> bool {
+    get_signal_inner_registry_mut().contains(&addr)
 }
 
 /// Ensures the signal inner registry is initialized and returns a mutable reference.
@@ -80,7 +80,7 @@ pub(crate) fn is_signal_inner_alive(addr: usize) -> bool {
 ///
 /// - `&'static mut HashSet<usize>`: A mutable reference to the signal inner registry.
 #[allow(static_mut_refs)]
-pub(crate) fn signal_inner_registry_mut() -> &'static mut HashSet<usize> {
+pub(crate) fn get_signal_inner_registry_mut() -> &'static mut HashSet<usize> {
     unsafe {
         if (*SIGNAL_INNER_REGISTRY.get_0().get()).is_none() {
             (*SIGNAL_INNER_REGISTRY.get_0().get()) = Some(HashSet::new());

@@ -1,18 +1,6 @@
 use crate::*;
 
-/// Converts a `VirtualNode` into itself via `IntoNode`.
-impl IntoNode for VirtualNode {
-    /// Returns this virtual node as-is.
-    ///
-    /// # Returns
-    ///
-    /// - `VirtualNode` - This same virtual node.
-    fn into_node(self) -> VirtualNode {
-        self
-    }
-}
-
-/// Converts a `Vec<VirtualNode>` into a `VirtualNode::Fragment` via `IntoNode`.
+/// Converts a `Vec<VirtualNode>` into a `VirtualNode::Fragment`.
 ///
 /// This enables using a `Vec<VirtualNode>` directly in the `html!` macro
 /// without manually wrapping it in `VirtualNode::Fragment(...)`.
@@ -21,33 +9,33 @@ impl IntoNode for VirtualNode {
 ///
 /// - `VirtualNode` - A `VirtualNode::Fragment` containing the nodes, or
 ///   `VirtualNode::Empty` if the vector is empty.
-impl IntoNode for Vec<VirtualNode> {
-    fn into_node(self) -> VirtualNode {
-        if self.is_empty() {
+impl From<Vec<VirtualNode>> for VirtualNode {
+    fn from(nodes: Vec<VirtualNode>) -> Self {
+        if nodes.is_empty() {
             VirtualNode::Empty
         } else {
-            VirtualNode::Fragment(self)
+            VirtualNode::Fragment(nodes)
         }
     }
 }
 
-/// Converts an `Option<VirtualNode>` into a `VirtualNode` via `IntoNode`.
+/// Converts an `Option<VirtualNode>` into a `VirtualNode`.
 ///
 /// `Some(node)` returns the inner node, `None` returns `VirtualNode::Empty`.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The inner node if `Some`, otherwise `VirtualNode::Empty`.
-impl IntoNode for Option<VirtualNode> {
-    fn into_node(self) -> VirtualNode {
-        match self {
+impl From<Option<VirtualNode>> for VirtualNode {
+    fn from(node: Option<VirtualNode>) -> Self {
+        match node {
             Some(node) => node,
             None => VirtualNode::Empty,
         }
     }
 }
 
-/// Converts an `Option<Vec<VirtualNode>>` into a `VirtualNode` via `IntoNode`.
+/// Converts an `Option<Vec<VirtualNode>>` into a `VirtualNode`.
 ///
 /// `Some(vec)` converts the vector into a `VirtualNode::Fragment` (or `Empty`
 /// if the vector is empty), `None` returns `VirtualNode::Empty`.
@@ -56,100 +44,95 @@ impl IntoNode for Option<VirtualNode> {
 ///
 /// - `VirtualNode` - A `VirtualNode::Fragment` if `Some` with nodes,
 ///   `VirtualNode::Empty` if `None` or the vector is empty.
-impl IntoNode for Option<Vec<VirtualNode>> {
-    fn into_node(self) -> VirtualNode {
-        match self {
-            Some(nodes) => nodes.into_node(),
+impl From<Option<Vec<VirtualNode>>> for VirtualNode {
+    fn from(nodes: Option<Vec<VirtualNode>>) -> Self {
+        match nodes {
+            Some(nodes) => nodes.into(),
             None => VirtualNode::Empty,
         }
     }
 }
 
-/// Wraps a `FnMut() -> VirtualNode` closure into a `DynamicNode` via `IntoNode`.
+/// Wraps a `FnMut(&mut HookContext) -> VirtualNode` closure into a `DynamicNode`.
 ///
-/// This enables writing `{move || html! { ... }}` directly in HTML markup
+/// This enables writing `{move |_: &mut HookContext| html! { ... }}` directly in HTML markup
 /// without explicit `DynamicNode` construction.
-impl<F> IntoNode for F
+impl<F> From<F> for VirtualNode
 where
-    F: FnMut() -> VirtualNode + 'static,
+    F: FnMut(&mut HookContext) -> VirtualNode + 'static,
 {
     /// Wraps this closure into a `VirtualNode::Dynamic` with a fresh hook context.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - A dynamic virtual node wrapping this closure.
-    fn into_node(self) -> VirtualNode {
-        let render_fn_inner: Rc<UnsafeCell<RenderFnInner>> =
-            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(self))));
-        VirtualNode::Dynamic(DynamicNode::new(
-            render_fn_inner,
-            crate::reactive::create_hook_context(),
-        ))
+    fn from(render_fn: F) -> Self {
+        VirtualNode::create_dynamic(render_fn)
     }
 }
 
-/// Converts a `String` into a text virtual node via `IntoNode`.
-impl IntoNode for String {
+/// Converts a `String` into a text virtual node.
+impl From<String> for VirtualNode {
     /// Converts this string into a text virtual node.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
-    fn into_node(self) -> VirtualNode {
-        VirtualNode::Text(TextNode::new(self, None))
+    fn from(text: String) -> Self {
+        VirtualNode::Text(TextNode::new(text, None))
     }
 }
 
-/// Converts a `&str` into a text virtual node via `IntoNode`.
-impl IntoNode for &str {
+/// Converts a `&str` into a text virtual node.
+impl From<&str> for VirtualNode {
     /// Converts this string slice into a text virtual node.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
-    fn into_node(self) -> VirtualNode {
-        VirtualNode::Text(TextNode::new(self.to_string(), None))
+    fn from(text: &str) -> Self {
+        VirtualNode::Text(TextNode::new(text.to_string(), None))
     }
 }
 
-/// Converts an `i32` into a text virtual node via `IntoNode`.
-impl IntoNode for i32 {
+/// Converts an `i32` into a text virtual node.
+impl From<i32> for VirtualNode {
     /// Converts this integer into a text virtual node.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
-    fn into_node(self) -> VirtualNode {
-        VirtualNode::Text(TextNode::new(self.to_string(), None))
+    fn from(value: i32) -> Self {
+        VirtualNode::Text(TextNode::new(value.to_string(), None))
     }
 }
 
-/// Converts a `usize` into a text virtual node via `IntoNode`.
-impl IntoNode for usize {
+/// Converts a `usize` into a text virtual node.
+impl From<usize> for VirtualNode {
     /// Converts this unsigned integer into a text virtual node.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
-    fn into_node(self) -> VirtualNode {
-        VirtualNode::Text(TextNode::new(self.to_string(), None))
+    fn from(value: usize) -> Self {
+        VirtualNode::Text(TextNode::new(value.to_string(), None))
     }
 }
 
-/// Converts a `bool` into a text virtual node via `IntoNode`.
-impl IntoNode for bool {
+/// Converts a `bool` into a text virtual node.
+impl From<bool> for VirtualNode {
     /// Converts this boolean into a text virtual node.
     ///
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
-    fn into_node(self) -> VirtualNode {
-        VirtualNode::Text(TextNode::new(self.to_string(), None))
+    fn from(value: bool) -> Self {
+        VirtualNode::Text(TextNode::new(value.to_string(), None))
     }
 }
 
-/// Converts a signal into a reactive text virtual node via `IntoNode`.
-impl<T> IntoNode for Signal<T>
+/// Converts a signal into a reactive text virtual node.
+impl<T> From<Signal<T>> for VirtualNode
 where
     T: Clone + PartialEq + Display + 'static,
 {
@@ -158,8 +141,8 @@ where
     /// # Returns
     ///
     /// - `VirtualNode` - A reactive text virtual node.
-    fn into_node(self) -> VirtualNode {
-        self.as_reactive_text()
+    fn from(signal: Signal<T>) -> Self {
+        signal.as_reactive_text()
     }
 }
 
@@ -222,6 +205,63 @@ where
     }
 }
 
+/// Converts an event with a specific event name into an `AttributeValue`.
+impl<F> From<EventNamedAdapter<F>> for AttributeValue
+where
+    F: FnMut(Event) + 'static,
+{
+    /// Converts the wrapped closure with event name into an event `AttributeValue`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
+    fn from(adapter: EventNamedAdapter<F>) -> Self {
+        AttributeValue::Event(NativeEventHandler::create(
+            adapter.get_event_name(),
+            adapter.inner,
+        ))
+    }
+}
+
+/// Converts an event named adapter with `NativeEventHandler` into an `AttributeValue`.
+impl From<EventNamedAdapter<NativeEventHandler>> for AttributeValue {
+    /// Converts the wrapped handler with event name into an event `AttributeValue`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
+    fn from(mut adapter: EventNamedAdapter<NativeEventHandler>) -> Self {
+        let event_name: &'static str = adapter.get_event_name();
+        adapter.get_mut_inner().set_event_name(event_name);
+        AttributeValue::Event(adapter.inner)
+    }
+}
+
+/// Converts an event named adapter with optional shared closure into an `AttributeValue`.
+///
+/// `Some(callback)` becomes `AttributeValue::Event` by wrapping the shared closure
+/// into a `NativeEventHandler` with the adapter's event name, and `None` becomes
+/// `AttributeValue::Text(String::new())`.
+impl From<EventNamedAdapter<Option<Rc<dyn Fn(Event)>>>> for AttributeValue {
+    /// Converts the wrapped optional shared closure with event name into an event `AttributeValue`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
+    fn from(adapter: EventNamedAdapter<Option<Rc<dyn Fn(Event)>>>) -> Self {
+        let event_name: &'static str = adapter.get_event_name();
+        match adapter.inner {
+            Some(callback) => AttributeValue::Event(NativeEventHandler::create(
+                event_name,
+                move |event: Event| {
+                    callback(event);
+                },
+            )),
+            None => AttributeValue::Text(String::new()),
+        }
+    }
+}
+
 /// Adapts an owned `NativeEventHandler` into an `AttributeValue::Event` directly.
 ///
 /// When the user already provides a `NativeEventHandler`, the handler is
@@ -266,7 +306,7 @@ impl EventAdapter<Option<NativeEventHandler>> {
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
     pub fn into_attribute(self, event_name: &'static str) -> AttributeValue {
         match self.into_inner() {
-            Some(handler) => EventAdapter::new(handler).into_attribute(event_name),
+            Some(handler) => EventNamedAdapter::new(handler, event_name).into(),
             None => AttributeValue::Text(String::new()),
         }
     }
@@ -325,8 +365,8 @@ where
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value wrapping the adapted closure.
-    pub fn into_callback_attribute_value(self) -> AttributeValue {
-        self.into_inner().into_callback_attribute()
+    pub fn into_callback(self) -> AttributeValue {
+        self.into_inner().into()
     }
 
     /// Converts the wrapped closure into a callback `AttributeValue` with a
@@ -339,22 +379,30 @@ where
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value with the custom name.
-    pub fn into_callback_attribute_value_with_name(self, name: &'static str) -> AttributeValue {
+    pub fn into_callback_named(self, name: &'static str) -> AttributeValue {
         AttributeValue::Event(NativeEventHandler::create(name, self.into_inner()))
     }
 }
 
-/// Adapts an owned `NativeEventHandler` into an `AttributeValue::Event` directly.
-impl AttrValueAdapter<NativeEventHandler> {
-    /// Converts the wrapped handler into an event `AttributeValue`.
+/// Converts a named callback adapter into an `AttributeValue`.
+impl<F> From<CallbackNamedAdapter<F>> for AttributeValue
+where
+    F: FnMut(Event) + 'static,
+{
+    /// Converts the wrapped closure with custom name into a callback `AttributeValue`.
     ///
     /// # Returns
     ///
-    /// - `AttributeValue` - An `AttributeValue::Event` containing the re-wrapped handler.
-    pub fn into_callback_attribute_value(self) -> AttributeValue {
-        AttributeValue::Event(self.into_inner())
+    /// - `AttributeValue` - An event attribute value with the custom name.
+    fn from(adapter: CallbackNamedAdapter<F>) -> Self {
+        AttributeValue::Event(NativeEventHandler::create(
+            adapter.get_name(),
+            adapter.inner,
+        ))
     }
+}
 
+impl AttrValueAdapter<NativeEventHandler> {
     /// Converts the wrapped handler into a callback `AttributeValue` with a
     /// custom event name for component props.
     ///
@@ -365,7 +413,7 @@ impl AttrValueAdapter<NativeEventHandler> {
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value with the custom name.
-    pub fn into_callback_attribute_value_with_name(self, name: &'static str) -> AttributeValue {
+    pub fn into_callback_named(self, name: &'static str) -> AttributeValue {
         let mut handler: NativeEventHandler = self.into_inner();
         handler.set_event_name(name);
         AttributeValue::Event(handler)
@@ -379,9 +427,9 @@ impl AttrValueAdapter<Option<NativeEventHandler>> {
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
-    pub fn into_callback_attribute_value(self) -> AttributeValue {
+    pub fn into_callback(self) -> AttributeValue {
         match self.into_inner() {
-            Some(handler) => AttrValueAdapter::new(handler).into_callback_attribute_value(),
+            Some(handler) => AttrValueAdapter::new(handler).into(),
             None => AttributeValue::Text(String::new()),
         }
     }
@@ -397,30 +445,28 @@ impl AttrValueAdapter<Option<NativeEventHandler>> {
     ///
     /// - `AttributeValue` - An event attribute with the custom name if `Some`,
     ///   otherwise an empty text attribute.
-    pub fn into_callback_attribute_value_with_name(self, name: &'static str) -> AttributeValue {
+    pub fn into_callback_named(self, name: &'static str) -> AttributeValue {
         match self.into_inner() {
-            Some(handler) => {
-                AttrValueAdapter::new(handler).into_callback_attribute_value_with_name(name)
-            }
+            Some(handler) => AttrValueAdapter::new(handler).into_callback_named(name),
             None => AttributeValue::Text(String::new()),
         }
     }
 }
 
-/// Adapts any `IntoReactiveValue` type into an `AttributeValue`.
+/// Adapts any type that implements `Into<AttributeValue>` into an `AttributeValue`.
 ///
 /// This is the fallback path for non-closure attribute values (strings, signals,
-/// CSS classes, etc.). The value is converted via `IntoReactiveValue::into_reactive_value()`.
-impl<T> AttrValueAdapter<T>
+/// CSS classes, etc.).
+impl<T> From<AttrValueAdapter<T>> for AttributeValue
 where
-    T: IntoReactiveValue,
+    T: Into<AttributeValue>,
 {
-    /// Converts the wrapped value into an `AttributeValue` via reactive value adaptation.
+    /// Converts the wrapped value into an `AttributeValue`.
     ///
     /// # Returns
     ///
     /// - `AttributeValue` - The reactive attribute value.
-    pub fn into_reactive_attribute_value(self) -> AttributeValue {
-        self.into_inner().into_reactive_value()
+    fn from(adapter: AttrValueAdapter<T>) -> Self {
+        adapter.into_inner().into()
     }
 }

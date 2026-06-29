@@ -132,10 +132,9 @@ impl<T: PartialEq> PartialEq for VirtualNode<T> {
 /// Provides a default empty dynamic node with a no-op render function.
 impl Default for DynamicNode {
     fn default() -> Self {
-        let render_fn_inner: Rc<UnsafeCell<RenderFnInner>> =
-            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(|| {
-                VirtualNode::Empty
-            }))));
+        let render_fn_inner: Rc<UnsafeCell<RenderFnInner>> = Rc::new(UnsafeCell::new(
+            RenderFnInner::new(Box::new(|_: &mut HookContext| VirtualNode::Empty)),
+        ));
         Self::new(render_fn_inner, HookContext::default())
     }
 }
@@ -149,12 +148,16 @@ impl DynamicNode {
     /// Must only be called from the main thread. Guaranteed in WASM
     /// single-threaded context. No concurrent access is possible.
     ///
+    /// # Arguments
+    ///
+    /// - `&mut HookContext` - The hook context to pass to the render closure.
+    ///
     /// # Returns
     ///
     /// - `VirtualNode` - The virtual node produced by the render closure.
-    pub fn render(&self) -> VirtualNode {
+    pub fn render(&self, hook_context: &mut HookContext) -> VirtualNode {
         let inner: &mut RenderFnInner = unsafe { &mut *self.get_render_fn().get() };
-        (inner.get_mut_render_fn())()
+        (inner.get_mut_render_fn())(hook_context)
     }
 }
 
@@ -223,70 +226,50 @@ impl<T> VirtualNode<T> {
     ///
     /// # Returns
     ///
-    /// - `VirtualNode` - The children as a virtual node.
-    pub fn try_get_child_node(&self) -> VirtualNode {
+    /// - `Option<VirtualNode>` - The children as a virtual node.
+    pub fn try_get_child_node(&self) -> Option<VirtualNode> {
         match self.try_get_children() {
             Some(children) => match children.len() {
-                0 => VirtualNode::Empty,
-                1 => children.first().cloned().unwrap_or_default(),
-                _ => VirtualNode::Fragment(children.clone()),
+                0 => None,
+                1 => children.first().cloned(),
+                _ => Some(VirtualNode::Fragment(children.clone())),
             },
-            None => VirtualNode::Empty,
+            None => None,
         }
+    }
+
+    /// Returns the children of this node as a virtual node.
+    ///
+    /// Returns `VirtualNode::Empty` when there are no children, a single child
+    /// when there is exactly one, or `VirtualNode::Fragment` when there are
+    /// multiple children.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode` - The children as a virtual node.
+    pub fn get_child_node(&self) -> VirtualNode {
+        self.try_get_child_node().unwrap_or_default()
     }
 }
 
 /// Implementation of virtual node construction for `VirtualNode<()>`.
 impl VirtualNode<()> {
-    /// Constructs a `Self::Dynamic` from a render closure with hook context management.
+    /// Creates a dynamic node with the given render function.
     ///
     /// # Arguments
     ///
-    /// - `FnMut() -> Self + 'static` - The render closure that produces
-    ///   a virtual node tree. Called on initial render and on every signal update.
+    /// - `F: FnMut(&mut HookContext) -> Self + 'static` - The render function.
     ///
     /// # Returns
     ///
-    /// - `Self` - A `Self::Dynamic` wrapping the render closure
-    ///   with a fresh `HookContext`.
-    pub fn create_dynamic<F>(mut render_fn: F) -> Self
-    where
-        F: FnMut() -> Self + 'static,
-    {
-        let hook_context: HookContext = create_hook_context();
-        let mut hook_context_for_closure: HookContext = hook_context.clone();
-        let inner: Rc<UnsafeCell<RenderFnInner>> =
-            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(move || {
-                hook_context_for_closure.reset_hook_index();
-                render_fn()
-            }))));
-        Self::Dynamic(DynamicNode::new(inner, hook_context))
-    }
-
-    /// Constructs a `Self::Dynamic` for match expressions where arm hook
-    /// isolation is required. The render closure receives a `&mut HookContext`
-    /// so it can call `set_arm_changed` before each arm body.
-    ///
-    /// # Arguments
-    ///
-    /// - `FnMut(&mut HookContext) -> Self + 'static` - The render closure
-    ///   that receives a mutable reference to the hook context.
-    ///
-    /// # Returns
-    ///
-    /// - `Self` - A `Self::Dynamic` wrapping the render closure
-    ///   with a fresh `HookContext`.
-    pub fn create_dynamic_with_context<F>(mut render_fn: F) -> Self
+    /// - `Self` - The dynamic node.
+    pub fn create_dynamic<F>(render_fn: F) -> Self
     where
         F: FnMut(&mut HookContext) -> Self + 'static,
     {
         let hook_context: HookContext = create_hook_context();
-        let mut hook_context_for_closure: HookContext = hook_context.clone();
         let inner: Rc<UnsafeCell<RenderFnInner>> =
-            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(move || {
-                hook_context_for_closure.reset_hook_index();
-                render_fn(&mut hook_context_for_closure)
-            }))));
+            Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(render_fn))));
         Self::Dynamic(DynamicNode::new(inner, hook_context))
     }
 }

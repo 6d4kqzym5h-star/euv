@@ -37,7 +37,7 @@ where
 ///
 /// - `&[usize]` - Dynamic node IDs to mark dirty.
 pub fn schedule_update(dependents: &[usize]) {
-    mark_slots_dirty_targeted(dependents);
+    mark_dirty(dependents);
     if SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
         return;
     }
@@ -111,7 +111,7 @@ where
     SUPPRESS_SCHEDULE.store(true, Ordering::Relaxed);
     let result: R = callback();
     SUPPRESS_SCHEDULE.store(!was_outermost, Ordering::Relaxed);
-    if was_outermost && has_dirty_slots() {
+    if was_outermost && has_dirty() {
         schedule_update(&[]);
     }
     result
@@ -132,7 +132,7 @@ pub(crate) fn subscribe_attr<F>(attr_signal: Signal<String>, compute: F)
 where
     F: Fn() -> String + 'static,
 {
-    register_attr_signal_listener(
+    register_attr_listener(
         attr_signal.get_inner(),
         Box::new(move || {
             attr_signal.set(compute());

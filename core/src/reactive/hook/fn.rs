@@ -33,13 +33,13 @@ pub(crate) fn get_current_hook_context() -> HookContext {
 /// # Returns
 ///
 /// - `R` - The result of the closure execution.
-pub(crate) fn with_hook_context<F, R>(context: HookContext, f: F) -> R
+pub(crate) fn with_hook_context<F, R>(context: HookContext, callback: F) -> R
 where
     F: FnOnce() -> R,
 {
     let previous: Option<HookContextRc> = try_get_current_hook_context_mut().take();
     *try_get_current_hook_context_mut() = Some(context.get_inner().clone());
-    let result: R = f();
+    let result: R = callback();
     *try_get_current_hook_context_mut() = previous;
     result
 }
@@ -174,9 +174,9 @@ where
         return;
     }
     let event_name_owned: String = event_name.to_owned();
-    let handler_id: usize = register_window_event_handler(event_name, callback);
+    let handler_id: usize = register_window_event(event_name, callback);
     inner.get_mut_cleanups().push(Box::new(move || {
-        unregister_window_event_handler(&event_name_owned, handler_id);
+        unregister_window_event(&event_name_owned, handler_id);
     }));
     inner.get_mut_hooks().push(Box::new(()));
 }

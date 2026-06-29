@@ -780,69 +780,72 @@ fn add_indentation(body: &str) -> String {
     let len: usize = chars.len();
     let mut result: String = String::new();
     let mut depth: i32 = 0;
-    let mut i: usize = 0;
-
-    while i < len {
-        if chars[i] == CHAR_DOUBLE_QUOTE || chars[i] == CHAR_SINGLE_QUOTE {
-            let quote: char = chars[i];
-            result.push(chars[i]);
-            i += 1;
-            while i < len {
-                if chars[i] == CHAR_SLASH_BACK && i + 1 < len {
-                    result.push(chars[i]);
-                    result.push(chars[i + 1]);
-                    i += 2;
+    let mut index: usize = 0;
+    while index < len {
+        if chars[index] == CHAR_DOUBLE_QUOTE || chars[index] == CHAR_SINGLE_QUOTE {
+            let quote: char = chars[index];
+            result.push(chars[index]);
+            index += 1;
+            while index < len {
+                if chars[index] == CHAR_SLASH_BACK && index + 1 < len {
+                    result.push(chars[index]);
+                    result.push(chars[index + 1]);
+                    index += 2;
                     continue;
                 }
-                result.push(chars[i]);
-                if chars[i] == quote {
-                    i += 1;
+                result.push(chars[index]);
+                if chars[index] == quote {
+                    index += 1;
                     break;
                 }
-                i += 1;
+                index += 1;
             }
             continue;
         }
-
-        if i + 1 < len && chars[i] == CHAR_SLASH_FORWARD && chars[i + 1] == CHAR_SLASH_FORWARD {
-            while i < len && chars[i] != CHAR_NEWLINE {
-                result.push(chars[i]);
-                i += 1;
+        if index + 1 < len
+            && chars[index] == CHAR_SLASH_FORWARD
+            && chars[index + 1] == CHAR_SLASH_FORWARD
+        {
+            while index < len && chars[index] != CHAR_NEWLINE {
+                result.push(chars[index]);
+                index += 1;
             }
             continue;
         }
-
-        if i + 1 < len && chars[i] == CHAR_SLASH_FORWARD && chars[i + 1] == CHAR_ASTERISK {
-            result.push(chars[i]);
-            result.push(chars[i + 1]);
-            i += 2;
-            while i + 1 < len {
-                if chars[i] == CHAR_ASTERISK && chars[i + 1] == CHAR_SLASH_FORWARD {
-                    result.push(chars[i]);
-                    result.push(chars[i + 1]);
-                    i += 2;
+        if index + 1 < len
+            && chars[index] == CHAR_SLASH_FORWARD
+            && chars[index + 1] == CHAR_ASTERISK
+        {
+            result.push(chars[index]);
+            result.push(chars[index + 1]);
+            index += 2;
+            while index + 1 < len {
+                if chars[index] == CHAR_ASTERISK && chars[index + 1] == CHAR_SLASH_FORWARD {
+                    result.push(chars[index]);
+                    result.push(chars[index + 1]);
+                    index += 2;
                     break;
                 }
-                result.push(chars[i]);
-                i += 1;
+                result.push(chars[index]);
+                index += 1;
             }
             continue;
         }
-
-        if chars[i] == CHAR_NEWLINE {
+        if chars[index] == CHAR_NEWLINE {
             result.push(CHAR_NEWLINE);
-            i += 1;
-            while i < len && (chars[i] == CHAR_SPACE || chars[i] == CHAR_TAB) {
-                i += 1;
+            index += 1;
+            while index < len && (chars[index] == CHAR_SPACE || chars[index] == CHAR_TAB) {
+                index += 1;
             }
-            if i >= len || chars[i] == CHAR_NEWLINE || chars[i] == CHAR_CARRIAGE_RETURN {
+            if index >= len || chars[index] == CHAR_NEWLINE || chars[index] == CHAR_CARRIAGE_RETURN
+            {
                 continue;
             }
             let mut closing_count: i32 = 0;
-            let mut j: usize = i;
-            while j < len && chars[j] == CHAR_BRACE_RIGHT {
+            let mut peek: usize = index;
+            while peek < len && chars[peek] == CHAR_BRACE_RIGHT {
                 closing_count += 1;
-                j += 1;
+                peek += 1;
             }
             let indent_depth: i32 = (depth - closing_count).max(0);
             for _ in 0..indent_depth * 4 {
@@ -850,46 +853,43 @@ fn add_indentation(body: &str) -> String {
             }
             continue;
         }
-
-        if chars[i] == CHAR_BRACE_LEFT {
+        if chars[index] == CHAR_BRACE_LEFT {
             depth += 1;
             result.push(CHAR_BRACE_LEFT);
-            i += 1;
+            index += 1;
             continue;
         }
-
-        if chars[i] == CHAR_BRACE_RIGHT {
+        if chars[index] == CHAR_BRACE_RIGHT {
             depth -= 1;
             result.push(CHAR_BRACE_RIGHT);
-            i += 1;
-            let mut j: usize = i;
-            while j < len && (chars[j] == CHAR_SPACE || chars[j] == CHAR_TAB) {
-                j += 1;
+            index += 1;
+            let mut peek: usize = index;
+            while peek < len && (chars[peek] == CHAR_SPACE || chars[peek] == CHAR_TAB) {
+                peek += 1;
             }
-            if j < len
-                && chars[j] != CHAR_BRACE_RIGHT
-                && chars[j] != CHAR_BRACE_LEFT
-                && chars[j] != CHAR_NEWLINE
-                && chars[j] != CHAR_CARRIAGE_RETURN
-                && chars[j] != CHAR_RIGHT_PAREN
-                && chars[j] != CHAR_COMMA
-                && chars[j] != CHAR_SEMICOLON
+            if peek < len
+                && chars[peek] != CHAR_BRACE_RIGHT
+                && chars[peek] != CHAR_BRACE_LEFT
+                && chars[peek] != CHAR_NEWLINE
+                && chars[peek] != CHAR_CARRIAGE_RETURN
+                && chars[peek] != CHAR_RIGHT_PAREN
+                && chars[peek] != CHAR_COMMA
+                && chars[peek] != CHAR_SEMICOLON
             {
-                let next_chars: String = chars[j..(j + 4).min(len)].iter().collect();
+                let next_chars: String = chars[peek..(peek + 4).min(len)].iter().collect();
                 if next_chars != "else" {
                     result.push(CHAR_NEWLINE);
                     let indent_depth: i32 = depth.max(0);
                     for _ in 0..indent_depth * 4 {
                         result.push(CHAR_SPACE);
                     }
-                    i = j;
+                    index = peek;
                 }
             }
             continue;
         }
-
-        result.push(chars[i]);
-        i += 1;
+        result.push(chars[index]);
+        index += 1;
     }
 
     result

@@ -2,7 +2,7 @@ use crate::*;
 
 /// Inner storage for a dynamic node render closure.
 ///
-/// Boxes a `dyn FnMut() -> VirtualNode` so it can be stored behind `Rc<UnsafeCell<>>`.
+/// Boxes a `dyn FnMut(&mut HookContext) -> VirtualNode` so it can be stored behind `Rc<UnsafeCell<>>`.
 #[derive(CustomDebug, Data, New)]
 pub(crate) struct RenderFnInner {
     /// The boxed render closure.
@@ -10,7 +10,7 @@ pub(crate) struct RenderFnInner {
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) render_fn: Box<dyn FnMut() -> VirtualNode>,
+    pub(crate) render_fn: Box<dyn FnMut(&mut HookContext) -> VirtualNode>,
 }
 
 /// Represents a text node in the virtual DOM.

@@ -403,12 +403,12 @@ impl ToTokens for HtmlNode {
             }
             HtmlNode::Expr(expr) => {
                 tokens.extend(quote! {
-                    ::euv::IntoNode::into_node(#expr)
+                    (#expr).into()
                 });
             }
             HtmlNode::Dynamic(expr) => {
                 tokens.extend(quote! {
-                    ::euv::VirtualNode::create_dynamic(move || ::euv::IntoNode::into_node(#expr))
+                    ::euv::VirtualNode::create_dynamic(move |_: &mut ::euv::HookContext| (#expr).into())
                 });
             }
             HtmlNode::If(html_if) => {
@@ -416,8 +416,8 @@ impl ToTokens for HtmlNode {
                     let if_chain: proc_macro2::TokenStream =
                         build_html_if_chain(html_if.get_branches());
                     tokens.extend(quote! {
-                        ::euv::VirtualNode::create_dynamic(move || { #if_chain })
-                    });
+                    ::euv::VirtualNode::create_dynamic(move |_: &mut ::euv::HookContext| { #if_chain })
+                });
                 } else {
                     let if_chain: proc_macro2::TokenStream =
                         build_html_if_chain_to_node(html_if.get_branches());
@@ -440,7 +440,7 @@ impl ToTokens for HtmlNode {
                             let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
                             quote! {
                                 #pattern => {
-                                    __euv_hook_context.set_arm_changed(#arm_index);
+                                    __euv_hook_context.switch_arm(#arm_index);
                                     #body_expr
                                 }
                             }
@@ -448,7 +448,7 @@ impl ToTokens for HtmlNode {
                     )
                     .collect();
                 tokens.extend(quote! {
-                    ::euv::VirtualNode::create_dynamic_with_context(move |__euv_hook_context: &mut ::euv::HookContext| {
+                    ::euv::VirtualNode::create_dynamic(move |__euv_hook_context: &mut ::euv::HookContext| {
                         match #scrutinee {
                             #(#arm_tokens)*
                         }
@@ -533,13 +533,13 @@ impl ToTokens for HtmlAttrValue {
                     let if_chain: proc_macro2::TokenStream =
                         attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Raw);
                     tokens.extend(quote! {
-                        ::euv::AttrValueAdapter::new(#if_chain).into_reactive_attribute_value()
+                        ::euv::AttrValueAdapter::new(#if_chain).into()
                     });
                 } else {
                     let if_chain: proc_macro2::TokenStream =
                         attr_if_to_tokens(html_attr_if, else_default.clone(), AttrIfMode::Reactive);
                     tokens.extend(quote! {
-                        ::euv::AttributeValue::create_reactive_signal(move || #if_chain)
+                        ::euv::AttributeValue::reactive(move || #if_chain)
                     });
                 }
             }
@@ -548,13 +548,13 @@ impl ToTokens for HtmlAttrValue {
                     let match_expr: proc_macro2::TokenStream =
                         attr_match_to_tokens(html_attr_match, AttrIfMode::Raw);
                     tokens.extend(quote! {
-                        ::euv::AttrValueAdapter::new(#match_expr).into_reactive_attribute_value()
+                        ::euv::AttrValueAdapter::new(#match_expr).into()
                     });
                 } else {
                     let match_expr: proc_macro2::TokenStream =
                         attr_match_to_tokens(html_attr_match, AttrIfMode::Reactive);
                     tokens.extend(quote! {
-                        ::euv::AttributeValue::create_reactive_signal(move || #match_expr)
+                        ::euv::AttributeValue::reactive(move || #match_expr)
                     });
                 }
             }
@@ -597,17 +597,17 @@ impl ToTokens for HtmlAttrValue {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::Css::create_style_string(&[#(#prop_tokens), *])
+                        ::euv::Css::style_string(&[#(#prop_tokens), *])
                     });
                 } else if has_conditional {
                     let prop_tokens: Vec<proc_macro2::TokenStream> = props
                         .iter()
                         .map(|(key, value): &(String, HtmlStylePropValue)| {
-                            quote! { (#key.to_string(), ::euv::IntoReactiveString::into_reactive_string(#value)) }
+                            quote! { (#key.to_string(), (#value).into()) }
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::AttributeValue::create_reactive_signal(move || ::euv::Css::create_style_string_owned(&[#(#prop_tokens), *]))
+                        ::euv::AttributeValue::reactive(move || ::euv::Css::style_string_owned(&[#(#prop_tokens), *]))
                     });
                 } else if all_literal {
                     let mut css_string: String = String::new();
@@ -633,7 +633,7 @@ impl ToTokens for HtmlAttrValue {
                         })
                         .collect();
                     tokens.extend(quote! {
-                        ::euv::Css::create_style_string(&[#(#key_value_tokens), *])
+                        ::euv::Css::style_string(&[#(#key_value_tokens), *])
                     });
                 }
             }
@@ -714,7 +714,7 @@ impl ToTokens for HtmlDynamicTag {
                                 quote! { #field_ident: #expr }
                             }
                             HtmlAttrValue::If(html_attr_if) => {
-                                let else_default: proc_macro2::TokenStream = match props_field_types.get(&key_string).map(|s: &String| s.as_str()) {
+                                let else_default: proc_macro2::TokenStream = match props_field_types.get(&key_string).map(|field_type: &String| field_type.as_str()) {
                                     Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
                                     _ => quote! { #STR_EMPTY },
                                 };
@@ -785,7 +785,7 @@ impl ToTokens for HtmlDynamicTag {
                 };
                 quote! {
                     #fn_name_str => {
-                        let mut __euv_dyn_node: ::euv::VirtualNode = ::euv::IntoNode::into_node(#component_call_tokens);
+                        let mut __euv_dyn_node: ::euv::VirtualNode = (#component_call_tokens).into();
                         if let ::euv::VirtualNode::Element { ref mut attributes, .. } = __euv_dyn_node {
                             let __euv_dyn_attrs: Vec<::euv::AttributeEntry> = vec![#(#non_prop_attr_tokens), *];
                             for __euv_dyn_attr in __euv_dyn_attrs {
@@ -800,7 +800,7 @@ impl ToTokens for HtmlDynamicTag {
             })
             .collect();
         tokens.extend(quote! {
-            ::euv::VirtualNode::create_dynamic(move || {
+            ::euv::VirtualNode::create_dynamic(move |_: &mut ::euv::HookContext| {
                 let __euv_tag_name: String = (#tag_expr).to_string();
                 match __euv_tag_name.as_str() {
                     #(#component_match_arms)*
@@ -865,7 +865,7 @@ impl ToTokens for HtmlElement {
                         HtmlAttrValue::If(html_attr_if) => {
                             let else_default: proc_macro2::TokenStream = match props_field_types
                                 .get(&key_string)
-                                .map(|s: &String| s.as_str())
+                                .map(|field_type: &String| field_type.as_str())
                             {
                                 Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
                                 _ => quote! { #STR_EMPTY },
@@ -914,20 +914,26 @@ impl ToTokens for HtmlElement {
             });
         } else {
             let mut key_expr: Option<proc_macro2::TokenStream> = None;
-            let attr_tokens: Vec<proc_macro2::TokenStream> = self.get_attributes().iter().filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = extract_attr_key_string(key);
-                let attr_name_token: proc_macro2::TokenStream = quote! { #key_string.to_string() };
-                if key_string == ATTR_KEY_KEY {
-                    if let HtmlAttrValue::Expr(expr) = value {
-                        key_expr = Some(quote! { Some(::euv::IntoReactiveString::into_reactive_string(#expr)) });
+            let attr_tokens: Vec<proc_macro2::TokenStream> = self
+                .get_attributes()
+                .iter()
+                .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
+                    let key_string: String = extract_attr_key_string(key);
+                    let attr_name_token: proc_macro2::TokenStream =
+                        quote! { #key_string.to_string() };
+                    if key_string == ATTR_KEY_KEY {
+                        if let HtmlAttrValue::Expr(expr) = value {
+                            key_expr = Some(quote! { Some((#expr).into()) });
+                        }
+                        return None;
                     }
-                    return None;
-                }
-                let value_tokens: proc_macro2::TokenStream = attr_value_to_entry_value_tokens(value, &key_string);
-                Some(quote! {
-                    ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
+                    let value_tokens: proc_macro2::TokenStream =
+                        attr_value_to_entry_value_tokens(value, &key_string);
+                    Some(quote! {
+                        ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
+                    })
                 })
-            }).collect();
+                .collect();
             let key_token: proc_macro2::TokenStream = key_expr.unwrap_or_else(|| quote! { None });
             let children_tokens: proc_macro2::TokenStream =
                 children_to_flattened_tokens(self.get_children());

@@ -16,7 +16,7 @@ use crate::*;
 #[component]
 pub(crate) fn euv_alert(node: VirtualNode<EuvAlertProps>) -> VirtualNode {
     let EuvAlertProps { variant }: EuvAlertProps = node.try_get_props().unwrap_or_default();
-    let children: VirtualNode = node.try_get_child_node();
+    let children: VirtualNode = node.get_child_node();
     match variant {
         AlertVariant::Error => html! {
             div {

@@ -13,7 +13,7 @@ use crate::*;
 #[component]
 pub(crate) fn my_modal(node: VirtualNode<MyModalProps>) -> VirtualNode {
     let MyModalProps { title, onclick }: MyModalProps = node.try_get_props().unwrap_or_default();
-    let children: VirtualNode = node.try_get_child_node();
+    let children: VirtualNode = node.get_child_node();
     let on_modal_content_click = move |_: Event| {};
     html! {
         div {

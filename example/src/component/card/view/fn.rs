@@ -13,7 +13,7 @@ use crate::*;
 #[component]
 pub(crate) fn euv_card(node: VirtualNode<MyCardProps>) -> VirtualNode {
     let MyCardProps { title, .. }: MyCardProps = node.try_get_props().unwrap_or_default();
-    let children: VirtualNode = node.try_get_child_node();
+    let children: VirtualNode = node.get_child_node();
     html! {
         div {
             class: c_card()

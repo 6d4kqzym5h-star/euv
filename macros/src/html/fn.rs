@@ -1173,7 +1173,7 @@ pub(crate) fn attr_if_to_tokens(
     for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
         let body_tokens: proc_macro2::TokenStream = match mode {
             AttrIfMode::Reactive => {
-                quote! { ::euv::IntoReactiveString::into_reactive_string(#body) }
+                quote! { (#body).to_string() }
             }
             AttrIfMode::Raw => quote! { #body },
         };
@@ -1192,7 +1192,7 @@ pub(crate) fn attr_if_to_tokens(
     if !has_else {
         let else_tokens: proc_macro2::TokenStream = match mode {
             AttrIfMode::Reactive => {
-                quote! { ::euv::IntoReactiveString::into_reactive_string(#else_default) }
+                quote! { (#else_default).to_string() }
             }
             AttrIfMode::Raw => quote! { #else_default },
         };
@@ -1204,8 +1204,7 @@ pub(crate) fn attr_if_to_tokens(
 /// Generates a token stream for an `HtmlAttrMatch` as a Rust `match` expression.
 ///
 /// The `mode` parameter controls how arm bodies are emitted:
-/// - `AttrIfMode::Reactive`: Each arm body is wrapped in
-///   `::euv::IntoReactiveString::into_reactive_string(...)`.
+/// - `AttrIfMode::Reactive`: Each arm body is wrapped with `.to_string()`.
 /// - `AttrIfMode::Raw`: Arm bodies are emitted as-is without wrapping.
 ///
 /// # Arguments
@@ -1227,7 +1226,7 @@ pub(crate) fn attr_match_to_tokens(
         .map(|(pattern, body): &(proc_macro2::TokenStream, Expr)| {
             let body_tokens: proc_macro2::TokenStream = match mode {
                 AttrIfMode::Reactive => {
-                    quote! { ::euv::IntoReactiveString::into_reactive_string(#body) }
+                    quote! { (#body).to_string() }
                 }
                 AttrIfMode::Raw => quote! { #body },
             };
@@ -1480,18 +1479,18 @@ pub(crate) fn attr_value_to_attribute_value_tokens(
             if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                 if is_component {
                     quote! {
-                        ::euv::AttrValueAdapter::new(#expr).into_callback_attribute_value_with_name(#key_str)
+                        ::euv::CallbackNamedAdapter::new(#expr, #key_str).into()
                     }
                 } else {
                     quote! {
-                        ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
+                        ::euv::EventNamedAdapter::new(#expr, #event_name_str).into()
                     }
                 }
             } else if key_str == ATTR_KEY_CHILDREN {
                 quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
             } else {
                 quote! {
-                    ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                    ::euv::AttrValueAdapter::new(#expr).into()
                 }
             }
         }
@@ -1625,13 +1624,13 @@ pub(crate) fn attr_value_to_entry_value_tokens(
         HtmlAttrValue::Expr(expr) => {
             if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
                 quote! {
-                    ::euv::EventAdapter::new(#expr).into_attribute(#event_name_str)
+                    ::euv::EventNamedAdapter::new(#expr, #event_name_str).into()
                 }
             } else if key_str == ATTR_KEY_CHILDREN {
                 quote! { ::euv::AttributeValue::Dynamic(Box::new(#expr)) }
             } else {
                 quote! {
-                    ::euv::AttrValueAdapter::new(#expr).into_reactive_attribute_value()
+                    ::euv::AttrValueAdapter::new(#expr).into()
                 }
             }
         }

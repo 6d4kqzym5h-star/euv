@@ -4,7 +4,7 @@
 /// so the framework can look up the element's identity across re-renders.
 pub(crate) const DATA_EUV_ID: &str = "data-euv-id";
 
-/// The maximum number of dispatch iterations allowed in `dispatch_signal_update_callbacks`.
+/// The maximum number of dispatch iterations allowed in `dispatch_updates`.
 ///
 /// Prevents infinite loops when callbacks continuously re-queue themselves.
 /// After this many passes, the dispatch loop breaks even if dirty entries remain.

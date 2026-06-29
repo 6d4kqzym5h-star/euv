@@ -406,7 +406,7 @@ pub(crate) fn reconstruct_selector_from_tokens(tokens: &proc_macro2::TokenStream
                     if literal_text.starts_with(CHAR_DOUBLE_QUOTE) {
                         if let Some(stripped) = literal_text
                             .strip_prefix(CHAR_DOUBLE_QUOTE)
-                            .and_then(|s| s.strip_suffix(CHAR_DOUBLE_QUOTE))
+                            .and_then(|text: &str| text.strip_suffix(CHAR_DOUBLE_QUOTE))
                         {
                             result.push_str(stripped);
                         } else {
@@ -1048,7 +1048,7 @@ pub(crate) fn reconstruct_media_query(tokens: &proc_macro2::TokenStream) -> Stri
                     if literal_text.starts_with(CHAR_DOUBLE_QUOTE) {
                         if let Some(stripped) = literal_text
                             .strip_prefix(CHAR_DOUBLE_QUOTE)
-                            .and_then(|s| s.strip_suffix(CHAR_DOUBLE_QUOTE))
+                            .and_then(|text: &str| text.strip_suffix(CHAR_DOUBLE_QUOTE))
                         {
                             result.push_str(stripped);
                         } else {

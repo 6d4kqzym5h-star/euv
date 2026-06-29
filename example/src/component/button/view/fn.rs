@@ -21,7 +21,7 @@ pub(crate) fn euv_button(node: VirtualNode<EuvButtonProps>) -> VirtualNode {
         onclick: click_handler,
         disabled,
     }: EuvButtonProps = node.try_get_props().unwrap_or_default();
-    let children: VirtualNode = node.try_get_child_node();
+    let children: VirtualNode = node.get_child_node();
     let content: VirtualNode = match children {
         VirtualNode::Empty => VirtualNode::Text(TextNode::new(label.to_string(), None)),
         other => other,

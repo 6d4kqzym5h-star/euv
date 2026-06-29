@@ -383,7 +383,7 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
     let mut components: Vec<String> = relative
         .components()
         .filter_map(|component: Component| match component {
-            Component::Normal(os_str) => os_str.to_str().map(|s: &str| s.to_string()),
+            Component::Normal(os_str) => os_str.to_str().map(|text: &str| text.to_string()),
             _ => None,
         })
         .collect();

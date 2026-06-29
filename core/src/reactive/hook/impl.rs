@@ -6,7 +6,7 @@ impl HookContext {
     ///
     /// Sets the internal hook index back to zero so that subsequent
     /// `use_signal` calls start indexing from the beginning of the hook list.
-    pub fn reset_hook_index(&mut self) {
+    pub fn reset_index(&mut self) {
         if let Ok(mut inner) = self.get_inner().try_borrow_mut() {
             inner.set_hook_index(0);
         }
@@ -21,7 +21,7 @@ impl HookContext {
     /// # Arguments
     ///
     /// - `usize` - The index of the new match arm.
-    pub fn set_arm_changed(&mut self, changed: usize) {
+    pub fn switch_arm(&mut self, changed: usize) {
         let cleanups: Vec<Box<dyn FnOnce()>>;
         {
             let Ok(mut inner) = self.get_inner().try_borrow_mut() else {
@@ -29,7 +29,7 @@ impl HookContext {
             };
             if inner.get_arm_changed() == changed {
                 drop(inner);
-                self.reset_hook_index();
+                self.reset_index();
                 return;
             }
             cleanups = take(inner.get_mut_cleanups());
@@ -39,7 +39,7 @@ impl HookContext {
         for cleanup in cleanups {
             cleanup();
         }
-        self.reset_hook_index();
+        self.reset_index();
     }
 }
 

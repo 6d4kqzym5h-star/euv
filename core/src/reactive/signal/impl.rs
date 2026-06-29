@@ -23,7 +23,7 @@ where
         let boxed: Box<SignalInner<T>> = Box::new(inner);
         let ptr: *mut SignalInner<T> = Box::into_raw(boxed);
         let addr: usize = ptr as usize;
-        signal_inner_registry_mut().insert(addr);
+        get_signal_inner_registry_mut().insert(addr);
         let mut signal: Self = Self::new(0, std::marker::PhantomData);
         signal.set_inner(addr);
         signal
@@ -48,7 +48,7 @@ where
     ///
     /// - `T` - The current value of the signal.
     pub fn get(&self) -> T {
-        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
         if !inner.get_alive() {
             return inner.get_value().clone();
         }
@@ -68,7 +68,7 @@ where
     where
         F: FnMut() + 'static,
     {
-        get_signal_inner_ref::<T>(self.get_inner())
+        get_signal_inner_mut::<T>(self.get_inner())
             .get_mut_listeners()
             .push(Box::new(callback));
     }
@@ -81,11 +81,11 @@ where
     /// # Arguments
     ///
     /// - `FnMut() + 'static` - The callback to invoke when the signal changes.
-    pub(crate) fn replace_subscribe<F>(&self, callback: F)
+    pub(crate) fn replace_listener<F>(&self, callback: F)
     where
         F: FnMut() + 'static,
     {
-        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
         inner.get_mut_listeners().clear();
         inner.get_mut_listeners().push(Box::new(callback));
         inner.set_listeners_replaced(true);
@@ -110,9 +110,9 @@ where
     /// The allocation remains valid until the page unloads. For SPAs this is
     /// acceptable; a long-lived app could add a periodic sweep that frees
     /// `alive == false` entries once no async references remain. This mirrors
-    /// the contract documented on `clear_signal_listeners_by_addr`.
+    /// the contract documented on `clear_signal_listeners`.
     pub(crate) fn deactivate(&self) {
-        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
         inner.set_alive(false);
         inner.get_mut_listeners().clear();
         inner.get_mut_dependents().clear();
@@ -127,8 +127,8 @@ where
     /// `Vec`, drops the mutable reference to inner state, then invokes each
     /// listener. After invocation, listeners are moved back. This prevents
     /// issues with re-entrant access during listener callbacks.
-    fn update_and_notify(&self, value: T) -> bool {
-        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
+    fn update(&self, value: T) -> bool {
+        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
         if !inner.get_alive() {
             return false;
         }
@@ -142,10 +142,10 @@ where
         for listener in listeners.iter_mut() {
             listener();
         }
-        if !is_signal_inner_alive(self.get_inner()) {
+        if !is_signal_alive(self.get_inner()) {
             return true;
         }
-        let inner: &mut SignalInner<T> = get_signal_inner_ref::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
         if inner.get_alive() {
             if inner.get_listeners_replaced() {
                 inner.set_listeners_replaced(false);
@@ -173,7 +173,7 @@ where
     /// - `usize` - The dynamic node ID to register as a dependent.
     pub(crate) fn add_dependent(&self, dynamic_id: usize) {
         let deps: &mut Vec<usize> =
-            get_signal_inner_ref::<T>(self.get_inner()).get_mut_dependents();
+            get_signal_inner_mut::<T>(self.get_inner()).get_mut_dependents();
         if !deps.contains(&dynamic_id) {
             deps.push(dynamic_id);
         }
@@ -189,7 +189,7 @@ where
     /// - `usize` - The dynamic node ID to remove.
     #[allow(dead_code)]
     pub(crate) fn remove_dependent(&self, dynamic_id: usize) {
-        get_signal_inner_ref::<T>(self.get_inner())
+        get_signal_inner_mut::<T>(self.get_inner())
             .get_mut_dependents()
             .retain(|id: &usize| *id != dynamic_id);
     }
@@ -200,7 +200,7 @@ where
     ///
     /// - `Vec<usize>` - Clone of the dependents list.
     pub(crate) fn get_dependents(&self) -> Vec<usize> {
-        get_signal_inner_ref::<T>(self.get_inner())
+        get_signal_inner_mut::<T>(self.get_inner())
             .get_dependents()
             .clone()
     }
@@ -219,7 +219,7 @@ where
     ///
     /// - `T` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
-        if self.update_and_notify(value) {
+        if self.update(value) {
             let dependents: Vec<usize> = self.get_dependents();
             schedule_update(&dependents);
         }

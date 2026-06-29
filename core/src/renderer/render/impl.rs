@@ -2,8 +2,8 @@ use crate::*;
 
 impl<T> OwnedPtr<T> {
     /// Creates a new `OwnedPtr` from a `Box::into_raw` pointer.
-    pub(crate) fn new(ptr: *mut T) -> Self {
-        Self { ptr }
+    pub(crate) fn new(pointer: *mut T) -> Self {
+        Self { ptr: pointer }
     }
 
     /// Returns the raw pointer for direct access.
@@ -40,7 +40,7 @@ impl Renderer {
         } else {
             while let Some(child) = self.get_root().first_child() {
                 if let Some(element) = child.dyn_ref::<Element>() {
-                    Self::cleanup_dom_subtree(element);
+                    Self::cleanup_subtree(element);
                 }
                 let _ = self.get_root().remove_child(&child);
             }
@@ -62,7 +62,7 @@ impl Renderer {
         let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
         while let Some(child) = self.get_root().first_child() {
             if let Some(element) = child.dyn_ref::<Element>() {
-                Self::cleanup_dom_subtree(element);
+                Self::cleanup_subtree(element);
             }
             let _ = self.get_root().remove_child(&child);
         }
@@ -92,7 +92,7 @@ impl Renderer {
             }
         } else if let Some(dom_child) = dom_child {
             if let Some(element) = dom_child.dyn_ref::<Element>() {
-                Self::cleanup_dom_subtree(element);
+                Self::cleanup_subtree(element);
             }
             let new_dom_node: Node = self.create_dom_node(new_node);
             let _ = self.get_root().replace_child(&new_dom_node, &dom_child);
@@ -140,7 +140,7 @@ impl Renderer {
                 if old_tag != new_tag {
                     let new_dom_node: Node = self.create_dom_node(new_node);
                     if let Some(parent) = dom_element.parent_node() {
-                        Self::cleanup_dom_subtree(dom_element);
+                        Self::cleanup_subtree(dom_element);
                         let _ = parent.replace_child(&new_dom_node, dom_element);
                     }
                     return;
@@ -155,21 +155,21 @@ impl Renderer {
             (VirtualNode::Dynamic(_), _) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
-                    Self::cleanup_dom_subtree(dom_element);
+                    Self::cleanup_subtree(dom_element);
                     let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             (_, VirtualNode::Dynamic(_)) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
-                    Self::cleanup_dom_subtree(dom_element);
+                    Self::cleanup_subtree(dom_element);
                     let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             _ => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
-                    Self::cleanup_dom_subtree(dom_element);
+                    Self::cleanup_subtree(dom_element);
                     let _ = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
@@ -267,7 +267,7 @@ impl Renderer {
     /// # Returns
     ///
     /// - `Option<Node>` - The child node at the given index, if it exists.
-    fn get_child_node(parent: &Element, index: u32) -> Option<Node> {
+    fn try_get_child_node(parent: &Element, index: u32) -> Option<Node> {
         parent.child_nodes().get(index)
     }
 
@@ -381,7 +381,7 @@ impl Renderer {
                     && let Some((_old_index, dom_node)) = old_key_to_node.remove(key)
                 {
                     if let Some(element) = dom_node.dyn_ref::<Element>() {
-                        Self::cleanup_dom_subtree(element);
+                        Self::cleanup_subtree(element);
                     }
                     let _ = parent.remove_child(&dom_node);
                 }
@@ -391,7 +391,7 @@ impl Renderer {
                     && let Some(dom_node) = child_nodes.get(dom_index)
                 {
                     if let Some(element) = dom_node.dyn_ref::<Element>() {
-                        Self::cleanup_dom_subtree(element);
+                        Self::cleanup_subtree(element);
                     }
                     let _ = parent.remove_child(&dom_node);
                 }
@@ -449,7 +449,7 @@ impl Renderer {
         for index in 0..common_len {
             let old_child: &VirtualNode = &old_children[index];
             let new_child: &VirtualNode = &new_children[index];
-            if let Some(dom_child) = Self::get_child_node(parent, index as u32) {
+            if let Some(dom_child) = Self::try_get_child_node(parent, index as u32) {
                 if let Some(element) = dom_child.dyn_ref::<Element>() {
                     self.patch_node(old_child, new_child, element);
                 } else if let (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) =
@@ -462,7 +462,7 @@ impl Renderer {
                     let new_dom_node: Node = self.create_dom_node(new_child);
                     if let Some(parent_node) = dom_child.parent_node() {
                         if let Some(child_element) = dom_child.dyn_ref::<Element>() {
-                            Self::cleanup_dom_subtree(child_element);
+                            Self::cleanup_subtree(child_element);
                         }
                         let _ = parent_node.replace_child(&new_dom_node, &dom_child);
                     }
@@ -479,7 +479,7 @@ impl Renderer {
                 if let Some(last_child) = parent.last_child()
                     && let Some(element) = last_child.dyn_ref::<Element>()
                 {
-                    Self::cleanup_dom_subtree(element);
+                    Self::cleanup_subtree(element);
                 }
                 if let Some(last_child) = parent.last_child() {
                     let _ = parent.remove_child(&last_child);
@@ -507,7 +507,7 @@ impl Renderer {
             Some(document_instance) => document_instance,
             None => return JsValue::UNDEFINED.into(),
         };
-        self.create_dom_node_with_document(node, &document)
+        self.create_dom_with_doc(node, &document)
     }
 
     /// Creates a real DOM node using a pre-acquired document reference.
@@ -520,7 +520,7 @@ impl Renderer {
     /// # Returns
     ///
     /// - `Node` - The created DOM node.
-    fn create_dom_node_with_document(&mut self, node: &VirtualNode, document: &Document) -> Node {
+    fn create_dom_with_doc(&mut self, node: &VirtualNode, document: &Document) -> Node {
         match node {
             VirtualNode::Element {
                 tag,
@@ -535,11 +535,11 @@ impl Renderer {
                     },
                     Tag::Component(_) => {
                         let unwrapped: VirtualNode = Self::unwrap_component(node);
-                        return self.create_dom_node_with_document(&unwrapped, document);
+                        return self.create_dom_with_doc(&unwrapped, document);
                     }
                 };
                 for child in children {
-                    let child_node: Node = self.create_dom_node_with_document(child, document);
+                    let child_node: Node = self.create_dom_with_doc(child, document);
                     let _ = element.append_child(&child_node);
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
@@ -560,7 +560,7 @@ impl Renderer {
                             let element_clone: Element = element.clone();
                             let signal_for_sub: Signal<String> = *signal;
                             let subscribe_signal: Signal<String> = signal_for_sub;
-                            signal_for_sub.replace_subscribe(move || {
+                            signal_for_sub.replace_listener(move || {
                                 if !is_node_connected(&element_clone) {
                                     // The element has been removed from the DOM.
                                     // Do NOT call `deactivate()` here — the signal
@@ -568,9 +568,9 @@ impl Renderer {
                                     // DynamicNodes. Deactivating it would permanently
                                     // break all other dependents. Simply return; the
                                     // listener will be cleaned up by
-                                    // `clear_signal_listeners_by_addr` during
-                                    // `cleanup_dom_subtree`, or replaced by
-                                    // `replace_subscribe` if the element is recreated.
+                                    // `clear_signal_listeners` during
+                                    // `cleanup_subtree`, or replaced by
+                                    // `replace_listener` if the element is recreated.
                                     return;
                                 }
                                 let new_value: String = subscribe_signal.get();
@@ -595,7 +595,7 @@ impl Renderer {
                     let text_clone: Text = text.clone();
                     let signal_for_sub: Signal<String> = *signal;
                     let subscribe_signal: Signal<String> = signal_for_sub;
-                    signal_for_sub.replace_subscribe(move || {
+                    signal_for_sub.replace_listener(move || {
                         if !is_node_connected(&text_clone) {
                             return;
                         }
@@ -612,7 +612,7 @@ impl Renderer {
                 };
                 let _ = fragment.set_attribute(ATTR_STYLE, FRAGMENT_STYLE);
                 for child in children {
-                    let child_node: Node = self.create_dom_node_with_document(child, document);
+                    let child_node: Node = self.create_dom_with_doc(child, document);
                     let _ = fragment.append_child(&child_node);
                     if let VirtualNode::Text(text_node) = child
                         && let Some(signal) = text_node.try_get_signal()
@@ -663,10 +663,11 @@ impl Renderer {
         skip_equal: bool,
     ) -> Node {
         let mut hook_context: HookContext = dynamic_node.get_hook_context().clone();
-        hook_context.reset_hook_index();
+        hook_context.reset_index();
         CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
-        let initial_vnode: VirtualNode =
-            with_hook_context(hook_context.clone(), || dynamic_node.render());
+        let initial_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
+            dynamic_node.render(&mut hook_context)
+        });
         let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
         CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
@@ -687,12 +688,12 @@ impl Renderer {
             if placeholder_clone.parent_node().is_none() {
                 return;
             }
-            hook_context.reset_hook_index();
+            hook_context.reset_index();
             let prev_arm: usize = unsafe { *last_arm_owned.get() };
             CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
             let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
                 let inner: &mut RenderFnInner = unsafe { &mut *render_fn_rc.get() };
-                (inner.get_mut_render_fn())()
+                (inner.get_mut_render_fn())(&mut hook_context)
             });
             let current_arm: usize = hook_context
                 .get_inner()
@@ -721,7 +722,7 @@ impl Renderer {
             }
             CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         });
-        register_dynamic_listener(dynamic_id, callback);
+        register_dynamic(dynamic_id, callback);
         initial_dom
     }
 
@@ -886,11 +887,11 @@ impl Renderer {
     /// # Arguments
     ///
     /// - `&Element` - The DOM element to clean up.
-    fn cleanup_dom_subtree(element: &Element) {
+    fn cleanup_subtree(element: &Element) {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
         {
-            cleanup_element_handlers(euv_id);
+            cleanup_element(euv_id);
         }
         if let Some(dynamic_id_str) = element.get_attribute(DATA_EUV_DYNAMIC_ID)
             && let Ok(dynamic_id) = dynamic_id_str.parse::<usize>()
@@ -901,7 +902,7 @@ impl Renderer {
             signal_addrs_str
                 .split(CHAR_SIGNAL_ADDRS_SEPARATOR)
                 .filter_map(|addr_str: &str| addr_str.parse::<usize>().ok())
-                .for_each(clear_signal_listeners_by_addr);
+                .for_each(clear_signal_listeners);
         }
         let child_nodes: NodeList = element.child_nodes();
         let length: u32 = child_nodes.length();
@@ -909,7 +910,7 @@ impl Renderer {
             if let Some(child) = child_nodes.get(child_index)
                 && let Some(child_element) = child.dyn_ref::<Element>()
             {
-                Self::cleanup_dom_subtree(child_element);
+                Self::cleanup_subtree(child_element);
             }
         }
     }
@@ -919,7 +920,7 @@ impl Renderer {
     /// For non-bubbling events (load, error, loadstart, etc.), attaches the
     /// listener directly on the element since global delegation on `window`
     /// cannot capture these events. For all other events, uses global event
-    /// delegation via `ensure_delegated_listener`.
+    /// delegation via `ensure_delegation`.
     ///
     /// # Arguments
     ///
@@ -941,7 +942,7 @@ impl Renderer {
             }
         };
         let event_name: &'static str = handler.get_event_name();
-        if is_non_bubbling_event(event_name) {
+        if is_non_bubbling(event_name) {
             let key: (usize, &'static str) = (euv_id, event_name);
             let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
             if let Some(existing_entry) = registry_ref.get(&key) {
@@ -969,7 +970,7 @@ impl Renderer {
                 registry_ref.insert(key, handler_slot);
             }
         } else {
-            ensure_delegated_listener(event_name);
+            ensure_delegation(event_name);
             let key: (usize, &'static str) = (euv_id, event_name);
             let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
             if let Some(existing_entry) = registry_ref.get(&key) {
