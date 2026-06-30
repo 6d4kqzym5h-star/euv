@@ -228,6 +228,45 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         drag.get_drag_status().set("Dropped".to_string());
         Console::log("Drop: item dropped");
     };
+    let file_drag_over: Signal<bool> = use_signal(|| false);
+    let on_file_drag_over = move |event: Event| {
+        event.prevent_default();
+        file_drag_over.set(true);
+    };
+    let on_file_drag_enter = move |_: Event| {
+        file_drag_over.set(true);
+        drag.get_drag_status().set("File over zone".to_string());
+        Console::log("DragEnter: file entered drop zone");
+    };
+    let on_file_drag_leave = move |_: Event| {
+        file_drag_over.set(false);
+        drag.get_drag_status().set("Outside".to_string());
+        Console::log("DragLeave: file left drop zone");
+    };
+    let on_file_drop = move |event: Event| {
+        event.prevent_default();
+        file_drag_over.set(false);
+        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
+            let file_names: String = drag_event
+                .data_transfer()
+                .and_then(|data_transfer: DataTransfer| data_transfer.files())
+                .map(|file_list: FileList| {
+                    let count: u32 = file_list.length();
+                    (0..count)
+                        .filter_map(|index: u32| file_list.get(index).map(|file: File| file.name()))
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                })
+                .unwrap_or_default();
+            if file_names.is_empty() {
+                drag.get_drag_types().set("No files".to_string());
+            } else {
+                drag.get_drag_types().set(file_names);
+            }
+        }
+        drag.get_drag_status().set("Dropped".to_string());
+        Console::log("Drop: files dropped");
+    };
     let on_wheel = move |event: Event| {
         if let Some(wheel_event) = event.dyn_ref::<WheelEvent>() {
             let delta: String = format!(
@@ -926,6 +965,57 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                         span {
                             class: c_event_info_label()
                             "Types:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            drag.get_drag_types()
+                        }
+                    }
+                }
+            }
+            euv_card {
+                title: "File Drag & Drop"
+                div {
+                    class: if { file_drag_over.get() } {
+                        c_event_drop_zone_active()
+                    } else {
+                        c_event_drop_zone()
+                    }
+                    ondragover: on_file_drag_over
+                    ondragenter: on_file_drag_enter
+                    ondragleave: on_file_drag_leave
+                    ondrop: on_file_drop
+                    span {
+                        class: c_event_drop_icon()
+                        "📁"
+                    }
+                    p {
+                        class: c_event_drop_text()
+                        "Drag & drop files here"
+                    }
+                    p {
+                        class: c_event_drop_hint()
+                        "dragover, dragenter, dragleave, drop"
+                    }
+                }
+                div {
+                    class: c_event_info_grid()
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Status:"
+                        }
+                        span {
+                            class: c_event_info_value()
+                            drag.get_drag_status()
+                        }
+                    }
+                    div {
+                        class: c_event_info_row()
+                        span {
+                            class: c_event_info_label()
+                            "Files:"
                         }
                         span {
                             class: c_event_info_value()

@@ -541,11 +541,6 @@ impl Renderer {
                 for child in children {
                     let child_node: Node = self.create_dom_with_doc(child, document);
                     let _ = element.append_child(&child_node);
-                    if let VirtualNode::Text(text_node) = child
-                        && let Some(signal) = text_node.try_get_signal()
-                    {
-                        element.track_signal_addr(signal.get_inner());
-                    }
                 }
                 for attr in attributes {
                     match attr.get_value() {
@@ -553,28 +548,22 @@ impl Renderer {
                             element.set_attribute_or_property(attr.get_name(), value);
                         }
                         AttributeValue::Signal(signal) => {
+                            let signal: Signal<String> = *signal;
                             let initial_value: String = signal.get();
                             element.set_attribute_or_property(attr.get_name(), &initial_value);
-                            element.track_signal_addr(signal.get_inner());
+                            let bridge_signal: Signal<String> = Signal::create(initial_value);
+                            element.track_signal_addr(bridge_signal.get_inner());
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
-                            let signal_for_sub: Signal<String> = *signal;
-                            let subscribe_signal: Signal<String> = signal_for_sub;
-                            signal_for_sub.replace_listener(move || {
+                            bridge_signal.replace_listener(move || {
                                 if !is_node_connected(&element_clone) {
-                                    // The element has been removed from the DOM.
-                                    // Do NOT call `deactivate()` here — the signal
-                                    // may be a user-created signal shared with other
-                                    // DynamicNodes. Deactivating it would permanently
-                                    // break all other dependents. Simply return; the
-                                    // listener will be cleaned up by
-                                    // `clear_signal_listeners` during
-                                    // `cleanup_subtree`, or replaced by
-                                    // `replace_listener` if the element is recreated.
                                     return;
                                 }
-                                let new_value: String = subscribe_signal.get();
+                                let new_value: String = bridge_signal.get();
                                 element_clone.set_attribute_or_property(&attr_name, &new_value);
+                            });
+                            signal.subscribe(move || {
+                                bridge_signal.set(signal.get());
                             });
                         }
                         AttributeValue::Event(handler) => {
@@ -592,15 +581,19 @@ impl Renderer {
             VirtualNode::Text(text_node) => {
                 let text: Text = document.create_text_node(text_node.get_content());
                 if let Some(signal) = text_node.try_get_signal() {
+                    let signal: Signal<String> = *signal;
+                    let bridge_signal: Signal<String> =
+                        Signal::create(text_node.get_content().clone());
                     let text_clone: Text = text.clone();
-                    let signal_for_sub: Signal<String> = *signal;
-                    let subscribe_signal: Signal<String> = signal_for_sub;
-                    signal_for_sub.replace_listener(move || {
+                    bridge_signal.replace_listener(move || {
                         if !is_node_connected(&text_clone) {
                             return;
                         }
-                        let new_value: String = subscribe_signal.get();
+                        let new_value: String = bridge_signal.get();
                         text_clone.set_text_content(Some(&new_value));
+                    });
+                    signal.subscribe(move || {
+                        bridge_signal.set(signal.get());
                     });
                 }
                 text.into()
@@ -614,11 +607,6 @@ impl Renderer {
                 for child in children {
                     let child_node: Node = self.create_dom_with_doc(child, document);
                     let _ = fragment.append_child(&child_node);
-                    if let VirtualNode::Text(text_node) = child
-                        && let Some(signal) = text_node.try_get_signal()
-                    {
-                        fragment.track_signal_addr(signal.get_inner());
-                    }
                 }
                 fragment.into()
             }

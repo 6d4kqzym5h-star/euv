@@ -1735,6 +1735,41 @@ class! {
         margin: var!(space-sm);
     }
 
+    pub(crate) c_event_drop_zone {
+        border: format!("2px dashed {}", var!(border));
+        padding: format!("{} {}", var!(space-4xl), var!(space-xl));
+        text-align: "center";
+        cursor: "pointer";
+    }
+
+    pub(crate) c_event_drop_zone_active {
+        border: format!("2px dashed {}", var!(accent));
+        padding: format!("{} {}", var!(space-4xl), var!(space-xl));
+        text-align: "center";
+        cursor: "pointer";
+        background: var!(accent-muted);
+    }
+
+    pub(crate) c_event_drop_icon {
+        font-size: var!(font-5xl);
+        display: "block";
+        padding-bottom: var!(space-md);
+    }
+
+    pub(crate) c_event_drop_text {
+        font-size: var!(font-lg);
+        font-weight: "500";
+        color: "inherit";
+        padding-bottom: var!(space-md);
+    }
+
+    pub(crate) c_event_drop_hint {
+        font-size: var!(font-base);
+        color: "inherit";
+        opacity: "1";
+        margin: "0px";
+    }
+
     pub(crate) c_event_wheel_zone {
         min-height: "120px";
         padding: format!("{} 0px", var!(space-xl));
@@ -2623,41 +2658,6 @@ class! {
     pub(crate) c_file_upload_item_name {
         color: "inherit";
         word-break: "break-all";
-    }
-
-    pub(crate) c_file_upload_drop_zone {
-        border: format!("2px dashed {}", var!(border));
-        padding: format!("{} {}", var!(space-4xl), var!(space-xl));
-        text-align: "center";
-        cursor: "pointer";
-    }
-
-    pub(crate) c_file_upload_drop_zone_active {
-        border: format!("2px dashed {}", var!(accent));
-        padding: format!("{} {}", var!(space-4xl), var!(space-xl));
-        text-align: "center";
-        cursor: "pointer";
-        background: var!(accent-muted);
-    }
-
-    pub(crate) c_file_upload_drop_icon {
-        font-size: var!(font-5xl);
-        display: "block";
-        padding-bottom: var!(space-md);
-    }
-
-    pub(crate) c_file_upload_drop_text {
-        font-size: var!(font-lg);
-        font-weight: "500";
-        color: "inherit";
-        padding-bottom: var!(space-md);
-    }
-
-    pub(crate) c_file_upload_drop_hint {
-        font-size: var!(font-base);
-        color: "inherit";
-        opacity: "1";
-        margin: "0px";
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

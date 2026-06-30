@@ -18,9 +18,6 @@ pub(crate) struct UseFileUpload {
     /// The accepted file types filter string.
     #[get(type(copy))]
     pub(crate) accept: Signal<String>,
-    /// The drag-over active state.
-    #[get(type(copy))]
-    pub(crate) drag_over: Signal<bool>,
     /// The status message.
     #[get(type(copy))]
     pub(crate) status: Signal<String>,

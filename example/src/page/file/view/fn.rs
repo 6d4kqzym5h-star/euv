@@ -40,45 +40,7 @@ fn build_file_list(state: UseFileUpload) -> VirtualNode {
     VirtualNode::Fragment(items)
 }
 
-/// Builds the drag-and-drop zone node.
-///
-/// # Arguments
-///
-/// - `UseFileUpload` - The file upload state.
-///
-/// # Returns
-///
-/// - `VirtualNode` - The drop zone element.
-fn build_drop_zone(state: UseFileUpload) -> VirtualNode {
-    let is_drag_over: bool = state.get_drag_over().get();
-    html! {
-        div {
-            class: if { is_drag_over } {
-                c_file_upload_drop_zone_active()
-            } else {
-                c_file_upload_drop_zone()
-            }
-            ondragenter: file_upload_on_drag_enter(state)
-            ondragleave: file_upload_on_drag_leave(state)
-            ondragover: file_upload_on_drag_over(state)
-            ondrop: file_upload_on_drop(state)
-            span {
-                class: c_file_upload_drop_icon()
-                "📁"
-            }
-            p {
-                class: c_file_upload_drop_text()
-                "Drag & drop files here"
-            }
-            p {
-                class: c_file_upload_drop_hint()
-                "or use the file input above"
-            }
-        }
-    }
-}
-
-/// A file upload demo page showcasing file selection, drag-and-drop, and file list display.
+/// A file upload demo page showcasing file selection and file list display.
 ///
 /// # Returns
 ///
@@ -93,7 +55,7 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
             euv_header {
                 icon: "📁"
                 title: "File Upload"
-                subtitle: "File selection, drag-and-drop zone, and file list display."
+                subtitle: "File selection and file list display."
             }
             euv_card {
                 title: "File Input"
@@ -150,18 +112,6 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
                         variant: EuvButtonVariant::Primary
                         label: "Clear"
                         onclick: file_upload_on_clear(state)
-                    }
-                }
-            }
-            euv_card {
-                title: "Drag & Drop Zone"
-                build_drop_zone(state)
-                p {
-                    class: c_event_result()
-                    "Drag over: "
-                    span {
-                        class: c_event_highlight()
-                        state.get_drag_over()
                     }
                 }
             }

@@ -12,7 +12,6 @@ pub(crate) fn use_file_upload() -> UseFileUpload {
         use_signal(Vec::new),
         use_signal(|| false),
         use_signal(String::new),
-        use_signal(|| false),
         use_signal(|| "No files selected".to_string()),
     )
 }
@@ -115,87 +114,6 @@ pub(crate) fn file_upload_on_clear(state: UseFileUpload) -> Option<Rc<dyn Fn(Eve
         state.get_file_names().set(Vec::new());
         state.get_file_sizes().set(Vec::new());
         state.get_file_types().set(Vec::new());
-        state.get_drag_over().set(false);
         state.get_status().set("No files selected".to_string());
-    }))
-}
-
-/// Creates a drag-enter event handler that activates the drop zone.
-///
-/// # Arguments
-///
-/// - `UseFileUpload` - The file upload state.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A dragenter handler.
-pub(crate) fn file_upload_on_drag_enter(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_: Event| {
-        state.get_drag_over().set(true);
-    }))
-}
-
-/// Creates a drag-leave event handler that deactivates the drop zone.
-///
-/// # Arguments
-///
-/// - `UseFileUpload` - The file upload state.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A dragleave handler.
-pub(crate) fn file_upload_on_drag_leave(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_: Event| {
-        state.get_drag_over().set(false);
-    }))
-}
-
-/// Creates a drag-over event handler that prevents default and keeps the drop zone active.
-///
-/// # Arguments
-///
-/// - `UseFileUpload` - The file upload state.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A dragover handler.
-pub(crate) fn file_upload_on_drag_over(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |event: Event| {
-        event.prevent_default();
-        state.get_drag_over().set(true);
-    }))
-}
-
-/// Creates a drop event handler that reads the dropped file names.
-///
-/// # Arguments
-///
-/// - `UseFileUpload` - The file upload state.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - A drop handler.
-pub(crate) fn file_upload_on_drop(state: UseFileUpload) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |event: Event| {
-        state.get_drag_over().set(false);
-        if let Some(drag_event) = event.dyn_ref::<DragEvent>() {
-            let has_files: bool = drag_event
-                .data_transfer()
-                .map(|data_transfer: DataTransfer| {
-                    let type_count: u32 = data_transfer.types().length();
-                    (0..type_count).any(|index: u32| {
-                        data_transfer.types().get(index).as_string() == Some("Files".to_string())
-                    })
-                })
-                .unwrap_or_default();
-            if has_files {
-                state
-                    .get_status()
-                    .set("File(s) dropped - reading file names requires JS interop".to_string());
-                Console::log("Drop: files detected in data transfer");
-            } else {
-                state.get_status().set("No files in drop data".to_string());
-            }
-        }
     }))
 }
