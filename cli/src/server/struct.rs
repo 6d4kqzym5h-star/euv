@@ -7,25 +7,25 @@ use crate::*;
 #[derive(Data, New)]
 pub struct AppState {
     /// The generated HTML with injected reload script.
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) html_content: RwLock<String>,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub html_content: RwLock<String>,
     /// Broadcast channel for reload events.
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) reload_tx: broadcast::Sender<ReloadEvent>,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub reload_tx: broadcast::Sender<ReloadEvent>,
     /// Whether a build is currently in progress.
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) is_building: RwLock<bool>,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub is_building: RwLock<bool>,
     /// CLI arguments.
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) args: ModeArgs,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub args: ModeArgs,
 }
 
 /// Request middleware that injects cache-control headers.

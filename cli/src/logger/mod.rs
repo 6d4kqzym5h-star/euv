@@ -5,6 +5,4 @@ mod r#struct;
 
 pub use r#struct::*;
 
-pub use {color_output::*, log};
-
-pub(crate) use {r#const::*, r#static::*};
+pub use {r#const::*, r#static::*};

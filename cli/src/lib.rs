@@ -1,0 +1,48 @@
+//! euv CLI
+//!
+//! The official CLI tool for the euv UI framework,
+//! providing run/build/fmt modes with hot reload and
+//! wasm-pack integration.
+
+mod build;
+mod error;
+mod fmt;
+mod logger;
+mod mode;
+mod server;
+
+pub use {build::*, error::*, fmt::*, logger::*, mode::*, server::*};
+
+use std::{
+    ffi,
+    fmt::Arguments,
+    io,
+    path::{Component, Path, PathBuf},
+    process::{Output, Stdio},
+    sync::{Arc, OnceLock},
+    time::Duration,
+};
+
+use {
+    clap::Parser,
+    color_output::*,
+    hyperlane::*,
+    ignore::gitignore::{Gitignore, GitignoreBuilder},
+    lombok_macros::*,
+    notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher},
+    qrcode::{QrCode, render::unicode::Dense1x2},
+    serde::Serialize,
+    tokio::{
+        fs::{
+            ReadDir, canonicalize, create_dir_all, metadata, read, read_dir, read_to_string,
+            remove_dir_all, remove_file, write,
+        },
+        process::Command,
+        spawn,
+        sync::{
+            RwLock, RwLockWriteGuard, broadcast,
+            mpsc::{Receiver, Sender, channel},
+        },
+        time::{Interval, interval, sleep},
+    },
+};

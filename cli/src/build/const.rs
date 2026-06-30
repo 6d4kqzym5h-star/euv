@@ -1,92 +1,92 @@
 /// Placeholder token used in HTML templates for the JS import path.
 ///
 /// Replaced at runtime with the resolved import path relative to the www directory.
-pub(crate) const IMPORT_PATH_PLACEHOLDER: &str = "__IMPORT_PATH__";
+pub const IMPORT_PATH_PLACEHOLDER: &str = "__IMPORT_PATH__";
 
 /// Placeholder token used in HTML templates for the reload endpoint URL.
 ///
 /// Replaced at runtime with the actual reload route path.
-pub(crate) const RELOAD_ROUTE_PLACEHOLDER: &str = "__RELOAD_ROUTE__";
+pub const RELOAD_ROUTE_PLACEHOLDER: &str = "__RELOAD_ROUTE__";
 
 /// The URL path for the reload endpoint.
 ///
 /// Used by the live-reload script in the HTML template and the server route registration.
-pub(crate) const RELOAD_ROUTE: &str = "/__euv_reload";
+pub const RELOAD_ROUTE: &str = "/__euv_reload";
 
 /// The wasm-pack flag indicating a release build.
-pub(crate) const RELEASE_FLAG: &str = "--release";
+pub const RELEASE_FLAG: &str = "--release";
 
 /// The CLI command name for wasm-pack.
-pub(crate) const WASM_PACK_COMMAND: &str = "wasm-pack";
+pub const WASM_PACK_COMMAND: &str = "wasm-pack";
 
 /// The wasm-pack subcommand for building.
-pub(crate) const WASM_PACK_BUILD_SUBCOMMAND: &str = "build";
+pub const WASM_PACK_BUILD_SUBCOMMAND: &str = "build";
 
 /// The wasm-pack argument for specifying the output directory.
-pub(crate) const OUT_DIR_ARG: &str = "--out-dir";
+pub const OUT_DIR_ARG: &str = "--out-dir";
 
 /// The wasm-pack argument for specifying the output name.
-pub(crate) const OUT_NAME_ARG: &str = "--out-name";
+pub const OUT_NAME_ARG: &str = "--out-name";
 
 /// The wasm-pack argument for specifying the target.
-pub(crate) const TARGET_ARG: &str = "--target";
+pub const TARGET_ARG: &str = "--target";
 
 /// The default wasm-pack target for browser usage.
-pub(crate) const TARGET_WEB: &str = "web";
+pub const TARGET_WEB: &str = "web";
 
 /// The default output subdirectory name for wasm-pack artifacts.
-pub(crate) const PKG_DIR_NAME: &str = "pkg";
+pub const PKG_DIR_NAME: &str = "pkg";
 
 /// The JavaScript file extension.
-pub(crate) const JS_EXTENSION: &str = ".js";
+pub const JS_EXTENSION: &str = ".js";
 
 /// The source directory name within a Cargo project.
-pub(crate) const SRC_DIR_NAME: &str = "src";
+pub const SRC_DIR_NAME: &str = "src";
 
 /// The name of the gitignore file.
-pub(crate) const GITIGNORE_FILE_NAME: &str = ".gitignore";
+pub const GITIGNORE_FILE_NAME: &str = ".gitignore";
 
 /// The name of the Cargo manifest file.
-pub(crate) const CARGO_TOML_FILE_NAME: &str = "Cargo.toml";
+pub const CARGO_TOML_FILE_NAME: &str = "Cargo.toml";
 
 /// The index HTML file name.
-pub(crate) const INDEX_HTML_FILE_NAME: &str = "index.html";
+pub const INDEX_HTML_FILE_NAME: &str = "index.html";
 
 /// The relative path prefix used for import path construction.
-pub(crate) const RELATIVE_PATH_PREFIX: &str = "./";
+pub const RELATIVE_PATH_PREFIX: &str = "./";
 
 /// The path separator used for joining path components.
-pub(crate) const PATH_SEPARATOR: &str = "/";
+pub const PATH_SEPARATOR: &str = "/";
 
 /// The wasm-pack flag for development builds.
-pub(crate) const DEV_FLAG: &str = "--dev";
+pub const DEV_FLAG: &str = "--dev";
 
 /// The wasm-pack flag for profiling builds.
-pub(crate) const PROFILING_FLAG: &str = "--profiling";
+pub const PROFILING_FLAG: &str = "--profiling";
 
 /// The euv-specific argument for specifying the crate path.
-pub(crate) const CRATE_PATH_ARG: &str = "--crate-path";
+pub const CRATE_PATH_ARG: &str = "--crate-path";
 
 /// The short form of the crate-path argument.
-pub(crate) const CRATE_PATH_ARG_SHORT: &str = "-c";
+pub const CRATE_PATH_ARG_SHORT: &str = "-c";
 
 /// The euv-specific argument for specifying the server port.
-pub(crate) const PORT_ARG: &str = "--port";
+pub const PORT_ARG: &str = "--port";
 
 /// The short form of the port argument.
-pub(crate) const PORT_ARG_SHORT: &str = "-p";
+pub const PORT_ARG_SHORT: &str = "-p";
 
 /// The euv-specific argument for specifying the www directory.
-pub(crate) const WWW_DIR_ARG: &str = "--www-dir";
+pub const WWW_DIR_ARG: &str = "--www-dir";
 
 /// The euv-specific argument for specifying a custom index.html template.
-pub(crate) const INDEX_HTML_ARG: &str = "--index-html";
+pub const INDEX_HTML_ARG: &str = "--index-html";
 
 /// The euv-specific argument for removing the .gitignore file from the output directory.
-pub(crate) const NO_GITIGNORE_ARG: &str = "--no-gitignore";
+pub const NO_GITIGNORE_ARG: &str = "--no-gitignore";
 
 /// The euv-specific argument names that should not be forwarded to wasm-pack.
-pub(crate) const EUV_ARGS: &[&str] = &[
+pub const EUV_ARGS: &[&str] = &[
     CRATE_PATH_ARG,
     CRATE_PATH_ARG_SHORT,
     PORT_ARG,
@@ -97,19 +97,19 @@ pub(crate) const EUV_ARGS: &[&str] = &[
 ];
 
 /// The double-dash separator used to distinguish euv args from wasm-pack args.
-pub(crate) const DOUBLE_DASH: &str = "--";
+pub const DOUBLE_DASH: &str = "--";
 
 /// The `run` action name used in banner display.
-pub(crate) const ACTION_RUN: &str = "run";
+pub const ACTION_RUN: &str = "run";
 
 /// The `build` action name used in banner display.
-pub(crate) const ACTION_BUILD: &str = "build";
+pub const ACTION_BUILD: &str = "build";
 
 /// The environment variable name for setting the minimum stack size of rustc threads.
-pub(crate) const RUST_MIN_STACK_ENV: &str = "RUST_MIN_STACK";
+pub const RUST_MIN_STACK_ENV: &str = "RUST_MIN_STACK";
 
 /// The minimum stack size in bytes for rustc threads (16 MiB).
-pub(crate) const RUST_MIN_STACK_VALUE: &str = "16777216";
+pub const RUST_MIN_STACK_VALUE: &str = "16777216";
 
 /// The `index.html` template for the development profile.
 ///
@@ -120,7 +120,7 @@ pub(crate) const RUST_MIN_STACK_VALUE: &str = "16777216";
 /// - `{"type":"Error","message":"..."}` — a build error occurred.
 ///
 /// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
-pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
+pub const INDEX_HTML_DEV: &str = r#"<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -197,7 +197,7 @@ pub(crate) const INDEX_HTML_DEV: &str = r#"<!doctype html>
 /// A minimal `index.html` without any live-reload instrumentation.
 /// Used when building for release to produce a clean, static entry point.
 /// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
-pub(crate) const INDEX_HTML_RELEASE: &str = r#"<!doctype html>
+pub const INDEX_HTML_RELEASE: &str = r#"<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />

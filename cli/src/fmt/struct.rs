@@ -7,13 +7,13 @@ use crate::*;
 #[derive(Data, New)]
 pub struct FmtResult {
     /// Whether the file content was changed by formatting.
-    #[get(pub(crate), type(copy))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) changed: bool,
+    #[get(pub, type(copy))]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub changed: bool,
     /// The formatted file content (identical to input if `changed` is false).
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) output: String,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub output: String,
 }

@@ -8,8 +8,8 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure of the initialization.
-pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure of the initialization.
+pub fn set_global_state(state: Arc<AppState>) -> Result<(), EuvError> {
     APP_STATE.set(state).map_err(|_: Arc<AppState>| {
         EuvError::Message(String::from("Global state already initialized"))
     })
@@ -20,7 +20,7 @@ pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<()> {
 /// # Returns
 ///
 /// - `Option<Arc<AppState>>` - The global state if initialized.
-pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
+pub fn get_global_state() -> Option<Arc<AppState>> {
     APP_STATE.get().cloned()
 }
 
@@ -39,13 +39,13 @@ pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
 ///
 /// # Returns
 ///
-/// - `Result<String>` - The generated HTML content written to disk.
-pub(crate) async fn generate_html(
+/// - `Result<String, EuvError>` - The generated HTML content written to disk.
+pub async fn generate_html(
     www_dir: &Path,
     import_path: &str,
     is_release: bool,
     custom_index_html: &Option<PathBuf>,
-) -> Result<String> {
+) -> Result<String, EuvError> {
     let template_content: String = if let Some(custom_path) = custom_index_html {
         let bytes: Vec<u8> =
             read(custom_path)
@@ -92,7 +92,7 @@ pub(crate) async fn generate_html(
 /// # Returns
 ///
 /// - `PathBuf` - The resolved www directory containing `index.html`.
-pub(crate) async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
+pub async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
     if metadata(www_dir.join(INDEX_HTML_FILE_NAME)).await.is_ok() {
         return www_dir.to_path_buf();
     }
@@ -120,6 +120,6 @@ pub(crate) async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
 /// # Returns
 ///
 /// - `PathBuf` - The resolved pkg directory containing WASM build artifacts.
-pub(crate) fn resolve_pkg_dir(args: &ModeArgs) -> PathBuf {
+pub fn resolve_pkg_dir(args: &ModeArgs) -> PathBuf {
     resolve_out_dir(args)
 }

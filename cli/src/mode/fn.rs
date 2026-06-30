@@ -8,8 +8,8 @@ use crate::*;
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure.
-pub(crate) async fn build_mode(mut args: ModeArgs) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure.
+pub async fn build_mode(mut args: ModeArgs) -> Result<(), EuvError> {
     reconcile_args(&mut args);
     args.set_crate_path(std::fs::canonicalize(args.get_crate_path()).map_err(
         |error: io::Error| EuvError::IoPath {
@@ -40,8 +40,8 @@ pub(crate) async fn build_mode(mut args: ModeArgs) -> Result<()> {
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure.
-pub(crate) async fn fmt_mode(args: FmtArgs) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure.
+pub async fn fmt_mode(args: FmtArgs) -> Result<(), EuvError> {
     let fmt_path: PathBuf = if args.get_path().is_absolute() {
         args.get_path().clone()
     } else {
@@ -68,8 +68,8 @@ pub(crate) async fn fmt_mode(args: FmtArgs) -> Result<()> {
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure.
-pub(crate) async fn run_mode(mut args: ModeArgs) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure.
+pub async fn run_mode(mut args: ModeArgs) -> Result<(), EuvError> {
     reconcile_args(&mut args);
     args.set_crate_path(std::fs::canonicalize(args.get_crate_path()).map_err(
         |error: io::Error| EuvError::IoPath {

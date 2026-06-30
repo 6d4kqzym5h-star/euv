@@ -1,4 +1,4 @@
 use crate::*;
 
 /// Global static Logger instance.
-pub(crate) static LOGGER: Logger = Logger;
+pub static LOGGER: Logger = Logger;

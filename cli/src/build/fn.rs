@@ -12,7 +12,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `bool` - Whether a build mode flag is already present.
-pub(crate) fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
+pub fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
     wasm_pack_args
         .iter()
         .any(|arg: &String| arg == DEV_FLAG || arg == RELEASE_FLAG || arg == PROFILING_FLAG)
@@ -32,7 +32,7 @@ pub(crate) fn has_build_mode_flag(wasm_pack_args: &[String]) -> bool {
 /// # Returns
 ///
 /// - `Vec<String>` - The filtered arguments safe for wasm-pack.
-pub(crate) fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
+pub fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
     let raw_args: &[String] = if let Some(position) = wasm_pack_args
         .iter()
         .rposition(|arg: &String| arg == DOUBLE_DASH)
@@ -74,7 +74,7 @@ pub(crate) fn filter_euv_args(wasm_pack_args: &[String]) -> Vec<String> {
 /// # Arguments
 ///
 /// - `&mut ModeArgs` - The CLI arguments to reconcile in-place.
-pub(crate) fn reconcile_args(args: &mut ModeArgs) {
+pub fn reconcile_args(args: &mut ModeArgs) {
     let wasm_pack_args: Vec<String> = args.get_wasm_pack_args().clone();
     let mut crate_path: Option<PathBuf> = None;
     let mut port: Option<u16> = None;
@@ -176,7 +176,7 @@ pub(crate) fn reconcile_args(args: &mut ModeArgs) {
 /// # Returns
 ///
 /// - `BuildMode` - The resolved build mode.
-pub(crate) fn resolve_build_mode(args: &ModeArgs) -> BuildMode {
+pub fn resolve_build_mode(args: &ModeArgs) -> BuildMode {
     if args.get_profiling() {
         BuildMode::Profiling
     } else if args.get_release() {
@@ -209,7 +209,7 @@ pub(crate) fn resolve_build_mode(args: &ModeArgs) -> BuildMode {
 /// # Returns
 ///
 /// - `&'static str` - The wasm-pack command-line flag.
-pub(crate) fn build_mode_to_flag(build_mode: BuildMode) -> &'static str {
+pub fn build_mode_to_flag(build_mode: BuildMode) -> &'static str {
     match build_mode {
         BuildMode::Dev => DEV_FLAG,
         BuildMode::Release => RELEASE_FLAG,
@@ -311,7 +311,7 @@ fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
 /// # Returns
 ///
 /// - `String` - The resolved JS filename with `.js` extension (e.g. `euv_example.js`).
-pub(crate) fn resolve_out_name(args: &ModeArgs) -> String {
+pub fn resolve_out_name(args: &ModeArgs) -> String {
     let name: String = if let Some(out_name) = extract_out_name(args.get_wasm_pack_args()) {
         out_name
     } else {
@@ -372,7 +372,7 @@ fn read_crate_name_from_toml(path: &Path) -> Option<String> {
 /// # Returns
 ///
 /// - `String` - The resolved JS import path relative to the www directory.
-pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
+pub fn resolve_import_path(args: &ModeArgs) -> String {
     let out_name: String = resolve_out_name(args);
     let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
@@ -405,7 +405,7 @@ pub(crate) fn resolve_import_path(args: &ModeArgs) -> String {
 /// # Returns
 ///
 /// - `PathBuf` - The resolved output directory (absolute if crate_path is joined).
-pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
+pub fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
     let out_dir_path: PathBuf = PathBuf::from(
         extract_out_dir(args.get_wasm_pack_args())
             .unwrap_or_else(|| format!("{}/{PKG_DIR_NAME}", args.get_www_dir())),
@@ -429,8 +429,8 @@ pub(crate) fn resolve_out_dir(args: &ModeArgs) -> PathBuf {
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure of the build.
-pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure of the build.
+pub async fn run_build_only_pipeline(args: &ModeArgs) -> Result<(), EuvError> {
     let src_path: PathBuf = args.get_crate_path().join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {error}");
@@ -456,7 +456,7 @@ pub(crate) async fn run_build_only_pipeline(args: &ModeArgs) -> Result<()> {
 /// # Arguments
 ///
 /// - `&Path` - The output directory to clean.
-pub(crate) async fn clean_out_dir(out_dir: &Path) {
+pub async fn clean_out_dir(out_dir: &Path) {
     let mut entries: ReadDir = match read_dir(out_dir).await {
         Ok(dir) => dir,
         Err(_) => return,
@@ -485,11 +485,11 @@ pub(crate) async fn clean_out_dir(out_dir: &Path) {
 ///
 /// # Returns
 ///
-/// - `Result<String>` - The generated HTML with reload script injected on success.
-pub(crate) async fn run_build_pipeline(
+/// - `Result<String, EuvError>` - The generated HTML with reload script injected on success.
+pub async fn run_build_pipeline(
     args: &ModeArgs,
     reload_tx: Option<&broadcast::Sender<ReloadEvent>>,
-) -> Result<String> {
+) -> Result<String, EuvError> {
     let src_path: PathBuf = args.get_crate_path().join(SRC_DIR_NAME);
     if let Err(error) = format_dir(&src_path, FmtMode::Write).await {
         log::warn!("euv fmt error: {error}");
@@ -543,14 +543,14 @@ async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure of the file watcher.
-pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure of the file watcher.
+pub async fn watch_and_build(state: Arc<AppState>) -> Result<(), EuvError> {
     let crate_path: PathBuf = state.get_args().get_crate_path().clone();
     let src_path: PathBuf = crate_path.join(SRC_DIR_NAME);
     let gitignore: Gitignore = build_gitignore(&crate_path).await;
     let (tx, mut rx): (Sender<Event>, Receiver<Event>) = channel(32);
     let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
-        move |result: std::result::Result<Event, notify::Error>| {
+        move |result: Result<Event, notify::Error>| {
             if let Ok(event) = result {
                 let _ = tx.blocking_send(event);
             }
@@ -615,8 +615,8 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<()> {
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure of the wasm-pack build.
-pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure of the wasm-pack build.
+pub async fn build_wasm(args: &ModeArgs) -> Result<(), EuvError> {
     let build_mode: BuildMode = resolve_build_mode(args);
     let build_mode_flag: &str = build_mode_to_flag(build_mode);
     let filtered_args: Vec<String> = filter_euv_args(args.get_wasm_pack_args());
@@ -711,7 +711,7 @@ pub(crate) async fn build_wasm(args: &ModeArgs) -> Result<()> {
 /// # Arguments
 ///
 /// - `Action` - The action to perform (run or build).
-pub(crate) fn print_banner(action: Action) {
+pub fn print_banner(action: Action) {
     let version: &str = env!("CARGO_PKG_VERSION");
     if version.is_empty() {
         log::warn!("Failed to parse version from root Cargo.toml");
@@ -741,7 +741,7 @@ pub(crate) fn print_banner(action: Action) {
 /// - `u16` - The port number the server is listening on.
 /// - `&str` - The www route prefix (e.g. "www").
 /// - `&str` - The index HTML file name (e.g. "index.html").
-pub(crate) fn print_server_urls(port: u16, www_route_prefix: &str, index_html_file_name: &str) {
+pub fn print_server_urls(port: u16, www_route_prefix: &str, index_html_file_name: &str) {
     let mut addresses: Vec<std::net::IpAddr> = Vec::new();
     match if_addrs::get_if_addrs() {
         Ok(interfaces) => {
@@ -785,8 +785,8 @@ pub(crate) fn print_server_urls(port: u16, www_route_prefix: &str, index_html_fi
 ///
 /// # Returns
 ///
-/// - `Result<()>` - Indicates success or failure of the formatting operation.
-pub(crate) async fn run_hyperlane_fmt() -> Result<()> {
+/// - `Result<(), EuvError>` - Indicates success or failure of the formatting operation.
+pub async fn run_hyperlane_fmt() -> Result<(), EuvError> {
     let args: hyperlane_cli::Args = hyperlane_cli::Args {
         command: hyperlane_cli::CommandType::Fmt,
         check: false,
