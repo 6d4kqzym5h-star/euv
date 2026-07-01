@@ -33,7 +33,7 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
                 ul {
                     class: c_list_ul()
                     data-observer-container: "true"
-                    for index in { 0..100 } {
+                    for index in 0..100 {
                         li {
                             key: index.to_string()
                             class: c_list_item()

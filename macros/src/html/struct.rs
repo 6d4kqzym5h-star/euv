@@ -18,11 +18,14 @@ pub(crate) struct HtmlRoot {
 
 /// Represents a reactive `for` loop in HTML.
 ///
-/// Syntax: `for pattern in {expr} { children }`.
+/// Syntax:
+/// - `for pattern in {expr} { children }`
+/// - `for pattern in expr { children }`
 ///
 /// The pattern is a Rust binding pattern (e.g., `item` or `(index, item)`).
-/// The expression in braces must evaluate to an iterable. Each iteration's
-/// body is rendered as HTML and collected into a `VirtualNode::Fragment`.
+/// The iterable may be wrapped in braces or written as a bare expression.
+/// Each iteration's body is rendered as HTML and collected into a
+/// `VirtualNode::Fragment`.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlFor {
     /// The binding pattern for loop variables (e.g., `item` or `(index, item)`).

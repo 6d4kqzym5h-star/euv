@@ -652,6 +652,18 @@ fn format_macro_body_raw(body: &str) -> String {
                     if position < len && chars[position] == CHAR_BRACE_LEFT {
                         result.push(CHAR_SPACE);
                     }
+                } else {
+                    result.push(CHAR_SPACE);
+                    while position < len && chars[position] != CHAR_BRACE_LEFT {
+                        result.push(chars[position]);
+                        position += 1;
+                    }
+                    if result.ends_with(CHAR_SPACE) {
+                        result.truncate(result.len() - 1);
+                    }
+                    if position < len && chars[position] == CHAR_BRACE_LEFT {
+                        result.push(CHAR_SPACE);
+                    }
                 }
             }
             continue;

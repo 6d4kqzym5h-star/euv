@@ -44,7 +44,21 @@ fn test_match_multiple_arms() {
 }
 
 #[test]
-fn test_for_loop() {
+fn test_for_loop_bare_expr() {
+    let input = "for i in a.iter(){b}";
+    let expected = "for i in a.iter() {\n    b\n}";
+    assert_eq!(format_macro_body(input), expected);
+}
+
+#[test]
+fn test_for_loop_bare_expr_chain() {
+    let input = "for (i, v) in a.iter().enumerate(){b}";
+    let expected = "for (i, v) in a.iter().enumerate() {\n    b\n}";
+    assert_eq!(format_macro_body(input), expected);
+}
+
+#[test]
+fn test_for_loop_braced_expr_unchanged() {
     let input = "for i in {a}{b}";
     let expected = "for i in { a } {\n    b\n}";
     assert_eq!(format_macro_body(input), expected);

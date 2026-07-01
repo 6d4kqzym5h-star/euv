@@ -55,7 +55,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
                 ul {
                     class: c_list_ul()
                     data_list_container: "true"
-                    for (index, item) in { state.get_items().get().iter().enumerate() } {
+                    for (index, item) in state.get_items().get().iter().enumerate() {
                         li {
                             key: index.to_string()
                             class: c_list_item()

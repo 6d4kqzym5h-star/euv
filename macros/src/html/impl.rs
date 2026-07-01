@@ -240,9 +240,13 @@ impl Parse for HtmlFor {
             pattern_tokens.extend([token_tree]);
         }
         input.parse::<Token![in]>()?;
-        let iter_content: ParseBuffer<'_>;
-        braced!(iter_content in input);
-        let iterable: Expr = iter_content.parse()?;
+        let iterable: Expr = if input.peek(Brace) {
+            let iter_content: ParseBuffer<'_>;
+            braced!(iter_content in input);
+            iter_content.parse()?
+        } else {
+            input.parse()?
+        };
         let body_content: ParseBuffer<'_>;
         braced!(body_content in input);
         let body: Vec<HtmlNode> = parse_html_children(&body_content)?;

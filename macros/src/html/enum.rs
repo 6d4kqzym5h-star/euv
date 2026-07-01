@@ -28,11 +28,13 @@ pub(crate) enum HtmlNode {
     /// The signal expression in braces is re-evaluated on change, and the
     /// matching arm's HTML is rendered inside a `DynamicNode`.
     Match(HtmlMatch),
-    /// A reactive for loop: `for pattern in {iterable} { html... }`.
+    /// A reactive for loop: `for pattern in {iterable} { html... }` or
+    /// `for pattern in iterable { html... }`.
     ///
     /// The pattern is a Rust binding pattern (e.g., `item` or `(index, item)`).
-    /// The iterable expression in braces is re-evaluated on signal change,
-    /// and each iteration's HTML is collected into a `DynamicNode` fragment.
+    /// The iterable expression may be wrapped in braces (reactive) or written
+    /// as a bare expression. Each iteration's HTML is collected into a
+    /// `DynamicNode` fragment.
     For(HtmlFor),
     /// A dynamic tag: `{tag_expr} { attr: value, ... children ... }`.
     ///
