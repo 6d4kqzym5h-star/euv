@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `Result<(), EuvError>` - Indicates success or failure of the initialization.
-pub fn set_global_state(state: Arc<AppState>) -> Result<(), EuvError> {
+pub(crate) fn set_global_state(state: Arc<AppState>) -> Result<(), EuvError> {
     APP_STATE.set(state).map_err(|_: Arc<AppState>| {
         EuvError::Message(String::from("Global state already initialized"))
     })
@@ -20,7 +20,7 @@ pub fn set_global_state(state: Arc<AppState>) -> Result<(), EuvError> {
 /// # Returns
 ///
 /// - `Option<Arc<AppState>>` - The global state if initialized.
-pub fn get_global_state() -> Option<Arc<AppState>> {
+pub(crate) fn get_global_state() -> Option<Arc<AppState>> {
     APP_STATE.get().cloned()
 }
 
@@ -33,20 +33,13 @@ pub fn get_global_state() -> Option<Arc<AppState>> {
 ///
 /// # Arguments
 ///
-/// - `&Path` - The path to the www directory where `index.html` will be written.
-/// - `&str` - The JS import path relative to the www directory (e.g. `./pkg/euv` or `./euv`).
-/// - `bool` - Whether to use the release template (no live-reload).
+/// - `&HtmlConfig` - The HTML generation configuration.
 ///
 /// # Returns
 ///
 /// - `Result<String, EuvError>` - The generated HTML content written to disk.
-pub async fn generate_html(
-    www_dir: &Path,
-    import_path: &str,
-    is_release: bool,
-    custom_index_html: &Option<PathBuf>,
-) -> Result<String, EuvError> {
-    let template_content: String = if let Some(custom_path) = custom_index_html {
+pub(crate) async fn generate_html(config: &HtmlConfig) -> Result<String, EuvError> {
+    let template_content: String = if let Some(custom_path) = config.try_get_custom_index_html() {
         let bytes: Vec<u8> =
             read(custom_path)
                 .await
@@ -59,16 +52,16 @@ pub async fn generate_html(
             message: String::from("Custom index.html is not valid UTF-8"),
             error,
         })?
-    } else if is_release {
+    } else if config.get_is_release() {
         INDEX_HTML_RELEASE.to_string()
     } else {
         INDEX_HTML_DEV.to_string()
     };
     let html: String = template_content
-        .replace(IMPORT_PATH_PLACEHOLDER, import_path)
+        .replace(IMPORT_PATH_PLACEHOLDER, config.get_import_path())
         .replace(RELOAD_ROUTE_PLACEHOLDER, RELOAD_ROUTE);
-    let index_path: PathBuf = www_dir.join(INDEX_HTML_FILE_NAME);
-    create_dir_all(www_dir)
+    let index_path: PathBuf = config.get_serving_root().join(INDEX_HTML_FILE_NAME);
+    create_dir_all(config.get_serving_root())
         .await
         .map_err(|error: io::Error| EuvError::Io {
             message: String::from("Failed to create static directory"),
@@ -122,4 +115,26 @@ pub async fn resolve_www_dir(www_dir: &Path) -> PathBuf {
 /// - `PathBuf` - The resolved pkg directory containing WASM build artifacts.
 pub fn resolve_pkg_dir(args: &ModeArgs) -> PathBuf {
     resolve_out_dir(args)
+}
+
+/// Resolves a file path within a base directory with path-traversal protection.
+///
+/// Canonicalizes both the file path and the base directory, then verifies
+/// that the canonical file path starts with the canonical base directory.
+///
+/// # Arguments
+///
+/// - `&Path` - The base directory to resolve within.
+/// - `&str` - The relative path to the file.
+///
+/// # Returns
+///
+/// - `Option<PathBuf>` - The resolved file path if valid, `None` otherwise.
+pub async fn resolve_file_in_base(base: &Path, path: &str) -> Option<PathBuf> {
+    let file_path: PathBuf = base.join(path);
+    let canonical_path: PathBuf = canonicalize(&file_path).await.ok()?;
+    let base_canonical: PathBuf = canonicalize(base).await.ok()?;
+    canonical_path
+        .starts_with(&base_canonical)
+        .then_some(file_path)
 }

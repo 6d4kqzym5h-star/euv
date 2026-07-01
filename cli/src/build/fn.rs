@@ -359,11 +359,45 @@ fn read_crate_name_from_toml(path: &Path) -> Option<String> {
     None
 }
 
-/// Resolves the JS import path for HTML generation.
+/// Computes the relative path from a base directory to a target directory.
 ///
-/// Computes the relative path from the www directory to the output directory,
-/// then appends the JS filename (from `resolve_out_name`, which includes `.js`)
-/// to form the full import path (e.g. `./pkg/euv.js` or `./euv.js`).
+/// Compares the component sequences of both paths to find the common prefix,
+/// then emits `..` for each remaining base component followed by the remaining
+/// target components.
+///
+/// # Arguments
+///
+/// - `&Path` - The base directory path.
+/// - `&Path` - The target directory path.
+///
+/// # Returns
+///
+/// - `PathBuf` - The relative path from base to target.
+fn compute_relative_path(base: &Path, target: &Path) -> PathBuf {
+    let base_components: Vec<Component> = base.components().collect();
+    let target_components: Vec<Component> = target.components().collect();
+    let common_len: usize = base_components
+        .iter()
+        .zip(target_components.iter())
+        .take_while(|(base_component, target_component)| base_component == target_component)
+        .count();
+    let mut result: PathBuf = PathBuf::new();
+    for _ in &base_components[common_len..] {
+        result.push("..");
+    }
+    for component in &target_components[common_len..] {
+        if let Component::Normal(os_str) = component {
+            result.push(os_str);
+        }
+    }
+    result
+}
+
+/// Resolves the serving root directory for the development server.
+///
+/// When the output directory is inside the www directory, returns the resolved www directory.
+/// When the output directory is outside the www directory, returns the parent of the output directory
+/// so that `index.html` and WASM artifacts are co-located under the same serving root.
 ///
 /// # Arguments
 ///
@@ -371,19 +405,86 @@ fn read_crate_name_from_toml(path: &Path) -> Option<String> {
 ///
 /// # Returns
 ///
-/// - `String` - The resolved JS import path relative to the www directory.
+/// - `PathBuf` - The resolved serving root directory.
+pub async fn resolve_serving_root(args: &ModeArgs) -> PathBuf {
+    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
+    let out_dir_absolute: PathBuf = resolve_out_dir(args);
+    if out_dir_absolute.strip_prefix(&www_absolute).is_ok() {
+        resolve_www_dir(&www_absolute).await
+    } else {
+        out_dir_absolute
+            .parent()
+            .map(|p: &Path| p.to_path_buf())
+            .unwrap_or_else(|| www_absolute)
+    }
+}
+
+/// Resolves the serving route prefix relative to the crate path.
+///
+/// Returns the forward-slash-separated path of the serving root relative to the crate path.
+/// Used for server route registration and URL display.
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing crate_path, www_dir, wasm_pack_args.
+///
+/// # Returns
+///
+/// - `String` - The serving route prefix (e.g. `www` or `wwws`).
+pub fn resolve_serving_route_prefix(args: &ModeArgs) -> String {
+    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
+    let out_dir_absolute: PathBuf = resolve_out_dir(args);
+    let serving_root: PathBuf = if out_dir_absolute.strip_prefix(&www_absolute).is_ok() {
+        www_absolute
+    } else {
+        out_dir_absolute
+            .parent()
+            .map(|p: &Path| p.to_path_buf())
+            .unwrap_or_else(|| www_absolute)
+    };
+    serving_root
+        .strip_prefix(args.get_crate_path())
+        .map(|rel: &Path| {
+            rel.to_string_lossy()
+                .replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD)
+        })
+        .unwrap_or_else(|_| {
+            args.get_www_dir()
+                .replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD)
+        })
+}
+
+/// Resolves the JS import path for HTML generation.
+///
+/// Computes the relative path from the serving root to the output directory,
+/// then appends the JS filename (from `resolve_out_name`, which includes `.js`)
+/// to form the full import path (e.g. `./pkg/euv.js` or `./pksg/cc.js`).
+///
+/// # Arguments
+///
+/// - `&ModeArgs` - The CLI arguments containing crate_path, www_dir, wasm_pack_args.
+///
+/// # Returns
+///
+/// - `String` - The resolved JS import path relative to the serving root.
 pub fn resolve_import_path(args: &ModeArgs) -> String {
     let out_name: String = resolve_out_name(args);
     let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
     let out_dir_absolute: PathBuf = resolve_out_dir(args);
-    let relative: PathBuf = match out_dir_absolute.strip_prefix(&www_absolute) {
-        Ok(rel) => rel.to_path_buf(),
-        Err(_) => out_dir_absolute,
+    let serving_root: PathBuf = if out_dir_absolute.strip_prefix(&www_absolute).is_ok() {
+        www_absolute
+    } else {
+        out_dir_absolute
+            .parent()
+            .map(|p: &Path| p.to_path_buf())
+            .unwrap_or_else(|| www_absolute)
     };
+    let relative: PathBuf = compute_relative_path(&serving_root, &out_dir_absolute);
     let mut components: Vec<String> = relative
         .components()
         .filter_map(|component: Component| match component {
             Component::Normal(os_str) => os_str.to_str().map(|text: &str| text.to_string()),
+            Component::ParentDir => Some(PARENT_DIR.to_string()),
             _ => None,
         })
         .collect();
@@ -439,11 +540,13 @@ pub async fn run_build_only_pipeline(args: &ModeArgs) -> Result<(), EuvError> {
     clean_out_dir(&out_dir).await;
     build_wasm(args).await?;
     log::info!("WASM build completed successfully");
-    let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
-    let import_path: String = resolve_import_path(args);
-    let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
-    let custom_html: &Option<PathBuf> = args.try_get_index_html();
-    generate_html(&www_dir, &import_path, is_release, custom_html).await?;
+    let html_config: HtmlConfig = HtmlConfig::new(
+        resolve_serving_root(args).await,
+        resolve_import_path(args),
+        resolve_build_mode(args) == BuildMode::Release,
+        args.try_get_index_html().clone(),
+    );
+    generate_html(&html_config).await?;
     Ok(())
 }
 
@@ -508,31 +611,19 @@ pub async fn run_build_pipeline(
             }
         }
     }
-    let www_dir: PathBuf = resolve_www_dir_from_args(args).await;
-    let import_path: String = resolve_import_path(args);
-    let is_release: bool = resolve_build_mode(args) == BuildMode::Release;
-    let custom_html: &Option<PathBuf> = args.try_get_index_html();
-    let html: String = generate_html(&www_dir, &import_path, is_release, custom_html).await?;
+    let html_config: HtmlConfig = HtmlConfig::new(
+        resolve_serving_root(args).await,
+        resolve_import_path(args),
+        resolve_build_mode(args) == BuildMode::Release,
+        args.try_get_index_html().clone(),
+    );
+    let html: String = generate_html(&html_config).await?;
     spawn(async move {
         if let Err(error) = run_hyperlane_fmt().await {
             log::warn!("hyperlane-cli fmt error: {error}");
         }
     });
     Ok(html)
-}
-
-/// Resolves the www directory from CLI arguments.
-///
-/// # Arguments
-///
-/// - `&ModeArgs` - The CLI arguments.
-///
-/// # Returns
-///
-/// - `PathBuf` - The resolved www directory.
-async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
-    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
-    resolve_www_dir(&www_absolute).await
 }
 
 /// Watches source files and triggers WASM builds.
@@ -544,7 +635,7 @@ async fn resolve_www_dir_from_args(args: &ModeArgs) -> PathBuf {
 /// # Returns
 ///
 /// - `Result<(), EuvError>` - Indicates success or failure of the file watcher.
-pub async fn watch_and_build(state: Arc<AppState>) -> Result<(), EuvError> {
+pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<(), EuvError> {
     let crate_path: PathBuf = state.get_args().get_crate_path().clone();
     let src_path: PathBuf = crate_path.join(SRC_DIR_NAME);
     let gitignore: Gitignore = build_gitignore(&crate_path).await;
@@ -738,15 +829,16 @@ pub fn print_banner(action: Action) {
 ///
 /// # Arguments
 ///
-/// - `u16` - The port number the server is listening on.
-/// - `&str` - The www route prefix (e.g. "www").
-/// - `&str` - The index HTML file name (e.g. "index.html").
-pub fn print_server_urls(port: u16, www_route_prefix: &str, index_html_file_name: &str) {
-    let mut addresses: Vec<std::net::IpAddr> = Vec::new();
+/// - `&ServerUrlConfig` - The server URL configuration.
+pub(crate) fn print_server_urls(config: &ServerUrlConfig) {
+    let port: u16 = config.get_port();
+    let route_prefix: &str = config.get_route_prefix();
+    let index_html_file_name: &str = config.get_index_html_file_name();
+    let mut addresses: Vec<IpAddr> = Vec::new();
     match if_addrs::get_if_addrs() {
         Ok(interfaces) => {
             for interface in interfaces {
-                let ip: std::net::IpAddr = interface.addr.ip();
+                let ip: IpAddr = interface.addr.ip();
                 if !addresses.contains(&ip) {
                     addresses.push(ip);
                 }
@@ -757,15 +849,15 @@ pub fn print_server_urls(port: u16, www_route_prefix: &str, index_html_file_name
         }
     }
     if addresses.is_empty() {
-        addresses.push(std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST));
+        addresses.push(IpAddr::V4(Ipv4Addr::LOCALHOST));
     }
     for ip in addresses {
         let host: String = match ip {
-            std::net::IpAddr::V6(_) => format!("[{ip}]"),
-            std::net::IpAddr::V4(_) => format!("{ip}"),
+            IpAddr::V6(_) => format!("[{ip}]"),
+            IpAddr::V4(_) => format!("{ip}"),
         };
         let url: String =
-            format!("{HTTP_SCHEME}://{host}:{port}/{www_route_prefix}/{index_html_file_name}");
+            format!("{HTTP_SCHEME}://{host}:{port}/{route_prefix}/{index_html_file_name}");
         log::info!("Server: {url}");
         match QrCode::new(url.as_str()) {
             Ok(code) => {

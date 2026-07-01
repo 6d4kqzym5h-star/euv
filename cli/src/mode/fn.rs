@@ -86,19 +86,18 @@ pub async fn run_mode(mut args: ModeArgs) -> Result<(), EuvError> {
                 .unwrap_or(&crate_path_str),
         ));
     }
-    let www_route_prefix: String = args
-        .get_www_dir()
-        .replace(CHAR_SLASH_BACK, STR_SLASH_FORWARD);
-    let www_absolute: PathBuf = args.get_crate_path().join(args.get_www_dir());
-    let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
+    let serving_route_prefix: String = resolve_serving_route_prefix(&args);
     let initial_html: String = match run_build_pipeline(&args, None).await {
         Ok(html) => html,
         Err(error) => {
             log::error!("Initial build pipeline failed: {error}");
-            let import_path: String = resolve_import_path(&args);
-            let is_release: bool = resolve_build_mode(&args) == BuildMode::Release;
-            let custom_html: &Option<PathBuf> = args.try_get_index_html();
-            generate_html(&www_absolute, &import_path, is_release, custom_html).await?
+            let html_config: HtmlConfig = HtmlConfig::new(
+                resolve_serving_root(&args).await,
+                resolve_import_path(&args),
+                resolve_build_mode(&args) == BuildMode::Release,
+                args.try_get_index_html().clone(),
+            );
+            generate_html(&html_config).await?
         }
     };
     print_banner(Action::Run);
@@ -126,12 +125,16 @@ pub async fn run_mode(mut args: ModeArgs) -> Result<(), EuvError> {
     server.server_config(server_config);
     server.request_middleware::<RequestMiddleware>();
     server.response_middleware::<ResponseMiddleware>();
-    server.route::<IndexRoute>(format!("{www_route_prefix}/{{path:.*}}"));
+    server.route::<IndexRoute>(format!("{serving_route_prefix}/{{path:.*}}"));
     server.route::<ReloadRoute>(RELOAD_ROUTE);
     if let Err(error) = set_global_state(Arc::clone(&state)) {
         log::error!("Failed to set global state: {error}");
     }
-    print_server_urls(args.get_port(), &www_route_prefix, INDEX_HTML_FILE_NAME);
+    print_server_urls(&ServerUrlConfig::new(
+        args.get_port(),
+        serving_route_prefix.clone(),
+        INDEX_HTML_FILE_NAME.to_string(),
+    ));
     let server_control_hook: ServerControlHook = server
         .run()
         .await

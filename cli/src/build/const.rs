@@ -58,6 +58,9 @@ pub const RELATIVE_PATH_PREFIX: &str = "./";
 /// The path separator used for joining path components.
 pub const PATH_SEPARATOR: &str = "/";
 
+/// The parent directory indicator used in relative path computation.
+pub const PARENT_DIR: &str = "..";
+
 /// The wasm-pack flag for development builds.
 pub const DEV_FLAG: &str = "--dev";
 
@@ -119,7 +122,7 @@ pub const RUST_MIN_STACK_VALUE: &str = "16777216";
 /// - `{"type":"Reload"}` — the client should reload the page.
 /// - `{"type":"Error","message":"..."}` — a build error occurred.
 ///
-/// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
+/// The `__IMPORT_PATH__` placeholder is replaced with the resolved JS import path at runtime.
 pub const INDEX_HTML_DEV: &str = r#"<!doctype html>
 <html lang="en">
   <head>
@@ -164,7 +167,7 @@ pub const INDEX_HTML_DEV: &str = r#"<!doctype html>
     <div id="app"></div>
   </body>
   <script type="module">
-    import init, { main } from './pkg/euv.js';
+    import init, { main } from '__IMPORT_PATH__';
     await init();
     main();
   </script>
@@ -196,7 +199,7 @@ pub const INDEX_HTML_DEV: &str = r#"<!doctype html>
 ///
 /// A minimal `index.html` without any live-reload instrumentation.
 /// Used when building for release to produce a clean, static entry point.
-/// The `__OUT_NAME__` placeholder is replaced with the actual output name at runtime.
+/// The `__IMPORT_PATH__` placeholder is replaced with the resolved JS import path at runtime.
 pub const INDEX_HTML_RELEASE: &str = r#"<!doctype html>
 <html lang="en">
   <head>
@@ -241,7 +244,7 @@ pub const INDEX_HTML_RELEASE: &str = r#"<!doctype html>
     <div id="app"></div>
   </body>
   <script type="module">
-    import init, { main } from './pkg/euv.js';
+    import init, { main } from '__IMPORT_PATH__';
     await init();
     main();
   </script>

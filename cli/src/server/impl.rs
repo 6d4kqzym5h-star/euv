@@ -127,30 +127,14 @@ impl ServerHook for IndexRoute {
                 .set_header(CONTENT_TYPE, TEXT_HTML);
             return Status::Continue;
         }
-        let www_absolute: PathBuf = state
-            .get_args()
-            .get_crate_path()
-            .join(state.get_args().get_www_dir());
-        let www_absolute: PathBuf = resolve_www_dir(&www_absolute).await;
-        let file_path: PathBuf = www_absolute.join(&path);
-        let canonical_path: PathBuf = match canonicalize(&file_path).await {
-            Ok(p) => p,
-            Err(_) => {
+        let serving_root: PathBuf = resolve_serving_root(state.get_args()).await;
+        let file_path: PathBuf = match resolve_file_in_base(&serving_root, &path).await {
+            Some(resolved) => resolved,
+            None => {
                 ctx.get_mut_response().set_status_code(404);
                 return Status::Continue;
             }
         };
-        let base_canonical: PathBuf = match canonicalize(&www_absolute).await {
-            Ok(p) => p,
-            Err(_) => {
-                ctx.get_mut_response().set_status_code(500);
-                return Status::Continue;
-            }
-        };
-        if !canonical_path.starts_with(&base_canonical) {
-            ctx.get_mut_response().set_status_code(403);
-            return Status::Continue;
-        }
         match read(&file_path).await {
             Ok(content) => {
                 let extension: String = FileExtension::get_extension_name(&path);

@@ -19,7 +19,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `FmtResult` - The formatting result indicating whether changes were made.
-pub fn format_source(source: &str) -> FmtResult {
+pub(crate) fn format_source(source: &str) -> FmtResult {
     let formatted: String = format_euv_macros(source);
     let changed: bool = formatted != source;
     FmtResult::new(changed, formatted)

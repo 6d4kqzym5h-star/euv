@@ -11,10 +11,9 @@ use crate::*;
 pub struct Cli {
     /// The mode to run in: run (build + server), build (build only), or fmt (format)
     #[command(subcommand)]
-    #[get(pub)]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub command: Mode,
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) command: Mode,
 }
 
 /// euv-specific arguments combined with wasm-pack passthrough.
@@ -25,60 +24,60 @@ pub struct Cli {
 pub struct ModeArgs {
     /// Path to the Rust crate containing the WASM application
     #[arg(short, long, default_value = ".")]
-    #[get(pub)]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub crate_path: PathBuf,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) crate_path: PathBuf,
     /// Port for the development server
     #[arg(short, long, default_value_t = 80)]
-    #[get(pub, type(copy))]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub port: u16,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) port: u16,
     /// Directory name for static assets and generated HTML (relative to crate-path)
     #[arg(long, default_value = "www")]
-    #[get(pub)]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub www_dir: String,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) www_dir: String,
     /// Path to a custom index.html template file.
     /// When specified, uses this file instead of the built-in template.
     /// The placeholders `__IMPORT_PATH__` and `__RELOAD_ROUTE__` will be replaced.
     #[arg(long)]
-    #[get(pub)]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub index_html: Option<PathBuf>,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) index_html: Option<PathBuf>,
     /// Create a development build. Enable debug info, and disable optimizations
     #[arg(long)]
-    #[get(pub, type(copy))]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub dev: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) dev: bool,
     /// Create a release build. Enable optimizations and disable debug info
     #[arg(long)]
-    #[get(pub, type(copy))]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub release: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) release: bool,
     /// Create a profiling build. Enable optimizations and debug info
     #[arg(long)]
-    #[get(pub, type(copy))]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub profiling: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) profiling: bool,
     /// Remove the .gitignore file from the output directory after building
     #[arg(long)]
-    #[get(pub, type(copy))]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub no_gitignore: bool,
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) no_gitignore: bool,
     /// Arguments transparently forwarded to `wasm-pack build`
     #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-    #[get(pub)]
-    #[get_mut(pub)]
-    #[set(pub)]
-    pub wasm_pack_args: Vec<String>,
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) wasm_pack_args: Vec<String>,
 }
 
 /// Arguments for the `fmt` subcommand.
@@ -92,11 +91,33 @@ pub struct FmtArgs {
     #[get(pub)]
     #[get_mut(pub)]
     #[set(pub)]
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
     /// Check if formatting is needed without modifying files
     #[arg(long, default_value_t = false)]
     #[get(pub, type(copy))]
     #[get_mut(pub)]
     #[set(pub)]
-    pub check: bool,
+    pub(crate) check: bool,
+}
+
+/// Configuration for server URL display.
+///
+/// Groups all parameters needed by `print_server_urls` into a single struct.
+#[derive(Data, New)]
+pub(crate) struct ServerUrlConfig {
+    /// The port number the server is listening on.
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) port: u16,
+    /// The serving route prefix (e.g. "www" or "wwws").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) route_prefix: String,
+    /// The index HTML file name (e.g. "index.html").
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) index_html_file_name: String,
 }

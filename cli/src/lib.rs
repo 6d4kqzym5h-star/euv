@@ -17,6 +17,7 @@ use std::{
     ffi,
     fmt::Arguments,
     io,
+    net::{IpAddr, Ipv4Addr},
     path::{Component, Path, PathBuf},
     process::{Output, Stdio},
     sync::{Arc, OnceLock},
