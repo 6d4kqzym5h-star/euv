@@ -141,12 +141,13 @@ fn cache_safe_area_insets() {
 /// Writes the cached safe-area inset values as inline CSS custom properties
 /// on the real app root element and any fullscreen overlay containers.
 ///
-/// Class rules such as `c_mobile_app_root`, `c_mobile_nav_drawer`, and
-/// `c_canvas_container_fullscreen` consume `var(--safe-area-inset-top)` in
-/// their `padding` declarations. By overriding these CSS custom properties
-/// with inline style (which has higher specificity than the stylesheet rule
-/// from `vars!`), all `var()` references resolve to the cached pixel values,
-/// bypassing the stale `env()` function after a fullscreen exit.
+/// Class rules such as `c_mobile_app_root`, `c_app_nav`, `c_app_main`,
+/// `c_mobile_nav_drawer`, and `c_canvas_container_fullscreen` consume
+/// `var(--safe-area-inset-top)` in their `padding` declarations. By overriding
+/// these CSS custom properties with inline style (which has higher specificity
+/// than the stylesheet rule from `vars!`), all `var()` references resolve to
+/// the cached pixel values, bypassing the stale `env()` function after a
+/// fullscreen exit.
 ///
 /// The canvas fullscreen container is `position: fixed` and outside the app
 /// root subtree, so it does not inherit the inline overrides — it must be

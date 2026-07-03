@@ -8,6 +8,8 @@ class! {
     pub(crate) c_app_root {
         display: "flex";
         height: "100%";
+        padding-top: var!(safe-area-inset-top);
+        padding-bottom: var!(safe-area-inset-bottom);
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(background);
         color: var!(foreground);
