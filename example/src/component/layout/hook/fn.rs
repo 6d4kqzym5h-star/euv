@@ -12,13 +12,14 @@ use crate::*;
 /// function result.
 ///
 /// When a native (browser) fullscreen is entered — for example the user taps
-/// the fullscreen button on a `<video controls>` element — a `pushState`
-/// entry is added so that the system back gesture will fire `popstate`. The
-/// `popstate` handler then calls `document.exitFullscreen()` to leave
+/// the fullscreen button on a `<video controls>` element — a browser history
+/// entry is added via `overlay_push_state` so that the system back gesture
+/// will fire `popstate`. A `popstate` guard registered via
+/// [`register_popstate_guard`] then calls `document.exitFullscreen()` to leave
 /// fullscreen, consuming the history entry without navigating to the previous
 /// route. When the native fullscreen is exited through other means (e.g. the
 /// browser's own exit button), the `fullscreenchange` handler consumes the
-/// extra history entry via `history.back()`.
+/// extra history entry via `overlay_back`.
 ///
 /// This hook should be called once during app initialization and covers:
 /// - Native video fullscreen → exit via system back button
@@ -35,9 +36,7 @@ pub(crate) fn use_safe_area_fix() {
             .is_some();
         if is_fullscreen {
             NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.set(true));
-            let window_value: Window = window().expect("no global window exists");
-            let history: History = window_value.history().expect("no history object exists");
-            let _ = history.push_state(&JsValue::NULL, "");
+            overlay_push_state();
         } else {
             let was_active: bool = NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.get());
             if was_active {
@@ -47,10 +46,7 @@ pub(crate) fn use_safe_area_fix() {
                 if exit_by_popstate {
                     NATIVE_FULLSCREEN_EXIT_BY_POPSTATE.with(|flag: &Cell<bool>| flag.set(false));
                 } else {
-                    let window_value: Window = window().expect("no global window exists");
-                    let history: History =
-                        window_value.history().expect("no history object exists");
-                    let _ = history.back();
+                    overlay_back(None);
                 }
             }
             apply_cached_insets();
@@ -62,9 +58,9 @@ pub(crate) fn use_safe_area_fix() {
     use_window_event("resize", || {
         apply_cached_insets();
     });
-    use_window_event("popstate", || {
+    register_popstate_guard(Rc::new(|| {
         if !NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.get()) {
-            return;
+            return false;
         }
         NATIVE_FULLSCREEN_EXIT_BY_POPSTATE.with(|flag: &Cell<bool>| flag.set(true));
         let document_value: Document = window()
@@ -72,7 +68,8 @@ pub(crate) fn use_safe_area_fix() {
             .document()
             .expect("should have a document");
         document_value.exit_fullscreen();
-    });
+        true
+    }));
 }
 
 /// Reads the current `env(safe-area-inset-*)` pixel values via a temporary

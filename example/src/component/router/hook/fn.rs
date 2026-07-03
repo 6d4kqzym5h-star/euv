@@ -55,6 +55,11 @@ pub(crate) fn use_hash_change(route_signal: Signal<String>) {
 /// A `popstate` listener pops the topmost entry and invokes its close callback, so
 /// overlays close in reverse opening order regardless of type.
 ///
+/// Before consulting the overlay stack, the listener iterates over all registered
+/// `popstate` guards (see [`register_popstate_guard`]). The first guard that returns
+/// `true` consumes the event, preventing the overlay stack and normal navigation
+/// from processing it.
+///
 /// # Arguments
 ///
 /// - `Signal<bool>` - The reactive signal controlling the nav drawer visibility.
@@ -73,6 +78,16 @@ pub(crate) fn use_overlay_history(drawer_open: Signal<bool>, mobile_signal: Sign
     });
     use_window_event("popstate", move || {
         WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() + 1));
+        let consumed: bool = POPSTATE_GUARDS.with(|guards: &PopstateGuardList| {
+            guards
+                .borrow()
+                .iter()
+                .any(|entry: &PopstateGuardEntry| entry.1())
+        });
+        if consumed {
+            WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
+            return;
+        }
         if BACK_PENDING.with(|flag: &Cell<bool>| flag.get()) {
             BACK_PENDING.with(|flag: &Cell<bool>| flag.set(false));
             let pending_route: Option<String> =
@@ -89,6 +104,54 @@ pub(crate) fn use_overlay_history(drawer_open: Signal<bool>, mobile_signal: Sign
             return;
         }
         WINDOW_EVENT_DEPTH.with(|depth: &Cell<usize>| depth.set(depth.get() - 1));
+    });
+}
+
+/// Registers a `popstate` guard callback that is invoked on every `popstate`
+/// event before the overlay stack is consulted.
+///
+/// Guards are called in registration order. The first guard that returns `true`
+/// consumes the `popstate` event, preventing the overlay stack and normal
+/// navigation from processing it. This allows external modules (e.g. native
+/// fullscreen, canvas fullscreen) to intercept the system back gesture without
+/// registering their own independent `popstate` listener.
+///
+/// Returns a guard ID that can be passed to [`unregister_popstate_guard`] to
+/// remove the guard when it is no longer needed.
+///
+/// # Arguments
+///
+/// - `Rc<dyn Fn() -> bool>` - The guard callback. Return `true` to consume the
+///   `popstate` event, `false` to let subsequent guards or the overlay stack
+///   handle it.
+///
+/// # Returns
+///
+/// - `usize` - A unique guard ID for later unregistration.
+pub(crate) fn register_popstate_guard(guard: Rc<dyn Fn() -> bool>) -> usize {
+    NEXT_POPSTATE_GUARD_ID.with(|counter: &Cell<usize>| {
+        let id: usize = counter.get();
+        counter.set(id + 1);
+        POPSTATE_GUARDS.with(|guards: &PopstateGuardList| {
+            guards.borrow_mut().push((id, guard));
+        });
+        id
+    })
+}
+
+/// Removes a previously registered `popstate` guard by its ID.
+///
+/// After removal, the guard will no longer be invoked on `popstate` events.
+///
+/// # Arguments
+///
+/// - `usize` - The guard ID returned by [`register_popstate_guard`].
+#[allow(dead_code)]
+pub(crate) fn unregister_popstate_guard(id: usize) {
+    POPSTATE_GUARDS.with(|guards: &PopstateGuardList| {
+        guards
+            .borrow_mut()
+            .retain(|entry: &PopstateGuardEntry| entry.0 != id);
     });
 }
 

@@ -88,6 +88,8 @@ vars! {
         safe-area-inset-right: "env(safe-area-inset-right, 0px)";
         safe-area-inset-bottom: "env(safe-area-inset-bottom, 0px)";
         safe-area-inset-left: "env(safe-area-inset-left, 0px)";
+        padding-shell-top: format!("calc({} + {})", var!(safe-area-inset-top), var!(space-sm));
+        padding-shell-bottom: format!("calc({} + {})", var!(safe-area-inset-bottom), var!(space-sm));
         padding-main-top: format!("calc({} + 24px)", var!(safe-area-inset-top));
         padding-main-bottom: format!("calc({} + 24px)", var!(safe-area-inset-bottom));
         padding-main-horizontal: "28px";
@@ -227,6 +229,8 @@ vars! {
         safe-area-inset-right: "env(safe-area-inset-right, 0px)";
         safe-area-inset-bottom: "env(safe-area-inset-bottom, 0px)";
         safe-area-inset-left: "env(safe-area-inset-left, 0px)";
+        padding-shell-top: format!("calc({} + {})", var!(safe-area-inset-top), var!(space-sm));
+        padding-shell-bottom: format!("calc({} + {})", var!(safe-area-inset-bottom), var!(space-sm));
         padding-main-top: format!("calc({} + 24px)", var!(safe-area-inset-top));
         padding-main-bottom: format!("calc({} + 24px)", var!(safe-area-inset-bottom));
         padding-main-horizontal: "28px";

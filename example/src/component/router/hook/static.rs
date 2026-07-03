@@ -41,4 +41,20 @@ thread_local! {
     /// earlier routes are overwritten because they were superseded by a
     /// more recent navigation intent.
     pub(crate) static DEFERRED_NAVIGATION: Cell<Option<String>> = const { Cell::new(None) };
+    /// Registered `popstate` guard callbacks.
+    ///
+    /// Each guard is an `Rc<dyn Fn() -> bool>`. On a `popstate` event, guards
+    /// are called in registration order. The first guard that returns `true`
+    /// consumes the event, preventing the overlay stack and normal navigation
+    /// from processing it. This allows external modules (e.g. native fullscreen,
+    /// canvas fullscreen) to intercept the system back gesture without
+    /// registering their own independent `popstate` listener.
+    pub(crate) static POPSTATE_GUARDS: PopstateGuardList =
+        const { RefCell::new(Vec::new()) };
+    /// Monotonically increasing counter for `popstate` guard IDs.
+    ///
+    /// Each call to `register_popstate_guard` reads and increments this
+    /// counter, ensuring every guard receives a unique, stable ID that
+    /// remains valid even after other guards are unregistered.
+    pub(crate) static NEXT_POPSTATE_GUARD_ID: Cell<usize> = const { Cell::new(0) };
 }

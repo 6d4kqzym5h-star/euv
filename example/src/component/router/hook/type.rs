@@ -24,3 +24,26 @@ pub(crate) struct OverlayEntry {
 /// The internal storage type for the unified overlay stack, holding an ordered
 /// list of all open overlays inside a `RefCell` for interior mutability.
 pub(crate) type OverlayStack = RefCell<Vec<OverlayEntry>>;
+
+/// A guard callback that is invoked on every `popstate` event.
+///
+/// Returning `true` means the guard has consumed the event and the
+/// `popstate` should **not** be forwarded to the overlay stack or
+/// normal navigation logic. Returning `false` lets the next guard (or
+/// the default overlay-stack handler) process the event.
+///
+/// Guards are called in registration order; the first guard that returns
+/// `true` wins and stops further processing.
+pub(crate) type PopstateGuard = Rc<dyn Fn() -> bool>;
+
+/// A single entry in the `popstate` guard list, pairing a unique ID with
+/// the guard callback. The ID is used for stable unregistration regardless
+/// of other entries being removed.
+pub(crate) type PopstateGuardEntry = (usize, PopstateGuard);
+
+/// The internal storage type for the registered `popstate` guard list.
+///
+/// Stored in a `RefCell` for interior mutability so that guards can be
+/// registered or unregistered from anywhere within the single-threaded
+/// WASM context.
+pub(crate) type PopstateGuardList = RefCell<Vec<PopstateGuardEntry>>;

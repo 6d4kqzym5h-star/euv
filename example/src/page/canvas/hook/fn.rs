@@ -513,7 +513,7 @@ pub(crate) fn map_rotated_offset(
 }
 
 /// Enters CSS fullscreen mode by setting the `fullscreen` signal to
-/// `true` and pushing a browser history entry via `history.pushState`
+/// `true` and pushing a browser history entry via `overlay_push_state`
 /// so that the system back button will exit fullscreen instead of
 /// navigating to the previous page.
 ///
@@ -525,13 +525,12 @@ pub(crate) fn map_rotated_offset(
 /// - `UseCanvas` - The canvas drawing board state.
 pub(crate) fn enter_fullscreen(state: UseCanvas) {
     state.get_fullscreen().set(true);
-    let window_value: Window = window().expect("no global window exists");
-    let history: History = window_value.history().expect("no history object exists");
-    let _ = history.push_state(&JsValue::NULL, "");
+    overlay_push_state();
     let snapshot_data_url: String = state.get_snapshot_data_url().get();
     let resize_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         resize_fullscreen_canvas(&snapshot_data_url);
     }));
+    let window_value: Window = window().expect("no global window exists");
     let _ = window_value.request_animation_frame(resize_closure.as_ref().unchecked_ref());
     resize_closure.forget();
 }
@@ -549,6 +548,7 @@ pub(crate) fn enter_fullscreen(state: UseCanvas) {
 ///
 /// - `&str` - The snapshot data URL to draw onto the canvas.
 pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
+    apply_cached_insets();
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let device_pixel_ratio: f64 = Reflect::get(
@@ -635,7 +635,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
 
 /// Exits CSS fullscreen mode by capturing the canvas content as a
 /// snapshot data URL, then setting the `fullscreen` signal to `false`
-/// and consuming the browser history entry via `history.back()`.
+/// and consuming the browser history entry via `overlay_back`.
 ///
 /// The canvas content is captured before the fullscreen signal changes
 /// so the DOM element is still available for data extraction.
@@ -647,9 +647,7 @@ pub(crate) fn exit_fullscreen(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
     apply_cached_insets();
-    let window_value: Window = window().expect("no global window exists");
-    let history: History = window_value.history().expect("no history object exists");
-    let _ = history.back();
+    overlay_back(None);
 }
 
 /// Exits CSS fullscreen mode without consuming a browser history entry.
@@ -801,19 +799,30 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
     }))
 }
 
-/// Listens for browser `popstate` events and exits fullscreen drawing mode.
+/// Registers a `popstate` guard that exits fullscreen drawing mode when the
+/// system back button is pressed.
 ///
 /// When the user presses the browser back button while the canvas page is in
-/// fullscreen drawing mode, this hook exits fullscreen so the history entry
-/// is consumed without leaving the UI in an inconsistent state.
+/// fullscreen drawing mode, this guard exits fullscreen so the history entry
+/// is consumed without leaving the UI in an inconsistent state. Returns `true`
+/// to consume the `popstate` event only when the canvas was in fullscreen;
+/// otherwise returns `false` to let other guards or the overlay stack handle it.
 ///
 /// # Arguments
 ///
 /// - `UseCanvas` - The canvas state containing the fullscreen signal.
-pub(crate) fn use_fullscreen_popstate(state: UseCanvas) {
-    use_window_event("popstate", move || {
+///
+/// # Returns
+///
+/// - `usize` - A guard ID that can be passed to [`unregister_popstate_guard`]
+///   to remove the guard when the canvas page is unmounted.
+pub(crate) fn use_fullscreen_popstate(state: UseCanvas) -> usize {
+    register_popstate_guard(Rc::new(move || {
         if state.get_fullscreen().get() {
             exit_fullscreen_from_popstate(state);
+            true
+        } else {
+            false
         }
-    });
+    }))
 }

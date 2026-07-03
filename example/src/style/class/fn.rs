@@ -161,7 +161,7 @@ class! {
         font-family: "system-ui, -apple-system, sans-serif";
         background: var!(background);
         color: var!(foreground);
-        padding: format!("{} {} {} {}", var!(safe-area-inset-top), var!(safe-area-inset-right), var!(safe-area-inset-bottom), var!(safe-area-inset-left));
+        padding: format!("{} {} {} {}", var!(padding-shell-top), var!(safe-area-inset-right), var!(padding-shell-bottom), var!(safe-area-inset-left));
         scrollbar-color: format!("{} {}", var!(scrollbar-thumb), var!(scrollbar-track));
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
@@ -1219,7 +1219,7 @@ class! {
         top: "0";
         left: "0";
         z-index: "10002";
-        padding: format!("calc({} + {}) {} calc({} + {}) {}", var!(safe-area-inset-top), var!(space-sm), var!(space-lg), var!(safe-area-inset-bottom), var!(space-sm), var!(space-lg));
+        padding: format!("{} {} {} {}", var!(padding-shell-top), var!(space-lg), var!(padding-shell-bottom), var!(space-lg));
         box-sizing: "border-box";
     }
 
@@ -1252,6 +1252,7 @@ class! {
     pub(crate) c_canvas_fullscreen_toolbar_row_top {
         display: "flex";
         align-items: "center";
+        height: var!(mobile-header-height);
         width: "100%";
         gap: var!(space-sm);
     }
@@ -2496,8 +2497,8 @@ class! {
         z-index: "201";
         display: "flex";
         flex-direction: "column";
-        padding-top: var!(safe-area-inset-top);
-        padding-bottom: var!(safe-area-inset-bottom);
+        padding-top: var!(padding-shell-top);
+        padding-bottom: var!(padding-shell-bottom);
         contain: "layout style paint";
         will-change: "transform";
         transition: format!("transform {} {}", var!(duration-overlay), var!(ease-out));
