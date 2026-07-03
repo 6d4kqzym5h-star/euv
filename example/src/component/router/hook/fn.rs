@@ -287,13 +287,16 @@ pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
         if !is_open {
             return;
         }
-        let outer_window: Window = window().expect("no global window exists");
+        let window_value: Window = window().expect("no global window exists");
+        let outer_raf: Window = window_value.clone();
+        let inner_raf_clone: Window = window_value.clone();
+        let inner_doc_clone: Window = window_value.clone();
         let outer_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let inner_window: Window = window().expect("no global window exists");
+            let inner_raf: Window = inner_raf_clone.clone();
+            let inner_doc: Window = inner_doc_clone.clone();
             let inner_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                let window_value: Window = window().expect("no global window exists");
                 let document_value: Document =
-                    window_value.document().expect("should have a document");
+                    inner_doc.document().expect("should have a document");
                 let Some(drawer_nav) = document_value
                     .query_selector(DRAWER_NAV_SELECTOR)
                     .ok()
@@ -327,10 +330,10 @@ pub(crate) fn use_scroll_drawer_to_active(drawer_open: Signal<bool>) {
                     - (container_height - active_height) / 2.0;
                 scroll_html_element.set_scroll_top(target_scroll_top.max(0.0) as i32);
             }));
-            let _ = inner_window.request_animation_frame(inner_closure.as_ref().unchecked_ref());
+            let _ = inner_raf.request_animation_frame(inner_closure.as_ref().unchecked_ref());
             inner_closure.forget();
         }));
-        let _ = outer_window.request_animation_frame(outer_closure.as_ref().unchecked_ref());
+        let _ = outer_raf.request_animation_frame(outer_closure.as_ref().unchecked_ref());
         outer_closure.forget();
     });
 }

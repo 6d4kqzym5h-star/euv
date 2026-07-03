@@ -38,7 +38,7 @@ pub(crate) fn filter_console_entries(
 ) -> Vec<(usize, ConsoleEntry)> {
     let log_list: Vec<ConsoleEntry> = logs.get();
     let filter_value: LogFilter = filter.get();
-    log_list
+    let mut result: Vec<(usize, ConsoleEntry)> = log_list
         .iter()
         .enumerate()
         .filter(|(_, entry): &(usize, &ConsoleEntry)| match filter_value {
@@ -48,10 +48,9 @@ pub(crate) fn filter_console_entries(
             LogFilter::Error => entry.get_level() == LogLevel::Error,
         })
         .map(|(index, entry): (usize, &ConsoleEntry)| (index, entry.clone()))
-        .collect::<Vec<(usize, ConsoleEntry)>>()
-        .into_iter()
-        .rev()
-        .collect()
+        .collect();
+    result.reverse();
+    result
 }
 
 /// Returns the short badge label for a log level.
@@ -62,12 +61,12 @@ pub(crate) fn filter_console_entries(
 ///
 /// # Returns
 ///
-/// - `String` - The badge label string ("LOG", "WRN", "ERR").
-pub(crate) fn get_log_level_badge(level: LogLevel) -> String {
+/// - `&str` - The badge label string ("LOG", "WRN", "ERR").
+pub(crate) fn get_log_level_badge(level: LogLevel) -> &'static str {
     match level {
-        LogLevel::Log => "LOG".to_string(),
-        LogLevel::Warn => "WRN".to_string(),
-        LogLevel::Error => "ERR".to_string(),
+        LogLevel::Log => "LOG",
+        LogLevel::Warn => "WRN",
+        LogLevel::Error => "ERR",
     }
 }
 

@@ -1895,6 +1895,7 @@ class! {
         width: "100%";
         height: "100%";
         background: var!(bg-overlay);
+        contain: "layout style paint";
         display: "flex";
         align-items: "center";
         justify-content: "center";
@@ -2269,7 +2270,7 @@ class! {
     pub(crate) c_vconsole_body {
         flex: "1";
         overflow-y: "auto";
-        flex-wrap: "wrap";
+        contain: "content";
         padding-bottom: var!(space-md);
         font-family: "ui-monospace, monospace";
         font-size: var!(font-xs);
@@ -2378,6 +2379,7 @@ class! {
         position: "sticky";
         top: "0px";
         z-index: "100";
+        contain: "content";
         border-bottom: format!("1px solid {}", var!(border));
     }
 
