@@ -2,7 +2,7 @@ use crate::*;
 
 /// Renders a standard header with an emoji icon, title, and subtitle.
 ///
-/// Produces a consistent hero-style banner with gradient glow effect,
+/// Produces a consistent style banner with gradient glow effect,
 /// matching the home page design language. Every demo page uses this
 /// component as its first child.
 ///
@@ -23,22 +23,22 @@ pub(crate) fn euv_header(node: VirtualNode<EuvHeaderProps>) -> VirtualNode {
     }: EuvHeaderProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
-            class: c_page_hero()
+            class: c_page()
             div {
-                class: c_page_hero_glow()
+                class: c_page_glow()
             }
             div {
-                class: c_page_hero_content()
+                class: c_page_content()
                 div {
-                    class: c_page_hero_icon()
+                    class: c_page_icon()
                     icon
                 }
                 h1 {
-                    class: c_page_hero_title()
+                    class: c_page_title()
                     title
                 }
                 p {
-                    class: c_page_hero_subtitle()
+                    class: c_page_subtitle()
                     subtitle
                 }
             }

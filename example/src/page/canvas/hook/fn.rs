@@ -551,6 +551,13 @@ pub(crate) fn enter_fullscreen(state: UseCanvas) {
 pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
+    let device_pixel_ratio: f64 = Reflect::get(
+        window_value.as_ref(),
+        &JsValue::from_str(CANVAS_EVENT_PROPERTY_DEVICE_PIXEL_RATIO),
+    )
+    .ok()
+    .and_then(|value: JsValue| value.as_f64())
+    .unwrap_or(1.0);
     let Some(wrapper_element) = document_value
         .query_selector(CANVAS_FULLSCREEN_WRAPPER_SELECTOR)
         .ok()
@@ -588,8 +595,8 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
             &format!("{}{}", canvas_height as i32, CANVAS_PIXEL_UNIT),
         )
         .unwrap_or(());
-    canvas_element.set_width(canvas_width as u32);
-    canvas_element.set_height(canvas_height as u32);
+    canvas_element.set_width((canvas_width * device_pixel_ratio) as u32);
+    canvas_element.set_height((canvas_height * device_pixel_ratio) as u32);
     let Some(context_object) = canvas_element
         .get_context(CANVAS_CONTEXT_TYPE)
         .ok()
@@ -598,6 +605,9 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    context_2d
+        .scale(device_pixel_ratio, device_pixel_ratio)
+        .unwrap_or(());
     let _ = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_FILL_STYLE),
@@ -636,7 +646,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
 pub(crate) fn exit_fullscreen(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
-    resize();
+    apply_cached_insets();
     let window_value: Window = window().expect("no global window exists");
     let history: History = window_value.history().expect("no history object exists");
     let _ = history.back();
@@ -659,7 +669,7 @@ pub(crate) fn exit_fullscreen(state: UseCanvas) {
 pub(crate) fn exit_fullscreen_from_popstate(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
-    resize();
+    apply_cached_insets();
 }
 
 /// Subscribes to browser `popstate` events to handle the system back

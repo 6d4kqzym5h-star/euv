@@ -49,6 +49,9 @@ pub(crate) const CANVAS_STORAGE_KEY_LINE_WIDTH: &str = "euv-canvas-line-width";
 /// The canvas 2D rendering context type identifier.
 pub(crate) const CANVAS_CONTEXT_TYPE: &str = "2d";
 
+/// The JavaScript property name for the device pixel ratio.
+pub(crate) const CANVAS_EVENT_PROPERTY_DEVICE_PIXEL_RATIO: &str = "devicePixelRatio";
+
 /// The JavaScript property name for the canvas stroke style.
 pub(crate) const CANVAS_CONTEXT_PROPERTY_STROKE_STYLE: &str = "strokeStyle";
 

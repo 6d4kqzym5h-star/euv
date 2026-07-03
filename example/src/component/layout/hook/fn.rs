@@ -1,47 +1,172 @@
 use crate::*;
 
-/// Registers global event listeners that force the browser to recalculate
-/// `env(safe-area-inset-*)` values after exiting any type of fullscreen.
+/// Registers global event listeners that preserve `env(safe-area-inset-*)`
+/// values after exiting any type of fullscreen on Android.
 ///
-/// Listens for the native Fullscreen API exit events (`fullscreenchange`,
-/// `webkitfullscreenchange`) as well as `resize` which fires after orientation
-/// or viewport changes that may invalidate inset values.
-///
-/// On detecting a fullscreen exit, forces a layout recalculation by toggling
-/// the root element's `display` property momentarily. This ensures iOS Safari
-/// and other WebKit browsers re-evaluate the `env()` CSS functions.
+/// On initialisation, reads the current `env(safe-area-inset-*)` pixel values
+/// through a sentinel `<div>` and caches them in thread-local storage.
+/// When a `fullscreenchange` or `resize` event fires, the cached values are
+/// written directly as inline CSS custom properties on the real app root
+/// element so that layout never depends on the potentially stale `env()`
+/// function result.
 ///
 /// This hook should be called once during app initialization and covers:
 /// - Native video fullscreen → exit
 /// - CSS simulated fullscreen → exit (canvas drawing mode)
 /// - Any future fullscreen scenarios
 pub(crate) fn use_safe_area_fix() {
+    cache_safe_area_insets();
     use_window_event("fullscreenchange", || {
-        resize();
+        let is_fullscreen: bool = window()
+            .expect("no global window exists")
+            .document()
+            .expect("should have a document")
+            .fullscreen_element()
+            .is_some();
+        if !is_fullscreen {
+            apply_cached_insets();
+        }
     });
     use_window_event("webkitfullscreenchange", || {
-        resize();
+        apply_cached_insets();
     });
     use_window_event("resize", || {
-        resize();
+        apply_cached_insets();
     });
 }
 
-/// Resizes the window.
-pub(crate) fn resize() {
-    let deferred_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let win: Window = window().expect("no global window exists");
-        let scroll_x: f64 = win.scroll_x().unwrap_or(0.0);
-        let scroll_y: f64 = win.scroll_y().unwrap_or(0.0);
-        win.scroll_to_with_x_and_y(scroll_x, scroll_y);
-    }));
-    let _ = window()
+/// Reads the current `env(safe-area-inset-*)` pixel values via a temporary
+/// sentinel element and persists them in thread-local storage.
+///
+/// The sentinel `<div>` is created with `padding-top: env(safe-area-inset-top)`
+/// (and similarly for the other three sides). After forcing a layout
+/// calculation, `getComputedStyle` yields the resolved pixel value, which is
+/// then stored in `SAFE_AREA_INSET_*` thread-local cells.
+///
+/// If the top inset is empty or `0px` (i.e. no safe area on this device or
+/// immersive mode not active), the values are not cached and no override is
+/// applied.
+fn cache_safe_area_insets() {
+    let top_cached: String =
+        SAFE_AREA_INSET_TOP.with(|cell: &RefCell<String>| cell.borrow().clone());
+    if !top_cached.is_empty() {
+        return;
+    }
+    let win: Window = window().expect("no global window exists");
+    let document_value: Document = win.document().expect("should have a document");
+    let body: HtmlElement = document_value.body().expect("should have a body");
+    let sentinel: HtmlElement = document_value
+        .create_element("div")
+        .expect("should create div")
+        .unchecked_into();
+    let _ = sentinel.style().set_property("position", "absolute");
+    let _ = sentinel.style().set_property("visibility", "hidden");
+    let _ = sentinel.style().set_property("pointer-events", "none");
+    let _ = sentinel
+        .style()
+        .set_property("padding-top", "env(safe-area-inset-top, 0px)");
+    let _ = sentinel
+        .style()
+        .set_property("padding-right", "env(safe-area-inset-right, 0px)");
+    let _ = sentinel
+        .style()
+        .set_property("padding-bottom", "env(safe-area-inset-bottom, 0px)");
+    let _ = sentinel
+        .style()
+        .set_property("padding-left", "env(safe-area-inset-left, 0px)");
+    let _ = body.append_child(&sentinel);
+    let Some(computed) = win.get_computed_style(&sentinel).ok().flatten() else {
+        let _ = body.remove_child(&sentinel);
+        return;
+    };
+    let top_value: String = computed
+        .get_property_value("padding-top")
+        .unwrap_or_default();
+    let right_value: String = computed
+        .get_property_value("padding-right")
+        .unwrap_or_default();
+    let bottom_value: String = computed
+        .get_property_value("padding-bottom")
+        .unwrap_or_default();
+    let left_value: String = computed
+        .get_property_value("padding-left")
+        .unwrap_or_default();
+    let _ = body.remove_child(&sentinel);
+    if top_value.is_empty() || top_value == "0px" {
+        return;
+    }
+    SAFE_AREA_INSET_TOP.with(|cell: &RefCell<String>| *cell.borrow_mut() = top_value);
+    SAFE_AREA_INSET_RIGHT.with(|cell: &RefCell<String>| *cell.borrow_mut() = right_value);
+    SAFE_AREA_INSET_BOTTOM.with(|cell: &RefCell<String>| *cell.borrow_mut() = bottom_value);
+    SAFE_AREA_INSET_LEFT.with(|cell: &RefCell<String>| *cell.borrow_mut() = left_value);
+}
+
+/// Writes the cached safe-area inset values as inline CSS custom properties
+/// on the real app root element and any fullscreen overlay containers.
+///
+/// Class rules such as `c_mobile_app_root`, `c_mobile_nav_drawer`, and
+/// `c_canvas_container_fullscreen` consume `var(--safe-area-inset-top)` in
+/// their `padding` declarations. By overriding these CSS custom properties
+/// with inline style (which has higher specificity than the stylesheet rule
+/// from `vars!`), all `var()` references resolve to the cached pixel values,
+/// bypassing the stale `env()` function after a fullscreen exit.
+///
+/// The canvas fullscreen container is `position: fixed` and outside the app
+/// root subtree, so it does not inherit the inline overrides — it must be
+/// patched separately.
+pub(crate) fn apply_cached_insets() {
+    let top_value: String =
+        SAFE_AREA_INSET_TOP.with(|cell: &RefCell<String>| cell.borrow().clone());
+    if top_value.is_empty() {
+        return;
+    }
+    let right_value: String =
+        SAFE_AREA_INSET_RIGHT.with(|cell: &RefCell<String>| cell.borrow().clone());
+    let bottom_value: String =
+        SAFE_AREA_INSET_BOTTOM.with(|cell: &RefCell<String>| cell.borrow().clone());
+    let left_value: String =
+        SAFE_AREA_INSET_LEFT.with(|cell: &RefCell<String>| cell.borrow().clone());
+    let document_value: Document = window()
         .expect("no global window exists")
-        .set_timeout_with_callback_and_timeout_and_arguments_0(
-            deferred_closure.as_ref().unchecked_ref::<Function>(),
-            360,
-        );
-    deferred_closure.forget();
+        .document()
+        .expect("should have a document");
+    let apply_to = |element: &HtmlElement| {
+        let _ = element
+            .style()
+            .set_property("--safe-area-inset-top", &top_value);
+        let _ = element
+            .style()
+            .set_property("--safe-area-inset-right", &right_value);
+        let _ = element
+            .style()
+            .set_property("--safe-area-inset-bottom", &bottom_value);
+        let _ = element
+            .style()
+            .set_property("--safe-area-inset-left", &left_value);
+    };
+    if let Some(app_root) = document_value
+        .query_selector(".c_mobile_app_root")
+        .ok()
+        .flatten()
+        .map(|element: Element| element.unchecked_into::<HtmlElement>())
+        .or_else(|| {
+            document_value
+                .query_selector(".c_app_root")
+                .ok()
+                .flatten()
+                .map(|element: Element| element.unchecked_into::<HtmlElement>())
+        })
+    {
+        apply_to(&app_root);
+    }
+    if let Some(canvas_fullscreen) = document_value
+        .query_selector(".c_canvas_container_fullscreen")
+        .ok()
+        .flatten()
+        .map(|element: Element| element.unchecked_into::<HtmlElement>())
+    {
+        apply_to(&canvas_fullscreen);
+    }
 }
 
 /// Creates a click event handler that toggles the mobile nav drawer signal

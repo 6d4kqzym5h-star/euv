@@ -36,9 +36,8 @@ pub(crate) fn vconsole_panel(node: VirtualNode<VconsolePanelProps>) -> VirtualNo
 ///
 /// Uses the shared `euv_logo` component with the `Fab` variant
 /// to display the branded "E" button with gradient background.
-/// Always renders the button and badge in the DOM, toggling visibility
-/// via `transform` + `opacity` so the browser has already performed layout;
-/// opening only triggers a CSS transition instead of a costly DOM rebuild.
+/// The button stays visible at all times, even when the drawer is open,
+/// so the user can always tap it to toggle the panel.
 ///
 /// # Arguments
 ///
@@ -56,11 +55,7 @@ pub(crate) fn vconsole_fab(node: VirtualNode<VconsoleFabProps>) -> VirtualNode {
     }: VconsoleFabProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
-            class: if { panel_open.get() } {
-                c_vconsole_fab_hidden()
-            } else {
-                c_vconsole_fab_visible()
-            }
+            class: c_vconsole_fab()
             euv_logo {
                 variant: LogoButtonVariant::Fab
                 on_click: vconsole_fab_on_click(panel_open)

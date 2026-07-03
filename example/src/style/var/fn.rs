@@ -144,9 +144,6 @@ vars! {
         // ═══════════════════════════════════════════════════════════════════════
         bg-glass: "rgba(255, 255, 255, 0.65)";
         bg-glass-heavy: "rgba(255, 255, 255, 0.82)";
-        glass-blur-sm: "blur(6px)";
-        glass-blur-md: "blur(14px)";
-        glass-blur-lg: "blur(24px)";
     }
 
     pub(crate) c_theme_dark {
@@ -292,8 +289,5 @@ vars! {
         // ═══════════════════════════════════════════════════════════════════════
         bg-glass: "rgba(0, 0, 0, 0.65)";
         bg-glass-heavy: "rgba(0, 0, 0, 0.82)";
-        glass-blur-sm: "blur(6px)";
-        glass-blur-md: "blur(14px)";
-        glass-blur-lg: "blur(24px)";
     }
 }

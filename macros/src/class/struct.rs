@@ -57,7 +57,7 @@ pub(crate) struct SelectorBlock {
 /// - `@layer base { ... }`
 /// - `@container (width > 400px) { ... }`
 /// - `@property --my-color { ... }`
-/// - `@scope (.hero) { ... }`
+/// - `@scope (.style) { ... }`
 /// - `@font-face { ... }`
 /// - `@charset "UTF-8";`
 /// - `@import url("style.css");`

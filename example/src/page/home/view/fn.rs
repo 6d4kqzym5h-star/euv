@@ -2,7 +2,7 @@ use crate::*;
 
 /// A home page component displaying the Euv framework showcase.
 ///
-/// Features a hero section with animated gradient, feature highlights,
+/// Features a section with animated gradient, feature highlights,
 /// package metadata cards, and interactive demos — all with modern
 /// glass-morphism design language.
 ///
@@ -19,26 +19,26 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
         div {
             class: c_page_container()
             div {
-                class: c_home_hero()
+                class: c_home()
                 div {
-                    class: c_home_hero_content()
+                    class: c_home_content()
                     h1 {
-                        class: c_home_hero_title()
+                        class: c_home_title()
                         BRAND_NAME
                     }
                     div {
-                        class: c_home_hero_badge_row()
+                        class: c_home_badge_row()
                         div {
-                            class: c_home_hero_badge()
+                            class: c_home_badge()
                             version.clone()
                         }
                     }
                     p {
-                        class: c_home_hero_subtitle()
+                        class: c_home_subtitle()
                         EUV_DESCRIPTION
                     }
                     div {
-                        class: c_home_hero_actions()
+                        class: c_home_actions()
                         a {
                             class: c_home_btn_primary()
                             href: EUV_REPOSITORY
