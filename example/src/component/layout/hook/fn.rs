@@ -1,7 +1,8 @@
 use crate::*;
 
 /// Registers global event listeners that preserve `env(safe-area-inset-*)`
-/// values after exiting any type of fullscreen on Android.
+/// values after exiting any type of fullscreen on Android, and ensures that
+/// the system back button exits native fullscreen instead of navigating away.
 ///
 /// On initialisation, reads the current `env(safe-area-inset-*)` pixel values
 /// through a sentinel `<div>` and caches them in thread-local storage.
@@ -10,8 +11,17 @@ use crate::*;
 /// element so that layout never depends on the potentially stale `env()`
 /// function result.
 ///
+/// When a native (browser) fullscreen is entered — for example the user taps
+/// the fullscreen button on a `<video controls>` element — a `pushState`
+/// entry is added so that the system back gesture will fire `popstate`. The
+/// `popstate` handler then calls `document.exitFullscreen()` to leave
+/// fullscreen, consuming the history entry without navigating to the previous
+/// route. When the native fullscreen is exited through other means (e.g. the
+/// browser's own exit button), the `fullscreenchange` handler consumes the
+/// extra history entry via `history.back()`.
+///
 /// This hook should be called once during app initialization and covers:
-/// - Native video fullscreen → exit
+/// - Native video fullscreen → exit via system back button
 /// - CSS simulated fullscreen → exit (canvas drawing mode)
 /// - Any future fullscreen scenarios
 pub(crate) fn use_safe_area_fix() {
@@ -23,7 +33,26 @@ pub(crate) fn use_safe_area_fix() {
             .expect("should have a document")
             .fullscreen_element()
             .is_some();
-        if !is_fullscreen {
+        if is_fullscreen {
+            NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.set(true));
+            let window_value: Window = window().expect("no global window exists");
+            let history: History = window_value.history().expect("no history object exists");
+            let _ = history.push_state(&JsValue::NULL, "");
+        } else {
+            let was_active: bool = NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.get());
+            if was_active {
+                NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.set(false));
+                let exit_by_popstate: bool =
+                    NATIVE_FULLSCREEN_EXIT_BY_POPSTATE.with(|flag: &Cell<bool>| flag.get());
+                if exit_by_popstate {
+                    NATIVE_FULLSCREEN_EXIT_BY_POPSTATE.with(|flag: &Cell<bool>| flag.set(false));
+                } else {
+                    let window_value: Window = window().expect("no global window exists");
+                    let history: History =
+                        window_value.history().expect("no history object exists");
+                    let _ = history.back();
+                }
+            }
             apply_cached_insets();
         }
     });
@@ -32,6 +61,17 @@ pub(crate) fn use_safe_area_fix() {
     });
     use_window_event("resize", || {
         apply_cached_insets();
+    });
+    use_window_event("popstate", || {
+        if !NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.get()) {
+            return;
+        }
+        NATIVE_FULLSCREEN_EXIT_BY_POPSTATE.with(|flag: &Cell<bool>| flag.set(true));
+        let document_value: Document = window()
+            .expect("no global window exists")
+            .document()
+            .expect("should have a document");
+        document_value.exit_fullscreen();
     });
 }
 
