@@ -17,7 +17,4 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use {
-    compare_version::*, js_sys::*, lombok_macros::*, serde::Deserialize, wasm_bindgen::prelude::*,
-    wasm_bindgen_futures::*, web_sys::*,
-};
+use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*};

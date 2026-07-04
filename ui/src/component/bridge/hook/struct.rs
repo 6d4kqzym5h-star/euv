@@ -33,27 +33,34 @@ pub struct UseCacheUpdate {
     pub updating: Signal<bool>,
 }
 
-/// The JSON response from docs.rs crate status endpoint.
+/// The result returned by a cache update closure.
 ///
-/// Example JSON: `{"doc_status": true, "version": "0.6.23"}`
-#[derive(Clone, Data, Default, Deserialize, New)]
-pub struct DocsStatus {
+/// The UI component uses this value to update its internal state signals
+/// without knowing how the update check was performed.
+#[derive(Clone, Data, New)]
+pub struct UpdateResult {
     /// Whether the documentation build succeeded.
     #[get(type(copy))]
     pub doc_status: bool,
     /// The latest version string of the crate.
     pub version: String,
+    /// Whether a cache update operation was triggered.
+    #[get(type(copy))]
+    pub updating: bool,
 }
 
 /// Configuration for bridge initialization.
 ///
 /// Allows customization of bridge behavior.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Data, Debug, Default, New)]
 pub struct BridgeConfig {
     /// The global bridge object key on window.
+    #[get(type(copy))]
     pub global_key: &'static str,
     /// The core module key.
+    #[get(type(copy))]
     pub core_key: &'static str,
     /// The invoke function key.
+    #[get(type(copy))]
     pub invoke_key: &'static str,
 }

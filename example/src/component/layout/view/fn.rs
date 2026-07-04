@@ -234,6 +234,110 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
     }
 }
 
+/// Asynchronously checks for euv documentation updates from docs.rs.
+///
+/// Fetches the crate status JSON, parses the `DocsStatus` payload, and if a newer
+/// version is available, invokes the bridge `update_cache` command to synchronize
+/// the local cache.
+///
+/// # Returns
+///
+/// - `UpdateResult` — The documentation status, version, and whether an update was triggered.
+async fn check_docs_update() -> UpdateResult {
+    let window_value: Window = window().expect("no global window exists");
+    let promise: Promise = window_value.fetch_with_str(DOCS_STATUS_URL);
+    let response: JsValue = match JsFuture::from(promise).await {
+        Ok(value) => value,
+        Err(error) => {
+            Console::error(&format!(
+                "Failed to fetch version status: {}",
+                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+            ));
+            return UpdateResult {
+                doc_status: false,
+                version: String::new(),
+                updating: false,
+            };
+        }
+    };
+    let response_value: Response = match response.dyn_into() {
+        Ok(value) => value,
+        Err(error) => {
+            Console::error(&format!(
+                "Failed to convert fetch response: {}",
+                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+            ));
+            return UpdateResult {
+                doc_status: false,
+                version: String::new(),
+                updating: false,
+            };
+        }
+    };
+    let text_string: String = match response_value.text() {
+        Ok(promise) => match JsFuture::from(promise).await {
+            Ok(value) => value.as_string().unwrap_or_default(),
+            Err(error) => {
+                Console::error(&format!(
+                    "Failed to read response text: {}",
+                    error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+                ));
+                return UpdateResult {
+                    doc_status: false,
+                    version: String::new(),
+                    updating: false,
+                };
+            }
+        },
+        Err(error) => {
+            Console::error(&format!(
+                "Failed to get response text promise: {}",
+                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+            ));
+            return UpdateResult {
+                doc_status: false,
+                version: String::new(),
+                updating: false,
+            };
+        }
+    };
+    Console::log(&text_string);
+    let parsed: DocsStatus = serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default();
+    if !matches!(
+        CompareVersion::compare_version(parsed.get_version(), EUV_VERSION),
+        Ok(VersionLevel::Greater)
+    ) {
+        Console::log(&format!(
+            "Current version v{EUV_VERSION} is already the latest version"
+        ));
+        return UpdateResult {
+            doc_status: parsed.get_doc_status(),
+            version: parsed.get_version().clone(),
+            updating: false,
+        };
+    }
+    if !BridgeConfig::is_available(None) {
+        return UpdateResult {
+            doc_status: parsed.get_doc_status(),
+            version: parsed.get_version().clone(),
+            updating: false,
+        };
+    }
+    let mut updating: bool = false;
+    if let Ok(promise) = BridgeConfig::invoke(INVOKE_UPDATE_CACHE, None, None) {
+        updating = true;
+        match JsFuture::from(promise).await {
+            Ok(result) => Console::log(&result.as_string().unwrap_or_default()),
+            Err(error) => Console::error(&error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())),
+        }
+    }
+    UpdateResult {
+        doc_status: parsed.get_doc_status(),
+        version: parsed.get_version().clone(),
+        updating,
+    }
+}
+
 /// Renders the application shell with navigation and route-based page content.
 ///
 /// Detects viewport size and switches between desktop sidebar layout and
@@ -251,7 +355,7 @@ pub(crate) fn app() -> VirtualNode {
     let theme_state: ThemeState = ThemeState::use_theme_state(mobile_signal);
     let theme_signal: Signal<String> = theme_state.get_theme();
     let root_class_signal: Signal<String> = theme_state.get_root_class();
-    UseCacheUpdate::use_cache_state().load(EUV_VERSION, None);
+    UseCacheUpdate::use_cache_state().load(check_docs_update);
     Router::use_hash_change(route_signal);
     Router::use_scroll_to_top(route_signal);
     Router::use_overlay_history(drawer_open, mobile_signal);

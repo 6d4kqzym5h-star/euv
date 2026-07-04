@@ -17,11 +17,8 @@ crate-type = ["rlib"]
 [dependencies]
 euv = { workspace = true }
 
-serde = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true }
-serde_json = { workspace = true }
 wasm-bindgen = { workspace = true }
 lombok-macros = { workspace = true }
-compare_version = { workspace = true }
 wasm-bindgen-futures = { workspace = true }

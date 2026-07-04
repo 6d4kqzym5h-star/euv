@@ -103,98 +103,31 @@ impl UseCacheUpdate {
         )
     }
 
-    /// Asynchronously fetches the docs.rs status JSON and invokes the bridge
-    /// `update_cache` command to synchronize the local cache.
+    /// Runs the provided updater closure and applies its result to the
+    /// internal state signals.
     ///
-    /// First fetches `DOCS_STATUS_URL` and parses the `{ "doc_status": bool,
-    /// "version": string }` JSON payload into the provided state signals.
-    /// If the remote version is greater than `EUV_VERSION` and the bridge
-    /// is available, invokes the `update_cache` command via
-    /// `window.bridge.core.invoke("update_cache")` and updates the
-    /// `updating` signal accordingly.
+    /// The closure is called asynchronously via `spawn_local`. It receives
+    /// no arguments and must return a `Future<Output = UpdateResult>`.
+    /// Once it resolves, the `doc_status`, `version`, and `updating`
+    /// signals are updated from the returned `UpdateResult`.
+    ///
+    /// The UI layer is completely unaware of how the update check is
+    /// performed (fetch, version comparison, bridge invocation, etc.) —
+    /// it only sees the result.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The current version string for comparison.
-    /// - `Option<BridgeConfig>`: Optional custom bridge configuration.
-    pub fn load(self, current_version: &str, config: Option<BridgeConfig>) {
-        let doc_status_signal: Signal<bool> = self.get_doc_status();
-        let version_signal: Signal<String> = self.get_version();
-        let updating_signal: Signal<bool> = self.get_updating();
-        let version_to_compare: String = current_version.to_string();
-        let cfg: Option<BridgeConfig> = config;
+    /// - `F`: An async closure that returns `UpdateResult`.
+    pub fn load<F, Fut>(self, updater: F)
+    where
+        F: FnOnce() -> Fut + 'static,
+        Fut: Future<Output = UpdateResult>,
+    {
         spawn_local(async move {
-            let window_value: Window = window().expect("no global window exists");
-            let promise: Promise = window_value.fetch_with_str(DOCS_STATUS_URL);
-            let future: JsFuture = JsFuture::from(promise);
-            let response: JsValue = match future.await {
-                Ok(value) => value,
-                Err(error) => {
-                    Console::error(&format!(
-                        "Failed to fetch version status: {}",
-                        error.as_string().unwrap_or_default()
-                    ));
-                    return;
-                }
-            };
-            let response_value: Response = match response.dyn_into() {
-                Ok(value) => value,
-                Err(error) => {
-                    Console::error(&format!(
-                        "Failed to convert fetch response: {}",
-                        error.as_string().unwrap_or_default()
-                    ));
-                    return;
-                }
-            };
-            let text_promise: Promise = match response_value.text() {
-                Ok(promise) => promise,
-                Err(error) => {
-                    Console::error(&format!(
-                        "Failed to get response text promise: {}",
-                        error.as_string().unwrap_or_default()
-                    ));
-                    return;
-                }
-            };
-            let text_future: JsFuture = JsFuture::from(text_promise);
-            let text: JsValue = match text_future.await {
-                Ok(value) => value,
-                Err(error) => {
-                    Console::error(&format!(
-                        "Failed to read response text: {}",
-                        error.as_string().unwrap_or_default()
-                    ));
-                    return;
-                }
-            };
-            let text_string: String = text.as_string().unwrap_or_default();
-            Console::log(&text_string);
-            let parsed: DocsStatus =
-                serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default();
-            doc_status_signal.set(parsed.get_doc_status());
-            version_signal.set(parsed.get_version().clone());
-            if !matches!(
-                CompareVersion::compare_version(parsed.get_version(), &version_to_compare),
-                Ok(VersionLevel::Greater)
-            ) {
-                Console::log(&format!(
-                    "Current version v{version_to_compare} is already the latest version"
-                ));
-                return;
-            }
-            if !BridgeConfig::is_available(cfg.as_ref()) {
-                return;
-            }
-            updating_signal.set(true);
-            if let Ok(promise) = BridgeConfig::invoke(INVOKE_UPDATE_CACHE, None, cfg.as_ref()) {
-                let future: JsFuture = JsFuture::from(promise);
-                match future.await {
-                    Ok(result) => Console::log(&result.as_string().unwrap_or_default()),
-                    Err(error) => Console::error(&error.as_string().unwrap_or_default()),
-                }
-            }
-            updating_signal.set(false);
+            let result: UpdateResult = updater().await;
+            self.get_doc_status().set(result.get_doc_status());
+            self.get_version().set(result.get_version().clone());
+            self.get_updating().set(result.get_updating());
         });
     }
 }
@@ -214,11 +147,13 @@ impl BridgeConfig {
     /// # Returns
     ///
     /// - `bool`: `true` if the bridge core module is available.
-    pub(crate) fn is_available(config: Option<&BridgeConfig>) -> bool {
-        let cfg: BridgeConfig =
-            config.map_or_else(BridgeConfig::default, |c: &BridgeConfig| c.clone());
+    pub fn is_available(config: Option<&BridgeConfig>) -> bool {
+        let config: BridgeConfig = config
+            .map_or_else(BridgeConfig::default, |config: &BridgeConfig| {
+                config.clone()
+            });
         let window_value: Window = window().expect("no global window exists");
-        let bridge_key: JsValue = JsValue::from_str(cfg.global_key);
+        let bridge_key: JsValue = JsValue::from_str(config.get_global_key());
         let bridge_obj: JsValue = match Reflect::get(&window_value, &bridge_key) {
             Ok(value) => value,
             Err(_) => return false,
@@ -226,7 +161,7 @@ impl BridgeConfig {
         if bridge_obj.is_undefined() || bridge_obj.is_null() {
             return false;
         }
-        let core_key: JsValue = JsValue::from_str(cfg.core_key);
+        let core_key: JsValue = JsValue::from_str(config.get_core_key());
         let core_obj: JsValue = match Reflect::get(&bridge_obj, &core_key) {
             Ok(value) => value,
             Err(_) => return false,
@@ -250,21 +185,23 @@ impl BridgeConfig {
     /// # Returns
     ///
     /// - `Result<Promise, String>`: The promise returned by the invoke call, or an error message.
-    pub(crate) fn invoke(
+    pub fn invoke(
         command: &str,
         args: Option<&JsValue>,
         config: Option<&BridgeConfig>,
     ) -> Result<Promise, String> {
-        let cfg: BridgeConfig =
-            config.map_or_else(BridgeConfig::default, |c: &BridgeConfig| c.clone());
+        let copnfig: BridgeConfig = config
+            .map_or_else(BridgeConfig::default, |copnfig: &BridgeConfig| {
+                copnfig.clone()
+            });
         let window_value: Window = window().expect("no global window exists");
-        let bridge_key: JsValue = JsValue::from_str(cfg.global_key);
+        let bridge_key: JsValue = JsValue::from_str(copnfig.get_global_key());
         let bridge_obj: JsValue = Reflect::get(&window_value, &bridge_key)
             .map_err(|error: JsValue| format!("{error:?}"))?;
-        let core_key: JsValue = JsValue::from_str(cfg.core_key);
+        let core_key: JsValue = JsValue::from_str(copnfig.get_core_key());
         let core_obj: JsValue =
             Reflect::get(&bridge_obj, &core_key).map_err(|error: JsValue| format!("{error:?}"))?;
-        let invoke_key: JsValue = JsValue::from_str(cfg.invoke_key);
+        let invoke_key: JsValue = JsValue::from_str(copnfig.get_invoke_key());
         let invoke_fn: JsValue =
             Reflect::get(&core_obj, &invoke_key).map_err(|error: JsValue| format!("{error:?}"))?;
         let invoke_function: Function = invoke_fn

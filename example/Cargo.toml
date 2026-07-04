@@ -28,6 +28,7 @@ euv-ui = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 lombok-macros = { workspace = true }
+compare_version = { workspace = true }
 console_error_panic_hook = { workspace = true }
 qrcode = { workspace = true, features = ["svg"] }
 

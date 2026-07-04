@@ -15,6 +15,7 @@ use std::{
 };
 
 use {
+    compare_version::*,
     euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *},
     euv_ui::*,
 };

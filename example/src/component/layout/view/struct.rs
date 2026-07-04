@@ -32,3 +32,15 @@ pub(crate) struct MobileLayoutProps {
     /// The reactive signal controlling the mobile nav drawer visibility.
     pub(crate) drawer_open: Signal<bool>,
 }
+
+/// The JSON response from docs.rs crate status endpoint.
+///
+/// Example JSON: `{"doc_status": true, "version": "0.6.23"}`
+#[derive(Clone, Data, Default, Deserialize, New)]
+pub(crate) struct DocsStatus {
+    /// Whether the documentation build succeeded.
+    #[get(type(copy))]
+    pub(crate) doc_status: bool,
+    /// The latest version string of the crate.
+    pub(crate) version: String,
+}
