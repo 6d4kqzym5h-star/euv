@@ -60,8 +60,8 @@ jobs:
 
       - name: Sync Pages
         run: |
-          max_retries=8
-          retry_delay=8
+          max_retries=60
+          retry_delay=60
           for i in $(seq 1 $max_retries); do
             if curl -sf -X POST https://ltpp.vip/api/github/pages/sync/euv-dev/euv \
               -H "Connection: close"; then
