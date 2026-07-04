@@ -234,12 +234,6 @@ pub(crate) struct HtmlDynamicTag {
 /// Contains the Props type name, the list of field names, and a map of
 /// field name to type string declared in the Props struct, used for
 /// attribute filtering and type-aware code generation in dynamic tags.
-///
-/// # Fields
-///
-/// - `props_type` - The Props type name (e.g., "PrimaryButtonProps").
-/// - `props_fields` - The field names declared in the Props struct.
-/// - `props_field_types` - Maps field name to its type string (e.g., "children" -> "VirtualNode").
 #[derive(Clone, Data, Debug, New, serde::Deserialize, serde::Serialize)]
 pub(crate) struct ComponentInfo {
     /// The Props type name (e.g., "PrimaryButtonProps").

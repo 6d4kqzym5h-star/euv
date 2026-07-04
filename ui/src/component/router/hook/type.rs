@@ -12,15 +12,6 @@ pub(crate) type ModalStackEntry = (Signal<bool>, Rc<dyn Fn()>);
 /// of currently open modals inside a `RefCell` for interior mutability.
 pub(crate) type ModalStack = RefCell<Vec<ModalStackEntry>>;
 
-/// A single entry in the unified overlay history stack.
-///
-/// Holds the close callback for an overlay (modal, panel, or drawer) so that
-/// a system back gesture can dismiss the most recently opened overlay first,
-/// regardless of its type.
-pub(crate) struct OverlayEntry {
-    pub(crate) closer: Rc<dyn Fn()>,
-}
-
 /// The internal storage type for the unified overlay stack, holding an ordered
 /// list of all open overlays inside a `RefCell` for interior mutability.
 pub(crate) type OverlayStack = RefCell<Vec<OverlayEntry>>;

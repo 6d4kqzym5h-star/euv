@@ -33,12 +33,16 @@ pub(crate) fn format_source(source: &str) -> FmtResult {
 ///
 /// # Arguments
 ///
-/// - `&str` - The Rust source code content.
+/// - `S: AsRef<str>` - The Rust source code content.
 ///
 /// # Returns
 ///
 /// - `String` - The source with all euv macros reformatted.
-pub fn format_euv_macros(source: &str) -> String {
+pub fn format_euv_macros<S>(source: S) -> String
+where
+    S: AsRef<str>,
+{
+    let source: &str = source.as_ref();
     let mut result: String = String::new();
     let chars: Vec<char> = source.chars().collect();
     let len: usize = chars.len();
@@ -461,7 +465,21 @@ fn extract_block_comment(chars: &[char], start: usize, len: usize) -> (String, u
     (result, position)
 }
 
-pub fn format_macro_body(body: &str) -> String {
+/// Formats the body of a euv macro invocation.
+///
+/// First applies raw formatting rules, then adds proper indentation.
+///
+/// # Arguments
+///
+/// - `B: AsRef<str>` - The raw macro body text (without outer braces).
+///
+/// # Returns
+///
+/// - `String` - The formatted macro body text.
+pub fn format_macro_body<B>(body: B) -> String
+where
+    B: AsRef<str>,
+{
     let raw: String = format_macro_body_raw(body);
     add_indentation(&raw)
 }
@@ -480,12 +498,16 @@ pub fn format_macro_body(body: &str) -> String {
 ///
 /// # Arguments
 ///
-/// - `&str` - The raw macro body text (without outer braces).
+/// - `B: AsRef<str>` - The raw macro body text (without outer braces).
 ///
 /// # Returns
 ///
 /// - `String` - The formatted macro body text.
-fn format_macro_body_raw(body: &str) -> String {
+fn format_macro_body_raw<B>(body: B) -> String
+where
+    B: AsRef<str>,
+{
+    let body: &str = body.as_ref();
     let chars: Vec<char> = body.chars().collect();
     let len: usize = chars.len();
     let mut result: String = String::new();

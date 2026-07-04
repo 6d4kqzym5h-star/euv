@@ -1,5 +1,6 @@
 /// Navigation item tuple: (icon, label, target).
 pub(crate) const NAV_ITEMS: &[(&str, &str, &str)] = &[
+    ("ℹ️", "About", "/"),
     ("🎬", "Animation", "/animation"),
     ("⏳", "Async", "/async"),
     ("⚙️", "Attrs", "/custom-attrs"),
@@ -13,7 +14,6 @@ pub(crate) const NAV_ITEMS: &[(&str, &str, &str)] = &[
     ("🏷️", "DynTag", "/dynamic-component"),
     ("🎯", "Event", "/event"),
     ("📄", "Form", "/form"),
-    ("🏠", "Home", "/"),
     ("💚", "KeepAlive", "/keep-alive"),
     ("♻️", "Lifecycle", "/lifecycle"),
     ("📝", "List", "/list"),

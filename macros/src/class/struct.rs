@@ -180,16 +180,6 @@ pub(crate) struct BlockContent {
 ///
 /// Bundles the values needed to generate a `OnceLock`-based static function body
 /// for a no-param class definition.
-///
-/// # Fields
-///
-/// - `visibility` - The visibility modifier for the generated function.
-/// - `fn_name_token` - The function name token stream.
-/// - `const_name_token` - The `OnceLock` constant name token stream.
-/// - `class_name_str` - The class name as a string literal.
-/// - `style_expr` - Token stream that evaluates to the CSS style string.
-/// - `selector_expr` - Token stream that evaluates to the selector rules vector.
-/// - `at_rule_expr` - Token stream that evaluates to the at-rule rules vector.
 pub(crate) struct OnceLockParams<'a> {
     /// The visibility modifier for the generated function.
     pub(crate) visibility: &'a Visibility,

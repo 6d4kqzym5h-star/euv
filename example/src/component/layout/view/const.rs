@@ -12,3 +12,9 @@ pub(crate) const INVOKE_UPDATE_CACHE: &str = "update_cache";
 
 /// The fallback string used when a `JsValue` error cannot be converted via `as_string()`.
 pub(crate) const ERROR_NULL_TEXT: &str = "null";
+
+/// The maximum number of retry attempts for fetching version status.
+pub(crate) const VERSION_FETCH_MAX_RETRY_COUNT: u32 = 8;
+
+/// The delay duration between retry attempts in milliseconds.
+pub(crate) const VERSION_FETCH_RETRY_DELAY_MS: u32 = 1000;

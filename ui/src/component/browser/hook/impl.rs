@@ -6,7 +6,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     pub fn use_browser_state() -> UseEuvBrowser {
         UseEuvBrowser::default()
     }
@@ -15,95 +15,115 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The key to look up.
+    /// - `K: AsRef<str>` - The key to look up.
     ///
     /// # Returns
     ///
-    /// - `Option<String>`: The stored value if found, or None.
-    pub fn local_storage_get(key: &str) -> Option<String> {
+    /// - `Option<String>` - The stored value if found, or None.
+    pub fn local_storage_get<K>(key: K) -> Option<String>
+    where
+        K: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let storage: Storage = window.local_storage().ok()??;
-        storage.get_item(key).ok()?
+        storage.get_item(key.as_ref()).ok()?
     }
 
     /// Writes a key-value pair to the browser localStorage.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The key to store.
-    /// - `&str`: The value to store.
-    pub fn local_storage_set(key: &str, value: &str) {
+    /// - `K: AsRef<str>` - The key to store.
+    /// - `V: AsRef<str>` - The value to store.
+    pub fn local_storage_set<K, V>(key: K, value: V)
+    where
+        K: AsRef<str>,
+        V: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let storage: Storage = match window.local_storage() {
             Ok(Some(local_storage)) => local_storage,
             _ => return,
         };
-        let _ = storage.set_item(key, value);
+        let _ = storage.set_item(key.as_ref(), value.as_ref());
     }
 
     /// Removes a key from the browser localStorage.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The key to remove.
-    pub(crate) fn local_storage_remove(key: &str) {
+    /// - `K: AsRef<str>` - The key to remove.
+    pub(crate) fn local_storage_remove<K>(key: K)
+    where
+        K: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let storage: Storage = match window.local_storage() {
             Ok(Some(local_storage)) => local_storage,
             _ => return,
         };
-        let _ = storage.remove_item(key);
+        let _ = storage.remove_item(key.as_ref());
     }
 
     /// Reads a value from the browser sessionStorage.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The key to look up.
+    /// - `K: AsRef<str>` - The key to look up.
     ///
     /// # Returns
     ///
-    /// - `Option<String>`: The stored value if found, or None.
-    pub(crate) fn session_storage_get(key: &str) -> Option<String> {
+    /// - `Option<String>` - The stored value if found, or None.
+    pub(crate) fn session_storage_get<K>(key: K) -> Option<String>
+    where
+        K: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let storage: Storage = window.session_storage().ok()??;
-        storage.get_item(key).ok()?
+        storage.get_item(key.as_ref()).ok()?
     }
 
     /// Writes a key-value pair to the browser sessionStorage.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The key to store.
-    /// - `&str`: The value to store.
-    pub(crate) fn session_storage_set(key: &str, value: &str) {
+    /// - `K: AsRef<str>` - The key to store.
+    /// - `V: AsRef<str>` - The value to store.
+    pub(crate) fn session_storage_set<K, V>(key: K, value: V)
+    where
+        K: AsRef<str>,
+        V: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let storage: Storage = match window.session_storage() {
             Ok(Some(session_storage)) => session_storage,
             _ => return,
         };
-        let _ = storage.set_item(key, value);
+        let _ = storage.set_item(key.as_ref(), value.as_ref());
     }
 
     /// Removes a key from the browser sessionStorage.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The key to remove.
-    pub(crate) fn session_storage_remove(key: &str) {
+    /// - `K: AsRef<str>` - The key to remove.
+    pub(crate) fn session_storage_remove<K>(key: K)
+    where
+        K: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let storage: Storage = match window.session_storage() {
             Ok(Some(session_storage)) => session_storage,
             _ => return,
         };
-        let _ = storage.remove_item(key);
+        let _ = storage.remove_item(key.as_ref());
     }
 
     /// Reads text from the system clipboard asynchronously.
     ///
     /// # Returns
     ///
-    /// - `String`: The clipboard text content, or an error message.
+    /// - `String` - The clipboard text content, or an error message.
     pub(crate) async fn clipboard_read_text() -> String {
         let window: Window = window().expect("no global window exists");
         let navigator: Navigator = window.navigator();
@@ -127,18 +147,21 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The text to write.
+    /// - `T: AsRef<str>` - The text to write.
     ///
     /// # Returns
     ///
-    /// - `bool`: Whether the write succeeded.
-    pub(crate) async fn clipboard_write_text(text: &str) -> bool {
+    /// - `bool` - Whether the write succeeded.
+    pub(crate) async fn clipboard_write_text<T>(text: T) -> bool
+    where
+        T: AsRef<str>,
+    {
         let window: Window = window().expect("no global window exists");
         let navigator: Navigator = window.navigator();
         match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
             Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
                 let clipboard: Clipboard = navigator.clipboard();
-                let promise: Promise = clipboard.write_text(text);
+                let promise: Promise = clipboard.write_text(text.as_ref());
                 let future: JsFuture = JsFuture::from(promise);
                 future.await.is_ok()
             }
@@ -150,7 +173,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `(i32, i32)`: A tuple of (inner_width, inner_height).
+    /// - `(i32, i32)` - A tuple of (inner_width, inner_height).
     pub(crate) fn window_inner_size() -> (i32, i32) {
         let window: Window = window().expect("no global window exists");
         let width: i32 = window
@@ -170,7 +193,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `String`: The user agent string.
+    /// - `String` - The user agent string.
     pub(crate) fn navigator_user_agent() -> String {
         let window: Window = window().expect("no global window exists");
         window
@@ -183,7 +206,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `String`: The preferred language string.
+    /// - `String` - The preferred language string.
     pub(crate) fn navigator_language() -> String {
         let window: Window = window().expect("no global window exists");
         window
@@ -196,7 +219,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `String`: The current full URL.
+    /// - `String` - The current full URL.
     pub(crate) fn location_href() -> String {
         let window: Window = window().expect("no global window exists");
         window
@@ -209,7 +232,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `String`: The origin portion of the URL.
+    /// - `String` - The origin portion of the URL.
     pub(crate) fn location_origin() -> String {
         let window: Window = window().expect("no global window exists");
         window
@@ -222,7 +245,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `String`: The pathname portion of the URL.
+    /// - `String` - The pathname portion of the URL.
     pub(crate) fn location_pathname() -> String {
         let window: Window = window().expect("no global window exists");
         window
@@ -235,11 +258,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to set the localStorage item.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to set the localStorage item.
     pub fn on_local_storage_set(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_local_key().get();
@@ -256,11 +279,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to get the localStorage item.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to get the localStorage item.
     pub fn on_local_storage_get(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_local_key().get();
@@ -278,11 +301,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to remove the localStorage item.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to remove the localStorage item.
     pub fn on_local_storage_remove(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_local_key().get();
@@ -295,11 +318,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to set the sessionStorage item.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to set the sessionStorage item.
     pub fn on_session_storage_set(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_session_key().get();
@@ -316,11 +339,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to get the sessionStorage item.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to get the sessionStorage item.
     pub fn on_session_storage_get(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_session_key().get();
@@ -340,11 +363,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to remove the sessionStorage item.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to remove the sessionStorage item.
     pub fn on_session_storage_remove(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_session_key().get();
@@ -358,11 +381,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to copy text to clipboard.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to copy text to clipboard.
     pub fn on_clipboard_copy(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let text: String = self.get_clipboard_text().get();
@@ -396,11 +419,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to read text from clipboard.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to read text from clipboard.
     pub fn on_clipboard_paste(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let result: Signal<String> = self.get_clipboard_result();
@@ -424,11 +447,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `UseEuvBrowser`: The browser API state.
+    /// - `UseEuvBrowser` - The browser API state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler to refresh the window size.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to refresh the window size.
     pub fn on_window_refresh_size(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let (width, height): (i32, i32) = Self::window_inner_size();
@@ -441,11 +464,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `Signal<String>`: The console input signal.
+    /// - `Signal<String>` - The console input signal.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler for console.log.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.log.
     pub fn on_console_log(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let raw: String = console_input.get();
@@ -462,11 +485,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `Signal<String>`: The console input signal.
+    /// - `Signal<String>` - The console input signal.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler for console.warn.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.warn.
     pub fn on_console_warn(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let raw: String = console_input.get();
@@ -483,11 +506,11 @@ impl UseEuvBrowser {
     ///
     /// # Arguments
     ///
-    /// - `Signal<String>`: The console input signal.
+    /// - `Signal<String>` - The console input signal.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler for console.error.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for console.error.
     pub fn on_console_error(console_input: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let raw: String = console_input.get();

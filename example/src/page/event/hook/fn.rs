@@ -219,7 +219,7 @@ pub(crate) fn generate_qr_code_data_url(content: &str) -> String {
     let svg_string: String = code
         .render::<svg::Color>()
         .min_dimensions(QR_CODE_MIN_DIMENSION, QR_CODE_MIN_DIMENSION)
-        .quiet_zone(false)
+        .quiet_zone(true)
         .build();
     let encoded_svg: String = encode_svg_for_data_url(&svg_string);
     format!("{SVG_DATA_URL_PREFIX}{encoded_svg}")

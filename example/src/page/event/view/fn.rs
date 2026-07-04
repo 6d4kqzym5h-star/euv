@@ -46,7 +46,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 modifier = "None".to_string();
             }
             keyboard.get_modifier().set(modifier);
-            Console::log(&format!(
+            Console::log(format!(
                 "KeyDown: {} (code: {})",
                 keyboard.get_last_key().get(),
                 keyboard.get_last_key_code().get()
@@ -57,7 +57,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
             let key_name: String = keyboard_event.key();
             keyboard.get_last_key_up().set(key_name.clone());
-            Console::log(&format!("KeyUp: {}", key_name));
+            Console::log(format!("KeyUp: {}", key_name));
         }
     };
     let on_mouse_click = move |event: Event| {
@@ -69,7 +69,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             mouse.get_mouse_screen_pos().set(screen);
             let current: i32 = mouse.get_click_count().get();
             mouse.get_click_count().set(current + 1);
-            Console::log(&format!(
+            Console::log(format!(
                 "Click: {} at ({}, {})",
                 current + 1,
                 mouse_event.client_x(),
@@ -80,7 +80,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
     let on_double_click = move |_: Event| {
         let current: i32 = mouse.get_double_click_count().get();
         mouse.get_double_click_count().set(current + 1);
-        Console::log(&format!("DblClick: #{}", current + 1));
+        Console::log(format!("DblClick: #{}", current + 1));
     };
     let on_mouse_down = move |event: Event| {
         if let Some(mouse_event) = event.dyn_ref::<MouseEvent>() {
@@ -283,7 +283,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                 2 => "page".to_string(),
                 _ => "unknown".to_string(),
             };
-            Console::log(&format!(
+            Console::log(format!(
                 "Wheel: dx={:.1}, dy={:.1}, mode={}",
                 wheel_event.delta_x(),
                 wheel_event.delta_y(),
@@ -345,7 +345,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             .join(", ");
         let info: String = format!("Start: {} touches [{}]", points.len(), detail);
         touch.get_touch_info().set(info);
-        Console::log(&format!("TouchStart: {} touches", points.len()));
+        Console::log(format!("TouchStart: {} touches", points.len()));
     };
     let on_touch_move = move |event: Event| {
         let points: Vec<NativeTouchPoint> = NativeTouchPoint::extract_all(&event);
@@ -381,7 +381,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             .join(", ");
         let info: String = format!("End: {} remaining, lifted [{}]", remaining.len(), detail);
         touch.get_touch_info().set(info);
-        Console::log(&format!("TouchEnd: {} remaining", remaining.len()));
+        Console::log(format!("TouchEnd: {} remaining", remaining.len()));
     };
     let on_touch_cancel = move |event: Event| {
         let changed: Vec<NativeTouchPoint> = NativeTouchPoint::extract_changed(&event);
@@ -399,13 +399,13 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             .join(", ");
         let info: String = format!("Cancel: [{}]", detail);
         touch.get_touch_info().set(info);
-        Console::log(&format!("TouchCancel: [{}]", detail));
+        Console::log(format!("TouchCancel: [{}]", detail));
     };
     let on_form_submit = move |event: Event| {
         event.prevent_default();
         let current: i32 = form.get_submit_count().get();
         form.get_submit_count().set(current + 1);
-        Console::log(&format!("Form submitted #{}", current + 1));
+        Console::log(format!("Form submitted #{}", current + 1));
     };
     let on_euv_input = move |event: Event| {
         if let Some(target) = event.target()

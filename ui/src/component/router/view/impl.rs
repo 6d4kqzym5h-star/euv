@@ -8,12 +8,12 @@ impl EuvRouteConfig {
     ///
     /// # Arguments
     ///
-    /// - `&'static str`: The route path.
-    /// - `F`: The component function.
+    /// - `&'static str` - The route path.
+    /// - `F: Fn() -> VirtualNode + 'static` - The component function.
     ///
     /// # Returns
     ///
-    /// - `EuvRouteConfig`: The route configuration.
+    /// - `EuvRouteConfig` - The route configuration.
     pub fn new<F>(path: &'static str, component: F) -> Self
     where
         F: Fn() -> VirtualNode + 'static,
@@ -31,13 +31,16 @@ impl Router {
     ///
     /// # Returns
     ///
-    /// - `String`: The hash fragment without the leading `#`, or `"/"` if empty.
+    /// - `String` - The hash fragment without the leading `#`, or `DEFAULT_ROUTE_PATH` if empty.
     pub fn current_route() -> String {
         let window: Window = window().expect("no global window exists");
         let hash: String = window.location().hash().unwrap_or_default();
-        let route: String = hash.strip_prefix('#').unwrap_or(&hash).to_string();
+        let route: String = hash
+            .strip_prefix(ROUTE_HASH_PREFIX)
+            .unwrap_or(&hash)
+            .to_string();
         if route.is_empty() {
-            "/".to_string()
+            DEFAULT_ROUTE_PATH.to_string()
         } else {
             route
         }
@@ -54,20 +57,23 @@ impl Router {
     ///
     /// Multiple rapid `navigate()` calls before the microtask fires are coalesced:
     /// only the **last** target route wins, as earlier routes were superseded by
-    /// a more recent navigation intent.
     ///
     /// # Arguments
     ///
-    /// - `&str`: The target route path.
-    pub fn navigate(route: &str) {
-        DEFERRED_NAVIGATION.with(|cell: &Cell<Option<String>>| cell.set(Some(route.to_string())));
+    /// - `R: AsRef<str>` - The target route path.
+    pub fn navigate<R>(route: R)
+    where
+        R: AsRef<str>,
+    {
+        let route_string: String = route.as_ref().to_string();
+        DEFERRED_NAVIGATION.with(|cell: &Cell<Option<String>>| cell.set(Some(route_string)));
         let deferred_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             let target_route: Option<String> =
                 DEFERRED_NAVIGATION.with(|cell: &Cell<Option<String>>| cell.take());
             if let Some(route_value) = target_route {
                 let nav_window: Window = web_sys::window().expect("no global window exists");
                 let nav_location: Location = nav_window.location();
-                let nav_new_hash: String = format!("#{}", route_value);
+                let nav_new_hash: String = format!("{ROUTE_HASH_PREFIX}{route_value}");
                 let _ = nav_location.set_hash(&nav_new_hash);
             }
         }));
@@ -86,15 +92,19 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `String`: The target route path.
+    /// - `R: AsRef<str>` - The target route path.
     ///
     /// # Returns
     ///
-    /// - `NativeEventHandler`: An event handler for click events.
-    pub fn link_handler(route: String) -> NativeEventHandler {
+    /// - `NativeEventHandler` - An event handler for click events.
+    pub fn link_handler<R>(route: R) -> NativeEventHandler
+    where
+        R: AsRef<str>,
+    {
+        let route_string: String = route.as_ref().to_string();
         NativeEventHandler::create("click", move |event: Event| {
             event.prevent_default();
-            Self::navigate(&route);
+            Self::navigate(&route_string);
         })
     }
 
@@ -104,7 +114,7 @@ impl Router {
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the viewport width is less than the mobile breakpoint.
+    /// - `bool` - `true` if the viewport width is less than the mobile breakpoint.
     pub fn is_mobile() -> bool {
         let window: Window = window().expect("no global window exists");
         let width: f64 = window

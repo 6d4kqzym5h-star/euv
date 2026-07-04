@@ -7,11 +7,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvRoutesProps>`: The props node containing route configurations.
+/// - `VirtualNode<EuvRoutesProps>` - The props node containing route configurations.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The matched route's component or fallback.
+/// - `VirtualNode` - The matched route's component or fallback.
 #[component]
 pub fn euv_routes(node: VirtualNode<EuvRoutesProps>) -> VirtualNode {
     let EuvRoutesProps {
@@ -34,11 +34,11 @@ pub fn euv_routes(node: VirtualNode<EuvRoutesProps>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvPageRouterProps>`: The props node containing the route signal.
+/// - `VirtualNode<EuvPageRouterProps>` - The props node containing the route signal.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The page router container with the children content.
+/// - `VirtualNode` - The page router container with the children content.
 #[component]
 pub fn euv_page_router(node: VirtualNode<EuvPageRouterProps>) -> VirtualNode {
     let EuvPageRouterProps {

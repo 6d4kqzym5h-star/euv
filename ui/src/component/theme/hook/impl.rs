@@ -106,11 +106,11 @@ impl ThemeState {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The theme name ("light" or "dark").
+    /// - `&str` - The theme name ("light" or "dark").
     ///
     /// # Returns
     ///
-    /// - `&'static str`: The CSS class name for the theme.
+    /// - `&'static str` - The CSS class name for the theme.
     pub(crate) fn theme_class_name(theme: &str) -> &'static str {
         if theme == THEME_DARK {
             c_theme_dark().get_name()
@@ -131,11 +131,11 @@ impl ThemeState {
     ///
     /// # Arguments
     ///
-    /// - `Signal<String>`: The theme signal to toggle.
+    /// - `Signal<String>` - The theme signal to toggle.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click event handler that flips the theme value.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that flips the theme value.
     pub fn toggle(theme_signal: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let current: String = theme_signal.get();

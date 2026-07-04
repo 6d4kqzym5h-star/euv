@@ -20,7 +20,7 @@ impl UseVirtualList {
     ///
     /// # Returns
     ///
-    /// - `UseVirtualList`: The virtual list state containing scroll offset and viewport height signals.
+    /// - `UseVirtualList` - The virtual list state containing scroll offset and viewport height signals.
     pub fn use_scroll_state() -> UseVirtualList {
         UseVirtualList::new(App::use_signal(|| 0), App::use_signal(|| 0))
     }
@@ -32,7 +32,7 @@ impl UseVirtualList {
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A scroll handler for the virtual list container.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A scroll handler for the virtual list container.
     pub fn on_scroll(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             if let Some(container) = Self::try_get_container() {
@@ -85,7 +85,7 @@ impl UseVirtualList {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The container element id.
+    /// - `&str` - The container element id.
     pub(crate) fn schedule_measure_by_id(self, container_id: &str) {
         let set: &mut HashSet<String> = PendingMeasureCell::get_mut();
         if !set.insert(container_id.to_string()) {
@@ -111,7 +111,7 @@ impl UseVirtualList {
     ///
     /// # Returns
     ///
-    /// - `Option<Element>`: The container element, if found in the document.
+    /// - `Option<Element>` - The container element, if found in the document.
     pub fn try_get_container() -> Option<Element> {
         window()
             .expect("no global window exists")
@@ -124,17 +124,20 @@ impl UseVirtualList {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The container element id.
+    /// - `C: AsRef<str>` - The container element id.
     ///
     /// # Returns
     ///
-    /// - `Option<Element>`: The container element, if found in the document.
-    pub fn try_get_container_by_id(container_id: &str) -> Option<Element> {
+    /// - `Option<Element>` - The container element, if found in the document.
+    pub fn try_get_container_by_id<C>(container_id: C) -> Option<Element>
+    where
+        C: AsRef<str>,
+    {
         window()
             .expect("no global window exists")
             .document()
             .expect("should have a document")
-            .get_element_by_id(container_id)
+            .get_element_by_id(container_id.as_ref())
     }
 
     /// Computes the range of visible item indices for the virtual list.
@@ -145,15 +148,15 @@ impl UseVirtualList {
     ///
     /// # Arguments
     ///
-    /// - `i32`: The current scroll offset in pixels.
-    /// - `i32`: The current viewport height in pixels.
-    /// - `usize`: The total number of items in the list.
-    /// - `i32`: The fixed height of each item in pixels.
-    /// - `usize`: The number of overscan items to render beyond the viewport.
+    /// - `i32` - The current scroll offset in pixels.
+    /// - `i32` - The current viewport height in pixels.
+    /// - `usize` - The total number of items in the list.
+    /// - `i32` - The fixed height of each item in pixels.
+    /// - `usize` - The number of overscan items to render beyond the viewport.
     ///
     /// # Returns
     ///
-    /// - `(usize, usize, usize, usize)`: A tuple of (visible_start, visible_end, render_start, render_end).
+    /// - `(usize, usize, usize, usize)` - A tuple of (visible_start, visible_end, render_start, render_end).
     ///   visible_start/visible_end represent the actual visible range without overscan.
     ///   render_start/render_end represent the rendering range including overscan.
     pub(crate) fn compute_visible_range(

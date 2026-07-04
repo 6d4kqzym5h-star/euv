@@ -12,7 +12,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `T` - The initial value of the signal.
+    /// - `T: Clone + PartialEq + 'static` - The initial value of the signal.
     ///
     /// # Returns
     ///
@@ -46,7 +46,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `T` - The current value of the signal.
+    /// - `T: Clone + PartialEq + 'static` - The current value of the signal.
     pub fn get(&self) -> T {
         let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         if !inner.get_alive() {
@@ -214,7 +214,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `T` - The new value to assign to the signal.
+    /// - `T: Clone + PartialEq + 'static` - The new value to assign to the signal.
     pub fn set(&self, value: T) {
         if self.update(value) {
             let dependents: Vec<usize> = self.get_dependents();

@@ -20,42 +20,54 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The message to log.
+    /// - `M: AsRef<str>` - The message to log.
     ///
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn log(message: &str) {
-        console::log_1(&message.into());
-        Self::append_entry(ConsoleEntry::new(LogLevel::Log, message.to_string()));
+    pub fn log<M>(message: M)
+    where
+        M: AsRef<str>,
+    {
+        let message_ref: &str = message.as_ref();
+        console::log_1(&message_ref.into());
+        Self::append_entry(ConsoleEntry::new(LogLevel::Log, message_ref.to_string()));
     }
 
     /// Logs a warning message (equivalent to console.warn).
     ///
     /// # Arguments
     ///
-    /// - `&str`: The warning message to log.
+    /// - `M: AsRef<str>` - The warning message to log.
     ///
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn warn(message: &str) {
-        console::warn_1(&message.into());
-        Self::append_entry(ConsoleEntry::new(LogLevel::Warn, message.to_string()));
+    pub fn warn<M>(message: M)
+    where
+        M: AsRef<str>,
+    {
+        let message_ref: &str = message.as_ref();
+        console::warn_1(&message_ref.into());
+        Self::append_entry(ConsoleEntry::new(LogLevel::Warn, message_ref.to_string()));
     }
 
     /// Logs an error message (equivalent to console.error).
     ///
     /// # Arguments
     ///
-    /// - `&str`: The error message to log.
+    /// - `M: AsRef<str>` - The error message to log.
     ///
     /// # Panics
     ///
     /// Panics if `init_console` has not been called.
-    pub fn error(message: &str) {
-        console::error_1(&message.into());
-        Self::append_entry(ConsoleEntry::new(LogLevel::Error, message.to_string()));
+    pub fn error<M>(message: M)
+    where
+        M: AsRef<str>,
+    {
+        let message_ref: &str = message.as_ref();
+        console::error_1(&message_ref.into());
+        Self::append_entry(ConsoleEntry::new(LogLevel::Error, message_ref.to_string()));
     }
 
     /// Clears all log entries from the vConsole panel signal.
@@ -72,7 +84,7 @@ impl Console {
     ///
     /// # Returns
     ///
-    /// - `Signal<Vec<ConsoleEntry>>`: The console log signal.
+    /// - `Signal<Vec<ConsoleEntry>>` - The console log signal.
     ///
     /// # Panics
     ///
@@ -87,11 +99,11 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `Signal<bool>`: The signal controlling panel visibility.
+    /// - `Signal<bool>` - The signal controlling panel visibility.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler that opens the panel.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that opens the panel.
     pub(crate) fn fab_on_click(panel_open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let closer: Rc<dyn Fn()> = Rc::new(move || {
@@ -106,12 +118,12 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `Signal<Vec<ConsoleEntry>>`: The console log signal.
-    /// - `Signal<LogFilter>`: The current filter level signal.
+    /// - `Signal<Vec<ConsoleEntry>>` - The console log signal.
+    /// - `Signal<LogFilter>` - The current filter level signal.
     ///
     /// # Returns
     ///
-    /// - `Vec<(usize, ConsoleEntry)>`: The filtered and reversed entries with original indices.
+    /// - `Vec<(usize, ConsoleEntry)>` - The filtered and reversed entries with original indices.
     pub(crate) fn filter_entries(
         logs: Signal<Vec<ConsoleEntry>>,
         filter: Signal<LogFilter>,
@@ -137,7 +149,7 @@ impl Console {
     ///
     /// # Arguments
     ///
-    /// - `ConsoleEntry`: The console entry to append.
+    /// - `ConsoleEntry` - The console entry to append.
     ///
     /// # Panics
     ///
@@ -173,7 +185,7 @@ impl LogLevel {
     ///
     /// # Returns
     ///
-    /// - `&str`: The badge label string ("LOG", "WRN", "ERR").
+    /// - `&str` - The badge label string ("LOG", "WRN", "ERR").
     pub(crate) fn badge(self) -> &'static str {
         match self {
             LogLevel::Log => "LOG",
@@ -189,11 +201,11 @@ impl LogFilter {
     ///
     /// # Arguments
     ///
-    /// - `Signal<LogFilter>`: The signal controlling the active log filter.
+    /// - `Signal<LogFilter>` - The signal controlling the active log filter.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler that sets filter to All.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to All.
     pub(crate) fn on_filter_all(filter_signal: Signal<LogFilter>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             filter_signal.set(LogFilter::All);
@@ -204,11 +216,11 @@ impl LogFilter {
     ///
     /// # Arguments
     ///
-    /// - `Signal<LogFilter>`: The signal controlling the active log filter.
+    /// - `Signal<LogFilter>` - The signal controlling the active log filter.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler that sets filter to Log.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to Log.
     pub(crate) fn on_filter_log(filter_signal: Signal<LogFilter>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             filter_signal.set(LogFilter::Log);
@@ -219,11 +231,11 @@ impl LogFilter {
     ///
     /// # Arguments
     ///
-    /// - `Signal<LogFilter>`: The signal controlling the active log filter.
+    /// - `Signal<LogFilter>` - The signal controlling the active log filter.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler that sets filter to Warn.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to Warn.
     pub(crate) fn on_filter_warn(filter_signal: Signal<LogFilter>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             filter_signal.set(LogFilter::Warn);
@@ -234,11 +246,11 @@ impl LogFilter {
     ///
     /// # Arguments
     ///
-    /// - `Signal<LogFilter>`: The signal controlling the active log filter.
+    /// - `Signal<LogFilter>` - The signal controlling the active log filter.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click handler that sets filter to Error.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets filter to Error.
     pub(crate) fn on_filter_error(filter_signal: Signal<LogFilter>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             filter_signal.set(LogFilter::Error);

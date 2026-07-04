@@ -6,7 +6,7 @@ impl UseEuvCamera {
     ///
     /// # Returns
     ///
-    /// - `UseEuvCamera`: The camera state.
+    /// - `UseEuvCamera` - The camera state.
     pub fn use_camera_state() -> UseEuvCamera {
         UseEuvCamera::new(
             App::use_signal(|| false),
@@ -28,12 +28,12 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The CSS selector of the `<video>` element to bind the stream to.
-    /// - `EuvCameraFacing`: The desired camera facing direction.
+    /// - `&str` - The CSS selector of the `<video>` element to bind the stream to.
+    /// - `EuvCameraFacing` - The desired camera facing direction.
     ///
     /// # Returns
     ///
-    /// - `Result<(), String>`: `Ok(())` on success, or an error message on failure.
+    /// - `Result<(), String>` - `Ok(())` on success, or an error message on failure.
     pub(crate) fn open(video_selector: &str, facing: EuvCameraFacing) -> Result<(), String> {
         let window_value: Window = window().expect("no global window exists");
         let navigator: Navigator = window_value.navigator();
@@ -88,7 +88,7 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The CSS selector of the `<video>` element whose stream should be stopped.
+    /// - `&str` - The CSS selector of the `<video>` element whose stream should be stopped.
     pub(crate) fn close(video_selector: &str) {
         let window_value: Window = window().expect("no global window exists");
         let document: Document = window_value.document().expect("should have a document");
@@ -113,7 +113,7 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     pub(crate) fn open_and_scan(self, config: Option<&EuvCameraConfig>) {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
@@ -148,7 +148,7 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     pub(crate) fn switch(self, config: Option<&EuvCameraConfig>) {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
@@ -188,7 +188,7 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     pub(crate) fn start_qr_scan(self, config: Option<&EuvCameraConfig>) {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
@@ -285,11 +285,11 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The string to check.
+    /// - `&str` - The string to check.
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the string is a valid HTTP or HTTPS URL.
+    /// - `bool` - `true` if the string is a valid HTTP or HTTPS URL.
     pub(crate) fn is_valid_qr_url(text: &str) -> bool {
         text.starts_with(CAMERA_URL_PREFIX_HTTP) || text.starts_with(CAMERA_URL_PREFIX_HTTPS)
     }
@@ -303,11 +303,11 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The absolute URL to parse.
+    /// - `&str` - The absolute URL to parse.
     ///
     /// # Returns
     ///
-    /// - `String`: The extracted hostname, or an empty string on failure.
+    /// - `String` - The extracted hostname, or an empty string on failure.
     pub(crate) fn extract_hostname(url: &str) -> String {
         let rest: &str = if let Some(stripped) = url.strip_prefix(CAMERA_URL_PREFIX_HTTPS) {
             stripped
@@ -335,11 +335,11 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The hostname to inspect.
+    /// - `&str` - The hostname to inspect.
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the hostname is a private/internal address.
+    /// - `bool` - `true` if the hostname is a private/internal address.
     pub(crate) fn is_private_host(hostname: &str) -> bool {
         if hostname.is_empty() {
             return false;
@@ -386,7 +386,7 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The URL to navigate to.
+    /// - `&str` - The URL to navigate to.
     pub(crate) fn navigate_qr_url(url: &str) {
         let window_value: Window = window().expect("no global window exists");
         let location: Location = window_value.location();
@@ -419,11 +419,11 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click event handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
     pub fn on_close(self, config: Option<&EuvCameraConfig>) -> Option<Rc<dyn Fn(Event)>> {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
@@ -439,11 +439,11 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click event handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
     pub fn on_switch(self, config: Option<&EuvCameraConfig>) -> Option<Rc<dyn Fn(Event)>> {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
@@ -456,11 +456,11 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click event handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler.
     pub fn on_open(self, config: Option<&EuvCameraConfig>) -> Option<Rc<dyn Fn(Event)>> {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
@@ -475,7 +475,7 @@ impl UseEuvCamera {
     ///
     /// # Arguments
     ///
-    /// - `Option<&EuvCameraConfig>`: Optional camera configuration.
+    /// - `Option<&EuvCameraConfig>` - Optional camera configuration.
     pub fn cleanup(self, config: Option<&EuvCameraConfig>) {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());

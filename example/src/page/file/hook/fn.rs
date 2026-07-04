@@ -66,7 +66,7 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Ev
                 state
                     .get_status()
                     .set(format!("{} file(s) selected", count));
-                Console::log(&format!("Files selected: {:?}", names));
+                Console::log(format!("Files selected: {:?}", names));
             }
         }
     }))

@@ -1,3 +1,3 @@
-/// Props for the `page_home` component.
+/// Props for the `page_about` component.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub(crate) struct PageHomeProps;
+pub(crate) struct PageAboutProps;

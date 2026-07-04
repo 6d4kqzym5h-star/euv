@@ -16,11 +16,11 @@ impl NativeTouchPoint {
     ///
     /// # Arguments
     ///
-    /// - `&Event`: The native DOM touch event.
+    /// - `&Event` - The native DOM touch event.
     ///
     /// # Returns
     ///
-    /// - `Vec<NativeTouchPoint>`: All currently active touch points.
+    /// - `Vec<NativeTouchPoint>` - All currently active touch points.
     pub fn extract_all(event: &Event) -> Vec<NativeTouchPoint> {
         let touches_value: JsValue = Reflect::get(event.as_ref(), &JsValue::from_str("touches"))
             .ok()
@@ -104,11 +104,11 @@ impl NativeTouchPoint {
     ///
     /// # Arguments
     ///
-    /// - `&Event`: The native DOM touch event.
+    /// - `&Event` - The native DOM touch event.
     ///
     /// # Returns
     ///
-    /// - `Vec<NativeTouchPoint>`: The touch points that changed in this event.
+    /// - `Vec<NativeTouchPoint>` - The touch points that changed in this event.
     pub fn extract_changed(event: &Event) -> Vec<NativeTouchPoint> {
         let touches_value: JsValue =
             Reflect::get(event.as_ref(), &JsValue::from_str("changedTouches"))
@@ -191,11 +191,11 @@ impl NativeTouchPointF64 {
     ///
     /// # Arguments
     ///
-    /// - `&Event`: The native DOM touch event.
+    /// - `&Event` - The native DOM touch event.
     ///
     /// # Returns
     ///
-    /// - `Vec<NativeTouchPointF64>`: All currently active touch points with `f64` coordinates.
+    /// - `Vec<NativeTouchPointF64>` - All currently active touch points with `f64` coordinates.
     pub fn extract_all(event: &Event) -> Vec<NativeTouchPointF64> {
         let touches_value: JsValue = Reflect::get(event.as_ref(), &JsValue::from_str("touches"))
             .ok()

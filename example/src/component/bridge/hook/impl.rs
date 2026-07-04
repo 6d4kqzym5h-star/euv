@@ -8,7 +8,7 @@ impl Default for BridgeConfig {
     ///
     /// # Returns
     ///
-    /// - `BridgeConfig`: The default bridge configuration.
+    /// - `BridgeConfig` - The default bridge configuration.
     fn default() -> Self {
         BridgeConfig::new(
             BRIDGE_DEFAULT_GLOBAL_KEY,
@@ -27,7 +27,7 @@ impl UseEuvNativeBridge {
     ///
     /// # Returns
     ///
-    /// - `UseEuvNativeBridge`: The native bridge state.
+    /// - `UseEuvNativeBridge` - The native bridge state.
     pub(crate) fn use_bridge_state() -> UseEuvNativeBridge {
         UseEuvNativeBridge::new(
             App::use_signal(|| false),
@@ -46,7 +46,7 @@ impl UseEuvNativeBridge {
     ///
     /// # Arguments
     ///
-    /// - `Option<BridgeConfig>`: Optional custom bridge configuration.
+    /// - `Option<BridgeConfig>` - Optional custom bridge configuration.
     pub(crate) fn load_data(self, config: Option<BridgeConfig>) {
         if !BridgeConfig::is_available(config.as_ref()) {
             self.get_available().set(false);
@@ -112,7 +112,7 @@ impl UseCacheUpdate {
     ///
     /// # Returns
     ///
-    /// - `UseCacheUpdate`: The cache update state.
+    /// - `UseCacheUpdate` - The cache update state.
     pub(crate) fn use_cache_state() -> UseCacheUpdate {
         UseCacheUpdate::new(
             App::use_signal(|| false),
@@ -135,7 +135,7 @@ impl UseCacheUpdate {
     ///
     /// # Arguments
     ///
-    /// - `F`: An async closure that returns `UpdateResult`.
+    /// - `F: FnOnce() -> Fut + 'static` - An async closure that returns `UpdateResult`.
     pub(crate) fn load<F, Fut>(self, updater: F)
     where
         F: FnOnce() -> Fut + 'static,
@@ -160,11 +160,11 @@ impl BridgeConfig {
     ///
     /// # Arguments
     ///
-    /// - `Option<&BridgeConfig>`: Optional custom bridge configuration.
+    /// - `Option<&BridgeConfig>` - Optional custom bridge configuration.
     ///
     /// # Returns
     ///
-    /// - `bool`: `true` if the bridge core module is available.
+    /// - `bool` - `true` if the bridge core module is available.
     pub(crate) fn is_available(config: Option<&BridgeConfig>) -> bool {
         let config: BridgeConfig = config
             .map_or_else(BridgeConfig::default, |config: &BridgeConfig| {
@@ -196,13 +196,13 @@ impl BridgeConfig {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The bridge command name to invoke.
-    /// - `Option<&JsValue>`: Optional arguments object to pass to the command.
-    /// - `Option<&BridgeConfig>`: Optional custom bridge configuration.
+    /// - `&str` - The bridge command name to invoke.
+    /// - `Option<&JsValue>` - Optional arguments object to pass to the command.
+    /// - `Option<&BridgeConfig>` - Optional custom bridge configuration.
     ///
     /// # Returns
     ///
-    /// - `Result<Promise, String>`: The promise returned by the invoke call, or an error message.
+    /// - `Result<Promise, String>` - The promise returned by the invoke call, or an error message.
     pub(crate) fn invoke(
         command: &str,
         args: Option<&JsValue>,

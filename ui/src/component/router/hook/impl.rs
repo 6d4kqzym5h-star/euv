@@ -200,13 +200,13 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `Rc<dyn Fn() -> bool>`: The guard callback. Return `true` to consume the
+    /// - `Rc<dyn Fn() -> bool>` - The guard callback. Return `true` to consume the
     ///   `popstate` event, `false` to let subsequent guards or the overlay stack
     ///   handle it.
     ///
     /// # Returns
     ///
-    /// - `usize`: A unique guard ID for later unregistration.
+    /// - `usize` - A unique guard ID for later unregistration.
     pub fn register_popstate_guard(guard: Rc<dyn Fn() -> bool>) -> usize {
         NEXT_POPSTATE_GUARD_ID.with(|counter: &Cell<usize>| {
             let id: usize = counter.get();
@@ -224,7 +224,7 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `usize`: The guard ID returned by [`Router::register_popstate_guard`].
+    /// - `usize` - The guard ID returned by [`Router::register_popstate_guard`].
     #[allow(dead_code)]
     pub(crate) fn unregister_popstate_guard(id: usize) {
         POPSTATE_GUARDS.with(|guards: &PopstateGuardList| {
@@ -250,7 +250,7 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `Option<String>`: An optional route to navigate to after the back completes.
+    /// - `Option<String>` - An optional route to navigate to after the back completes.
     pub fn overlay_back(navigate_target: Option<String>) {
         BACK_PENDING.with(|flag: &Cell<bool>| flag.set(true));
         if let Some(ref route) = navigate_target {
@@ -268,7 +268,7 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `Rc<dyn Fn()>`: The callback that closes the overlay (e.g., sets its visibility signal to `false`).
+    /// - `Rc<dyn Fn()>` - The callback that closes the overlay (e.g., sets its visibility signal to `false`).
     pub(crate) fn overlay_stack_push(closer: Rc<dyn Fn()>) {
         OVERLAY_STACK.with(|stack: &OverlayStack| {
             stack.borrow_mut().push(OverlayEntry { closer });
@@ -284,7 +284,7 @@ impl Router {
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn()>>`: The topmost overlay's close callback, or `None` if no overlay is open.
+    /// - `Option<Rc<dyn Fn()>>` - The topmost overlay's close callback, or `None` if no overlay is open.
     pub(crate) fn overlay_stack_pop() -> Option<Rc<dyn Fn()>> {
         let closer: Option<Rc<dyn Fn()>> = OVERLAY_STACK.with(|stack: &OverlayStack| {
             stack
@@ -334,8 +334,8 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `Signal<bool>`: The modal's visibility signal, used as a stable identity for later removal.
-    /// - `Rc<dyn Fn()>`: The callback that closes the modal (e.g., sets the visibility signal to `false`).
+    /// - `Signal<bool>` - The modal's visibility signal, used as a stable identity for later removal.
+    /// - `Rc<dyn Fn()>` - The callback that closes the modal (e.g., sets the visibility signal to `false`).
     pub fn modal_push(visible: Signal<bool>, closer: Rc<dyn Fn()>) {
         let already_open: bool = MODAL_STACK.with(|stack: &ModalStack| {
             stack
@@ -362,7 +362,7 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `Signal<bool>`: The visibility signal identifying the modal to remove.
+    /// - `Signal<bool>` - The visibility signal identifying the modal to remove.
     pub fn modal_close_via_ui(visible: Signal<bool>) {
         let removed: bool = MODAL_STACK.with(|stack: &ModalStack| {
             let mut entries = stack.borrow_mut();
@@ -391,15 +391,18 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `&str`: The URL to open.
-    pub fn open_system_browser(url: &str) {
+    /// - `U: AsRef<str>` - The URL to open.
+    pub fn open_system_browser<U>(url: U)
+    where
+        U: AsRef<str>,
+    {
         let window_value: Window = window().expect("no global window exists");
         if let Ok(open_fn) = Reflect::get(&window_value, &JsValue::from_str("open"))
             .and_then(|value: JsValue| value.dyn_into::<Function>())
         {
             let _ = open_fn.call2(
                 &window_value,
-                &JsValue::from_str(url),
+                &JsValue::from_str(url.as_ref()),
                 &JsValue::from_str(SYSTEM_BROWSER_TARGET),
             );
         }
@@ -415,15 +418,19 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `String`: The external URL to open on click.
+    /// - `U: AsRef<str>` - The external URL to open on click.
     ///
     /// # Returns
     ///
-    /// - `NativeEventHandler`: An event handler for click events.
-    pub fn external_link_handler(url: String) -> NativeEventHandler {
+    /// - `NativeEventHandler` - An event handler for click events.
+    pub fn external_link_handler<U>(url: U) -> NativeEventHandler
+    where
+        U: AsRef<str>,
+    {
+        let url_string: String = url.as_ref().to_string();
         NativeEventHandler::create("click", move |event: Event| {
             event.prevent_default();
-            Self::open_system_browser(&url);
+            Self::open_system_browser(&url_string);
         })
     }
 
@@ -435,9 +442,12 @@ impl Router {
     ///
     /// # Arguments
     ///
-    /// - `Signal<bool>`: The drawer open signal.
-    /// - `String`: The target route.
-    pub fn close_drawer_and_navigate(_drawer_open: Signal<bool>, target: String) {
-        Self::overlay_back(Some(target));
+    /// - `Signal<bool>` - The drawer open signal.
+    /// - `T: AsRef<str>` - The target route.
+    pub fn close_drawer_and_navigate<T>(_drawer_open: Signal<bool>, target: T)
+    where
+        T: AsRef<str>,
+    {
+        Self::overlay_back(Some(target.as_ref().to_string()));
     }
 }

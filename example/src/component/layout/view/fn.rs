@@ -26,7 +26,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 a {
                     href: GITHUB_URL
                     target: "_blank"
-                    onclick: Router::external_link_handler(GITHUB_URL.to_string())
+                    onclick: Router::external_link_handler(GITHUB_URL)
                     class: c_nav_header()
                     euv_logo {
                         variant: LogoButtonVariant::Nav
@@ -60,7 +60,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 a {
                     href: GITHUB_URL
                     target: "_blank"
-                    onclick: Router::external_link_handler(GITHUB_URL.to_string())
+                    onclick: Router::external_link_handler(GITHUB_URL)
                     class: c_nav_footer()
                     div {
                         class: c_nav_footer_divider()
@@ -134,7 +134,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     a {
                         href: GITHUB_URL
                         target: "_blank"
-                        onclick: Router::external_link_handler(GITHUB_URL.to_string())
+                        onclick: Router::external_link_handler(GITHUB_URL)
                         class: c_mobile_header_logo()
                         euv_logo {
                             variant: LogoButtonVariant::Nav
@@ -187,7 +187,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         a {
                             href: GITHUB_URL
                             target: "_blank"
-                            onclick: Router::external_link_handler(GITHUB_URL.to_string())
+                            onclick: Router::external_link_handler(GITHUB_URL)
                             class: c_mobile_header_logo()
                             euv_logo {
                                 variant: LogoButtonVariant::Nav
@@ -215,7 +215,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 a {
                     href: GITHUB_URL
                     target: "_blank"
-                    onclick: Router::external_link_handler(GITHUB_URL.to_string())
+                    onclick: Router::external_link_handler(GITHUB_URL)
                     class: c_nav_footer()
                     div {
                         class: c_nav_footer_divider()
@@ -234,25 +234,95 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
     }
 }
 
+/// Asynchronously fetches the docs status with retry logic.
+///
+/// Attempts to fetch the crate status JSON up to `VERSION_FETCH_MAX_RETRY_COUNT` times,
+/// waiting `VERSION_FETCH_RETRY_DELAY_MS` milliseconds between each retry on failure.
+///
+/// # Returns
+///
+/// - `Result<DocsStatus, ()>` — The parsed docs status on success, or an error indicator on failure.
+async fn fetch_docs_status_with_retry() -> Result<DocsStatus, ()> {
+    let window_value: Window = window().expect("no global window exists");
+    let mut attempt: u32 = 0;
+    loop {
+        let promise: Promise = window_value.fetch_with_str(DOCS_STATUS_URL);
+        match JsFuture::from(promise).await {
+            Ok(response) => {
+                let response_value: Response = match response.dyn_into() {
+                    Ok(value) => value,
+                    Err(error) => {
+                        Console::error(format!(
+                            "Failed to convert fetch response: {}",
+                            error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+                        ));
+                        return Err(());
+                    }
+                };
+                let text_string: String = match response_value.text() {
+                    Ok(promise) => match JsFuture::from(promise).await {
+                        Ok(value) => value.as_string().unwrap_or_default(),
+                        Err(error) => {
+                            Console::error(format!(
+                                "Failed to read response text: {}",
+                                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+                            ));
+                            return Err(());
+                        }
+                    },
+                    Err(error) => {
+                        Console::error(format!(
+                            "Failed to get response text promise: {}",
+                            error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+                        ));
+                        return Err(());
+                    }
+                };
+                Console::log(&text_string);
+                return Ok(serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default());
+            }
+            Err(error) => {
+                attempt += 1;
+                if attempt >= VERSION_FETCH_MAX_RETRY_COUNT {
+                    Console::error(format!(
+                        "Failed to fetch version status after {VERSION_FETCH_MAX_RETRY_COUNT} attempts: {}",
+                        error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+                    ));
+                    return Err(());
+                }
+                Console::warn(format!(
+                    "Failed to fetch version status (attempt {attempt}/{VERSION_FETCH_MAX_RETRY_COUNT}): {}. Retrying in {VERSION_FETCH_RETRY_DELAY_MS}ms...",
+                    error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
+                ));
+                JsFuture::from(Promise::new(&mut |resolve: Function, _reject: Function| {
+                    let window: Window = window().expect("no global window exists");
+                    window
+                        .set_timeout_with_callback_and_timeout_and_arguments_0(
+                            &resolve,
+                            VERSION_FETCH_RETRY_DELAY_MS as i32,
+                        )
+                        .expect("failed to set timeout");
+                }))
+                .await
+                .expect("timeout future failed");
+            }
+        }
+    }
+}
+
 /// Asynchronously checks for euv documentation updates from docs.rs.
 ///
-/// Fetches the crate status JSON, parses the `DocsStatus` payload, and if a newer
-/// version is available, invokes the bridge `update_cache` command to synchronize
-/// the local cache.
+/// Fetches the crate status JSON with retry logic, parses the `DocsStatus` payload,
+/// and if a newer version is available, invokes the bridge `update_cache` command
+/// to synchronize the local cache.
 ///
 /// # Returns
 ///
 /// - `UpdateResult` — The documentation status, version, and whether an update was triggered.
 async fn check_docs_update() -> UpdateResult {
-    let window_value: Window = window().expect("no global window exists");
-    let promise: Promise = window_value.fetch_with_str(DOCS_STATUS_URL);
-    let response: JsValue = match JsFuture::from(promise).await {
-        Ok(value) => value,
-        Err(error) => {
-            Console::error(&format!(
-                "Failed to fetch version status: {}",
-                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
-            ));
+    let parsed: DocsStatus = match fetch_docs_status_with_retry().await {
+        Ok(status) => status,
+        Err(()) => {
             return UpdateResult {
                 doc_status: false,
                 version: String::new(),
@@ -260,54 +330,11 @@ async fn check_docs_update() -> UpdateResult {
             };
         }
     };
-    let response_value: Response = match response.dyn_into() {
-        Ok(value) => value,
-        Err(error) => {
-            Console::error(&format!(
-                "Failed to convert fetch response: {}",
-                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
-            ));
-            return UpdateResult {
-                doc_status: false,
-                version: String::new(),
-                updating: false,
-            };
-        }
-    };
-    let text_string: String = match response_value.text() {
-        Ok(promise) => match JsFuture::from(promise).await {
-            Ok(value) => value.as_string().unwrap_or_default(),
-            Err(error) => {
-                Console::error(&format!(
-                    "Failed to read response text: {}",
-                    error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
-                ));
-                return UpdateResult {
-                    doc_status: false,
-                    version: String::new(),
-                    updating: false,
-                };
-            }
-        },
-        Err(error) => {
-            Console::error(&format!(
-                "Failed to get response text promise: {}",
-                error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
-            ));
-            return UpdateResult {
-                doc_status: false,
-                version: String::new(),
-                updating: false,
-            };
-        }
-    };
-    Console::log(&text_string);
-    let parsed: DocsStatus = serde_json::from_str::<DocsStatus>(&text_string).unwrap_or_default();
     if !matches!(
         CompareVersion::compare_version(parsed.get_version(), EUV_VERSION),
         Ok(VersionLevel::Greater)
     ) {
-        Console::log(&format!(
+        Console::log(format!(
             "Current version v{EUV_VERSION} is already the latest version"
         ));
         return UpdateResult {
@@ -327,8 +354,8 @@ async fn check_docs_update() -> UpdateResult {
     if let Ok(promise) = BridgeConfig::invoke(INVOKE_UPDATE_CACHE, None, None) {
         updating = true;
         match JsFuture::from(promise).await {
-            Ok(result) => Console::log(&result.as_string().unwrap_or_default()),
-            Err(error) => Console::error(&error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())),
+            Ok(result) => Console::log(result.as_string().unwrap_or_default()),
+            Err(error) => Console::error(error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())),
         }
     }
     UpdateResult {

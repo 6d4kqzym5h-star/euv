@@ -10,11 +10,11 @@ impl UseEuvInput {
     ///
     /// # Arguments
     ///
-    /// - `Signal<bool>`: The boolean signal to toggle.
+    /// - `Signal<bool>` - The boolean signal to toggle.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A click event handler that toggles the signal.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A click event handler that toggles the signal.
     pub fn use_toggle(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let current: bool = signal.get();
@@ -26,11 +26,11 @@ impl UseEuvInput {
     ///
     /// # Arguments
     ///
-    /// - `Signal<String>`: The signal to update with the input value.
+    /// - `Signal<String>` - The signal to update with the input value.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: An input handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - An input handler.
     pub fn on_input_value(signal: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |event: Event| {
             let value: Option<String> = event.target().and_then(|target: EventTarget| {
@@ -55,11 +55,11 @@ impl UseEuvInput {
     ///
     /// # Arguments
     ///
-    /// - `Signal<String>`: The signal to update with the change value.
+    /// - `Signal<String>` - The signal to update with the change value.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A change handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A change handler.
     pub fn on_change_value(signal: Signal<String>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |event: Event| {
             let value: Option<String> = event.target().and_then(|target: EventTarget| {
@@ -84,11 +84,11 @@ impl UseEuvInput {
     ///
     /// # Arguments
     ///
-    /// - `Signal<bool>`: The signal to update with the checked state.
+    /// - `Signal<bool>` - The signal to update with the checked state.
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A change handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A change handler.
     pub fn on_change_checked(signal: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |event: Event| {
             if let Some(target) = event.target()
@@ -109,7 +109,7 @@ impl UseEuvInput {
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A focus handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A focus handler.
     pub fn on_focus_scroll_into_view() -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |event: Event| {
             let Some(target) = event.target() else {
@@ -162,7 +162,7 @@ impl UseEuvInput {
     ///
     /// # Returns
     ///
-    /// - `Option<Rc<dyn Fn(Event)>>`: A blur handler.
+    /// - `Option<Rc<dyn Fn(Event)>>` - A blur handler.
     pub fn on_blur_restore_height() -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |event: Event| {
             let Some(target) = event.target() else {

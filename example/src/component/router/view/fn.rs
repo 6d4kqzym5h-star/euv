@@ -20,8 +20,8 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
         div {
             class: c_page_router()
             match { route_signal.get().as_str() } {
-                "/" => {
-                    page_home {}
+                "/" | "/about" => {
+                    page_about {}
                 }
                 "/counter" => {
                     page_counter {}

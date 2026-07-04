@@ -41,7 +41,7 @@ pub fn euv_nav_item(node: VirtualNode<EuvNavItemProps>) -> VirtualNode {
     html! {
         a {
             href: format!("#{target_string}")
-            target: "_blank"
+            target: BLANK_BROWSER_TARGET
             class: effective_class
             onclick: click_handler
             span {
@@ -89,7 +89,7 @@ pub fn euv_mobile_nav_item(node: VirtualNode<EuvMobileNavItemProps>) -> VirtualN
     html! {
         a {
             href: format!("#{target_string}")
-            target: "_blank"
+            target: BLANK_BROWSER_TARGET
             class: if { is_active } {
                 c_nav_item_active()
             } else {

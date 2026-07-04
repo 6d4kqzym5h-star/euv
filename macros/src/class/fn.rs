@@ -225,7 +225,7 @@ pub(crate) fn expr_to_string(tokens: &proc_macro2::TokenStream) -> String {
 /// # Arguments
 ///
 /// - `ParseStream` - The syn parse stream to read from.
-/// - `initial_colons` - The number of leading colons already consumed (1 for `:`, 2 for `::`).
+/// - `usize` - The number of leading colons already consumed (1 for `:`, 2 for `::`).
 ///
 /// # Returns
 ///

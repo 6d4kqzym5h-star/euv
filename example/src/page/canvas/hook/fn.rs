@@ -726,7 +726,7 @@ pub(crate) fn save_stroke_color(color: &str) {
 ///
 /// - `f64` - The line width value to persist.
 pub(crate) fn save_line_width(width: f64) {
-    UseEuvBrowser::local_storage_set(CANVAS_STORAGE_KEY_LINE_WIDTH, &width.to_string());
+    UseEuvBrowser::local_storage_set(CANVAS_STORAGE_KEY_LINE_WIDTH, width.to_string());
 }
 
 /// Creates an input event handler that updates the line width via

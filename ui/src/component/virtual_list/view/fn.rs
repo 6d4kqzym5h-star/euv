@@ -8,11 +8,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvVirtualListProps>`: The props node containing configuration, item renderer, and optional callbacks.
+/// - `VirtualNode<EuvVirtualListProps>` - The props node containing configuration, item renderer, and optional callbacks.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The virtual list container with windowed rendering.
+/// - `VirtualNode` - The virtual list container with windowed rendering.
 #[component]
 pub fn euv_virtual_list(node: VirtualNode<EuvVirtualListProps>) -> VirtualNode {
     let EuvVirtualListProps {

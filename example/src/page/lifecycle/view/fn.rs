@@ -12,9 +12,7 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
     let render_count: Signal<i32> = state.get_render_count();
     let logs: Signal<Vec<String>> = state.get_logs();
     watch!(render_count, |render_count_value: i32| {
-        Console::log(&format!(
-            "watch! render count changed: {render_count_value}"
-        ));
+        Console::log(format!("watch! render count changed: {render_count_value}"));
     });
     html! {
         div {

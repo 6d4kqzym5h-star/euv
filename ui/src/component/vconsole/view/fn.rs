@@ -9,11 +9,11 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvVconsolePanelProps>`: The props node containing the panel visibility signal.
+/// - `VirtualNode<EuvVconsolePanelProps>` - The props node containing the panel visibility signal.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The vConsole panel virtual DOM tree.
+/// - `VirtualNode` - The vConsole panel virtual DOM tree.
 #[component]
 pub fn euv_vconsole_panel(node: VirtualNode<EuvVconsolePanelProps>) -> VirtualNode {
     let EuvVconsolePanelProps { panel_open }: EuvVconsolePanelProps =
@@ -40,11 +40,11 @@ pub fn euv_vconsole_panel(node: VirtualNode<EuvVconsolePanelProps>) -> VirtualNo
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvVconsoleFabProps>`: The props node containing panel visibility signal and log count.
+/// - `VirtualNode<EuvVconsoleFabProps>` - The props node containing panel visibility signal and log count.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The floating action button virtual DOM tree.
+/// - `VirtualNode` - The floating action button virtual DOM tree.
 #[component]
 pub fn euv_vconsole_fab(node: VirtualNode<EuvVconsoleFabProps>) -> VirtualNode {
     let EuvVconsoleFabProps {
@@ -81,11 +81,11 @@ pub fn euv_vconsole_fab(node: VirtualNode<EuvVconsoleFabProps>) -> VirtualNode {
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvVconsoleDrawerProps>`: The props node containing console signal, panel visibility signal, and log count.
+/// - `VirtualNode<EuvVconsoleDrawerProps>` - The props node containing console signal, panel visibility signal, and log count.
 ///
 /// # Returns
 ///
-/// - `VirtualNode`: The drawer panel virtual DOM tree.
+/// - `VirtualNode` - The drawer panel virtual DOM tree.
 #[component]
 pub fn euv_vconsole_drawer(node: VirtualNode<EuvVconsoleDrawerProps>) -> VirtualNode {
     let EuvVconsoleDrawerProps {

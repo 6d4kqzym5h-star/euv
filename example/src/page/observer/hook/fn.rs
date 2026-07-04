@@ -40,7 +40,7 @@ fn bind_observer(selector: &str) {
                 let data_index: Option<String> = target.get_attribute("data_index");
                 match data_index {
                     Some(index_value) => {
-                        Console::log(&format!(
+                        Console::log(format!(
                             "[IntersectionObserver] <{}> index={}, intersection_ratio={:.2}",
                             tag_name, index_value, intersection_ratio
                         ));
@@ -50,7 +50,7 @@ fn bind_observer(selector: &str) {
                         let total_count: u32 = children.length();
                         let estimated_visible: u32 =
                             (intersection_ratio * total_count as f64).ceil() as u32;
-                        Console::log(&format!(
+                        Console::log(format!(
                             "[IntersectionObserver] <{}> intersection_ratio={:.2}, total_items={}, estimated_visible_items={}",
                             tag_name, intersection_ratio, total_count, estimated_visible
                         ));
