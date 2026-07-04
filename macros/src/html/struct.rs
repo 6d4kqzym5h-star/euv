@@ -16,18 +16,24 @@ pub(crate) struct HtmlRoot {
     pub(crate) children: Vec<HtmlNode>,
 }
 
-/// Represents a reactive `for` loop in HTML.
+/// Represents a `for` loop in HTML.
 ///
 /// Syntax:
-/// - `for pattern in {expr} { children }`
-/// - `for pattern in expr { children }`
+/// - Reactive: `for pattern in {expr} { children }`
+///   The iterable expression in braces is treated as a signal that triggers re-rendering.
+/// - Inline: `for pattern in expr { children }`
+///   The iterable is a plain Rust expression, evaluated once at render time.
 ///
 /// The pattern is a Rust binding pattern (e.g., `item` or `(index, item)`).
-/// The iterable may be wrapped in braces or written as a bare expression.
 /// Each iteration's body is rendered as HTML and collected into a
 /// `VirtualNode::Fragment`.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlFor {
+    /// Whether this for loop is reactive (iterable wrapped in braces as a signal).
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) is_reactive: bool,
     /// The binding pattern for loop variables (e.g., `item` or `(index, item)`).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
@@ -56,7 +62,7 @@ pub(crate) struct HtmlFor {
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlIf {
     /// Whether this conditional is reactive (condition wrapped in braces as a signal).
-    #[get(pub(crate))]
+    #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) is_reactive: bool,
@@ -135,12 +141,21 @@ pub(crate) struct HtmlAttrMatch {
     pub(crate) arms: Vec<(proc_macro2::TokenStream, Expr)>,
 }
 
-/// Represents a reactive `match` expression in HTML.
+/// Represents a `match` expression in HTML.
 ///
-/// Syntax: `match {expr} { pattern => { children } ... }`.
+/// Syntax:
+/// - Reactive: `match {expr} { pattern => { children } ... }`
+///   The scrutinee expression in braces is treated as a signal that triggers re-rendering.
+/// - Inline: `match expr { pattern => { children } ... }`
+///   The scrutinee is a plain Rust expression, evaluated once at render time.
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlMatch {
-    /// The expression to match against (from the braces after `match`).
+    /// Whether this match is reactive (scrutinee wrapped in braces as a signal).
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) is_reactive: bool,
+    /// The expression to match against (from the braces after `match` for reactive, or bare expression for inline).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]

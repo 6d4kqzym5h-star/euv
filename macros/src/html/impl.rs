@@ -181,13 +181,21 @@ impl Parse for HtmlIf {
     }
 }
 
-/// Implementation of `Parse` for `HtmlMatch`, parsing reactive match expressions.
+/// Implementation of `Parse` for `HtmlMatch`, parsing reactive and inline match expressions.
 ///
 /// Each arm body can be any valid HTML content (elements, expressions, if, etc.)
 /// without requiring outer braces. Bodies are terminated by `,` or end of the
 /// match block.
 impl Parse for HtmlMatch {
-    /// Parses a reactive `match` expression into an `HtmlMatch` AST.
+    /// Parses a `match` expression into an `HtmlMatch` AST.
+    ///
+    /// Supports two syntaxes:
+    /// - Reactive: `match {expr} { pattern => { children } ... }`
+    ///   Detected when `match` is immediately followed by `{`.
+    ///   The scrutinee expression in braces is treated as a signal that triggers re-rendering.
+    /// - Inline: `match expr { pattern => { children } ... }`
+    ///   Detected when `match` is followed by a non-`{` token.
+    ///   The scrutinee is a plain Rust expression, evaluated once at render time.
     ///
     /// # Arguments
     ///
@@ -198,9 +206,14 @@ impl Parse for HtmlMatch {
     /// - `syn::Result<Self>` - The parsed `HtmlMatch`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         input.parse::<Token![match]>()?;
-        let scrutinee_content: ParseBuffer<'_>;
-        braced!(scrutinee_content in input);
-        let scrutinee: Expr = scrutinee_content.parse()?;
+        let is_reactive: bool = input.peek(Brace);
+        let scrutinee: Expr = if is_reactive {
+            let scrutinee_content: ParseBuffer<'_>;
+            braced!(scrutinee_content in input);
+            scrutinee_content.parse()?
+        } else {
+            input.parse()?
+        };
         let arms_content: ParseBuffer<'_>;
         braced!(arms_content in input);
         let mut arms: Vec<(proc_macro2::TokenStream, Vec<HtmlNode>)> = Vec::new();
@@ -217,13 +230,25 @@ impl Parse for HtmlMatch {
                 arms_content.parse::<Token![,]>()?;
             }
         }
-        Ok(Self { scrutinee, arms })
+        Ok(Self {
+            is_reactive,
+            scrutinee,
+            arms,
+        })
     }
 }
 
-/// Implementation of `Parse` for `HtmlFor`, parsing reactive for loops.
+/// Implementation of `Parse` for `HtmlFor`, parsing reactive and inline for loops.
 impl Parse for HtmlFor {
-    /// Parses a reactive `for` loop into an `HtmlFor` AST.
+    /// Parses a `for` loop into an `HtmlFor` AST.
+    ///
+    /// Supports two syntaxes:
+    /// - Reactive: `for pattern in {expr} { children }`
+    ///   Detected when `in` is immediately followed by `{`.
+    ///   The iterable expression in braces is treated as a signal that triggers re-rendering.
+    /// - Inline: `for pattern in expr { children }`
+    ///   Detected when `in` is followed by a non-`{` token.
+    ///   The iterable is a plain Rust expression, evaluated once at render time.
     ///
     /// # Arguments
     ///
@@ -240,7 +265,8 @@ impl Parse for HtmlFor {
             pattern_tokens.extend([token_tree]);
         }
         input.parse::<Token![in]>()?;
-        let iterable: Expr = if input.peek(Brace) {
+        let is_reactive: bool = input.peek(Brace);
+        let iterable: Expr = if is_reactive {
             let iter_content: ParseBuffer<'_>;
             braced!(iter_content in input);
             iter_content.parse()?
@@ -251,6 +277,7 @@ impl Parse for HtmlFor {
         braced!(body_content in input);
         let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
         Ok(Self {
+            is_reactive,
             pattern: pattern_tokens,
             iterable,
             body,
@@ -416,7 +443,7 @@ impl ToTokens for HtmlNode {
                 });
             }
             HtmlNode::If(html_if) => {
-                if *html_if.get_is_reactive() {
+                if html_if.get_is_reactive() {
                     let if_chain: proc_macro2::TokenStream =
                         build_html_if_chain(html_if.get_branches());
                     tokens.extend(quote! {
@@ -432,46 +459,86 @@ impl ToTokens for HtmlNode {
             }
             HtmlNode::Match(html_match) => {
                 let scrutinee: &Expr = strip_braces_from_expr(html_match.get_scrutinee());
-                let arm_tokens: Vec<proc_macro2::TokenStream> = html_match
-                    .get_arms()
-                    .iter()
-                    .enumerate()
-                    .map(
-                        |(arm_index, (pattern, body)): (
-                            usize,
-                            &(proc_macro2::TokenStream, Vec<HtmlNode>),
-                        )| {
-                            let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
-                            quote! {
-                                #pattern => {
-                                    __euv_hook_context.switch_arm(#arm_index);
-                                    #body_expr
+                if html_match.get_is_reactive() {
+                    let arm_tokens: Vec<proc_macro2::TokenStream> = html_match
+                        .get_arms()
+                        .iter()
+                        .enumerate()
+                        .map(
+                            |(arm_index, (pattern, body)): (
+                                usize,
+                                &(proc_macro2::TokenStream, Vec<HtmlNode>),
+                            )| {
+                                let body_expr: proc_macro2::TokenStream =
+                                    children_to_node_tokens(body);
+                                quote! {
+                                    #pattern => {
+                                        __euv_hook_context.switch_arm(#arm_index);
+                                        #body_expr
+                                    }
                                 }
+                            },
+                        )
+                        .collect();
+                    tokens.extend(quote! {
+                        ::euv::VirtualNode::create_dynamic(move |__euv_hook_context: &mut ::euv::HookContext| {
+                            match #scrutinee {
+                                #(#arm_tokens)*
                             }
-                        },
-                    )
-                    .collect();
-                tokens.extend(quote! {
-                    ::euv::VirtualNode::create_dynamic(move |__euv_hook_context: &mut ::euv::HookContext| {
-                        match #scrutinee {
-                            #(#arm_tokens)*
+                        })
+                    });
+                } else {
+                    let arm_tokens: Vec<proc_macro2::TokenStream> = html_match
+                        .get_arms()
+                        .iter()
+                        .map(
+                            |(pattern, body): &(proc_macro2::TokenStream, Vec<HtmlNode>)| {
+                                let body_expr: proc_macro2::TokenStream =
+                                    children_to_node_tokens(body);
+                                quote! {
+                                    #pattern => #body_expr
+                                }
+                            },
+                        )
+                        .collect();
+                    tokens.extend(quote! {
+                        {
+                            match #scrutinee {
+                                #(#arm_tokens)*
+                            }
                         }
-                    })
-                });
+                    });
+                }
             }
             HtmlNode::For(html_for) => {
                 let pattern: &proc_macro2::TokenStream = html_for.get_pattern();
                 let iterable: &Expr = html_for.get_iterable();
                 let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
-                tokens.extend(quote! {
-                    {
-                        let mut __euv_for_nodes: Vec<::euv::VirtualNode> = Vec::new();
-                        for #pattern in #iterable {
-                            __euv_for_nodes.extend(#body_tokens);
+                if html_for.get_is_reactive() {
+                    tokens.extend(quote! {
+                        ::euv::VirtualNode::create_dynamic(move |_: &mut ::euv::HookContext| {
+                            let __euv_iterable = #iterable;
+                            let __euv_size_hint: usize = __euv_iterable.size_hint().0;
+                            let mut __euv_for_nodes: Vec<::euv::VirtualNode> = Vec::with_capacity(__euv_size_hint);
+                            for #pattern in __euv_iterable {
+                                __euv_for_nodes.extend(#body_tokens);
+                            }
+                            ::euv::VirtualNode::Fragment(__euv_for_nodes)
+                        })
+                    });
+                } else {
+                    tokens.extend(quote! {
+                        {
+                            let __euv_iterable = #iterable;
+                            let __euv_size_hint: usize = __euv_iterable.size_hint().0;
+                            let mut __euv_for_nodes: Vec<::euv::VirtualNode> = Vec::with_capacity(__euv_size_hint);
+                            for #pattern in __euv_iterable {
+                                __euv_for_nodes.extend(#body_tokens);
+                            }
+                            ::euv::VirtualNode::Fragment(__euv_for_nodes)
                         }
-                        ::euv::VirtualNode::Fragment(__euv_for_nodes)
-                    }
-                });
+                    });
+                }
             }
             HtmlNode::DynamicTag(dynamic_tag) => {
                 dynamic_tag.to_tokens(tokens);
