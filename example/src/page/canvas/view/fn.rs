@@ -73,7 +73,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
             euv_header {
                 icon: "🎨"
                 title: "Canvas"
-                subtitle: "A freehand drawing board. Tap Draw to start creating."
+                subtitle: "A freehand drawing board with color picker and line width control. Tap Draw to enter fullscreen canvas mode."
             }
             euv_card {
                 title: "Drawing Board"

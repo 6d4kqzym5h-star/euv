@@ -20,7 +20,7 @@ pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNo
             euv_header {
                 icon: "🔌"
                 title: "WebSocket Chat"
-                subtitle: "Connect to a WebSocket chat server with automatic UUID and Ping keep-alive."
+                subtitle: "Connect to a WebSocket chat server with automatic UUID assignment and Ping keep-alive. Send and receive messages in real time."
             }
             euv_card {
                 title: "Connection"

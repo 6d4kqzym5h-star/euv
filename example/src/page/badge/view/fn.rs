@@ -14,13 +14,13 @@ pub(crate) fn page_badge(node: VirtualNode<PageBadgeProps>) -> VirtualNode {
             euv_header {
                 icon: "🏷️"
                 title: "Badge"
-                subtitle: "Status indicators with click support."
+                subtitle: "Colored tag components with click-to-log support. Solid and outline variants demonstrate the euv_tag component's color and style options."
             }
             euv_card {
                 title: "Solid Tags"
                 p {
                     class: c_badge_hint()
-                    "Status indicators with click support"
+                    "Click any tag below to log its name to the browser console. Solid tags use a filled background, while outline tags display a bordered style."
                 }
                 div {
                     class: c_badge_row()

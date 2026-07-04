@@ -36,7 +36,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
             euv_header {
                 icon: "📊"
                 title: "Virtual List"
-                subtitle: "High-performance windowed list rendering 10,000 items with minimal DOM nodes."
+                subtitle: "High-performance windowed list rendering 10,000 items with minimal DOM nodes. Only visible rows are rendered."
             }
             div {
                 class: c_virtual_list_card()

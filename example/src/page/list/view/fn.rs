@@ -15,7 +15,7 @@ pub(crate) fn page_list(node: VirtualNode<PageListProps>) -> VirtualNode {
             euv_header {
                 icon: "📝"
                 title: "List Rendering"
-                subtitle: "Dynamic list with add and remove operations."
+                subtitle: "Dynamic todo list with Signal-backed add and remove operations. Demonstrates keyed list rendering and reactive state management."
             }
             euv_card {
                 title: "Todo List"

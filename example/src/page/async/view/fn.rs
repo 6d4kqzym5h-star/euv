@@ -15,13 +15,13 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
             euv_header {
                 icon: "⏳"
                 title: "Async Data"
-                subtitle: "Simulating network requests with loading states."
+                subtitle: "Simulate asynchronous network requests with full lifecycle management: loading spinner, error handling, and successful data display."
             }
             euv_card {
                 title: "Fetch Data"
                 p {
                     class: c_fetch_hint()
-                    "Click the button below to fetch data from ltpp.vip"
+                    "Click the button below to simulate a network request. The UI reactively transitions between loading, error, and success states based on the fetch result."
                 }
                 div {
                     class: c_button_controls()
@@ -46,7 +46,7 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
                             }
                             span {
                                 class: c_loading_subtitle()
-                                "Fetching data from server"
+                                "Fetching data from the remote server — please wait..."
                             }
                         }
                     }

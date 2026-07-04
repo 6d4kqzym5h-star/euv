@@ -15,7 +15,7 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
             euv_header {
                 icon: "🔢"
                 title: "Counter"
-                subtitle: "Reactive counter driven by signal state."
+                subtitle: "A reactive counter powered by Signal state. Click Add, Subtract, or Reset to see fine-grained updates — only the changed number re-renders, not the entire page."
             }
             euv_card {
                 title: "Counter"
@@ -27,7 +27,7 @@ pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
                         class: c_counter_value()
                         count
                     }
-                    " clicks."
+                    ". Each click updates the Signal, and the Virtual DOM efficiently patches only the changed text node."
                 }
                 div {
                     class: c_button_controls()

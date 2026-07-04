@@ -19,7 +19,7 @@ pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
             euv_header {
                 icon: "📡"
                 title: "Server-Sent Events"
-                subtitle: "Connect to an SSE endpoint and receive real-time streaming events."
+                subtitle: "Connect to an SSE endpoint and receive real-time streaming events from the server. Events appear in the list below as they arrive."
             }
             euv_card {
                 title: "Connection"

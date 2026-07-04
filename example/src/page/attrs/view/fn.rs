@@ -22,7 +22,7 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
             euv_header {
                 icon: "⚙️"
                 title: "Custom Attributes"
-                subtitle: "Static and dynamic attribute keys and values."
+                subtitle: "Dynamic attribute keys and values in both html! and class! macros."
             }
             euv_card {
                 title: "HTML Dynamic Attribute (Variable Key & Value)"

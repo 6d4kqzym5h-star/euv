@@ -600,7 +600,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             euv_header {
                 icon: "🎯"
                 title: "Event Handling"
-                subtitle: "Complete browser event demo: keyboard, mouse, focus, drag, wheel, clipboard, touch, form, media, video, and image events."
+                subtitle: "Complete browser event demo covering keyboard, mouse, focus, drag-and-drop, wheel, clipboard, touch, form, media, video, and image events."
             }
             euv_card {
                 title: "Keyboard Events"
@@ -689,11 +689,11 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     oncontextmenu: on_context_menu
                     p {
                         class: c_demo_text()
-                        "Click, double-click, right-click, or move mouse here"
+                        "Click, double-click, right-click, or move your mouse within this area to track mouse events."
                     }
                     p {
                         class: c_demo_text_muted()
-                        "Tracks click, dblclick, mousedown, mouseup, mousemove, mouseenter, mouseleave, contextmenu"
+                        "Tracks click, dblclick, mousedown, mouseup, mousemove, mouseenter, mouseleave, and contextmenu events."
                     }
                 }
                 div {
@@ -1031,11 +1031,11 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     onwheel: on_wheel
                     p {
                         class: c_demo_text()
-                        "Scroll mouse wheel here"
+                        "Scroll the mouse wheel within this area to track wheel deltas and scroll mode."
                     }
                     p {
                         class: c_demo_text_muted()
-                        "Tracks wheel delta and scroll mode"
+                        "Tracks wheel delta (deltaX, deltaY) and delta mode (pixel, line, or page)."
                     }
                 }
                 div {
@@ -1117,11 +1117,11 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     ontouchcancel: on_touch_cancel
                     p {
                         class: c_demo_text()
-                        "Touch this area (mobile/touchscreen)"
+                        "Touch this area on a mobile device or touchscreen to track touch events."
                     }
                     p {
                         class: c_demo_text_muted()
-                        "touchstart, touchmove, touchend, touchcancel"
+                        "Tracks touchstart, touchmove, touchend, and touchcancel events with touch point details."
                     }
                 }
                 div {

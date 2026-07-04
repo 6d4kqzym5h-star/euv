@@ -26,7 +26,7 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
             euv_header {
                 icon: "📷"
                 title: "Camera"
-                subtitle: "Open the camera to scan QR codes. Navigates on valid URL detection."
+                subtitle: "Open the device camera to scan QR codes. When a valid URL is detected, the app navigates to it automatically."
             }
             euv_card {
                 title: "Camera Preview"

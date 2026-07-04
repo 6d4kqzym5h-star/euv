@@ -338,13 +338,13 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
             euv_header {
                 icon: "🔗"
                 title: "Component Binding"
-                subtitle: "Props passing, two-way binding, and cross-component reactive binding."
+                subtitle: "Props passing with callbacks, two-way binding via shared Signals, and cross-component reactive binding using watch!."
             }
             euv_card {
                 title: "Props & Callbacks"
                 p {
                     class: c_demo_text()
-                    "Parent passes data to child via props. Child communicates back via callbacks."
+                    "The parent component passes a string message to the child via props. The child communicates back to the parent through callback functions triggered on user interaction."
                 }
                 euv_input {
                     id: BINDING_PARENT_MESSAGE_ID
@@ -414,7 +414,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                 title: "Two-Way Binding (Shared Signal)"
                 p {
                     class: c_demo_text()
-                    "Parent and child share the same Signal. Changes in either component are reflected everywhere."
+                    "Both parent and child components share the same Signal instances. Any mutation in either component is immediately reflected in the other — no callbacks or event listeners needed."
                 }
                 div {
                     class: c_binding_parent_box()
@@ -452,7 +452,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                 title: "Cross-Component Reactive Binding (watch!)"
                 p {
                     class: c_demo_text()
-                    "Signals are linked across components using watch! Changing one automatically updates the other."
+                    "Signals are linked across components using the watch! macro. Changing one Signal automatically updates the other through a reactive side effect."
                 }
                 h4 {
                     class: c_binding_section_title()
@@ -460,7 +460,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                 }
                 p {
                     class: c_hint()
-                    "Edit either field — the other updates reactively via watch!"
+                    "Edit either temperature field — the other updates reactively via watch!"
                 }
                 {
                     temperature_converter(cross_state.get_celsius(), cross_state.get_fahrenheit())
@@ -471,7 +471,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                 }
                 p {
                     class: c_hint()
-                    "Adjust RGB sliders — the hex color updates reactively via watch!"
+                    "Adjust the RGB sliders — the hex color and preview update reactively via watch!"
                 }
                 {
                     color_mixer(cross_state.get_red(), cross_state.get_green(), cross_state.get_blue(), cross_state.get_hex_color())

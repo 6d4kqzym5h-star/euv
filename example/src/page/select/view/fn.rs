@@ -15,7 +15,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
             euv_header {
                 icon: "📋"
                 title: "Select & Textarea"
-                subtitle: "Dropdown selection, cascading selects, and textarea binding."
+                subtitle: "Dropdown selection, cascading country-city selects, and textarea with character count validation."
             }
             euv_card {
                 title: "Simple Select"

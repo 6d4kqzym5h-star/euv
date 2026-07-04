@@ -18,7 +18,7 @@ pub(crate) fn page_observer(node: VirtualNode<PageObserverProps>) -> VirtualNode
             euv_header {
                 icon: "👁️"
                 title: "Observer"
-                subtitle: "IntersectionObserver API demo: detect when elements enter or leave the viewport."
+                subtitle: "Detect when elements enter or leave the viewport using the IntersectionObserver API. Open the browser console to see intersection events."
             }
             euv_card {
                 title: "Intersection Observer"

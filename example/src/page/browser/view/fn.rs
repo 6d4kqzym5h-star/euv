@@ -15,13 +15,13 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
             euv_header {
                 icon: "🌐"
                 title: "Browser APIs"
-                subtitle: "Interact with localStorage, sessionStorage, clipboard, window, navigator, and location."
+                subtitle: "Interact with browser storage, clipboard, window metrics, navigator info, location URL, and developer console — all through euv's typed hook APIs."
             }
             euv_card {
                 title: "localStorage"
                 p {
                     class: c_demo_text()
-                    "Store and retrieve persistent data in the browser."
+                    "Store, retrieve, and remove persistent key-value data. Data in localStorage survives page reloads and browser restarts."
                 }
                 div {
                     class: c_browser_api_row()
@@ -80,7 +80,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 title: "sessionStorage"
                 p {
                     class: c_demo_text()
-                    "Store data for the duration of the page session."
+                    "Store key-value data for the duration of the page session. Data is cleared when the tab or window is closed."
                 }
                 div {
                     class: c_browser_api_row()
@@ -139,7 +139,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 title: "Clipboard API"
                 p {
                     class: c_demo_text()
-                    "Read from and write to the system clipboard."
+                    "Write text to the system clipboard or read the current clipboard contents. Requires a secure context (HTTPS or localhost)."
                 }
                 euv_field {
                     id: CLIPBOARD_TEXT_ID
@@ -180,7 +180,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 title: "Window"
                 p {
                     class: c_demo_text()
-                    "Read the current window dimensions."
+                    "Read the browser window's inner width and height in CSS pixels. Click Refresh Size after resizing the window."
                 }
                 div {
                     class: c_button_controls()
@@ -209,7 +209,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 title: "Navigator"
                 p {
                     class: c_demo_text()
-                    "Read browser and device information."
+                    "Read the browser's User-Agent string and preferred language. Useful for analytics, feature detection, and localization."
                 }
                 div {
                     class: c_browser_info_grid()
@@ -241,7 +241,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 title: "Location"
                 p {
                     class: c_demo_text()
-                    "Read the current page URL information."
+                    "Read the current page's full URL components: href, origin, and pathname. All values are read-only and update automatically on navigation."
                 }
                 div {
                     class: c_browser_info_grid()
@@ -284,7 +284,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                 title: "Console"
                 p {
                     class: c_demo_text()
-                    "Send messages to the browser developer console."
+                    "Send log, warning, and error messages to the browser developer console. Open DevTools (F12) to see the output."
                 }
                 euv_field {
                     id: CONSOLE_MESSAGE_ID

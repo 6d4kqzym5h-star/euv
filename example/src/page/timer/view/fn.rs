@@ -39,7 +39,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
             euv_header {
                 icon: "⏱️"
                 title: "Timer"
-                subtitle: "Stopwatch and countdown timer with interval-based updates."
+                subtitle: "Interval-based stopwatch and countdown timer. Both use use_interval for precise timing and use_cleanup to clear intervals on unmount."
             }
             euv_card {
                 title: "Stopwatch"

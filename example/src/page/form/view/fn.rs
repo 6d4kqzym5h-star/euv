@@ -15,7 +15,7 @@ pub(crate) fn page_form(node: VirtualNode<PageFormProps>) -> VirtualNode {
             euv_header {
                 icon: "📄"
                 title: "Form Demo"
-                subtitle: "Two-way binding and validation example."
+                subtitle: "A registration form with two-way Signal binding and real-time field validation."
             }
             euv_card {
                 title: "Registration Form"

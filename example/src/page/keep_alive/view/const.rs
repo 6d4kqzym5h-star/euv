@@ -42,3 +42,6 @@ pub(crate) const KEEP_ALIVE_MESSAGE_PLACEHOLDER: &str = "Write a message...";
 
 /// The HTML rows attribute for the message textarea element.
 pub(crate) const KEEP_ALIVE_MESSAGE_ROWS: &str = "3";
+
+/// The description text for the keep-alive "How It Works" section.
+pub(crate) const KEEP_ALIVE_DESCRIPTION: &str = "In euv, using match or if to switch between components destroys and recreates them, resetting all hook state. To preserve state (keep-alive), render all tabs simultaneously and toggle visibility with CSS display: none / block. This way, all DynamicNodes and their HookContexts stay alive — signals retain values, intervals keep running, and form inputs are preserved. Watch the console to see that the counter and timer continue working even when their tab is hidden.";

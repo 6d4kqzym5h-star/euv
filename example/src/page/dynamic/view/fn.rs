@@ -21,7 +21,7 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
             euv_header {
                 icon: "🏷️"
                 title: "Dynamic Tag"
-                subtitle: "Switch tags at runtime using the {tag} { content } syntax."
+                subtitle: "Switch the element tag at runtime using the {tag} { content } syntax. Supports native HTML elements and user-defined components."
             }
             euv_card {
                 title: "Tag Type Selection"

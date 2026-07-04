@@ -19,7 +19,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
             euv_header {
                 icon: "🎬"
                 title: "Animation"
-                subtitle: "CSS transitions, keyframe animations, and reactive style changes."
+                subtitle: "CSS transitions, keyframe animations, and reactive style changes. Toggle each demo to see how euv binds Signal state to CSS classes and inline styles for smooth, declarative animations."
             }
             euv_card {
                 title: "Fade In / Out"
@@ -42,12 +42,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 if { box_visible.get() } {
                     div {
                         class: c_anim_fade_in()
-                        "This element fades in and out with a smooth transition."
+                        "This element fades in and out with a smooth CSS transition. The visibility is controlled by a Signal — when it becomes true, the node is inserted into the Virtual DOM with a fade-in animation."
                     }
                 }
             }
             euv_card {
-                title: "Spinning Element"
+                title: "CSS Keyframe Spin"
                 div {
                     class: c_button_controls()
                     euv_button {
@@ -77,7 +77,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 }
             }
             euv_card {
-                title: "Pulse Effect"
+                title: "CSS Keyframe Pulse"
                 div {
                     class: c_button_controls()
                     euv_button {
@@ -107,7 +107,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 }
             }
             euv_card {
-                title: "Progress Bar"
+                title: "Animated Progress Bar"
                 div {
                     class: c_button_controls()
                     euv_button {
@@ -133,7 +133,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 }
             }
             euv_card {
-                title: "Size Scale"
+                title: "Reactive Inline Style (Scale Transform)"
                 div {
                     class: c_button_controls()
                     euv_button {
@@ -143,9 +143,9 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                             EuvButtonVariant::Primary
                         }
                         label: if { scale_active.get() } {
-                            "Click me to restore!"
+                            "Restore"
                         } else {
-                            "Click me to shrink!"
+                            "Shrink"
                         }
                         onclick: use_toggle(scale_active)
                     }

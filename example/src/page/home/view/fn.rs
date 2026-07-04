@@ -146,7 +146,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                             p {
                                 class: c_feature_desc()
-                                "Fine-grained reactive state management with automatic dependency tracking."
+                                "Fine-grained reactive state management with automatic dependency tracking. Signals only notify dependents that read them, avoiding unnecessary re-renders."
                             }
                         }
                     }
@@ -167,7 +167,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                             p {
                                 class: c_feature_desc()
-                                "Virtual DOM with optimized reconciliation for smooth 60fps updates."
+                                "Virtual DOM with optimized reconciliation for smooth 60fps updates. The differ computes the minimal set of DOM operations needed to sync the UI with the latest state."
                             }
                         }
                     }
@@ -188,7 +188,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                             p {
                                 class: c_feature_desc()
-                                "Write UI with familiar HTML-like macros that compile to efficient Rust."
+                                "Write UI with familiar HTML-like macros that compile to efficient Rust at build time. No runtime template engine — just zero-cost abstractions."
                             }
                         }
                     }
@@ -209,7 +209,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             }
                             p {
                                 class: c_feature_desc()
-                                "Run anywhere with WASM — browsers, servers, and native via bridge."
+                                "Run anywhere with WASM — browsers, servers, and native platforms via the bridge. Share the same Rust codebase across all targets."
                             }
                         }
                     }

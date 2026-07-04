@@ -14,7 +14,7 @@ pub(crate) fn page_not_found(node: VirtualNode<PageNotFoundProps>) -> VirtualNod
             euv_header {
                 icon: "🔍"
                 title: "404 Not Found"
-                subtitle: "The page you are looking for does not exist."
+                subtitle: "The page you are looking for does not exist or has been moved."
             }
             euv_card {
                 title: "Navigation"

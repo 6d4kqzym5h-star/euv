@@ -372,7 +372,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
             euv_header {
                 icon: "💚"
                 title: "Keep-Alive"
-                subtitle: "Preserve component state across tab switches using CSS display toggling."
+                subtitle: "Keep component state alive across tab switches using CSS display toggling."
             }
             euv_card {
                 title: "Tab Switching with State Preservation"
@@ -447,7 +447,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                 title: "How It Works"
                 p {
                     class: c_keep_alive_demo_text()
-                    "In euv, using match or if to switch between components destroys and recreates them, resetting all hook state. To preserve state (keep-alive), render all tabs simultaneously and toggle visibility with CSS display: none / block. This way, all DynamicNodes and their HookContexts stay alive — signals retain values, intervals keep running, and form inputs are preserved."
+                    KEEP_ALIVE_DESCRIPTION
                 }
             }
         }

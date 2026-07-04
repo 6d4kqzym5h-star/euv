@@ -15,13 +15,13 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
             euv_header {
                 icon: "💬"
                 title: "Modal Dialog"
-                subtitle: "Overlay dialogs with different content patterns."
+                subtitle: "Overlay dialogs with different content patterns: basic text, confirmation, form input, and nested stacking with back-gesture support."
             }
             euv_card {
                 title: "Basic Modal"
                 p {
                     class: c_demo_text()
-                    "A simple modal with text content."
+                    "A simple modal with static text content. Click the close button or the overlay backdrop to dismiss."
                 }
                 div {
                     class: c_button_controls()
@@ -36,7 +36,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 title: "Confirm Modal"
                 p {
                     class: c_demo_text()
-                    "A modal requiring user confirmation."
+                    "A modal that requires the user to confirm or cancel an action. The result is displayed below the button."
                 }
                 div {
                     class: c_button_controls()
@@ -57,7 +57,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 title: "Form Modal"
                 p {
                     class: c_demo_text()
-                    "A modal containing a form with inputs."
+                    "A modal containing validated form inputs. Submission is blocked until all validation rules pass."
                 }
                 div {
                     class: c_button_controls()

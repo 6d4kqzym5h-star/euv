@@ -55,7 +55,7 @@ pub(crate) fn page_file_upload(node: VirtualNode<PageFileUploadProps>) -> Virtua
             euv_header {
                 icon: "📁"
                 title: "File Upload"
-                subtitle: "File selection and file list display."
+                subtitle: "File input with configurable multiple and accept filter options. Displays selected file names and supports clearing."
             }
             euv_card {
                 title: "File Input"

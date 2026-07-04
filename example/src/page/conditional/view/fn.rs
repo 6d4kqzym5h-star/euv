@@ -18,7 +18,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
             euv_header {
                 icon: "🔀"
                 title: "Conditional Rendering"
-                subtitle: "Toggle visibility and switch between views."
+                subtitle: "Toggle element visibility with if expressions, render different content based on role with match, and implement tab switching — all driven by Signal state."
             }
             euv_card {
                 title: "Toggle Content"
@@ -43,11 +43,11 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         }
                         p {
                             class: c_demo_text()
-                            "This content is conditionally rendered based on the toggle state."
+                            "This content is conditionally rendered using an if expression bound to a Signal. When the Signal is false, the node is removed from the Virtual DOM entirely."
                         }
                         p {
                             class: c_demo_text_muted()
-                            "You can use this pattern for modals, accordions, and more."
+                            "Use this pattern for modals, accordions, feature flags, permission-based UI, and any scenario where content should appear or disappear reactively."
                         }
                     }
                 }

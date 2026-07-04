@@ -22,7 +22,7 @@ pub(crate) fn page_lifecycle(node: VirtualNode<PageLifecycleProps>) -> VirtualNo
             euv_header {
                 icon: "♻️"
                 title: "Lifecycle"
-                subtitle: "Track component updates and lifecycle events."
+                subtitle: "Track component render counts and watch-driven updates. The watch! macro reacts to Signal changes and logs them to the console."
             }
             euv_card {
                 title: "Render Counter"
