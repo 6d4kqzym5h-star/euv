@@ -14,3 +14,11 @@ pub(crate) struct CurrentHookContextCell(
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<HookContextRc>>,
 );
+
+/// A zero-sized struct providing static methods for scheduling
+/// signal update dispatches and batching.
+///
+/// All methods are crate-internal associated functions that manage
+/// the global scheduling flags and dispatch closure.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub(crate) struct Scheduler;

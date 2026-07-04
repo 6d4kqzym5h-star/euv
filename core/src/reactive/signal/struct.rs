@@ -62,7 +62,7 @@ where
 /// global registry for lifecycle management. The `Copy` semantics are safe
 /// because only the pointer address is copied — the actual heap allocation
 /// is owned by the registry.
-#[derive(CustomDebug, Data, Eq, New, PartialEq)]
+#[derive(CustomDebug, Data, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub struct Signal<T>
 where
     T: Clone + PartialEq + 'static,

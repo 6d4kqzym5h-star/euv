@@ -3,12 +3,15 @@
 //! A declarative, cross-platform UI framework for Rust with virtual DOM,
 //! reactive signals, and HTML macros for WebAssembly.
 
+mod app;
 mod event;
 mod reactive;
 mod renderer;
 mod vdom;
 
-pub use {event::*, reactive::*, renderer::*, vdom::*};
+pub use {app::*, event::*, reactive::*, vdom::*};
+
+pub(crate) use renderer::*;
 
 use std::{
     any::Any,

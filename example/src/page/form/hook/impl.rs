@@ -9,16 +9,16 @@ impl Default for UseForm {
     /// - `Self` - A new `UseForm` with all signals initialized to defaults.
     fn default() -> Self {
         Self {
-            username: use_signal(String::new),
-            email: use_signal(String::new),
-            password: use_signal(String::new),
-            agree: use_signal(|| true),
-            submitted: use_signal(String::new),
-            errors: use_signal(String::new),
-            username_error: use_signal(String::new),
-            email_error: use_signal(String::new),
-            password_error: use_signal(String::new),
-            agree_error: use_signal(String::new),
+            username: App::use_signal(String::new),
+            email: App::use_signal(String::new),
+            password: App::use_signal(String::new),
+            agree: App::use_signal(|| true),
+            submitted: App::use_signal(String::new),
+            errors: App::use_signal(String::new),
+            username_error: App::use_signal(String::new),
+            email_error: App::use_signal(String::new),
+            password_error: App::use_signal(String::new),
+            agree_error: App::use_signal(String::new),
         }
     }
 }

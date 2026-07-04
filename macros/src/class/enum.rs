@@ -1,9 +1,9 @@
 /// The key side of a CSS property in a class definition.
 ///
 /// Supports two forms:
-/// - `Static`: A compile-time string literal or kebab-case identifier (e.g., `font_size`, `"background"`).
+/// - `Static` - A compile-time string literal or kebab-case identifier (e.g., `font_size`, `"background"`).
 ///   Stored as raw tokens to preserve the original form — converted to a string only at code generation time.
-/// - `Dynamic`: A runtime expression wrapped in braces (e.g., `{key_var}`) that evaluates to a string.
+/// - `Dynamic` - A runtime expression wrapped in braces (e.g., `{key_var}`) that evaluates to a string.
 #[derive(Clone, Debug)]
 pub(crate) enum ClassPropKey {
     /// A static key known at compile time, stored as raw tokens for transparent pass-through to CSS.

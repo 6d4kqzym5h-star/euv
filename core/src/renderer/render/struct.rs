@@ -9,6 +9,7 @@ use crate::*;
 ///
 /// The pointer must have been allocated via `Box::into_raw`. Only one
 /// `OwnedPtr` should exist per allocation (no aliasing ownership).
+#[derive(Debug)]
 pub(crate) struct OwnedPtr<T> {
     /// The raw pointer owned by this wrapper.
     pub(crate) ptr: *mut T,
@@ -34,3 +35,11 @@ pub(crate) struct Renderer {
     #[new(skip)]
     pub(crate) current_tree: Option<VirtualNode>,
 }
+
+/// A zero-sized struct providing a static method for mounting
+/// virtual DOM trees into the real DOM.
+///
+/// `Mount::mount()` is the entry point for rendering a virtual DOM tree
+/// to a real DOM element selected by a CSS selector.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub(crate) struct Mount;

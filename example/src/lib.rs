@@ -5,9 +5,8 @@
 
 mod component;
 mod page;
-mod style;
 
-use {component::*, page::*, style::*};
+use {component::*, page::*};
 
 use std::{
     cell::{Cell, RefCell},
@@ -15,11 +14,13 @@ use std::{
     rc::Rc,
 };
 
-use euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *};
+use {
+    euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *},
+    euv_ui::*,
+};
 
 use {
-    compare_version::{CompareVersion, VersionLevel},
-    lombok_macros::{Data, New},
+    lombok_macros::*,
     qrcode::{QrCode, render::svg, types::QrError},
     serde::{Deserialize, Serialize},
 };
@@ -29,5 +30,5 @@ use {
 pub fn main() {
     console_error_panic_hook::set_once();
     inject_app_global_css();
-    mount("#app", app);
+    App::mount("#app", app);
 }

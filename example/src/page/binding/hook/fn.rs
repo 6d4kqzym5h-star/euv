@@ -6,7 +6,7 @@ use crate::*;
 ///
 /// - `UsePropsDemo` - The props demo state.
 pub(crate) fn use_props_demo() -> UsePropsDemo {
-    UsePropsDemo::new(use_signal(|| "Hello from Parent!".to_string()))
+    UsePropsDemo::new(App::use_signal(|| "Hello from Parent!".to_string()))
 }
 
 /// Creates two-way binding demo state signals.
@@ -15,7 +15,10 @@ pub(crate) fn use_props_demo() -> UsePropsDemo {
 ///
 /// - `UseTwoWayDemo` - The two-way binding demo state.
 pub(crate) fn use_two_way_demo() -> UseTwoWayDemo {
-    UseTwoWayDemo::new(use_signal(|| "Type here...".to_string()), use_signal(|| 0))
+    UseTwoWayDemo::new(
+        App::use_signal(|| "Type here...".to_string()),
+        App::use_signal(|| 0),
+    )
 }
 
 /// Creates a click event handler that increments the shared counter.
@@ -57,12 +60,12 @@ pub(crate) fn two_way_on_decrement(counter: Signal<i32>) -> Option<Rc<dyn Fn(Eve
 /// - `UseCrossComponentDemo` - The cross-component demo state.
 pub(crate) fn use_cross_component_demo() -> UseCrossComponentDemo {
     let state: UseCrossComponentDemo = UseCrossComponentDemo::new(
-        use_signal(|| 0.0),
-        use_signal(|| 32.0),
-        use_signal(|| 79),
-        use_signal(|| 70),
-        use_signal(|| 229),
-        use_signal(|| "#000000".to_string()),
+        App::use_signal(|| 0.0),
+        App::use_signal(|| 32.0),
+        App::use_signal(|| 79),
+        App::use_signal(|| 70),
+        App::use_signal(|| 229),
+        App::use_signal(|| "#000000".to_string()),
     );
     let celsius: Signal<f64> = state.get_celsius();
     let fahrenheit: Signal<f64> = state.get_fahrenheit();
@@ -241,7 +244,11 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
 ///
 /// - `UseTypedPropsDemo` - The typed props demo state.
 pub(crate) fn use_typed_props_demo() -> UseTypedPropsDemo {
-    UseTypedPropsDemo::new(use_signal(|| false), use_signal(|| 5), use_signal(|| 0))
+    UseTypedPropsDemo::new(
+        App::use_signal(|| false),
+        App::use_signal(|| 5),
+        App::use_signal(|| 0),
+    )
 }
 
 /// Creates a click event handler that toggles the disabled signal.

@@ -2,27 +2,27 @@ use crate::*;
 
 #[test]
 fn test_signal_get() {
-    let signal: Signal<i32> = use_signal(|| 42);
+    let signal: Signal<i32> = App::use_signal(|| 42);
     assert_eq!(signal.get(), 42);
 }
 
 #[test]
 fn test_signal_set() {
-    let signal: Signal<i32> = use_signal(|| 0);
+    let signal: Signal<i32> = App::use_signal(|| 0);
     signal.set(10);
     assert_eq!(signal.get(), 10);
 }
 
 #[test]
 fn test_signal_set_no_op_on_equal() {
-    let signal: Signal<i32> = use_signal(|| 5);
+    let signal: Signal<i32> = App::use_signal(|| 5);
     signal.set(5);
     assert_eq!(signal.get(), 5);
 }
 
 #[test]
 fn test_signal_subscribe() {
-    let signal: Signal<i32> = use_signal(|| 0);
+    let signal: Signal<i32> = App::use_signal(|| 0);
     let count: Rc<Cell<i32>> = Rc::new(Cell::new(0));
     signal.subscribe({
         let count: Rc<Cell<i32>> = Rc::clone(&count);
@@ -38,7 +38,7 @@ fn test_signal_subscribe() {
 
 #[test]
 fn test_signal_set_notifies_listeners() {
-    let signal: Signal<i32> = use_signal(|| 0);
+    let signal: Signal<i32> = App::use_signal(|| 0);
     let count: Rc<Cell<i32>> = Rc::new(Cell::new(0));
     signal.subscribe({
         let count: Rc<Cell<i32>> = Rc::clone(&count);
@@ -54,7 +54,7 @@ fn test_signal_set_notifies_listeners() {
 
 #[test]
 fn test_signal_set_no_op_on_equal_value() {
-    let signal: Signal<i32> = use_signal(|| 5);
+    let signal: Signal<i32> = App::use_signal(|| 5);
     let count: Rc<Cell<i32>> = Rc::new(Cell::new(0));
     signal.subscribe({
         let count: Rc<Cell<i32>> = Rc::clone(&count);

@@ -26,7 +26,7 @@ fn bind_observer(selector: &str) {
         return;
     }
     let callback: Closure<dyn FnMut(Array)> = Closure::wrap(Box::new(move |entries: Array| {
-        batch(|| {
+        App::batch(|| {
             for index in 0..entries.length() {
                 let entry: JsValue = entries.get(index);
                 let intersection_entry: IntersectionObserverEntry =
@@ -128,7 +128,7 @@ pub(crate) fn use_intersection_observer(selector: &str) {
         let _ = Reflect::set(&window_value, &listener_key, &JsValue::TRUE);
         schedule_bind_observer(init_selector);
     }
-    use_cleanup(move || {
+    App::use_cleanup(move || {
         let window_value: Window = match window() {
             Some(window_instance) => window_instance,
             None => return,

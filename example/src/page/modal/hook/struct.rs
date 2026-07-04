@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for the modal demo feature.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseModal {
     /// Whether the basic modal is visible.
     #[get(type(copy))]

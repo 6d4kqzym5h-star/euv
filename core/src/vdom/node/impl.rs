@@ -267,7 +267,7 @@ impl VirtualNode<()> {
     where
         F: FnMut(&mut HookContext) -> Self + 'static,
     {
-        let hook_context: HookContext = create_hook_context();
+        let hook_context: HookContext = HookContext::default();
         let inner: Rc<UnsafeCell<RenderFnInner>> =
             Rc::new(UnsafeCell::new(RenderFnInner::new(Box::new(render_fn))));
         Self::Dynamic(DynamicNode::new(inner, hook_context))

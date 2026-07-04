@@ -1,0 +1,27 @@
+[package]
+name = "euv-ui"
+version = "0.8.20"
+readme = "README.md"
+edition = "2024"
+authors = ["root@ltpp.vip"]
+license = "MIT"
+description = """Reusable UI component library for the euv framework, providing buttons, cards, modals, inputs, and more."""
+keywords = ["cross-platform", "ui", "components"]
+repository = "https://github.com/euv-dev/euv.git"
+categories = ["web-programming", "gui"]
+exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+euv = { workspace = true }
+
+serde = { workspace = true }
+js-sys = { workspace = true }
+web-sys = { workspace = true }
+serde_json = { workspace = true }
+wasm-bindgen = { workspace = true }
+lombok-macros = { workspace = true }
+compare_version = { workspace = true }
+wasm-bindgen-futures = { workspace = true }

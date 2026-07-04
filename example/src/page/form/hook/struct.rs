@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for a registration form feature.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseForm {
     /// The username input.
     #[get(type(copy))]

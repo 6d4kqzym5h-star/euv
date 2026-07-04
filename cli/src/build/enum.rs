@@ -47,7 +47,7 @@ pub enum Mode {
 ///
 /// Used as the message type in the broadcast channel so that the
 /// frontend can distinguish between a successful rebuild and an error.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(tag = "type", content = "message")]
 pub enum ReloadEvent {
     /// A successful WASM rebuild; the client should reload the page.

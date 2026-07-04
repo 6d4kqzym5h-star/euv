@@ -12,37 +12,53 @@ use crate::*;
 #[component]
 pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> VirtualNode {
     let PageVirtualListProps = node.try_get_props().unwrap_or_default();
-    let state: UseVirtualList = use_virtual_list();
-    virtual_list_schedule_measure(state);
-    use_window_event("resize", move || {
-        virtual_list_update_viewport_height(state);
+    let visible_range: Signal<(usize, usize)> = App::use_signal(|| (0, 0));
+    let item_renderer: VirtualListItemRenderer = Rc::new(|index: usize| {
+        html! {
+            div {
+                class: c_virtual_list_row()
+                span {
+                    class: c_virtual_list_row_index()
+                    index.to_string()
+                }
+                span {
+                    class: c_virtual_list_row_label()
+                    format!("Item #{index}")
+                }
+                span {
+                    class: c_virtual_list_row_description()
+                    format!("Description for item {index}")
+                }
+            }
+        }
     });
-    let scroll_offset: i32 = state.get_scroll_offset().get();
-    let viewport_height: i32 = state.get_viewport_height().get();
-    let (visible_start, visible_end, render_start, render_end): (usize, usize, usize, usize) =
-        compute_visible_range(
-            scroll_offset,
-            viewport_height,
-            VIRTUAL_LIST_TOTAL_COUNT,
-            VIRTUAL_LIST_ITEM_HEIGHT,
-            VIRTUAL_LIST_OVERSCAN_COUNT,
-        );
-    let total_height: i32 = VIRTUAL_LIST_TOTAL_COUNT as i32 * VIRTUAL_LIST_ITEM_HEIGHT;
-    let top_padding: i32 = render_start as i32 * VIRTUAL_LIST_ITEM_HEIGHT;
-    let visible_count: usize = visible_end - visible_start;
+    let on_visible_range_change: Option<VirtualListRangeHandler> = {
+        let visible_range: Signal<(usize, usize)> = visible_range;
+        Some(Rc::new(move |range: (usize, usize)| {
+            visible_range.set(range);
+        }))
+    };
+    let (visible_start, visible_end): (usize, usize) = visible_range.get();
+    let visible_count: usize = visible_end.saturating_sub(visible_start);
+    let virtual_list_config: VirtualListConfig = VirtualListConfig::new(
+        String::from(VIRTUAL_LIST_DEMO_ID),
+        VIRTUAL_LIST_DEMO_TOTAL_COUNT,
+        VIRTUAL_LIST_DEMO_ITEM_HEIGHT,
+        VIRTUAL_LIST_DEMO_OVERSCAN_COUNT,
+    );
     html! {
         div {
             class: c_page_container()
             euv_header {
                 icon: "📊"
                 title: "Virtual List"
-                subtitle: "High-performance windowed list rendering 10,000 items with minimal DOM nodes. Only visible rows are rendered."
+                subtitle: VIRTUAL_LIST_DEMO_SUBTITLE
             }
             div {
                 class: c_virtual_list_card()
                 h3 {
                     class: c_card_title()
-                    "10,000 Items Virtual Scroll"
+                    format!("{} Items Virtual Scroll", VIRTUAL_LIST_DEMO_TOTAL_COUNT)
                 }
                 div {
                     class: c_virtual_list_status()
@@ -51,7 +67,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         "Total: "
                         span {
                             class: c_virtual_list_status_value()
-                            VIRTUAL_LIST_TOTAL_COUNT.to_string()
+                            VIRTUAL_LIST_DEMO_TOTAL_COUNT.to_string()
                         }
                     }
                     span {
@@ -71,35 +87,10 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                         }
                     }
                 }
-                div {
-                    class: c_virtual_list_container()
-                    id: VIRTUAL_LIST_CONTAINER_ID
-                    onscroll: virtual_list_on_scroll(state)
-                    div {
-                        style: format!("position: relative; height: {total_height}px;")
-                        div {
-                            style: format!("position: absolute; top: {top_padding}px; left: 0; right: 0;")
-                            for index in { render_start..render_end } {
-                                div {
-                                    key: index.to_string()
-                                    class: c_virtual_list_row()
-                                    style: format!("height: {}px; box-sizing: border-box;", VIRTUAL_LIST_ITEM_HEIGHT)
-                                    span {
-                                        class: c_virtual_list_row_index()
-                                        index.to_string()
-                                    }
-                                    span {
-                                        class: c_virtual_list_row_label()
-                                        format!("Item #{index}")
-                                    }
-                                    span {
-                                        class: c_virtual_list_row_description()
-                                        format!("Description for item {index}")
-                                    }
-                                }
-                            }
-                        }
-                    }
+                euv_virtual_list {
+                    config: virtual_list_config
+                    item_renderer: item_renderer
+                    on_visible_range_change: on_visible_range_change
                 }
             }
         }

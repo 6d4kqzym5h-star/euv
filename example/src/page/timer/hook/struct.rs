@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// Contains only `Copy` signal fields so the struct can be freely
 /// captured inside `html!` closures without causing `FnOnce` issues.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseStopwatch {
     /// The elapsed seconds counter.
     #[get(type(copy))]
@@ -21,7 +21,7 @@ pub(crate) struct UseStopwatch {
 ///
 /// Contains only `Copy` signal fields so the struct can be freely
 /// captured inside `html!` closures without causing `FnOnce` issues.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseCountdown {
     /// The total countdown seconds.
     #[get(type(copy))]

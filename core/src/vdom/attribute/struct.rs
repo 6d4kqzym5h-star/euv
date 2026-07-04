@@ -22,7 +22,7 @@ pub struct AttributeEntry {
 /// Each rule has a selector suffix (e.g., ":hover", "::before", ":focus")
 /// and a style declaration string. When injected into the DOM, it produces
 /// a rule like `.class-name:hover { background: red; }`.
-#[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
+#[derive(Clone, Data, Debug, Default, Eq, Hash, New, PartialEq)]
 pub struct PseudoRule {
     /// The CSS pseudo selector suffix appended to the class name
     /// (e.g., ":hover", ":focus", ":active", ":disabled", "::before", "::after",
@@ -71,7 +71,7 @@ pub struct Css {
 /// a style declaration string, and optional nested pseudo-element rules.
 /// When injected into the DOM, it produces a rule like:
 /// `@media (max-width: 767px) { .class-name { font-size: 14px; } .class-name::-webkit-scrollbar { width: 0px; } }`.
-#[derive(Clone, Data, Debug, Default, Eq, New, PartialEq)]
+#[derive(Clone, Data, Debug, Default, Eq, Hash, New, PartialEq)]
 pub struct MediaRule {
     /// The media query condition string (e.g., "(max-width: 767px)").
     #[get(pub(crate))]
@@ -103,7 +103,7 @@ pub struct MediaRule {
 /// - `FnMut(NativeEvent)` closure → `AttributeValue::Event` via `NativeEventHandler`
 /// - `NativeEventHandler` directly → `AttributeValue::Event` as-is
 /// - `Option<NativeEventHandler>` → `AttributeValue::Event` or `AttributeValue::Text`
-#[derive(Data, New)]
+#[derive(Data, Debug, New)]
 pub struct EventAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
     #[get(pub(crate))]
@@ -117,7 +117,7 @@ pub struct EventAdapter<T> {
 /// This type wraps an event value and its event name, enabling
 /// `Into<AttributeValue>` trait implementation for events.
 /// Used by the `html!` macro for event attributes like `onclick`.
-#[derive(Data, New)]
+#[derive(Data, Debug, New)]
 pub struct EventNamedAdapter<T> {
     /// The wrapped event value to be adapted.
     #[get(pub(crate))]
@@ -156,7 +156,7 @@ pub struct AttrValueAdapter<T> {
 /// This type wraps a callback and its custom attribute name, enabling
 /// `Into<AttributeValue>` trait implementation for named callbacks.
 /// Used by the `html!` macro for component callback props.
-#[derive(Data, New)]
+#[derive(Data, Debug, New)]
 pub struct CallbackNamedAdapter<T> {
     /// The wrapped callback to be adapted.
     #[get(pub(crate))]

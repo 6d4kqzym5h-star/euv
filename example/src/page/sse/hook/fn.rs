@@ -7,11 +7,11 @@ use crate::*;
 /// - `UseSse` - The SSE connection state.
 pub(crate) fn use_sse() -> UseSse {
     UseSse::new(
-        use_signal(|| SSE_DEFAULT_URL.to_string()),
-        use_signal(|| false),
-        use_signal(|| false),
-        use_signal(Vec::new),
-        use_signal(String::new),
+        App::use_signal(|| SSE_DEFAULT_URL.to_string()),
+        App::use_signal(|| false),
+        App::use_signal(|| false),
+        App::use_signal(Vec::new),
+        App::use_signal(String::new),
     )
 }
 
@@ -65,7 +65,7 @@ pub(crate) fn sse_on_disconnect(state: UseSse) -> Option<Rc<dyn Fn(Event)>> {
 ///
 /// - `UseSse` - The SSE connection state.
 pub(crate) fn sse_cleanup(state: UseSse) {
-    use_cleanup(move || {
+    App::use_cleanup(move || {
         sse_close(state, false);
     });
 }

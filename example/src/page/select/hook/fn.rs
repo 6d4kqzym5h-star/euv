@@ -41,13 +41,13 @@ pub(crate) fn get_cities_by_country(country: &str) -> Vec<(String, String)> {
 /// - `UseSelect` - The select state.
 pub(crate) fn use_select() -> UseSelect {
     UseSelect::new(
-        use_signal(|| "apple".to_string()),
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(Vec::new),
-        use_signal(String::new),
-        use_signal(String::new),
-        use_signal(String::new),
+        App::use_signal(|| "apple".to_string()),
+        App::use_signal(String::new),
+        App::use_signal(String::new),
+        App::use_signal(Vec::new),
+        App::use_signal(String::new),
+        App::use_signal(String::new),
+        App::use_signal(String::new),
     )
 }
 

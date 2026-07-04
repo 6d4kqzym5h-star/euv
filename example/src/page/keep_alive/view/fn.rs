@@ -6,7 +6,7 @@ use crate::*;
 ///
 /// - `Signal<Option<IntervalHandle>>` - The handle signal for the timer interval.
 fn keep_alive_cleanup(handle: Signal<Option<IntervalHandle>>) {
-    use_cleanup(move || {
+    App::use_cleanup(move || {
         if let Some(h) = handle.get() {
             h.clear();
         }
@@ -22,7 +22,7 @@ fn keep_alive_cleanup(handle: Signal<Option<IntervalHandle>>) {
 ///
 /// - `VirtualNode` - The counter tab virtual DOM tree.
 fn counter_tab() -> VirtualNode {
-    let count: Signal<i32> = use_signal(|| 0);
+    let count: Signal<i32> = App::use_signal(|| 0);
     html! {
         div {
             class: c_keep_alive_tab_panel()
@@ -72,9 +72,9 @@ fn counter_tab() -> VirtualNode {
 ///
 /// - `VirtualNode` - The form tab virtual DOM tree.
 fn form_tab() -> VirtualNode {
-    let name: Signal<String> = use_signal(String::new);
-    let email: Signal<String> = use_signal(String::new);
-    let message: Signal<String> = use_signal(String::new);
+    let name: Signal<String> = App::use_signal(String::new);
+    let email: Signal<String> = App::use_signal(String::new);
+    let message: Signal<String> = App::use_signal(String::new);
     html! {
         div {
             class: c_keep_alive_tab_panel()
@@ -100,7 +100,7 @@ fn form_tab() -> VirtualNode {
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_NAME
                     placeholder: KEEP_ALIVE_NAME_PLACEHOLDER
                     value: name
-                    oninput: on_input_value(name)
+                    oninput: UseEuvInput::on_input_value(name)
                 }
             }
             div {
@@ -117,7 +117,7 @@ fn form_tab() -> VirtualNode {
                     autocomplete: KEEP_ALIVE_AUTOCOMPLETE_EMAIL
                     placeholder: KEEP_ALIVE_EMAIL_PLACEHOLDER
                     value: email
-                    oninput: on_input_value(email)
+                    oninput: UseEuvInput::on_input_value(email)
                 }
             }
             div {
@@ -135,9 +135,9 @@ fn form_tab() -> VirtualNode {
                     value: message.get()
                     class: c_textarea_input()
                     rows: KEEP_ALIVE_MESSAGE_ROWS
-                    oninput: on_input_value(message)
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    oninput: UseEuvInput::on_input_value(message)
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
             }
             if { !name.get().is_empty() || !email.get().is_empty() || !message.get().is_empty() } {
@@ -169,15 +169,15 @@ fn form_tab() -> VirtualNode {
 ///
 /// - `VirtualNode` - The timer tab virtual DOM tree.
 fn timer_tab() -> VirtualNode {
-    let elapsed: Signal<i32> = use_signal(|| 0);
-    let running: Signal<bool> = use_signal(|| false);
-    let handle: Signal<Option<IntervalHandle>> = use_signal(|| None);
+    let elapsed: Signal<i32> = App::use_signal(|| 0);
+    let running: Signal<bool> = App::use_signal(|| false);
+    let handle: Signal<Option<IntervalHandle>> = App::use_signal(|| None);
     keep_alive_cleanup(handle);
     watch!(running, |is_running: bool| {
         if is_running {
             let elapsed_signal: Signal<i32> = elapsed;
             let handle_signal: Signal<Option<IntervalHandle>> = handle;
-            let new_handle: IntervalHandle = use_interval(1000, move || {
+            let new_handle: IntervalHandle = App::use_interval(1000, move || {
                 let current: i32 = elapsed_signal.get();
                 elapsed_signal.set(current + 1);
             });
@@ -365,7 +365,7 @@ pub(crate) fn keep_alive_timer_on_reset(
 #[component]
 pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
     let PageKeepAliveProps = node.try_get_props().unwrap_or_default();
-    let tab: Signal<String> = use_signal(|| "counter".to_string());
+    let tab: Signal<String> = App::use_signal(|| "counter".to_string());
     html! {
         div {
             class: c_page_container()

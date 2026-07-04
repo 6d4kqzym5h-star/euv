@@ -88,22 +88,17 @@ pub struct ModeArgs {
 pub struct FmtArgs {
     /// Path to the directory or file to format
     #[arg(short, long, default_value = ".")]
-    #[get(pub)]
-    #[get_mut(pub)]
-    #[set(pub)]
     pub(crate) path: PathBuf,
     /// Check if formatting is needed without modifying files
     #[arg(long, default_value_t = false)]
-    #[get(pub, type(copy))]
-    #[get_mut(pub)]
-    #[set(pub)]
+    #[get(type(copy))]
     pub(crate) check: bool,
 }
 
 /// Configuration for server URL display.
 ///
 /// Groups all parameters needed by `print_server_urls` into a single struct.
-#[derive(Data, New)]
+#[derive(Clone, Data, Debug, New)]
 pub(crate) struct ServerUrlConfig {
     /// The port number the server is listening on.
     #[get(pub(crate), type(copy))]

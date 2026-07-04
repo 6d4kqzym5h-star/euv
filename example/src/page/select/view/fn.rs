@@ -32,7 +32,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         autocomplete: SELECT_AUTOCOMPLETE_OFF
                         class: c_select_input()
                         value: state.get_selected_fruit()
-                        onchange: on_change_value(state.get_selected_fruit())
+                        onchange: UseEuvInput::on_change_value(state.get_selected_fruit())
                         option {
                             value: "apple"
                             "Apple"
@@ -109,7 +109,7 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                             autocomplete: SELECT_AUTOCOMPLETE_OFF
                             class: c_select_input()
                             value: state.get_selected_city()
-                            onchange: on_change_value(state.get_selected_city())
+                            onchange: UseEuvInput::on_change_value(state.get_selected_city())
                             for (value, label) in { state.get_cities().get().iter() } {
                                 option {
                                     value: value.clone()
@@ -152,8 +152,8 @@ pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
                         value: state.get_textarea_content()
                         oninput: select_on_input_textarea(state)
                         rows: SELECT_FEEDBACK_ROWS
-                        onfocus: on_focus_scroll_into_view()
-                        onblur: on_blur_restore_height()
+                        onfocus: UseEuvInput::on_focus_scroll_into_view()
+                        onblur: UseEuvInput::on_blur_restore_height()
                     }
                     if { !state.get_textarea_error().get().is_empty() } {
                         p {

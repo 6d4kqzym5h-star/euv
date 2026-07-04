@@ -55,11 +55,11 @@ pub struct HookContext {
 ///
 /// Stores the numeric interval ID returned by `window.setInterval` so the
 /// timer can be cancelled later via `clear_interval`.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub struct IntervalHandle {
     /// The interval ID assigned by the browser.
-    #[get(pub, type(copy))]
+    #[get(type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub interval_id: i32,
+    pub(crate) interval_id: i32,
 }

@@ -7,12 +7,12 @@ use crate::*;
 /// - `UseFileUpload` - The file upload state.
 pub(crate) fn use_file_upload() -> UseFileUpload {
     UseFileUpload::new(
-        use_signal(Vec::new),
-        use_signal(Vec::new),
-        use_signal(Vec::new),
-        use_signal(|| false),
-        use_signal(String::new),
-        use_signal(|| "No files selected".to_string()),
+        App::use_signal(Vec::new),
+        App::use_signal(Vec::new),
+        App::use_signal(Vec::new),
+        App::use_signal(|| false),
+        App::use_signal(String::new),
+        App::use_signal(|| "No files selected".to_string()),
     )
 }
 

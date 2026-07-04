@@ -115,3 +115,12 @@ pub(crate) struct WindowEventRegistryCell(
     #[set(pub(crate))]
     pub(crate) UnsafeCell<Option<WindowEventRegistryMap>>,
 );
+
+/// A zero-sized struct providing static methods for managing
+/// the framework's internal registries (handlers, signal updates,
+/// window events, and delegated events).
+///
+/// All methods are crate-internal associated functions that operate
+/// on the global static registries.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub(crate) struct Registry;

@@ -18,8 +18,8 @@ use crate::*;
 #[component]
 pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
     let _page_camera_props: PageCameraProps = node.try_get_props().unwrap_or_default();
-    let state: UseCamera = use_camera();
-    camera_cleanup(state);
+    let state: UseEuvCamera = UseEuvCamera::use_camera_state();
+    state.cleanup(None);
     html! {
         div {
             class: c_page_container()
@@ -89,24 +89,24 @@ pub(crate) fn page_camera(node: VirtualNode<PageCameraProps>) -> VirtualNode {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Close"
-                            onclick: camera_on_close(state)
+                            onclick: state.on_close(None)
                         }
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Switch"
-                            onclick: camera_on_switch(state)
+                            onclick: state.on_switch(None)
                         }
                     } else if { state.get_camera_loading().get() } {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Opening..."
-                            disabled: state.get_camera_loading()
+                            disabled: state.camera_loading
                         }
                     } else {
                         euv_button {
                             variant: EuvButtonVariant::Primary
                             label: "Open"
-                            onclick: camera_on_open(state)
+                            onclick: state.on_open(None)
                         }
                     }
                 }

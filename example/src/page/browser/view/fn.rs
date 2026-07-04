@@ -8,7 +8,7 @@ use crate::*;
 #[component]
 pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
     let PageBrowserProps = node.try_get_props().unwrap_or_default();
-    let state: UseBrowserApi = use_browser_api();
+    let state: UseEuvBrowser = UseEuvBrowser::use_browser_state();
     html! {
         div {
             class: c_page_container()
@@ -51,17 +51,17 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Set"
-                        onclick: local_storage_on_set(state)
+                        onclick: state.on_local_storage_set()
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Get"
-                        onclick: local_storage_on_get(state)
+                        onclick: state.on_local_storage_get()
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Remove"
-                        onclick: local_storage_on_remove(state)
+                        onclick: state.on_local_storage_remove()
                     }
                 }
                 div {
@@ -110,17 +110,17 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Set"
-                        onclick: session_storage_on_set(state)
+                        onclick: state.on_session_storage_set()
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Get"
-                        onclick: session_storage_on_get(state)
+                        onclick: state.on_session_storage_get()
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Remove"
-                        onclick: session_storage_on_remove(state)
+                        onclick: state.on_session_storage_remove()
                     }
                 }
                 div {
@@ -156,12 +156,12 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Copy"
-                        onclick: clipboard_on_copy(state)
+                        onclick: state.on_clipboard_copy()
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Paste"
-                        onclick: clipboard_on_paste(state)
+                        onclick: state.on_clipboard_paste()
                     }
                 }
                 div {
@@ -187,7 +187,7 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Refresh Size"
-                        onclick: window_on_refresh_size(state)
+                        onclick: state.on_window_refresh_size()
                     }
                 }
                 div {
@@ -301,17 +301,17 @@ pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Log"
-                        onclick: console_on_log(state.get_console_input())
+                        onclick: UseEuvBrowser::on_console_log(state.get_console_input())
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Warn"
-                        onclick: console_on_warn(state.get_console_input())
+                        onclick: UseEuvBrowser::on_console_warn(state.get_console_input())
                     }
                     euv_button {
                         variant: EuvButtonVariant::Primary
                         label: "Error"
-                        onclick: console_on_error(state.get_console_input())
+                        onclick: UseEuvBrowser::on_console_error(state.get_console_input())
                     }
                 }
             }

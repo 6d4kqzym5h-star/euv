@@ -37,6 +37,6 @@ thread_local! {
     pub(crate) static DISPATCH_CLOSURE: Closure<dyn FnMut()> =
         Closure::wrap(Box::new(|| {
             SCHEDULED.store(false, Ordering::Relaxed);
-            dispatch_updates();
+            Scheduler::dispatch_updates();
         }) as Box<dyn FnMut()>);
 }

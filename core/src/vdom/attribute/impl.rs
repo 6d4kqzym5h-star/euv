@@ -25,7 +25,7 @@ impl AttributeValue {
         F: Fn() -> String + 'static,
     {
         let attr_signal: Signal<String> = Signal::create(compute());
-        subscribe_attr(attr_signal, compute);
+        Self::subscribe_attr(attr_signal, compute);
         Self::Signal(attr_signal)
     }
 
@@ -67,7 +67,7 @@ impl AttributeValue {
                     .join(&CHAR_SPACE.to_string())
             });
             let attr_signal: Signal<String> = Signal::create(compute());
-            subscribe_attr(attr_signal, compute);
+            Self::subscribe_attr(attr_signal, compute);
             Self::Signal(attr_signal)
         } else {
             let result: String = values
@@ -120,7 +120,7 @@ impl AttributeValue {
                     .join(&CHAR_SPACE.to_string())
             });
             let attr_signal: Signal<String> = Signal::create(compute());
-            subscribe_attr(attr_signal, compute);
+            Self::subscribe_attr(attr_signal, compute);
             Self::Signal(attr_signal)
         } else {
             let result: String = values
@@ -134,6 +134,52 @@ impl AttributeValue {
                 .join(&CHAR_SPACE.to_string());
             Self::Text(result)
         }
+    }
+
+    /// Subscribes an attribute signal to the global signal update dispatch cycle.
+    ///
+    /// Creates a callback that re-computes the attribute value and sets
+    /// it on the signal whenever a signal update cycle runs. The callback
+    /// is registered in the signal update registry using the signal's
+    /// inner address as the key.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<String>` - The attribute signal to subscribe.
+    /// - `Fn() -> String + 'static` - A closure that computes the current attribute value string.
+    fn subscribe_attr<F>(attr_signal: Signal<String>, compute: F)
+    where
+        F: Fn() -> String + 'static,
+    {
+        Registry::register_attr_listener(
+            attr_signal.get_inner(),
+            Box::new(move || {
+                attr_signal.set(compute());
+            }),
+        );
+    }
+
+    /// Converts a bool signal into a reactive `Signal<String>` attribute value.
+    ///
+    /// Creates a `Signal<String>` initialized with the bool's string
+    /// representation, then subscribes to the source signal so that
+    /// whenever the bool changes, the string signal is updated accordingly.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<bool>` - The source boolean signal.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - An `AttributeValue::Signal` wrapping the derived string signal.
+    pub(crate) fn bool_to_attr(source: Signal<bool>) -> AttributeValue {
+        let string_signal: Signal<String> = Signal::create(source.get().to_string());
+        let string_signal_clone: Signal<String> = string_signal;
+        let source_for_sub: Signal<bool> = source;
+        source_for_sub.subscribe(move || {
+            string_signal_clone.set(source_for_sub.get().to_string());
+        });
+        AttributeValue::Signal(string_signal)
     }
 }
 
@@ -479,7 +525,22 @@ impl Css {
     ///
     /// - `bool` - `true` if newly injected, `false` if already present.
     fn mark_injected(class_name: String) -> bool {
-        get_injected_classes_mut().insert(class_name)
+        Self::get_injected_classes_mut().insert(class_name)
+    }
+
+    /// Returns a mutable reference to the global injected classes set.
+    ///
+    /// Lazily initializes the set on first access.
+    #[allow(static_mut_refs)]
+    fn get_injected_classes_mut() -> &'static mut HashSet<String> {
+        unsafe {
+            if (*INJECTED_CLASSES.get_0().get()).is_none() {
+                (*INJECTED_CLASSES.get_0().get()) = Some(HashSet::new());
+            }
+            (*INJECTED_CLASSES.get_0().get())
+                .as_mut()
+                .unwrap_unchecked()
+        }
     }
 
     /// Appends CSS text directly to the shared `<style>` element.

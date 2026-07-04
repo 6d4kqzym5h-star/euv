@@ -228,7 +228,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         drag.get_drag_status().set("Dropped".to_string());
         Console::log("Drop: item dropped");
     };
-    let file_drag_over: Signal<bool> = use_signal(|| false);
+    let file_drag_over: Signal<bool> = App::use_signal(|| false);
     let on_file_drag_over = move |event: Event| {
         event.prevent_default();
         file_drag_over.set(true);
@@ -330,7 +330,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         Console::log("Paste: text pasted");
     };
     let on_touch_start = move |event: Event| {
-        let points: Vec<NativeTouchPoint> = extract_touch_points(&event);
+        let points: Vec<NativeTouchPoint> = NativeTouchPoint::extract_all(&event);
         let detail: String = points
             .iter()
             .map(|point: &NativeTouchPoint| {
@@ -348,7 +348,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         Console::log(&format!("TouchStart: {} touches", points.len()));
     };
     let on_touch_move = move |event: Event| {
-        let points: Vec<NativeTouchPoint> = extract_touch_points(&event);
+        let points: Vec<NativeTouchPoint> = NativeTouchPoint::extract_all(&event);
         let detail: String = points
             .iter()
             .map(|point: &NativeTouchPoint| {
@@ -365,8 +365,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         touch.get_touch_info().set(info);
     };
     let on_touch_end = move |event: Event| {
-        let remaining: Vec<NativeTouchPoint> = extract_touch_points(&event);
-        let changed: Vec<NativeTouchPoint> = extract_changed_touch_points(&event);
+        let remaining: Vec<NativeTouchPoint> = NativeTouchPoint::extract_all(&event);
+        let changed: Vec<NativeTouchPoint> = NativeTouchPoint::extract_changed(&event);
         let detail: String = changed
             .iter()
             .map(|point: &NativeTouchPoint| {
@@ -384,7 +384,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         Console::log(&format!("TouchEnd: {} remaining", remaining.len()));
     };
     let on_touch_cancel = move |event: Event| {
-        let changed: Vec<NativeTouchPoint> = extract_changed_touch_points(&event);
+        let changed: Vec<NativeTouchPoint> = NativeTouchPoint::extract_changed(&event);
         let detail: String = changed
             .iter()
             .map(|point: &NativeTouchPoint| {
@@ -613,8 +613,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     class: c_euv_input()
                     onkeydown: on_key_down
                     onkeyup: on_key_up
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
                 div {
                     class: c_event_info_grid()
@@ -1161,8 +1161,8 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                                 class: c_euv_input()
                                 oninput: on_euv_input
                                 onchange: on_form_change
-                                onfocus: on_focus_scroll_into_view()
-                                onblur: on_blur_restore_height()
+                                onfocus: UseEuvInput::on_focus_scroll_into_view()
+                                onblur: UseEuvInput::on_blur_restore_height()
                             }
                         }
                         div {

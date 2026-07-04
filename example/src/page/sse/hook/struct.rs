@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for the Server-Sent Events (SSE) demo page.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseSse {
     /// The SSE endpoint URL input.
     #[get(type(copy))]

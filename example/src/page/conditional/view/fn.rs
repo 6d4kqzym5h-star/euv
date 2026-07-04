@@ -8,10 +8,10 @@ use crate::*;
 #[component]
 pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> VirtualNode {
     let PageConditionalProps = node.try_get_props().unwrap_or_default();
-    let show_details: Signal<bool> = use_signal(|| false);
-    let user_type: Signal<String> = use_signal(|| "guest".to_string());
-    let tab: Signal<String> = use_signal(|| "info".to_string());
-    let display_name: Signal<String> = use_signal(|| "".to_string());
+    let show_details: Signal<bool> = App::use_signal(|| false);
+    let user_type: Signal<String> = App::use_signal(|| "guest".to_string());
+    let tab: Signal<String> = App::use_signal(|| "info".to_string());
+    let display_name: Signal<String> = App::use_signal(|| "".to_string());
     html! {
         div {
             class: c_page_container()
@@ -31,7 +31,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                             EuvButtonVariant::Primary
                         }
                         label: "Toggle"
-                        onclick: use_toggle(show_details)
+                        onclick: UseEuvInput::use_toggle(show_details)
                     }
                 }
                 if { show_details.get() } {

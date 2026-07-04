@@ -128,7 +128,7 @@ impl ToTokens for ComputedInput {
                 quote! {
                     {
                         #signal.subscribe(move || {
-                            ::euv::batch(|| {
+                            ::euv::App::batch(|| {
                                 unsafe { (&mut *(__euv_computed_fire_addr as *mut Box<dyn ::std::ops::FnMut()>))() }
                             });
                         });
@@ -138,17 +138,17 @@ impl ToTokens for ComputedInput {
             .collect();
         tokens.extend(quote! {{
             #(let #signals: ::euv::Signal<_> = #signal_exprs;)*
-            let #result_ident: ::euv::Signal<#return_type> = ::euv::use_signal(|| {
+            let #result_ident: ::euv::Signal<#return_type> = ::euv::App::use_signal(|| {
                 #(#all_gets)*
                 { #(#body)* }
             });
-            let __euv_computed_subscribed: ::euv::Signal<bool> = ::euv::use_signal(|| false);
+            let __euv_computed_subscribed: ::euv::Signal<bool> = ::euv::App::use_signal(|| false);
             if !__euv_computed_subscribed.get() {
                 let __euv_computed_fire_addr: usize = Box::leak(Box::new(Box::new(move || {
                     #(#all_gets)*
                     #result_ident.set({ #(#body)* });
                 }) as Box<dyn ::std::ops::FnMut()>)) as *mut Box<dyn ::std::ops::FnMut()> as usize;
-                ::euv::batch(|| {
+                ::euv::App::batch(|| {
                     #(#subscribe_calls)*
                     __euv_computed_subscribed.set(true);
                 });

@@ -25,7 +25,7 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
     let PageTimerProps = node.try_get_props().unwrap_or_default();
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
-    use_cleanup(move || {
+    App::use_cleanup(move || {
         if let Some(handle) = stopwatch.get_handle().get() {
             handle.clear();
         }
@@ -94,8 +94,8 @@ pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
                         value: countdown.get_input()
                         class: c_euv_input()
                         oninput: countdown_on_input(countdown)
-                        onfocus: on_focus_scroll_into_view()
-                        onblur: on_blur_restore_height()
+                        onfocus: UseEuvInput::on_focus_scroll_into_view()
+                        onblur: UseEuvInput::on_blur_restore_height()
                     }
                 }
                 div {

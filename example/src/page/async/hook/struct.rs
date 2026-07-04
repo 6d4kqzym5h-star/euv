@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for an async data fetch feature.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseFetch {
     /// Whether data is currently being fetched.
     #[get(type(copy))]

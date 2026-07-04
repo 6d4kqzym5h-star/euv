@@ -254,21 +254,21 @@ fn test_format_euv_macros_no_leading_blank_lines() {
 
 #[test]
 fn test_sibling_elements() {
-    let input = "html! {\n    vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
-    let expected = "html! {\n    vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
+    let input = "html! {\n    euv_vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    euv_vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
+    let expected = "html! {\n    euv_vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    euv_vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
     assert_eq!(format_euv_macros(input), expected);
 }
 
 #[test]
 fn test_sibling_elements_with_indent() {
-    let input = "    html! {\n            vconsole_fab {\n                panel_open: panel_open\n                console_signal: console_signal\n            }\n            vconsole_drawer {\n                console_signal: console_signal\n                panel_open: panel_open\n            }\n        }";
-    let expected = "    html! {\n            vconsole_fab {\n                panel_open: panel_open\n                console_signal: console_signal\n            }\n            vconsole_drawer {\n                console_signal: console_signal\n                panel_open: panel_open\n            }\n    }";
+    let input = "    html! {\n            euv_vconsole_fab {\n                panel_open: panel_open\n                console_signal: console_signal\n            }\n            euv_vconsole_drawer {\n                console_signal: console_signal\n                panel_open: panel_open\n            }\n        }";
+    let expected = "    html! {\n            euv_vconsole_fab {\n                panel_open: panel_open\n                console_signal: console_signal\n            }\n            euv_vconsole_drawer {\n                console_signal: console_signal\n                panel_open: panel_open\n            }\n    }";
     assert_eq!(format_euv_macros(input), expected);
 }
 
 #[test]
 fn test_sibling_elements_compressed() {
-    let input = "html!{vconsole_fab{panel_open:panel_open console_signal:console_signal}vconsole_drawer{console_signal:console_signal panel_open:panel_open}}";
-    let expected = "html! {\n    vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
+    let input = "html!{euv_vconsole_fab{panel_open:panel_open console_signal:console_signal}euv_vconsole_drawer{console_signal:console_signal panel_open:panel_open}}";
+    let expected = "html! {\n    euv_vconsole_fab {\n        panel_open: panel_open\n        console_signal: console_signal\n    }\n    euv_vconsole_drawer {\n        console_signal: console_signal\n        panel_open: panel_open\n    }\n}";
     assert_eq!(format_euv_macros(input), expected);
 }

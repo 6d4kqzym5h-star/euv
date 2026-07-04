@@ -26,7 +26,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 a {
                     href: GITHUB_URL
                     target: "_blank"
-                    onclick: external_link_handler(GITHUB_URL.to_string())
+                    onclick: Router::external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_header()
                     euv_logo {
                         variant: LogoButtonVariant::Nav
@@ -47,7 +47,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                     class: c_nav_theme_toggle()
                     button {
                         class: c_nav_theme_button()
-                        onclick: toggle_theme(theme_signal)
+                        onclick: ThemeState::toggle(theme_signal)
                         div {
                             class: if { theme_signal.get() == THEME_DARK } {
                                 c_theme_icon_sun()
@@ -60,7 +60,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                 a {
                     href: GITHUB_URL
                     target: "_blank"
-                    onclick: external_link_handler(GITHUB_URL.to_string())
+                    onclick: Router::external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
                     div {
                         class: c_nav_footer_divider()
@@ -81,7 +81,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
                     route_signal
                 }
             }
-            vconsole_panel {
+            euv_vconsole_panel {
                 panel_open
             }
         }
@@ -108,11 +108,11 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
         drawer_open,
     }: MobileLayoutProps = node.try_get_props().unwrap_or_default();
     let on_overlay_click = move |_: Event| {
-        overlay_stack_close();
+        Router::overlay_stack_close();
         drawer_open.set(false);
     };
     let on_drawer_close_click = move |_: Event| {
-        overlay_stack_close();
+        Router::overlay_stack_close();
         drawer_open.set(false);
     };
     html! {
@@ -128,13 +128,13 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         } else {
                             c_mobile_menu_button()
                         }
-                        onclick: use_drawer_toggle(drawer_open)
+                        onclick: UseEuvLayout::use_drawer_toggle(drawer_open)
                         "☰"
                     }
                     a {
                         href: GITHUB_URL
                         target: "_blank"
-                        onclick: external_link_handler(GITHUB_URL.to_string())
+                        onclick: Router::external_link_handler(GITHUB_URL.to_string())
                         class: c_mobile_header_logo()
                         euv_logo {
                             variant: LogoButtonVariant::Nav
@@ -147,7 +147,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 }
                 button {
                     class: c_mobile_theme_button()
-                    onclick: toggle_theme(theme_signal)
+                    onclick: ThemeState::toggle(theme_signal)
                     div {
                         class: if { theme_signal.get() == THEME_DARK } {
                             c_theme_icon_sun()
@@ -163,7 +163,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                     route_signal
                 }
             }
-            vconsole_panel {
+            euv_vconsole_panel {
                 panel_open
             }
             div {
@@ -187,7 +187,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                         a {
                             href: GITHUB_URL
                             target: "_blank"
-                            onclick: external_link_handler(GITHUB_URL.to_string())
+                            onclick: Router::external_link_handler(GITHUB_URL.to_string())
                             class: c_mobile_header_logo()
                             euv_logo {
                                 variant: LogoButtonVariant::Nav
@@ -215,7 +215,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 a {
                     href: GITHUB_URL
                     target: "_blank"
-                    onclick: external_link_handler(GITHUB_URL.to_string())
+                    onclick: Router::external_link_handler(GITHUB_URL.to_string())
                     class: c_nav_footer()
                     div {
                         class: c_nav_footer_divider()
@@ -243,20 +243,20 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
 ///
 /// - `VirtualNode` - The root application virtual DOM tree.
 pub(crate) fn app() -> VirtualNode {
-    init_console();
-    let route_signal: Signal<String> = use_signal(current_route);
-    let panel_open: Signal<bool> = use_signal(|| false);
-    let drawer_open: Signal<bool> = use_signal(|| false);
-    let mobile_signal: Signal<bool> = use_resize();
-    let theme_state: ThemeState = use_theme(mobile_signal);
+    Console::init();
+    let route_signal: Signal<String> = App::use_signal(Router::current_route);
+    let panel_open: Signal<bool> = App::use_signal(|| false);
+    let drawer_open: Signal<bool> = App::use_signal(|| false);
+    let mobile_signal: Signal<bool> = UseEuvLayout::use_resize();
+    let theme_state: ThemeState = ThemeState::use_theme_state(mobile_signal);
     let theme_signal: Signal<String> = theme_state.get_theme();
     let root_class_signal: Signal<String> = theme_state.get_root_class();
-    load_cache_update(use_cache_update());
-    use_hash_change(route_signal);
-    use_scroll_to_top(route_signal);
-    use_overlay_history(drawer_open, mobile_signal);
-    use_scroll_drawer_to_active(drawer_open);
-    use_safe_area_fix();
+    UseCacheUpdate::use_cache_state().load(EUV_VERSION, None);
+    Router::use_hash_change(route_signal);
+    Router::use_scroll_to_top(route_signal);
+    Router::use_overlay_history(drawer_open, mobile_signal);
+    Router::use_scroll_drawer_to_active(drawer_open);
+    UseEuvLayout::use_safe_area_fix();
     html! {
         if { mobile_signal.get() } {
             mobile_layout {

@@ -12,8 +12,8 @@ use crate::*;
 #[component]
 pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
     let PageHomeProps = node.try_get_props().unwrap_or_default();
-    let native_bridge_state: UseNativeBridge = use_native_bridge();
-    load_native_bridge_data(native_bridge_state);
+    let native_bridge_state: UseEuvNativeBridge = UseEuvNativeBridge::use_bridge_state();
+    native_bridge_state.load_data(None);
     let version: String = format!("v{EUV_VERSION}");
     html! {
         div {
@@ -43,13 +43,13 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             class: c_home_btn_primary()
                             href: EUV_REPOSITORY
                             target: "_blank"
-                            onclick: external_link_handler(EUV_REPOSITORY.to_string())
+                            onclick: Router::external_link_handler(EUV_REPOSITORY.to_string())
                             "GitHub"
                         }
                         a {
                             class: c_home_btn_secondary()
                             href: "#/counter"
-                            onclick: link_handler("/counter".to_string())
+                            onclick: Router::link_handler("/counter".to_string())
                             "Explore"
                         }
                     }
@@ -248,7 +248,7 @@ pub(crate) fn page_home(node: VirtualNode<PageHomeProps>) -> VirtualNode {
                             class: c_info_link()
                             href: EUV_REPOSITORY
                             target: "_blank"
-                            onclick: external_link_handler(EUV_REPOSITORY.to_string())
+                            onclick: Router::external_link_handler(EUV_REPOSITORY.to_string())
                             EUV_REPOSITORY_NAME
                         }
                     }

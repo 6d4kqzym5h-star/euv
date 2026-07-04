@@ -47,7 +47,7 @@ impl From<Signal<bool>> for AttributeValue {
     ///
     /// - `AttributeValue` - A signal-backed attribute value yielding `"true"` or `"false"`.
     fn from(signal: Signal<bool>) -> Self {
-        bool_to_attr(signal)
+        AttributeValue::bool_to_attr(signal)
     }
 }
 
@@ -165,6 +165,20 @@ impl From<Option<NativeEventHandler>> for AttributeValue {
     fn from(handler: Option<NativeEventHandler>) -> Self {
         match handler {
             Some(event_handler) => AttrValueAdapter::new(event_handler).into(),
+            None => AttributeValue::Text(String::new()),
+        }
+    }
+}
+
+/// Converts an optional string signal into a reactive or empty attribute value.
+///
+/// `Some(signal)` becomes `AttributeValue::Signal`, `None` becomes
+/// `AttributeValue::Text(String::new())`. This supports component props
+/// that use `Option<Signal<String>>` for optional reactive attributes.
+impl From<Option<Signal<String>>> for AttributeValue {
+    fn from(signal: Option<Signal<String>>) -> Self {
+        match signal {
+            Some(string_signal) => AttributeValue::Signal(string_signal),
             None => AttributeValue::Text(String::new()),
         }
     }

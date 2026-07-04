@@ -90,7 +90,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 }
             }
             if { state.get_show_basic().get() } {
-                my_modal {
+                euv_modal {
                     title: "Basic Modal"
                     onclick: modal_dismiss_handler(state.get_show_basic())
                     p {
@@ -104,7 +104,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 }
             }
             if { state.get_show_confirm().get() } {
-                my_modal {
+                euv_modal {
                     title: "Confirm Action"
                     onclick: modal_dismiss_handler(state.get_show_confirm())
                     p {
@@ -127,7 +127,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 }
             }
             if { state.get_show_form().get() } {
-                my_modal {
+                euv_modal {
                     title: "Quick Sign Up"
                     onclick: modal_dismiss_handler(state.get_show_form())
                     euv_field {
@@ -174,7 +174,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 }
             }
             if { state.get_show_nested_1().get() } {
-                my_modal {
+                euv_modal {
                     title: "Nested Modal · Layer 1"
                     onclick: modal_dismiss_handler(state.get_show_nested_1())
                     p {
@@ -196,7 +196,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 }
             }
             if { state.get_show_nested_2().get() } {
-                my_modal {
+                euv_modal {
                     title: "Nested Modal · Layer 2"
                     onclick: modal_dismiss_handler(state.get_show_nested_2())
                     p {
@@ -214,7 +214,7 @@ pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
                 }
             }
             if { state.get_show_nested_3().get() } {
-                my_modal {
+                euv_modal {
                     title: "Nested Modal · Layer 3"
                     onclick: modal_dismiss_handler(state.get_show_nested_3())
                     p {

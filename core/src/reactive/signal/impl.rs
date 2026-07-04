@@ -23,7 +23,7 @@ where
         let boxed: Box<SignalInner<T>> = Box::new(inner);
         let ptr: *mut SignalInner<T> = Box::into_raw(boxed);
         let addr: usize = ptr as usize;
-        get_signal_inner_registry_mut().insert(addr);
+        Self::registry_mut().insert(addr);
         let mut signal: Self = Self::new(0, std::marker::PhantomData);
         signal.set_inner(addr);
         signal
@@ -48,7 +48,7 @@ where
     ///
     /// - `T` - The current value of the signal.
     pub fn get(&self) -> T {
-        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         if !inner.get_alive() {
             return inner.get_value().clone();
         }
@@ -68,7 +68,7 @@ where
     where
         F: FnMut() + 'static,
     {
-        get_signal_inner_mut::<T>(self.get_inner())
+        Self::inner_mut(self.get_inner())
             .get_mut_listeners()
             .push(Box::new(callback));
     }
@@ -85,7 +85,7 @@ where
     where
         F: FnMut() + 'static,
     {
-        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         inner.get_mut_listeners().clear();
         inner.get_mut_listeners().push(Box::new(callback));
         inner.set_listeners_replaced(true);
@@ -112,7 +112,7 @@ where
     /// `alive == false` entries once no async references remain. This mirrors
     /// the contract documented on `clear_signal_listeners`.
     pub(crate) fn deactivate(&self) {
-        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         inner.set_alive(false);
         inner.get_mut_listeners().clear();
         inner.get_mut_dependents().clear();
@@ -128,7 +128,7 @@ where
     /// listener. After invocation, listeners are moved back. This prevents
     /// issues with re-entrant access during listener callbacks.
     fn update(&self, value: T) -> bool {
-        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         if !inner.get_alive() {
             return false;
         }
@@ -142,10 +142,10 @@ where
         for listener in listeners.iter_mut() {
             listener();
         }
-        if !is_signal_alive(self.get_inner()) {
+        if !Self::is_alive(self.get_inner()) {
             return true;
         }
-        let inner: &mut SignalInner<T> = get_signal_inner_mut::<T>(self.get_inner());
+        let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         if inner.get_alive() {
             if inner.get_listeners_replaced() {
                 inner.set_listeners_replaced(false);
@@ -172,8 +172,7 @@ where
     ///
     /// - `usize` - The dynamic node ID to register as a dependent.
     pub(crate) fn add_dependent(&self, dynamic_id: usize) {
-        let deps: &mut Vec<usize> =
-            get_signal_inner_mut::<T>(self.get_inner()).get_mut_dependents();
+        let deps: &mut Vec<usize> = Self::inner_mut(self.get_inner()).get_mut_dependents();
         if !deps.contains(&dynamic_id) {
             deps.push(dynamic_id);
         }
@@ -189,7 +188,7 @@ where
     /// - `usize` - The dynamic node ID to remove.
     #[allow(dead_code)]
     pub(crate) fn remove_dependent(&self, dynamic_id: usize) {
-        get_signal_inner_mut::<T>(self.get_inner())
+        Self::inner_mut(self.get_inner())
             .get_mut_dependents()
             .retain(|id: &usize| *id != dynamic_id);
     }
@@ -200,9 +199,7 @@ where
     ///
     /// - `Vec<usize>` - Clone of the dependents list.
     pub(crate) fn get_dependents(&self) -> Vec<usize> {
-        get_signal_inner_mut::<T>(self.get_inner())
-            .get_dependents()
-            .clone()
+        Self::inner_mut(self.get_inner()).get_dependents().clone()
     }
 
     /// Sets the value of the signal and notifies listeners.
@@ -221,7 +218,38 @@ where
     pub fn set(&self, value: T) {
         if self.update(value) {
             let dependents: Vec<usize> = self.get_dependents();
-            schedule_update(&dependents);
+            App::schedule_update(&dependents);
+        }
+    }
+
+    /// Retrieves a mutable pointer to `SignalInner<T>` directly from the
+    /// signal's stored address.
+    ///
+    /// SAFETY: The address stored in `Signal::inner` is always a valid pointer
+    /// to a `SignalInner<T>` that is kept alive by the global registry. Since
+    /// WASM is single-threaded, the pointer is always valid as long as the
+    /// signal has not been explicitly freed.
+    fn inner_mut(addr: usize) -> &'static mut SignalInner<T> {
+        unsafe { &mut *(addr as *mut SignalInner<T>) }
+    }
+
+    /// Returns whether the signal allocation at `addr` is still present in
+    /// the global registry (i.e. has not been freed).
+    fn is_alive(addr: usize) -> bool {
+        Self::registry_mut().contains(&addr)
+    }
+
+    /// Ensures the signal inner registry is initialized and returns a mutable
+    /// reference to the global signal address registry.
+    #[allow(static_mut_refs)]
+    fn registry_mut() -> &'static mut HashSet<usize> {
+        unsafe {
+            if (*SIGNAL_INNER_REGISTRY.get_0().get()).is_none() {
+                (*SIGNAL_INNER_REGISTRY.get_0().get()) = Some(HashSet::new());
+            }
+            (*SIGNAL_INNER_REGISTRY.get_0().get())
+                .as_mut()
+                .unwrap_unchecked()
         }
     }
 }
@@ -234,7 +262,7 @@ where
 ///
 /// # Returns
 ///
-/// - `Self`: A valid signal initialized with `T::default()`.
+/// - `Self` - A valid signal initialized with `T::default()`.
 impl<T> Default for Signal<T>
 where
     T: Clone + Default + PartialEq + 'static,
@@ -250,7 +278,7 @@ where
 ///
 /// # Returns
 ///
-/// - `Self`: A copy of the signal handle sharing the same inner state.
+/// - `Self` - A copy of the signal handle sharing the same inner state.
 impl<T> Clone for Signal<T>
 where
     T: Clone + PartialEq + 'static,
@@ -281,7 +309,7 @@ where
     ///
     /// # Returns
     ///
-    /// - `Self`: An empty `SignalCell` with `None` stored in the inner `UnsafeCell`.
+    /// - `Self` - An empty `SignalCell` with `None` stored in the inner `UnsafeCell`.
     pub const fn none() -> Self {
         Self {
             inner: UnsafeCell::new(None),
@@ -333,7 +361,7 @@ where
 ///
 /// # Returns
 ///
-/// - `Self`: An empty `SignalCell` with no signal stored.
+/// - `Self` - An empty `SignalCell` with no signal stored.
 impl<T> Default for SignalCell<T>
 where
     T: Clone + PartialEq + 'static,
@@ -348,3 +376,35 @@ where
 /// SAFETY: `SignalInnerRegistryCell` is only used in single-threaded WASM contexts.
 /// Concurrent access from multiple threads would be undefined behavior.
 unsafe impl Sync for SignalInnerRegistryCell {}
+
+/// String-specific signal operations.
+impl Signal<String> {
+    /// Clears DOM-binding listeners on a bridge signal identified by its inner
+    /// pointer address, deactivates the bridge signal, and releases its value
+    /// memory.
+    ///
+    /// This function is used during DOM cleanup (`cleanup_dom_subtree`) to
+    /// release bridge `Signal<String>` instances that are no longer needed.
+    ///
+    /// Bridge signals are internal `Signal<String>` instances created by
+    /// `as_reactive_text` and `AttributeValue::Signal` for DOM binding.
+    /// They have exactly one consumer (the DOM element), so deactivating them
+    /// is safe when the element is removed. User-created source signals are
+    /// never passed to this function — they are tracked by `SignalInner.dependents`
+    /// and cleaned up by `use_signal`'s `deactivate()` on hook context teardown.
+    ///
+    /// The bridge signal's value is replaced with `String::new()` to release
+    /// the original string data, and `alive` is set to `false` so that any
+    /// stale async references become safe no-ops.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The inner pointer address of the bridge signal.
+    pub(crate) fn clear_listeners(addr: usize) {
+        let inner: &mut SignalInner<String> = Self::inner_mut(addr);
+        inner.get_mut_listeners().clear();
+        inner.set_alive(false);
+        inner.set_value(String::new());
+        Registry::cleanup_attr_slot(addr);
+    }
+}

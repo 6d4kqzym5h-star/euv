@@ -222,9 +222,9 @@ pub(crate) struct HtmlDynamicTag {
 ///
 /// # Fields
 ///
-/// - `props_type`: The Props type name (e.g., "PrimaryButtonProps").
-/// - `props_fields`: The field names declared in the Props struct.
-/// - `props_field_types`: Maps field name to its type string (e.g., "children" -> "VirtualNode").
+/// - `props_type` - The Props type name (e.g., "PrimaryButtonProps").
+/// - `props_fields` - The field names declared in the Props struct.
+/// - `props_field_types` - Maps field name to its type string (e.g., "children" -> "VirtualNode").
 #[derive(Clone, Data, Debug, New, serde::Deserialize, serde::Serialize)]
 pub(crate) struct ComponentInfo {
     /// The Props type name (e.g., "PrimaryButtonProps").

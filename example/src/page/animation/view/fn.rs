@@ -8,11 +8,11 @@ use crate::*;
 #[component]
 pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNode {
     let PageAnimationProps = node.try_get_props().unwrap_or_default();
-    let box_visible: Signal<bool> = use_signal(|| false);
-    let spin_active: Signal<bool> = use_signal(|| false);
-    let pulse_active: Signal<bool> = use_signal(|| false);
+    let box_visible: Signal<bool> = App::use_signal(|| false);
+    let spin_active: Signal<bool> = App::use_signal(|| false);
+    let pulse_active: Signal<bool> = App::use_signal(|| false);
     let progress: UseProgress = use_progress();
-    let scale_active: Signal<bool> = use_signal(|| false);
+    let scale_active: Signal<bool> = App::use_signal(|| false);
     html! {
         div {
             class: c_page_container()
@@ -36,7 +36,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             "Show Element"
                         }
-                        onclick: use_toggle(box_visible)
+                        onclick: UseEuvInput::use_toggle(box_visible)
                     }
                 }
                 if { box_visible.get() } {
@@ -61,7 +61,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             "Start Spin"
                         }
-                        onclick: use_toggle(spin_active)
+                        onclick: UseEuvInput::use_toggle(spin_active)
                     }
                 }
                 div {
@@ -91,7 +91,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             "Start Pulse"
                         }
-                        onclick: use_toggle(pulse_active)
+                        onclick: UseEuvInput::use_toggle(pulse_active)
                     }
                 }
                 div {
@@ -147,7 +147,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         } else {
                             "Shrink"
                         }
-                        onclick: use_toggle(scale_active)
+                        onclick: UseEuvInput::use_toggle(scale_active)
                     }
                 }
                 div {

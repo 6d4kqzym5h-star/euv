@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for a todo list feature.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseTodoList {
     /// The list of todo items.
     #[get(type(copy))]

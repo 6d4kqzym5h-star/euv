@@ -58,14 +58,14 @@ pub(crate) fn use_canvas_state() -> UseCanvas {
     let initial_stroke_color: String = load_stroke_color();
     let initial_line_width: f64 = load_line_width();
     UseCanvas {
-        drawing: use_signal(|| false),
-        stroke_color: use_signal(move || initial_stroke_color.clone()),
-        line_width: use_signal(move || initial_line_width),
-        fullscreen: use_signal(|| false),
-        snapshot_data_url: use_signal(String::new),
-        last_x: use_signal(|| 0.0),
-        last_y: use_signal(|| 0.0),
-        touch_last_points: use_signal(HashMap::new),
+        drawing: App::use_signal(|| false),
+        stroke_color: App::use_signal(move || initial_stroke_color.clone()),
+        line_width: App::use_signal(move || initial_line_width),
+        fullscreen: App::use_signal(|| false),
+        snapshot_data_url: App::use_signal(String::new),
+        last_x: App::use_signal(|| 0.0),
+        last_y: App::use_signal(|| 0.0),
+        touch_last_points: App::use_signal(HashMap::new),
     }
 }
 
@@ -316,7 +316,7 @@ pub(crate) fn get_mouse_client(event: &Event) -> (f64, f64) {
 /// - `&Event` - The touchstart event.
 /// - `bool` - Whether the canvas is in fullscreen mode.
 pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_fullscreen: bool) {
-    let points: Vec<NativeTouchPointF64> = extract_touch_points_f64(event);
+    let points: Vec<NativeTouchPointF64> = NativeTouchPointF64::extract_all(event);
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let Some(element) = document_value
@@ -381,7 +381,7 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
     if !state.get_drawing().get() {
         return;
     }
-    let points: Vec<NativeTouchPointF64> = extract_touch_points_f64(event);
+    let points: Vec<NativeTouchPointF64> = NativeTouchPointF64::extract_all(event);
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let Some(element) = document_value
@@ -445,8 +445,8 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
 /// - `UseCanvas` - The canvas drawing board state.
 /// - `&Event` - The touchend or touchcancel event.
 pub(crate) fn stop_drawing_multi_touch(state: UseCanvas, event: &Event) {
-    let changed_points: Vec<NativeTouchPoint> = extract_changed_touch_points(event);
-    let remaining: Vec<NativeTouchPoint> = extract_touch_points(event);
+    let changed_points: Vec<NativeTouchPoint> = NativeTouchPoint::extract_changed(event);
+    let remaining: Vec<NativeTouchPoint> = NativeTouchPoint::extract_all(event);
     let mut touch_last: HashMap<i32, (f64, f64)> = state.get_touch_last_points().get();
     for point in &changed_points {
         touch_last.remove(&point.get_identifier());
@@ -525,7 +525,7 @@ pub(crate) fn map_rotated_offset(
 /// - `UseCanvas` - The canvas drawing board state.
 pub(crate) fn enter_fullscreen(state: UseCanvas) {
     state.get_fullscreen().set(true);
-    overlay_push_state();
+    Router::overlay_push_state();
     let snapshot_data_url: String = state.get_snapshot_data_url().get();
     let resize_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         resize_fullscreen_canvas(&snapshot_data_url);
@@ -548,7 +548,7 @@ pub(crate) fn enter_fullscreen(state: UseCanvas) {
 ///
 /// - `&str` - The snapshot data URL to draw onto the canvas.
 pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
-    apply_cached_insets();
+    UseEuvLayout::apply_cached_insets();
     let window_value: Window = window().expect("no global window exists");
     let document_value: Document = window_value.document().expect("should have a document");
     let device_pixel_ratio: f64 = Reflect::get(
@@ -646,8 +646,8 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
 pub(crate) fn exit_fullscreen(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
-    apply_cached_insets();
-    overlay_back(None);
+    UseEuvLayout::apply_cached_insets();
+    Router::overlay_back(None);
 }
 
 /// Exits CSS fullscreen mode without consuming a browser history entry.
@@ -667,7 +667,7 @@ pub(crate) fn exit_fullscreen(state: UseCanvas) {
 pub(crate) fn exit_fullscreen_from_popstate(state: UseCanvas) {
     update_snapshot(state);
     state.get_fullscreen().set(false);
-    apply_cached_insets();
+    UseEuvLayout::apply_cached_insets();
 }
 
 /// Subscribes to browser `popstate` events to handle the system back
@@ -692,7 +692,7 @@ pub(crate) fn exit_fullscreen_from_popstate(state: UseCanvas) {
 ///
 /// - `String` - The persisted or default stroke color.
 pub(crate) fn load_stroke_color() -> String {
-    local_storage_get(CANVAS_STORAGE_KEY_STROKE_COLOR)
+    UseEuvBrowser::local_storage_get(CANVAS_STORAGE_KEY_STROKE_COLOR)
         .filter(|color: &String| !color.is_empty())
         .unwrap_or_else(|| CANVAS_DEFAULT_STROKE_COLOR.to_string())
 }
@@ -706,7 +706,7 @@ pub(crate) fn load_stroke_color() -> String {
 ///
 /// - `f64` - The persisted or default line width.
 pub(crate) fn load_line_width() -> f64 {
-    local_storage_get(CANVAS_STORAGE_KEY_LINE_WIDTH)
+    UseEuvBrowser::local_storage_get(CANVAS_STORAGE_KEY_LINE_WIDTH)
         .and_then(|width: String| width.parse::<f64>().ok())
         .unwrap_or(CANVAS_DEFAULT_LINE_WIDTH)
 }
@@ -717,7 +717,7 @@ pub(crate) fn load_line_width() -> f64 {
 ///
 /// - `&str` - The stroke color value to persist.
 pub(crate) fn save_stroke_color(color: &str) {
-    local_storage_set(CANVAS_STORAGE_KEY_STROKE_COLOR, color);
+    UseEuvBrowser::local_storage_set(CANVAS_STORAGE_KEY_STROKE_COLOR, color);
 }
 
 /// Persists the current line width to localStorage.
@@ -726,7 +726,7 @@ pub(crate) fn save_stroke_color(color: &str) {
 ///
 /// - `f64` - The line width value to persist.
 pub(crate) fn save_line_width(width: f64) {
-    local_storage_set(CANVAS_STORAGE_KEY_LINE_WIDTH, &width.to_string());
+    UseEuvBrowser::local_storage_set(CANVAS_STORAGE_KEY_LINE_WIDTH, &width.to_string());
 }
 
 /// Creates an input event handler that updates the line width via
@@ -814,10 +814,10 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
 ///
 /// # Returns
 ///
-/// - `usize` - A guard ID that can be passed to [`unregister_popstate_guard`]
+/// - `usize` - A guard ID that can be passed to [`Router::unregister_popstate_guard`]
 ///   to remove the guard when the canvas page is unmounted.
 pub(crate) fn use_fullscreen_popstate(state: UseCanvas) -> usize {
-    register_popstate_guard(Rc::new(move || {
+    Router::register_popstate_guard(Rc::new(move || {
         if state.get_fullscreen().get() {
             exit_fullscreen_from_popstate(state);
             true

@@ -9,7 +9,11 @@ use crate::*;
 ///
 /// - `UseStopwatch` - The stopwatch state containing seconds, running, and handle signals.
 pub(crate) fn use_stopwatch() -> UseStopwatch {
-    UseStopwatch::new(use_signal(|| 0), use_signal(|| false), use_signal(|| None))
+    UseStopwatch::new(
+        App::use_signal(|| 0),
+        App::use_signal(|| false),
+        App::use_signal(|| None),
+    )
 }
 
 /// Creates countdown state signals wrapped in a `UseCountdown` struct.
@@ -22,11 +26,11 @@ pub(crate) fn use_stopwatch() -> UseStopwatch {
 /// - `UseCountdown` - The countdown state containing total, remaining, running, handle, and input signals.
 pub(crate) fn use_countdown() -> UseCountdown {
     UseCountdown::new(
-        use_signal(|| 60),
-        use_signal(|| 60),
-        use_signal(|| false),
-        use_signal(|| None),
-        use_signal(|| "60".to_string()),
+        App::use_signal(|| 60),
+        App::use_signal(|| 60),
+        App::use_signal(|| false),
+        App::use_signal(|| None),
+        App::use_signal(|| "60".to_string()),
     )
 }
 
@@ -52,7 +56,7 @@ pub(crate) fn stopwatch_on_start(state: UseStopwatch) -> Option<Rc<dyn Fn(Event)
         }
         let seconds_signal: Signal<i32> = state.get_seconds();
         let handle_signal: Signal<Option<IntervalHandle>> = state.get_handle();
-        let new_handle: IntervalHandle = use_interval(1000, move || {
+        let new_handle: IntervalHandle = App::use_interval(1000, move || {
             let current: i32 = seconds_signal.get();
             seconds_signal.set(current + 1);
         });
@@ -141,7 +145,7 @@ pub(crate) fn countdown_on_start(state: UseCountdown) -> Option<Rc<dyn Fn(Event)
         let remaining_signal: Signal<i32> = state.get_remaining();
         let running_signal: Signal<bool> = state.get_running();
         let handle_signal: Signal<Option<IntervalHandle>> = state.get_handle();
-        let new_handle: IntervalHandle = use_interval(1000, move || {
+        let new_handle: IntervalHandle = App::use_interval(1000, move || {
             if running_signal.get() {
                 let current: i32 = remaining_signal.get();
                 if current > 0 {

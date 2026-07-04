@@ -3,7 +3,7 @@ use crate::*;
 /// Props for the `nav_item` component.
 ///
 /// Defines the strongly-typed interface for a desktop navigation item link.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct NavItemProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,
@@ -18,7 +18,7 @@ pub(crate) struct NavItemProps {
 /// Props for the `mobile_nav_item` component.
 ///
 /// Defines the strongly-typed interface for a mobile navigation item link.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct MobileNavItemProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,
@@ -35,7 +35,7 @@ pub(crate) struct MobileNavItemProps {
 /// Props for the `build_desktop_nav_items` component.
 ///
 /// Defines the strongly-typed interface for the desktop navigation items list.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct BuildDesktopNavItemsProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,
@@ -44,7 +44,7 @@ pub(crate) struct BuildDesktopNavItemsProps {
 /// Props for the `build_mobile_nav_items` component.
 ///
 /// Defines the strongly-typed interface for the mobile navigation items list.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct BuildMobileNavItemsProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,

@@ -5,7 +5,7 @@ use crate::*;
 /// Aggregates all signals needed for the drawing board including
 /// drawing status, stroke configuration, fullscreen mode, and
 /// a snapshot of the current canvas content as a data URL.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Default, PartialEq)]
 pub(crate) struct UseCanvas {
     /// Whether the user is currently drawing on the canvas.
     #[get(type(copy))]

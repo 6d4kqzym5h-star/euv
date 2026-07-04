@@ -176,9 +176,13 @@ pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
     let Ok(manifest_dir) = env::var(CARGO_MANIFEST_DIR) else {
         return HashMap::new();
     };
-    let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
     let mut rust_source_files: Vec<PathBuf> = Vec::new();
+    let src_dir: PathBuf = PathBuf::from(&manifest_dir).join(SRC_DIR);
     collect_rs_files(&src_dir, &mut rust_source_files);
+    let dep_src_dirs: Vec<PathBuf> = collect_local_dep_src_dirs(&manifest_dir);
+    for dep_src_dir in dep_src_dirs {
+        collect_rs_files(&dep_src_dir, &mut rust_source_files);
+    }
     let fingerprint: String = compute_fingerprint(&rust_source_files);
     if let Ok(out_dir) = env::var(ENV_OUT_DIR) {
         let cache_path: PathBuf = PathBuf::from(out_dir).join(REGISTRY_CACHE_FILE_NAME);
@@ -268,6 +272,117 @@ fn try_save_cache(
         let content: String = format!("{fingerprint}{CHAR_NEWLINE}{data}");
         let _ = std::fs::write(cache_path, content);
     }
+}
+
+/// Collects the `src/` directories of local path dependencies from `Cargo.toml`.
+///
+/// Parses the `Cargo.toml` at the given manifest directory and extracts
+/// all dependency entries that specify a `path` field pointing to a local
+/// directory, or reference a workspace dependency. Returns the `src/` subdirectory
+/// of each such dependency so that the component registry scanner can also
+/// discover `#[component]` functions defined in local dependency crates.
+///
+/// # Arguments
+///
+/// - `&str` - The `CARGO_MANIFEST_DIR` path containing the `Cargo.toml`.
+///
+/// # Returns
+///
+/// - `Vec<PathBuf>` - A list of `src/` directory paths for local path dependencies.
+fn collect_local_dep_src_dirs(manifest_dir: &str) -> Vec<PathBuf> {
+    let cargo_toml_path: PathBuf = PathBuf::from(manifest_dir).join(CARGO_TOML);
+    let Ok(content) = read_to_string(&cargo_toml_path) else {
+        return Vec::new();
+    };
+    let Ok(manifest) = toml::from_str::<toml::Value>(&content) else {
+        return Vec::new();
+    };
+    let mut dep_dirs: Vec<PathBuf> = Vec::new();
+    let manifest_dir_path: PathBuf = PathBuf::from(manifest_dir);
+    let workspace_root: PathBuf = find_workspace_root(manifest_dir);
+    let workspace_toml: Option<toml::Value> = if workspace_root != manifest_dir_path {
+        read_to_string(workspace_root.join(CARGO_TOML))
+            .ok()
+            .and_then(|toml_content: String| toml::from_str::<toml::Value>(&toml_content).ok())
+    } else {
+        None
+    };
+    for section_key in [DEPENDENCIES, WORKSPACE_DEPENDENCIES] {
+        let Some(deps) = manifest
+            .get(section_key)
+            .and_then(|table_value: &toml::Value| table_value.as_table())
+        else {
+            continue;
+        };
+        for (name, value) in deps {
+            let path_str: Option<&str> = if let Some(table) = value.as_table() {
+                if table
+                    .get(WORKSPACE_KEY)
+                    .and_then(|workspace_flag: &toml::Value| workspace_flag.as_bool())
+                    == Some(true)
+                {
+                    workspace_toml
+                        .as_ref()
+                        .and_then(|workspace_manifest: &toml::Value| {
+                            workspace_manifest.get(WORKSPACE_KEY)
+                        })
+                        .and_then(|workspace_table: &toml::Value| workspace_table.get(DEPENDENCIES))
+                        .and_then(|deps_table: &toml::Value| deps_table.get(name))
+                        .and_then(|dep_entry: &toml::Value| dep_entry.as_table())
+                        .and_then(|dep_table: &toml::Table| dep_table.get(PATH_KEY))
+                        .and_then(|path_value: &toml::Value| path_value.as_str())
+                } else {
+                    table
+                        .get(PATH_KEY)
+                        .and_then(|path_value: &toml::Value| path_value.as_str())
+                }
+            } else {
+                None
+            };
+            if let Some(path_str) = path_str {
+                let path: PathBuf = PathBuf::from(path_str);
+                let dep_dir: PathBuf = if path.is_absolute() {
+                    path.join(SRC_DIR)
+                } else if workspace_root != manifest_dir_path {
+                    workspace_root.join(path_str).join(SRC_DIR)
+                } else {
+                    manifest_dir_path.join(path_str).join(SRC_DIR)
+                };
+                if dep_dir.is_dir() {
+                    dep_dirs.push(dep_dir);
+                }
+            }
+        }
+    }
+    dep_dirs
+}
+
+/// Finds the workspace root directory by traversing up from the manifest directory.
+///
+/// Searches for a `Cargo.toml` containing `[workspace]` section by walking up
+/// the directory tree until the root is reached.
+///
+/// # Arguments
+///
+/// - `&str` - The starting manifest directory path.
+///
+/// # Returns
+///
+/// - `PathBuf` - The workspace root directory, or the starting directory if no workspace found.
+fn find_workspace_root(manifest_dir: &str) -> PathBuf {
+    let mut current: PathBuf = PathBuf::from(manifest_dir);
+    loop {
+        let cargo_toml: PathBuf = current.join(CARGO_TOML);
+        if let Ok(content) = read_to_string(&cargo_toml)
+            && content.contains(WORKSPACE_SECTION)
+        {
+            return current;
+        }
+        if !current.pop() {
+            break;
+        }
+    }
+    PathBuf::from(manifest_dir)
 }
 
 /// Builds the component registry by parsing all source files in a single pass.
@@ -1143,12 +1258,12 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 /// change, the conditional is re-evaluated.
 ///
 /// The `mode` parameter controls how branch bodies are emitted:
-/// - `AttrIfMode::Reactive`: Each branch body is wrapped in
+/// - `AttrIfMode::Reactive` - Each branch body is wrapped in
 ///   `::euv::IntoReactiveString::into_reactive_string(...)` so that all branches
 ///   produce a `String` regardless of their original type (e.g., `Css`, `&str`, `String`).
 ///   This ensures type compatibility when the `if` and implicit `else` branches
 ///   return different types.
-/// - `AttrIfMode::Raw`: Branch bodies are emitted as-is without wrapping.
+/// - `AttrIfMode::Raw` - Branch bodies are emitted as-is without wrapping.
 ///   Used for component props where branch types are already consistent.
 ///
 /// # Arguments
@@ -1204,8 +1319,8 @@ pub(crate) fn attr_if_to_tokens(
 /// Generates a token stream for an `HtmlAttrMatch` as a Rust `match` expression.
 ///
 /// The `mode` parameter controls how arm bodies are emitted:
-/// - `AttrIfMode::Reactive`: Each arm body is wrapped with `.to_string()`.
-/// - `AttrIfMode::Raw`: Arm bodies are emitted as-is without wrapping.
+/// - `AttrIfMode::Reactive` - Each arm body is wrapped with `.to_string()`.
+/// - `AttrIfMode::Raw` - Arm bodies are emitted as-is without wrapping.
 ///
 /// # Arguments
 ///

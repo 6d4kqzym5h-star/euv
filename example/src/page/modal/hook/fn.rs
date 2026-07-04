@@ -35,7 +35,7 @@ pub(crate) fn use_modal() -> UseModal {
 /// - `Signal<bool>` - The visibility signal controlling the modal.
 pub(crate) fn open_modal(visible: Signal<bool>) {
     visible.set(true);
-    modal_push(
+    Router::modal_push(
         visible,
         Rc::new(move || {
             visible.set(false);
@@ -57,7 +57,7 @@ pub(crate) fn open_modal(visible: Signal<bool>) {
 ///
 /// - `Signal<bool>` - The visibility signal controlling the modal.
 pub(crate) fn dismiss_modal(visible: Signal<bool>) {
-    modal_close_via_ui(visible);
+    Router::modal_close_via_ui(visible);
     visible.set(false);
 }
 

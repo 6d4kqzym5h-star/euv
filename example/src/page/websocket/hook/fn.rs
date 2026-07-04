@@ -78,13 +78,13 @@ fn build_websocket_url() -> String {
 /// - `UseWebSocket` - The WebSocket connection state.
 pub(crate) fn use_websocket() -> UseWebSocket {
     UseWebSocket {
-        url: use_signal(build_websocket_url),
-        connected: use_signal(|| false),
-        connecting: use_signal(|| false),
-        message_input: use_signal(String::new),
-        messages: use_signal(Vec::new),
-        error: use_signal(String::new),
-        ping_handle: use_signal(|| None),
+        url: App::use_signal(build_websocket_url),
+        connected: App::use_signal(|| false),
+        connecting: App::use_signal(|| false),
+        message_input: App::use_signal(String::new),
+        messages: App::use_signal(Vec::new),
+        error: App::use_signal(String::new),
+        ping_handle: App::use_signal(|| None),
     }
 }
 
@@ -97,7 +97,7 @@ pub(crate) fn use_websocket() -> UseWebSocket {
 ///
 /// - `Signal<Option<IntervalHandle>>` - The signal to store the interval handle.
 fn start_ping_timer(ping_handle_signal: Signal<Option<IntervalHandle>>) {
-    let handle: IntervalHandle = use_interval(WEBSOCKET_PING_INTERVAL_MS, move || {
+    let handle: IntervalHandle = App::use_interval(WEBSOCKET_PING_INTERVAL_MS, move || {
         WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
             if let Some(socket) = instance.borrow().as_ref() {
                 let _ = socket.send_with_str(WEBSOCKET_PING_MESSAGE);
@@ -330,7 +330,7 @@ pub(crate) fn websocket_on_send(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>
 ///
 /// - `UseWebSocket` - The WebSocket connection state.
 pub(crate) fn ws_cleanup(state: UseWebSocket) {
-    use_cleanup(move || {
+    App::use_cleanup(move || {
         stop_ping_timer(state.get_ping_handle());
         ws_close_instance();
         state.get_connected().set(false);

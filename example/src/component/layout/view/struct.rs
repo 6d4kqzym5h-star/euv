@@ -3,7 +3,7 @@ use crate::*;
 /// Props for the `desktop_layout` component.
 ///
 /// Defines the strongly-typed interface for the desktop application shell layout.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct DesktopLayoutProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,
@@ -19,7 +19,7 @@ pub(crate) struct DesktopLayoutProps {
 /// Props for the `mobile_layout` component.
 ///
 /// Defines the strongly-typed interface for the mobile application shell layout.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct MobileLayoutProps {
     /// The reactive signal holding the current route.
     pub(crate) route_signal: Signal<String>,

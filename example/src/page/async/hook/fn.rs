@@ -7,9 +7,9 @@ use crate::*;
 /// - `UseFetch` - The fetch state containing loading, data, and error signals.
 pub(crate) fn use_fetch() -> UseFetch {
     UseFetch::new(
-        use_signal(|| false),
-        use_signal(|| "Click fetch to load data".to_string()),
-        use_signal(String::new),
+        App::use_signal(|| false),
+        App::use_signal(|| "Click fetch to load data".to_string()),
+        App::use_signal(String::new),
     )
 }
 

@@ -7,15 +7,15 @@ use crate::*;
 /// - `UseTodoList` - The todo list state.
 pub(crate) fn use_todo_list() -> UseTodoList {
     UseTodoList::new(
-        use_signal(|| {
+        App::use_signal(|| {
             let mut items: Vec<String> = Vec::with_capacity(1000);
             for index in 1..=1000 {
                 items.push(format!("Item {}", index));
             }
             items
         }),
-        use_signal(String::new),
-        use_signal(String::new),
+        App::use_signal(String::new),
+        App::use_signal(String::new),
     )
 }
 

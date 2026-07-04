@@ -99,7 +99,7 @@ pub(crate) fn child_input(text_signal: Signal<String>, count_signal: Signal<i32>
                 label: "Edit shared text:"
                 autocomplete: BINDING_AUTOCOMPLETE_OFF
                 value: text_signal
-                oninput: on_input_value(text_signal)
+                oninput: UseEuvInput::on_input_value(text_signal)
                 class: c_euv_input_no_transition().clone()
             }
             div {
@@ -156,8 +156,8 @@ pub(crate) fn temperature_converter(
                     value: format!("{:.1}", celsius_value)
                     class: c_euv_input_no_transition()
                     oninput: cross_on_input_celsius(celsius_signal)
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
             }
             span {
@@ -179,8 +179,8 @@ pub(crate) fn temperature_converter(
                     value: format!("{:.1}", fahrenheit_value)
                     class: c_euv_input_no_transition()
                     oninput: cross_on_input_fahrenheit(fahrenheit_signal)
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
             }
         }
@@ -248,8 +248,8 @@ pub(crate) fn color_mixer(
                     style: format!("--value: {}%", (red_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(red_signal)
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
                 span {
                     class: c_binding_slider_value()
@@ -277,8 +277,8 @@ pub(crate) fn color_mixer(
                     style: format!("--value: {}%", (green_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(green_signal)
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
                 span {
                     class: c_binding_slider_value()
@@ -306,8 +306,8 @@ pub(crate) fn color_mixer(
                     style: format!("--value: {}%", (blue_value * 100 / 255))
                     class: c_binding_slider()
                     oninput: cross_on_input_i32(blue_signal)
-                    onfocus: on_focus_scroll_into_view()
-                    onblur: on_blur_restore_height()
+                    onfocus: UseEuvInput::on_focus_scroll_into_view()
+                    onblur: UseEuvInput::on_blur_restore_height()
                 }
                 span {
                     class: c_binding_slider_value()
@@ -353,7 +353,7 @@ pub(crate) fn page_component_binding(node: VirtualNode<PageComponentBindingProps
                     input_type: BINDING_TEXT_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
                     value: props_state.get_parent_message()
-                    oninput: on_input_value(props_state.get_parent_message())
+                    oninput: UseEuvInput::on_input_value(props_state.get_parent_message())
                     class: c_euv_input_no_transition().clone()
                 }
                 p {

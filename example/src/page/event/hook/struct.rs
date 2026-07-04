@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for the keyboard events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseKeyboardEvent {
     /// The last key pressed down.
     #[get(type(copy))]
@@ -21,7 +21,7 @@ pub(crate) struct UseKeyboardEvent {
 }
 
 /// Reactive state for the mouse events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseMouseEvent {
     /// The total click count.
     #[get(type(copy))]
@@ -62,7 +62,7 @@ pub(crate) struct UseMouseEvent {
 }
 
 /// Reactive state for the focus events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseFocusEvent {
     /// The current focus status string.
     #[get(type(copy))]
@@ -76,7 +76,7 @@ pub(crate) struct UseFocusEvent {
 }
 
 /// Reactive state for the drag events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseDragEvent {
     /// The current drag status string.
     #[get(type(copy))]
@@ -103,7 +103,7 @@ pub(crate) struct UseDragEvent {
 }
 
 /// Reactive state for the wheel event demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, PartialEq)]
 pub(crate) struct UseWheelEvent {
     /// The wheel delta string.
     #[get(type(copy))]
@@ -114,7 +114,7 @@ pub(crate) struct UseWheelEvent {
 }
 
 /// Reactive state for the clipboard events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseClipboardEvent {
     /// The clipboard data content.
     #[get(type(copy))]
@@ -125,7 +125,7 @@ pub(crate) struct UseClipboardEvent {
 }
 
 /// Reactive state for the touch events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseTouchEvent {
     /// The touch information string.
     #[get(type(copy))]
@@ -133,7 +133,7 @@ pub(crate) struct UseTouchEvent {
 }
 
 /// Reactive state for the form events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseFormEvent {
     /// The input value from oninput.
     #[get(type(copy))]
@@ -153,7 +153,7 @@ pub(crate) struct UseFormEvent {
 }
 
 /// Reactive state for the audio media events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseMediaEvent {
     /// The media playback status.
     #[get(type(copy))]
@@ -164,7 +164,7 @@ pub(crate) struct UseMediaEvent {
 }
 
 /// Reactive state for the video events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseVideoEvent {
     /// The video playback status.
     #[get(type(copy))]
@@ -187,7 +187,7 @@ pub(crate) struct UseVideoEvent {
 }
 
 /// Reactive state for the image events demo.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseImageEvent {
     /// The image load status.
     #[get(type(copy))]

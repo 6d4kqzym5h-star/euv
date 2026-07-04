@@ -74,3 +74,21 @@ pub(crate) const ATTR_KEY_KEY: &str = "key";
 
 /// Empty string constant used as default placeholder for unset attribute values.
 pub(crate) const STR_EMPTY: &str = "";
+
+/// Cargo manifest file name.
+pub(crate) const CARGO_TOML: &str = "Cargo.toml";
+
+/// Workspace section header in Cargo.toml.
+pub(crate) const WORKSPACE_SECTION: &str = "[workspace]";
+
+/// Dependencies section key in Cargo.toml.
+pub(crate) const DEPENDENCIES: &str = "dependencies";
+
+/// Workspace dependencies section key in Cargo.toml.
+pub(crate) const WORKSPACE_DEPENDENCIES: &str = "workspace.dependencies";
+
+/// Path field key in dependency table.
+pub(crate) const PATH_KEY: &str = "path";
+
+/// Workspace field key in dependency table.
+pub(crate) const WORKSPACE_KEY: &str = "workspace";

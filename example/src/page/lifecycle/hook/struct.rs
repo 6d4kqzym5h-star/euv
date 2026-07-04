@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for a lifecycle demo feature.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseLifecycle {
     /// The render count.
     #[get(type(copy))]

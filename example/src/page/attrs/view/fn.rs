@@ -12,10 +12,10 @@ use crate::*;
 #[component]
 pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> VirtualNode {
     let PageCustomAttrsProps = node.try_get_props().unwrap_or_default();
-    let dynamic_key: Signal<String> = use_signal(|| "data-custom".to_string());
-    let dynamic_value: Signal<String> = use_signal(String::new);
-    let class_prop_key: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_KEY.to_string());
-    let class_prop_value: Signal<String> = use_signal(|| CLASS_DYNAMIC_PROP_VALUE.to_string());
+    let dynamic_key: Signal<String> = App::use_signal(|| "data-custom".to_string());
+    let dynamic_value: Signal<String> = App::use_signal(String::new);
+    let class_prop_key: Signal<String> = App::use_signal(|| CLASS_DYNAMIC_PROP_KEY.to_string());
+    let class_prop_value: Signal<String> = App::use_signal(|| CLASS_DYNAMIC_PROP_VALUE.to_string());
     html! {
         div {
             class: c_page_container()

@@ -202,8 +202,8 @@ impl Renderer {
                 if let AttributeValue::Event(handler) = old_attr.get_value()
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
-                    && let Some(entry) =
-                        ensure_handler_registry_mut().remove(&(euv_id, handler.get_event_name()))
+                    && let Some(entry) = Registry::ensure_handler_registry_mut()
+                        .remove(&(euv_id, handler.get_event_name()))
                 {
                     let slot: &mut HandlerSlot = unsafe { &mut *entry };
                     if let Some(listener_element) = slot.try_get_element().as_ref().cloned()
@@ -556,7 +556,7 @@ impl Renderer {
                             let attr_name: String = attr.get_name().clone();
                             let element_clone: Element = element.clone();
                             bridge_signal.replace_listener(move || {
-                                if !is_node_connected(&element_clone) {
+                                if !Renderer::is_node_connected(&element_clone) {
                                     return;
                                 }
                                 let new_value: String = bridge_signal.get();
@@ -586,7 +586,7 @@ impl Renderer {
                         Signal::create(text_node.get_content().clone());
                     let text_clone: Text = text.clone();
                     bridge_signal.replace_listener(move || {
-                        if !is_node_connected(&text_clone) {
+                        if !Renderer::is_node_connected(&text_clone) {
                             return;
                         }
                         let new_value: String = bridge_signal.get();
@@ -653,7 +653,7 @@ impl Renderer {
         let mut hook_context: HookContext = dynamic_node.get_hook_context().clone();
         hook_context.reset_index();
         CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
-        let initial_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
+        let initial_vnode: VirtualNode = HookContext::with(hook_context.clone(), || {
             dynamic_node.render(&mut hook_context)
         });
         let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
@@ -679,7 +679,7 @@ impl Renderer {
             hook_context.reset_index();
             let prev_arm: usize = unsafe { *last_arm_owned.get() };
             CURRENT_TRACKING_DYNAMIC_ID.store(dynamic_id, Ordering::Relaxed);
-            let new_vnode: VirtualNode = with_hook_context(hook_context.clone(), || {
+            let new_vnode: VirtualNode = HookContext::with(hook_context.clone(), || {
                 let inner: &mut RenderFnInner = unsafe { &mut *render_fn_rc.get() };
                 (inner.get_mut_render_fn())(&mut hook_context)
             });
@@ -710,7 +710,7 @@ impl Renderer {
             }
             CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         });
-        register_dynamic(dynamic_id, callback);
+        Registry::register_dynamic(dynamic_id, callback);
         initial_dom
     }
 
@@ -879,18 +879,18 @@ impl Renderer {
         if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
             && let Ok(euv_id) = euv_id_str.parse::<usize>()
         {
-            cleanup_element(euv_id);
+            Registry::cleanup_element(euv_id);
         }
         if let Some(dynamic_id_str) = element.get_attribute(DATA_EUV_DYNAMIC_ID)
             && let Ok(dynamic_id) = dynamic_id_str.parse::<usize>()
         {
-            cleanup_dynamic_node(dynamic_id);
+            Registry::cleanup_dynamic_node(dynamic_id);
         }
         if let Some(signal_addrs_str) = element.get_attribute(DATA_EUV_SIGNAL_ADDRS) {
             signal_addrs_str
                 .split(CHAR_SIGNAL_ADDRS_SEPARATOR)
                 .filter_map(|addr_str: &str| addr_str.parse::<usize>().ok())
-                .for_each(clear_signal_listeners);
+                .for_each(Signal::<String>::clear_listeners);
         }
         let child_nodes: NodeList = element.child_nodes();
         let length: u32 = child_nodes.length();
@@ -908,7 +908,7 @@ impl Renderer {
     /// For non-bubbling events (load, error, loadstart, etc.), attaches the
     /// listener directly on the element since global delegation on `window`
     /// cannot capture these events. For all other events, uses global event
-    /// delegation via `ensure_delegation`.
+    /// delegation via `Registry::ensure_delegation`.
     ///
     /// # Arguments
     ///
@@ -930,16 +930,16 @@ impl Renderer {
             }
         };
         let event_name: &'static str = handler.get_event_name();
-        if is_non_bubbling(event_name) {
+        if Registry::is_non_bubbling(event_name) {
             let key: (usize, &'static str) = (euv_id, event_name);
-            let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
+            let registry_ref: &mut HandlerRegistryMap = Registry::ensure_handler_registry_mut();
             if let Some(existing_entry) = registry_ref.get(&key) {
                 let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
                 slot.set_handler(Some(handler.clone()));
             } else {
                 let closure: Closure<dyn FnMut(Event)> =
                     Closure::wrap(Box::new(move |event: Event| {
-                        if let Some(entry) = ensure_handler_registry().get(&key) {
+                        if let Some(entry) = Registry::ensure_handler_registry().get(&key) {
                             let slot: &HandlerSlot = unsafe { &**entry };
                             if let Some(active_handler) = slot.try_get_handler().as_ref().cloned() {
                                 active_handler.handle(event);
@@ -958,9 +958,9 @@ impl Renderer {
                 registry_ref.insert(key, handler_slot);
             }
         } else {
-            ensure_delegation(event_name);
+            Registry::ensure_delegation(event_name);
             let key: (usize, &'static str) = (euv_id, event_name);
-            let registry_ref: &mut HandlerRegistryMap = ensure_handler_registry_mut();
+            let registry_ref: &mut HandlerRegistryMap = Registry::ensure_handler_registry_mut();
             if let Some(existing_entry) = registry_ref.get(&key) {
                 let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
                 slot.set_handler(Some(handler.clone()));
@@ -973,5 +973,82 @@ impl Renderer {
                 registry_ref.insert(key, handler_slot);
             }
         }
+    }
+
+    /// Checks whether a DOM node is currently connected to the document.
+    ///
+    /// Uses the `isConnected` JavaScript property to determine if the node
+    /// is still attached to the live DOM tree.
+    ///
+    /// # Arguments
+    ///
+    /// - `&T` - A reference to any type that can be converted to `&Node`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the node is connected to the document, `false` otherwise.
+    fn is_node_connected<T>(node: &T) -> bool
+    where
+        T: AsRef<Node>,
+    {
+        let node_ref: &Node = node.as_ref();
+        let result: Result<JsValue, JsValue> =
+            Reflect::get(node_ref.as_ref(), &JsValue::from_str(IS_CONNECTED));
+        match result {
+            Ok(value) => value.is_truthy(),
+            Err(_) => false,
+        }
+    }
+}
+
+/// Static method for mounting a virtual DOM tree into a real DOM element.
+impl Mount {
+    /// Mounts the given virtual DOM tree to a specific element matched by a CSS selector.
+    ///
+    /// Supported selector syntax:
+    /// - `"#id"` — select by element ID
+    /// - `".class"` — select by class name (uses the first match)
+    /// - `"tag"` — select by tag name (uses the first match)
+    ///
+    /// # Arguments
+    ///
+    /// - `S: AsRef<str>` - A CSS selector string to locate the target element.
+    /// - `FnOnce() -> VirtualNode + 'static` - A closure that returns the virtual DOM tree.
+    pub(crate) fn setup<S, F>(selector: S, render_fn: F)
+    where
+        S: AsRef<str>,
+        F: FnOnce() -> VirtualNode,
+    {
+        let selector: &str = selector.as_ref();
+        let window: Window = match window() {
+            Some(window_instance) => window_instance,
+            None => return,
+        };
+        let document: Document = match window.document() {
+            Some(document_instance) => document_instance,
+            None => return,
+        };
+        let target: Element = if selector == BODY_TAG {
+            match document.body() {
+                Some(body) => body.into(),
+                None => return,
+            }
+        } else if let Some(id) = selector.strip_prefix(ID_SELECTOR_PREFIX) {
+            match document.get_element_by_id(id) {
+                Some(element) => element,
+                None => return,
+            }
+        } else if let Some(class) = selector.strip_prefix(CLASS_SELECTOR_PREFIX) {
+            match document.get_elements_by_class_name(class).item(0) {
+                Some(element) => element,
+                None => return,
+            }
+        } else {
+            match document.get_elements_by_tag_name(selector).item(0) {
+                Some(element) => element,
+                None => return,
+            }
+        };
+        Renderer::new(target).render(render_fn());
     }
 }

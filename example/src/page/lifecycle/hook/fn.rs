@@ -12,8 +12,8 @@ fn create_log_data(times: i32) -> String {
 pub(crate) fn use_lifecycle() -> UseLifecycle {
     let times: i32 = 1;
     UseLifecycle::new(
-        use_signal(|| times),
-        use_signal(|| vec![create_log_data(times)]),
+        App::use_signal(|| times),
+        App::use_signal(|| vec![create_log_data(times)]),
     )
 }
 

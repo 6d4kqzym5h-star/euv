@@ -1,7 +1,7 @@
 use crate::*;
 
 /// A single WebSocket message with its display text and timestamp.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct WsMessage {
     /// The display text extracted from the JSON `data` field.
     pub(crate) data: String,
@@ -12,7 +12,7 @@ pub(crate) struct WsMessage {
 /// The client-sent WebSocket text message format for serialization.
 ///
 /// Serialized as: `{"type":"Text","data":"<user input>"}`
-#[derive(Clone, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub(crate) struct WsClientTextMessage {
     /// The message type, always `"Text"`.
     pub(crate) r#type: &'static str,
@@ -23,7 +23,7 @@ pub(crate) struct WsClientTextMessage {
 /// The server-sent WebSocket message format for deserialization.
 ///
 /// Example JSON: `{"type":"Text","name":"uuid","data":"hello","time":1780741281040}`
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub(crate) struct WsServerMessage {
     /// The message payload.
     pub(crate) data: String,
@@ -32,7 +32,7 @@ pub(crate) struct WsServerMessage {
 }
 
 /// Reactive state for the WebSocket demo page.
-#[derive(Clone, Copy, Data)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseWebSocket {
     /// The WebSocket endpoint URL input.
     #[get(type(copy))]

@@ -99,8 +99,8 @@ pub fn class(input: TokenStream) -> TokenStream {
 /// after a colon.
 ///
 /// ```ignore
-/// let count = use_signal(|| 0_i32);
-/// let name = use_signal(|| String::from("euv"));
+/// let count = App::use_signal(|| 0_i32);
+/// let name = App::use_signal(|| String::from("euv"));
 /// watch!(count, name, |count_val: i32, name_val: String| {
 ///     web_sys::console::log_1(&format!("count={}, name={}", count_val, name_val).into());
 /// });
@@ -126,8 +126,8 @@ pub fn watch(input: TokenStream) -> TokenStream {
 /// during first render.
 ///
 /// ```ignore
-/// let first_name = use_signal(|| String::from("John"));
-/// let last_name = use_signal(|| String::from("Doe"));
+/// let first_name = App::use_signal(|| String::from("John"));
+/// let last_name = App::use_signal(|| String::from("Doe"));
 /// let full_name: Signal<String> = computed!(first_name, last_name, |first: String, last: String| -> String {
 ///     format!("{} {}", first, last)
 /// });

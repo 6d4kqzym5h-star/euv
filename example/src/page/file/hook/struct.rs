@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for a file upload feature.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, New, PartialEq)]
 pub(crate) struct UseFileUpload {
     /// The names of selected files.
     #[get(type(copy))]

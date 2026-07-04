@@ -3,7 +3,7 @@ use crate::*;
 /// Represents the type of an HTML tag or a component.
 ///
 /// Distinguishes between standard HTML elements and user-defined components.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Tag {
     /// A standard HTML element identified by its tag name.
     Element(String),

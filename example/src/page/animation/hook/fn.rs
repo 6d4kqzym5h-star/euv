@@ -6,7 +6,7 @@ use crate::*;
 ///
 /// - `UseProgress` - The progress state containing a running signal.
 pub(crate) fn use_progress() -> UseProgress {
-    UseProgress::new(use_signal(|| false))
+    UseProgress::new(App::use_signal(|| false))
 }
 
 /// Creates a click event handler that starts the progress bar animation.

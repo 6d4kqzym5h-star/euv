@@ -1,7 +1,7 @@
 use crate::*;
 
 /// Reactive state for the parent-child props passing demo.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UsePropsDemo {
     /// The parent message to pass down to child.
     #[get(type(copy))]
@@ -9,7 +9,7 @@ pub(crate) struct UsePropsDemo {
 }
 
 /// Reactive state for the two-way binding demo.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseTwoWayDemo {
     /// The shared text value bound between parent and child.
     #[get(type(copy))]
@@ -20,7 +20,7 @@ pub(crate) struct UseTwoWayDemo {
 }
 
 /// Reactive state for the cross-component reactive binding demo.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, New, PartialEq, PartialOrd)]
 pub(crate) struct UseCrossComponentDemo {
     /// The temperature in Celsius.
     #[get(type(copy))]
@@ -45,7 +45,7 @@ pub(crate) struct UseCrossComponentDemo {
 /// Reactive state for the typed props demo.
 ///
 /// Demonstrates passing non-String props (bool, i32) to child components.
-#[derive(Clone, Copy, Data, New)]
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
 pub(crate) struct UseTypedPropsDemo {
     /// Whether the child input is disabled.
     #[get(type(copy))]
