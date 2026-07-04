@@ -1,6 +1,5 @@
 mod alert;
 mod badge;
-mod bridge;
 mod browser;
 mod button;
 mod camera;
@@ -22,7 +21,7 @@ mod vconsole;
 mod virtual_list;
 
 pub use {
-    alert::*, badge::*, bridge::*, browser::*, button::*, camera::*, card::*, checkbox::*,
-    field::*, header::*, info::*, input::*, layout::*, logo::*, modal::*, nav::*, router::*,
-    tag::*, theme::*, touch::*, vconsole::*, virtual_list::*,
+    alert::*, badge::*, browser::*, button::*, camera::*, card::*, checkbox::*, field::*,
+    header::*, info::*, input::*, layout::*, logo::*, modal::*, nav::*, router::*, tag::*,
+    theme::*, touch::*, vconsole::*, virtual_list::*,
 };

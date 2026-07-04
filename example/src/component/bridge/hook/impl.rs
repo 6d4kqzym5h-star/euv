@@ -1,5 +1,23 @@
 use crate::*;
 
+/// Default implementation for `BridgeConfig`.
+///
+/// Uses the standard euv-app bridge keys: `window.bridge.core.invoke`.
+impl Default for BridgeConfig {
+    /// Creates a `BridgeConfig` with the default euv-app bridge keys.
+    ///
+    /// # Returns
+    ///
+    /// - `BridgeConfig`: The default bridge configuration.
+    fn default() -> Self {
+        BridgeConfig::new(
+            BRIDGE_DEFAULT_GLOBAL_KEY,
+            BRIDGE_DEFAULT_CORE_KEY,
+            BRIDGE_DEFAULT_INVOKE_KEY,
+        )
+    }
+}
+
 /// Implementation of native bridge functionality.
 impl UseEuvNativeBridge {
     /// Creates native bridge state for accessing platform-native features.
@@ -10,7 +28,7 @@ impl UseEuvNativeBridge {
     /// # Returns
     ///
     /// - `UseEuvNativeBridge`: The native bridge state.
-    pub fn use_bridge_state() -> UseEuvNativeBridge {
+    pub(crate) fn use_bridge_state() -> UseEuvNativeBridge {
         UseEuvNativeBridge::new(
             App::use_signal(|| false),
             App::use_signal(|| true),
@@ -29,7 +47,7 @@ impl UseEuvNativeBridge {
     /// # Arguments
     ///
     /// - `Option<BridgeConfig>`: Optional custom bridge configuration.
-    pub fn load_data(self, config: Option<BridgeConfig>) {
+    pub(crate) fn load_data(self, config: Option<BridgeConfig>) {
         if !BridgeConfig::is_available(config.as_ref()) {
             self.get_available().set(false);
             self.get_loading().set(false);
@@ -95,7 +113,7 @@ impl UseCacheUpdate {
     /// # Returns
     ///
     /// - `UseCacheUpdate`: The cache update state.
-    pub fn use_cache_state() -> UseCacheUpdate {
+    pub(crate) fn use_cache_state() -> UseCacheUpdate {
         UseCacheUpdate::new(
             App::use_signal(|| false),
             App::use_signal(String::new),
@@ -118,7 +136,7 @@ impl UseCacheUpdate {
     /// # Arguments
     ///
     /// - `F`: An async closure that returns `UpdateResult`.
-    pub fn load<F, Fut>(self, updater: F)
+    pub(crate) fn load<F, Fut>(self, updater: F)
     where
         F: FnOnce() -> Fut + 'static,
         Fut: Future<Output = UpdateResult>,
@@ -147,7 +165,7 @@ impl BridgeConfig {
     /// # Returns
     ///
     /// - `bool`: `true` if the bridge core module is available.
-    pub fn is_available(config: Option<&BridgeConfig>) -> bool {
+    pub(crate) fn is_available(config: Option<&BridgeConfig>) -> bool {
         let config: BridgeConfig = config
             .map_or_else(BridgeConfig::default, |config: &BridgeConfig| {
                 config.clone()
@@ -185,23 +203,23 @@ impl BridgeConfig {
     /// # Returns
     ///
     /// - `Result<Promise, String>`: The promise returned by the invoke call, or an error message.
-    pub fn invoke(
+    pub(crate) fn invoke(
         command: &str,
         args: Option<&JsValue>,
         config: Option<&BridgeConfig>,
     ) -> Result<Promise, String> {
-        let copnfig: BridgeConfig = config
-            .map_or_else(BridgeConfig::default, |copnfig: &BridgeConfig| {
-                copnfig.clone()
+        let config: BridgeConfig = config
+            .map_or_else(BridgeConfig::default, |config: &BridgeConfig| {
+                config.clone()
             });
         let window_value: Window = window().expect("no global window exists");
-        let bridge_key: JsValue = JsValue::from_str(copnfig.get_global_key());
+        let bridge_key: JsValue = JsValue::from_str(config.get_global_key());
         let bridge_obj: JsValue = Reflect::get(&window_value, &bridge_key)
             .map_err(|error: JsValue| format!("{error:?}"))?;
-        let core_key: JsValue = JsValue::from_str(copnfig.get_core_key());
+        let core_key: JsValue = JsValue::from_str(config.get_core_key());
         let core_obj: JsValue =
             Reflect::get(&bridge_obj, &core_key).map_err(|error: JsValue| format!("{error:?}"))?;
-        let invoke_key: JsValue = JsValue::from_str(copnfig.get_invoke_key());
+        let invoke_key: JsValue = JsValue::from_str(config.get_invoke_key());
         let invoke_fn: JsValue =
             Reflect::get(&core_obj, &invoke_key).map_err(|error: JsValue| format!("{error:?}"))?;
         let invoke_function: Function = invoke_fn
