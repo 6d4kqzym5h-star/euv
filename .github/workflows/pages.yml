@@ -65,6 +65,7 @@ jobs:
           for i in $(seq 1 $max_retries); do
             if curl -sf -X POST https://ltpp.vip/api/github/pages/sync/euv-dev/euv \
               -H "Connection: close"; then
+              echo ""
               echo "Sync succeeded on attempt $i"
               exit 0
             fi
