@@ -36,6 +36,9 @@ pub(crate) struct UseGame3D {
     /// Whether auto-rotation is enabled.
     #[get(type(copy))]
     pub(crate) auto_rotate: Signal<bool>,
+    /// Whether the canvas has finished loading and is ready for interaction.
+    #[get(type(copy))]
+    pub(crate) loaded: Signal<bool>,
 }
 
 /// Non-reactive camera orbit angles persisted via a `Signal` wrapper.

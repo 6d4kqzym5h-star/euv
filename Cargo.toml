@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.9.1"
+version = "0.10.0"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -115,15 +115,16 @@ web-sys = { version = "0.3.103", features = [
     "MediaQueryList",
     "ScrollBehavior",
     "VisualViewport",
+    "CanvasGradient",
     "HashChangeEvent",
-    "HtmlInputElement",
     "TransitionEvent",
+    "HtmlInputElement",
     "DocumentFragment",
     "HtmlImageElement",
     "HtmlMediaElement",
+    "HtmlStyleElement",
     "HtmlOptionElement",
     "HtmlSelectElement",
-    "HtmlStyleElement",
     "HtmlVideoElement",
     "MediaStreamTrack",
     "BeforeUnloadEvent",

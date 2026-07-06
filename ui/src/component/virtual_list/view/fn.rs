@@ -26,7 +26,10 @@ pub fn euv_virtual_list(node: VirtualNode<EuvVirtualListProps>) -> VirtualNode {
     let total_count: usize = config.total_count;
     let item_height: i32 = config.item_height;
     let overscan_count: usize = config.overscan_count;
-    state.schedule_measure_by_id(&container_id);
+    let viewport_height: i32 = state.get_viewport_height().get();
+    if viewport_height == 0 {
+        state.schedule_measure_by_id(&container_id);
+    }
     let scroll_handler: Option<Rc<dyn Fn(Event)>> = {
         let state: UseVirtualList = state;
         let container_id: String = container_id.clone();
@@ -43,8 +46,7 @@ pub fn euv_virtual_list(node: VirtualNode<EuvVirtualListProps>) -> VirtualNode {
         }))
     };
     let scroll_offset: i32 = state.get_scroll_offset().get();
-    let viewport_height: i32 = state.get_viewport_height().get();
-    let (visible_start, visible_end, render_start, render_end): (usize, usize, usize, usize) =
+    let (_, _, render_start, render_end): (usize, usize, usize, usize) =
         UseVirtualList::compute_visible_range(
             scroll_offset,
             viewport_height,
@@ -52,8 +54,36 @@ pub fn euv_virtual_list(node: VirtualNode<EuvVirtualListProps>) -> VirtualNode {
             item_height,
             overscan_count,
         );
-    if let Some(ref callback) = on_visible_range_change {
-        callback((visible_start, visible_end));
+    let range_callback: Option<VirtualListRangeHandler> = on_visible_range_change.clone();
+    let range_watch_initialized: Signal<bool> = App::use_signal(|| false);
+    if !range_watch_initialized.get() {
+        let scroll_offset_signal: Signal<i32> = state.get_scroll_offset();
+        let viewport_height_signal: Signal<i32> = state.get_viewport_height();
+        let fire_addr: usize = Box::leak(Box::new(Box::new(move || {
+            let scroll_offset: i32 = scroll_offset_signal.get();
+            let viewport_height: i32 = viewport_height_signal.get();
+            if let Some(ref callback) = range_callback {
+                let (visible_start, visible_end, _, _): (usize, usize, usize, usize) =
+                    UseVirtualList::compute_visible_range(
+                        scroll_offset,
+                        viewport_height,
+                        total_count,
+                        item_height,
+                        overscan_count,
+                    );
+                callback((visible_start, visible_end));
+            }
+        }) as Box<dyn FnMut()>)) as *mut Box<dyn FnMut()> as usize;
+        App::batch(|| {
+            scroll_offset_signal.subscribe(move || {
+                App::batch(|| unsafe { (&mut *(fire_addr as *mut Box<dyn FnMut()>))() });
+            });
+            viewport_height_signal.subscribe(move || {
+                App::batch(|| unsafe { (&mut *(fire_addr as *mut Box<dyn FnMut()>))() });
+            });
+            unsafe { (&mut *(fire_addr as *mut Box<dyn FnMut()>))() }
+            range_watch_initialized.set(true);
+        });
     }
     let total_height: i32 = total_count as i32 * item_height;
     let top_padding: i32 = render_start as i32 * item_height;

@@ -11,6 +11,7 @@ pub(crate) fn use_game_2d_state() -> UseGame2D {
         fps: App::use_signal(|| 0.0),
         ball_count: App::use_signal(|| 0),
         total_spawned: App::use_signal(|| 0),
+        loaded: App::use_signal(|| false),
     }
 }
 
@@ -476,12 +477,37 @@ pub(crate) fn start_game_2d_loop(
             .unwrap_or(0);
         raf_clone.set(Some(next_id));
     }) as Box<dyn FnMut()>);
-    let window_value: Window = window().expect("no global window exists");
-    let id: i32 = window_value
-        .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-        .unwrap_or(0);
-    raf_id.set(Some(id));
     *closure_cell.borrow_mut() = Some(raf_closure);
+    let start_timeout_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+    let start_timeout_clone: Rc<Cell<Option<i32>>> = start_timeout_id.clone();
+    let raf_for_start: Rc<Cell<Option<i32>>> = raf_id.clone();
+    let cell_for_start: RafClosureCell = closure_cell.clone();
+    let state_for_start: UseGame2D = state;
+    let start_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        state_for_start.get_loaded().set(true);
+        let start_window: Window = window().expect("no global window exists");
+        let start_id: i32 = start_window
+            .request_animation_frame(
+                cell_for_start
+                    .borrow()
+                    .as_ref()
+                    .expect("raf closure should exist")
+                    .as_ref()
+                    .unchecked_ref(),
+            )
+            .unwrap_or(0);
+        raf_for_start.set(Some(start_id));
+    }) as Box<dyn FnMut()>);
+    let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
+    start_closure.forget();
+    let start_window: Window = window().expect("no global window exists");
+    let timeout_id: i32 = start_window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(
+            &start_callback,
+            GAME_2D_LOOP_START_DELAY_MILLIS,
+        )
+        .unwrap_or(0);
+    start_timeout_clone.set(Some(timeout_id));
     let debounce_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
     let timer_for_event: Rc<Cell<Option<i32>>> = debounce_timer.clone();
@@ -511,6 +537,10 @@ pub(crate) fn start_game_2d_loop(
         if let Some(cancel_id) = raf_id.get() {
             let window_value: Window = window().expect("no global window exists");
             let _ = window_value.cancel_animation_frame(cancel_id);
+        }
+        if let Some(timeout_id) = start_timeout_id.get() {
+            let window_value: Window = window().expect("no global window exists");
+            window_value.clear_timeout_with_handle(timeout_id);
         }
         if let Some(timer_id) = debounce_timer.get() {
             let window_value: Window = window().expect("no global window exists");

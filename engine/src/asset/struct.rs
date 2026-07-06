@@ -40,4 +40,7 @@ pub struct AssetLoader {
     #[set(pub(crate))]
     #[new(skip)]
     pub(crate) pending_count: u32,
+    /// Stored closures keeping `onload`/`onerror` callbacks alive, preventing memory leaks.
+    #[new(skip)]
+    pub(crate) closures: AssetClosures,
 }

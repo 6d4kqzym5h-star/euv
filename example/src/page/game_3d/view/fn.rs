@@ -82,17 +82,27 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                         }
                     }
                 }
-                canvas {
-                    id: GAME_3D_CANVAS_ID
-                    class: c_game_3d_canvas(&format!("{} / {}", GAME_3D_CANVAS_WIDTH as i32, GAME_3D_CANVAS_HEIGHT as i32), GAME_3D_BACKGROUND_COLOR)
-                    onmousedown: on_pointer_down.clone()
-                    onmousemove: on_pointer_move.clone()
-                    onmouseup: on_pointer_up.clone()
-                    onmouseleave: on_pointer_up.clone()
-                    ontouchstart: on_touch_start.clone()
-                    ontouchmove: on_touch_move.clone()
-                    ontouchend: on_touch_end.clone()
-                    ontouchcancel: on_touch_end.clone()
+                div {
+                    class: c_game_canvas_wrapper()
+                    canvas {
+                        id: GAME_3D_CANVAS_ID
+                        class: c_game_3d_canvas(&format!("{} / {}", GAME_3D_CANVAS_WIDTH as i32, GAME_3D_CANVAS_HEIGHT as i32), GAME_3D_BACKGROUND_COLOR)
+                        onmousedown: on_pointer_down.clone()
+                        onmousemove: on_pointer_move.clone()
+                        onmouseup: on_pointer_up.clone()
+                        onmouseleave: on_pointer_up.clone()
+                        ontouchstart: on_touch_start.clone()
+                        ontouchmove: on_touch_move.clone()
+                        ontouchend: on_touch_end.clone()
+                        ontouchcancel: on_touch_end.clone()
+                    }
+                    if { !state.get_loaded().get() } {
+                        euv_loading {
+                            title: "Loading..."
+                            overlay: true
+                            background: GAME_3D_BACKGROUND_COLOR
+                        }
+                    }
                 }
                 div {
                     class: c_button_controls()

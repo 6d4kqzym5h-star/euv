@@ -10,31 +10,35 @@ class! {
     }
 
     pub c_game_stats_label {
-        color: var!(game-stats-label);
+        color: "inherit";
     }
 
     pub c_game_stats_fps_value {
-        color: var!(game-stats-fps);
+        color: "inherit";
     }
 
     pub c_game_stats_count_value {
-        color: var!(game-stats-count);
+        color: "inherit";
     }
 
     pub c_game_stats_total_value {
-        color: var!(game-stats-total);
+        color: "inherit";
     }
 
     pub c_game_description {
         line-height: "1.6";
-        color: var!(game-description);
+        color: "inherit";
+    }
+
+    pub c_game_canvas_wrapper {
+        position: "relative";
+        width: "100%";
     }
 
     pub c_game_3d_canvas(aspect_ratio: &str, background: &str) {
         width: "100%";
         aspect-ratio: aspect_ratio;
         height: "auto";
-        border-radius: "8px";
         cursor: "grab";
         display: "block";
         background: background;
@@ -45,7 +49,6 @@ class! {
         width: "100%";
         aspect-ratio: aspect_ratio;
         height: "auto";
-        border-radius: "8px";
         cursor: "pointer";
         display: "block";
         background: background;

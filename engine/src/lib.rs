@@ -15,11 +15,12 @@ mod physics;
 mod renderer;
 mod scene;
 mod scheduler;
+mod spatial;
 mod sprite;
 
 pub use {
     asset::*, audio::*, collider::*, entity::*, input::*, math::*, physics::*, renderer::*,
-    scene::*, scheduler::*, sprite::*,
+    scene::*, scheduler::*, spatial::*, sprite::*,
 };
 
 use euv::*;

@@ -810,3 +810,415 @@ impl SsaaCanvas {
         );
     }
 }
+
+/// Implements CSS composite operation string conversion for `BlendMode`.
+impl BlendMode {
+    /// Returns the CSS `globalCompositeOperation` string for this blend mode.
+    ///
+    /// # Returns
+    ///
+    /// - `&str` - The CSS composite operation string.
+    pub fn to_css_string(&self) -> &str {
+        match self {
+            BlendMode::Normal => BLEND_MODE_NORMAL,
+            BlendMode::Multiply => BLEND_MODE_MULTIPLY,
+            BlendMode::Screen => BLEND_MODE_SCREEN,
+            BlendMode::Lighter => BLEND_MODE_LIGHTER,
+            BlendMode::Overlay => BLEND_MODE_OVERLAY,
+            BlendMode::Darken => BLEND_MODE_DARKEN,
+            BlendMode::Lighten => BLEND_MODE_LIGHTEN,
+            BlendMode::ColorDodge => BLEND_MODE_COLOR_DODGE,
+            BlendMode::ColorBurn => BLEND_MODE_COLOR_BURN,
+            BlendMode::HardLight => BLEND_MODE_HARD_LIGHT,
+            BlendMode::SoftLight => BLEND_MODE_SOFT_LIGHT,
+            BlendMode::Difference => BLEND_MODE_DIFFERENCE,
+            BlendMode::Exclusion => BLEND_MODE_EXCLUSION,
+            BlendMode::Hue => BLEND_MODE_HUE,
+            BlendMode::Saturation => BLEND_MODE_SATURATION,
+            BlendMode::Color => BLEND_MODE_COLOR,
+            BlendMode::Luminosity => BLEND_MODE_LUMINOSITY,
+        }
+    }
+}
+
+/// Implements construction and canvas gradient creation for `LinearGradient`.
+impl LinearGradient {
+    /// Creates a new linear gradient from two points and a list of color stops.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - The start point.
+    /// - `Vector2D` - The end point.
+    /// - `Vec<(f64, String)>` - The color stops as (position, color) pairs.
+    ///
+    /// # Returns
+    ///
+    /// - `LinearGradient` - The new gradient.
+    pub fn create(start: Vector2D, end: Vector2D, stops: Vec<(f64, String)>) -> LinearGradient {
+        LinearGradient::new(start, end, stops)
+    }
+
+    /// Creates a `CanvasGradient` from this gradient definition on the given context.
+    ///
+    /// # Arguments
+    ///
+    /// - `&CanvasRenderingContext2d` - The canvas context.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<CanvasGradient>` - The canvas gradient, or `None` if creation failed.
+    pub fn to_canvas_gradient(&self, context: &CanvasRenderingContext2d) -> Option<CanvasGradient> {
+        let canvas_gradient: CanvasGradient = context.create_linear_gradient(
+            self.get_start().get_x(),
+            self.get_start().get_y(),
+            self.get_end().get_x(),
+            self.get_end().get_y(),
+        );
+        for (position, color) in &self.stops {
+            let _ = canvas_gradient.add_color_stop(*position as f32, color);
+        }
+        Some(canvas_gradient)
+    }
+}
+
+/// Implements construction and canvas gradient creation for `RadialGradient`.
+impl RadialGradient {
+    /// Creates a new radial gradient from inner and outer circles and color stops.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - The inner circle center.
+    /// - `f64` - The inner circle radius.
+    /// - `Vector2D` - The outer circle center.
+    /// - `f64` - The outer circle radius.
+    /// - `Vec<(f64, String)>` - The color stops as (position, color) pairs.
+    ///
+    /// # Returns
+    ///
+    /// - `RadialGradient` - The new gradient.
+    pub fn create(
+        inner_center: Vector2D,
+        inner_radius: f64,
+        outer_center: Vector2D,
+        outer_radius: f64,
+        stops: Vec<(f64, String)>,
+    ) -> RadialGradient {
+        RadialGradient::new(
+            inner_center,
+            inner_radius,
+            outer_center,
+            outer_radius,
+            stops,
+        )
+    }
+
+    /// Creates a `CanvasGradient` from this gradient definition on the given context.
+    ///
+    /// # Arguments
+    ///
+    /// - `&CanvasRenderingContext2d` - The canvas context.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<CanvasGradient>` - The canvas gradient, or `None` if creation failed.
+    pub fn to_canvas_gradient(&self, context: &CanvasRenderingContext2d) -> Option<CanvasGradient> {
+        let canvas_gradient: CanvasGradient = context
+            .create_radial_gradient(
+                self.get_inner_center().get_x(),
+                self.get_inner_center().get_y(),
+                self.get_inner_radius(),
+                self.get_outer_center().get_x(),
+                self.get_outer_center().get_y(),
+                self.get_outer_radius(),
+            )
+            .ok()?;
+        for (position, color) in &self.stops {
+            let _ = canvas_gradient.add_color_stop(*position as f32, color);
+        }
+        Some(canvas_gradient)
+    }
+}
+
+/// Implements construction methods for `ShadowConfig`.
+impl ShadowConfig {
+    /// Creates a shadow configuration with default values.
+    ///
+    /// # Returns
+    ///
+    /// - `ShadowConfig` - The default shadow configuration.
+    pub fn create() -> ShadowConfig {
+        ShadowConfig::new(
+            RENDERER_DEFAULT_SHADOW_COLOR.to_string(),
+            RENDERER_DEFAULT_SHADOW_BLUR,
+            0.0,
+            0.0,
+        )
+    }
+}
+
+/// Implements `Default` for `ShadowConfig` with default shadow values.
+impl Default for ShadowConfig {
+    fn default() -> ShadowConfig {
+        ShadowConfig::create()
+    }
+}
+
+/// Implements construction methods for `RenderLayer`.
+impl RenderLayer {
+    /// Creates a render layer with the given z-index and visibility.
+    ///
+    /// # Arguments
+    ///
+    /// - `i32` - The z-index determining draw order.
+    /// - `bool` - Whether the layer is visible.
+    ///
+    /// # Returns
+    ///
+    /// - `RenderLayer` - The new render layer.
+    pub fn create(z_index: i32, visible: bool) -> RenderLayer {
+        RenderLayer::new(z_index, visible)
+    }
+
+    /// Creates a background render layer with z-index 0 and visibility enabled.
+    ///
+    /// # Returns
+    ///
+    /// - `RenderLayer` - The background layer.
+    pub fn background() -> RenderLayer {
+        RenderLayer::new(RENDERER_LAYER_BACKGROUND, true)
+    }
+
+    /// Creates a foreground render layer with a high z-index and visibility enabled.
+    ///
+    /// # Returns
+    ///
+    /// - `RenderLayer` - The foreground layer.
+    pub fn foreground() -> RenderLayer {
+        RenderLayer::new(RENDERER_LAYER_FOREGROUND, true)
+    }
+
+    /// Creates a UI overlay render layer with the highest z-index and visibility enabled.
+    ///
+    /// # Returns
+    ///
+    /// - `RenderLayer` - The UI overlay layer.
+    pub fn ui() -> RenderLayer {
+        RenderLayer::new(RENDERER_LAYER_UI, true)
+    }
+}
+
+/// Implements blend mode, shadow, and gradient rendering methods for `CanvasRenderer`.
+impl CanvasRenderer {
+    /// Sets the blend mode for compositing subsequent draw operations.
+    ///
+    /// # Arguments
+    ///
+    /// - `BlendMode` - The blend mode to apply.
+    pub fn set_blend_mode(&self, mode: BlendMode) {
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_GLOBAL_COMPOSITE_OPERATION),
+            &JsValue::from_str(mode.to_css_string()),
+        );
+    }
+
+    /// Applies a shadow configuration for subsequent draw operations.
+    ///
+    /// # Arguments
+    ///
+    /// - `&ShadowConfig` - The shadow configuration to apply.
+    pub fn set_shadow(&self, config: &ShadowConfig) {
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_COLOR),
+            &JsValue::from_str(config.get_color().as_str()),
+        );
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_BLUR),
+            &JsValue::from_f64(config.get_blur()),
+        );
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_X),
+            &JsValue::from_f64(config.get_offset_x()),
+        );
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_Y),
+            &JsValue::from_f64(config.get_offset_y()),
+        );
+    }
+
+    /// Clears any previously applied shadow, disabling shadow rendering.
+    pub fn clear_shadow(&self) {
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_COLOR),
+            &JsValue::from_str("rgba(0, 0, 0, 0)"),
+        );
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_BLUR),
+            &JsValue::from_f64(0.0),
+        );
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_X),
+            &JsValue::from_f64(0.0),
+        );
+        let _ = Reflect::set(
+            self.get_context(),
+            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_Y),
+            &JsValue::from_f64(0.0),
+        );
+    }
+
+    /// Applies a linear gradient as the fill style for subsequent operations.
+    ///
+    /// # Arguments
+    ///
+    /// - `&LinearGradient` - The linear gradient to use as fill style.
+    pub fn set_linear_gradient_fill(&self, gradient: &LinearGradient) {
+        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+            let _ = Reflect::set(
+                self.get_context(),
+                &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
+                &canvas_gradient,
+            );
+        }
+    }
+
+    /// Applies a radial gradient as the fill style for subsequent operations.
+    ///
+    /// # Arguments
+    ///
+    /// - `&RadialGradient` - The radial gradient to use as fill style.
+    pub fn set_radial_gradient_fill(&self, gradient: &RadialGradient) {
+        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+            let _ = Reflect::set(
+                self.get_context(),
+                &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
+                &canvas_gradient,
+            );
+        }
+    }
+
+    /// Applies a linear gradient as the stroke style for subsequent operations.
+    ///
+    /// # Arguments
+    ///
+    /// - `&LinearGradient` - The linear gradient to use as stroke style.
+    pub fn set_linear_gradient_stroke(&self, gradient: &LinearGradient) {
+        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+            let _ = Reflect::set(
+                self.get_context(),
+                &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
+                &canvas_gradient,
+            );
+        }
+    }
+
+    /// Applies a radial gradient as the stroke style for subsequent operations.
+    ///
+    /// # Arguments
+    ///
+    /// - `&RadialGradient` - The radial gradient to use as stroke style.
+    pub fn set_radial_gradient_stroke(&self, gradient: &RadialGradient) {
+        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+            let _ = Reflect::set(
+                self.get_context(),
+                &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
+                &canvas_gradient,
+            );
+        }
+    }
+}
+
+/// Implements the `RenderBackend` trait for `CanvasRenderer`, providing
+/// a backend-agnostic rendering interface.
+impl RenderBackend for CanvasRenderer {
+    fn clear(&self) {
+        self.clear();
+    }
+
+    fn clear_with_color(&self, color: &str) {
+        self.clear_with_color(color);
+    }
+
+    fn save(&self) {
+        self.save();
+    }
+
+    fn restore(&self) {
+        self.restore();
+    }
+
+    fn set_fill_color(&self, color: &str) {
+        self.set_fill_color(color);
+    }
+
+    fn set_stroke_color(&self, color: &str) {
+        self.set_stroke_color(color);
+    }
+
+    fn set_line_width(&self, width: f64) {
+        self.set_line_width(width);
+    }
+
+    fn set_global_alpha(&self, alpha: f64) {
+        self.set_global_alpha(alpha);
+    }
+
+    fn set_blend_mode(&self, mode: BlendMode) {
+        self.set_blend_mode(mode);
+    }
+
+    fn set_shadow(&self, config: &ShadowConfig) {
+        self.set_shadow(config);
+    }
+
+    fn clear_shadow(&self) {
+        self.clear_shadow();
+    }
+
+    fn fill_rect(&self, position: Vector2D, width: f64, height: f64) {
+        self.fill_rect(position, width, height);
+    }
+
+    fn stroke_rect(&self, position: Vector2D, width: f64, height: f64) {
+        self.stroke_rect(position, width, height);
+    }
+
+    fn fill_circle(&self, center: Vector2D, radius: f64) {
+        self.fill_circle(center, radius);
+    }
+
+    fn stroke_circle(&self, center: Vector2D, radius: f64) {
+        self.stroke_circle(center, radius);
+    }
+
+    fn draw_line(&self, start: Vector2D, end: Vector2D) {
+        self.draw_line(start, end);
+    }
+
+    fn fill_text(&self, text: &str, position: Vector2D) {
+        self.fill_text(text, position);
+    }
+
+    fn set_font(&self, font: &str) {
+        self.set_font(font);
+    }
+
+    fn draw_image(&self, image: &HtmlImageElement, position: Vector2D, width: f64, height: f64) {
+        self.draw_image(image, position, width, height);
+    }
+
+    fn set_linear_gradient_fill(&self, gradient: &LinearGradient) {
+        self.set_linear_gradient_fill(gradient);
+    }
+
+    fn set_radial_gradient_fill(&self, gradient: &RadialGradient) {
+        self.set_radial_gradient_fill(gradient);
+    }
+}

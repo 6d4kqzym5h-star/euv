@@ -28,6 +28,7 @@ pub fn inject_app_global_css() {
         "* { scrollbar-width: thin; } ",
         "::-webkit-scrollbar { width: 6px; height: 6px; } ",
         "::-webkit-scrollbar-track { background: transparent; } ",
+        "::-webkit-scrollbar-thumb { border-radius: 0; } ",
         "::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; } ",
         "::-webkit-scrollbar-corner { background: transparent; }",
         "@media (max-width: 767px) { * { scrollbar-width: none; } ::-webkit-scrollbar { width: 0px; height: 0px; } }",

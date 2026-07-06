@@ -156,3 +156,96 @@ impl Entity {
         self.get_tags().iter().any(|t: &String| t == tag)
     }
 }
+
+/// Implements event subscription, emission, and management for `EventBus`.
+impl EventBus {
+    /// Creates a new empty event bus.
+    ///
+    /// # Returns
+    ///
+    /// - `EventBus` - The new event bus.
+    pub fn create() -> EventBus {
+        EventBus::new()
+    }
+
+    /// Subscribes a handler to the named event channel.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - The event name to subscribe to.
+    /// - `EventHandler` - The handler closure to call when the event is emitted.
+    pub fn subscribe(&mut self, event_name: String, handler: EventHandler) {
+        self.get_mut_handlers()
+            .entry(event_name)
+            .or_default()
+            .push(handler);
+    }
+
+    /// Emits an event to all handlers subscribed to the matching channel.
+    ///
+    /// The event name is derived from the `EntityEvent` variant.
+    ///
+    /// # Arguments
+    ///
+    /// - `&EntityEvent` - The event to emit.
+    pub fn emit(&self, event: &EntityEvent) {
+        let event_name: String = Self::event_name(event);
+        if let Some(handlers) = self.get_handlers().get(&event_name) {
+            for handler in handlers {
+                handler(event);
+            }
+        }
+    }
+
+    /// Removes all handlers for the named event channel.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The event name to clear.
+    pub fn unsubscribe_all(&mut self, event_name: &str) {
+        self.get_mut_handlers().remove(event_name);
+    }
+
+    /// Returns the number of handlers registered for the named event.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The event name.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The handler count.
+    pub fn handler_count(&self, event_name: &str) -> usize {
+        self.get_handlers()
+            .get(event_name)
+            .map(|handlers: &Vec<EventHandler>| handlers.len())
+            .unwrap_or(0)
+    }
+
+    /// Derives the event channel name from an `EntityEvent` variant.
+    ///
+    /// # Arguments
+    ///
+    /// - `&EntityEvent` - The event.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - The channel name.
+    fn event_name(event: &EntityEvent) -> String {
+        match event {
+            EntityEvent::Collision { .. } => "collision".to_string(),
+            EntityEvent::TriggerEnter { .. } => "trigger_enter".to_string(),
+            EntityEvent::TriggerExit { .. } => "trigger_exit".to_string(),
+            EntityEvent::Spawn => "spawn".to_string(),
+            EntityEvent::Destroy => "destroy".to_string(),
+            EntityEvent::Custom { name, .. } => name.clone(),
+        }
+    }
+}
+
+/// Implements `Default` for `EventBus` as a new empty bus.
+impl Default for EventBus {
+    fn default() -> EventBus {
+        EventBus::create()
+    }
+}

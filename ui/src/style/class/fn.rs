@@ -22,6 +22,7 @@ class! {
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
             border: "none";
+            border-radius: "0px";
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
@@ -168,6 +169,7 @@ class! {
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
             border: "none";
+            border-radius: "0px";
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
@@ -276,6 +278,7 @@ class! {
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
             border: "none";
+            border-radius: "0px";
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
@@ -428,6 +431,7 @@ class! {
         ::-webkit-scrollbar-thumb {
             background: var!(scrollbar-thumb);
             border: "none";
+            border-radius: "0px";
         }
         ::-webkit-scrollbar-thumb:hover {
             background: var!(scrollbar-thumb-hover);
@@ -1386,6 +1390,20 @@ class! {
     pub c_loading_subtitle {
         color: var!(muted-foreground);
         font-size: var!(font-base);
+    }
+
+    pub c_loading_overlay(background: &str) {
+        position: "absolute";
+        inset: "0";
+        display: "flex";
+        flex-direction: "column";
+        align-items: "center";
+        justify-content: "center";
+        gap: var!(gap-component);
+        border-radius: "8px";
+        background: background;
+        z-index: "1";
+        box-sizing: "border-box";
     }
 
     pub c_error_container {
@@ -2509,7 +2527,6 @@ class! {
 
     pub c_mobile_nav_drawer_closed {
         transform: "translateX(-100%)";
-        will-change: "auto";
     }
 
     pub c_mobile_nav_drawer_header {

@@ -89,11 +89,21 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                         }
                     }
                 }
-                canvas {
-                    id: GAME_2D_CANVAS_ID
-                    class: c_game_2d_canvas(&format!("{} / {}", GAME_2D_CANVAS_WIDTH as i32, GAME_2D_CANVAS_HEIGHT as i32), GAME_2D_BACKGROUND_COLOR)
-                    onclick: on_canvas_click
-                    ontouchstart: on_canvas_touch
+                div {
+                    class: c_game_canvas_wrapper()
+                    canvas {
+                        id: GAME_2D_CANVAS_ID
+                        class: c_game_2d_canvas(&format!("{} / {}", GAME_2D_CANVAS_WIDTH as i32, GAME_2D_CANVAS_HEIGHT as i32), GAME_2D_BACKGROUND_COLOR)
+                        onclick: on_canvas_click
+                        ontouchstart: on_canvas_touch
+                    }
+                    if { !state.get_loaded().get() } {
+                        euv_loading {
+                            title: "Loading..."
+                            overlay: true
+                            background: GAME_2D_BACKGROUND_COLOR
+                        }
+                    }
                 }
                 div {
                     class: c_button_controls()

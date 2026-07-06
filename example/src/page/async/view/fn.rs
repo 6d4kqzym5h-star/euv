@@ -33,22 +33,9 @@ pub(crate) fn page_async_demo(node: VirtualNode<PageAsyncDemoProps>) -> VirtualN
                     }
                 }
                 if { fetch.get_loading().get() } {
-                    div {
-                        class: c_loading_container()
-                        div {
-                            class: c_spinner()
-                        }
-                        div {
-                            class: c_loading_text_col()
-                            span {
-                                class: c_loading_title()
-                                "Loading..."
-                            }
-                            span {
-                                class: c_loading_subtitle()
-                                "Fetching data from the remote server — please wait..."
-                            }
-                        }
+                    euv_loading {
+                        title: "Loading..."
+                        subtitle: "Fetching data from the remote server — please wait..."
                     }
                 } else if { !fetch.get_error().get().is_empty() } {
                     div {

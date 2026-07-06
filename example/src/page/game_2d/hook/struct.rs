@@ -28,6 +28,9 @@ pub(crate) struct UseGame2D {
     /// The total number of balls spawned since the 2D game started.
     #[get(type(copy))]
     pub(crate) total_spawned: Signal<usize>,
+    /// Whether the canvas has finished loading and is ready for interaction.
+    #[get(type(copy))]
+    pub(crate) loaded: Signal<bool>,
 }
 
 /// A persistent wrapper for the ball list that survives component re-renders.

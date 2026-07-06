@@ -106,11 +106,20 @@ impl Parse for HtmlNode {
 impl Parse for HtmlIf {
     /// Parses a conditional into an `HtmlIf` AST.
     ///
-    /// Supports two syntaxes:
-    /// - Reactive: `if {expr} { children } [else if {expr} { children }]* [else { children }]`
-    ///   Detected when `if` is immediately followed by `{`.
-    /// - Inline: `if condition { children } [else if condition { children }]* [else { children }]`
-    ///   Detected when `if` is followed by a non-`{` token (e.g., identifier, `!`, etc.).
+    /// Each branch condition is independently parsed as either reactive (braced)
+    /// or inline (plain expression). The overall `is_reactive` flag is set to
+    /// `true` if any branch has a braced condition, causing the entire if-chain
+    /// to be wrapped in a `DynamicNode` for reactive re-rendering.
+    ///
+    /// Supported syntaxes per branch:
+    /// - Reactive: `{expr}` — the braced expression is treated as a signal.
+    /// - Inline: `condition` — a plain Rust boolean expression.
+    ///
+    /// Any combination is valid, e.g.:
+    /// - `if {a} {} else if {b} {}` — all reactive
+    /// - `if a {} else if b {}` — all inline
+    /// - `if {a} {} else if b {}` — mixed (first reactive, second inline)
+    /// - `if a {} else if {b} {}` — mixed (first inline, second reactive)
     ///
     /// # Arguments
     ///
@@ -121,57 +130,44 @@ impl Parse for HtmlIf {
     /// - `syn::Result<Self>` - The parsed `HtmlIf`, or a syntax error.
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut branches: Vec<(Option<Expr>, Vec<HtmlNode>)> = Vec::new();
-        let is_reactive: bool = input.peek2(Brace);
+        let mut is_reactive: bool = false;
         input.parse::<Token![if]>()?;
-        if is_reactive {
+        let branch_reactive: bool = input.peek(Brace);
+        is_reactive = is_reactive || branch_reactive;
+        let condition: Expr = if branch_reactive {
             let cond_content: ParseBuffer<'_>;
             braced!(cond_content in input);
-            let condition: Expr = cond_content.parse()?;
-            let body_content: ParseBuffer<'_>;
-            braced!(body_content in input);
-            let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-            branches.push((Some(condition), body));
-            while input.peek(Token![else]) {
-                input.parse::<Token![else]>()?;
-                if input.peek(Token![if]) {
-                    input.parse::<Token![if]>()?;
+            cond_content.parse()?
+        } else {
+            parse_expr_until_brace(input)?
+        };
+        let body_content: ParseBuffer<'_>;
+        braced!(body_content in input);
+        let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+        branches.push((Some(condition), body));
+        while input.peek(Token![else]) {
+            input.parse::<Token![else]>()?;
+            if input.peek(Token![if]) {
+                input.parse::<Token![if]>()?;
+                let branch_reactive: bool = input.peek(Brace);
+                is_reactive = is_reactive || branch_reactive;
+                let condition: Expr = if branch_reactive {
                     let cond_content: ParseBuffer<'_>;
                     braced!(cond_content in input);
-                    let condition: Expr = cond_content.parse()?;
-                    let body_content: ParseBuffer<'_>;
-                    braced!(body_content in input);
-                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-                    branches.push((Some(condition), body));
+                    cond_content.parse()?
                 } else {
-                    let body_content: ParseBuffer<'_>;
-                    braced!(body_content in input);
-                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-                    branches.push((None, body));
-                    break;
-                }
-            }
-        } else {
-            let condition: Expr = input.parse()?;
-            let body_content: ParseBuffer<'_>;
-            braced!(body_content in input);
-            let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-            branches.push((Some(condition), body));
-            while input.peek(Token![else]) {
-                input.parse::<Token![else]>()?;
-                if input.peek(Token![if]) {
-                    input.parse::<Token![if]>()?;
-                    let condition: Expr = input.parse()?;
-                    let body_content: ParseBuffer<'_>;
-                    braced!(body_content in input);
-                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-                    branches.push((Some(condition), body));
-                } else {
-                    let body_content: ParseBuffer<'_>;
-                    braced!(body_content in input);
-                    let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
-                    branches.push((None, body));
-                    break;
-                }
+                    parse_expr_until_brace(input)?
+                };
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in input);
+                let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+                branches.push((Some(condition), body));
+            } else {
+                let body_content: ParseBuffer<'_>;
+                braced!(body_content in input);
+                let body: Vec<HtmlNode> = parse_html_children(&body_content)?;
+                branches.push((None, body));
+                break;
             }
         }
         Ok(Self {
@@ -212,7 +208,7 @@ impl Parse for HtmlMatch {
             braced!(scrutinee_content in input);
             scrutinee_content.parse()?
         } else {
-            input.parse()?
+            parse_expr_until_brace(input)?
         };
         let arms_content: ParseBuffer<'_>;
         braced!(arms_content in input);
@@ -271,7 +267,7 @@ impl Parse for HtmlFor {
             braced!(iter_content in input);
             iter_content.parse()?
         } else {
-            input.parse()?
+            parse_expr_until_brace(input)?
         };
         let body_content: ParseBuffer<'_>;
         braced!(body_content in input);

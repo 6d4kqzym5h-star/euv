@@ -118,8 +118,8 @@ impl AssetLoader {
         image.set_onload(Some(onload_closure.as_ref().unchecked_ref()));
         image.set_onerror(Some(onerror_closure.as_ref().unchecked_ref()));
         image.set_src(&url);
-        onload_closure.forget();
-        onerror_closure.forget();
+        self.get_closures().borrow_mut().push(onload_closure);
+        self.get_closures().borrow_mut().push(onerror_closure);
     }
 
     /// Returns whether all requested assets have finished loading.

@@ -23,3 +23,15 @@ pub struct Entity {
     #[get_mut(pub(crate))]
     pub(crate) tags: Vec<String>,
 }
+
+/// A publish-subscribe event bus for decoupled inter-entity communication.
+///
+/// Entities and game systems can subscribe to named event channels and
+/// emit events that are dispatched to all registered handlers.
+#[derive(Clone, Data, New)]
+pub struct EventBus {
+    /// The map from event name to the list of registered handler closures.
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) handlers: EventHandlers,
+}

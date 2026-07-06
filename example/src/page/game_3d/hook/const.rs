@@ -33,6 +33,13 @@ pub(crate) const GAME_3D_PITCH_CLAMP: f64 = 0.01;
 /// The debounce interval in milliseconds for the resize event handler.
 pub(crate) const GAME_3D_RESIZE_DEBOUNCE_MILLIS: i32 = 100;
 
+/// The delay in milliseconds before starting the 3D game loop after page mount.
+///
+/// Defers the heavy `requestAnimationFrame` rendering loop to avoid competing
+/// with the mobile drawer close animation for main thread time, preventing
+/// sidebar animation stutter on page transitions.
+pub(crate) const GAME_3D_LOOP_START_DELAY_MILLIS: i32 = 360;
+
 /// The JavaScript property name for the canvas fill style.
 pub(crate) const GAME_3D_PROPERTY_FILL_STYLE: &str = "fillStyle";
 

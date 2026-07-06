@@ -1,5 +1,32 @@
 use crate::*;
 
+/// Parses a Rust expression from the parse stream, stopping before a top-level brace.
+///
+/// This is used for inline `if` conditions, `match` scrutinees, and `for` iterables
+/// where a plain identifier followed by `{` would otherwise be misinterpreted as a
+/// struct literal expression (e.g., `if has_subtitle { ... }` would try to parse
+/// `has_subtitle { ... }` as `ExprStruct`).
+///
+/// Tokens are collected until a top-level `Brace` delimiter is encountered, then
+/// parsed as an `Expr`. Nested groups (parens, brackets) are consumed as single
+/// `TokenTree` units, so braces inside them do not terminate the collection.
+///
+/// # Arguments
+///
+/// - `ParseStream` - The parse stream positioned at the start of the expression.
+///
+/// # Returns
+///
+/// - `syn::Result<Expr>` - The parsed expression, or a syntax error.
+pub(crate) fn parse_expr_until_brace(input: ParseStream) -> syn::Result<Expr> {
+    let mut tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
+    while !input.peek(Brace) {
+        let token_tree: proc_macro2::TokenTree = input.parse()?;
+        tokens.extend([token_tree]);
+    }
+    syn::parse2(tokens)
+}
+
 /// Checks whether the next tokens after the current position form a `::` path separator.
 ///
 /// This is used to distinguish between a single `:` (attribute key-value separator)
@@ -1098,11 +1125,20 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
 
 /// Parses a reactive or inline `if` conditional in attribute value position.
 ///
-/// Supports two syntaxes:
-/// - Reactive: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
-///   Detected when `if` is immediately followed by `{`.
-/// - Inline: `if condition { value } [else if condition { value }]* [else { value }]`
-///   Detected when `if` is followed by a non-`{` token (e.g., identifier, `!`, etc.).
+/// Each branch condition is independently parsed as either reactive (braced)
+/// or inline (plain expression). The overall `is_inline` flag is set to
+/// `false` if any branch has a braced condition, causing the entire if-chain
+/// to be wrapped in a reactive `AttributeValue`.
+///
+/// Supported syntaxes per branch:
+/// - Reactive: `{expr}` — the braced expression is treated as a signal.
+/// - Inline: `condition` — a plain Rust boolean expression.
+///
+/// Any combination is valid, e.g.:
+/// - `if {a} { v } else if {b} { v }` — all reactive
+/// - `if a { v } else if b { v }` — all inline
+/// - `if {a} { v } else if b { v }` — mixed (first reactive, second inline)
+/// - `if a { v } else if {b} { v }` — mixed (first inline, second reactive)
 ///
 /// When no explicit `else` branch is provided, an empty string is used as the default.
 ///
@@ -1114,58 +1150,45 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
 ///
 /// - `syn::Result<HtmlAttrIf>` - The parsed attribute-level reactive or inline conditional.
 pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
-    let is_inline: bool = !content.peek2(Brace);
     let mut branches: Vec<(Option<Expr>, Expr)> = Vec::new();
+    let mut is_inline: bool = true;
     content.parse::<Token![if]>()?;
-    if is_inline {
-        let condition: Expr = content.parse()?;
-        let body_content: ParseBuffer<'_>;
-        braced!(body_content in content);
-        let body: Expr = body_content.parse()?;
-        branches.push((Some(condition), body));
-        while content.peek(Token![else]) {
-            content.parse::<Token![else]>()?;
-            if content.peek(Token![if]) {
-                content.parse::<Token![if]>()?;
-                let condition: Expr = content.parse()?;
-                let body_content: ParseBuffer<'_>;
-                braced!(body_content in content);
-                let body: Expr = body_content.parse()?;
-                branches.push((Some(condition), body));
-            } else {
-                let body_content: ParseBuffer<'_>;
-                braced!(body_content in content);
-                let body: Expr = body_content.parse()?;
-                branches.push((None, body));
-                break;
-            }
-        }
-    } else {
+    let branch_reactive: bool = content.peek(Brace);
+    is_inline = is_inline && !branch_reactive;
+    let condition: Expr = if branch_reactive {
         let cond_content: ParseBuffer<'_>;
         braced!(cond_content in content);
-        let condition: Expr = cond_content.parse()?;
-        let body_content: ParseBuffer<'_>;
-        braced!(body_content in content);
-        let body: Expr = body_content.parse()?;
-        branches.push((Some(condition), body));
-        while content.peek(Token![else]) {
-            content.parse::<Token![else]>()?;
-            if content.peek(Token![if]) {
-                content.parse::<Token![if]>()?;
+        cond_content.parse()?
+    } else {
+        parse_expr_until_brace(content)?
+    };
+    let body_content: ParseBuffer<'_>;
+    braced!(body_content in content);
+    let body: Expr = body_content.parse()?;
+    branches.push((Some(condition), body));
+    while content.peek(Token![else]) {
+        content.parse::<Token![else]>()?;
+        if content.peek(Token![if]) {
+            content.parse::<Token![if]>()?;
+            let branch_reactive: bool = content.peek(Brace);
+            is_inline = is_inline && !branch_reactive;
+            let condition: Expr = if branch_reactive {
                 let cond_content: ParseBuffer<'_>;
                 braced!(cond_content in content);
-                let condition: Expr = cond_content.parse()?;
-                let body_content: ParseBuffer<'_>;
-                braced!(body_content in content);
-                let body: Expr = body_content.parse()?;
-                branches.push((Some(condition), body));
+                cond_content.parse()?
             } else {
-                let body_content: ParseBuffer<'_>;
-                braced!(body_content in content);
-                let body: Expr = body_content.parse()?;
-                branches.push((None, body));
-                break;
-            }
+                parse_expr_until_brace(content)?
+            };
+            let body_content: ParseBuffer<'_>;
+            braced!(body_content in content);
+            let body: Expr = body_content.parse()?;
+            branches.push((Some(condition), body));
+        } else {
+            let body_content: ParseBuffer<'_>;
+            braced!(body_content in content);
+            let body: Expr = body_content.parse()?;
+            branches.push((None, body));
+            break;
         }
     }
     let else_default: proc_macro2::TokenStream = quote! { #STR_EMPTY };
@@ -1195,7 +1218,7 @@ pub(crate) fn parse_attr_match(content: ParseStream) -> syn::Result<HtmlAttrMatc
     let is_inline: bool = !content.peek2(Brace);
     content.parse::<Token![match]>()?;
     let scrutinee: Expr = if is_inline {
-        content.parse()?
+        parse_expr_until_brace(content)?
     } else {
         let scrutinee_content: ParseBuffer<'_>;
         braced!(scrutinee_content in content);

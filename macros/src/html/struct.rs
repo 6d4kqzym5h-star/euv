@@ -53,24 +53,31 @@ pub(crate) struct HtmlFor {
 
 /// Represents a conditional in HTML.
 ///
-/// Supports two syntaxes:
-/// - Reactive: `if {expr} { children } [else if {expr} { children }]* [else { children }]`
-///   The condition expression in braces is treated as a signal that triggers re-rendering.
-/// - Inline: `if condition { children } [else if condition { children }]* [else { children }]`
-///   The condition is a plain Rust boolean expression, evaluated once at render time.
-///   This form is typically used inside `for` loops where the condition depends on loop variables.
+/// Each branch condition is independently either reactive (braced `{expr}`)
+/// or inline (plain expression). The `is_reactive` flag is `true` if any
+/// branch has a braced condition, causing the entire if-chain to be wrapped
+/// in a `DynamicNode` for reactive re-rendering.
+///
+/// Supported combinations include:
+/// - `if {a} {} else if {b} {}` — all reactive
+/// - `if a {} else if b {}` — all inline
+/// - `if {a} {} else if b {}` — mixed (first reactive, second inline)
+/// - `if a {} else if {b} {}` — mixed (first inline, second reactive)
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlIf {
-    /// Whether this conditional is reactive (condition wrapped in braces as a signal).
+    /// Whether this conditional has at least one reactive (braced) branch.
+    ///
+    /// When `true`, the entire if-chain is wrapped in a `DynamicNode` that
+    /// re-evaluates when any braced signal changes.
     #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) is_reactive: bool,
     /// The list of condition-branch pairs.
     ///
-    /// For reactive conditionals, each condition is a braced signal expression.
-    /// For inline conditionals, each condition is a plain Rust expression.
-    /// The last entry may have `None` as condition (representing `else`).
+    /// Each condition is a Rust expression, regardless of whether it was
+    /// originally braced (reactive) or inline. The last entry may have
+    /// `None` as condition (representing `else`).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
@@ -79,15 +86,22 @@ pub(crate) struct HtmlIf {
 
 /// Represents a reactive or inline `if` conditional in attribute value position.
 ///
-/// Supports two syntaxes:
-/// - Reactive: `if {expr} { value } [else if {expr} { value }]* [else { value }]`
-///   The condition expression in braces is treated as a signal that triggers re-rendering.
-/// - Inline: `if condition { value } [else if condition { value }]* [else { value }]`
-///   The condition is a plain Rust boolean expression, evaluated once at render time.
-///   This form is typically used inside `for` loops where the condition depends on loop variables.
+/// Each branch condition is independently either reactive (braced `{expr}`)
+/// or inline (plain expression). The `is_inline` flag is `true` only when
+/// all branches are inline; if any branch is reactive, the entire if-chain
+/// is wrapped in a reactive `AttributeValue`.
+///
+/// Supported combinations include:
+/// - `if {a} { v } else if {b} { v }` — all reactive
+/// - `if a { v } else if b { v }` — all inline
+/// - `if {a} { v } else if b { v }` — mixed (first reactive, second inline)
+/// - `if a { v } else if {b} { v }` — mixed (first inline, second reactive)
 #[derive(Clone, Data, Debug, New)]
 pub(crate) struct HtmlAttrIf {
-    /// Whether this conditional is inline (condition is a plain expression, not a braced signal).
+    /// Whether this conditional is entirely inline (no braced conditions).
+    ///
+    /// When `false`, at least one branch is reactive and the entire if-chain
+    /// is wrapped in a reactive `AttributeValue`.
     #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]

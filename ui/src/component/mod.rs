@@ -10,6 +10,7 @@ mod header;
 mod info;
 mod input;
 mod layout;
+mod loading;
 mod logo;
 mod modal;
 mod nav;
@@ -22,6 +23,6 @@ mod virtual_list;
 
 pub use {
     alert::*, badge::*, browser::*, button::*, camera::*, card::*, checkbox::*, field::*,
-    header::*, info::*, input::*, layout::*, logo::*, modal::*, nav::*, router::*, tag::*,
-    theme::*, touch::*, vconsole::*, virtual_list::*,
+    header::*, info::*, input::*, layout::*, loading::*, logo::*, modal::*, nav::*, router::*,
+    tag::*, theme::*, touch::*, vconsole::*, virtual_list::*,
 };

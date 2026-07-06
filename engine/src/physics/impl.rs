@@ -360,14 +360,34 @@ impl PhysicsWorld2D {
 
     /// Detects and resolves all collisions between bodies in the world.
     ///
-    /// Uses broad-phase bounding box checks followed by narrow-phase shape-specific
-    /// collision detection, then applies impulse-based resolution.
+    /// Uses a spatial hash grid for broad-phase culling followed by narrow-phase
+    /// shape-specific collision detection, then applies impulse-based resolution.
+    /// This reduces the broad-phase from O(n²) to near O(n) for typical scenes.
     fn resolve_collisions(&mut self) {
         let body_count: usize = self.get_bodies().len();
+        if body_count < 2 {
+            return;
+        }
+        let mut grid: SpatialHashGrid2D = SpatialHashGrid2D::with_default_size();
+        for (index, body) in self.get_bodies().iter().enumerate() {
+            if let Some(bbox) = body.bounding_box() {
+                grid.insert(index, bbox.min(), bbox.max());
+            }
+        }
         for iteration in 0..PHYSICS_MAX_ITERATIONS {
             let mut any_collision: bool = false;
             for i in 0..body_count {
-                for j in (i + 1)..body_count {
+                let candidates: Vec<usize> = {
+                    let body: &RigidBody2D = &self.get_bodies()[i];
+                    match body.bounding_box() {
+                        Some(bbox) => grid.query(bbox.min(), bbox.max()),
+                        None => Vec::new(),
+                    }
+                };
+                for j in candidates {
+                    if j <= i {
+                        continue;
+                    }
                     let (left, right) = self.get_mut_bodies().split_at_mut(j);
                     let body_a: &mut RigidBody2D = &mut left[i];
                     let body_b: &mut RigidBody2D = &mut right[0];
@@ -645,14 +665,34 @@ impl PhysicsWorld3D {
 
     /// Detects and resolves all collisions between bodies in the 3D world.
     ///
-    /// Uses broad-phase bounding box checks followed by narrow-phase shape-specific
-    /// collision detection, then applies impulse-based resolution.
+    /// Uses a spatial hash grid for broad-phase culling followed by narrow-phase
+    /// shape-specific collision detection, then applies impulse-based resolution.
+    /// This reduces the broad-phase from O(n²) to near O(n) for typical scenes.
     fn resolve_collisions(&mut self) {
         let body_count: usize = self.get_bodies().len();
+        if body_count < 2 {
+            return;
+        }
+        let mut grid: SpatialHashGrid3D = SpatialHashGrid3D::with_default_size();
+        for (index, body) in self.get_bodies().iter().enumerate() {
+            if let Some(bbox) = body.bounding_box() {
+                grid.insert(index, bbox.get_min(), bbox.get_max());
+            }
+        }
         for iteration in 0..PHYSICS_MAX_ITERATIONS {
             let mut any_collision: bool = false;
             for i in 0..body_count {
-                for j in (i + 1)..body_count {
+                let candidates: Vec<usize> = {
+                    let body: &RigidBody3D = &self.get_bodies()[i];
+                    match body.bounding_box() {
+                        Some(bbox) => grid.query(bbox.get_min(), bbox.get_max()),
+                        None => Vec::new(),
+                    }
+                };
+                for j in candidates {
+                    if j <= i {
+                        continue;
+                    }
                     let (left, right) = self.get_mut_bodies().split_at_mut(j);
                     let body_a: &mut RigidBody3D = &mut left[i];
                     let body_b: &mut RigidBody3D = &mut right[0];

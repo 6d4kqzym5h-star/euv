@@ -65,6 +65,78 @@ pub struct CanvasRenderer {
     pub(crate) camera: Camera2D,
 }
 
+/// A linear gradient defined by two endpoints and a list of color stops.
+///
+/// Used to create smooth color transitions along a straight line
+/// for fill or stroke operations on the canvas.
+#[derive(Clone, Data, Debug, New, PartialEq)]
+pub struct LinearGradient {
+    /// The starting point of the gradient in world space.
+    #[get(type(copy))]
+    pub(crate) start: Vector2D,
+    /// The ending point of the gradient in world space.
+    #[get(type(copy))]
+    pub(crate) end: Vector2D,
+    /// The ordered list of color stops, each containing a position (0.0 to 1.0) and a CSS color string.
+    pub(crate) stops: Vec<(f64, String)>,
+}
+
+/// A radial gradient defined by inner and outer circles and a list of color stops.
+///
+/// Used to create smooth color transitions radiating outward from a center point
+/// for fill or stroke operations on the canvas.
+#[derive(Clone, Data, Debug, New, PartialEq)]
+pub struct RadialGradient {
+    /// The center of the inner circle of the gradient.
+    #[get(type(copy))]
+    pub(crate) inner_center: Vector2D,
+    /// The radius of the inner circle.
+    #[get(type(copy))]
+    pub(crate) inner_radius: f64,
+    /// The center of the outer circle of the gradient.
+    #[get(type(copy))]
+    pub(crate) outer_center: Vector2D,
+    /// The radius of the outer circle.
+    #[get(type(copy))]
+    pub(crate) outer_radius: f64,
+    /// The ordered list of color stops, each containing a position (0.0 to 1.0) and a CSS color string.
+    pub(crate) stops: Vec<(f64, String)>,
+}
+
+/// Shadow rendering configuration for drop shadow effects on canvas primitives.
+///
+/// When applied, all subsequent fill, stroke, and draw operations will cast
+/// a shadow with the specified color, blur radius, and offset.
+#[derive(Clone, Data, Debug, New, PartialEq, PartialOrd)]
+pub struct ShadowConfig {
+    /// The CSS color string of the shadow (e.g., `"rgba(0,0,0,0.5)"`).
+    #[get(type(clone))]
+    pub(crate) color: String,
+    /// The blur radius of the shadow in pixels.
+    #[get(type(copy))]
+    pub(crate) blur: f64,
+    /// The horizontal offset of the shadow in pixels.
+    #[get(type(copy))]
+    pub(crate) offset_x: f64,
+    /// The vertical offset of the shadow in pixels.
+    #[get(type(copy))]
+    pub(crate) offset_y: f64,
+}
+
+/// Represents the rendering priority layer for draw call ordering.
+///
+/// Higher z-index values are drawn on top of lower values,
+/// enabling correct visual layering of game objects.
+#[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]
+pub struct RenderLayer {
+    /// The z-index determining draw order. Higher values draw later (on top).
+    #[get(type(copy))]
+    pub(crate) z_index: i32,
+    /// Whether objects in this layer should be rendered.
+    #[get(type(copy))]
+    pub(crate) visible: bool,
+}
+
 /// A supersampling anti-aliasing (SSAA) canvas wrapper that renders at a higher
 /// resolution on an offscreen canvas and downscales to the display canvas for
 /// smoother polygon edges in software-rendered 3D scenes.
