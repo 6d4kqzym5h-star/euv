@@ -122,9 +122,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                             c_tab_item_inactive()
                         }
                         onclick: tab_on_select(tab, ConditionalTab::Info)
-                        {
-                            ConditionalTab::Info.to_string()
-                        }
+                        ConditionalTab::Info.to_string()
                     }
                     div {
                         class: if { tab.get() == ConditionalTab::Settings } {
@@ -133,9 +131,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                             c_tab_item_inactive()
                         }
                         onclick: tab_on_select(tab, ConditionalTab::Settings)
-                        {
-                            ConditionalTab::Settings.to_string()
-                        }
+                        ConditionalTab::Settings.to_string()
                     }
                     div {
                         class: if { tab.get() == ConditionalTab::About } {
@@ -144,9 +140,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                             c_tab_item_inactive()
                         }
                         onclick: tab_on_select(tab, ConditionalTab::About)
-                        {
-                            ConditionalTab::About.to_string()
-                        }
+                        ConditionalTab::About.to_string()
                     }
                 }
                 match { tab.get() } {

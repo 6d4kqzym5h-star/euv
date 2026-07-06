@@ -149,9 +149,7 @@ fn form_tab() -> VirtualNode {
                     }
                     p {
                         class: c_keep_alive_demo_text()
-                        {
-                            format!("Name: {} | Email: {} | Message: {}", name.get(), email.get(), message.get())
-                        }
+                        format!("Name: {} | Email: {} | Message: {}", name.get(), email.get(), message.get())
                     }
                 }
             }
@@ -205,9 +203,7 @@ fn timer_tab() -> VirtualNode {
                 class: c_keep_alive_counter_display()
                 span {
                     class: c_keep_alive_counter_value()
-                    {
-                        format_time(elapsed.get())
-                    }
+                    format_time(elapsed.get())
                 }
             }
             div {
@@ -412,9 +408,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                     } else {
                         c_keep_alive_tab_hidden()
                     }
-                    {
-                        counter_tab()
-                    }
+                    counter_tab()
                 }
                 div {
                     class: if { tab.get() == KeepAliveTab::Form } {
@@ -422,9 +416,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                     } else {
                         c_keep_alive_tab_hidden()
                     }
-                    {
-                        form_tab()
-                    }
+                    form_tab()
                 }
                 div {
                     class: if { tab.get() == KeepAliveTab::Timer } {
@@ -432,9 +424,7 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                     } else {
                         c_keep_alive_tab_hidden()
                     }
-                    {
-                        timer_tab()
-                    }
+                    timer_tab()
                 }
             }
             euv_card {
