@@ -1,7 +1,5 @@
 use crate::*;
 
-use std::rc::Rc;
-
 /// Implementation of default configuration for virtual list.
 impl Default for EuvVirtualListConfig {
     /// Returns a default configuration with sensible defaults.

@@ -1,7 +1,5 @@
 use crate::*;
 
-use std::rc::Rc;
-
 /// Implementation of route configuration construction.
 impl EuvRouteConfig {
     /// Creates a new route configuration.
