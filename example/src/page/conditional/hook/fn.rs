@@ -4,19 +4,18 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The user type signal to update.
-/// - `&str` - The user type value to set.
+/// - `Signal<ConditionalUserType>` - The user type signal to update.
+/// - `ConditionalUserType` - The user type variant to set.
 ///
 /// # Returns
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the user type.
 pub(crate) fn user_type_on_select(
-    user_type: Signal<String>,
-    value: &str,
+    user_type: Signal<ConditionalUserType>,
+    value: ConditionalUserType,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    let value_owned: String = value.to_string();
     Some(Rc::new(move |_: Event| {
-        user_type.set(value_owned.clone());
+        user_type.set(value);
     }))
 }
 
@@ -24,15 +23,17 @@ pub(crate) fn user_type_on_select(
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The tab signal to update.
-/// - `&str` - The tab value to set.
+/// - `Signal<ConditionalTab>` - The tab signal to update.
+/// - `ConditionalTab` - The tab variant to set.
 ///
 /// # Returns
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the active tab.
-pub(crate) fn tab_on_select(tab: Signal<String>, value: &str) -> Option<Rc<dyn Fn(Event)>> {
-    let value_owned: String = value.to_string();
+pub(crate) fn tab_on_select(
+    tab: Signal<ConditionalTab>,
+    value: ConditionalTab,
+) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        tab.set(value_owned.clone());
+        tab.set(value);
     }))
 }

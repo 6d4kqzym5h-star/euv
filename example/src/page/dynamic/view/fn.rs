@@ -13,7 +13,7 @@ use crate::*;
 #[component]
 pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps>) -> VirtualNode {
     let PageDynamicComponentProps = node.try_get_props().unwrap_or_default();
-    let tag_name_opt: Signal<String> = App::use_signal(|| DEFAULT_TAG_NAME.to_string());
+    let tag_name_opt: Signal<DynamicTagType> = App::use_signal(DynamicTagType::default);
     let content: Signal<String> = App::use_signal(|| "Hello, dynamic tag!".to_string());
     html! {
         div {
@@ -32,40 +32,40 @@ pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps
                 div {
                     class: c_dynamic_component_tab_bar()
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_DIV } {
+                        variant: if { tag_name_opt.get() == DynamicTagType::Div } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: TAG_OPTION_DIV_LABEL
-                        onclick: tag_on_select(tag_name_opt, TAG_NAME_DIV)
+                        label: DynamicTagType::Div.label()
+                        onclick: tag_on_select(tag_name_opt, DynamicTagType::Div)
                     }
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_SPAN } {
+                        variant: if { tag_name_opt.get() == DynamicTagType::Span } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: TAG_OPTION_SPAN_LABEL
-                        onclick: tag_on_select(tag_name_opt, TAG_NAME_SPAN)
+                        label: DynamicTagType::Span.label()
+                        onclick: tag_on_select(tag_name_opt, DynamicTagType::Span)
                     }
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_EUV_CARD } {
+                        variant: if { tag_name_opt.get() == DynamicTagType::EuvCard } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: TAG_OPTION_EUV_CARD_LABEL
-                        onclick: tag_on_select(tag_name_opt, TAG_NAME_EUV_CARD)
+                        label: DynamicTagType::EuvCard.label()
+                        onclick: tag_on_select(tag_name_opt, DynamicTagType::EuvCard)
                     }
                     euv_button {
-                        variant: if { tag_name_opt.get() == TAG_NAME_BADGE } {
+                        variant: if { tag_name_opt.get() == DynamicTagType::Badge } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: TAG_OPTION_BADGE_LABEL
-                        onclick: tag_on_select(tag_name_opt, TAG_NAME_BADGE)
+                        label: DynamicTagType::Badge.label()
+                        onclick: tag_on_select(tag_name_opt, DynamicTagType::Badge)
                     }
                 }
             }

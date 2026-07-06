@@ -1,0 +1,24 @@
+[package]
+name = "euv-engine"
+version = "0.8.29"
+readme = "README.md"
+edition = "2024"
+authors = ["root@ltpp.vip"]
+license = "MIT"
+description = """A high-performance 2D game engine built on the euv framework, featuring ECS, fixed-timestep game loop, canvas rendering, physics, collision detection, sprite animation, and audio."""
+keywords = ["cross-platform", "game-engine", "2d", "wasm"]
+repository = "https://github.com/euv-dev/euv.git"
+categories = ["web-programming", "game-engines"]
+exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+euv = { workspace = true }
+
+js-sys = { workspace = true }
+web-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+lombok-macros = { workspace = true }
+wasm-bindgen-futures = { workspace = true }

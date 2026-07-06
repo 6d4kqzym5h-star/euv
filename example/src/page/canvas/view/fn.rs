@@ -146,7 +146,7 @@ pub(crate) fn page_canvas(node: VirtualNode<PageCanvasProps>) -> VirtualNode {
                             max: CANVAS_MAX_LINE_WIDTH_ATTR
                             step: CANVAS_LINE_WIDTH_STEP_ATTR
                             value: initial_line_width.to_string()
-                            style: format!("--value: {}%", initial_line_width_percent)
+                            class: c_slider_value(&format!("{}%", initial_line_width_percent))
                             oninput: canvas_on_line_width_input(state)
                             onfocus: UseEuvInput::on_focus_scroll_into_view()
                             onblur: UseEuvInput::on_blur_restore_height()

@@ -9,8 +9,8 @@ use crate::*;
 pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> VirtualNode {
     let PageConditionalProps = node.try_get_props().unwrap_or_default();
     let show_details: Signal<bool> = App::use_signal(|| false);
-    let user_type: Signal<String> = App::use_signal(|| "guest".to_string());
-    let tab: Signal<String> = App::use_signal(|| "info".to_string());
+    let user_type: Signal<ConditionalUserType> = App::use_signal(ConditionalUserType::default);
+    let tab: Signal<ConditionalTab> = App::use_signal(ConditionalTab::default);
     let display_name: Signal<String> = App::use_signal(|| "".to_string());
     html! {
         div {
@@ -57,35 +57,35 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_role_button_row()
                     euv_button {
-                        variant: if { user_type.get() == "guest" } {
+                        variant: if { user_type.get() == ConditionalUserType::Guest } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: "Guest"
-                        onclick: user_type_on_select(user_type, "guest")
+                        label: ConditionalUserType::Guest.label()
+                        onclick: user_type_on_select(user_type, ConditionalUserType::Guest)
                     }
                     euv_button {
-                        variant: if { user_type.get() == "user" } {
+                        variant: if { user_type.get() == ConditionalUserType::User } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: "User"
-                        onclick: user_type_on_select(user_type, "user")
+                        label: ConditionalUserType::User.label()
+                        onclick: user_type_on_select(user_type, ConditionalUserType::User)
                     }
                     euv_button {
-                        variant: if { user_type.get() == "admin" } {
+                        variant: if { user_type.get() == ConditionalUserType::Admin } {
                             EuvButtonVariant::Primary
                         } else {
                             EuvButtonVariant::Outline
                         }
-                        label: "Admin"
-                        onclick: user_type_on_select(user_type, "admin")
+                        label: ConditionalUserType::Admin.label()
+                        onclick: user_type_on_select(user_type, ConditionalUserType::Admin)
                     }
                 }
-                match { user_type.get().as_str() } {
-                    "guest" => {
+                match { user_type.get() } {
+                    ConditionalUserType::Guest => {
                         div {
                             p {
                                 class: c_role_guest_text()
@@ -93,7 +93,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                             }
                         }
                     }
-                    "user" => {
+                    ConditionalUserType::User => {
                         div {
                             p {
                                 class: c_role_user_text()
@@ -116,35 +116,41 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_tab_bar()
                     div {
-                        class: if { tab.get() == "info" } {
+                        class: if { tab.get() == ConditionalTab::Info } {
                             c_tab_item_active()
                         } else {
                             c_tab_item_inactive()
                         }
-                        onclick: tab_on_select(tab, "info")
-                        "Info"
+                        onclick: tab_on_select(tab, ConditionalTab::Info)
+                        {
+                            ConditionalTab::Info.to_string()
+                        }
                     }
                     div {
-                        class: if { tab.get() == "settings" } {
+                        class: if { tab.get() == ConditionalTab::Settings } {
                             c_tab_item_active()
                         } else {
                             c_tab_item_inactive()
                         }
-                        onclick: tab_on_select(tab, "settings")
-                        "Settings"
+                        onclick: tab_on_select(tab, ConditionalTab::Settings)
+                        {
+                            ConditionalTab::Settings.to_string()
+                        }
                     }
                     div {
-                        class: if { tab.get() == "about" } {
+                        class: if { tab.get() == ConditionalTab::About } {
                             c_tab_item_active()
                         } else {
                             c_tab_item_inactive()
                         }
-                        onclick: tab_on_select(tab, "about")
-                        "About"
+                        onclick: tab_on_select(tab, ConditionalTab::About)
+                        {
+                            ConditionalTab::About.to_string()
+                        }
                     }
                 }
-                match { tab.get().as_str() } {
-                    "info" => {
+                match { tab.get() } {
+                    ConditionalTab::Info => {
                         div {
                             class: c_tab_content()
                             p {
@@ -157,7 +163,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                             }
                         }
                     }
-                    "settings" => {
+                    ConditionalTab::Settings => {
                         div {
                             class: c_tab_content()
                             p {

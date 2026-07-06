@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.8.29"
+version = "0.9.0"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -15,7 +15,7 @@ exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
 crate-type = ["rlib"]
 
 [workspace]
-members = ["cli", "core", "example", "macros", "ui"]
+members = ["cli", "core", "engine", "example", "macros", "ui"]
 resolver = "3"
 
 [workspace.dependencies]
@@ -23,6 +23,7 @@ euv = { path = ".", version = "0.8.29" }
 euv-ui = { path = "ui", version = "0.8.29" }
 euv-cli = { path = "cli", version = "0.8.29" }
 euv-core = { path = "core", version = "0.8.29" }
+euv-engine = { path = "engine", version = "0.8.29" }
 euv-macros = { path = "macros", version = "0.8.29" }
 euv-example = { path = "example", version = "0.8.29" }
 
@@ -61,76 +62,85 @@ tokio = { version = "1.52.3", features = [
     "time",
 ] }
 web-sys = { version = "0.3.103", features = [
-    "AnimationEvent",
-    "BeforeUnloadEvent",
-    "CanvasRenderingContext2d",
     "Blob",
-    "Clipboard",
-    "ClipboardEvent",
-    "console",
-    "CssStyleDeclaration",
-    "DataTransfer",
-    "Document",
-    "DocumentFragment",
-    "DomRect",
-    "DragEvent",
-    "Element",
-    "Event",
-    "EventSource",
-    "EventInit",
-    "EventTarget",
     "File",
+    "Node",
+    "Text",
+    "Event",
+    "Touch",
+    "Window",
+    "DomRect",
+    "Element",
+    "History",
+    "Storage",
+    "console",
+    "Document",
     "FileList",
+    "GainNode",
+    "Location",
+    "NodeList",
+    "Response",
+    "Clipboard",
+    "DragEvent",
+    "EventInit",
+    "Navigator",
+    "TouchList",
+    "WebSocket",
+    "AudioParam",
     "FileReader",
     "FocusEvent",
-    "HashChangeEvent",
-    "History",
-    "HtmlButtonElement",
-    "HtmlCanvasElement",
-    "HtmlCollection",
     "HtmlElement",
+    "InputEvent",
+    "MouseEvent",
+    "TouchEvent",
+    "WheelEvent",
+    "AudioBuffer",
+    "EventSource",
+    "EventTarget",
+    "MediaStream",
+    "Performance",
+    "SubmitEvent",
+    "AudioContext",
+    "DataTransfer",
+    "MediaDevices",
+    "MessageEvent",
+    "AnimationEvent",
+    "AudioListener",
+    "KeyboardEvent",
+    "ClipboardEvent",
+    "HtmlCollection",
     "HtmlFormElement",
     "HtmlHeadElement",
-    "HtmlImageElement",
-    "HtmlInputElement",
-    "HtmlMediaElement",
-    "HtmlVideoElement",
     "HtmlMetaElement",
-    "MediaDevices",
     "MediaQueryList",
-    "MediaStream",
-    "MediaStreamConstraints",
-    "MediaStreamTrack",
-    "MessageEvent",
+    "ScrollBehavior",
+    "VisualViewport",
+    "HashChangeEvent",
+    "HtmlInputElement",
+    "TransitionEvent",
+    "DocumentFragment",
+    "HtmlImageElement",
+    "HtmlMediaElement",
     "HtmlOptionElement",
     "HtmlSelectElement",
     "HtmlStyleElement",
+    "HtmlVideoElement",
+    "MediaStreamTrack",
+    "BeforeUnloadEvent",
+    "HtmlButtonElement",
+    "HtmlCanvasElement",
+    "CssStyleDeclaration",
     "HtmlTextAreaElement",
-    "InputEvent",
+    "AudioDestinationNode",
     "IntersectionObserver",
-    "IntersectionObserverEntry",
-    "IntersectionObserverInit",
-    "KeyboardEvent",
-    "Location",
-    "MouseEvent",
-    "Navigator",
-    "Node",
-    "NodeList",
-    "Response",
-    "ScrollBehavior",
+    "AudioBufferSourceNode",
     "ScrollIntoViewOptions",
     "ScrollLogicalPosition",
-    "Storage",
-    "SubmitEvent",
-    "Text",
-    "TouchEvent",
-    "TouchList",
-    "Touch",
-    "TransitionEvent",
-    "VisualViewport",
-    "WheelEvent",
-    "WebSocket",
-    "Window",
+    "MediaStreamConstraints",
+    "AudioScheduledSourceNode",
+    "CanvasRenderingContext2d",
+    "IntersectionObserverInit",
+    "IntersectionObserverEntry",
 ] }
 
 [dependencies]
@@ -150,6 +160,7 @@ euv = { path = "." }
 euv-ui = { path = "ui" }
 euv-cli = { path = "cli" }
 euv-core = { path = "core" }
+euv-engine = { path = "engine" }
 euv-macros = { path = "macros" }
 euv-example = { path = "example" }
 

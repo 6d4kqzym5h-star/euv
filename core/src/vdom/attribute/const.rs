@@ -61,3 +61,12 @@ pub(crate) const CHAR_CSS_RULE_SEPARATOR: char = '\n';
 
 /// The signal addresses separator character.
 pub(crate) const CHAR_SIGNAL_ADDRS_SEPARATOR: char = ',';
+
+/// The backslash character used for escaping special characters in CSS selectors.
+pub(crate) const CHAR_CSS_ESCAPE: char = '\\';
+
+/// The hyphen character used in CSS class names and selectors.
+pub(crate) const CHAR_HYPHEN: char = '-';
+
+/// The underscore character used in CSS class names and identifiers.
+pub(crate) const CHAR_UNDERSCORE: char = '_';

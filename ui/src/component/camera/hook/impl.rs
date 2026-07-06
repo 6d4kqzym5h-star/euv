@@ -194,15 +194,23 @@ impl UseEuvCamera {
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
         let window_value: Window = window().expect("no global window exists");
         let barcode_detector_key: JsValue = JsValue::from_str("BarcodeDetector");
-        if Reflect::get(&window_value, &barcode_detector_key).is_err() {
-            self.get_error_message()
-                .set("BarcodeDetector API is not supported in this browser".to_string());
-            return;
-        }
-        let detector_result: Result<JsValue, JsValue> =
-            Function::new_no_args("return new BarcodeDetector({ formats: ['qr_code'] })")
-                .call0(&JsValue::NULL);
-        let detector: JsValue = match detector_result {
+        let barcode_detector_constructor: Function =
+            match Reflect::get(&window_value, &barcode_detector_key) {
+                Ok(value) if !value.is_undefined() && !value.is_null() => value.unchecked_into(),
+                _ => {
+                    self.get_error_message()
+                        .set("BarcodeDetector API is not supported in this browser".to_string());
+                    return;
+                }
+            };
+        let formats_array: Array = Array::new();
+        formats_array.push(&JsValue::from_str("qr_code"));
+        let init_object: Object = Object::new();
+        let _ = Reflect::set(&init_object, &JsValue::from_str("formats"), &formats_array);
+        let args_array: Array = Array::new();
+        args_array.push(&init_object.into());
+        let detector: JsValue = match Reflect::construct(&barcode_detector_constructor, &args_array)
+        {
             Ok(value) => value,
             Err(error) => {
                 self.get_error_message()
@@ -496,7 +504,7 @@ impl Default for EuvCameraConfig {
         EuvCameraConfig {
             video_selector: CAMERA_VIDEO_SELECTOR,
             scan_interval_millis: CAMERA_SCAN_INTERVAL_MILLIS,
-            auto_scan: false,
+            auto_scan: true,
             on_qr_detected: None,
             on_error: None,
         }

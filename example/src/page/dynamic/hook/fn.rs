@@ -1,22 +1,21 @@
 use crate::*;
 
-/// Creates a click event handler that sets the tag name signal.
+/// Creates a click event handler that sets the tag type signal.
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The tag name signal to update.
-/// - `&str` - The tag name value to set.
+/// - `Signal<DynamicTagType>` - The tag type signal to update.
+/// - `DynamicTagType` - The tag type variant to set.
 ///
 /// # Returns
 ///
-/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the tag name.
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the tag type.
 pub(crate) fn tag_on_select(
-    try_get_tag_name: Signal<String>,
-    value: &str,
+    try_get_tag_name: Signal<DynamicTagType>,
+    value: DynamicTagType,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    let value_owned: String = value.to_string();
     Some(Rc::new(move |_: Event| {
-        try_get_tag_name.set(value_owned.clone());
+        try_get_tag_name.set(value);
     }))
 }
 

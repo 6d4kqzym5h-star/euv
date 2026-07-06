@@ -9,6 +9,8 @@ pub(crate) const NAV_ITEMS: &[(&str, &str, &str)] = &[
     ("🌐", "Browser", "/browser"),
     ("📷", "Camera", "/camera"),
     ("🎨", "Canvas", "/canvas"),
+    ("🎮", "Game2D", "/game-2d"),
+    ("🎲", "Game3D", "/game-3d"),
     ("🔀", "Condition", "/conditional"),
     ("🔢", "Counter", "/counter"),
     ("🏷️", "DynTag", "/dynamic-component"),

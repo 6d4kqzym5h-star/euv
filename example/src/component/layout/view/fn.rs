@@ -21,6 +21,7 @@ pub(crate) fn desktop_layout(node: VirtualNode<DesktopLayoutProps>) -> VirtualNo
     html! {
         div {
             class: root_class_signal
+            class: c_example_theme()
             nav {
                 class: c_app_nav()
                 a {
@@ -118,6 +119,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
     html! {
         div {
             class: root_class_signal
+            class: c_example_theme()
             header {
                 class: c_mobile_header()
                 div {

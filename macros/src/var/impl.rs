@@ -49,7 +49,8 @@ impl Parse for VarsInput {
                 content.parse::<Token![:]>()?;
                 let var_value: VarsValue = {
                     let expr: Expr = content.parse()?;
-                    VarsValue::Expr(expr.into_token_stream())
+                    let expanded: proc_macro2::TokenStream = expand_var_macros(&expr);
+                    VarsValue::Expr(expanded)
                 };
                 vars.push((css_key, var_value));
                 if content.peek(Semi) {

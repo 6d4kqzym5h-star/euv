@@ -278,7 +278,7 @@ jobs:
           echo "published=false" >> $GITHUB_OUTPUT
           echo "${{ secrets.CARGO_REGISTRY_TOKEN }}" | cargo login
           VERSION="${{ needs.setup.outputs.version }}"
-          PUBLISH_ORDER=("euv-macros" "euv-core" "euv-cli" "euv" "euv-ui")
+          PUBLISH_ORDER=("euv-core" "euv-macros" "euv-cli" "euv" "euv-ui" "euv-engine")
           SKIP_PACKAGES=("euv-example")
           MAIN_PACKAGE="euv"
           declare -A PUBLISH_RESULT

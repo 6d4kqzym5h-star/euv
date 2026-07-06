@@ -302,7 +302,7 @@ impl ToTokens for ClassDef {
                     quote! { #class_name_str.to_string() }
                 } else {
                     let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
-                    quote! { format!(#name_format, #class_name_str, [#(format!("{:?}", #param_names)), *].join(#STR_HYPHEN)) }
+                    quote! { format!(#name_format, #class_name_str, [#(format!("{}", #param_names)), *].join(#STR_HYPHEN)) }
                 };
                 let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
                     quote! { "".to_string() }

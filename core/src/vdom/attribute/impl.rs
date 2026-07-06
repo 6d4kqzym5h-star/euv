@@ -1,8 +1,5 @@
 use crate::*;
 
-/// SAFETY: `InjectedClassesCell` is only used in single-threaded WASM contexts.
-unsafe impl Sync for InjectedClassesCell {}
-
 /// Implementation of attribute value factory methods for reactive and merged values.
 impl AttributeValue {
     /// Creates a reactive attribute `Self` for conditional attribute values.
@@ -467,19 +464,25 @@ impl Css {
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
     pub fn inject_style(&self) {
-        if !Self::mark_injected(self.get_name().clone()) {
-            return;
+        let raw_name: String = self.get_name().clone();
+        let mut escaped_name: String = String::with_capacity(raw_name.len() * 2);
+        for ch in raw_name.chars() {
+            if ch.is_ascii_alphanumeric() || ch == CHAR_HYPHEN || ch == CHAR_UNDERSCORE {
+                escaped_name.push(ch);
+            } else {
+                escaped_name.push(CHAR_CSS_ESCAPE);
+                escaped_name.push(ch);
+            }
         }
         let mut css_text: String = format!(
-            "{CHAR_CSS_CLASS_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
-            self.get_name(),
+            "{CHAR_CSS_CLASS_PREFIX}{escaped_name}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
             self.get_style()
         );
         for pseudo_rule in self.get_pseudo_rules() {
             if !pseudo_rule.get_style().is_empty() {
                 css_text = format!(
                     "{css_text}{CHAR_CSS_RULE_SEPARATOR}{CHAR_CSS_CLASS_PREFIX}{}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
-                    self.get_name(),
+                    escaped_name,
                     pseudo_rule.get_selector(),
                     pseudo_rule.get_style()
                 );
@@ -489,14 +492,14 @@ impl Css {
             if !media_rule.get_query().is_empty() {
                 let mut media_body: String = format!(
                     "{CHAR_CSS_CLASS_PREFIX}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
-                    self.get_name(),
+                    escaped_name,
                     media_rule.get_style()
                 );
                 for pseudo_rule in media_rule.get_pseudo_rules() {
                     if !pseudo_rule.get_style().is_empty() {
                         media_body = format!(
                             "{media_body} {CHAR_CSS_CLASS_PREFIX}{}{}{CSS_RULE_OPEN_FORMAT}{}{CSS_RULE_CLOSE_FORMAT}",
-                            self.get_name(),
+                            escaped_name,
                             pseudo_rule.get_selector(),
                             pseudo_rule.get_style()
                         );
@@ -510,37 +513,6 @@ impl Css {
             }
         }
         Self::append_css(&css_text);
-    }
-
-    /// Marks a class name as injected in the global `HashSet`.
-    ///
-    /// Returns `false` if the class was already injected (no-op), `true`
-    /// if this is the first injection.
-    ///
-    /// # Arguments
-    ///
-    /// - `String` - The class name to mark as injected.
-    ///
-    /// # Returns
-    ///
-    /// - `bool` - `true` if newly injected, `false` if already present.
-    fn mark_injected(class_name: String) -> bool {
-        Self::get_injected_classes_mut().insert(class_name)
-    }
-
-    /// Returns a mutable reference to the global injected classes set.
-    ///
-    /// Lazily initializes the set on first access.
-    #[allow(static_mut_refs)]
-    fn get_injected_classes_mut() -> &'static mut HashSet<String> {
-        unsafe {
-            if (*INJECTED_CLASSES.get_0().get()).is_none() {
-                (*INJECTED_CLASSES.get_0().get()) = Some(HashSet::new());
-            }
-            (*INJECTED_CLASSES.get_0().get())
-                .as_mut()
-                .unwrap_unchecked()
-        }
     }
 
     /// Appends CSS text directly to the shared `<style>` element.

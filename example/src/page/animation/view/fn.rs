@@ -152,12 +152,10 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 }
                 div {
                     class: c_anim_scale_box()
-                    style: {
-                        transition: "transform 0.3s ease"; transform: if { scale_active.get() } {
-                            "scale(0.85)"
-                        } else {
-                            "scale(1)"
-                        };
+                    class: if { scale_active.get() } {
+                        c_anim_scale_shrink()
+                    } else {
+                        c_anim_scale_normal()
                     }
                 }
             }

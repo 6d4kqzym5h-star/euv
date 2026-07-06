@@ -126,6 +126,7 @@ pub(crate) fn start_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
     context_2d.begin_path();
     let _ = Reflect::set(
         &context_2d,
@@ -177,6 +178,7 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
     let _ = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
@@ -335,6 +337,7 @@ pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_full
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
     let stroke_color: String = state.get_stroke_color().get();
     let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
@@ -400,6 +403,7 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
     let _ = Reflect::set(
         &context_2d,
@@ -410,6 +414,7 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
     context_2d.set_line_width(line_width);
     context_2d.set_line_cap(CANVAS_LINE_CAP_ROUND);
     context_2d.set_line_join(CANVAS_LINE_JOIN_ROUND);
+    let mut touch_last: HashMap<i32, (f64, f64)> = state.get_touch_last_points().get();
     for point in &points {
         let (mapped_x, mapped_y): (f64, f64) = if is_fullscreen {
             (
@@ -420,18 +425,17 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
             (point.get_offset_x(), point.get_offset_y())
         };
         let identifier: i32 = point.get_identifier();
-        let mut touch_last: HashMap<i32, (f64, f64)> = state.get_touch_last_points().get();
         let (prev_x, prev_y): (f64, f64) = touch_last
             .get(&identifier)
             .copied()
             .unwrap_or((mapped_x, mapped_y));
         touch_last.insert(identifier, (mapped_x, mapped_y));
-        state.get_touch_last_points().set(touch_last);
         context_2d.begin_path();
         context_2d.move_to(prev_x, prev_y);
         context_2d.line_to(mapped_x, mapped_y);
         context_2d.stroke();
     }
+    state.get_touch_last_points().set(touch_last);
 }
 
 /// Ends drawing strokes for the touch points that were lifted.
@@ -605,6 +609,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
+    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
     context_2d
         .scale(device_pixel_ratio, device_pixel_ratio)
         .unwrap_or(());

@@ -5,8 +5,9 @@
 
 mod component;
 mod page;
+mod style;
 
-use {component::*, page::*};
+use {component::*, page::*, style::*};
 
 use std::{
     cell::{Cell, RefCell},
@@ -17,6 +18,7 @@ use std::{
 use {
     compare_version::*,
     euv::{js_sys::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*, *},
+    euv_engine::*,
     euv_ui::*,
 };
 

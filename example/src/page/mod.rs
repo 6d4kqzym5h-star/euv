@@ -13,6 +13,8 @@ mod dynamic;
 mod event;
 mod file;
 mod form;
+mod game_2d;
+mod game_3d;
 mod keep_alive;
 mod lifecycle;
 mod list;
@@ -27,7 +29,7 @@ mod websocket;
 
 pub(crate) use {
     about::*, animation::*, r#async::*, attrs::*, badge::*, binding::*, browser::*, camera::*,
-    canvas::*, conditional::*, counter::*, dynamic::*, event::*, file::*, form::*, keep_alive::*,
-    lifecycle::*, list::*, modal::*, not_found::*, observer::*, select::*, sse::*, timer::*,
-    virtual_list::*, websocket::*,
+    canvas::*, conditional::*, counter::*, dynamic::*, event::*, file::*, form::*, game_2d::*,
+    game_3d::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, observer::*,
+    select::*, sse::*, timer::*, virtual_list::*, websocket::*,
 };

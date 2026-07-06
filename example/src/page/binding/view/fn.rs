@@ -217,11 +217,7 @@ pub(crate) fn color_mixer(
             class: c_binding_color_mixer()
             div {
                 class: c_binding_color_preview()
-                style: {
-                    background: {
-                        &hex_value
-                    };
-                }
+                class: c_binding_color_preview_bg(&hex_value)
                 span {
                     class: c_binding_color_hex()
                     hex_value
@@ -232,9 +228,7 @@ pub(crate) fn color_mixer(
                 label {
                     for: COLOR_MIXER_RED_ID
                     class: c_binding_slider_label()
-                    style: {
-                        color: var!(accent);
-                    }
+                    class: c_binding_slider_label_accent()
                     "R"
                 }
                 input {
@@ -245,8 +239,8 @@ pub(crate) fn color_mixer(
                     min: COLOR_MIXER_MIN
                     max: COLOR_MIXER_MAX
                     value: red_value.to_string()
-                    style: format!("--value: {}%", (red_value * 100 / 255))
                     class: c_binding_slider()
+                    class: c_slider_value(&format!("{}%", red_value * 100 / 255))
                     oninput: cross_on_input_i32(red_signal)
                     onfocus: UseEuvInput::on_focus_scroll_into_view()
                     onblur: UseEuvInput::on_blur_restore_height()
@@ -261,9 +255,7 @@ pub(crate) fn color_mixer(
                 label {
                     for: COLOR_MIXER_GREEN_ID
                     class: c_binding_slider_label()
-                    style: {
-                        color: var!(accent);
-                    }
+                    class: c_binding_slider_label_accent()
                     "G"
                 }
                 input {
@@ -274,8 +266,8 @@ pub(crate) fn color_mixer(
                     min: COLOR_MIXER_MIN
                     max: COLOR_MIXER_MAX
                     value: green_value.to_string()
-                    style: format!("--value: {}%", (green_value * 100 / 255))
                     class: c_binding_slider()
+                    class: c_slider_value(&format!("{}%", green_value * 100 / 255))
                     oninput: cross_on_input_i32(green_signal)
                     onfocus: UseEuvInput::on_focus_scroll_into_view()
                     onblur: UseEuvInput::on_blur_restore_height()
@@ -290,9 +282,7 @@ pub(crate) fn color_mixer(
                 label {
                     for: COLOR_MIXER_BLUE_ID
                     class: c_binding_slider_label()
-                    style: {
-                        color: var!(accent);
-                    }
+                    class: c_binding_slider_label_accent()
                     "B"
                 }
                 input {
@@ -303,8 +293,8 @@ pub(crate) fn color_mixer(
                     min: COLOR_MIXER_MIN
                     max: COLOR_MIXER_MAX
                     value: blue_value.to_string()
-                    style: format!("--value: {}%", (blue_value * 100 / 255))
                     class: c_binding_slider()
+                    class: c_slider_value(&format!("{}%", blue_value * 100 / 255))
                     oninput: cross_on_input_i32(blue_signal)
                     onfocus: UseEuvInput::on_focus_scroll_into_view()
                     onblur: UseEuvInput::on_blur_restore_height()

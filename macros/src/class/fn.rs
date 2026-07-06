@@ -308,6 +308,9 @@ pub(crate) fn is_element_selector_block(input: ParseStream) -> bool {
         }
         if forked.peek(Token![:]) && !forked.peek2(Token![:]) {
             let _ = forked.parse::<Token![:]>();
+            if forked.peek(Brace) {
+                return false;
+            }
             while !forked.is_empty() {
                 if forked.peek(Semi) || forked.peek(Brace) {
                     break;

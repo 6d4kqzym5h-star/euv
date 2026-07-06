@@ -4,18 +4,17 @@ use crate::*;
 ///
 /// # Arguments
 ///
-/// - `Signal<String>` - The tab signal to update.
-/// - `&str` - The tab value to set.
+/// - `Signal<KeepAliveTab>` - The tab signal to update.
+/// - `KeepAliveTab` - The tab variant to set.
 ///
 /// # Returns
 ///
-/// - `NativeEventHandler` - A click handler that sets the active tab.
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the active tab.
 pub(crate) fn keep_alive_tab_on_select(
-    tab: Signal<String>,
-    value: &str,
+    tab: Signal<KeepAliveTab>,
+    value: KeepAliveTab,
 ) -> Option<Rc<dyn Fn(Event)>> {
-    let value_owned: String = value.to_string();
     Some(Rc::new(move |_: Event| {
-        tab.set(value_owned.clone());
+        tab.set(value);
     }))
 }

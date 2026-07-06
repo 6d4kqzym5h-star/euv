@@ -365,7 +365,7 @@ pub(crate) fn keep_alive_timer_on_reset(
 #[component]
 pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
     let PageKeepAliveProps = node.try_get_props().unwrap_or_default();
-    let tab: Signal<String> = App::use_signal(|| "counter".to_string());
+    let tab: Signal<KeepAliveTab> = App::use_signal(KeepAliveTab::default);
     html! {
         div {
             class: c_page_container()
@@ -379,64 +379,58 @@ pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualN
                 div {
                     class: c_keep_alive_tab_bar()
                     div {
-                        class: if { tab.get() == "counter" } {
+                        class: if { tab.get() == KeepAliveTab::Counter } {
                             c_tab_item_active()
                         } else {
                             c_tab_item_inactive()
                         }
-                        onclick: keep_alive_tab_on_select(tab, "counter")
-                        "Counter"
+                        onclick: keep_alive_tab_on_select(tab, KeepAliveTab::Counter)
+                        KeepAliveTab::Counter.to_string()
                     }
                     div {
-                        class: if { tab.get() == "form" } {
+                        class: if { tab.get() == KeepAliveTab::Form } {
                             c_tab_item_active()
                         } else {
                             c_tab_item_inactive()
                         }
-                        onclick: keep_alive_tab_on_select(tab, "form")
-                        "Form"
+                        onclick: keep_alive_tab_on_select(tab, KeepAliveTab::Form)
+                        KeepAliveTab::Form.to_string()
                     }
                     div {
-                        class: if { tab.get() == "timer" } {
+                        class: if { tab.get() == KeepAliveTab::Timer } {
                             c_tab_item_active()
                         } else {
                             c_tab_item_inactive()
                         }
-                        onclick: keep_alive_tab_on_select(tab, "timer")
-                        "Timer"
+                        onclick: keep_alive_tab_on_select(tab, KeepAliveTab::Timer)
+                        KeepAliveTab::Timer.to_string()
                     }
                 }
                 div {
-                    style: {
-                        display: if { tab.get() == "counter" } {
-                            "block".to_string()
-                        } else {
-                            "none".to_string()
-                        };
+                    class: if { tab.get() == KeepAliveTab::Counter } {
+                        c_keep_alive_tab_visible()
+                    } else {
+                        c_keep_alive_tab_hidden()
                     }
                     {
                         counter_tab()
                     }
                 }
                 div {
-                    style: {
-                        display: if { tab.get() == "form" } {
-                            "block".to_string()
-                        } else {
-                            "none".to_string()
-                        };
+                    class: if { tab.get() == KeepAliveTab::Form } {
+                        c_keep_alive_tab_visible()
+                    } else {
+                        c_keep_alive_tab_hidden()
                     }
                     {
                         form_tab()
                     }
                 }
                 div {
-                    style: {
-                        display: if { tab.get() == "timer" } {
-                            "block".to_string()
-                        } else {
-                            "none".to_string()
-                        };
+                    class: if { tab.get() == KeepAliveTab::Timer } {
+                        c_keep_alive_tab_visible()
+                    } else {
+                        c_keep_alive_tab_hidden()
                     }
                     {
                         timer_tab()

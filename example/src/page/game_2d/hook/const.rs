@@ -1,0 +1,53 @@
+/// The HTML `id` attribute value for the 2D game canvas element.
+pub(crate) const GAME_2D_CANVAS_ID: &str = "game-2d-canvas";
+
+/// The CSS selector used to query the 2D game canvas element from the DOM.
+pub(crate) const GAME_2D_CANVAS_SELECTOR: &str = "#game-2d-canvas";
+
+/// The canvas 2D rendering context type identifier.
+pub(crate) const GAME_2D_CONTEXT_TYPE_2D: &str = "2d";
+
+/// The default canvas width in CSS pixels.
+pub(crate) const GAME_2D_CANVAS_WIDTH: f64 = 600.0;
+
+/// The default canvas height in CSS pixels.
+pub(crate) const GAME_2D_CANVAS_HEIGHT: f64 = 400.0;
+
+/// The gravitational acceleration in pixels per second squared.
+pub(crate) const GAME_2D_GRAVITY: f64 = 600.0;
+
+/// The minimum radius of a ball in pixels.
+pub(crate) const GAME_2D_BALL_MIN_RADIUS: f64 = 8.0;
+
+/// The maximum radius of a ball in pixels.
+pub(crate) const GAME_2D_BALL_MAX_RADIUS: f64 = 30.0;
+
+/// The restitution (bounciness) coefficient for wall and ball collisions.
+pub(crate) const GAME_2D_RESTITUTION: f64 = 0.85;
+
+/// The linear damping coefficient applied per second to simulate air resistance.
+pub(crate) const GAME_2D_LINEAR_DAMPING: f64 = 0.1;
+
+/// The initial upward velocity magnitude when spawning a ball.
+pub(crate) const GAME_2D_SPAWN_VELOCITY: f64 = 200.0;
+
+/// The fixed timestep for the 2D game loop in seconds (60 FPS).
+pub(crate) const GAME_2D_FIXED_TIMESTEP: f64 = 1.0 / 60.0;
+
+/// The maximum number of balls allowed simultaneously.
+pub(crate) const GAME_2D_MAX_BALLS: usize = 100;
+
+/// The debounce interval in milliseconds for the resize event handler.
+pub(crate) const GAME_2D_RESIZE_DEBOUNCE_MILLIS: i32 = 100;
+
+/// The JavaScript property name for the canvas fill style.
+pub(crate) const GAME_2D_PROPERTY_FILL_STYLE: &str = "fillStyle";
+
+/// The canvas background fill color as a CSS color string.
+pub(crate) const GAME_2D_BACKGROUND_COLOR: &str = "#1a1a2e";
+
+/// The palette of ball colors used for random color assignment.
+pub(crate) const GAME_2D_BALL_COLORS: &[&str] = &[
+    "#e94560", "#0f3460", "#16c79a", "#f5b461", "#ec524b", "#41b883", "#6c5ce7", "#fd79a8",
+    "#00cec9", "#fab1a0",
+];
