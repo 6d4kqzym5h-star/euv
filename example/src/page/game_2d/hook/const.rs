@@ -50,8 +50,17 @@ pub(crate) const GAME_2D_LOOP_START_DELAY_MILLIS: i32 = 360;
 /// The JavaScript property name for the canvas fill style.
 pub(crate) const GAME_2D_PROPERTY_FILL_STYLE: &str = "fillStyle";
 
-/// The canvas background fill color as a CSS color string.
-pub(crate) const GAME_2D_BACKGROUND_COLOR: &str = "#1a1a2e";
+/// The loading text displayed on the canvas before the game loop starts.
+pub(crate) const GAME_2D_LOADING_TEXT: &str = "Loading...";
+
+/// The CSS font family used for the loading text on the canvas.
+pub(crate) const GAME_2D_LOADING_FONT_FAMILY: &str = "sans-serif";
+
+/// The ratio of the loading font size to the canvas height.
+pub(crate) const GAME_2D_LOADING_FONT_SIZE_RATIO: f64 = 0.04;
+
+/// The CSS color used for the loading text on the canvas.
+pub(crate) const GAME_2D_LOADING_COLOR: &str = "#ffffff";
 
 /// The palette of ball colors used for random color assignment.
 pub(crate) const GAME_2D_BALL_COLORS: &[&str] = &[

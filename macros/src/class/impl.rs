@@ -21,6 +21,11 @@ impl Parse for ClassInput {
         while !input.is_empty() {
             let visibility: Visibility = input.parse()?;
             let name: Ident = input.parse()?;
+            let mut generics: Generics = if input.peek(Token![<]) {
+                input.parse()?
+            } else {
+                Generics::default()
+            };
             let params: Option<Vec<ClassParam>> = if input.peek(Paren) {
                 let param_content: ParseBuffer<'_>;
                 parenthesized!(param_content in input);
@@ -45,6 +50,10 @@ impl Parse for ClassInput {
             } else {
                 None
             };
+            if input.peek(Token![where]) {
+                let where_clause: WhereClause = input.parse()?;
+                generics.where_clause = Some(where_clause);
+            }
             let content: ParseBuffer<'_>;
             braced!(content in input);
             let mut extends: Vec<ClassExtend> = Vec::new();
@@ -162,6 +171,7 @@ impl Parse for ClassInput {
             classes.push(ClassDef {
                 visibility,
                 name,
+                generics,
                 params,
                 extends,
                 properties,
@@ -183,7 +193,10 @@ impl ToTokens for ClassDef {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let visibility: &Visibility = self.get_visibility();
         let name: &Ident = self.get_name();
+        let generics: &Generics = self.get_generics();
         let class_name_str: String = name.to_string();
+        let has_generics: bool = !generics.params.is_empty();
+        let where_clause: Option<&WhereClause> = generics.where_clause.as_ref();
         let has_extra: bool =
             !self.get_selector_blocks().is_empty() || !self.get_at_rule_blocks().is_empty();
         let has_extends: bool = !self.get_extends().is_empty();
@@ -302,15 +315,15 @@ impl ToTokens for ClassDef {
                     quote! { #class_name_str.to_string() }
                 } else {
                     let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
-                    quote! { format!(#name_format, #class_name_str, [#(format!("{}", #param_names)), *].join(#STR_HYPHEN)) }
+                    quote! { format!(#name_format, #class_name_str, [#(std::any::type_name_of_val(&#param_names)), *].join(#STR_HYPHEN)) }
                 };
                 let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
-                    quote! { "".to_string() }
+                    quote! { #STR_EMPTY.to_string() }
                 } else {
                     quote! { [#(#all_css_parts), *].concat() }
                 };
                 tokens.extend(quote! {
-                    #visibility fn #name(#(#param_defs), *) -> ::euv::Css {
+                    #visibility fn #name #generics(#(#param_defs), *) -> ::euv::Css #where_clause {
                         ::euv::Css::new(#unique_name_expr, #style_expr, #selector_expr, #at_rule_expr)
                     }
                 });
@@ -321,63 +334,7 @@ impl ToTokens for ClassDef {
                 let const_name_token: proc_macro2::TokenStream =
                     quote_spanned!(name_span=> #const_name);
                 let fn_name_token: proc_macro2::TokenStream = quote_spanned!(name_span=> #name);
-                let all_static: bool = !has_extends
-                    && self.get_properties().iter().all(
-                        |(key, value): &(ClassPropKey, ClassPropValue)| {
-                            let ClassPropKey::Static(_) = key else {
-                                return false;
-                            };
-                            let ClassPropValue::Expr(expr) = value;
-                            is_static_string_expr(expr)
-                        },
-                    )
-                    && is_selector_blocks_static(self.get_selector_blocks())
-                    && is_at_rule_blocks_static(self.get_at_rule_blocks());
-                if all_static {
-                    let mut css_string: String = String::new();
-                    for (key, value) in self.get_properties() {
-                        let ClassPropValue::Expr(expr) = value;
-                        let ClassPropKey::Static(key_tokens) = key else {
-                            continue;
-                        };
-                        let key_str: String = reconstruct_ident_from_tokens(key_tokens);
-                        css_string.push_str(&key_str);
-                        css_string.push_str(CSS_PROP_SEPARATOR);
-                        css_string.push_str(&expr_to_string(expr));
-                        css_string.push_str(CSS_DECL_TERMINATOR);
-                    }
-                    if has_extra {
-                        let selector_static: String =
-                            selector_blocks_to_static_string(self.get_selector_blocks());
-                        let at_rule_static: String =
-                            at_rule_blocks_to_static_string(self.get_at_rule_blocks());
-                        emit_once_lock_fn(
-                            tokens,
-                            OnceLockParams {
-                                visibility,
-                                fn_name_token: &fn_name_token,
-                                const_name_token: &const_name_token,
-                                class_name_str: &class_name_str,
-                                style_expr: &quote! { #css_string.to_string() },
-                                selector_expr: &quote! { ::euv::Css::parse_pseudo_rules(#selector_static) },
-                                at_rule_expr: &quote! { ::euv::Css::parse_media_rules(#at_rule_static) },
-                            },
-                        );
-                    } else {
-                        emit_once_lock_fn(
-                            tokens,
-                            OnceLockParams {
-                                visibility,
-                                fn_name_token: &fn_name_token,
-                                const_name_token: &const_name_token,
-                                class_name_str: &class_name_str,
-                                style_expr: &quote! { #css_string.to_string() },
-                                selector_expr: &selector_expr,
-                                at_rule_expr: &at_rule_expr,
-                            },
-                        );
-                    }
-                } else {
+                if has_generics {
                     let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
                         .get_extends()
                         .iter()
@@ -415,22 +372,130 @@ impl ToTokens for ClassDef {
                         }
                     }
                     let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
-                        quote! { "".to_string() }
+                        quote! { #STR_EMPTY.to_string() }
                     } else {
                         quote! { [#(#all_css_parts), *].concat() }
                     };
-                    emit_once_lock_fn(
-                        tokens,
-                        OnceLockParams {
-                            visibility,
-                            fn_name_token: &fn_name_token,
-                            const_name_token: &const_name_token,
-                            class_name_str: &class_name_str,
-                            style_expr: &style_expr,
-                            selector_expr: &selector_expr,
-                            at_rule_expr: &at_rule_expr,
-                        },
-                    );
+                    tokens.extend(quote! {
+                        #visibility fn #name #generics() -> ::euv::Css #where_clause {
+                            let css: ::euv::Css = ::euv::Css::new(#class_name_str.to_string(), #style_expr, #selector_expr, #at_rule_expr);
+                            css.inject_style();
+                            css
+                        }
+                    });
+                } else {
+                    let all_static: bool = !has_extends
+                        && self.get_properties().iter().all(
+                            |(key, value): &(ClassPropKey, ClassPropValue)| {
+                                let ClassPropKey::Static(_) = key else {
+                                    return false;
+                                };
+                                let ClassPropValue::Expr(expr) = value;
+                                is_static_string_expr(expr)
+                            },
+                        )
+                        && is_selector_blocks_static(self.get_selector_blocks())
+                        && is_at_rule_blocks_static(self.get_at_rule_blocks());
+                    if all_static {
+                        let mut css_string: String = String::new();
+                        for (key, value) in self.get_properties() {
+                            let ClassPropValue::Expr(expr) = value;
+                            let ClassPropKey::Static(key_tokens) = key else {
+                                continue;
+                            };
+                            let key_str: String = reconstruct_ident_from_tokens(key_tokens);
+                            css_string.push_str(&key_str);
+                            css_string.push_str(CSS_PROP_SEPARATOR);
+                            css_string.push_str(&expr_to_string(expr));
+                            css_string.push_str(CSS_DECL_TERMINATOR);
+                        }
+                        if has_extra {
+                            let selector_static: String =
+                                selector_blocks_to_static_string(self.get_selector_blocks());
+                            let at_rule_static: String =
+                                at_rule_blocks_to_static_string(self.get_at_rule_blocks());
+                            emit_once_lock_fn(
+                                tokens,
+                                OnceLockParams {
+                                    visibility,
+                                    fn_name_token: &fn_name_token,
+                                    const_name_token: &const_name_token,
+                                    class_name_str: &class_name_str,
+                                    style_expr: &quote! { #css_string.to_string() },
+                                    selector_expr: &quote! { ::euv::Css::parse_pseudo_rules(#selector_static) },
+                                    at_rule_expr: &quote! { ::euv::Css::parse_media_rules(#at_rule_static) },
+                                },
+                            );
+                        } else {
+                            emit_once_lock_fn(
+                                tokens,
+                                OnceLockParams {
+                                    visibility,
+                                    fn_name_token: &fn_name_token,
+                                    const_name_token: &const_name_token,
+                                    class_name_str: &class_name_str,
+                                    style_expr: &quote! { #css_string.to_string() },
+                                    selector_expr: &selector_expr,
+                                    at_rule_expr: &at_rule_expr,
+                                },
+                            );
+                        }
+                    } else {
+                        let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
+                            .get_extends()
+                            .iter()
+                            .map(|parent: &ClassExtend| {
+                                let parent_name: &Ident = parent.get_name();
+                                let parent_args: &Vec<proc_macro2::TokenStream> = parent.get_args();
+                                if parent_args.is_empty() {
+                                    quote! { #parent_name().get_style().to_string() + #STR_SPACE }
+                                } else {
+                                    quote! { #parent_name(#(#parent_args), *).get_style().to_string() + #STR_SPACE }
+                                }
+                            })
+                            .collect();
+                        for (key, value) in self.get_properties() {
+                            let ClassPropValue::Expr(expr) = value;
+                            match key {
+                                ClassPropKey::Static(static_key) => {
+                                    let key_str: String = reconstruct_ident_from_tokens(static_key);
+                                    if is_static_string_expr(expr) {
+                                        let value_str: String = expr_to_string(expr);
+                                        let prop_str: String = format!(
+                                            "{key_str}{CSS_PROP_SEPARATOR}{value_str}{CSS_DECL_TERMINATOR}"
+                                        );
+                                        all_css_parts.push(quote! { #prop_str.to_string() });
+                                    } else {
+                                        let key_sep: String =
+                                            format!("{key_str}{CSS_PROP_SEPARATOR}");
+                                        all_css_parts.push(quote! { #key_sep.to_string() + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                                    }
+                                }
+                                ClassPropKey::Dynamic(_) => {
+                                    let key_token: proc_macro2::TokenStream =
+                                        class_prop_key_to_tokens(key);
+                                    all_css_parts.push(quote! { #key_token + #CSS_PROP_SEPARATOR + &(#expr).to_string() + #CSS_DECL_TERMINATOR });
+                                }
+                            }
+                        }
+                        let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
+                            quote! { #STR_EMPTY.to_string() }
+                        } else {
+                            quote! { [#(#all_css_parts), *].concat() }
+                        };
+                        emit_once_lock_fn(
+                            tokens,
+                            OnceLockParams {
+                                visibility,
+                                fn_name_token: &fn_name_token,
+                                const_name_token: &const_name_token,
+                                class_name_str: &class_name_str,
+                                style_expr: &style_expr,
+                                selector_expr: &selector_expr,
+                                at_rule_expr: &at_rule_expr,
+                            },
+                        );
+                    }
                 }
             }
         }

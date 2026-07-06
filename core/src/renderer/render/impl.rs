@@ -1,18 +1,46 @@
 use crate::*;
 
+/// Implementation of owned pointer for heap-allocated renderer state.
+///
+/// Wraps a raw pointer to ensure the heap allocation is properly freed
+/// when the `OwnedPtr` is dropped. Used for renderer sub-trees and
+/// arm-tracking state in dynamic nodes.
 impl<T> OwnedPtr<T> {
     /// Creates a new `OwnedPtr` from a `Box::into_raw` pointer.
+    ///
+    /// # Arguments
+    ///
+    /// - `*mut T` - The raw pointer to wrap, obtained from `Box::into_raw`.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - A new `OwnedPtr` wrapping the given pointer.
     pub(crate) fn new(pointer: *mut T) -> Self {
         Self { ptr: pointer }
     }
 
     /// Returns the raw pointer for direct access.
+    ///
+    /// # Returns
+    ///
+    /// - `*mut T` - The wrapped raw pointer.
     pub(crate) fn get(&self) -> *mut T {
         self.ptr
     }
 }
 
+/// Implementation of `Drop` for `OwnedPtr`.
+///
+/// Ensures the heap-allocated memory is properly freed when the `OwnedPtr`
+/// goes out of scope. This prevents memory leaks for renderer sub-trees
+/// and other dynamically allocated state.
 impl<T> Drop for OwnedPtr<T> {
+    /// Drops the owned pointer, freeing the heap allocation.
+    ///
+    /// # Safety
+    ///
+    /// This is safe because `OwnedPtr` is only used in single-threaded WASM
+    /// contexts, and the pointer is always valid as long as the `OwnedPtr` exists.
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe {
@@ -202,7 +230,7 @@ impl Renderer {
                 if let AttributeValue::Event(handler) = old_attr.get_value()
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
-                    && let Some(entry) = Registry::ensure_handler_registry_mut()
+                    && let Some(entry) = Registry::get_mut_handler_registry()
                         .remove(&(euv_id, handler.get_event_name()))
                 {
                     let slot: &mut HandlerSlot = unsafe { &mut *entry };
@@ -908,7 +936,7 @@ impl Renderer {
     /// For non-bubbling events (load, error, loadstart, etc.), attaches the
     /// listener directly on the element since global delegation on `window`
     /// cannot capture these events. For all other events, uses global event
-    /// delegation via `Registry::ensure_delegation`.
+    /// delegation via `Registry::delegation`.
     ///
     /// # Arguments
     ///
@@ -932,14 +960,14 @@ impl Renderer {
         let event_name: &'static str = handler.get_event_name();
         if Registry::is_non_bubbling(event_name) {
             let key: (usize, &'static str) = (euv_id, event_name);
-            let registry_ref: &mut HandlerRegistryMap = Registry::ensure_handler_registry_mut();
+            let registry_ref: &mut HandlerRegistryMap = Registry::get_mut_handler_registry();
             if let Some(existing_entry) = registry_ref.get(&key) {
                 let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
                 slot.set_handler(Some(handler.clone()));
             } else {
                 let closure: Closure<dyn FnMut(Event)> =
                     Closure::wrap(Box::new(move |event: Event| {
-                        if let Some(entry) = Registry::ensure_handler_registry().get(&key) {
+                        if let Some(entry) = Registry::get_handler_registry().get(&key) {
                             let slot: &HandlerSlot = unsafe { &**entry };
                             if let Some(active_handler) = slot.try_get_handler().as_ref().cloned() {
                                 active_handler.handle(event);
@@ -958,9 +986,9 @@ impl Renderer {
                 registry_ref.insert(key, handler_slot);
             }
         } else {
-            Registry::ensure_delegation(event_name);
+            Registry::delegation(event_name);
             let key: (usize, &'static str) = (euv_id, event_name);
-            let registry_ref: &mut HandlerRegistryMap = Registry::ensure_handler_registry_mut();
+            let registry_ref: &mut HandlerRegistryMap = Registry::get_mut_handler_registry();
             if let Some(existing_entry) = registry_ref.get(&key) {
                 let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
                 slot.set_handler(Some(handler.clone()));

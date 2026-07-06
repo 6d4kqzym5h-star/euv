@@ -113,10 +113,10 @@ pub(crate) struct ClassExtend {
 
 /// A single class definition parsed from the `class!` macro.
 ///
-/// Contains visibility, name, optional parameters, style properties,
-/// optional selector blocks (pseudo-classes/pseudo-elements), and
-/// optional at-rule blocks (media queries, keyframes, etc.).
-#[derive(Clone, Data, Debug, New)]
+/// Contains visibility, name, optional generic parameters, optional parameters,
+/// style properties, optional selector blocks (pseudo-classes/pseudo-elements),
+/// and optional at-rule blocks (media queries, keyframes, etc.).
+#[derive(Clone, Data, Debug)]
 pub(crate) struct ClassDef {
     /// The visibility modifier (e.g., `pub`, `pub(crate)`, `pub(super)`, or none).
     #[get(pub(crate))]
@@ -128,6 +128,12 @@ pub(crate) struct ClassDef {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: Ident,
+    /// Generic parameters and optional where clause
+    /// (e.g., `<T: Clone, U> where U: Display`).
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) generics: Generics,
     /// Optional parameter list for a parameterized class.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]

@@ -21,8 +21,12 @@ use std::{
     marker::PhantomData,
     mem::{swap, take},
     num::ParseIntError,
+    ops::Deref,
     rc::Rc,
-    sync::atomic::{AtomicBool, AtomicUsize, Ordering},
+    sync::{
+        LazyLock,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
 };
 
 use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, web_sys::*};

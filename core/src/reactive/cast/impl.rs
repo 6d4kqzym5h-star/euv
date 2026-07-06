@@ -176,6 +176,11 @@ impl From<Option<NativeEventHandler>> for AttributeValue {
 /// `AttributeValue::Text(String::new())`. This supports component props
 /// that use `Option<Signal<String>>` for optional reactive attributes.
 impl From<Option<Signal<String>>> for AttributeValue {
+    /// Converts this optional signal into an `AttributeValue::Signal` or `AttributeValue::Text` if `None`.
+    ///
+    /// # Returns
+    ///
+    /// - `AttributeValue` - A signal-backed attribute value if `Some`, otherwise an empty text attribute.
     fn from(signal: Option<Signal<String>>) -> Self {
         match signal {
             Some(string_signal) => AttributeValue::Signal(string_signal),

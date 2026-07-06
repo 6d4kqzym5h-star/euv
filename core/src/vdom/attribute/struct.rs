@@ -169,3 +169,19 @@ pub struct CallbackNamedAdapter<T> {
     #[set(pub(crate))]
     pub(crate) name: &'static str,
 }
+
+/// A `Sync` wrapper for single-threaded global `HashSet` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct InjectedClassesCell(
+    /// Interior-mutable storage for the set of CSS class names already
+    /// injected into the DOM.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<HashSet<String>>,
+);

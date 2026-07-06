@@ -337,7 +337,8 @@ pub(crate) fn resolve_ball_collision(a: &mut Ball, b: &mut Ball) {
 
 /// Renders all balls onto the canvas using a pre-cached rendering context.
 ///
-/// Clears the canvas with the background color, then draws each ball as a
+/// Clears the canvas to transparency so the CSS `background` property
+/// (set to `var(--accent)`) shows through, then draws each ball as a
 /// filled circle with its assigned color.
 ///
 /// # Arguments
@@ -345,13 +346,8 @@ pub(crate) fn resolve_ball_collision(a: &mut Ball, b: &mut Ball) {
 /// - `&CanvasRenderingContext2d` - The cached canvas 2D rendering context.
 /// - `&[Ball]` - The ball list to render.
 pub(crate) fn render_balls_with_context(context: &CanvasRenderingContext2d, balls: &[Ball]) {
+    context.clear_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
     let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);
-    let _ = Reflect::set(
-        context,
-        &fill_style_key,
-        &JsValue::from_str(GAME_2D_BACKGROUND_COLOR),
-    );
-    context.fill_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
     for ball in balls {
         let _ = Reflect::set(context, &fill_style_key, &JsValue::from_str(&ball.color));
         context.begin_path();
@@ -385,6 +381,49 @@ pub(crate) fn acquire_game_2d_canvas() -> Option<(HtmlCanvasElement, CanvasRende
     let context: CanvasRenderingContext2d = context_object.unchecked_into();
     CanvasRenderer::enable_context_anti_aliasing(&context);
     Some((canvas, context))
+}
+
+/// Draws the loading text centered on the 2D game canvas using SSAA.
+///
+/// Called during the startup delay before the game loop begins, so the
+/// canvas shows a loading message instead of being blank. Uses an
+/// `SsaaCanvas` with a 2x scale factor on desktop and 1x on mobile for
+/// crisp text rendering.
+pub(crate) fn draw_game_2d_loading() {
+    let window_value: Window = window().expect("no global window exists");
+    let is_mobile: bool = window_value
+        .inner_width()
+        .ok()
+        .and_then(|value: JsValue| value.as_f64())
+        .is_some_and(|width: f64| width < 768.0);
+    let scale_factor: f64 = if is_mobile { 1.0 } else { 2.0 };
+    let Some(ssaa_canvas) = SsaaCanvas::from_selector_with_scale(
+        GAME_2D_CANVAS_SELECTOR,
+        GAME_2D_CANVAS_WIDTH,
+        GAME_2D_CANVAS_HEIGHT,
+        scale_factor,
+    ) else {
+        return;
+    };
+    let context: &CanvasRenderingContext2d = ssaa_canvas.get_offscreen_context();
+    context.clear_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
+    let font_size: f64 = GAME_2D_CANVAS_HEIGHT * GAME_2D_LOADING_FONT_SIZE_RATIO;
+    let font: String = format!("{font_size}px {GAME_2D_LOADING_FONT_FAMILY}");
+    let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);
+    let _ = Reflect::set(
+        context,
+        &fill_style_key,
+        &JsValue::from_str(GAME_2D_LOADING_COLOR),
+    );
+    context.set_font(&font);
+    context.set_text_align("center");
+    context.set_text_baseline("middle");
+    let _ = context.fill_text(
+        GAME_2D_LOADING_TEXT,
+        GAME_2D_CANVAS_WIDTH * 0.5,
+        GAME_2D_CANVAS_HEIGHT * 0.5,
+    );
+    ssaa_canvas.present();
 }
 
 /// Starts the 2D game loop driven by `requestAnimationFrame`.
@@ -508,6 +547,13 @@ pub(crate) fn start_game_2d_loop(
         )
         .unwrap_or(0);
     start_timeout_clone.set(Some(timeout_id));
+    let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        draw_game_2d_loading();
+    }) as Box<dyn FnMut()>);
+    let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
+    loading_closure.forget();
+    let _ =
+        start_window.set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     let debounce_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
     let timer_for_event: Rc<Cell<Option<i32>>> = debounce_timer.clone();

@@ -753,7 +753,7 @@ pub(crate) fn at_rule_blocks_to_media_tokens(
                 selector_blocks_to_tokens(block.get_selector_blocks())
                     .unwrap_or_else(|| quote! { Vec::new() });
             let style_expr: proc_macro2::TokenStream = if style_parts.is_empty() {
-                quote! { "".to_string() }
+                quote! { #STR_EMPTY.to_string() }
             } else {
                 quote! { [#(#style_parts), *].concat() }
             };

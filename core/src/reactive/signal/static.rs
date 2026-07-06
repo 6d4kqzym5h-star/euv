@@ -7,5 +7,5 @@ use crate::*;
 /// use-after-free when listeners free signals during dispatch.
 ///
 /// SAFETY: Must only be accessed from the main thread (WASM single-threaded context).
-pub(crate) static mut SIGNAL_INNER_REGISTRY: SignalInnerRegistryCell =
-    SignalInnerRegistryCell(UnsafeCell::new(None));
+pub(crate) static mut SIGNAL_INNER_REGISTRY: LazyLock<SignalInnerRegistryCell> =
+    LazyLock::new(|| SignalInnerRegistryCell(UnsafeCell::new(HashSet::new())));

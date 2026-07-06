@@ -1394,13 +1394,15 @@ class! {
 
     pub c_loading_overlay(background: &str) {
         position: "absolute";
-        inset: "0";
+        top: "0";
+        left: "0";
+        width: "100%";
+        height: "100%";
         display: "flex";
         flex-direction: "column";
         align-items: "center";
         justify-content: "center";
         gap: var!(gap-component);
-        border-radius: "8px";
         background: background;
         z-index: "1";
         box-sizing: "border-box";

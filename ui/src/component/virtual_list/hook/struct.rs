@@ -26,5 +26,5 @@ pub(crate) struct PendingMeasureCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashSet<String>>>,
+    pub(crate) UnsafeCell<HashSet<String>>,
 );

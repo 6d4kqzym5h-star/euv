@@ -68,7 +68,7 @@ pub(crate) struct HandlerRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HandlerRegistryMap>>,
+    pub(crate) UnsafeCell<HandlerRegistryMap>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashSet` access.
@@ -83,7 +83,7 @@ pub(crate) struct DelegatedEventsCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashSet<&'static str>>>,
+    pub(crate) UnsafeCell<HashSet<&'static str>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashMap` access.
@@ -98,7 +98,7 @@ pub(crate) struct SignalUpdateRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashMap<usize, SignalUpdateEntry>>>,
+    pub(crate) UnsafeCell<HashMap<usize, SignalUpdateEntry>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `WindowEventRegistryMap` access.
@@ -113,7 +113,7 @@ pub(crate) struct WindowEventRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<WindowEventRegistryMap>>,
+    pub(crate) UnsafeCell<WindowEventRegistryMap>,
 );
 
 /// A zero-sized struct providing static methods for managing

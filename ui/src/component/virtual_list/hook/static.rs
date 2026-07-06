@@ -8,5 +8,5 @@ pub(crate) static PENDING_MEASURE: AtomicBool = AtomicBool::new(false);
 /// same container id. A container id is inserted when a frame is requested and
 /// removed once the callback fires. If the id is already present, the new request
 /// is skipped, preventing duplicate measurements during rapid re-renders.
-pub(crate) static mut PENDING_MEASURE_BY_ID: PendingMeasureCell =
-    PendingMeasureCell(UnsafeCell::new(None));
+pub(crate) static mut PENDING_MEASURE_BY_ID: LazyLock<PendingMeasureCell> =
+    LazyLock::new(|| PendingMeasureCell(UnsafeCell::new(HashSet::new())));

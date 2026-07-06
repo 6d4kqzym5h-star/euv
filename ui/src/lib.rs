@@ -13,8 +13,12 @@ use euv::*;
 use std::{
     cell::{Cell, RefCell, UnsafeCell},
     collections::HashSet,
+    ops::Deref,
     rc::Rc,
-    sync::atomic::{AtomicBool, Ordering},
+    sync::{
+        LazyLock,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::*, web_sys::*};

@@ -105,7 +105,7 @@ impl HookContext {
     ///
     /// SAFETY: Must only be called from the main thread (WASM single-threaded context).
     #[allow(static_mut_refs)]
-    fn try_get_current_mut() -> &'static mut Option<HookContextRc> {
+    fn try_get_mut_current() -> &'static mut Option<HookContextRc> {
         unsafe { &mut *CURRENT_HOOK_CONTEXT.get_0().get() }
     }
 
@@ -123,7 +123,7 @@ impl HookContext {
             Some(hook_context_rc) => HookContext::new(hook_context_rc.clone()),
             None => {
                 let rc: HookContextRc = Rc::new(RefCell::new(HookContextInner::default()));
-                *Self::try_get_current_mut() = Some(rc.clone());
+                *Self::try_get_mut_current() = Some(rc.clone());
                 HookContext::new(rc)
             }
         }
@@ -146,10 +146,10 @@ impl HookContext {
     where
         F: FnOnce() -> R,
     {
-        let previous: Option<HookContextRc> = Self::try_get_current_mut().take();
-        *Self::try_get_current_mut() = Some(context.get_inner().clone());
+        let previous: Option<HookContextRc> = Self::try_get_mut_current().take();
+        *Self::try_get_mut_current() = Some(context.get_inner().clone());
         let result: R = callback();
-        *Self::try_get_current_mut() = previous;
+        *Self::try_get_mut_current() = previous;
         result
     }
 

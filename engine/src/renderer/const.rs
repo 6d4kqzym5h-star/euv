@@ -43,6 +43,12 @@ pub(crate) const RENDERER_DEFAULT_CAMERA_ZOOM: f64 = 1.0;
 /// The default camera rotation in radians.
 pub(crate) const RENDERER_DEFAULT_CAMERA_ROTATION: f64 = 0.0;
 
+/// The canvas context property name for text rendering.
+pub(crate) const RENDERER_PROPERTY_TEXT_RENDERING: &str = "textRendering";
+
+/// The high-quality text rendering value for geometric precision.
+pub(crate) const RENDERER_TEXT_RENDERING_GEOMETRIC_PRECISION: &str = "geometricPrecision";
+
 /// The canvas context property name for image smoothing enabled.
 pub(crate) const RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED: &str = "imageSmoothingEnabled";
 

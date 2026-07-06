@@ -5,6 +5,26 @@ impl<T> Signal<T>
 where
     T: Clone + PartialEq + 'static,
 {
+    /// Returns a shared reference to the signal inner registry.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static HashSet<usize>` - A shared reference to the global signal address registry.
+    #[allow(static_mut_refs)]
+    fn registry() -> &'static HashSet<usize> {
+        unsafe { &*SIGNAL_INNER_REGISTRY.deref().get_0().get() }
+    }
+
+    /// Returns a mutable reference to the signal inner registry.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut HashSet<usize>` - A mutable reference to the global signal address registry.
+    #[allow(static_mut_refs)]
+    fn registry_mut() -> &'static mut HashSet<usize> {
+        unsafe { &mut *SIGNAL_INNER_REGISTRY.deref().get_0().get() }
+    }
+
     /// Creates a new `Signal` with the given initial value.
     ///
     /// Allocates `SignalInner<T>` on the heap via `Box`, stores the raw pointer
@@ -236,21 +256,7 @@ where
     /// Returns whether the signal allocation at `addr` is still present in
     /// the global registry (i.e. has not been freed).
     fn is_alive(addr: usize) -> bool {
-        Self::registry_mut().contains(&addr)
-    }
-
-    /// Ensures the signal inner registry is initialized and returns a mutable
-    /// reference to the global signal address registry.
-    #[allow(static_mut_refs)]
-    fn registry_mut() -> &'static mut HashSet<usize> {
-        unsafe {
-            if (*SIGNAL_INNER_REGISTRY.get_0().get()).is_none() {
-                (*SIGNAL_INNER_REGISTRY.get_0().get()) = Some(HashSet::new());
-            }
-            (*SIGNAL_INNER_REGISTRY.get_0().get())
-                .as_mut()
-                .unwrap_unchecked()
-        }
+        Self::registry().contains(&addr)
     }
 }
 

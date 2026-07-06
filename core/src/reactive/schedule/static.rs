@@ -38,5 +38,5 @@ thread_local! {
         Closure::wrap(Box::new(|| {
             SCHEDULED.store(false, Ordering::Relaxed);
             Scheduler::dispatch_updates();
-        }) as Box<dyn FnMut()>);
+        }));
 }

@@ -1,7 +1,19 @@
 use crate::*;
 
 /// Implementation of `ElementExt` for `Element`.
+///
+/// Provides convenient methods for manipulating DOM element attributes and properties,
+/// handling special cases for form elements like inputs, textareas, and selects.
 impl ElementExt for Element {
+    /// Removes an attribute or property from the element.
+    ///
+    /// Handles special cases for form element properties (`value`, `checked`, `disabled`,
+    /// `selected`, `readonly`, `multiple`) by setting them to their default values
+    /// rather than removing the attribute.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The name of the attribute or property to remove.
     fn remove_attribute_or_property(&self, name: &str) {
         if name == ATTR_VALUE {
             if let Some(input) = self.dyn_ref::<HtmlInputElement>() {
@@ -70,6 +82,16 @@ impl ElementExt for Element {
         let _ = self.remove_attribute(name);
     }
 
+    /// Sets an attribute or property on the element.
+    ///
+    /// Handles special cases for form element properties (`value`, `checked`, `disabled`,
+    /// `selected`, `readonly`, `multiple`) by setting the corresponding DOM property
+    /// rather than the HTML attribute, ensuring proper two-way binding behavior.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The name of the attribute or property to set.
+    /// - `&str` - The value to assign.
     fn set_attribute_or_property(&self, name: &str, value: &str) {
         if name == ATTR_VALUE {
             if let Some(input) = self.dyn_ref::<HtmlInputElement>() {
@@ -138,6 +160,15 @@ impl ElementExt for Element {
         let _ = self.set_attribute(name, value);
     }
 
+    /// Tracks a signal address on the element for cleanup purposes.
+    ///
+    /// Stores the signal's inner address in a `data-euv-signal-addrs` attribute
+    /// so that when the element is removed from the DOM, all associated signal
+    /// listeners can be properly cleaned up.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The signal's inner address to track.
     fn track_signal_addr(&self, addr: usize) {
         let mut updated: String = self
             .get_attribute(DATA_EUV_SIGNAL_ADDRS)

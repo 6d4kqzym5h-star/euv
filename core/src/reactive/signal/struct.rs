@@ -113,5 +113,5 @@ pub(crate) struct SignalInnerRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HashSet<usize>>>,
+    pub(crate) UnsafeCell<HashSet<usize>>,
 );

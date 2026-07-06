@@ -3,14 +3,9 @@ use crate::*;
 /// Encapsulated access to the global pending measurement set.
 impl PendingMeasureCell {
     /// Returns a mutable reference to the set of pending container ids.
-    ///
-    /// Lazily initializes the set on first access.
     #[allow(static_mut_refs)]
-    fn get_mut() -> &'static mut HashSet<String> {
-        unsafe {
-            let slot: &mut Option<HashSet<String>> = &mut *PENDING_MEASURE_BY_ID.get_mut_0().get();
-            slot.get_or_insert_with(HashSet::new)
-        }
+    fn get_mut_pending_measure() -> &'static mut HashSet<String> {
+        unsafe { &mut *PENDING_MEASURE_BY_ID.deref().get_0().get() }
     }
 }
 
@@ -87,14 +82,13 @@ impl UseVirtualList {
     ///
     /// - `&str` - The container element id.
     pub(crate) fn schedule_measure_by_id(self, container_id: &str) {
-        let set: &mut HashSet<String> = PendingMeasureCell::get_mut();
-        if !set.insert(container_id.to_string()) {
+        if !PendingMeasureCell::get_mut_pending_measure().insert(container_id.to_string()) {
             return;
         }
 
         let id: String = container_id.to_string();
         let callback: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            PendingMeasureCell::get_mut().remove(&id);
+            PendingMeasureCell::get_mut_pending_measure().remove(&id);
             if let Some(element) = Self::try_get_container_by_id(&id) {
                 let html_element: HtmlElement = element.unchecked_into();
                 self.get_viewport_height().set(html_element.client_height());

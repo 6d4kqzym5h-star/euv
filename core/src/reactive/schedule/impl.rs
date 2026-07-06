@@ -7,11 +7,17 @@ use crate::*;
 unsafe impl Sync for CurrentHookContextCell {}
 
 /// Static methods for scheduling signal update dispatch and batching.
+///
+/// Provides centralized scheduling for reactive updates, ensuring efficient
+/// batching and dispatch of signal changes to dependent dynamic nodes.
 impl Scheduler {
     /// Removes all entries from the signal update registry that have been
     /// marked as `removed`. Called after each dispatch cycle completes.
+    ///
+    /// This prevents memory leaks by freeing slots for dynamic nodes that
+    /// have been removed from the DOM.
     fn sweep_removed_entries() {
-        Registry::ensure_update_registry_mut().retain(|_key, entry| {
+        Registry::get_mut_update_registry().retain(|_key, entry| {
             let slot: &SignalUpdateSlot = unsafe { &**entry };
             if slot.get_removed() {
                 unsafe {
@@ -25,6 +31,14 @@ impl Scheduler {
     }
 
     /// Schedules a deferred signal update with precise dirty marking.
+    ///
+    /// Marks the specified dynamic nodes as dirty and queues a microtask
+    /// to dispatch updates. Uses `queueMicrotask` if available, falling
+    /// back to `setTimeout` or `requestAnimationFrame`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[usize]` - The dynamic node IDs that depend on the changed signal.
     pub(crate) fn update(dependents: &[usize]) {
         Registry::mark_dirty(dependents);
         if SUPPRESS_SCHEDULE.load(Ordering::Relaxed) {
@@ -82,6 +96,18 @@ impl Scheduler {
     }
 
     /// Batches signal updates within a closure, deferring DOM dispatch.
+    ///
+    /// Suppresses scheduling during the callback execution, then triggers
+    /// a single dispatch after the outermost batch completes. This prevents
+    /// redundant re-renders when multiple signals are updated in sequence.
+    ///
+    /// # Arguments
+    ///
+    /// - `F: FnOnce() -> R` - The closure to execute with batching enabled.
+    ///
+    /// # Returns
+    ///
+    /// - `R` - The result of the closure execution.
     pub(crate) fn batch<F, R>(callback: F) -> R
     where
         F: FnOnce() -> R,
@@ -114,7 +140,7 @@ impl Scheduler {
         let mut iterations: usize = 0;
         loop {
             let registry: &mut HashMap<usize, SignalUpdateEntry> =
-                Registry::ensure_update_registry_mut();
+                Registry::get_mut_update_registry();
             let dirty_keys: Vec<usize> = registry
                 .iter()
                 .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
@@ -131,7 +157,7 @@ impl Scheduler {
             }
             for key in dirty_keys {
                 let entry: SignalUpdateEntry =
-                    match Registry::ensure_update_registry_mut().remove(&key) {
+                    match Registry::get_mut_update_registry().remove(&key) {
                         Some(removed_entry) => removed_entry,
                         None => continue,
                     };
@@ -159,7 +185,7 @@ impl Scheduler {
                     continue;
                 }
                 let registry: &mut HashMap<usize, SignalUpdateEntry> =
-                    Registry::ensure_update_registry_mut();
+                    Registry::get_mut_update_registry();
                 if registry.contains_key(&key) {
                     unsafe {
                         let _ = Box::from_raw(entry);

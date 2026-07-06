@@ -26,38 +26,36 @@ fn bind_observer(selector: &str) {
         return;
     }
     let callback: Closure<dyn FnMut(Array)> = Closure::wrap(Box::new(move |entries: Array| {
-        App::batch(|| {
-            for index in 0..entries.length() {
-                let entry: JsValue = entries.get(index);
-                let intersection_entry: IntersectionObserverEntry =
-                    entry.dyn_into::<IntersectionObserverEntry>().unwrap();
-                if !intersection_entry.is_intersecting() {
-                    continue;
+        for index in 0..entries.length() {
+            let entry: JsValue = entries.get(index);
+            let intersection_entry: IntersectionObserverEntry =
+                entry.dyn_into::<IntersectionObserverEntry>().unwrap();
+            if !intersection_entry.is_intersecting() {
+                continue;
+            }
+            let target: Element = intersection_entry.target();
+            let tag_name: String = target.tag_name();
+            let intersection_ratio: f64 = intersection_entry.intersection_ratio();
+            let data_index: Option<String> = target.get_attribute("data_index");
+            match data_index {
+                Some(index_value) => {
+                    Console::log(format!(
+                        "[IntersectionObserver] <{}> index={}, intersection_ratio={:.2}",
+                        tag_name, index_value, intersection_ratio
+                    ));
                 }
-                let target: Element = intersection_entry.target();
-                let tag_name: String = target.tag_name();
-                let intersection_ratio: f64 = intersection_entry.intersection_ratio();
-                let data_index: Option<String> = target.get_attribute("data_index");
-                match data_index {
-                    Some(index_value) => {
-                        Console::log(format!(
-                            "[IntersectionObserver] <{}> index={}, intersection_ratio={:.2}",
-                            tag_name, index_value, intersection_ratio
-                        ));
-                    }
-                    None => {
-                        let children: NodeList = target.query_selector_all("[data_index]").unwrap();
-                        let total_count: u32 = children.length();
-                        let estimated_visible: u32 =
-                            (intersection_ratio * total_count as f64).ceil() as u32;
-                        Console::log(format!(
-                            "[IntersectionObserver] <{}> intersection_ratio={:.2}, total_items={}, estimated_visible_items={}",
-                            tag_name, intersection_ratio, total_count, estimated_visible
-                        ));
-                    }
+                None => {
+                    let children: NodeList = target.query_selector_all("[data_index]").unwrap();
+                    let total_count: u32 = children.length();
+                    let estimated_visible: u32 =
+                        (intersection_ratio * total_count as f64).ceil() as u32;
+                    Console::log(format!(
+                        "[IntersectionObserver] <{}> intersection_ratio={:.2}, total_items={}, estimated_visible_items={}",
+                        tag_name, intersection_ratio, total_count, estimated_visible
+                    ));
                 }
             }
-        });
+        }
     }));
     let observer: IntersectionObserver =
         IntersectionObserver::new(callback.as_ref().unchecked_ref()).unwrap();
@@ -68,12 +66,17 @@ fn bind_observer(selector: &str) {
     }
 }
 
-/// Schedules a `bind_observer` call via `requestAnimationFrame` so that the
-/// DOM is fully painted before querying elements.
+/// Schedules a `bind_observer` call via `queueMicrotask` so that the DOM
+/// is fully updated before querying elements.
+///
+/// Because `use_intersection_observer` is called during the component render
+/// callback (inside `dispatch_updates`), the DOM has not yet been patched when
+/// this function runs.  `queueMicrotask` fires after the current `dispatch_updates`
+/// microtask completes — at that point `render_full_replace` has already inserted
+/// the new DOM nodes, so `query_selector` can find the container element.
 ///
 /// Uses a guard flag (`window.__euv_observer_pending`) to debounce
-/// multiple schedule requests within the same frame into a single
-/// `requestAnimationFrame` callback.
+/// multiple schedule requests into a single microtask callback.
 ///
 /// # Arguments
 ///
@@ -88,28 +91,26 @@ fn schedule_bind_observer(selector: String) {
         return;
     }
     let _ = Reflect::set(&window_value, &pending_key, &JsValue::TRUE);
-    let request_animation_frame_closure: Closure<dyn FnMut()> =
-        Closure::wrap(Box::new(move || {
-            let window_value: Window = window().expect("no global window exists");
-            let key: JsValue = JsValue::from_str("__euv_observer_pending");
-            let _ = Reflect::set(&window_value, &key, &JsValue::UNDEFINED);
-            bind_observer(&selector);
-        }));
-    let _ = window_value
-        .request_animation_frame(request_animation_frame_closure.as_ref().unchecked_ref());
-    request_animation_frame_closure.forget();
+    let microtask_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        let window_value: Window = window().expect("no global window exists");
+        let key: JsValue = JsValue::from_str("__euv_observer_pending");
+        let _ = Reflect::set(&window_value, &key, &JsValue::UNDEFINED);
+        bind_observer(&selector);
+    }));
+    window_value.queue_microtask(microtask_closure.as_ref().unchecked_ref::<Function>());
+    microtask_closure.forget();
 }
 
 /// Observes the container element matching the given CSS selector for viewport
 /// intersection changes.
 ///
-/// On first call, schedules an initial binding via `requestAnimationFrame` so
-/// that the DOM is fully rendered and painted before querying elements.
+/// On first call, schedules an initial binding via `queueMicrotask` so
+/// that the DOM is fully updated before querying elements.
 /// Only the container itself is observed (not individual children) to avoid
 /// O(N) overhead with large lists.
 ///
 /// A guard flag (`window.__euv_observer_listener`) ensures the initial
-/// `requestAnimationFrame` is only registered once.
+/// `queueMicrotask` is only registered once.
 ///
 /// The observer is automatically disconnected when the hook context is cleared
 /// (i.e., when the component unmounts or a `match` arm switches).

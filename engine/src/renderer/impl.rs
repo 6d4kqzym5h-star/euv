@@ -129,6 +129,11 @@ impl CanvasRenderer {
             &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
             &JsValue::from_str(RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH),
         );
+        let _ = Reflect::set(
+            context,
+            &JsValue::from_str(RENDERER_PROPERTY_TEXT_RENDERING),
+            &JsValue::from_str(RENDERER_TEXT_RENDERING_GEOMETRIC_PRECISION),
+        );
     }
 }
 

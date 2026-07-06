@@ -1,5 +1,57 @@
 use crate::*;
 
+/// SAFETY: `InjectedClassesCell` is only used in single-threaded WASM contexts.
+unsafe impl Sync for InjectedClassesCell {}
+
+/// Implementation of injected class tracking for CSS deduplication.
+impl InjectedClassesCell {
+    /// Returns a shared reference to the injected classes set.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static HashSet<String>` - A shared reference to the global set of injected class names.
+    #[allow(static_mut_refs)]
+    pub(crate) fn get_injected_classes() -> &'static HashSet<String> {
+        unsafe { &*INJECTED_CLASSES.deref().get_0().get() }
+    }
+
+    /// Returns a mutable reference to the injected classes set.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut HashSet<String>` - A mutable reference to the global set of injected class names.
+    #[allow(static_mut_refs)]
+    pub(crate) fn get_mut_injected_classes() -> &'static mut HashSet<String> {
+        unsafe { &mut *INJECTED_CLASSES.deref().get_0().get() }
+    }
+
+    /// Returns `true` if the given class name has already been injected into the DOM.
+    ///
+    /// Encapsulates `static mut` access so callers do not need `unsafe` blocks.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The CSS class name to check.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - Whether the class name has been injected.
+    pub(crate) fn is_injected(class_name: &str) -> bool {
+        Self::get_injected_classes().contains(class_name)
+    }
+
+    /// Marks a class name as injected so future calls to `is_injected` return `true`.
+    ///
+    /// Encapsulates `static mut` access so callers do not need `unsafe` blocks.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The CSS class name to mark as injected.
+    pub(crate) fn mark_injected(class_name: &str) {
+        Self::get_mut_injected_classes().insert(class_name.to_string());
+    }
+}
+
 /// Implementation of attribute value factory methods for reactive and merged values.
 impl AttributeValue {
     /// Creates a reactive attribute `Self` for conditional attribute values.
@@ -10,7 +62,7 @@ impl AttributeValue {
     ///
     /// # Arguments
     ///
-    /// - `Fn() -> String + 'static` - A closure that computes the current attribute value.
+    /// - `F: Fn() -> String + 'static` - A closure that computes the current attribute value.
     ///   Called on initial render and whenever any signal changes.
     ///
     /// # Returns
@@ -65,23 +117,22 @@ impl AttributeValue {
             });
             let attr_signal: Signal<String> = Signal::create(compute());
             Self::subscribe_attr(attr_signal, compute);
-            Self::Signal(attr_signal)
-        } else {
-            let result: String = values
-                .iter()
-                .filter_map(|value: &Self| match value {
-                    Self::Css(css) => {
-                        css.inject_style();
-                        Some(css.get_name().to_string())
-                    }
-                    Self::Text(text_value) => Some(text_value.clone()),
-                    _ => None,
-                })
-                .filter(|segment: &String| !segment.is_empty())
-                .collect::<Vec<String>>()
-                .join(&CHAR_SPACE.to_string());
-            Self::Text(result)
+            return Self::Signal(attr_signal);
         }
+        let result: String = values
+            .iter()
+            .filter_map(|value: &Self| match value {
+                Self::Css(css) => {
+                    css.inject_style();
+                    Some(css.get_name().to_string())
+                }
+                Self::Text(text_value) => Some(text_value.clone()),
+                _ => None,
+            })
+            .filter(|segment: &String| !segment.is_empty())
+            .collect::<Vec<String>>()
+            .join(&CHAR_SPACE.to_string());
+        Self::Text(result)
     }
 
     /// Merges multiple style attribute values into a single `Self`.
@@ -118,19 +169,18 @@ impl AttributeValue {
             });
             let attr_signal: Signal<String> = Signal::create(compute());
             Self::subscribe_attr(attr_signal, compute);
-            Self::Signal(attr_signal)
-        } else {
-            let result: String = values
-                .iter()
-                .filter_map(|value: &Self| match value {
-                    Self::Text(text_value) => Some(text_value.clone()),
-                    _ => None,
-                })
-                .filter(|segment: &String| !segment.is_empty())
-                .collect::<Vec<String>>()
-                .join(&CHAR_SPACE.to_string());
-            Self::Text(result)
+            return Self::Signal(attr_signal);
         }
+        let result: String = values
+            .iter()
+            .filter_map(|value: &Self| match value {
+                Self::Text(text_value) => Some(text_value.clone()),
+                _ => None,
+            })
+            .filter(|segment: &String| !segment.is_empty())
+            .collect::<Vec<String>>()
+            .join(&CHAR_SPACE.to_string());
+        Self::Text(result)
     }
 
     /// Subscribes an attribute signal to the global signal update dispatch cycle.
@@ -143,7 +193,7 @@ impl AttributeValue {
     /// # Arguments
     ///
     /// - `Signal<String>` - The attribute signal to subscribe.
-    /// - `Fn() -> String + 'static` - A closure that computes the current attribute value string.
+    /// - `F: Fn() -> String + 'static` - A closure that computes the current attribute value string.
     fn subscribe_attr<F>(attr_signal: Signal<String>, compute: F)
     where
         F: Fn() -> String + 'static,
@@ -464,6 +514,11 @@ impl Css {
     ///
     /// Panics if `window()` or `document()` is unavailable on the current platform.
     pub fn inject_style(&self) {
+        let class_name: &String = self.get_name();
+        if InjectedClassesCell::is_injected(class_name) {
+            return;
+        }
+        InjectedClassesCell::mark_injected(class_name);
         let raw_name: String = self.get_name().clone();
         let mut escaped_name: String = String::with_capacity(raw_name.len() * 2);
         for ch in raw_name.chars() {

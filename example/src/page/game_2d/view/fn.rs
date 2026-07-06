@@ -26,6 +26,9 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
         balls
             .borrow_mut()
             .push(create_ball(Vector2D::new(GAME_2D_CANVAS_WIDTH * 0.7, 80.0)));
+        balls
+            .borrow_mut()
+            .push(create_ball(Vector2D::new(GAME_2D_CANVAS_WIDTH * 0.2, 60.0)));
         BallStore(balls)
     });
     let balls: Rc<RefCell<Vec<Ball>>> = balls_store.get().0;
@@ -90,19 +93,12 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_game_canvas_wrapper()
+                    class: c_game_canvas_wrapper(&format!("{} / {}", GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT))
                     canvas {
                         id: GAME_2D_CANVAS_ID
-                        class: c_game_2d_canvas(&format!("{} / {}", GAME_2D_CANVAS_WIDTH as i32, GAME_2D_CANVAS_HEIGHT as i32), GAME_2D_BACKGROUND_COLOR)
+                        class: c_game_2d_canvas()
                         onclick: on_canvas_click
                         ontouchstart: on_canvas_touch
-                    }
-                    if { !state.get_loaded().get() } {
-                        euv_loading {
-                            title: "Loading..."
-                            overlay: true
-                            background: GAME_2D_BACKGROUND_COLOR
-                        }
                     }
                 }
                 div {

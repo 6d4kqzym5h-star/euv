@@ -160,10 +160,12 @@ pub(crate) fn is_face_visible(world_vertices: &[Vector3D], camera: &Camera3D) ->
 
 /// Renders the 3D scene onto the SSAA offscreen canvas and presents it to the display.
 ///
-/// Clears the canvas, draws world axes, then renders each cube's visible
-/// faces sorted by depth (painter's algorithm). Finally calls `present()`
-/// to downscale the high-resolution buffer onto the visible canvas with
-/// high-quality image smoothing for SSAA anti-aliasing.
+/// Clears the offscreen canvas to transparency so the CSS `background`
+/// property (set to `var(--accent)`) shows through on the display canvas,
+/// then draws world axes and renders each cube's visible faces sorted by
+/// depth (painter's algorithm). Finally calls `present()` to downscale the
+/// high-resolution buffer onto the visible canvas with high-quality image
+/// smoothing for SSAA anti-aliasing.
 ///
 /// # Arguments
 ///
@@ -172,12 +174,7 @@ pub(crate) fn is_face_visible(world_vertices: &[Vector3D], camera: &Camera3D) ->
 /// - `&Camera3D` - The camera.
 pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &Camera3D) {
     let context: &CanvasRenderingContext2d = ssaa_canvas.get_offscreen_context();
-    let _ = Reflect::set(
-        context,
-        &JsValue::from_str(GAME_3D_PROPERTY_FILL_STYLE),
-        &JsValue::from_str(GAME_3D_BACKGROUND_COLOR),
-    );
-    context.fill_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
+    context.clear_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
     let origin_screen: Vector3D = camera.world_to_screen(Vector3D::zero());
     let x_axis_screen: Vector3D = camera.world_to_screen(Vector3D::new(2.0, 0.0, 0.0));
     let y_axis_screen: Vector3D = camera.world_to_screen(Vector3D::new(0.0, 2.0, 0.0));
@@ -297,6 +294,105 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
     )
 }
 
+/// Registers non-passive event listeners directly on the 3D game canvas
+/// element to prevent the page from scrolling when the mouse wheel or touch
+/// gesture is used over the canvas.
+///
+/// The framework's event delegation system registers bubbling events on
+/// `window` with the capture phase, which Chrome treats as passive by
+/// default for `wheel`, `touchstart`, and `touchmove` events, making
+/// `preventDefault()` ineffective. This function bypasses the framework and
+/// attaches listeners directly on the element, where `preventDefault()`
+/// works correctly. On desktop this prevents wheel scrolling; on mobile this
+/// prevents touch scrolling as a belt-and-suspenders complement to the
+/// `touch-action: none` CSS property.
+///
+/// # Returns
+///
+/// - `Option<CanvasGuardEntry>` - The listener closures and element for cleanup, or `None` if the canvas was not found.
+pub(crate) fn register_canvas_scroll_guard() -> Option<CanvasGuardEntry> {
+    let window: Window = window().expect("no global window exists");
+    let document: Document = window.document().expect("should have a document");
+    let canvas: Element = document
+        .query_selector(GAME_3D_CANVAS_SELECTOR)
+        .ok()
+        .flatten()?;
+    let wheel_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
+        event.prevent_default();
+    }));
+    let _ = canvas.add_event_listener_with_callback(
+        GAME_3D_EVENT_WHEEL,
+        wheel_closure.as_ref().unchecked_ref(),
+    );
+    let touch_start_closure: Closure<dyn FnMut(Event)> =
+        Closure::wrap(Box::new(move |event: Event| {
+            event.prevent_default();
+        }));
+    let _ = canvas.add_event_listener_with_callback(
+        GAME_3D_EVENT_TOUCH_START,
+        touch_start_closure.as_ref().unchecked_ref(),
+    );
+    let touch_move_closure: Closure<dyn FnMut(Event)> =
+        Closure::wrap(Box::new(move |event: Event| {
+            event.prevent_default();
+        }));
+    let _ = canvas.add_event_listener_with_callback(
+        GAME_3D_EVENT_TOUCH_MOVE,
+        touch_move_closure.as_ref().unchecked_ref(),
+    );
+    Some((
+        vec![
+            (wheel_closure, GAME_3D_EVENT_WHEEL),
+            (touch_start_closure, GAME_3D_EVENT_TOUCH_START),
+            (touch_move_closure, GAME_3D_EVENT_TOUCH_MOVE),
+        ],
+        canvas,
+    ))
+}
+
+/// Draws the loading text centered on the 3D game canvas using SSAA.
+///
+/// Called during the startup delay before the game loop begins, so the
+/// canvas shows a loading message instead of being blank. Uses an
+/// `SsaaCanvas` with a 2x scale factor on desktop and 1x on mobile for
+/// crisp text rendering.
+pub(crate) fn draw_game_3d_loading() {
+    let window_value: Window = window().expect("no global window exists");
+    let is_mobile: bool = window_value
+        .inner_width()
+        .ok()
+        .and_then(|value: JsValue| value.as_f64())
+        .is_some_and(|width: f64| width < 768.0);
+    let scale_factor: f64 = if is_mobile { 1.0 } else { 2.0 };
+    let Some(ssaa_canvas) = SsaaCanvas::from_selector_with_scale(
+        GAME_3D_CANVAS_SELECTOR,
+        GAME_3D_CANVAS_WIDTH,
+        GAME_3D_CANVAS_HEIGHT,
+        scale_factor,
+    ) else {
+        return;
+    };
+    let context: &CanvasRenderingContext2d = ssaa_canvas.get_offscreen_context();
+    context.clear_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
+    let font_size: f64 = GAME_3D_CANVAS_HEIGHT * GAME_3D_LOADING_FONT_SIZE_RATIO;
+    let font: String = format!("{font_size}px {GAME_3D_LOADING_FONT_FAMILY}");
+    let fill_style_key: JsValue = JsValue::from_str(GAME_3D_PROPERTY_FILL_STYLE);
+    let _ = Reflect::set(
+        context,
+        &fill_style_key,
+        &JsValue::from_str(GAME_3D_LOADING_COLOR),
+    );
+    context.set_font(&font);
+    context.set_text_align("center");
+    context.set_text_baseline("middle");
+    let _ = context.fill_text(
+        GAME_3D_LOADING_TEXT,
+        GAME_3D_CANVAS_WIDTH * 0.5,
+        GAME_3D_CANVAS_HEIGHT * 0.5,
+    );
+    ssaa_canvas.present();
+}
+
 /// Starts the 3D game loop driven by `requestAnimationFrame`.
 ///
 /// Runs a fixed-timestep accumulator loop that updates cube rotation at a
@@ -321,6 +417,7 @@ pub(crate) fn start_game_3d_loop(
     let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
+    let guard_cell: CanvasGuardCell = Rc::new(RefCell::new(None));
     let state_clone: UseGame3D = state;
     let cubes_clone: Rc<RefCell<Vec<Cube3D>>> = cubes;
     let angles_clone: CameraAngles = angles;
@@ -393,9 +490,11 @@ pub(crate) fn start_game_3d_loop(
     let start_timeout_clone: Rc<Cell<Option<i32>>> = start_timeout_id.clone();
     let raf_for_start: Rc<Cell<Option<i32>>> = raf_id.clone();
     let cell_for_start: RafClosureCell = closure_cell.clone();
+    let guard_for_start: CanvasGuardCell = guard_cell.clone();
     let state_for_start: UseGame3D = state;
     let start_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         state_for_start.get_loaded().set(true);
+        *guard_for_start.borrow_mut() = register_canvas_scroll_guard();
         let start_window: Window = window().expect("no global window exists");
         let start_id: i32 = start_window
             .request_animation_frame(
@@ -419,6 +518,13 @@ pub(crate) fn start_game_3d_loop(
         )
         .unwrap_or(0);
     start_timeout_clone.set(Some(timeout_id));
+    let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        draw_game_3d_loading();
+    }) as Box<dyn FnMut()>);
+    let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
+    loading_closure.forget();
+    let _ =
+        window_value.set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     let debounce_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
     let timer_for_event: Rc<Cell<Option<i32>>> = debounce_timer.clone();
@@ -444,6 +550,7 @@ pub(crate) fn start_game_3d_loop(
             .unwrap_or_default();
         timer_for_event.set(Some(new_timer));
     });
+    let guard_for_cleanup: CanvasGuardCell = guard_cell.clone();
     App::use_cleanup(move || {
         if let Some(cancel_id) = raf_id.get() {
             let window_value: Window = window().expect("no global window exists");
@@ -458,6 +565,14 @@ pub(crate) fn start_game_3d_loop(
             window_value.clear_timeout_with_handle(timer_id);
         }
         closure_cell.borrow_mut().take();
+        if let Some((listeners, element)) = guard_for_cleanup.borrow_mut().take() {
+            for (closure, event_name) in listeners {
+                let _ = element.remove_event_listener_with_callback(
+                    event_name,
+                    closure.as_ref().unchecked_ref(),
+                );
+            }
+        }
     });
 }
 

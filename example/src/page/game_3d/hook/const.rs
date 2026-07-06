@@ -43,11 +43,20 @@ pub(crate) const GAME_3D_LOOP_START_DELAY_MILLIS: i32 = 360;
 /// The JavaScript property name for the canvas fill style.
 pub(crate) const GAME_3D_PROPERTY_FILL_STYLE: &str = "fillStyle";
 
+/// The loading text displayed on the canvas before the game loop starts.
+pub(crate) const GAME_3D_LOADING_TEXT: &str = "Loading...";
+
+/// The CSS font family used for the loading text on the canvas.
+pub(crate) const GAME_3D_LOADING_FONT_FAMILY: &str = "sans-serif";
+
+/// The ratio of the loading font size to the canvas height.
+pub(crate) const GAME_3D_LOADING_FONT_SIZE_RATIO: f64 = 0.04;
+
+/// The CSS color used for the loading text on the canvas.
+pub(crate) const GAME_3D_LOADING_COLOR: &str = "#ffffff";
+
 /// The JavaScript property name for the canvas stroke style.
 pub(crate) const GAME_3D_PROPERTY_STROKE_STYLE: &str = "strokeStyle";
-
-/// The canvas background fill color as a CSS color string.
-pub(crate) const GAME_3D_BACKGROUND_COLOR: &str = "#0f0f23";
 
 /// The CSS color used for cube faces.
 pub(crate) const GAME_3D_CUBE_FACE_COLOR: &str = "#16c79a";
@@ -66,6 +75,21 @@ pub(crate) const GAME_3D_EVENT_PROPERTY_CLIENT_X: &str = "clientX";
 
 /// The JavaScript property name for the client Y coordinate on a `Touch` object.
 pub(crate) const GAME_3D_EVENT_PROPERTY_CLIENT_Y: &str = "clientY";
+
+/// The JavaScript event name for the wheel event, used to register a
+/// non-passive listener directly on the canvas element to prevent page
+/// scrolling when the mouse wheel is scrolled over the canvas.
+pub(crate) const GAME_3D_EVENT_WHEEL: &str = "wheel";
+
+/// The JavaScript event name for the touchstart event, used to register a
+/// non-passive listener directly on the canvas element to prevent page
+/// scrolling when a finger touches the canvas on mobile devices.
+pub(crate) const GAME_3D_EVENT_TOUCH_START: &str = "touchstart";
+
+/// The JavaScript event name for the touchmove event, used to register a
+/// non-passive listener directly on the canvas element to prevent page
+/// scrolling when a finger drags across the canvas on mobile devices.
+pub(crate) const GAME_3D_EVENT_TOUCH_MOVE: &str = "touchmove";
 
 /// The cube vertex offsets relative to center, defining the 8 corners of a unit cube.
 pub(crate) const GAME_3D_CUBE_VERTICES: [(f64, f64, f64); 8] = [

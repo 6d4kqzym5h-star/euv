@@ -30,28 +30,27 @@ class! {
         color: "inherit";
     }
 
-    pub c_game_canvas_wrapper {
+    pub c_game_canvas_wrapper(aspect_ratio: &str) {
         position: "relative";
         width: "100%";
+        aspect-ratio: aspect_ratio;
     }
 
-    pub c_game_3d_canvas(aspect_ratio: &str, background: &str) {
+    pub c_game_3d_canvas {
         width: "100%";
-        aspect-ratio: aspect_ratio;
-        height: "auto";
+        height: "100%";
         cursor: "grab";
         display: "block";
-        background: background;
+        background: var!(accent);
         touch-action: "none";
     }
 
-    pub c_game_2d_canvas(aspect_ratio: &str, background: &str) {
+    pub c_game_2d_canvas {
         width: "100%";
-        aspect-ratio: aspect_ratio;
-        height: "auto";
+        height: "100%";
         cursor: "pointer";
         display: "block";
-        background: background;
+        background: var!(accent);
         touch-action: "none";
     }
 
