@@ -110,7 +110,7 @@ impl AssetLoader {
                     .get_mut_entries()
                     .insert(url_for_onload.clone(), entry);
             }
-        }) as Box<dyn FnMut()>);
+        }));
         let cache_clone_err: Rc<RefCell<AssetCache>> = self.get_cache().clone();
         let onerror_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             let mut cache_ref = cache_clone_err.borrow_mut();
@@ -120,7 +120,7 @@ impl AssetLoader {
                     .get_mut_entries()
                     .insert(url_for_onerror.clone(), entry);
             }
-        }) as Box<dyn FnMut()>);
+        }));
         image.set_onload(Some(onload_closure.as_ref().unchecked_ref()));
         image.set_onerror(Some(onerror_closure.as_ref().unchecked_ref()));
         image.set_src(&url);

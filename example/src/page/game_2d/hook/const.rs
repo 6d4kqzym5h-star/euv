@@ -57,7 +57,11 @@ pub(crate) const GAME_2D_LOADING_FONT_FAMILY: &str = "sans-serif";
 pub(crate) const GAME_2D_LOADING_FONT_SIZE_RATIO: f64 = 0.04;
 
 /// The CSS variable name for the loading text color on the canvas.
-pub(crate) const GAME_2D_LOADING_COLOR_VAR: &str = "--foreground";
+///
+/// Uses `--text-on-accent` because the canvas background is `var!(accent)`,
+/// and `text-on-accent` is the theme variable that contrasts with the accent
+/// color (foreground/background equal accent in this monochrome design).
+pub(crate) const GAME_2D_LOADING_COLOR_VAR: &str = "--text-on-accent";
 
 /// The palette of ball colors used for random color assignment.
 pub(crate) const GAME_2D_BALL_COLORS: &[&str] = &[

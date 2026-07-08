@@ -53,7 +53,11 @@ pub(crate) const GAME_3D_LOADING_FONT_FAMILY: &str = "sans-serif";
 pub(crate) const GAME_3D_LOADING_FONT_SIZE_RATIO: f64 = 0.04;
 
 /// The CSS variable name for the loading text color on the canvas.
-pub(crate) const GAME_3D_LOADING_COLOR_VAR: &str = "--foreground";
+///
+/// Uses `--text-on-accent` because the canvas background is `var!(accent)`,
+/// and `text-on-accent` is the theme variable that contrasts with the accent
+/// color (foreground/background equal accent in this monochrome design).
+pub(crate) const GAME_3D_LOADING_COLOR_VAR: &str = "--text-on-accent";
 
 /// The JavaScript property name for the canvas stroke style.
 pub(crate) const GAME_3D_PROPERTY_STROKE_STYLE: &str = "strokeStyle";
@@ -63,9 +67,6 @@ pub(crate) const GAME_3D_CUBE_FACE_COLOR: &str = "#16c79a";
 
 /// The CSS color used for cube edges.
 pub(crate) const GAME_3D_CUBE_EDGE_COLOR: &str = "#e94560";
-
-/// The CSS color used for the world origin axes.
-pub(crate) const GAME_3D_AXIS_COLOR: &str = "#6366f1";
 
 /// The JavaScript property name for the touch list `touches` on a `TouchEvent`.
 pub(crate) const GAME_3D_EVENT_PROPERTY_TOUCHES: &str = "touches";
@@ -113,4 +114,26 @@ pub(crate) const GAME_3D_CUBE_FACES: [(usize, usize, usize, usize); 6] = [
     (2, 3, 7, 6),
     (0, 4, 7, 3),
     (1, 2, 6, 5),
+];
+
+/// The 12 unique edges of a unit cube, defined by pairs of vertex indices.
+///
+/// Used to draw the cube wireframe without duplicating the shared edge
+/// between two adjacent visible faces — without deduplication the three
+/// edges meeting at the front-most vertex are each stroked twice (once per
+/// face), which shows up as visible "extra lines" near the cube's inner
+/// corner after SSAA downscaling.
+pub(crate) const GAME_3D_CUBE_EDGES: [(usize, usize); 12] = [
+    (0, 1),
+    (1, 2),
+    (2, 3),
+    (3, 0),
+    (4, 5),
+    (5, 6),
+    (6, 7),
+    (7, 4),
+    (0, 4),
+    (1, 5),
+    (2, 6),
+    (3, 7),
 ];

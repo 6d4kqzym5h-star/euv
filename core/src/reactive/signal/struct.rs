@@ -115,3 +115,25 @@ pub(crate) struct SignalInnerRegistryCell(
     #[set(pub(crate))]
     pub(crate) UnsafeCell<HashSet<usize>>,
 );
+
+/// A handle to a leaked `FnMut()` closure, stored as the closure's heap address.
+///
+/// The closure is double-boxed (`Box<Box<dyn FnMut()>>`) and leaked, so its
+/// memory outlives any `FireHandle` copy and can be safely invoked from any
+/// context via the raw pointer. The handle is `Copy` because it only holds
+/// the address — repeated invocations on captured copies all resolve to the
+/// same underlying closure.
+///
+/// This type replaces the inline `Box::leak(... as *mut Box<dyn FnMut()> as usize)`
+/// pattern that was used by `watch!`/`computed!` macros and the virtual list
+/// component, encapsulating the unsized coercion, double-boxing, and raw
+/// pointer arithmetic behind `From`/`Into` conversions and a dedicated
+/// `fire` method.
+#[derive(Clone, Copy, CustomDebug, Data, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct FireHandle {
+    /// Address of the leaked `Box<dyn FnMut()>` allocation.
+    #[get(pub(crate), type(copy))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) inner: usize,
+}

@@ -236,32 +236,56 @@ pub(crate) fn map_client_to_canvas(
     )
 }
 
+/// The number of physics substeps performed per fixed timestep.
+///
+/// Splits the fixed `1/60s` timestep into smaller slices so a fast ball never
+/// moves more than its own radius between collision checks, preventing the
+/// "tunneling" effect where one ball passes through another in a single step.
+const GAME_2D_PHYSICS_SUBSTEPS: usize = 4;
+
+/// The number of ball-to-ball collision resolution passes per substep.
+///
+/// A single pass is insufficient when a ball is squeezed between two or more
+/// other balls: resolving the overlap with ball A can leave the ball still
+/// overlapping with ball C. Repeating the pass lets the correction propagate
+/// through the contact graph until every overlap is cleared (or a stable
+/// stacking configuration is reached).
+const GAME_2D_COLLISION_ITERATIONS: usize = 4;
+
 /// Performs one physics update step on all balls.
 ///
-/// Applies gravity, integrates velocity and position, handles wall collisions
-/// with restitution, and resolves ball-to-ball collisions using impulse-based
-/// response.
+/// Subdivides `delta_time` into `GAME_2D_PHYSICS_SUBSTEPS` smaller slices,
+/// applying gravity, integrating velocity and position, handling wall
+/// collisions with restitution, and resolving ball-to-ball collisions with
+/// impulse-based response in each substep. The ball-to-ball pass is itself
+/// repeated `GAME_2D_COLLISION_ITERATIONS` times per substep to converge on a
+/// non-overlapping configuration when many balls are in contact.
 ///
 /// # Arguments
 ///
 /// - `&mut [Ball]` - The mutable ball slice.
 /// - `f64` - The delta time in seconds.
 pub(crate) fn update_balls(balls: &mut [Ball], delta_time: f64) {
+    let sub_dt: f64 = delta_time / GAME_2D_PHYSICS_SUBSTEPS as f64;
     let gravity: Vector2D = Vector2D::new(0.0, GAME_2D_GRAVITY);
-    let damping: f64 = (1.0 - GAME_2D_LINEAR_DAMPING * delta_time).max(0.0);
-    for ball in balls.iter_mut() {
-        ball.velocity += gravity.scaled(delta_time);
-        ball.velocity = ball.velocity.scaled(damping);
-        ball.position += ball.velocity.scaled(delta_time);
-    }
-    for ball in balls.iter_mut() {
-        resolve_wall_collision(ball);
-    }
-    let count: usize = balls.len();
-    for i in 0..count {
-        for j in (i + 1)..count {
-            let (left, right) = balls.split_at_mut(j);
-            resolve_ball_collision(&mut left[i], &mut right[0]);
+    for _ in 0..GAME_2D_PHYSICS_SUBSTEPS {
+        let damping: f64 = (1.0 - GAME_2D_LINEAR_DAMPING * sub_dt).max(0.0);
+        for ball in balls.iter_mut() {
+            ball.velocity += gravity.scaled(sub_dt);
+            ball.velocity = ball.velocity.scaled(damping);
+            ball.position += ball.velocity.scaled(sub_dt);
+        }
+        for ball in balls.iter_mut() {
+            resolve_wall_collision(ball);
+        }
+        for _ in 0..GAME_2D_COLLISION_ITERATIONS {
+            let count: usize = balls.len();
+            for i in 0..count {
+                for j in (i + 1)..count {
+                    let (left, right) = balls.split_at_mut(j);
+                    resolve_ball_collision(&mut left[i], &mut right[0]);
+                }
+            }
         }
     }
 }
@@ -427,18 +451,22 @@ pub(crate) fn draw_game_2d_loading() {
     context.clear_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
     let font_size: f64 = GAME_2D_CANVAS_HEIGHT * GAME_2D_LOADING_FONT_SIZE_RATIO;
     let font: String = format!("{font_size}px {GAME_2D_LOADING_FONT_FAMILY}");
-    // Read the loading text color from the CSS variable via getComputedStyle
+    // Read the loading text color from the CSS variable via getComputedStyle.
+    // Query the canvas element itself so the theme variable (defined on a
+    // parent container, not on the document root) is inherited correctly.
     let loading_color: String = window_value
-        .get_computed_style(
-            &window_value
-                .document()
-                .expect("should have a document")
-                .document_element()
-                .expect("should have a document element"),
-        )
+        .document()
+        .expect("should have a document")
+        .query_selector(GAME_2D_CANVAS_SELECTOR)
         .ok()
         .flatten()
-        .and_then(|style| style.get_property_value(GAME_2D_LOADING_COLOR_VAR).ok())
+        .and_then(|element: Element| {
+            window_value
+                .get_computed_style(&element)
+                .ok()
+                .flatten()
+                .and_then(|style| style.get_property_value(GAME_2D_LOADING_COLOR_VAR).ok())
+        })
         .unwrap_or_else(|| "#ffffff".to_string());
     let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);
     let _ = Reflect::set(context, &fill_style_key, &JsValue::from_str(&loading_color));
@@ -542,7 +570,7 @@ pub(crate) fn start_game_2d_loop(
             )
             .unwrap_or(0);
         raf_clone.set(Some(next_id));
-    }) as Box<dyn FnMut()>);
+    }));
     *closure_cell.borrow_mut() = Some(raf_closure);
     let start_timeout_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let start_timeout_clone: Rc<Cell<Option<i32>>> = start_timeout_id.clone();
@@ -563,7 +591,7 @@ pub(crate) fn start_game_2d_loop(
             )
             .unwrap_or(0);
         raf_for_start.set(Some(start_id));
-    }) as Box<dyn FnMut()>);
+    }));
     let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
     start_closure.forget();
     let start_window: Window = window().expect("no global window exists");
@@ -576,7 +604,7 @@ pub(crate) fn start_game_2d_loop(
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_2d_loading();
-    }) as Box<dyn FnMut()>);
+    }));
     let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
     loading_closure.forget();
     let _ =

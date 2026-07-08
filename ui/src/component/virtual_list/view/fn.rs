@@ -59,7 +59,7 @@ pub fn euv_virtual_list(node: VirtualNode<EuvVirtualListProps>) -> VirtualNode {
     if !range_watch_initialized.get() {
         let scroll_offset_signal: Signal<i32> = state.get_scroll_offset();
         let viewport_height_signal: Signal<i32> = state.get_viewport_height();
-        let fire_addr: usize = Box::leak(Box::new(Box::new(move || {
+        let fire_handle: FireHandle = (move || {
             let scroll_offset: i32 = scroll_offset_signal.get();
             let viewport_height: i32 = viewport_height_signal.get();
             if let Some(ref callback) = range_callback {
@@ -73,15 +73,16 @@ pub fn euv_virtual_list(node: VirtualNode<EuvVirtualListProps>) -> VirtualNode {
                     );
                 callback((visible_start, visible_end));
             }
-        }) as Box<dyn FnMut()>)) as *mut Box<dyn FnMut()> as usize;
+        })
+        .into();
         App::batch(|| {
             scroll_offset_signal.subscribe(move || {
-                App::batch(|| unsafe { (&mut *(fire_addr as *mut Box<dyn FnMut()>))() });
+                App::batch(|| unsafe { fire_handle.fire() });
             });
             viewport_height_signal.subscribe(move || {
-                App::batch(|| unsafe { (&mut *(fire_addr as *mut Box<dyn FnMut()>))() });
+                App::batch(|| unsafe { fire_handle.fire() });
             });
-            unsafe { (&mut *(fire_addr as *mut Box<dyn FnMut()>))() }
+            unsafe { fire_handle.fire() }
             range_watch_initialized.set(true);
         });
     }

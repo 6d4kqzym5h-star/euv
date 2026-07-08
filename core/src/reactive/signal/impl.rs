@@ -414,3 +414,97 @@ impl Signal<String> {
         Registry::cleanup_attr_slot(addr);
     }
 }
+
+/// Implementation of `FireHandle` construction, invocation, and conversions.
+impl FireHandle {
+    /// Leaks the given closure and returns a handle pointing to its heap address.
+    ///
+    /// The closure is double-boxed (`Box<Box<dyn FnMut()>>`) and leaked so the
+    /// inner box's address remains stable for the lifetime of the program.
+    /// The address is captured as a `usize` and wrapped in a `FireHandle`.
+    ///
+    /// # Arguments
+    ///
+    /// - `F: FnMut() + 'static` - The fire closure to leak.
+    ///
+    /// # Returns
+    ///
+    /// - `FireHandle` - A handle holding the leaked closure's address.
+    pub fn new<F>(fire: F) -> Self
+    where
+        F: FnMut() + 'static,
+    {
+        let leaked: &'static mut Box<dyn FnMut()> =
+            Box::leak(Box::new(Box::new(fire) as Box<dyn FnMut()>));
+        let addr: usize = leaked as *mut Box<dyn FnMut()> as usize;
+        let mut handle: Self = Self { inner: 0 };
+        handle.set_inner(addr);
+        handle
+    }
+
+    /// Invokes the closure pointed to by this handle.
+    ///
+    /// Takes `self` by value because `FireHandle: Copy` — repeated invocations
+    /// on a single captured handle each copy the address and operate on the
+    /// same underlying closure.
+    ///
+    /// # Safety
+    ///
+    /// The handle must come from `FireHandle::new` (or `From`) and the
+    /// underlying boxed closure must still be live.
+    pub unsafe fn fire(self) {
+        unsafe { Self::fire_at(self.get_inner()) };
+    }
+
+    /// Invokes the closure stored at the given address.
+    ///
+    /// This is the static counterpart of `fire` for call sites that have
+    /// only the raw `usize` address (e.g., macro-generated code that
+    /// captures the address by `move` into a subscribe closure).
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The address of a leaked `Box<dyn FnMut()>`.
+    ///
+    /// # Safety
+    ///
+    /// `addr` must come from a valid `FireHandle` produced by `new` (or
+    /// `From`) and the underlying boxed closure must still be live.
+    pub unsafe fn fire_at(addr: usize) {
+        let ptr: *mut Box<dyn FnMut()> = addr as *mut Box<dyn FnMut()>;
+        unsafe { (&mut *ptr)() };
+    }
+}
+
+/// Leaks a fire closure into a `FireHandle`.
+///
+/// This is the canonical `Into` path used by `watch!`/`computed!` macros
+/// and the virtual list component to obtain a `FireHandle` from a closure.
+impl<F> From<F> for FireHandle
+where
+    F: FnMut() + 'static,
+{
+    /// Leaks this closure and stores its address in the returned handle.
+    ///
+    /// # Returns
+    ///
+    /// - `FireHandle` - A handle holding the leaked closure's address.
+    fn from(fire: F) -> Self {
+        Self::new(fire)
+    }
+}
+
+/// Extracts the raw address from a `FireHandle`.
+///
+/// This is used by macro-generated code that needs to capture the address
+/// (a `Copy` type) into `FnMut() + 'static` subscribe closures.
+impl From<FireHandle> for usize {
+    /// Returns the leaked closure's heap address.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The address held by this handle.
+    fn from(handle: FireHandle) -> Self {
+        handle.get_inner()
+    }
+}

@@ -384,7 +384,7 @@ impl Registry {
         F: FnMut() + 'static,
     {
         let handler_id: usize = NEXT_WINDOW_HANDLER_ID.fetch_add(1, Ordering::Relaxed);
-        let boxed: Box<Box<dyn FnMut()>> = Box::new(Box::new(callback) as Box<dyn FnMut()>);
+        let boxed: Box<Box<dyn FnMut()>> = Box::new(Box::new(callback));
         let entry: WindowEventHandlerEntry = (handler_id, Box::into_raw(boxed));
         let registry: &mut WindowEventRegistryMap = Self::get_mut_window_registry();
         let is_new_event: bool = !registry.contains_key(event_name);

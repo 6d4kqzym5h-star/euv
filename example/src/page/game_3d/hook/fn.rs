@@ -162,10 +162,13 @@ pub(crate) fn is_face_visible(world_vertices: &[Vector3D], camera: &Camera3D) ->
 ///
 /// Clears the offscreen canvas to transparency so the CSS `background`
 /// property (set to `var(--accent)`) shows through on the display canvas,
-/// then draws world axes and renders each cube's visible faces sorted by
-/// depth (painter's algorithm). Finally calls `present()` to downscale the
-/// high-resolution buffer onto the visible canvas with high-quality image
-/// smoothing for SSAA anti-aliasing.
+/// draws the world axes, then for each cube (back-to-front via painter's
+/// algorithm) draws the visible face fills and finally the unique visible
+/// edges as a separate wireframe pass. The fill/stroke separation avoids
+/// stroking each shared cube edge twice (which would otherwise appear as
+/// thicker lines near the inner corner where three visible faces meet).
+/// Calls `present()` to downscale the high-resolution buffer onto the
+/// visible canvas with high-quality image smoothing for SSAA anti-aliasing.
 ///
 /// # Arguments
 ///
@@ -175,32 +178,26 @@ pub(crate) fn is_face_visible(world_vertices: &[Vector3D], camera: &Camera3D) ->
 pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &Camera3D) {
     let context: &CanvasRenderingContext2d = ssaa_canvas.get_offscreen_context();
     context.clear_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
-    let origin_screen: Vector3D = camera.world_to_screen(Vector3D::zero());
-    let x_axis_screen: Vector3D = camera.world_to_screen(Vector3D::new(2.0, 0.0, 0.0));
-    let y_axis_screen: Vector3D = camera.world_to_screen(Vector3D::new(0.0, 2.0, 0.0));
-    let z_axis_screen: Vector3D = camera.world_to_screen(Vector3D::new(0.0, 0.0, 2.0));
-    let _ = Reflect::set(
-        context,
-        &JsValue::from_str(GAME_3D_PROPERTY_STROKE_STYLE),
-        &JsValue::from_str(GAME_3D_AXIS_COLOR),
+    let mut cube_batches: Vec<(f64, &Cube3D, Vec<Vector3D>)> = cubes
+        .iter()
+        .map(|cube: &Cube3D| {
+            let world_vertices: Vec<Vector3D> = GAME_3D_CUBE_VERTICES
+                .iter()
+                .map(|(vx, vy, vz): &(f64, f64, f64)| {
+                    transform_cube_vertex(cube, Vector3D::new(*vx, *vy, *vz))
+                })
+                .collect();
+            let depth: f64 = face_average_depth(&world_vertices, camera);
+            (depth, cube, world_vertices)
+        })
+        .collect();
+    cube_batches.sort_by(
+        |a: &(f64, &Cube3D, Vec<Vector3D>), b: &(f64, &Cube3D, Vec<Vector3D>)| {
+            a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal)
+        },
     );
-    context.set_line_width(2.0);
-    context.begin_path();
-    context.move_to(origin_screen.get_x(), origin_screen.get_y());
-    context.line_to(x_axis_screen.get_x(), x_axis_screen.get_y());
-    context.move_to(origin_screen.get_x(), origin_screen.get_y());
-    context.line_to(y_axis_screen.get_x(), y_axis_screen.get_y());
-    context.move_to(origin_screen.get_x(), origin_screen.get_y());
-    context.line_to(z_axis_screen.get_x(), z_axis_screen.get_y());
-    context.stroke();
-    let mut face_batches: Vec<(f64, Vec<Vector3D>, String, String)> = Vec::new();
-    for cube in cubes {
-        let world_vertices: Vec<Vector3D> = GAME_3D_CUBE_VERTICES
-            .iter()
-            .map(|(vx, vy, vz): &(f64, f64, f64)| {
-                transform_cube_vertex(cube, Vector3D::new(*vx, *vy, *vz))
-            })
-            .collect();
+    for (_cube_depth, cube, world_vertices) in &cube_batches {
+        let mut face_batches: Vec<(f64, Vec<Vector3D>)> = Vec::new();
         for (i0, i1, i2, i3) in GAME_3D_CUBE_FACES {
             let face_world: Vec<Vector3D> = vec![
                 world_vertices[i0],
@@ -212,45 +209,99 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
                 continue;
             }
             let depth: f64 = face_average_depth(&face_world, camera);
-            face_batches.push((
-                depth,
-                face_world,
-                cube.face_color.clone(),
-                cube.edge_color.clone(),
-            ));
+            face_batches.push((depth, face_world));
         }
-    }
-    face_batches.sort_by(
-        |a: &(f64, Vec<Vector3D>, String, String), b: &(f64, Vec<Vector3D>, String, String)| {
+        face_batches.sort_by(|a: &(f64, Vec<Vector3D>), b: &(f64, Vec<Vector3D>)| {
             a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal)
-        },
-    );
-    for (_depth, face_world, face_color, edge_color) in &face_batches {
-        let screen_vertices: Vec<Vector3D> = face_world
-            .iter()
-            .map(|world: &Vector3D| camera.world_to_screen(*world))
-            .collect();
+        });
         let _ = Reflect::set(
             context,
             &JsValue::from_str(GAME_3D_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(face_color),
+            &JsValue::from_str(&cube.face_color),
         );
-        context.begin_path();
-        context.move_to(screen_vertices[0].get_x(), screen_vertices[0].get_y());
-        for screen_vertex in screen_vertices.iter().skip(1) {
-            context.line_to(screen_vertex.get_x(), screen_vertex.get_y());
+        for (_depth, face_world) in &face_batches {
+            let screen_vertices: Vec<Vector3D> = face_world
+                .iter()
+                .map(|world: &Vector3D| camera.world_to_screen(*world))
+                .collect();
+            context.begin_path();
+            context.move_to(screen_vertices[0].get_x(), screen_vertices[0].get_y());
+            for screen_vertex in screen_vertices.iter().skip(1) {
+                context.line_to(screen_vertex.get_x(), screen_vertex.get_y());
+            }
+            context.close_path();
+            context.fill();
         }
-        context.close_path();
-        context.fill();
+        let visible_edges: Vec<(usize, usize)> = collect_visible_edges(world_vertices, camera);
         let _ = Reflect::set(
             context,
             &JsValue::from_str(GAME_3D_PROPERTY_STROKE_STYLE),
-            &JsValue::from_str(edge_color),
+            &JsValue::from_str(&cube.edge_color),
         );
         context.set_line_width(1.5);
-        context.stroke();
+        context.set_line_join("miter");
+        for (i_a, i_b) in &visible_edges {
+            let v_a: Vector3D = world_vertices[*i_a];
+            let v_b: Vector3D = world_vertices[*i_b];
+            let s_a: Vector3D = camera.world_to_screen(v_a);
+            let s_b: Vector3D = camera.world_to_screen(v_b);
+            context.begin_path();
+            context.move_to(s_a.get_x(), s_a.get_y());
+            context.line_to(s_b.get_x(), s_b.get_y());
+            context.stroke();
+        }
     }
     ssaa_canvas.present();
+}
+
+/// Collects the unique edges of a cube that belong to at least one
+/// visible (front-facing) face.
+///
+/// Iterates the 12 cube edges in `GAME_3D_CUBE_EDGES` and returns those
+/// that are referenced by a face passing the back-face culling test. The
+/// returned edges are deduplicated (an edge shared by two visible faces
+/// appears only once) so the wireframe pass strokes each silhouette edge
+/// exactly once, avoiding the doubled strokes that would otherwise appear
+/// as "extra lines" at the inner corner of a cube's visible silhouette.
+///
+/// # Arguments
+///
+/// - `&[Vector3D]` - The cube's 8 world-space vertex positions.
+/// - `&Camera3D` - The camera used for back-face culling.
+///
+/// # Returns
+///
+/// - `Vec<(usize, usize)>` - The list of unique visible edge index pairs.
+fn collect_visible_edges(world_vertices: &[Vector3D], camera: &Camera3D) -> Vec<(usize, usize)> {
+    let mut visible_face_edges: std::collections::HashSet<(usize, usize)> =
+        std::collections::HashSet::new();
+    for (i0, i1, i2, i3) in GAME_3D_CUBE_FACES {
+        let face_world: Vec<Vector3D> = vec![
+            world_vertices[i0],
+            world_vertices[i1],
+            world_vertices[i2],
+            world_vertices[i3],
+        ];
+        if !is_face_visible(&face_world, camera) {
+            continue;
+        }
+        let mut add = |a: usize, b: usize| {
+            let key: (usize, usize) = if a < b { (a, b) } else { (b, a) };
+            visible_face_edges.insert(key);
+        };
+        add(i0, i1);
+        add(i1, i2);
+        add(i2, i3);
+        add(i3, i0);
+    }
+    GAME_3D_CUBE_EDGES
+        .iter()
+        .copied()
+        .filter(|(a, b): &(usize, usize)| {
+            let key: (usize, usize) = if a < b { (*a, *b) } else { (*b, *a) };
+            visible_face_edges.contains(&key)
+        })
+        .collect()
 }
 
 /// Performs one physics update step on all cubes.
@@ -376,18 +427,22 @@ pub(crate) fn draw_game_3d_loading() {
     context.clear_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
     let font_size: f64 = GAME_3D_CANVAS_HEIGHT * GAME_3D_LOADING_FONT_SIZE_RATIO;
     let font: String = format!("{font_size}px {GAME_3D_LOADING_FONT_FAMILY}");
-    // Read the loading text color from the CSS variable via getComputedStyle
+    // Read the loading text color from the CSS variable via getComputedStyle.
+    // Query the canvas element itself so the theme variable (defined on a
+    // parent container, not on the document root) is inherited correctly.
     let loading_color: String = window_value
-        .get_computed_style(
-            &window_value
-                .document()
-                .expect("should have a document")
-                .document_element()
-                .expect("should have a document element"),
-        )
+        .document()
+        .expect("should have a document")
+        .query_selector(GAME_3D_CANVAS_SELECTOR)
         .ok()
         .flatten()
-        .and_then(|style| style.get_property_value(GAME_3D_LOADING_COLOR_VAR).ok())
+        .and_then(|element: Element| {
+            window_value
+                .get_computed_style(&element)
+                .ok()
+                .flatten()
+                .and_then(|style| style.get_property_value(GAME_3D_LOADING_COLOR_VAR).ok())
+        })
         .unwrap_or_else(|| "#ffffff".to_string());
     let fill_style_key: JsValue = JsValue::from_str(GAME_3D_PROPERTY_FILL_STYLE);
     let _ = Reflect::set(context, &fill_style_key, &JsValue::from_str(&loading_color));
@@ -493,7 +548,7 @@ pub(crate) fn start_game_3d_loop(
             )
             .unwrap_or(0);
         raf_clone.set(Some(next_id));
-    }) as Box<dyn FnMut()>);
+    }));
     *closure_cell.borrow_mut() = Some(raf_closure);
     let start_timeout_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let start_timeout_clone: Rc<Cell<Option<i32>>> = start_timeout_id.clone();
@@ -516,7 +571,7 @@ pub(crate) fn start_game_3d_loop(
             )
             .unwrap_or(0);
         raf_for_start.set(Some(start_id));
-    }) as Box<dyn FnMut()>);
+    }));
     let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
     start_closure.forget();
     let window_value: Window = window().expect("no global window exists");
@@ -529,7 +584,7 @@ pub(crate) fn start_game_3d_loop(
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_3d_loading();
-    }) as Box<dyn FnMut()>);
+    }));
     let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
     loading_closure.forget();
     let _ =

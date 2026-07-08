@@ -153,7 +153,7 @@ impl SchedulerHandle {
                     .unwrap_or(0);
                 state_clone.borrow_mut().set_raf_id(Some(id));
             }
-        }) as Box<dyn FnMut()>);
+        }));
         let window_value: Window = window().expect("no global window exists");
         let id: i32 = window_value
             .request_animation_frame(raf_closure.as_ref().unchecked_ref())
