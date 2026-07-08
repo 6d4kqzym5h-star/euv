@@ -6,14 +6,17 @@ impl AssetCache {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The asset URL.
+    /// - `U: AsRef<str>` - The asset URL.
     ///
     /// # Returns
     ///
     /// - `Option<AssetState>` - The asset state, or `None`.
-    pub fn get_state(&self, url: &str) -> Option<AssetState> {
+    pub fn get_state<U>(&self, url: U) -> Option<AssetState>
+    where
+        U: AsRef<str>,
+    {
         self.get_entries()
-            .get(url)
+            .get(url.as_ref())
             .map(|entry: &AssetEntry| entry.get_state())
     }
 
@@ -21,13 +24,16 @@ impl AssetCache {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The asset URL.
+    /// - `U: AsRef<str>` - The asset URL.
     ///
     /// # Returns
     ///
     /// - `Option<HtmlImageElement>` - The loaded image, or `None`.
-    pub fn get_image(&self, url: &str) -> Option<HtmlImageElement> {
-        let entry: &AssetEntry = self.get_entries().get(url)?;
+    pub fn get_image<U>(&self, url: U) -> Option<HtmlImageElement>
+    where
+        U: AsRef<str>,
+    {
+        let entry: &AssetEntry = self.get_entries().get(url.as_ref())?;
         if entry.get_state() != AssetState::Loaded {
             return None;
         }
@@ -135,13 +141,16 @@ impl AssetLoader {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The asset URL.
+    /// - `U: AsRef<str>` - The asset URL.
     ///
     /// # Returns
     ///
     /// - `Option<HtmlImageElement>` - The loaded image, or `None`.
-    pub fn get_image(&self, url: &str) -> Option<HtmlImageElement> {
-        self.get_cache().borrow().get_image(url)
+    pub fn get_image<U>(&self, url: U) -> Option<HtmlImageElement>
+    where
+        U: AsRef<str>,
+    {
+        self.get_cache().borrow().get_image(url.as_ref())
     }
 
     /// Returns the progress ratio of loaded assets.
@@ -175,14 +184,17 @@ impl AssetLoader {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The image URL.
+    /// - `U: AsRef<str>` - The image URL.
     ///
     /// # Returns
     ///
     /// - `Option<HtmlImageElement>` - The image element, or `None` if creation failed.
-    pub fn create_image_element(url: &str) -> Option<HtmlImageElement> {
+    pub fn create_image_element<U>(url: U) -> Option<HtmlImageElement>
+    where
+        U: AsRef<str>,
+    {
         let image: HtmlImageElement = HtmlImageElement::new().ok()?;
-        image.set_src(url);
+        image.set_src(url.as_ref());
         Some(image)
     }
 }

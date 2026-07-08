@@ -13,17 +13,22 @@ impl Entity {
 
     /// Creates a new entity with the given name and a default identity transform.
     ///
+    /// Creates a new entity with the given name and a default identity transform.
+    ///
     /// # Arguments
     ///
-    /// - `&str` - The name of the entity.
+    /// - `N: AsRef<str>` - The name of the entity.
     ///
     /// # Returns
     ///
     /// - `Entity` - The newly created entity.
-    pub fn create(name: &str) -> Entity {
+    pub fn create<N>(name: N) -> Entity
+    where
+        N: AsRef<str>,
+    {
         Entity::new(
             Self::generate_id(),
-            name.to_string(),
+            name.as_ref().to_string(),
             Transform2D::identity(),
             true,
             Vec::new(),
@@ -68,11 +73,15 @@ impl Entity {
     /// # Returns
     ///
     /// - `Option<ComponentRc>` - The removed component, if found.
-    pub fn remove_component_by_name(&mut self, name: &str) -> Option<ComponentRc> {
+    pub fn remove_component_by_name<N>(&mut self, name: N) -> Option<ComponentRc>
+    where
+        N: AsRef<str>,
+    {
+        let target: &str = name.as_ref();
         let position: Option<usize> = self
             .get_components()
             .iter()
-            .position(|component: &ComponentRc| component.borrow().name() == name);
+            .position(|component: &ComponentRc| component.borrow().name() == target);
         let index: usize = position?;
         let removed: ComponentRc = self.get_mut_components().remove(index);
         removed.borrow_mut().on_destroy();
@@ -88,10 +97,14 @@ impl Entity {
     /// # Returns
     ///
     /// - `Option<ComponentRc>` - The matching component, if found.
-    pub fn get_component_by_name(&self, name: &str) -> Option<ComponentRc> {
+    pub fn get_component_by_name<N>(&self, name: N) -> Option<ComponentRc>
+    where
+        N: AsRef<str>,
+    {
+        let target: &str = name.as_ref();
         self.get_components()
             .iter()
-            .find(|component: &&ComponentRc| component.borrow().name() == name)
+            .find(|component: &&ComponentRc| component.borrow().name() == target)
             .cloned()
     }
 
@@ -152,8 +165,12 @@ impl Entity {
     /// # Returns
     ///
     /// - `bool` - True if the tag is present.
-    pub fn has_tag(&self, tag: &str) -> bool {
-        self.get_tags().iter().any(|t: &String| t == tag)
+    pub fn has_tag<T>(&self, tag: T) -> bool
+    where
+        T: AsRef<str>,
+    {
+        let target: &str = tag.as_ref();
+        self.get_tags().iter().any(|t: &String| t == target)
     }
 }
 
@@ -201,9 +218,12 @@ impl EventBus {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The event name to clear.
-    pub fn unsubscribe_all(&mut self, event_name: &str) {
-        self.get_mut_handlers().remove(event_name);
+    /// - `E: AsRef<str>` - The event name to clear.
+    pub fn unsubscribe_all<E>(&mut self, event_name: E)
+    where
+        E: AsRef<str>,
+    {
+        self.get_mut_handlers().remove(event_name.as_ref());
     }
 
     /// Returns the number of handlers registered for the named event.
@@ -215,9 +235,12 @@ impl EventBus {
     /// # Returns
     ///
     /// - `usize` - The handler count.
-    pub fn handler_count(&self, event_name: &str) -> usize {
+    pub fn handler_count<E>(&self, event_name: E) -> usize
+    where
+        E: AsRef<str>,
+    {
         self.get_handlers()
-            .get(event_name)
+            .get(event_name.as_ref())
             .map(|handlers: &Vec<EventHandler>| handlers.len())
             .unwrap_or(0)
     }

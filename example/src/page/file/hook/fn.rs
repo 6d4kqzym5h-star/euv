@@ -63,10 +63,8 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Ev
                 state.get_status().set("No files selected".to_string());
             } else {
                 let count: usize = names.len();
-                state
-                    .get_status()
-                    .set(format!("{} file(s) selected", count));
-                Console::log(format!("Files selected: {:?}", names));
+                state.get_status().set(format!("{count} file(s) selected"));
+                Console::log(format!("Files selected: {names:?}"));
             }
         }
     }))

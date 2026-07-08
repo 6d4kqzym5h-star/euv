@@ -193,7 +193,7 @@ pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Even
                 let raw: String = if data.is_string() {
                     data.as_string().unwrap_or_default()
                 } else {
-                    format!("{:?}", data)
+                    format!("{data:?}")
                 };
                 let ws_message: WsMessage = parse_ws_message(&raw);
                 let mut messages: Vec<WsMessage> = state.get_messages().get();

@@ -18,7 +18,7 @@ use crate::*;
 pub(crate) fn badge_on_click(badge_name: &str, level: LogLevel) -> Option<Rc<dyn Fn(Event)>> {
     let name: String = badge_name.to_string();
     Some(Rc::new(move |_: Event| {
-        let message: String = format!("{} badge clicked!", name);
+        let message: String = format!("{name} badge clicked!");
         match level {
             LogLevel::Log => Console::log(&message),
             LogLevel::Warn => Console::warn(&message),

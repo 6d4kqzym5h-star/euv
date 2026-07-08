@@ -83,7 +83,7 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                     }
                 }
                 div {
-                    class: c_game_canvas_wrapper(&format!("{} / {}", GAME_3D_CANVAS_WIDTH , GAME_3D_CANVAS_HEIGHT))
+                    class: c_game_canvas_wrapper(&format!("{GAME_3D_CANVAS_WIDTH} / {GAME_3D_CANVAS_HEIGHT}"))
                     canvas {
                         id: GAME_3D_CANVAS_ID
                         class: c_game_3d_canvas()

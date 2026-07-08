@@ -57,7 +57,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         if let Some(keyboard_event) = event.dyn_ref::<KeyboardEvent>() {
             let key_name: String = keyboard_event.key();
             keyboard.get_last_key_up().set(key_name.clone());
-            Console::log(format!("KeyUp: {}", key_name));
+            Console::log(format!("KeyUp: {key_name}"));
         }
     };
     let on_mouse_click = move |event: Event| {
@@ -397,9 +397,9 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             })
             .collect::<Vec<String>>()
             .join(", ");
-        let info: String = format!("Cancel: [{}]", detail);
+        let info: String = format!("Cancel: [{detail}]");
         touch.get_touch_info().set(info);
-        Console::log(format!("TouchCancel: [{}]", detail));
+        Console::log(format!("TouchCancel: [{detail}]"));
     };
     let on_form_submit = move |event: Event| {
         event.prevent_default();

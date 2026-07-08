@@ -10,7 +10,7 @@ pub(crate) fn use_todo_list() -> UseTodoList {
         App::use_signal(|| {
             let mut items: Vec<String> = Vec::with_capacity(1000);
             for index in 1..=1000 {
-                items.push(format!("Item {}", index));
+                items.push(format!("Item {index}"));
             }
             items
         }),

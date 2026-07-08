@@ -102,7 +102,7 @@ pub fn class(input: TokenStream) -> TokenStream {
 /// let count = App::use_signal(|| 0_i32);
 /// let name = App::use_signal(|| String::from("euv"));
 /// watch!(count, name, |count_val: i32, name_val: String| {
-///     web_sys::console::log_1(&format!("count={}, name={}", count_val, name_val).into());
+///     web_sys::console::log_1(&format!("count={count_val}, name={name_val}").into());
 /// });
 /// ```
 #[proc_macro]
@@ -129,7 +129,7 @@ pub fn watch(input: TokenStream) -> TokenStream {
 /// let first_name = App::use_signal(|| String::from("John"));
 /// let last_name = App::use_signal(|| String::from("Doe"));
 /// let full_name: Signal<String> = computed!(first_name, last_name, |first: String, last: String| -> String {
-///     format!("{} {}", first, last)
+///     format!("{first} {last}")
 /// });
 /// ```
 #[proc_macro]

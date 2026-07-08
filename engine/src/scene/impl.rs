@@ -35,9 +35,12 @@ impl SceneManager {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The name of the scene to remove.
-    pub fn unregister(&mut self, name: &str) {
-        self.get_mut_scenes().remove(name);
+    /// - `N: AsRef<str>` - The name of the scene to remove.
+    pub fn unregister<N>(&mut self, name: N)
+    where
+        N: AsRef<str>,
+    {
+        self.get_mut_scenes().remove(name.as_ref());
     }
 
     /// Transitions to the scene with the given name.
@@ -47,13 +50,17 @@ impl SceneManager {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The name of the scene to switch to.
+    /// - `N: AsRef<str>` - The name of the scene to switch to.
     ///
     /// # Returns
     ///
     /// - `bool` - True if the transition was successful.
-    pub fn switch_to(&mut self, name: &str) -> bool {
-        if !self.get_scenes().contains_key(name) {
+    pub fn switch_to<N>(&mut self, name: N) -> bool
+    where
+        N: AsRef<str>,
+    {
+        let name_ref: &str = name.as_ref();
+        if !self.get_scenes().contains_key(name_ref) {
             return false;
         }
         let current_name: Option<String> = self.get_mut_current_scene_name().clone();
@@ -62,8 +69,8 @@ impl SceneManager {
         {
             current_scene.borrow_mut().on_exit();
         }
-        self.set_current_scene_name(Some(name.to_string()));
-        if let Some(new_scene) = self.get_scenes().get(name) {
+        self.set_current_scene_name(Some(name_ref.to_string()));
+        if let Some(new_scene) = self.get_scenes().get(name_ref) {
             new_scene.borrow_mut().on_enter();
         }
         true
@@ -122,13 +129,16 @@ impl SceneManager {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The scene name to check.
+    /// - `N: AsRef<str>` - The scene name to check.
     ///
     /// # Returns
     ///
     /// - `bool` - True if the scene is registered.
-    pub fn has_scene(&self, name: &str) -> bool {
-        self.get_scenes().contains_key(name)
+    pub fn has_scene<N>(&self, name: N) -> bool
+    where
+        N: AsRef<str>,
+    {
+        self.get_scenes().contains_key(name.as_ref())
     }
 
     /// Returns the name of the currently active scene.

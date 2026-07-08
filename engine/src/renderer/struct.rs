@@ -63,6 +63,12 @@ pub struct CanvasRenderer {
     /// The active camera controlling the viewport.
     #[get(type(copy))]
     pub(crate) camera: Camera2D,
+    /// The active rendering quality preset.
+    ///
+    /// Controls `imageSmoothingEnabled`, `imageSmoothingQuality`, and
+    /// `textRendering` on the underlying context. Defaults to `Medium`.
+    #[get(type(copy))]
+    pub(crate) quality: RenderQuality,
 }
 
 /// A linear gradient defined by two endpoints and a list of color stops.
@@ -158,6 +164,13 @@ pub struct SsaaCanvas {
     /// The supersampling scale factor (e.g., 2.0 means 4x SSAA).
     #[get(type(copy))]
     pub(crate) scale_factor: f64,
+    /// The rendering quality preset for the downscaling present step.
+    ///
+    /// Controls the smoothing strategy when the offscreen buffer is
+    /// downscaled onto the display canvas. Defaults to `Medium`.
+    #[new(skip)]
+    #[get(type(copy))]
+    pub(crate) quality: RenderQuality,
     /// The logical display width in CSS pixels.
     #[get(type(copy))]
     pub(crate) width: f64,

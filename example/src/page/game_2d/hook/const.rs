@@ -4,9 +4,6 @@ pub(crate) const GAME_2D_CANVAS_ID: &str = "game-2d-canvas";
 /// The CSS selector used to query the 2D game canvas element from the DOM.
 pub(crate) const GAME_2D_CANVAS_SELECTOR: &str = "#game-2d-canvas";
 
-/// The canvas 2D rendering context type identifier.
-pub(crate) const GAME_2D_CONTEXT_TYPE_2D: &str = "2d";
-
 /// The default canvas width in CSS pixels.
 pub(crate) const GAME_2D_CANVAS_WIDTH: f64 = 600.0;
 

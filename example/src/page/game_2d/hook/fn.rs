@@ -335,17 +335,19 @@ pub(crate) fn resolve_ball_collision(a: &mut Ball, b: &mut Ball) {
     b.velocity += impulse.scaled(1.0 / mass_b);
 }
 
-/// Renders all balls onto the canvas using a pre-cached rendering context.
+/// Renders all balls onto the supplied SSAA canvas and presents the result.
 ///
-/// Clears the canvas to transparency so the CSS `background` property
-/// (set to `var(--accent)`) shows through, then draws each ball as a
-/// filled circle with its assigned color.
+/// Draws onto the offscreen context using logical CSS-pixel coordinates,
+/// then delegates to `present()` for HiDPI-friendly downscaling. The canvas
+/// backing store is sized to `devicePixelRatio * scale_factor` automatically
+/// by `SsaaCanvas::from_selector_with_scale`.
 ///
 /// # Arguments
 ///
-/// - `&CanvasRenderingContext2d` - The cached canvas 2D rendering context.
+/// - `&SsaaCanvas` - The SSAA canvas wrapper.
 /// - `&[Ball]` - The ball list to render.
-pub(crate) fn render_balls_with_context(context: &CanvasRenderingContext2d, balls: &[Ball]) {
+pub(crate) fn render_balls_with_ssaa(ssaa_canvas: &SsaaCanvas, balls: &[Ball]) {
+    let context: &CanvasRenderingContext2d = ssaa_canvas.get_offscreen_context();
     context.clear_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
     let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);
     for ball in balls {
@@ -360,27 +362,43 @@ pub(crate) fn render_balls_with_context(context: &CanvasRenderingContext2d, ball
         );
         context.fill();
     }
+    ssaa_canvas.present();
 }
 
-/// Queries the 2D game canvas element and caches its 2D rendering context.
+/// Queries the 2D game canvas element and constructs an SSAA wrapper for it.
+///
+/// Picks the SSAA scale factor via the same desktop/mobile heuristic used
+/// for the 3D game (2x on desktop, 1x on mobile). The DPR multiplier is
+/// applied automatically inside `SsaaCanvas::from_selector_with_scale`.
+///
+/// Returns the underlying display element alongside the SSAA wrapper so
+/// that click handlers can map viewport coordinates into canvas space.
 ///
 /// # Returns
 ///
-/// - `Option<(HtmlCanvasElement, CanvasRenderingContext2d)>` - The canvas element and cached context, or `None` if unavailable.
-pub(crate) fn acquire_game_2d_canvas() -> Option<(HtmlCanvasElement, CanvasRenderingContext2d)> {
+/// - `Option<(HtmlCanvasElement, SsaaCanvas)>` - The display canvas plus
+///   the SSAA wrapper, or `None` if the canvas element was not found.
+pub(crate) fn acquire_game_2d_ssaa_canvas() -> Option<(HtmlCanvasElement, SsaaCanvas)> {
     let window_value: Window = window().expect("no global window exists");
+    let is_mobile: bool = window_value
+        .inner_width()
+        .ok()
+        .and_then(|value: JsValue| value.as_f64())
+        .is_some_and(|width: f64| width < 768.0);
+    let scale_factor: f64 = if is_mobile { 1.0 } else { 2.0 };
+    let ssaa_canvas: SsaaCanvas = SsaaCanvas::from_selector_with_scale(
+        GAME_2D_CANVAS_SELECTOR,
+        GAME_2D_CANVAS_WIDTH,
+        GAME_2D_CANVAS_HEIGHT,
+        scale_factor,
+    )?;
     let document_value: Document = window_value.document().expect("should have a document");
     let element: Element = document_value
         .query_selector(GAME_2D_CANVAS_SELECTOR)
         .ok()
         .flatten()?;
-    let canvas: HtmlCanvasElement = element.unchecked_into();
-    canvas.set_width(GAME_2D_CANVAS_WIDTH as u32);
-    canvas.set_height(GAME_2D_CANVAS_HEIGHT as u32);
-    let context_object: Object = canvas.get_context(GAME_2D_CONTEXT_TYPE_2D).ok().flatten()?;
-    let context: CanvasRenderingContext2d = context_object.unchecked_into();
-    CanvasRenderer::enable_context_anti_aliasing(&context);
-    Some((canvas, context))
+    let display_canvas: HtmlCanvasElement = element.unchecked_into();
+    Some((display_canvas, ssaa_canvas))
 }
 
 /// Draws the loading text centered on the 2D game canvas using SSAA.
@@ -443,7 +461,7 @@ pub(crate) fn start_game_2d_loop(
     balls: Rc<RefCell<Vec<Ball>>>,
     canvas_cache: CanvasCache,
 ) {
-    let canvas_context: Rc<RefCell<Option<CanvasRenderingContext2d>>> = Rc::new(RefCell::new(None));
+    let canvas_ssaa: Rc<RefCell<Option<SsaaCanvas>>> = Rc::new(RefCell::new(None));
     let resize_dirty: Rc<Cell<bool>> = Rc::new(Cell::new(false));
     let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
     let last_time: Rc<Cell<f64>> = Rc::new(Cell::new(-1.0));
@@ -460,7 +478,7 @@ pub(crate) fn start_game_2d_loop(
     let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
     let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
     let cell_clone: RafClosureCell = closure_cell.clone();
-    let context_clone: Rc<RefCell<Option<CanvasRenderingContext2d>>> = canvas_context.clone();
+    let context_clone: Rc<RefCell<Option<SsaaCanvas>>> = canvas_ssaa.clone();
     let dirty_clone: Rc<Cell<bool>> = resize_dirty.clone();
     let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let window_value: Window = window().expect("no global window exists");
@@ -488,13 +506,13 @@ pub(crate) fn start_game_2d_loop(
             dirty_clone.set(false);
         }
         if context_clone.borrow().is_none()
-            && let Some((canvas_el, ctx)) = acquire_game_2d_canvas()
+            && let Some((canvas_el, ssaa_canvas)) = acquire_game_2d_ssaa_canvas()
         {
             *cache_clone.0.borrow_mut() = Some(canvas_el);
-            *context_clone.borrow_mut() = Some(ctx);
+            *context_clone.borrow_mut() = Some(ssaa_canvas);
         }
-        if let Some(context) = context_clone.borrow().as_ref() {
-            render_balls_with_context(context, &balls_clone.borrow());
+        if let Some(ssaa_canvas) = context_clone.borrow().as_ref() {
+            render_balls_with_ssaa(ssaa_canvas, &balls_clone.borrow());
         }
         frame_clone.set(frame_clone.get() + 1);
         fps_clone.set(fps_clone.get() + frame_time);

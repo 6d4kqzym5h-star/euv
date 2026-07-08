@@ -58,7 +58,7 @@ pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> Virt
                 class: c_virtual_list_card()
                 h3 {
                     class: c_card_title()
-                    format!("{} Items Virtual Scroll", VIRTUAL_LIST_DEMO_TOTAL_COUNT)
+                    format!("{VIRTUAL_LIST_DEMO_TOTAL_COUNT} Items Virtual Scroll")
                 }
                 div {
                     class: c_virtual_list_status()

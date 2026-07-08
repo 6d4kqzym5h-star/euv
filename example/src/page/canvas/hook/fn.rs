@@ -126,7 +126,7 @@ pub(crate) fn start_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
+    CanvasRenderer::enable_smoothing_on(&context_2d);
     context_2d.begin_path();
     let _ = Reflect::set(
         &context_2d,
@@ -178,7 +178,7 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
+    CanvasRenderer::enable_smoothing_on(&context_2d);
     let _ = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
@@ -337,7 +337,7 @@ pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_full
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
+    CanvasRenderer::enable_smoothing_on(&context_2d);
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
     let stroke_color: String = state.get_stroke_color().get();
     let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
@@ -403,7 +403,7 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
+    CanvasRenderer::enable_smoothing_on(&context_2d);
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
     let _ = Reflect::set(
         &context_2d,
@@ -609,7 +609,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
         return;
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
-    CanvasRenderer::enable_context_anti_aliasing(&context_2d);
+    CanvasRenderer::enable_smoothing_on(&context_2d);
     context_2d
         .scale(device_pixel_ratio, device_pixel_ratio)
         .unwrap_or(());
@@ -779,7 +779,7 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
             };
             input
                 .style()
-                .set_property("--value", &format!("{}%", percent))
+                .set_property("--value", &format!("{percent}%"))
                 .unwrap_or(());
         }
         pending_value.set(new_width);

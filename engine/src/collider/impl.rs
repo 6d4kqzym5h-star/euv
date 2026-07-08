@@ -199,23 +199,6 @@ impl Collider for CircleCollider {
     }
 }
 
-/// Implements broad-phase collision checking for `Rect`.
-impl Rect {
-    /// Performs a broad-phase check using bounding boxes to quickly reject non-colliding pairs.
-    ///
-    /// # Arguments
-    ///
-    /// - `Rect` - The first bounding box.
-    /// - `Rect` - The second bounding box.
-    ///
-    /// # Returns
-    ///
-    /// - `bool` - True if the bounding boxes overlap.
-    pub fn broad_phase_check(a: Rect, b: Rect) -> bool {
-        a.intersects(b)
-    }
-}
-
 /// Implements `Collider3D` trait and convenience methods for `AabbCollider3D`.
 impl AabbCollider3D {
     /// Creates a new 3D AABB collider from a center point and dimensions.
@@ -456,7 +439,7 @@ impl AABB3D {
     /// # Returns
     ///
     /// - `bool` - True if the bounding boxes overlap.
-    pub fn broad_phase_check(a: AABB3D, b: AABB3D) -> bool {
+    pub fn broad_phase(a: AABB3D, b: AABB3D) -> bool {
         a.intersects(b)
     }
 }

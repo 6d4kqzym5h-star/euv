@@ -216,7 +216,7 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
             let percent = (clamped as f64 / 255.0 * 100.0).clamp(0.0, 100.0);
             input
                 .style()
-                .set_property("--value", &format!("{}%", percent))
+                .set_property("--value", &format!("{percent}%"))
                 .unwrap_or(());
             pending_value.set(clamped);
             if raf_id.get().is_some() {

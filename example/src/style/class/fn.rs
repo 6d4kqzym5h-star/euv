@@ -54,6 +54,11 @@ class! {
         touch-action: "none";
     }
 
+    pub c_canvas_pixelated {
+        image-rendering: "pixelated";
+        image-rendering: "crisp-edges";
+    }
+
     pub c_keep_alive_tab_visible {
         display: "block";
     }

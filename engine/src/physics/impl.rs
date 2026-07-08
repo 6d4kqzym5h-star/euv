@@ -237,7 +237,7 @@ impl RigidBody2D {
     fn check_collision_with(&self, other: &RigidBody2D) -> Option<CollisionResult> {
         let a_bbox: Rect = self.bounding_box()?;
         let b_bbox: Rect = other.bounding_box()?;
-        if !Rect::broad_phase_check(a_bbox, b_bbox) {
+        if !Rect::broad_phase_alias(a_bbox, b_bbox) {
             return None;
         }
         let self_collider: Option<BodyCollider> = self.get_collider();
@@ -725,7 +725,7 @@ impl PhysicsWorld3D {
     fn check_collision_3d(a: &RigidBody3D, b: &RigidBody3D) -> Option<CollisionResult3D> {
         let a_bbox: AABB3D = a.bounding_box()?;
         let b_bbox: AABB3D = b.bounding_box()?;
-        if !AABB3D::broad_phase_check(a_bbox, b_bbox) {
+        if !AABB3D::broad_phase(a_bbox, b_bbox) {
             return None;
         }
         let a_collider: Option<BodyCollider3D> = a.get_collider();

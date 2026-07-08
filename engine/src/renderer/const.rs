@@ -49,11 +49,23 @@ pub(crate) const RENDERER_PROPERTY_TEXT_RENDERING: &str = "textRendering";
 /// The high-quality text rendering value for geometric precision.
 pub(crate) const RENDERER_TEXT_RENDERING_GEOMETRIC_PRECISION: &str = "geometricPrecision";
 
+/// The window property name for device pixel ratio (HiDPI scale factor).
+pub(crate) const RENDERER_PROPERTY_DEVICE_PIXEL_RATIO: &str = "devicePixelRatio";
+
+/// The fallback device pixel ratio when window detection fails.
+pub(crate) const RENDERER_DEFAULT_DEVICE_PIXEL_RATIO: f64 = 1.0;
+
 /// The canvas context property name for image smoothing enabled.
 pub(crate) const RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED: &str = "imageSmoothingEnabled";
 
 /// The canvas context property name for image smoothing quality.
 pub(crate) const RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY: &str = "imageSmoothingQuality";
+
+/// The low-quality image smoothing value (fastest, pixelated-friendly).
+pub(crate) const RENDERER_IMAGE_SMOOTHING_QUALITY_LOW: &str = "low";
+
+/// The medium-quality image smoothing value.
+pub(crate) const RENDERER_IMAGE_SMOOTHING_QUALITY_MEDIUM: &str = "medium";
 
 /// The high-quality image smoothing value.
 pub(crate) const RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH: &str = "high";

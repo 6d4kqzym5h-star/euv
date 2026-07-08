@@ -694,7 +694,7 @@ impl Css {
 
 /// Displays the CSS class name.
 ///
-/// This enables `format!("{}", css)` to produce the class name string,
+/// This enables `format!("{css}")` to produce the class name string,
 /// which is required for reactive `if` conditions in `class:` attributes.
 impl Display for Css {
     /// Formats the CSS class as its name string.

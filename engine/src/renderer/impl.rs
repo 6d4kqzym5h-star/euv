@@ -91,13 +91,17 @@ impl CanvasRenderer {
     /// # Arguments
     ///
     /// - `f64` - The font size in pixels.
-    /// - `&str` - The font family name.
+    /// - `F: AsRef<str>` - The font family name.
     ///
     /// # Returns
     ///
     /// - `String` - The CSS font string (e.g., `"16px sans-serif"`).
-    pub fn build_font_string(size: f64, family: &str) -> String {
-        format!("{}px {}", size, family)
+    pub fn font<F>(size: f64, family: F) -> String
+    where
+        F: AsRef<str>,
+    {
+        let family: &str = family.as_ref();
+        format!("{size}px {family}")
     }
 
     /// Creates a default font string using the default font size and family.
@@ -105,29 +109,77 @@ impl CanvasRenderer {
     /// # Returns
     ///
     /// - `String` - The default CSS font string.
-    pub fn default_font_string() -> String {
-        Self::build_font_string(RENDERER_DEFAULT_FONT_SIZE, RENDERER_DEFAULT_FONT_FAMILY)
+    pub fn default_font() -> String {
+        Self::font(RENDERER_DEFAULT_FONT_SIZE, RENDERER_DEFAULT_FONT_FAMILY)
     }
 
     /// Enables high-quality anti-aliasing on an arbitrary canvas 2D context.
     ///
-    /// Sets `imageSmoothingEnabled` to `true` and `imageSmoothingQuality` to `"high"`
-    /// on the given context. This is a static utility for code that manages its own
-    /// `CanvasRenderingContext2d` without using a `CanvasRenderer` instance.
+    /// Applies the `High` rendering quality preset via `apply_quality`,
+    /// which sets `imageSmoothingEnabled`, `imageSmoothingQuality = "high"`,
+    /// and `textRendering = "geometricPrecision"` on the given context.
+    ///
+    /// Use this static helper when you manage your own `CanvasRenderingContext2d`
+    /// and don't hold a `CanvasRenderer` instance. For instances, call
+    /// `renderer.enable_smoothing()` instead.
     ///
     /// # Arguments
     ///
     /// - `&CanvasRenderingContext2d` - The canvas context to configure.
-    pub fn enable_context_anti_aliasing(context: &CanvasRenderingContext2d) {
+    pub fn enable_smoothing_on(context: &CanvasRenderingContext2d) {
+        Self::apply_quality(context, RenderQuality::High);
+    }
+
+    /// Detects the host device pixel ratio (HiDPI scale factor) via reflection.
+    ///
+    /// Reads `window.devicePixelRatio` using `Reflect::get` because the
+    /// `web-sys` `Window` features currently in use do not expose a native
+    /// getter for this property. Falls back to
+    /// `RENDERER_DEFAULT_DEVICE_PIXEL_RATIO` (1.0) when the value is missing,
+    /// not a finite number, or below 1.0.
+    ///
+    /// # Returns
+    ///
+    /// - `f64` - The detected device pixel ratio (clamped to `>= 1.0`).
+    pub fn detect_dpr() -> f64 {
+        let window_value: Window = window().expect("no global window exists");
+        let raw: Option<f64> = Reflect::get(
+            window_value.as_ref(),
+            &JsValue::from_str(RENDERER_PROPERTY_DEVICE_PIXEL_RATIO),
+        )
+        .ok()
+        .and_then(|value: JsValue| value.as_f64());
+        raw.filter(|value: &f64| value.is_finite() && *value >= 1.0)
+            .unwrap_or(RENDERER_DEFAULT_DEVICE_PIXEL_RATIO)
+    }
+
+    /// Applies the given `RenderQuality` preset to an arbitrary canvas context.
+    ///
+    /// Sets `imageSmoothingEnabled`, `imageSmoothingQuality`, and
+    /// `textRendering` according to the supplied quality. `Low` disables
+    /// smoothing (intended for use with CSS `image-rendering: pixelated`),
+    /// `Medium` and `High` enable it with the matching quality level.
+    ///
+    /// # Arguments
+    ///
+    /// - `&CanvasRenderingContext2d` - The target context.
+    /// - `RenderQuality` - The quality preset to apply.
+    pub(crate) fn apply_quality(context: &CanvasRenderingContext2d, quality: RenderQuality) {
+        let smoothing_enabled: bool = !matches!(quality, RenderQuality::Low);
         let _ = Reflect::set(
             context,
             &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED),
-            &JsValue::from_bool(true),
+            &JsValue::from_bool(smoothing_enabled),
         );
+        let quality_value: &str = match quality {
+            RenderQuality::Low => RENDERER_IMAGE_SMOOTHING_QUALITY_LOW,
+            RenderQuality::Medium => RENDERER_IMAGE_SMOOTHING_QUALITY_MEDIUM,
+            RenderQuality::High => RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH,
+        };
         let _ = Reflect::set(
             context,
             &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
-            &JsValue::from_str(RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH),
+            &JsValue::from_str(quality_value),
         );
         let _ = Reflect::set(
             context,
@@ -166,15 +218,18 @@ impl CanvasRenderer {
     /// # Returns
     ///
     /// - `Option<CanvasRenderer>` - The renderer, or `None` if the canvas was not found.
-    pub fn from_selector(
-        canvas_selector: &str,
+    pub fn from_selector<S>(
+        canvas_selector: S,
         viewport_width: f64,
         viewport_height: f64,
-    ) -> Option<CanvasRenderer> {
+    ) -> Option<CanvasRenderer>
+    where
+        S: AsRef<str>,
+    {
         let window_value: Window = window().expect("no global window exists");
         let document_value: Document = window_value.document().expect("should have a document");
         let element: Element = document_value
-            .query_selector(canvas_selector)
+            .query_selector(canvas_selector.as_ref())
             .ok()
             .flatten()?;
         let canvas_element: HtmlCanvasElement = element.unchecked_into();
@@ -183,29 +238,22 @@ impl CanvasRenderer {
             .ok()
             .flatten()?;
         let context: CanvasRenderingContext2d = context_object.unchecked_into();
-        Some(CanvasRenderer::new(
+        let renderer: CanvasRenderer = CanvasRenderer::new(
             context,
             Camera2D::create(viewport_width, viewport_height),
-        ))
+            RenderQuality::default(),
+        );
+        renderer.enable_smoothing();
+        Some(renderer)
     }
 
     /// Enables high-quality anti-aliasing on the canvas context by setting
     /// `imageSmoothingEnabled` to `true` and `imageSmoothingQuality` to `"high"`.
     ///
-    /// This improves the quality of image scaling operations (e.g., `draw_image`)
-    /// but does not affect vector primitives like lines and fills, which are
-    /// already anti-aliased by the browser's 2D canvas implementation.
-    pub fn enable_anti_aliasing(&self) {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED),
-            &JsValue::from_bool(true),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
-            &JsValue::from_str(RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH),
-        );
+    /// Applies the active `quality` preset via the shared `apply_quality`
+    /// helper so that all smoothing-related settings are kept in sync.
+    pub fn enable_smoothing(&self) {
+        Self::apply_quality(self.get_context(), self.get_quality());
     }
 
     /// Clears the entire canvas viewport.
@@ -222,12 +270,15 @@ impl CanvasRenderer {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS color string (e.g., `"#000000"`).
-    pub fn clear_with_color(&self, color: &str) {
+    /// - `C: AsRef<str>` - The CSS color string (e.g., `"#000000"`).
+    pub fn clear_color<C>(&self, color: C)
+    where
+        C: AsRef<str>,
+    {
         let _ = Reflect::set(
             self.get_context(),
             &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(color),
+            &JsValue::from_str(color.as_ref()),
         );
         self.get_context().fill_rect(
             0.0,
@@ -271,12 +322,15 @@ impl CanvasRenderer {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS color string.
-    pub fn set_fill_color(&self, color: &str) {
+    /// - `C: AsRef<str>` - The CSS color string.
+    pub fn set_fill_color<C>(&self, color: C)
+    where
+        C: AsRef<str>,
+    {
         let _ = Reflect::set(
             self.get_context(),
             &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(color),
+            &JsValue::from_str(color.as_ref()),
         );
     }
 
@@ -284,12 +338,15 @@ impl CanvasRenderer {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS color string.
-    pub fn set_stroke_color(&self, color: &str) {
+    /// - `C: AsRef<str>` - The CSS color string.
+    pub fn set_stroke_color<C>(&self, color: C)
+    where
+        C: AsRef<str>,
+    {
         let _ = Reflect::set(
             self.get_context(),
             &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
-            &JsValue::from_str(color),
+            &JsValue::from_str(color.as_ref()),
         );
     }
 
@@ -388,11 +445,14 @@ impl CanvasRenderer {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The text to draw.
+    /// - `T: AsRef<str>` - The text to draw.
     /// - `Vector2D` - The position in world space.
-    pub fn fill_text(&self, text: &str, position: Vector2D) {
+    pub fn fill_text<T>(&self, text: T, position: Vector2D)
+    where
+        T: AsRef<str>,
+    {
         self.get_context()
-            .fill_text(text, position.get_x(), position.get_y())
+            .fill_text(text.as_ref(), position.get_x(), position.get_y())
             .unwrap_or(());
     }
 
@@ -400,12 +460,15 @@ impl CanvasRenderer {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS font string (e.g., `"16px sans-serif"`).
-    pub fn set_font(&self, font: &str) {
+    /// - `F: AsRef<str>` - The CSS font string (e.g., `"16px sans-serif"`).
+    pub fn set_font<F>(&self, font: F)
+    where
+        F: AsRef<str>,
+    {
         let _ = Reflect::set(
             self.get_context(),
             &JsValue::from_str(RENDERER_PROPERTY_FONT),
-            &JsValue::from_str(font),
+            &JsValue::from_str(font.as_ref()),
         );
     }
 
@@ -444,7 +507,7 @@ impl CanvasRenderer {
     /// - `Vector2D` - The destination top-left position in world space.
     /// - `f64` - The destination width.
     /// - `f64` - The destination height.
-    pub fn draw_image_subregion(
+    pub fn draw_image_rect(
         &self,
         image: &HtmlImageElement,
         source: Rect,
@@ -554,7 +617,7 @@ impl Camera3D {
     /// # Returns
     ///
     /// - `Matrix4x4` - The view-projection matrix.
-    pub fn view_projection_matrix(&self) -> Matrix4x4 {
+    pub fn view_proj_matrix(&self) -> Matrix4x4 {
         self.projection_matrix().multiply(self.view_matrix())
     }
 
@@ -568,7 +631,7 @@ impl Camera3D {
     ///
     /// - `Vector3D` - The screen-space point where x and y are in [0, 1] and z is the depth.
     pub fn world_to_screen(&self, world: Vector3D) -> Vector3D {
-        let clip: Vector3D = self.view_projection_matrix().transform_point(world);
+        let clip: Vector3D = self.view_proj_matrix().transform_point(world);
         Vector3D::new(
             (clip.get_x() + 1.0) * 0.5 * self.get_viewport_width(),
             (1.0 - clip.get_y()) * 0.5 * self.get_viewport_height(),
@@ -585,8 +648,8 @@ impl Camera3D {
     /// # Returns
     ///
     /// - `bool` - True if the point is within the frustum.
-    pub fn is_in_frustum(&self, world: Vector3D) -> bool {
-        let clip: Vector3D = self.view_projection_matrix().transform_point(world);
+    pub fn in_frustum(&self, world: Vector3D) -> bool {
+        let clip: Vector3D = self.view_proj_matrix().transform_point(world);
         clip.get_x() >= -1.0
             && clip.get_x() <= 1.0
             && clip.get_y() >= -1.0
@@ -659,14 +722,17 @@ impl SsaaCanvas {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS selector for the display canvas element.
+    /// - `S: AsRef<str>` - The CSS selector for the display canvas element.
     /// - `f64` - The logical display width in CSS pixels.
     /// - `f64` - The logical display height in CSS pixels.
     ///
     /// # Returns
     ///
     /// - `Option<SsaaCanvas>` - The SSAA canvas, or `None` if the canvas was not found.
-    pub fn from_selector(canvas_selector: &str, width: f64, height: f64) -> Option<SsaaCanvas> {
+    pub fn from_selector<S>(canvas_selector: S, width: f64, height: f64) -> Option<SsaaCanvas>
+    where
+        S: AsRef<str>,
+    {
         Self::from_selector_with_scale(
             canvas_selector,
             width,
@@ -682,7 +748,7 @@ impl SsaaCanvas {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS selector for the display canvas element.
+    /// - `S: AsRef<str>` - The CSS selector for the display canvas element.
     /// - `f64` - The logical display width in CSS pixels.
     /// - `f64` - The logical display height in CSS pixels.
     /// - `f64` - The supersampling scale factor (e.g., 2.0 for 4x SSAA).
@@ -690,32 +756,39 @@ impl SsaaCanvas {
     /// # Returns
     ///
     /// - `Option<SsaaCanvas>` - The SSAA canvas, or `None` if the canvas was not found.
-    pub fn from_selector_with_scale(
-        canvas_selector: &str,
+    pub fn from_selector_with_scale<S>(
+        canvas_selector: S,
         width: f64,
         height: f64,
         scale_factor: f64,
-    ) -> Option<SsaaCanvas> {
+    ) -> Option<SsaaCanvas>
+    where
+        S: AsRef<str>,
+    {
         let window_value: Window = window().expect("no global window exists");
         let document_value: Document = window_value.document().expect("should have a document");
         let element: Element = document_value
-            .query_selector(canvas_selector)
+            .query_selector(canvas_selector.as_ref())
             .ok()
             .flatten()?;
         let display_canvas: HtmlCanvasElement = element.unchecked_into();
-        display_canvas.set_width(width as u32);
-        display_canvas.set_height(height as u32);
+        let device_pixel_ratio: f64 = CanvasRenderer::detect_dpr();
+        let physical_width: u32 = (width * device_pixel_ratio).round() as u32;
+        let physical_height: u32 = (height * device_pixel_ratio).round() as u32;
+        display_canvas.set_width(physical_width);
+        display_canvas.set_height(physical_height);
         let display_context_object: Object = display_canvas
             .get_context(RENDERER_CONTEXT_TYPE_2D)
             .ok()
             .flatten()?;
         let display_context: CanvasRenderingContext2d = display_context_object.unchecked_into();
+        let _ = display_context.scale(device_pixel_ratio, device_pixel_ratio);
         let offscreen_canvas: HtmlCanvasElement = document_value
             .create_element(RENDERER_ELEMENT_CANVAS)
             .ok()?
             .unchecked_into();
-        let scaled_width: u32 = (width * scale_factor) as u32;
-        let scaled_height: u32 = (height * scale_factor) as u32;
+        let scaled_width: u32 = (width * scale_factor * device_pixel_ratio).round() as u32;
+        let scaled_height: u32 = (height * scale_factor * device_pixel_ratio).round() as u32;
         offscreen_canvas.set_width(scaled_width);
         offscreen_canvas.set_height(scaled_height);
         let offscreen_context_object: Object = offscreen_canvas
@@ -723,7 +796,10 @@ impl SsaaCanvas {
             .ok()
             .flatten()?;
         let offscreen_context: CanvasRenderingContext2d = offscreen_context_object.unchecked_into();
-        let _ = offscreen_context.scale(scale_factor, scale_factor);
+        let _ = offscreen_context.scale(
+            scale_factor * device_pixel_ratio,
+            scale_factor * device_pixel_ratio,
+        );
         let ssaa_canvas: SsaaCanvas = SsaaCanvas::new(
             display_canvas,
             display_context,
@@ -733,27 +809,18 @@ impl SsaaCanvas {
             width,
             height,
         );
-        ssaa_canvas.enable_anti_aliasing();
+        ssaa_canvas.enable_smoothing();
         Some(ssaa_canvas)
     }
 
     /// Presents the offscreen buffer onto the display canvas with high-quality downscaling.
     ///
-    /// Enables `imageSmoothingEnabled` and `imageSmoothingQuality = "high"` on the
-    /// display context, clears the display canvas, then draws the offscreen canvas
-    /// scaled down to the logical display size. This is the core SSAA step that
-    /// produces smooth polygon edges.
+    /// Applies the active `quality` preset to the display context, clears the
+    /// display canvas, then draws the offscreen canvas scaled down to the
+    /// logical display size. This is the core SSAA step that produces smooth
+    /// polygon edges.
     pub fn present(&self) {
-        let _ = Reflect::set(
-            &self.display_context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED),
-            &JsValue::from_bool(true),
-        );
-        let _ = Reflect::set(
-            &self.display_context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
-            &JsValue::from_str(RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH),
-        );
+        CanvasRenderer::apply_quality(&self.display_context, self.get_quality());
         self.display_context
             .clear_rect(0.0, 0.0, self.width, self.height);
         let _ = self
@@ -777,12 +844,15 @@ impl SsaaCanvas {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS color string.
-    pub fn clear_with_color(&self, color: &str) {
+    /// - `C: AsRef<str>` - The CSS color string.
+    pub fn clear_color<C>(&self, color: C)
+    where
+        C: AsRef<str>,
+    {
         let _ = Reflect::set(
             &self.offscreen_context,
             &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(color),
+            &JsValue::from_str(color.as_ref()),
         );
         self.offscreen_context
             .fill_rect(0.0, 0.0, self.width, self.height);
@@ -790,29 +860,12 @@ impl SsaaCanvas {
 
     /// Enables high-quality anti-aliasing on both the display and offscreen contexts.
     ///
-    /// Sets `imageSmoothingEnabled = true` and `imageSmoothingQuality = "high"`
-    /// on both contexts to ensure optimal image scaling quality.
-    pub fn enable_anti_aliasing(&self) {
-        let _ = Reflect::set(
-            &self.display_context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED),
-            &JsValue::from_bool(true),
-        );
-        let _ = Reflect::set(
-            &self.display_context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
-            &JsValue::from_str(RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH),
-        );
-        let _ = Reflect::set(
-            &self.offscreen_context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED),
-            &JsValue::from_bool(true),
-        );
-        let _ = Reflect::set(
-            &self.offscreen_context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
-            &JsValue::from_str(RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH),
-        );
+    /// Applies the active `quality` preset to both contexts via the shared
+    /// `apply_quality` helper.
+    pub fn enable_smoothing(&self) {
+        let quality: RenderQuality = self.get_quality();
+        CanvasRenderer::apply_quality(&self.display_context, quality);
+        CanvasRenderer::apply_quality(&self.offscreen_context, quality);
     }
 }
 
@@ -823,7 +876,7 @@ impl BlendMode {
     /// # Returns
     ///
     /// - `&str` - The CSS composite operation string.
-    pub fn to_css_string(&self) -> &str {
+    pub fn to_css(&self) -> &str {
         match self {
             BlendMode::Normal => BLEND_MODE_NORMAL,
             BlendMode::Multiply => BLEND_MODE_MULTIPLY,
@@ -872,7 +925,7 @@ impl LinearGradient {
     /// # Returns
     ///
     /// - `Option<CanvasGradient>` - The canvas gradient, or `None` if creation failed.
-    pub fn to_canvas_gradient(&self, context: &CanvasRenderingContext2d) -> Option<CanvasGradient> {
+    pub fn to_gradient(&self, context: &CanvasRenderingContext2d) -> Option<CanvasGradient> {
         let canvas_gradient: CanvasGradient = context.create_linear_gradient(
             self.get_start().get_x(),
             self.get_start().get_y(),
@@ -926,7 +979,7 @@ impl RadialGradient {
     /// # Returns
     ///
     /// - `Option<CanvasGradient>` - The canvas gradient, or `None` if creation failed.
-    pub fn to_canvas_gradient(&self, context: &CanvasRenderingContext2d) -> Option<CanvasGradient> {
+    pub fn to_gradient(&self, context: &CanvasRenderingContext2d) -> Option<CanvasGradient> {
         let canvas_gradient: CanvasGradient = context
             .create_radial_gradient(
                 self.get_inner_center().get_x(),
@@ -1023,7 +1076,7 @@ impl CanvasRenderer {
         let _ = Reflect::set(
             self.get_context(),
             &JsValue::from_str(RENDERER_PROPERTY_GLOBAL_COMPOSITE_OPERATION),
-            &JsValue::from_str(mode.to_css_string()),
+            &JsValue::from_str(mode.to_css()),
         );
     }
 
@@ -1085,7 +1138,7 @@ impl CanvasRenderer {
     ///
     /// - `&LinearGradient` - The linear gradient to use as fill style.
     pub fn set_linear_gradient_fill(&self, gradient: &LinearGradient) {
-        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+        if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
             let _ = Reflect::set(
                 self.get_context(),
                 &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
@@ -1100,7 +1153,7 @@ impl CanvasRenderer {
     ///
     /// - `&RadialGradient` - The radial gradient to use as fill style.
     pub fn set_radial_gradient_fill(&self, gradient: &RadialGradient) {
-        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+        if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
             let _ = Reflect::set(
                 self.get_context(),
                 &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
@@ -1115,7 +1168,7 @@ impl CanvasRenderer {
     ///
     /// - `&LinearGradient` - The linear gradient to use as stroke style.
     pub fn set_linear_gradient_stroke(&self, gradient: &LinearGradient) {
-        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+        if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
             let _ = Reflect::set(
                 self.get_context(),
                 &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
@@ -1130,7 +1183,7 @@ impl CanvasRenderer {
     ///
     /// - `&RadialGradient` - The radial gradient to use as stroke style.
     pub fn set_radial_gradient_stroke(&self, gradient: &RadialGradient) {
-        if let Some(canvas_gradient) = gradient.to_canvas_gradient(self.get_context()) {
+        if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
             let _ = Reflect::set(
                 self.get_context(),
                 &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
@@ -1147,8 +1200,11 @@ impl RenderBackend for CanvasRenderer {
         self.clear();
     }
 
-    fn clear_with_color(&self, color: &str) {
-        self.clear_with_color(color);
+    fn clear_color<C>(&self, color: C)
+    where
+        C: AsRef<str>,
+    {
+        self.clear_color(color);
     }
 
     fn save(&self) {

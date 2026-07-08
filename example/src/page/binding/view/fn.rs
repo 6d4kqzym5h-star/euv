@@ -153,7 +153,7 @@ pub(crate) fn temperature_converter(
                     name: TEMPERATURE_CELSIUS_NAME
                     type: BINDING_NUMBER_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
-                    value: format!("{:.1}", celsius_value)
+                    value: format!("{celsius_value:.1}")
                     class: c_euv_input_no_transition()
                     oninput: cross_on_input_celsius(celsius_signal)
                     onfocus: UseEuvInput::on_focus_scroll_into_view()
@@ -176,7 +176,7 @@ pub(crate) fn temperature_converter(
                     name: TEMPERATURE_FAHRENHEIT_NAME
                     type: BINDING_NUMBER_TYPE
                     autocomplete: BINDING_AUTOCOMPLETE_OFF
-                    value: format!("{:.1}", fahrenheit_value)
+                    value: format!("{fahrenheit_value:.1}")
                     class: c_euv_input_no_transition()
                     oninput: cross_on_input_fahrenheit(fahrenheit_signal)
                     onfocus: UseEuvInput::on_focus_scroll_into_view()

@@ -39,3 +39,32 @@ pub enum BlendMode {
     /// Uses the luminosity of the source with the hue and saturation of the destination.
     Luminosity,
 }
+
+/// Rendering quality preset controlling anti-aliasing smoothing strategy.
+///
+/// Maps to the canvas `imageSmoothingQuality` value plus an explicit
+/// `imageSmoothingEnabled` toggle. Combined with a CSS `image-rendering:
+/// pixelated` rule on the consumer side, `Low` produces crisp pixel-art
+/// rendering while `High` produces smooth vector-style rendering.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum RenderQuality {
+    /// Fastest rendering, pixelated scaling.
+    ///
+    /// Disables `imageSmoothingEnabled` on the canvas context and sets
+    /// `imageSmoothingQuality = "low"`. Pair with CSS `image-rendering:
+    /// pixelated` for sharp nearest-neighbour scaling.
+    Low,
+    /// Balanced rendering with default smoothing quality.
+    ///
+    /// Sets `imageSmoothingQuality = "medium"`.
+    Medium,
+    /// Highest fidelity rendering with smooth edges and high-quality scaling.
+    ///
+    /// Sets `imageSmoothingQuality = "high"`. Best for vector-style content
+    /// on HiDPI displays. This is the default — when no explicit quality is
+    /// requested, the engine errs on the side of visual fidelity rather than
+    /// performance, since users typically notice aliasing artifacts before
+    /// they notice a few extra milliseconds of GPU time.
+    #[default]
+    High,
+}

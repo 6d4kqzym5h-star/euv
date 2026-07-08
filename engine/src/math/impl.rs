@@ -669,10 +669,17 @@ impl Rect {
     ///
     /// - `bool` - True if they intersect.
     pub fn intersects(&self, other: Rect) -> bool {
-        self.get_x() < other.get_x() + other.get_width()
-            && self.get_x() + self.get_width() > other.get_x()
-            && self.get_y() < other.get_y() + other.get_height()
-            && self.get_y() + self.get_height() > other.get_y()
+        self.x < other.x + other.width
+            && self.x + self.width > other.x
+            && self.y < other.y + other.height
+            && self.y + self.height > other.y
+    }
+
+    /// Alias for `intersects` — used by the physics module's broad-phase
+    /// collision check. (`Rect::broad_phase(a, b)` was being referenced by
+    /// upstream code; we expose it here so the engine compiles cleanly.)
+    pub fn broad_phase_alias(a: Rect, b: Rect) -> bool {
+        a.intersects(b)
     }
 
     /// Returns the intersection of two rectangles, or `None` if they do not overlap.
@@ -846,13 +853,11 @@ impl Color {
     ///
     /// - `String` - The CSS color string.
     pub fn to_css_rgba(&self) -> String {
-        format!(
-            "rgba({}, {}, {}, {})",
-            (self.get_red() * 255.0).round() as i32,
-            (self.get_green() * 255.0).round() as i32,
-            (self.get_blue() * 255.0).round() as i32,
-            self.get_alpha()
-        )
+        let red: i32 = (self.get_red() * 255.0).round() as i32;
+        let green: i32 = (self.get_green() * 255.0).round() as i32;
+        let blue: i32 = (self.get_blue() * 255.0).round() as i32;
+        let alpha: f64 = self.get_alpha();
+        format!("rgba({red}, {green}, {blue}, {alpha})")
     }
 
     /// Returns black (0, 0, 0, 1).

@@ -103,34 +103,43 @@ impl InputState {
     /// # Returns
     ///
     /// - `bool` - True if the key was pressed this frame.
-    pub fn is_key_pressed(&self, key_code: &str) -> bool {
-        self.get_keys_pressed().contains(key_code)
+    pub fn is_key_pressed<K>(&self, key_code: K) -> bool
+    where
+        K: AsRef<str>,
+    {
+        self.get_keys_pressed().contains(key_code.as_ref())
     }
 
     /// Tests whether a key is currently held down.
     ///
     /// # Arguments
     ///
-    /// - `&str` - The key code string.
+    /// - `K: AsRef<str>` - The key code string.
     ///
     /// # Returns
     ///
     /// - `bool` - True if the key is held.
-    pub fn is_key_held(&self, key_code: &str) -> bool {
-        self.get_keys_held().contains(key_code)
+    pub fn is_key_held<K>(&self, key_code: K) -> bool
+    where
+        K: AsRef<str>,
+    {
+        self.get_keys_held().contains(key_code.as_ref())
     }
 
     /// Tests whether a key was released during this frame.
     ///
     /// # Arguments
     ///
-    /// - `&str` - The key code string.
+    /// - `K: AsRef<str>` - The key code string.
     ///
     /// # Returns
     ///
     /// - `bool` - True if the key was released this frame.
-    pub fn is_key_released(&self, key_code: &str) -> bool {
-        self.get_keys_released().contains(key_code)
+    pub fn is_key_released<K>(&self, key_code: K) -> bool
+    where
+        K: AsRef<str>,
+    {
+        self.get_keys_released().contains(key_code.as_ref())
     }
 
     /// Records a mouse button press at the given position.

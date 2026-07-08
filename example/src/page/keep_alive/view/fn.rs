@@ -243,7 +243,7 @@ fn timer_tab() -> VirtualNode {
 fn format_time(total_seconds: i32) -> String {
     let minutes: i32 = total_seconds / 60;
     let seconds: i32 = total_seconds % 60;
-    format!("{:02}:{:02}", minutes, seconds)
+    format!("{minutes:02}:{seconds:02}")
 }
 
 /// Creates a click event handler that increments the counter signal.

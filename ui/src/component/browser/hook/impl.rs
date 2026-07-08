@@ -269,8 +269,7 @@ impl UseEuvBrowser {
             let value: String = self.get_local_value().get();
             if !key.is_empty() {
                 Self::local_storage_set(&key, &value);
-                self.get_local_result()
-                    .set(format!("Set: {} = {}", key, value));
+                self.get_local_result().set(format!("Set: {key} = {value}"));
             }
         }))
     }
@@ -289,10 +288,10 @@ impl UseEuvBrowser {
             let key: String = self.get_local_key().get();
             let value: Option<String> = Self::local_storage_get(&key);
             match value {
-                Some(v) => self.get_local_result().set(format!("Get: {} = {}", key, v)),
+                Some(v) => self.get_local_result().set(format!("Get: {key} = {v}")),
                 None => self
                     .get_local_result()
-                    .set(format!("Key '{}' not found", key)),
+                    .set(format!("Key '{key}' not found")),
             }
         }))
     }
@@ -310,7 +309,7 @@ impl UseEuvBrowser {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_local_key().get();
             Self::local_storage_remove(&key);
-            self.get_local_result().set(format!("Removed key: {}", key));
+            self.get_local_result().set(format!("Removed key: {key}"));
         }))
     }
 
@@ -330,7 +329,7 @@ impl UseEuvBrowser {
             if !key.is_empty() {
                 Self::session_storage_set(&key, &value);
                 self.get_session_result()
-                    .set(format!("Set: {} = {}", key, value));
+                    .set(format!("Set: {key} = {value}"));
             }
         }))
     }
@@ -349,12 +348,10 @@ impl UseEuvBrowser {
             let key: String = self.get_session_key().get();
             let value: Option<String> = Self::session_storage_get(&key);
             match value {
-                Some(v) => self
-                    .get_session_result()
-                    .set(format!("Get: {} = {}", key, v)),
+                Some(v) => self.get_session_result().set(format!("Get: {key} = {v}")),
                 None => self
                     .get_session_result()
-                    .set(format!("Key '{}' not found", key)),
+                    .set(format!("Key '{key}' not found")),
             }
         }))
     }
@@ -372,8 +369,7 @@ impl UseEuvBrowser {
         Some(Rc::new(move |_: Event| {
             let key: String = self.get_session_key().get();
             Self::session_storage_remove(&key);
-            self.get_session_result()
-                .set(format!("Removed key: {}", key));
+            self.get_session_result().set(format!("Removed key: {key}"));
         }))
     }
 
@@ -433,7 +429,7 @@ impl UseEuvBrowser {
                 Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
                     spawn_local(async move {
                         let text: String = Self::clipboard_read_text().await;
-                        result.set(format!("Pasted: {}", text));
+                        result.set(format!("Pasted: {text}"));
                     });
                 }
                 _ => {
@@ -455,8 +451,7 @@ impl UseEuvBrowser {
     pub fn on_window_refresh_size(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let (width, height): (i32, i32) = Self::window_inner_size();
-            self.get_window_size()
-                .set(format!("{} x {}", width, height));
+            self.get_window_size().set(format!("{width} x {height}"));
         }))
     }
 
@@ -529,7 +524,7 @@ impl Default for UseEuvBrowser {
     fn default() -> Self {
         let window_size_val: String = {
             let (width, height): (i32, i32) = UseEuvBrowser::window_inner_size();
-            format!("{} x {}", width, height)
+            format!("{width} x {height}")
         };
         UseEuvBrowser {
             local_key: App::use_signal(String::new),

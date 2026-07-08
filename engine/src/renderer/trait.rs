@@ -24,8 +24,10 @@ pub trait RenderBackend {
     ///
     /// # Arguments
     ///
-    /// - `&str` - The CSS color string (e.g., `"#000000"`).
-    fn clear_with_color(&self, color: &str);
+    /// - `C: AsRef<str>` - The CSS color string (e.g., `"#000000"`).
+    fn clear_color<C>(&self, color: C)
+    where
+        C: AsRef<str>;
 
     /// Saves the current rendering state onto the state stack.
     fn save(&self);

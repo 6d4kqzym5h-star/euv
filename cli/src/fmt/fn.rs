@@ -93,7 +93,7 @@ where
                                 if line.trim().is_empty() {
                                     line.to_string()
                                 } else {
-                                    format!("{}{}", indent_str, line)
+                                    format!("{indent_str}{line}")
                                 }
                             })
                             .collect::<Vec<String>>()
