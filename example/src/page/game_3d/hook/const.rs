@@ -52,8 +52,8 @@ pub(crate) const GAME_3D_LOADING_FONT_FAMILY: &str = "sans-serif";
 /// The ratio of the loading font size to the canvas height.
 pub(crate) const GAME_3D_LOADING_FONT_SIZE_RATIO: f64 = 0.04;
 
-/// The CSS color used for the loading text on the canvas.
-pub(crate) const GAME_3D_LOADING_COLOR: &str = "#ffffff";
+/// The CSS variable name for the loading text color on the canvas.
+pub(crate) const GAME_3D_LOADING_COLOR_VAR: &str = "--foreground";
 
 /// The JavaScript property name for the canvas stroke style.
 pub(crate) const GAME_3D_PROPERTY_STROKE_STYLE: &str = "strokeStyle";

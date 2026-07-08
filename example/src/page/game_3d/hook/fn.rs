@@ -376,12 +376,21 @@ pub(crate) fn draw_game_3d_loading() {
     context.clear_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
     let font_size: f64 = GAME_3D_CANVAS_HEIGHT * GAME_3D_LOADING_FONT_SIZE_RATIO;
     let font: String = format!("{font_size}px {GAME_3D_LOADING_FONT_FAMILY}");
+    // Read the loading text color from the CSS variable via getComputedStyle
+    let loading_color: String = window_value
+        .get_computed_style(
+            &window_value
+                .document()
+                .expect("should have a document")
+                .document_element()
+                .expect("should have a document element"),
+        )
+        .ok()
+        .flatten()
+        .and_then(|style| style.get_property_value(GAME_3D_LOADING_COLOR_VAR).ok())
+        .unwrap_or_else(|| "#ffffff".to_string());
     let fill_style_key: JsValue = JsValue::from_str(GAME_3D_PROPERTY_FILL_STYLE);
-    let _ = Reflect::set(
-        context,
-        &fill_style_key,
-        &JsValue::from_str(GAME_3D_LOADING_COLOR),
-    );
+    let _ = Reflect::set(context, &fill_style_key, &JsValue::from_str(&loading_color));
     context.set_font(&font);
     context.set_text_align("center");
     context.set_text_baseline("middle");
