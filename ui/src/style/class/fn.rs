@@ -119,7 +119,6 @@ class! {
         img, svg, video, canvas, audio, iframe, embed, object {
             display: "block";
             max-width: "100%";
-            height: "auto";
         }
         table {
             border-collapse: "collapse";
