@@ -23,65 +23,23 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
                 "/" | "/about" => {
                     page_about {}
                 }
-                "/counter" => {
-                    page_counter {}
-                }
-                "/badge" => {
-                    page_badge {}
-                }
-                "/event" => {
-                    page_event {}
-                }
-                "/list" => {
-                    page_list {}
-                }
-                "/observer" => {
-                    page_observer {}
-                }
-                "/conditional" => {
-                    page_conditional {}
-                }
-                "/modal" => {
-                    page_modal {}
-                }
-                "/select" => {
-                    page_select {}
+                "/animation" => {
+                    page_animation {}
                 }
                 "/async" => {
                     page_async_demo {}
                 }
-                "/form" => {
-                    page_form {}
+                "/custom-attrs" => {
+                    page_custom_attrs {}
                 }
-                "/file-upload" => {
-                    page_file_upload {}
-                }
-                "/timer" => {
-                    page_timer {}
-                }
-                "/animation" => {
-                    page_animation {}
-                }
-                "/browser" => {
-                    page_browser {}
-                }
-                "/lifecycle" => {
-                    page_lifecycle {}
-                }
-                "/keep-alive" => {
-                    page_keep_alive {}
+                "/badge" => {
+                    page_badge {}
                 }
                 "/component-binding" => {
                     page_component_binding {}
                 }
-                "/custom-attrs" => {
-                    page_custom_attrs {}
-                }
-                "/dynamic-component" => {
-                    page_dynamic_component {}
-                }
-                "/virtual-list" => {
-                    page_virtual_list {}
+                "/browser" => {
+                    page_browser {}
                 }
                 "/camera" => {
                     page_camera {}
@@ -89,14 +47,56 @@ pub(crate) fn page_router(node: VirtualNode<PageRouterProps>) -> VirtualNode {
                 "/canvas" => {
                     page_canvas {}
                 }
+                "/conditional" => {
+                    page_conditional {}
+                }
+                "/counter" => {
+                    page_counter {}
+                }
+                "/dynamic-component" => {
+                    page_dynamic_component {}
+                }
+                "/event" => {
+                    page_event {}
+                }
+                "/form" => {
+                    page_form {}
+                }
                 "/game-2d" => {
                     page_game_2d {}
                 }
                 "/game-3d" => {
                     page_game_3d {}
                 }
+                "/keep-alive" => {
+                    page_keep_alive {}
+                }
+                "/lifecycle" => {
+                    page_lifecycle {}
+                }
+                "/list" => {
+                    page_list {}
+                }
+                "/modal" => {
+                    page_modal {}
+                }
+                "/observer" => {
+                    page_observer {}
+                }
                 "/sse" => {
                     page_sse {}
+                }
+                "/select" => {
+                    page_select {}
+                }
+                "/timer" => {
+                    page_timer {}
+                }
+                "/file-upload" => {
+                    page_file_upload {}
+                }
+                "/virtual-list" => {
+                    page_virtual_list {}
                 }
                 "/websocket" => {
                     page_websocket {}
