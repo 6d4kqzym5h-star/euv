@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.12.4"
+version = "0.12.5"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -31,7 +31,7 @@ log = "0.4.33"
 toml = "0.9.12"
 quote = "1.0.46"
 chrono = "0.4.45"
-ignore = "0.4.27"
+ignore = "0.4.28"
 js-sys = "0.3.103"
 if-addrs = "0.15.0"
 hyperlane = "21.2.12"
