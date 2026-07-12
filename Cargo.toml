@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.12.10"
+version = "0.12.11"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -43,6 +43,7 @@ hyperlane-cli = "0.1.20"
 lombok-macros = "2.0.31"
 compare_version = "2.0.9"
 alloc-no-stdlib = "=2.0.4"
+serde-wasm-bindgen = "0.6.5"
 wasm-bindgen-test = "0.3.76"
 wasm-bindgen-futures = "0.4.76"
 console_error_panic_hook = "0.1.7"

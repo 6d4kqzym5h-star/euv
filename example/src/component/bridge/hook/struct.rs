@@ -19,7 +19,10 @@ pub(crate) struct UseEuvNativeBridge {
 /// Reactive state for the cache update feature.
 ///
 /// Tracks the documentation build status, the latest version string,
-/// and whether a cache update is currently in progress.
+/// whether a cache update is currently in progress, and the most recent
+/// data / message reported by the native `update_cache` bridge. The last
+/// two let the UI surface the new snapshot name on success and the native
+/// error string on failure without reaching into the retry loop.
 #[derive(Clone, Copy, Data, New)]
 pub(crate) struct UseCacheUpdate {
     /// Whether the docs.rs build status indicates documentation is available.
@@ -31,12 +34,29 @@ pub(crate) struct UseCacheUpdate {
     /// Whether a cache update operation is currently in progress.
     #[get(type(copy))]
     pub(crate) updating: Signal<bool>,
+    /// Most recent `data` payload from the native `update_cache` bridge.
+    ///
+    /// On `Success` this is the freshly minted snapshot name (e.g.
+    /// `v_1731321600123`); on `Failed` it is an empty string.
+    #[get(type(copy))]
+    pub(crate) data: Signal<String>,
+    /// Most recent `message` payload from the native `update_cache` bridge.
+    ///
+    /// On `Success` this is a fixed "cache updated successfully" string;
+    /// on `Failed` it carries the underlying error from the cache layer.
+    /// Surfacing it here lets the UI show the native error verbatim
+    /// instead of inventing its own message.
+    #[get(type(copy))]
+    pub(crate) message: Signal<String>,
 }
 
 /// The result returned by a cache update closure.
 ///
 /// The UI component uses this value to update its internal state signals
-/// without knowing how the update check was performed.
+/// via `UseCacheUpdate::load`. Every field is consumed — the docs.rs-side
+/// fields come from the webview's own fetch, the `data` / `message`
+/// fields come from the native bridge payload (see `UpdateStatus` /
+/// `UpdateResultPayload` for the wire details).
 #[derive(Clone, Data, New)]
 pub(crate) struct UpdateResult {
     /// Whether the documentation build succeeded.
@@ -44,9 +64,38 @@ pub(crate) struct UpdateResult {
     pub(crate) doc_status: bool,
     /// The latest version string of the crate.
     pub(crate) version: String,
-    /// Whether a cache update operation was triggered.
+    /// Whether a cache update operation was currently in progress when
+    /// this result was produced.
     #[get(type(copy))]
     pub(crate) updating: bool,
+    /// Snapshot version name reported by the native bridge (empty on failure).
+    pub(crate) data: String,
+    /// Human-readable status / error message reported by the native bridge.
+    pub(crate) message: String,
+}
+
+/// Wire-level mirror of the native `CacheUpdateResult` payload.
+///
+/// `result` is deserialized as an enum so an unknown tag fails the whole
+/// payload rather than silently mis-classifying. `data` carries the new
+/// snapshot name on success; `message` carries the native error
+/// description on failure or a success sentinel on success. Both fields
+/// are propagated into `UpdateResult` for the UI to surface.
+///
+/// Only `try_notify_native_once` reads from this type (in `view/fn.rs`);
+/// it lives here so every payload-facing type lives next to `UpdateResult`
+/// / `UpdateStatus` and the struct-vs-fn responsibility split stays clean.
+#[derive(Data, Deserialize, New)]
+pub(crate) struct UpdateResultPayload {
+    /// Outcome tag deserialized as an enum, so an unknown tag fails the
+    /// whole payload rather than silently mis-classifying.
+    pub(crate) result: UpdateStatus,
+    /// Snapshot version name reported by the native side; empty on failure.
+    /// Propagated into `UpdateResult::data` for the UI to surface.
+    pub(crate) data: String,
+    /// Human-readable status / error message from the native side. Propagated
+    /// into `UpdateResult::message` so the UI shows the native error verbatim.
+    pub(crate) message: String,
 }
 
 /// Configuration for bridge initialization.

@@ -1,5 +1,6 @@
 mod r#const;
+mod r#enum;
 mod r#impl;
 mod r#struct;
 
-pub(crate) use {r#const::*, r#struct::*};
+pub(crate) use {r#const::*, r#enum::*, r#struct::*};

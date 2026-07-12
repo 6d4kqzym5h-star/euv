@@ -198,21 +198,6 @@ where
         }
     }
 
-    /// Removes a dynamic node ID from the dependents list of this signal.
-    ///
-    /// Called during cleanup when a dynamic node is removed from the DOM
-    /// and its dependency relationships need to be severed.
-    ///
-    /// # Arguments
-    ///
-    /// - `usize` - The dynamic node ID to remove.
-    #[allow(dead_code)]
-    pub(crate) fn remove_dependent(&self, dynamic_id: usize) {
-        Self::inner_mut(self.get_inner())
-            .get_mut_dependents()
-            .retain(|id: &usize| *id != dynamic_id);
-    }
-
     /// Returns the list of dependent dynamic node IDs for this signal.
     ///
     /// # Returns

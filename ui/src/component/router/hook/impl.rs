@@ -218,22 +218,6 @@ impl Router {
         })
     }
 
-    /// Removes a previously registered `popstate` guard by its ID.
-    ///
-    /// After removal, the guard will no longer be invoked on `popstate` events.
-    ///
-    /// # Arguments
-    ///
-    /// - `usize` - The guard ID returned by [`Router::register_popstate_guard`].
-    #[allow(dead_code)]
-    pub(crate) fn unregister_popstate_guard(id: usize) {
-        POPSTATE_GUARDS.with(|guards: &PopstateGuardList| {
-            guards
-                .borrow_mut()
-                .retain(|entry: &PopstateGuardEntry| entry.0 != id);
-        });
-    }
-
     /// Pushes a browser history entry for an overlay that is about to open.
     ///
     /// Call this when an overlay (vconsole panel) opens so that the browser

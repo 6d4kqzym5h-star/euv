@@ -18,3 +18,15 @@ pub(crate) const VERSION_FETCH_MAX_RETRY_COUNT: u32 = 8;
 
 /// The delay duration between retry attempts in milliseconds.
 pub(crate) const VERSION_FETCH_RETRY_DELAY_MS: u32 = 1000;
+
+/// The maximum number of retry attempts when re-notifying the native side to
+/// pull the latest cache after a failed bridge call.
+///
+/// When `bridge.core.invoke("update_cache", ...)` either rejects on the JS
+/// side or returns a `success: false` payload from native, the webview retries
+/// the invocation this many times before giving up.
+pub(crate) const VIEW_UPDATE_RETRY_COUNT: u32 = 8;
+
+/// The delay duration in milliseconds between retry attempts when
+/// re-notifying the native side (see `VIEW_UPDATE_RETRY_COUNT`).
+pub(crate) const VIEW_UPDATE_RETRY_DELAY_MS: u32 = 1000;

@@ -22,8 +22,10 @@ impl Default for BridgeConfig {
 impl UseEuvNativeBridge {
     /// Creates native bridge state for accessing platform-native features.
     ///
-    /// Initializes all signals with default values and sets `available` to `false`.
-    /// The actual data is loaded asynchronously via `Self::load_data`.
+    /// Initializes `available` to `false` and `permissions` to an empty string.
+    /// `loading` starts as `true` because the first `load_data` invocation
+    /// will not return synchronously; the actual data is loaded asynchronously
+    /// via `Self::load_data`.
     ///
     /// # Returns
     ///
@@ -39,10 +41,12 @@ impl UseEuvNativeBridge {
     /// Asynchronously loads native bridge data and updates the provided state signals.
     ///
     /// First checks platform availability via `BridgeConfig::is_available`. If unavailable,
-    /// sets `available` to `false` and returns. Otherwise, invokes the
+    /// sets `available` to `false` and `loading` to `false` (no further fetches will be
+    /// attempted for this hook instance) and returns. Otherwise, invokes the
     /// `resolve_bridge_group_permissions` command, then populates the corresponding
     /// signal from the result. If the invoke fails, sets `available` to `false`
-    /// so the card is hidden.
+    /// so the card is hidden; in either success or failure path, `loading` is
+    /// flipped to `false` once the work is done.
     ///
     /// # Arguments
     ///
@@ -54,7 +58,6 @@ impl UseEuvNativeBridge {
             return;
         }
         let permissions_state: UseEuvNativeBridge = self;
-        let cfg: Option<BridgeConfig> = config;
         spawn_local(async move {
             let args_obj: Object = Object::new();
             Reflect::set(
@@ -66,7 +69,7 @@ impl UseEuvNativeBridge {
             let permissions_result: Result<JsValue, String> = match BridgeConfig::invoke(
                 INVOKE_RESOLVE_BRIDGE_GROUP_PERMISSIONS,
                 Some(&args_obj),
-                cfg.as_ref(),
+                config.as_ref(),
             ) {
                 Ok(promise) => {
                     let future: JsFuture = JsFuture::from(promise);
@@ -107,8 +110,8 @@ impl UseCacheUpdate {
     /// Creates cache update state for tracking documentation build status.
     ///
     /// Initializes `doc_status` to `false`, `version` to an empty string,
-    /// and `updating` to `false`. The actual data is loaded asynchronously
-    /// via `Self::load`.
+    /// `updating` to `false`, and `data` / `message` to empty strings.
+    /// The actual data is loaded asynchronously via `Self::load`.
     ///
     /// # Returns
     ///
@@ -118,6 +121,8 @@ impl UseCacheUpdate {
             App::use_signal(|| false),
             App::use_signal(String::new),
             App::use_signal(|| false),
+            App::use_signal(String::new),
+            App::use_signal(String::new),
         )
     }
 
@@ -126,8 +131,10 @@ impl UseCacheUpdate {
     ///
     /// The closure is called asynchronously via `spawn_local`. It receives
     /// no arguments and must return a `Future<Output = UpdateResult>`.
-    /// Once it resolves, the `doc_status`, `version`, and `updating`
-    /// signals are updated from the returned `UpdateResult`.
+    /// Once it resolves, every field on the returned `UpdateResult`
+    /// (`doc_status`, `version`, `updating`, `data`, `message`) is
+    /// pushed into the matching signal — the closure owns the entire
+    /// shape of what the UI sees, so this loop stays a one-to-one mirror.
     ///
     /// The UI layer is completely unaware of how the update check is
     /// performed (fetch, version comparison, bridge invocation, etc.) —
@@ -146,6 +153,8 @@ impl UseCacheUpdate {
             self.get_doc_status().set(result.get_doc_status());
             self.get_version().set(result.get_version().clone());
             self.get_updating().set(result.get_updating());
+            self.get_data().set(result.get_data().clone());
+            self.get_message().set(result.get_message().clone());
         });
     }
 }
@@ -166,10 +175,7 @@ impl BridgeConfig {
     ///
     /// - `bool` - `true` if the bridge core module is available.
     pub(crate) fn is_available(config: Option<&BridgeConfig>) -> bool {
-        let config: BridgeConfig = config
-            .map_or_else(BridgeConfig::default, |config: &BridgeConfig| {
-                config.clone()
-            });
+        let config: BridgeConfig = config.cloned().unwrap_or_default();
         let window_value: Window = window().expect("no global window exists");
         let bridge_key: JsValue = JsValue::from_str(config.get_global_key());
         let bridge_obj: JsValue = match Reflect::get(&window_value, &bridge_key) {
@@ -208,10 +214,7 @@ impl BridgeConfig {
         args: Option<&JsValue>,
         config: Option<&BridgeConfig>,
     ) -> Result<Promise, String> {
-        let config: BridgeConfig = config
-            .map_or_else(BridgeConfig::default, |config: &BridgeConfig| {
-                config.clone()
-            });
+        let config: BridgeConfig = config.cloned().unwrap_or_default();
         let window_value: Window = window().expect("no global window exists");
         let bridge_key: JsValue = JsValue::from_str(config.get_global_key());
         let bridge_obj: JsValue = Reflect::get(&window_value, &bridge_key)

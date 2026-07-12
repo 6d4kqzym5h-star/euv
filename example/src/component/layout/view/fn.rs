@@ -296,17 +296,7 @@ async fn fetch_docs_status_with_retry() -> Result<DocsStatus, ()> {
                     "Failed to fetch version status (attempt {attempt}/{VERSION_FETCH_MAX_RETRY_COUNT}): {}. Retrying in {VERSION_FETCH_RETRY_DELAY_MS}ms...",
                     error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())
                 ));
-                JsFuture::from(Promise::new(&mut |resolve: Function, _reject: Function| {
-                    let window: Window = window().expect("no global window exists");
-                    window
-                        .set_timeout_with_callback_and_timeout_and_arguments_0(
-                            &resolve,
-                            VERSION_FETCH_RETRY_DELAY_MS as i32,
-                        )
-                        .expect("failed to set timeout");
-                }))
-                .await
-                .expect("timeout future failed");
+                sleep_ms(VERSION_FETCH_RETRY_DELAY_MS).await;
             }
         }
     }
@@ -316,7 +306,9 @@ async fn fetch_docs_status_with_retry() -> Result<DocsStatus, ()> {
 ///
 /// Fetches the crate status JSON with retry logic, parses the `DocsStatus` payload,
 /// and if a newer version is available, invokes the bridge `update_cache` command
-/// to synchronize the local cache.
+/// to synchronize the local cache. The bridge invocation is itself retried up to
+/// `VIEW_UPDATE_RETRY_COUNT` times (with `VIEW_UPDATE_RETRY_DELAY_MS` between
+/// attempts) when the native side reports a failure or the JS-side invoke rejects.
 ///
 /// # Returns
 ///
@@ -329,6 +321,8 @@ async fn check_docs_update() -> UpdateResult {
                 doc_status: false,
                 version: String::new(),
                 updating: false,
+                data: String::new(),
+                message: "failed to fetch docs status".to_string(),
             };
         }
     };
@@ -343,6 +337,8 @@ async fn check_docs_update() -> UpdateResult {
             doc_status: parsed.get_doc_status(),
             version: parsed.get_version().clone(),
             updating: false,
+            data: String::new(),
+            message: "already on the latest version".to_string(),
         };
     }
     if !BridgeConfig::is_available(None) {
@@ -350,21 +346,151 @@ async fn check_docs_update() -> UpdateResult {
             doc_status: parsed.get_doc_status(),
             version: parsed.get_version().clone(),
             updating: false,
+            data: String::new(),
+            message: "native bridge is not available".to_string(),
         };
     }
-    let mut updating: bool = false;
-    if let Ok(promise) = BridgeConfig::invoke(INVOKE_UPDATE_CACHE, None, None) {
-        updating = true;
-        match JsFuture::from(promise).await {
-            Ok(result) => Console::log(result.as_string().unwrap_or_default()),
-            Err(error) => Console::error(error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string())),
+    notify_native_with_retry(parsed.get_doc_status(), parsed.get_version().clone()).await
+}
+
+/// Invokes the bridge `update_cache` command and retries on failure.
+///
+/// A failure is anything other than a native-side `UpdateStatus::Success`:
+/// JS-side promise rejection, native-side `UpdateStatus::Failed`, or a
+/// payload that cannot be deserialized into `UpdateStatus`. Retries up to
+/// `VIEW_UPDATE_RETRY_COUNT` total attempts with `VIEW_UPDATE_RETRY_DELAY_MS`
+/// between attempts, then collapses to a final `UpdateResult` with
+/// `updating: false` and the last observed native message.
+///
+/// The webview-derived `doc_status` / `version` travel in as parameters
+/// so the eventual `UpdateResult` keeps the docs.rs fetch context even
+/// after the bridge call fails.
+///
+/// # Returns
+///
+/// - `UpdateResult` — UI-facing snapshot carrying docs.rs context plus
+///   the most recent `data` / `message` reported by the native side.
+async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateResult {
+    let mut attempt: u32 = 0;
+    loop {
+        match try_notify_native_once().await {
+            Ok((UpdateStatus::Success, payload)) => {
+                Console::log(format!(
+                    "update_cache bridge returned Success: {}",
+                    format_payload(&payload)
+                ));
+                return UpdateResult {
+                    doc_status,
+                    version,
+                    updating: true,
+                    data: payload.data,
+                    message: payload.message,
+                };
+            }
+            Ok((UpdateStatus::Failed, payload)) => {
+                Console::warn(format!(
+                    "update_cache bridge returned Failed: {}",
+                    format_payload(&payload)
+                ));
+                return UpdateResult {
+                    doc_status,
+                    version,
+                    updating: false,
+                    data: String::new(),
+                    message: payload.message,
+                };
+            }
+            Err(error) => {
+                attempt += 1;
+                if attempt >= VIEW_UPDATE_RETRY_COUNT {
+                    Console::error(format!(
+                        "update_cache bridge failed after {VIEW_UPDATE_RETRY_COUNT} attempts: {error} (no native payload)"
+                    ));
+                    return UpdateResult {
+                        doc_status,
+                        version,
+                        updating: false,
+                        data: String::new(),
+                        message: error,
+                    };
+                }
+                Console::warn(format!(
+                    "update_cache bridge failed (attempt {attempt}/{VIEW_UPDATE_RETRY_COUNT}): {error} (no native payload). Retrying in {VIEW_UPDATE_RETRY_DELAY_MS}ms..."
+                ));
+                sleep_ms(VIEW_UPDATE_RETRY_DELAY_MS).await;
+            }
         }
     }
-    UpdateResult {
-        doc_status: parsed.get_doc_status(),
-        version: parsed.get_version().clone(),
-        updating,
-    }
+}
+
+/// Formats the full native `CacheUpdateResult` payload for console output.
+///
+/// Includes every wire field (`result` / `data` / `message`) so a single
+/// log line captures the bridge round-trip end-to-end — useful both for
+/// debugging and for surfacing the native-side error verbatim when the
+/// retry budget is exhausted.
+///
+/// # Arguments
+///
+/// - `&UpdateResultPayload` - The deserialized wire payload to render.
+///
+/// # Returns
+///
+/// - `String` - A single-line `result=... data="..." message="..."` representation.
+fn format_payload(payload: &UpdateResultPayload) -> String {
+    format!(
+        "result={:?} data=\"{}\" message=\"{}\"",
+        payload.get_result(),
+        payload.get_data(),
+        payload.get_message()
+    )
+}
+
+/// Performs one bridge invocation and classifies the outcome.
+///
+/// Deserializes the native `CacheUpdateResult` payload into
+/// `UpdateResultPayload` and surfaces every field to the retry loop so it
+/// can build a complete `UpdateResult` (success log message, snapshot
+/// name, or last error description).
+///
+/// # Returns
+///
+/// - `Ok((UpdateStatus, UpdateResultPayload))` — Native-side outcome plus
+///   the full payload, so the caller can read `data` / `message` without
+///   re-deserializing.
+/// - `Err<String>` — Transport-level or deserialization failure that
+///   justifies a retry.
+async fn try_notify_native_once() -> Result<(UpdateStatus, UpdateResultPayload), String> {
+    let promise: Promise = BridgeConfig::invoke(INVOKE_UPDATE_CACHE, None, None)?;
+    let value: JsValue = JsFuture::from(promise)
+        .await
+        .map_err(|error: JsValue| error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string()))?;
+    let payload: UpdateResultPayload = serde_wasm_bindgen::from_value(value)
+        .map_err(|error| format!("failed to deserialize update_cache result: {error}"))?;
+    Ok((payload.result, payload))
+}
+
+/// Suspends the current task for `millis` milliseconds via `setTimeout`.
+///
+/// Centralizes the timer wiring used by retry loops so call sites stay
+/// declarative and the timeout closure is a single point to swap for tests.
+///
+/// # Arguments
+///
+/// - `millis: u32` — Number of milliseconds to sleep.
+///
+/// # Returns
+///
+/// - `()` — Resolves once the timer fires.
+async fn sleep_ms(millis: u32) {
+    let window: Window = window().expect("no global window exists");
+    JsFuture::from(Promise::new(&mut |resolve: Function, _reject: Function| {
+        window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, millis as i32)
+            .expect("failed to set timeout");
+    }))
+    .await
+    .expect("timeout future failed");
 }
 
 /// Renders the application shell with navigation and route-based page content.
