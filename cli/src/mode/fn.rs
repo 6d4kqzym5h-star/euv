@@ -121,6 +121,7 @@ pub async fn run_mode(mut args: ModeArgs) -> Result<(), EuvError> {
     log::info!("Serving pkg from: {}", pkg_dir.display());
     let mut server: Server = Server::default();
     let mut server_config: ServerConfig = ServerConfig::default();
+    server_config.set_nodelay(Some(false));
     server_config.set_address(Server::format_bind_address(DEFAULT_HOST, args.get_port()));
     server.server_config(server_config);
     server.request_middleware::<RequestMiddleware>();
