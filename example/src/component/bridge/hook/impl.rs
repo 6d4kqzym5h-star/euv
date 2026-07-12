@@ -1,5 +1,63 @@
 use crate::*;
 
+/// Hand-written `Deserialize` for `UpdateStatus` so the wire-tag mapping is
+/// expressed as Rust control flow against the canonical constants in
+/// `const.rs` — that constant table is now the only place the literal
+/// `"success"` / `"failed"` strings live. `Display` reads the same constants
+/// out, so both the parse path and the log-formatting path point at one
+/// source of truth.
+///
+/// `serde_wasm_bindgen` invokes this via the inner `UpdateResultPayload`
+/// struct field `result: UpdateStatus` (defined in `struct.rs`), so the
+/// visitor has to drive a real `Deserializer` rather than just match a
+/// `String`.
+impl<'de> Deserialize<'de> for UpdateStatus {
+    fn deserialize<Reader>(reader: Reader) -> Result<Self, Reader::Error>
+    where
+        Reader: serde::Deserializer<'de>,
+    {
+        struct TagVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for TagVisitor {
+            type Value = UpdateStatus;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str(&format!(
+                    "an `UpdateStatus` wire tag ({UPDATE_RESULT_SUCCESS:?} / {UPDATE_RESULT_FAILED:?})"
+                ))
+            }
+
+            fn visit_str<Error>(self, value: &str) -> Result<Self::Value, Error>
+            where
+                Error: serde::de::Error,
+            {
+                if value == UPDATE_RESULT_SUCCESS {
+                    Ok(UpdateStatus::Success)
+                } else if value == UPDATE_RESULT_FAILED {
+                    Ok(UpdateStatus::Failed)
+                } else {
+                    Err(Error::unknown_variant(
+                        value,
+                        &[UPDATE_RESULT_SUCCESS, UPDATE_RESULT_FAILED],
+                    ))
+                }
+            }
+        }
+
+        reader.deserialize_str(TagVisitor)
+    }
+}
+
+impl std::fmt::Display for UpdateStatus {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let tag: &'static str = match self {
+            UpdateStatus::Success => UPDATE_RESULT_SUCCESS,
+            UpdateStatus::Failed => UPDATE_RESULT_FAILED,
+        };
+        formatter.write_str(tag)
+    }
+}
+
 /// Default implementation for `BridgeConfig`.
 ///
 /// Uses the standard euv-app bridge keys: `window.bridge.core.invoke`.

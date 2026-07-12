@@ -375,10 +375,13 @@ async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateRe
     loop {
         match try_notify_native_once().await {
             Ok((UpdateStatus::Success, payload)) => {
-                Console::log(format!(
-                    "update_cache bridge returned Success: {}",
-                    format_payload(&payload)
-                ));
+                if attempt > 0 {
+                    Console::log(format!(
+                        "update_cache bridge returned after {attempt}/{VIEW_UPDATE_RETRY_COUNT} prior failure(s): {payload}"
+                    ));
+                } else {
+                    Console::log(format!("update_cache bridge returned: {payload}"));
+                }
                 return UpdateResult {
                     doc_status,
                     version,
@@ -388,17 +391,23 @@ async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateRe
                 };
             }
             Ok((UpdateStatus::Failed, payload)) => {
+                attempt += 1;
+                if attempt >= VIEW_UPDATE_RETRY_COUNT {
+                    Console::error(format!(
+                        "update_cache bridge returned after {VIEW_UPDATE_RETRY_COUNT} attempts: {payload}",
+                    ));
+                    return UpdateResult {
+                        doc_status,
+                        version,
+                        updating: false,
+                        data: String::new(),
+                        message: payload.message,
+                    };
+                }
                 Console::warn(format!(
-                    "update_cache bridge returned Failed: {}",
-                    format_payload(&payload)
+                    "update_cache bridge returned (attempt {attempt}/{VIEW_UPDATE_RETRY_COUNT}): {payload}. Retrying in {VIEW_UPDATE_RETRY_DELAY_MS}ms...",
                 ));
-                return UpdateResult {
-                    doc_status,
-                    version,
-                    updating: false,
-                    data: String::new(),
-                    message: payload.message,
-                };
+                sleep_ms(VIEW_UPDATE_RETRY_DELAY_MS).await;
             }
             Err(error) => {
                 attempt += 1;
@@ -421,29 +430,6 @@ async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateRe
             }
         }
     }
-}
-
-/// Formats the full native `CacheUpdateResult` payload for console output.
-///
-/// Includes every wire field (`result` / `data` / `message`) so a single
-/// log line captures the bridge round-trip end-to-end — useful both for
-/// debugging and for surfacing the native-side error verbatim when the
-/// retry budget is exhausted.
-///
-/// # Arguments
-///
-/// - `&UpdateResultPayload` - The deserialized wire payload to render.
-///
-/// # Returns
-///
-/// - `String` - A single-line `result=... data="..." message="..."` representation.
-fn format_payload(payload: &UpdateResultPayload) -> String {
-    format!(
-        "result={:?} data=\"{}\" message=\"{}\"",
-        payload.get_result(),
-        payload.get_data(),
-        payload.get_message()
-    )
 }
 
 /// Performs one bridge invocation and classifies the outcome.

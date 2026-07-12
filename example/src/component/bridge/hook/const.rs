@@ -19,3 +19,9 @@ pub(crate) const INVOKE_RESOLVE_BRIDGE_GROUP_PERMISSIONS: &str = "resolve_bridge
 
 /// The bridge group name for querying all permissions.
 pub(crate) const BRIDGE_GROUP_ALL: &str = "all";
+
+/// String tag emitted by native on a successful `update_cache`.
+pub(crate) const UPDATE_RESULT_SUCCESS: &str = "success";
+
+/// String tag emitted by native on a failed `update_cache`.
+pub(crate) const UPDATE_RESULT_FAILED: &str = "failed";

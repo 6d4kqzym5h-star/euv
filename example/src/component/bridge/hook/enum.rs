@@ -1,5 +1,3 @@
-use crate::*;
-
 /// `CacheUpdateStatus` on the native side.
 ///
 /// Wire-only enum: lives outside `UpdateResult` because no UI signal reads
@@ -9,16 +7,17 @@ use crate::*;
 /// the enum separate from the UI DTO avoids spurious dead-field noise and
 /// keeps each type's responsibility narrow.
 ///
-/// The `Deserialize` impl maps the lowercase wire tags
-/// (`"success"` / `"failed"`) emitted by `CacheUpdateStatus::as_tag()` on
-/// the native side — `serde`'s default derive would expect Rust-style
-/// variant names (`"Success"` / `"Failed"`) instead.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+/// Deserialization is hand-written in `impl.rs` so the wire-tag mapping is
+/// expressed as Rust control flow against the canonical constants
+/// `UPDATE_RESULT_SUCCESS` / `UPDATE_RESULT_FAILED` from `const.rs` — the
+/// constants are the single source of truth, and the parse function is the
+/// only place that consults them. `Display` reads through those same
+/// constants so `format_payload` can embed the wire tag into log lines
+/// without re-hardcoding.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum UpdateStatus {
-    /// The cache snapshot was successfully staged.
-    #[serde(rename = "success")]
+    /// The cache snapshot was successfully staged. Wire tag constant: `UPDATE_RESULT_SUCCESS`.
     Success,
-    /// The cache update did not produce a usable snapshot.
-    #[serde(rename = "failed")]
+    /// The cache update did not produce a usable snapshot. Wire tag constant: `UPDATE_RESULT_FAILED`.
     Failed,
 }

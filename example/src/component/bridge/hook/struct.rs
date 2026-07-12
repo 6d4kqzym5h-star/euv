@@ -85,7 +85,7 @@ pub(crate) struct UpdateResult {
 /// Only `try_notify_native_once` reads from this type (in `view/fn.rs`);
 /// it lives here so every payload-facing type lives next to `UpdateResult`
 /// / `UpdateStatus` and the struct-vs-fn responsibility split stays clean.
-#[derive(Data, Deserialize, New)]
+#[derive(Data, Debug, Deserialize, DisplayDebug, New)]
 pub(crate) struct UpdateResultPayload {
     /// Outcome tag deserialized as an enum, so an unknown tag fails the
     /// whole payload rather than silently mis-classifying.
