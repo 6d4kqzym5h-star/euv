@@ -30,6 +30,9 @@ pub(crate) fn use_sse() -> UseSse {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the SSE connection.
 pub(crate) fn sse_on_connect(state: UseSse) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        if state.get_connecting().get() || state.get_connected().get() {
+            return;
+        }
         let url: String = state.get_url().get();
         if url.is_empty() {
             state
@@ -37,8 +40,8 @@ pub(crate) fn sse_on_connect(state: UseSse) -> Option<Rc<dyn Fn(Event)>> {
                 .set("Please enter a valid SSE URL".to_string());
             return;
         }
-        sse_close(state, true);
         state.get_connecting().set(true);
+        sse_close(state, true);
         sse_open_source(state, &url);
     }))
 }

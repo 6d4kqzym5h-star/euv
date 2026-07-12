@@ -139,6 +139,9 @@ fn stop_ping_timer(ping_handle_signal: Signal<Option<IntervalHandle>>) {
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler to open the WebSocket connection.
 pub(crate) fn websocket_on_connect(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
+        if state.get_connecting().get() || state.get_connected().get() {
+            return;
+        }
         let url: String = state.get_url().get();
         if url.is_empty() {
             state
