@@ -386,22 +386,25 @@ async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateRe
                     doc_status,
                     version,
                     updating: true,
-                    data: payload.data,
-                    message: payload.message,
+                    data: payload.get_data().clone(),
+                    message: payload.get_message().clone(),
                 };
             }
             Ok((UpdateStatus::Failed, payload)) => {
                 attempt += 1;
                 if attempt >= VIEW_UPDATE_RETRY_COUNT {
                     Console::error(format!(
-                        "update_cache bridge returned after {VIEW_UPDATE_RETRY_COUNT} attempts: {payload}",
+                        "update_cache bridge returned after {attempt}/{VIEW_UPDATE_RETRY_COUNT} attempts ({attempt} failure(s)): {payload}",
                     ));
                     return UpdateResult {
                         doc_status,
                         version,
                         updating: false,
                         data: String::new(),
-                        message: payload.message,
+                        message: format!(
+                            "{} (attempt {attempt}/{VIEW_UPDATE_RETRY_COUNT}, {attempt} failure(s))",
+                            payload.get_message()
+                        ),
                     };
                 }
                 Console::warn(format!(
@@ -413,14 +416,16 @@ async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateRe
                 attempt += 1;
                 if attempt >= VIEW_UPDATE_RETRY_COUNT {
                     Console::error(format!(
-                        "update_cache bridge failed after {VIEW_UPDATE_RETRY_COUNT} attempts: {error} (no native payload)"
+                        "update_cache bridge failed after {attempt}/{VIEW_UPDATE_RETRY_COUNT} attempts ({attempt} failure(s)): {error} (no native payload)"
                     ));
                     return UpdateResult {
                         doc_status,
                         version,
                         updating: false,
                         data: String::new(),
-                        message: error,
+                        message: format!(
+                            "{error} (attempt {attempt}/{VIEW_UPDATE_RETRY_COUNT}, {attempt} failure(s))"
+                        ),
                     };
                 }
                 Console::warn(format!(
