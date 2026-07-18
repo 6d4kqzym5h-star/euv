@@ -976,7 +976,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
             euv_card {
                 title: "File Drag & Drop"
                 div {
-                    class: if { file_drag_over.get() } {
+                    class: if { file_drag_over } {
                         c_event_drop_zone_active()
                     } else {
                         c_event_drop_zone()

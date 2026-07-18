@@ -73,15 +73,20 @@ pub(crate) struct HtmlIf {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) is_reactive: bool,
-    /// The list of condition-branch pairs.
+    /// The list of condition-branch tuples.
     ///
-    /// Each condition is a Rust expression, regardless of whether it was
-    /// originally braced (reactive) or inline. The last entry may have
-    /// `None` as condition (representing `else`).
+    /// Each entry is `(condition, body, is_condition_reactive)` where:
+    /// - `condition` is the parsed Rust expression, or `None` for the
+    ///   trailing `else` branch.
+    /// - `body` is the list of HTML child nodes rendered when this branch
+    ///   is selected.
+    /// - `is_condition_reactive` is `true` when the condition was written
+    ///   inside `{}` (reactive). In that case a single-segment identifier
+    ///   expression is auto-`.get()`-ed during codegen.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) branches: Vec<(Option<Expr>, Vec<HtmlNode>)>,
+    pub(crate) branches: Vec<(Option<Expr>, Vec<HtmlNode>, bool)>,
 }
 
 /// Represents a reactive or inline `if` conditional in attribute value position.
@@ -106,15 +111,14 @@ pub(crate) struct HtmlAttrIf {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) is_inline: bool,
-    /// The list of condition-branch pairs.
+    /// The list of condition-branch tuples.
     ///
-    /// For reactive conditionals, each condition is a braced signal expression.
-    /// For inline conditionals, each condition is a plain Rust expression.
-    /// The last entry may have `None` as condition (representing `else`).
+    /// Each entry is `(condition, body, is_condition_reactive)`. The last
+    /// entry may have `None` as condition (representing `else`).
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) branches: Vec<(Option<Expr>, Expr)>,
+    pub(crate) branches: Vec<(Option<Expr>, Expr, bool)>,
     /// The default token stream for the implicit else branch when no explicit else exists.
     ///
     /// For `class` attributes, this is an empty string. For `style` attributes,
@@ -265,4 +269,54 @@ pub(crate) struct ComponentInfo {
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) props_field_types: HashMap<String, String>,
+}
+
+/// Bundle of parameters for emitting an attribute-level `if` chain as tokens.
+///
+/// Groups the conditional AST, the implicit `else` default, and the wrapping
+/// mode (`Reactive` / `Raw`) so the helper takes a single argument instead
+/// of three positional ones, and so callers don't have to thread the same
+/// three values through multiple helpers.
+#[derive(Clone, Copy, Data, Debug, New)]
+pub(crate) struct AttrIfContext<'a> {
+    /// The parsed attribute-level `if` conditional.
+    #[get(pub(crate))]
+    pub(crate) html_attr_if: &'a HtmlAttrIf,
+    /// The default else-branch token stream (used when no explicit `else`).
+    #[get(pub(crate))]
+    pub(crate) else_default: &'a proc_macro2::TokenStream,
+    /// The wrapping mode (`Reactive` or `Raw`).
+    #[get(pub(crate), type(copy))]
+    pub(crate) mode: AttrIfMode,
+}
+
+/// Bundle of parameters for emitting an `HtmlAttrValue` into an `AttributeValue`.
+///
+/// Combines the attribute value AST, the attribute key string, and the
+/// component flag into a single struct so callers don't have to pass three
+/// positional arguments to the same helper from multiple sites.
+#[derive(Clone, Copy, Data, Debug, New)]
+pub(crate) struct AttrValueContext<'a> {
+    /// The attribute value AST.
+    #[get(pub(crate))]
+    pub(crate) value: &'a HtmlAttrValue,
+    /// The attribute key (e.g., `"class"`, `"onclick"`).
+    #[get(pub(crate))]
+    pub(crate) key_str: &'a str,
+    /// Whether the attribute belongs to a component (affects event adapter
+    /// selection and the resulting `AttributeValue` variant).
+    #[get(pub(crate), type(copy))]
+    pub(crate) is_component: bool,
+}
+
+/// Bundle of parameters for emitting an `HtmlAttrValue` into an
+/// `AttributeEntry::new(...)` value (used by element / dynamic tag emission).
+#[derive(Clone, Copy, Data, Debug, New)]
+pub(crate) struct AttrEntryContext<'a> {
+    /// The attribute value AST.
+    #[get(pub(crate))]
+    pub(crate) value: &'a HtmlAttrValue,
+    /// The attribute key (e.g., `"class"`, `"onclick"`).
+    #[get(pub(crate))]
+    pub(crate) key_str: &'a str,
 }

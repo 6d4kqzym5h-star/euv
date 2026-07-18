@@ -669,10 +669,10 @@ impl Rect {
     ///
     /// - `bool` - True if they intersect.
     pub fn intersects(&self, other: Rect) -> bool {
-        self.x < other.x + other.width
-            && self.x + self.width > other.x
-            && self.y < other.y + other.height
-            && self.y + self.height > other.y
+        self.get_x() < other.get_x() + other.get_width()
+            && self.get_x() + self.get_width() > other.get_x()
+            && self.get_y() < other.get_y() + other.get_height()
+            && self.get_y() + self.get_height() > other.get_y()
     }
 
     /// Alias for `intersects` — used by the physics module's broad-phase

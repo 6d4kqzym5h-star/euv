@@ -27,6 +27,65 @@ pub(crate) fn parse_expr_until_brace(input: ParseStream) -> syn::Result<Expr> {
     syn::parse2(tokens)
 }
 
+/// Determines whether the macro should automatically append `.get()` to an expression
+/// inside a reactive `{}` position (e.g. `if { signal }`, `match { signal }`,
+/// `for x in { signal }`, `{ signal }` DOM child).
+///
+/// Returns `true` only for plain single-segment identifier paths such as `signal`
+/// or `value`. Chained expressions like `state.field`, `signal.iter()`, or
+/// `signal == X` are NOT auto-unwrapped — the user must call `.get()` explicitly
+/// in those cases (e.g., `state.field.get()`, `signal.get().iter()`,
+/// `signal.get() == X`).
+///
+/// This is a conservative heuristic: the macro only adds `.get()` where the
+/// expression is unambiguously a single identifier, which is the most common
+/// case for signal references. Other expression kinds pass through unchanged
+/// so that non-signal expressions (literals, function calls, etc.) keep working.
+///
+/// # Arguments
+///
+/// - `&Expr` - The expression to inspect.
+///
+/// # Returns
+///
+/// - `bool` - `true` if the expression is a single-segment path suitable for
+///   automatic `.get()` unwrapping.
+pub(crate) fn should_auto_get(expr: &Expr) -> bool {
+    matches!(
+        expr,
+        Expr::Path(expr_path)
+            if expr_path.qself.is_none()
+                && expr_path.path.leading_colon.is_none()
+                && expr_path.path.segments.len() == 1
+                && matches!(
+                    expr_path.path.segments[0].arguments,
+                    syn::PathArguments::None
+                )
+    )
+}
+
+/// Wraps an expression with `.get()` when it is a single-segment identifier path,
+/// otherwise returns the expression unchanged.
+///
+/// When `enabled` is `false`, the expression is returned as-is (used for inline
+/// `if`/`match`/`for` whose conditions were NOT written inside `{}`).
+///
+/// # Arguments
+///
+/// - `&Expr` - The expression to optionally unwrap.
+/// - `bool` - Whether the wrapping should be applied.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - The wrapped or unchanged expression tokens.
+pub(crate) fn auto_get_expr_tokens(expr: &Expr, enabled: bool) -> proc_macro2::TokenStream {
+    if enabled && should_auto_get(expr) {
+        quote! { #expr.get() }
+    } else {
+        quote! { #expr }
+    }
+}
+
 /// Checks whether the next tokens after the current position form a `::` path separator.
 ///
 /// This is used to distinguish between a single `:` (attribute key-value separator)
@@ -914,21 +973,25 @@ pub(crate) fn nodes_to_token_vec(children: &[HtmlNode]) -> Vec<proc_macro2::Toke
 /// # Returns
 ///
 /// - `proc_macro2::TokenStream` - The generated if-chain token stream producing a `VirtualNode`.
-pub(crate) fn build_html_if_chain_to_node(
-    branches: &[(Option<Expr>, Vec<HtmlNode>)],
+pub(crate) fn build_html_if_chain(
+    branches: &[(Option<Expr>, Vec<HtmlNode>, bool)],
 ) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     let has_else: bool = branches
         .last()
-        .is_some_and(|(condition, _): &(Option<Expr>, Vec<HtmlNode>)| condition.is_none());
-    for (branch_index, (condition, body)) in branches.iter().enumerate() {
+        .is_some_and(|(condition, _, _): &(Option<Expr>, Vec<HtmlNode>, bool)| condition.is_none());
+    for (branch_index, (condition, body, is_reactive)) in branches.iter().enumerate() {
         let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                if_chain.extend(quote! { if #cond { #body_expr } });
+                let cond_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(cond, *is_reactive);
+                if_chain.extend(quote! { if #cond_tokens { #body_expr } });
             }
             (_, Some(cond)) => {
-                if_chain.extend(quote! { else if #cond { #body_expr } });
+                let cond_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(cond, *is_reactive);
+                if_chain.extend(quote! { else if #cond_tokens { #body_expr } });
             }
             (_, None) => {
                 if_chain.extend(quote! { else { #body_expr } });
@@ -993,20 +1056,24 @@ pub(crate) fn children_to_node_tokens(children: &[HtmlNode]) -> proc_macro2::Tok
 ///
 /// - `proc_macro2::TokenStream` - The generated if-chain token stream producing `Vec<VirtualNode>`.
 pub(crate) fn build_html_if_chain_to_vec(
-    branches: &[(Option<Expr>, Vec<HtmlNode>)],
+    branches: &[(Option<Expr>, Vec<HtmlNode>, bool)],
 ) -> proc_macro2::TokenStream {
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     let has_else: bool = branches
         .last()
-        .is_some_and(|(condition, _): &(Option<Expr>, Vec<HtmlNode>)| condition.is_none());
-    for (branch_index, (condition, body)) in branches.iter().enumerate() {
+        .is_some_and(|(condition, _, _): &(Option<Expr>, Vec<HtmlNode>, bool)| condition.is_none());
+    for (branch_index, (condition, body, is_reactive)) in branches.iter().enumerate() {
         let body_expr: proc_macro2::TokenStream = children_to_tokens(body);
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                if_chain.extend(quote! { if #cond { #body_expr } });
+                let cond_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(cond, *is_reactive);
+                if_chain.extend(quote! { if #cond_tokens { #body_expr } });
             }
             (_, Some(cond)) => {
-                if_chain.extend(quote! { else if #cond { #body_expr } });
+                let cond_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(cond, *is_reactive);
+                if_chain.extend(quote! { else if #cond_tokens { #body_expr } });
             }
             (_, None) => {
                 if_chain.extend(quote! { else { #body_expr } });
@@ -1047,23 +1114,23 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStr
                 let if_chain: proc_macro2::TokenStream =
                     build_html_if_chain_to_vec(html_if.get_branches());
                 parts.push(quote! {
-                    __euv_for_body.extend(#if_chain);
+                    __euv_nodes.extend(#if_chain);
                 });
             }
             _ => {
                 let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
                 child.to_tokens(&mut token_stream);
                 parts.push(quote! {
-                    __euv_for_body.push(#token_stream);
+                    __euv_nodes.push(#token_stream);
                 });
             }
         }
     }
     quote! {
         {
-            let mut __euv_for_body: Vec<::euv::VirtualNode> = Vec::new();
+            let mut __euv_nodes: Vec<::euv::VirtualNode> = Vec::new();
             #(#parts)*
-            __euv_for_body
+            __euv_nodes
         }
     }
 }
@@ -1085,16 +1152,26 @@ pub(crate) fn children_to_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStr
 ///
 /// - `proc_macro2::TokenStream` - The generated token stream representing a `Vec<VirtualNode>`.
 pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2::TokenStream {
+    let needs_flatten: bool = children.iter().any(|child: &HtmlNode| {
+        matches!(child, HtmlNode::For(_))
+            || matches!(child, HtmlNode::If(html_if) if !html_if.get_is_reactive())
+    });
+    if !needs_flatten {
+        let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(children);
+        return quote! { vec![#(#child_tokens), *] };
+    }
     let mut parts: Vec<proc_macro2::TokenStream> = Vec::new();
     for child in children {
         match child {
             HtmlNode::For(html_for) => {
                 let pattern: &proc_macro2::TokenStream = html_for.get_pattern();
                 let iterable: &Expr = html_for.get_iterable();
+                let iterable_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(iterable, html_for.get_is_reactive());
                 let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
                 parts.push(quote! {
-                    for #pattern in #iterable {
-                        __euv_element_children.extend(#body_tokens);
+                    for #pattern in #iterable_tokens {
+                        __euv_nodes.extend(#body_tokens);
                     }
                 });
             }
@@ -1102,23 +1179,23 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
                 let if_chain: proc_macro2::TokenStream =
                     build_html_if_chain_to_vec(html_if.get_branches());
                 parts.push(quote! {
-                    __euv_element_children.extend(#if_chain);
+                    __euv_nodes.extend(#if_chain);
                 });
             }
             _ => {
                 let mut token_stream: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
                 child.to_tokens(&mut token_stream);
                 parts.push(quote! {
-                    __euv_element_children.push(#token_stream);
+                    __euv_nodes.push(#token_stream);
                 });
             }
         }
     }
     quote! {
         {
-            let mut __euv_element_children: Vec<::euv::VirtualNode> = Vec::new();
+            let mut __euv_nodes: Vec<::euv::VirtualNode> = Vec::new();
             #(#parts)*
-            __euv_element_children
+            __euv_nodes
         }
     }
 }
@@ -1150,7 +1227,7 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
 ///
 /// - `syn::Result<HtmlAttrIf>` - The parsed attribute-level reactive or inline conditional.
 pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
-    let mut branches: Vec<(Option<Expr>, Expr)> = Vec::new();
+    let mut branches: Vec<(Option<Expr>, Expr, bool)> = Vec::new();
     let mut is_inline: bool = true;
     content.parse::<Token![if]>()?;
     let branch_reactive: bool = content.peek(Brace);
@@ -1165,7 +1242,7 @@ pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
     let body_content: ParseBuffer<'_>;
     braced!(body_content in content);
     let body: Expr = body_content.parse()?;
-    branches.push((Some(condition), body));
+    branches.push((Some(condition), body, branch_reactive));
     while content.peek(Token![else]) {
         content.parse::<Token![else]>()?;
         if content.peek(Token![if]) {
@@ -1182,12 +1259,12 @@ pub(crate) fn parse_attr_if(content: ParseStream) -> syn::Result<HtmlAttrIf> {
             let body_content: ParseBuffer<'_>;
             braced!(body_content in content);
             let body: Expr = body_content.parse()?;
-            branches.push((Some(condition), body));
+            branches.push((Some(condition), body, branch_reactive));
         } else {
             let body_content: ParseBuffer<'_>;
             braced!(body_content in content);
             let body: Expr = body_content.parse()?;
-            branches.push((None, body));
+            branches.push((None, body, false));
             break;
         }
     }
@@ -1298,17 +1375,16 @@ pub(crate) fn strip_braces_from_expr(expr: &Expr) -> &Expr {
 /// # Returns
 ///
 /// - `proc_macro2::TokenStream` - The generated `if ... { ... } else if ... { ... } else { ... }` token stream.
-pub(crate) fn attr_if_to_tokens(
-    html_attr_if: &HtmlAttrIf,
-    else_default: proc_macro2::TokenStream,
-    mode: AttrIfMode,
-) -> proc_macro2::TokenStream {
+pub(crate) fn attr_if_to_tokens(ctx: &AttrIfContext<'_>) -> proc_macro2::TokenStream {
+    let html_attr_if: &HtmlAttrIf = ctx.get_html_attr_if();
+    let else_default: &proc_macro2::TokenStream = ctx.get_else_default();
+    let mode: AttrIfMode = ctx.get_mode();
     let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
     let has_else: bool = html_attr_if
         .branches
         .last()
-        .is_some_and(|(condition, _): &(Option<Expr>, Expr)| condition.is_none());
-    for (branch_index, (condition, body)) in html_attr_if.branches.iter().enumerate() {
+        .is_some_and(|(condition, _, _): &(Option<Expr>, Expr, bool)| condition.is_none());
+    for (branch_index, (condition, body, is_reactive)) in html_attr_if.branches.iter().enumerate() {
         let body_tokens: proc_macro2::TokenStream = match mode {
             AttrIfMode::Reactive => {
                 quote! { (#body).to_string() }
@@ -1317,10 +1393,14 @@ pub(crate) fn attr_if_to_tokens(
         };
         match (branch_index, condition) {
             (0, Some(cond)) => {
-                if_chain.extend(quote! { if #cond { #body_tokens } });
+                let cond_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(cond, *is_reactive);
+                if_chain.extend(quote! { if #cond_tokens { #body_tokens } });
             }
             (_, Some(cond)) => {
-                if_chain.extend(quote! { else if #cond { #body_tokens } });
+                let cond_tokens: proc_macro2::TokenStream =
+                    auto_get_expr_tokens(cond, *is_reactive);
+                if_chain.extend(quote! { else if #cond_tokens { #body_tokens } });
             }
             (_, None) => {
                 if_chain.extend(quote! { else { #body_tokens } });
@@ -1358,6 +1438,8 @@ pub(crate) fn attr_match_to_tokens(
     mode: AttrIfMode,
 ) -> proc_macro2::TokenStream {
     let scrutinee: &Expr = html_attr_match.get_scrutinee();
+    let scrutinee_tokens: proc_macro2::TokenStream =
+        auto_get_expr_tokens(scrutinee, !html_attr_match.get_is_inline());
     let arm_tokens: Vec<proc_macro2::TokenStream> = html_attr_match
         .get_arms()
         .iter()
@@ -1371,7 +1453,7 @@ pub(crate) fn attr_match_to_tokens(
             quote! { #pattern => #body_tokens, }
         })
         .collect();
-    quote! { match #scrutinee { #(#arm_tokens)* } }
+    quote! { match #scrutinee_tokens { #(#arm_tokens)* } }
 }
 
 /// Checks whether an `HtmlAttrValue` contains any inline (non-reactive) conditional logic.
@@ -1418,45 +1500,6 @@ pub(crate) fn is_style_props_conditional(props: &[(String, HtmlStylePropValue)])
                 HtmlStylePropValue::If(_) | HtmlStylePropValue::Match(_)
             )
         })
-}
-
-/// Builds a Rust `if/else if/else` chain token stream from `HtmlIf` branches.
-///
-/// Each branch body is converted to a `VirtualNode` token stream via `children_to_node_tokens`.
-/// Used by `HtmlNode::If` in `ToTokens`.
-///
-/// # Arguments
-///
-/// - `&[(Option<Expr>, Vec<HtmlNode>)]` - The branches from an `HtmlIf`.
-///
-/// # Returns
-///
-/// - `proc_macro2::TokenStream` - The generated if-chain token stream.
-pub(crate) fn build_html_if_chain(
-    branches: &[(Option<Expr>, Vec<HtmlNode>)],
-) -> proc_macro2::TokenStream {
-    let mut if_chain: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
-    let has_else: bool = branches
-        .last()
-        .is_some_and(|(condition, _): &(Option<Expr>, Vec<HtmlNode>)| condition.is_none());
-    for (branch_index, (condition, body)) in branches.iter().enumerate() {
-        let body_expr: proc_macro2::TokenStream = children_to_node_tokens(body);
-        match (branch_index, condition) {
-            (0, Some(cond)) => {
-                if_chain.extend(quote! { if #cond { #body_expr } });
-            }
-            (_, Some(cond)) => {
-                if_chain.extend(quote! { else if #cond { #body_expr } });
-            }
-            (_, None) => {
-                if_chain.extend(quote! { else { #body_expr } });
-            }
-        }
-    }
-    if !has_else {
-        if_chain.extend(quote! { else { ::euv::VirtualNode::Empty } });
-    }
-    if_chain
 }
 
 /// Parses the value side of an attribute, handling the special `style:` attribute.
@@ -1608,10 +1651,11 @@ pub(crate) fn merge_same_key_attributes(attributes: HtmlAttrs) -> HtmlAttrs {
 ///
 /// - `proc_macro2::TokenStream` - Token stream that evaluates to an `AttributeValue`.
 pub(crate) fn attr_value_to_attribute_value_tokens(
-    value: &HtmlAttrValue,
-    key_str: &str,
-    is_component: bool,
+    ctx: &AttrValueContext<'_>,
 ) -> proc_macro2::TokenStream {
+    let value: &HtmlAttrValue = ctx.get_value();
+    let key_str: &str = ctx.get_key_str();
+    let is_component: bool = ctx.get_is_component();
     match value {
         HtmlAttrValue::Expr(expr) => {
             if let Some(event_name_str) = key_str.strip_prefix(EVENT_ATTR_PREFIX) {
@@ -1741,9 +1785,10 @@ pub(crate) fn extract_attr_key_string(key: &proc_macro2::TokenStream) -> String 
 ///
 /// - `proc_macro2::TokenStream` - Token stream that evaluates to an `AttributeValue`.
 pub(crate) fn attr_value_to_entry_value_tokens(
-    value: &HtmlAttrValue,
-    key_str: &str,
+    ctx: &AttrEntryContext<'_>,
 ) -> proc_macro2::TokenStream {
+    let value: &HtmlAttrValue = ctx.get_value();
+    let key_str: &str = ctx.get_key_str();
     match value {
         HtmlAttrValue::Style(props) => {
             let has_conditional: bool = is_style_props_conditional(props);

@@ -125,7 +125,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 div {
                     class: c_mobile_header_left()
                     button {
-                        class: if { drawer_open.get() } {
+                        class: if { drawer_open } {
                             c_mobile_menu_button_active()
                         } else {
                             c_mobile_menu_button()
@@ -169,7 +169,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 panel_open
             }
             div {
-                class: if { drawer_open.get() } {
+                class: if { drawer_open } {
                     c_mobile_overlay().to_string()
                 } else {
                     format!("{} {}", c_mobile_overlay().get_name(), c_mobile_overlay_hidden().get_name())
@@ -177,7 +177,7 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
                 onclick: on_overlay_click
             }
             nav {
-                class: if { drawer_open.get() } {
+                class: if { drawer_open } {
                     c_mobile_nav_drawer().to_string()
                 } else {
                     format!("{} {}", c_mobile_nav_drawer().get_name(), c_mobile_nav_drawer_closed().get_name())
@@ -508,7 +508,7 @@ pub(crate) fn app() -> VirtualNode {
     Router::use_scroll_drawer_to_active(drawer_open);
     UseEuvLayout::use_safe_area_fix();
     html! {
-        if { mobile_signal.get() } {
+        if { mobile_signal } {
             mobile_layout {
                 route_signal
                 theme_signal

@@ -25,7 +25,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { show_details.get() } {
+                        variant: if { show_details } {
                             EuvButtonVariant::Outline
                         } else {
                             EuvButtonVariant::Primary
@@ -34,7 +34,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         onclick: UseEuvInput::use_toggle(show_details)
                     }
                 }
-                if { show_details.get() } {
+                if { show_details } {
                     div {
                         class: c_toggle_content()
                         h4 {
@@ -84,7 +84,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         onclick: user_type_on_select(user_type, ConditionalUserType::Admin)
                     }
                 }
-                match { user_type.get() } {
+                match { user_type } {
                     ConditionalUserType::Guest => {
                         div {
                             p {
@@ -143,7 +143,7 @@ pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> Virtu
                         ConditionalTab::About.to_string()
                     }
                 }
-                match { tab.get() } {
+                match { tab } {
                     ConditionalTab::Info => {
                         div {
                             class: c_tab_content()

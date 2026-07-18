@@ -17,7 +17,6 @@ use crate::*;
 pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
     let PageGame2DProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<Game2DTab> = App::use_signal(Game2DTab::default);
-    let webgpu_state: UseGame2DWebGpu = use_game_2d_webgpu_state();
     html! {
         div {
             class: c_page_container()
@@ -49,22 +48,34 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                         "WebGPU"
                     }
                 }
-                div {
-                    if { tab.get() == Game2DTab::Canvas2D } {
-                        game_2d_canvas_tab()
+                match { tab } {
+                    Game2DTab::Canvas2D => {
+                        div {
+                            game_2d_canvas_tab()
+                        }
                     }
-                }
-                div {
-                    if { tab.get() == Game2DTab::WebGpu } {
-                        game_2d_webgpu_tab(webgpu_state)
+                    Game2DTab::WebGpu => {
+                        div {
+                            game_2d_webgpu_tab(use_game_2d_webgpu_state())
+                        }
                     }
                 }
             }
             euv_card {
                 title: "2D Engine Features"
-                p {
-                    class: c_game_description()
-                    "This demo uses euv-engine's Vector2D for position/velocity math, impulse-based collision resolution with mass proportional to radius squared, wall reflection with configurable restitution, and a fixed-timestep game loop with accumulator pattern for deterministic physics at 60 Hz. The WebGPU tab demonstrates GPU-accelerated rendering with a WGSL shader pipeline."
+                match { tab } {
+                    Game2DTab::Canvas2D => {
+                        p {
+                            class: c_game_description()
+                            "This demo uses euv-engine's Vector2D for position/velocity math, impulse-based collision resolution with mass proportional to radius squared, wall reflection with configurable restitution, and a fixed-timestep game loop with accumulator pattern for deterministic physics at 60 Hz. The WebGPU tab demonstrates GPU-accelerated rendering with a WGSL shader pipeline."
+                        }
+                    }
+                    Game2DTab::WebGpu => {
+                        p {
+                            class: c_game_description()
+                            "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader, and render an RGB triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
+                        }
+                    }
                 }
             }
         }
@@ -240,10 +251,6 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
                     id: GAME_2D_WEBGPU_CANVAS_ID
                     class: c_game_2d_canvas()
                 }
-            }
-            p {
-                class: c_game_description()
-                "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader, and render an RGB triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
             }
         }
     }

@@ -238,6 +238,47 @@ impl<T> VirtualNode<T> {
         }
     }
 
+    /// Extends this node's attribute list with the given entries, then
+    /// returns the node. If the node is not an `Element` variant, the
+    /// entries are dropped and the node is returned unchanged.
+    ///
+    /// Used by the `html!` macro to splice `class` / `style` / event
+    /// handler attributes onto a component-returned node without forcing
+    /// a `let mut` binding in the generated code.
+    ///
+    /// # Arguments
+    ///
+    /// - `I: IntoIterator<Item = AttributeEntry>` - The extra entries to append.
+    ///
+    /// # Returns
+    ///
+    /// - `Self` - The node with extended attributes (or unchanged).
+    pub fn extend_attributes<I>(self, extra: I) -> Self
+    where
+        I: IntoIterator<Item = AttributeEntry>,
+    {
+        match self {
+            Self::Element {
+                tag,
+                attributes,
+                children,
+                key,
+                props,
+            } => {
+                let mut attrs = attributes;
+                attrs.extend(extra);
+                Self::Element {
+                    tag,
+                    attributes: attrs,
+                    children,
+                    key,
+                    props,
+                }
+            }
+            other => other,
+        }
+    }
+
     /// Returns the children of this node as a virtual node.
     ///
     /// Returns `VirtualNode::Empty` when there are no children, a single child

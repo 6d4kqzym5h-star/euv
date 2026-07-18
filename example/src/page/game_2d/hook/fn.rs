@@ -645,13 +645,6 @@ pub(crate) fn start_game_2d_loop(
 /// 2. loaded
 /// 3. active
 /// 4. loop_started
-///
-/// The fourth slot is reserved for the WebGPU loop gate. Storing it on the
-/// struct (rather than calling `use_signal(|| false)` inside the WebGPU tab
-/// helper) is essential: euv's hook context is global, and the Canvas 2D tab
-/// also calls `use_signal(|| false)` for its own loop gate, so a local
-/// `use_signal` inside the WebGPU tab would land on the same hook index and
-/// silently inherit the Canvas 2D's `true` value, skipping the WebGPU init.
 pub(crate) fn use_game_2d_webgpu_state() -> UseGame2DWebGpu {
     UseGame2DWebGpu {
         fps: App::use_signal(|| 0.0),
@@ -692,29 +685,83 @@ pub(crate) fn game_2d_on_tab_select(
 pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
     let init_state: UseGame2DWebGpu = state;
     let loop_state: UseGame2DWebGpu = state;
+    let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+    let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
+    let resize_dirty: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+    let renderer_rc: Rc<RefCell<Option<WebGpuRenderer>>> = Rc::new(RefCell::new(None));
+    let cancelled: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
+    let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
+    let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        resize_dirty_for_event.set(true);
+    }));
+    let debounce_callback: Function = debounce_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    debounce_closure.forget();
+    let resize_window: Window = window().expect("no global window exists");
+    App::use_window_event("resize", move || {
+        let old_timer: Option<i32> = resize_timer_for_event.get();
+        if let Some(timer_id) = old_timer {
+            let clear_window: Window = window().expect("no global window exists");
+            clear_window.clear_timeout_with_handle(timer_id);
+        }
+        let new_timer: i32 = resize_window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                &debounce_callback,
+                GAME_2D_RESIZE_DEBOUNCE_MILLIS,
+            )
+            .unwrap_or_default();
+        resize_timer_for_event.set(Some(new_timer));
+    });
+    let raf_for_cleanup: Rc<Cell<Option<i32>>> = raf_id.clone();
+    let cell_for_cleanup: RafClosureCell = closure_cell.clone();
+    let renderer_for_cleanup: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
+    let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
+    let cancelled_for_cleanup: Rc<Cell<bool>> = cancelled.clone();
+    App::use_cleanup(move || {
+        cancelled_for_cleanup.set(true);
+        if let Some(cancel_id) = raf_for_cleanup.get() {
+            let window_value: Window = window().expect("no global window exists");
+            let _ = window_value.cancel_animation_frame(cancel_id);
+        }
+        if let Some(timer_id) = resize_timer_for_cleanup.get() {
+            let window_value: Window = window().expect("no global window exists");
+            window_value.clear_timeout_with_handle(timer_id);
+        }
+        cell_for_cleanup.borrow_mut().take();
+        *renderer_for_cleanup.borrow_mut() = None;
+    });
+    let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
     spawn_local(async move {
         let config: RenderConfig = RenderConfig::webgpu(
             GAME_2D_WEBGPU_CANVAS_SELECTOR,
             GAME_2D_CANVAS_WIDTH,
             GAME_2D_CANVAS_HEIGHT,
         );
-        let Some(renderer) = Engine::webgpu_renderer(&config).await else {
-            init_state.get_loaded().set(true);
+        let renderer: Result<WebGpuRenderer, WebGpuInitError> =
+            Engine::webgpu_renderer(&config).await;
+        if cancelled_for_init.get() {
             return;
+        }
+        let renderer: WebGpuRenderer = match renderer {
+            Ok(value) => value,
+            Err(error) => {
+                Console::error(format!("[euv-engine][game_2d] webgpu init failed: {error}"));
+                init_state.get_loaded().set(true);
+                return;
+            }
         };
         let pipeline: JsValue = renderer.create_render_pipeline(GAME_2D_WEBGPU_SHADER);
         init_state.get_active().set(true);
         init_state.get_loaded().set(true);
-        let renderer_rc: Rc<RefCell<Option<WebGpuRenderer>>> =
-            Rc::new(RefCell::new(Some(renderer)));
+        *renderer_rc.borrow_mut() = Some(renderer);
         let pipeline_rc: Rc<JsValue> = Rc::new(pipeline);
-        let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
-        let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
         let last_time: Rc<Cell<f64>> = Rc::new(Cell::new(-1.0));
         let frame_count: Rc<Cell<u32>> = Rc::new(Cell::new(0));
         let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
-        let resize_dirty: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
         let renderer_for_loop: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
         let pipeline_for_loop: Rc<JsValue> = pipeline_rc.clone();
         let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
@@ -793,46 +840,5 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
             )
             .unwrap_or(0);
         raf_id.set(Some(start_id));
-        let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
-        let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
-        let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            resize_dirty_for_event.set(true);
-        }));
-        let debounce_callback: Function = debounce_closure
-            .as_ref()
-            .unchecked_ref::<Function>()
-            .clone();
-        debounce_closure.forget();
-        let resize_window: Window = window().expect("no global window exists");
-        App::use_window_event("resize", move || {
-            let old_timer: Option<i32> = resize_timer_for_event.get();
-            if let Some(timer_id) = old_timer {
-                let clear_window: Window = window().expect("no global window exists");
-                clear_window.clear_timeout_with_handle(timer_id);
-            }
-            let new_timer: i32 = resize_window
-                .set_timeout_with_callback_and_timeout_and_arguments_0(
-                    &debounce_callback,
-                    GAME_2D_RESIZE_DEBOUNCE_MILLIS,
-                )
-                .unwrap_or_default();
-            resize_timer_for_event.set(Some(new_timer));
-        });
-        let raf_for_cleanup: Rc<Cell<Option<i32>>> = raf_id.clone();
-        let cell_for_cleanup: RafClosureCell = closure_cell.clone();
-        let renderer_for_cleanup: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
-        let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
-        App::use_cleanup(move || {
-            if let Some(cancel_id) = raf_for_cleanup.get() {
-                let window_value: Window = window().expect("no global window exists");
-                let _ = window_value.cancel_animation_frame(cancel_id);
-            }
-            if let Some(timer_id) = resize_timer_for_cleanup.get() {
-                let window_value: Window = window().expect("no global window exists");
-                window_value.clear_timeout_with_handle(timer_id);
-            }
-            cell_for_cleanup.borrow_mut().take();
-            *renderer_for_cleanup.borrow_mut() = None;
-        });
     });
 }

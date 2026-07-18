@@ -90,7 +90,7 @@ pub fn euv_mobile_nav_item(node: VirtualNode<EuvMobileNavItemProps>) -> VirtualN
         a {
             href: format!("#{target_string}")
             target: BLANK_BROWSER_TARGET
-            class: if { is_active } {
+            class: if is_active {
                 c_nav_item_active()
             } else {
                 c_nav_item_inactive()

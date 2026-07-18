@@ -26,12 +26,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { box_visible.get() } {
+                        variant: if { box_visible } {
                             EuvButtonVariant::Outline
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: if { box_visible.get() } {
+                        label: if { box_visible } {
                             "Hide Element"
                         } else {
                             "Show Element"
@@ -39,7 +39,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                         onclick: UseEuvInput::use_toggle(box_visible)
                     }
                 }
-                if { box_visible.get() } {
+                if { box_visible } {
                     div {
                         class: c_anim_fade_in()
                         "This element fades in and out with a smooth CSS transition. The visibility is controlled by a Signal — when it becomes true, the node is inserted into the Virtual DOM with a fade-in animation."
@@ -51,12 +51,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { spin_active.get() } {
+                        variant: if { spin_active } {
                             EuvButtonVariant::Outline
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: if { spin_active.get() } {
+                        label: if { spin_active } {
                             "Stop Spin"
                         } else {
                             "Start Spin"
@@ -67,7 +67,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_anim_spin_container()
                     div {
-                        class: if { spin_active.get() } {
+                        class: if { spin_active } {
                             c_anim_spin()
                         } else {
                             c_anim_spin_stopped()
@@ -81,12 +81,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { pulse_active.get() } {
+                        variant: if { pulse_active } {
                             EuvButtonVariant::Outline
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: if { pulse_active.get() } {
+                        label: if { pulse_active } {
                             "Stop Pulse"
                         } else {
                             "Start Pulse"
@@ -97,7 +97,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_anim_pulse_container()
                     div {
-                        class: if { pulse_active.get() } {
+                        class: if { pulse_active } {
                             c_anim_pulse()
                         } else {
                             c_anim_pulse_stopped()
@@ -137,12 +137,12 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 div {
                     class: c_button_controls()
                     euv_button {
-                        variant: if { scale_active.get() } {
+                        variant: if { scale_active } {
                             EuvButtonVariant::Outline
                         } else {
                             EuvButtonVariant::Primary
                         }
-                        label: if { scale_active.get() } {
+                        label: if { scale_active } {
                             "Restore"
                         } else {
                             "Shrink"
@@ -152,7 +152,7 @@ pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNo
                 }
                 div {
                     class: c_anim_scale_box()
-                    class: if { scale_active.get() } {
+                    class: if { scale_active } {
                         c_anim_scale_shrink()
                     } else {
                         c_anim_scale_normal()

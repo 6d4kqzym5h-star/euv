@@ -820,24 +820,24 @@ impl SsaaCanvas {
     /// logical display size. This is the core SSAA step that produces smooth
     /// polygon edges.
     pub fn present(&self) {
-        CanvasRenderer::apply_quality(&self.display_context, self.get_quality());
-        self.display_context
-            .clear_rect(0.0, 0.0, self.width, self.height);
+        CanvasRenderer::apply_quality(self.get_display_context(), self.get_quality());
+        self.get_display_context()
+            .clear_rect(0.0, 0.0, self.get_width(), self.get_height());
         let _ = self
-            .display_context
+            .get_display_context()
             .draw_image_with_html_canvas_element_and_dw_and_dh(
-                &self.offscreen_canvas,
+                self.get_offscreen_canvas(),
                 0.0,
                 0.0,
-                self.width,
-                self.height,
+                self.get_width(),
+                self.get_height(),
             );
     }
 
     /// Clears the offscreen buffer to transparent.
     pub fn clear(&self) {
-        self.offscreen_context
-            .clear_rect(0.0, 0.0, self.width, self.height);
+        self.get_offscreen_context()
+            .clear_rect(0.0, 0.0, self.get_width(), self.get_height());
     }
 
     /// Clears the offscreen buffer and fills it with the given CSS color.
@@ -850,12 +850,12 @@ impl SsaaCanvas {
         C: AsRef<str>,
     {
         let _ = Reflect::set(
-            &self.offscreen_context,
+            self.get_offscreen_context(),
             &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
             &JsValue::from_str(color.as_ref()),
         );
-        self.offscreen_context
-            .fill_rect(0.0, 0.0, self.width, self.height);
+        self.get_offscreen_context()
+            .fill_rect(0.0, 0.0, self.get_width(), self.get_height());
     }
 
     /// Enables high-quality anti-aliasing on both the display and offscreen contexts.
@@ -864,8 +864,8 @@ impl SsaaCanvas {
     /// `apply_quality` helper.
     pub fn enable_smoothing(&self) {
         let quality: RenderQuality = self.get_quality();
-        CanvasRenderer::apply_quality(&self.display_context, quality);
-        CanvasRenderer::apply_quality(&self.offscreen_context, quality);
+        CanvasRenderer::apply_quality(self.get_display_context(), quality);
+        CanvasRenderer::apply_quality(self.get_offscreen_context(), quality);
     }
 }
 
@@ -932,7 +932,7 @@ impl LinearGradient {
             self.get_end().get_x(),
             self.get_end().get_y(),
         );
-        for (position, color) in &self.stops {
+        for (position, color) in self.get_stops() {
             let _ = canvas_gradient.add_color_stop(*position as f32, color);
         }
         Some(canvas_gradient)
@@ -990,7 +990,7 @@ impl RadialGradient {
                 self.get_outer_radius(),
             )
             .ok()?;
-        for (position, color) in &self.stops {
+        for (position, color) in self.get_stops() {
             let _ = canvas_gradient.add_color_stop(*position as f32, color);
         }
         Some(canvas_gradient)
@@ -1369,15 +1369,16 @@ impl WebGpuRenderer {
     /// Asynchronously initializes a WebGPU renderer from the given render configuration.
     ///
     /// Requests a GPU adapter and device, obtains the WebGPU canvas context,
-    /// and configures it with the preferred texture format. Returns `None` if
+    /// and configures it with the preferred texture format. Returns `Err` if
     /// WebGPU is not supported, the adapter/device request fails, the canvas
     /// element is not found, or the adapter/device request hangs beyond
     /// `INIT_PROMISE_TIMEOUT_MILLIS` (a defensive timeout for browser GPU
     /// states that leave the WebGPU promises permanently pending).
     ///
-    /// Every early return logs a `console.error` describing the specific
-    /// failure so the user can diagnose from DevTools why their environment
-    /// can't render with WebGPU.
+    /// The engine no longer logs diagnostic output internally; instead each
+    /// failure mode is returned as a distinct `WebGpuInitError` variant so
+    /// the caller can decide how to surface it (typically via `Console::error`
+    /// or by falling back to the Canvas 2D backend).
     ///
     /// # Arguments
     ///
@@ -1385,28 +1386,19 @@ impl WebGpuRenderer {
     ///
     /// # Returns
     ///
-    /// - `Option<WebGpuRenderer>` - The initialized renderer, or `None` on failure.
-    pub async fn init(config: &RenderConfig) -> Option<WebGpuRenderer> {
+    /// - `Result<WebGpuRenderer, WebGpuInitError>` - The initialized renderer, or
+    ///   a typed error describing the specific failure.
+    pub async fn init(config: &RenderConfig) -> Result<WebGpuRenderer, WebGpuInitError> {
         let window: Window = window().expect("no global window exists");
         let navigator: Navigator = window.navigator();
         let gpu_result: Result<JsValue, JsValue> =
             Reflect::get(navigator.as_ref(), &JsValue::from_str(WEBGPU_CONTEXT_TYPE));
         let gpu: JsValue = match gpu_result {
             Ok(value) => value,
-            Err(err) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: Reflect::get(navigator, webgpu) failed: {:?}",
-                    err,
-                )));
-                return None;
-            }
+            Err(err) => return Err(WebGpuInitError::NavigatorLookup(err)),
         };
         if gpu.is_undefined() || gpu.is_null() {
-            web_sys::console::error_1(&JsValue::from_str(
-                "[euv-engine][webgpu] init: navigator.gpu is missing - \
-                 browser does not expose WebGPU on this origin",
-            ));
-            return None;
+            return Err(WebGpuInitError::NavigatorGpuMissing);
         }
         let adapter_options: Object = Object::new();
         let _ = Reflect::set(
@@ -1417,41 +1409,19 @@ impl WebGpuRenderer {
         let request_adapter_fn: Function =
             match Reflect::get(&gpu, &JsValue::from_str(WEBGPU_METHOD_REQUEST_ADAPTER)) {
                 Ok(value) => value.unchecked_into(),
-                Err(err) => {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "[euv-engine][webgpu] init: Reflect::get(gpu, requestAdapter) failed: {:?}",
-                        err,
-                    )));
-                    return None;
-                }
+                Err(err) => return Err(WebGpuInitError::RequestAdapterLookup(err)),
             };
         let adapter_promise: Promise = match request_adapter_fn.call1(&gpu, &adapter_options) {
             Ok(value) => value.unchecked_into(),
-            Err(err) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: gpu.requestAdapter() threw: {:?}",
-                    err,
-                )));
-                return None;
-            }
+            Err(err) => return Err(WebGpuInitError::RequestAdapterCall(err)),
         };
         let adapter_value: JsValue =
             match JsFuture::from(Self::race_with_timeout(adapter_promise)).await {
                 Ok(value) => value,
-                Err(err) => {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "[euv-engine][webgpu] init: adapter promise rejected or timed out: {:?}",
-                        err,
-                    )));
-                    return None;
-                }
+                Err(err) => return Err(WebGpuInitError::AdapterPromise(err)),
             };
         if adapter_value.is_null() || adapter_value.is_undefined() {
-            web_sys::console::error_1(&JsValue::from_str(
-                "[euv-engine][webgpu] init: requestAdapter returned null - \
-                 no compatible GPU adapter for the requested powerPreference",
-            ));
-            return None;
+            return Err(WebGpuInitError::AdapterUnavailable);
         }
         let device_descriptor: Object = Object::new();
         let request_device_fn: Function = match Reflect::get(
@@ -1459,106 +1429,50 @@ impl WebGpuRenderer {
             &JsValue::from_str(WEBGPU_METHOD_REQUEST_DEVICE),
         ) {
             Ok(value) => value.unchecked_into(),
-            Err(err) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: Reflect::get(adapter, requestDevice) failed: {:?}",
-                    err,
-                )));
-                return None;
-            }
+            Err(err) => return Err(WebGpuInitError::RequestDeviceLookup(err)),
         };
         let device_promise: Promise =
             match request_device_fn.call1(&adapter_value, &device_descriptor) {
                 Ok(value) => value.unchecked_into(),
-                Err(err) => {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "[euv-engine][webgpu] init: adapter.requestDevice() threw: {:?}",
-                        err,
-                    )));
-                    return None;
-                }
+                Err(err) => return Err(WebGpuInitError::RequestDeviceCall(err)),
             };
         let device_value: JsValue =
             match JsFuture::from(Self::race_with_timeout(device_promise)).await {
                 Ok(value) => value,
-                Err(err) => {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "[euv-engine][webgpu] init: device promise rejected or timed out: {:?}",
-                        err,
-                    )));
-                    return None;
-                }
+                Err(err) => return Err(WebGpuInitError::DevicePromise(err)),
             };
         if device_value.is_null() || device_value.is_undefined() {
-            web_sys::console::error_1(&JsValue::from_str(
-                "[euv-engine][webgpu] init: requestDevice returned null - \
-                 adapter could not allocate a device (possibly device-lost)",
-            ));
-            return None;
+            return Err(WebGpuInitError::DeviceUnavailable);
         }
         let document: Document = window.document().expect("should have a document");
         let element: Element = match document.query_selector(&config.canvas_selector) {
             Ok(Some(el)) => el,
             Ok(None) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: canvas element {:?} not found in DOM",
-                    &config.canvas_selector,
-                )));
-                return None;
+                return Err(WebGpuInitError::CanvasNotFound(
+                    config.canvas_selector.clone(),
+                ));
             }
-            Err(err) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: querySelector threw: {:?}",
-                    err,
-                )));
-                return None;
-            }
+            Err(err) => return Err(WebGpuInitError::CanvasQuery(err)),
         };
         let canvas: HtmlCanvasElement = element.unchecked_into();
         let context_object: Option<Object> = canvas.get_context(WEBGPU_CONTEXT_TYPE).ok().flatten();
         let context_object: Object = match context_object {
             Some(c) => c,
-            None => {
-                web_sys::console::error_1(&JsValue::from_str(
-                    "[euv-engine][webgpu] init: canvas.get_context('webgpu') returned null - \
-                     the canvas may already be using another context type or WebGPU is disabled",
-                ));
-                return None;
-            }
+            None => return Err(WebGpuInitError::CanvasContextUnavailable),
         };
         let context: JsValue = context_object.into();
-        let get_format_fn: Function = match Reflect::get(
-            &gpu,
-            &JsValue::from_str(WEBGPU_METHOD_GET_PREFERRED_FORMAT),
-        ) {
-            Ok(value) => value.unchecked_into(),
-            Err(err) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: Reflect::get(gpu, getPreferredCanvasFormat) failed: {:?}",
-                    err,
-                )));
-                return None;
-            }
-        };
+        let get_format_fn: Function =
+            match Reflect::get(&gpu, &JsValue::from_str(WEBGPU_METHOD_GET_PREFERRED_FORMAT)) {
+                Ok(value) => value.unchecked_into(),
+                Err(err) => return Err(WebGpuInitError::PreferredFormatLookup(err)),
+            };
         let format_value: JsValue = match get_format_fn.call0(&gpu) {
             Ok(value) => value,
-            Err(err) => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: gpu.getPreferredCanvasFormat() threw: {:?}",
-                    err,
-                )));
-                return None;
-            }
+            Err(err) => return Err(WebGpuInitError::PreferredFormatCall(err)),
         };
         let format: String = match format_value.as_string() {
             Some(s) => s,
-            None => {
-                web_sys::console::error_1(&JsValue::from_str(&format!(
-                    "[euv-engine][webgpu] init: getPreferredCanvasFormat returned non-string: {:?}",
-                    format_value,
-                )));
-                return None;
-            }
+            None => return Err(WebGpuInitError::PreferredFormatType(format_value)),
         };
         // WebGPU's `configure` requires the canvas backing-store size to be
         // set BEFORE calling configure, otherwise the swap chain is created
@@ -1582,27 +1496,15 @@ impl WebGpuRenderer {
         let configure_fn: Function =
             match Reflect::get(&context, &JsValue::from_str(WEBGPU_METHOD_CONFIGURE)) {
                 Ok(value) => value.unchecked_into(),
-                Err(err) => {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "[euv-engine][webgpu] init: Reflect::get(context, configure) failed: {:?}",
-                        err,
-                    )));
-                    return None;
-                }
+                Err(err) => return Err(WebGpuInitError::ConfigureLookup(err)),
             };
         let _ = configure_fn.call1(&context, &canvas_config);
         let queue: JsValue =
             match Reflect::get(&device_value, &JsValue::from_str(WEBGPU_PROPERTY_QUEUE)) {
                 Ok(value) => value,
-                Err(err) => {
-                    web_sys::console::error_1(&JsValue::from_str(&format!(
-                        "[euv-engine][webgpu] init: Reflect::get(device, queue) failed: {:?}",
-                        err,
-                    )));
-                    return None;
-                }
+                Err(err) => return Err(WebGpuInitError::QueueLookup(err)),
             };
-        Some(WebGpuRenderer {
+        Ok(WebGpuRenderer {
             device: device_value,
             queue,
             context,
@@ -1639,33 +1541,41 @@ impl WebGpuRenderer {
     /// - `bool` - `true` on success, `false` if the swap chain or canvas
     ///   handles were missing or `configure` failed.
     pub fn resize(&mut self, physical_width: u32, physical_height: u32) -> bool {
-        if self.canvas.is_null() || self.context.is_null() || self.device.is_undefined() {
+        if self.get_canvas().is_null()
+            || self.get_context().is_null()
+            || self.get_device().is_undefined()
+        {
             return false;
         }
-        self.canvas.set_width(physical_width);
-        self.canvas.set_height(physical_height);
-        let format_value: JsValue = JsValue::from_str(&self.format);
+        self.get_canvas().set_width(physical_width);
+        self.get_canvas().set_height(physical_height);
+        let format_value: JsValue = JsValue::from_str(&self.get_format());
         let canvas_config: Object = Object::new();
         let _ = Reflect::set(
             &canvas_config,
             &JsValue::from_str(WEBGPU_PROPERTY_DEVICE),
-            &self.device,
+            self.get_device(),
         );
         let _ = Reflect::set(
             &canvas_config,
             &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
             &format_value,
         );
-        let configure_fn: Function =
-            Reflect::get(&self.context, &JsValue::from_str(WEBGPU_METHOD_CONFIGURE))
-                .ok()
-                .and_then(|value: JsValue| value.dyn_into::<Function>().ok())
-                .unwrap_or_else(|| Function::new_no_args(""));
-        if configure_fn.call1(&self.context, &canvas_config).is_err() {
+        let configure_fn: Function = Reflect::get(
+            self.get_context(),
+            &JsValue::from_str(WEBGPU_METHOD_CONFIGURE),
+        )
+        .ok()
+        .and_then(|value: JsValue| value.dyn_into::<Function>().ok())
+        .unwrap_or_else(|| Function::new_no_args(""));
+        if configure_fn
+            .call1(self.get_context(), &canvas_config)
+            .is_err()
+        {
             return false;
         }
-        self.width = physical_width;
-        self.height = physical_height;
+        self.set_width(physical_width);
+        self.set_height(physical_height);
         true
     }
 
@@ -1875,7 +1785,7 @@ impl WebGpuRenderer {
         let _ = Reflect::set(
             &target,
             &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
-            &JsValue::from_str(&self.format),
+            &JsValue::from_str(&self.get_format()),
         );
         let targets: Array = Array::new();
         targets.push(&target);
@@ -2019,3 +1929,211 @@ impl WebGpuRenderer {
         self.submit(&[command_buffer]);
     }
 }
+
+/// Implements helper methods on `WebGpuInitError`.
+///
+/// These methods provide ergonomic access to the diagnostic code and the
+/// underlying JS error value, which are useful when surfacing the failure
+/// to the user (e.g. via `Console::error` from the example crate).
+impl WebGpuInitError {
+    /// Returns a short, machine-readable identifier for this error variant.
+    ///
+    /// Suitable for use as a stable error code in logs or telemetry.
+    /// The codes are stable across releases.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static str` - The error code (e.g. `"WEBGPU_NAVIGATOR_GPU_MISSING"`).
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::NavigatorLookup(_) => "WEBGPU_NAVIGATOR_LOOKUP",
+            Self::NavigatorGpuMissing => "WEBGPU_NAVIGATOR_GPU_MISSING",
+            Self::RequestAdapterLookup(_) => "WEBGPU_REQUEST_ADAPTER_LOOKUP",
+            Self::RequestAdapterCall(_) => "WEBGPU_REQUEST_ADAPTER_CALL",
+            Self::AdapterPromise(_) => "WEBGPU_ADAPTER_PROMISE",
+            Self::AdapterUnavailable => "WEBGPU_ADAPTER_UNAVAILABLE",
+            Self::RequestDeviceLookup(_) => "WEBGPU_REQUEST_DEVICE_LOOKUP",
+            Self::RequestDeviceCall(_) => "WEBGPU_REQUEST_DEVICE_CALL",
+            Self::DevicePromise(_) => "WEBGPU_DEVICE_PROMISE",
+            Self::DeviceUnavailable => "WEBGPU_DEVICE_UNAVAILABLE",
+            Self::CanvasNotFound(_) => "WEBGPU_CANVAS_NOT_FOUND",
+            Self::CanvasQuery(_) => "WEBGPU_CANVAS_QUERY",
+            Self::CanvasContextUnavailable => "WEBGPU_CANVAS_CONTEXT_UNAVAILABLE",
+            Self::PreferredFormatLookup(_) => "WEBGPU_PREFERRED_FORMAT_LOOKUP",
+            Self::PreferredFormatCall(_) => "WEBGPU_PREFERRED_FORMAT_CALL",
+            Self::PreferredFormatType(_) => "WEBGPU_PREFERRED_FORMAT_TYPE",
+            Self::ConfigureLookup(_) => "WEBGPU_CONFIGURE_LOOKUP",
+            Self::QueueLookup(_) => "WEBGPU_QUEUE_LOOKUP",
+        }
+    }
+
+    /// Returns the underlying JS error value if this variant carries one.
+    ///
+    /// Variants that do not capture a JS value (e.g. `NavigatorGpuMissing`,
+    /// `AdapterUnavailable`, `CanvasNotFound`, `CanvasContextUnavailable`)
+    /// return `None`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&JsValue>` - The captured JS error, if any.
+    pub fn js_error(&self) -> Option<&JsValue> {
+        match self {
+            Self::NavigatorLookup(err)
+            | Self::RequestAdapterLookup(err)
+            | Self::RequestAdapterCall(err)
+            | Self::AdapterPromise(err)
+            | Self::RequestDeviceLookup(err)
+            | Self::RequestDeviceCall(err)
+            | Self::DevicePromise(err)
+            | Self::CanvasQuery(err)
+            | Self::PreferredFormatLookup(err)
+            | Self::PreferredFormatCall(err)
+            | Self::PreferredFormatType(err)
+            | Self::ConfigureLookup(err)
+            | Self::QueueLookup(err) => Some(err),
+            Self::NavigatorGpuMissing
+            | Self::AdapterUnavailable
+            | Self::DeviceUnavailable
+            | Self::CanvasContextUnavailable
+            | Self::CanvasNotFound(_) => None,
+        }
+    }
+}
+
+/// Renders the JS-side error into a `String` when present, otherwise `"<none>"`.
+fn js_error_to_string(value: &JsValue) -> String {
+    if let Some(s) = value.as_string() {
+        s
+    } else if value.is_undefined() {
+        "<undefined>".to_string()
+    } else if value.is_null() {
+        "<null>".to_string()
+    } else {
+        format!("{:?}", value)
+    }
+}
+
+/// Implements `std::fmt::Display` for `WebGpuInitError`.
+///
+/// The formatted message is intended for end-user diagnostic output
+/// (typically forwarded to `Console::error` by the calling application)
+/// and includes the variant code plus a human-readable description. When
+/// the variant carries a JS error, its `Debug` form is appended.
+impl std::fmt::Display for WebGpuInitError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NavigatorLookup(err) => write!(
+                formatter,
+                "[{}] Reflect::get(navigator, webgpu) failed: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::NavigatorGpuMissing => write!(
+                formatter,
+                "[{}] navigator.gpu is missing - browser does not expose WebGPU on this origin",
+                self.code(),
+            ),
+            Self::RequestAdapterLookup(err) => write!(
+                formatter,
+                "[{}] Reflect::get(gpu, requestAdapter) failed: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::RequestAdapterCall(err) => write!(
+                formatter,
+                "[{}] gpu.requestAdapter() threw: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::AdapterPromise(err) => write!(
+                formatter,
+                "[{}] adapter promise rejected or timed out: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::AdapterUnavailable => write!(
+                formatter,
+                "[{}] requestAdapter returned null - no compatible GPU adapter for the requested powerPreference",
+                self.code(),
+            ),
+            Self::RequestDeviceLookup(err) => write!(
+                formatter,
+                "[{}] Reflect::get(adapter, requestDevice) failed: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::RequestDeviceCall(err) => write!(
+                formatter,
+                "[{}] adapter.requestDevice() threw: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::DevicePromise(err) => write!(
+                formatter,
+                "[{}] device promise rejected or timed out: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::DeviceUnavailable => write!(
+                formatter,
+                "[{}] requestDevice returned null - adapter could not allocate a device (possibly device-lost)",
+                self.code(),
+            ),
+            Self::CanvasNotFound(selector) => write!(
+                formatter,
+                "[{}] canvas element {:?} not found in DOM",
+                self.code(),
+                selector,
+            ),
+            Self::CanvasQuery(err) => write!(
+                formatter,
+                "[{}] querySelector threw: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::CanvasContextUnavailable => write!(
+                formatter,
+                "[{}] canvas.get_context('webgpu') returned null - the canvas may already be using another context type or WebGPU is disabled",
+                self.code(),
+            ),
+            Self::PreferredFormatLookup(err) => write!(
+                formatter,
+                "[{}] Reflect::get(gpu, getPreferredCanvasFormat) failed: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::PreferredFormatCall(err) => write!(
+                formatter,
+                "[{}] gpu.getPreferredCanvasFormat() threw: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::PreferredFormatType(value) => write!(
+                formatter,
+                "[{}] getPreferredCanvasFormat returned non-string: {}",
+                self.code(),
+                js_error_to_string(value),
+            ),
+            Self::ConfigureLookup(err) => write!(
+                formatter,
+                "[{}] Reflect::get(context, configure) failed: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::QueueLookup(err) => write!(
+                formatter,
+                "[{}] Reflect::get(device, queue) failed: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+        }
+    }
+}
+
+/// Implements the standard `std::error::Error` trait for `WebGpuInitError`.
+///
+/// The `source()` method delegates to the underlying JS error's `toString()`
+/// representation when present, otherwise returns `None`. The engine never
+/// logs or prints anything; this impl exists solely so the error composes
+/// with `Result`-based APIs and `?` operator chains.
+impl std::error::Error for WebGpuInitError {}

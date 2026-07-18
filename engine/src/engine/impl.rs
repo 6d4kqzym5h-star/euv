@@ -38,7 +38,9 @@ impl Engine {
     ///
     /// - `EngineHandle` - A handle to the running engine. If renderer
     ///   initialization failed the handle's renderer field will be `None`
-    ///   and `is_running` will be `false`.
+    ///   and `is_running` will be `false`. Initialization errors are not
+    ///   logged inside the engine; callers should call `init_webgpu`
+    ///   directly if they need access to the typed `WebGpuInitError`.
     pub async fn run(config: EngineConfig, handler: TickHandlerRc) -> EngineHandle {
         let mut handle: EngineHandle = Engine::new_handle(config);
         match handle.get_config().get_render().get_backend() {
@@ -46,7 +48,7 @@ impl Engine {
                 handle.init_canvas();
             }
             RenderBackendType::WebGpu => {
-                handle.init_webgpu().await;
+                let _ = handle.init_webgpu().await;
             }
         }
         handle.start(handler);
@@ -92,14 +94,19 @@ impl Engine {
     /// Promises that must be awaited. Mirrors `Engine::canvas_renderer` for
     /// callers that want the renderer without the full engine handle.
     ///
+    /// Failures are surfaced as `WebGpuInitError` so the caller can decide
+    /// how to react (typically by logging via `Console::error` or by
+    /// falling back to the Canvas 2D backend).
+    ///
     /// # Arguments
     ///
     /// - `&RenderConfig` - The rendering configuration.
     ///
     /// # Returns
     ///
-    /// - `Option<WebGpuRenderer>` - The renderer, or `None` on GPU initialization failure.
-    pub async fn webgpu_renderer(config: &RenderConfig) -> Option<WebGpuRenderer> {
+    /// - `Result<WebGpuRenderer, WebGpuInitError>` - The initialized renderer,
+    ///   or a typed error describing the specific failure.
+    pub async fn webgpu_renderer(config: &RenderConfig) -> Result<WebGpuRenderer, WebGpuInitError> {
         WebGpuRenderer::init(config).await
     }
 }
@@ -120,7 +127,7 @@ impl EngineHandle {
     ///
     /// - `bool` - `true` if the renderer was created successfully.
     pub fn init_canvas(&mut self) -> bool {
-        let render_config: &RenderConfig = &self.config.get_render();
+        let render_config: &RenderConfig = &self.get_config().get_render();
         let renderer: Option<CanvasRenderer> = CanvasRenderer::from_selector(
             render_config.get_canvas_selector(),
             render_config.get_width(),
@@ -128,13 +135,13 @@ impl EngineHandle {
         );
         match renderer {
             Some(r) => {
-                self.canvas_renderer = Some(r);
-                self.webgpu_renderer = None;
+                self.set_canvas_renderer(Some(r));
+                self.set_webgpu_renderer(None);
                 true
             }
             None => {
-                self.canvas_renderer = None;
-                self.webgpu_renderer = None;
+                self.set_canvas_renderer(None);
+                self.set_webgpu_renderer(None);
                 false
             }
         }
@@ -143,26 +150,20 @@ impl EngineHandle {
     /// Initializes the WebGPU rendering backend.
     ///
     /// On success, populates `webgpu_renderer` and clears `canvas_renderer`.
-    /// On failure, both renderer fields remain `None`.
+    /// On failure, both renderer fields remain `None` and the typed error is
+    /// returned so the caller can decide how to surface it (typically via
+    /// `Console::error`).
     ///
     /// # Returns
     ///
-    /// - `bool` - `true` if the renderer was created successfully.
-    pub async fn init_webgpu(&mut self) -> bool {
-        let render_config: &RenderConfig = &self.config.get_render();
-        let renderer: Option<WebGpuRenderer> = WebGpuRenderer::init(render_config).await;
-        match renderer {
-            Some(r) => {
-                self.webgpu_renderer = Some(r);
-                self.canvas_renderer = None;
-                true
-            }
-            None => {
-                self.canvas_renderer = None;
-                self.webgpu_renderer = None;
-                false
-            }
-        }
+    /// - `Result<WebGpuRenderer, WebGpuInitError>` - The initialized renderer,
+    ///   or a typed error describing the specific failure.
+    pub async fn init_webgpu(&mut self) -> Result<WebGpuRenderer, WebGpuInitError> {
+        let render_config: &RenderConfig = &self.get_config().get_render();
+        let renderer: WebGpuRenderer = WebGpuRenderer::init(render_config).await?;
+        self.set_webgpu_renderer(Some(renderer.clone()));
+        self.set_canvas_renderer(None);
+        Ok(renderer)
     }
 
     /// Starts the game loop with the given tick handler.
@@ -175,13 +176,13 @@ impl EngineHandle {
     ///
     /// - `TickHandlerRc` - The tick handler receiving update and render callbacks.
     pub fn start(&mut self, handler: TickHandlerRc) {
-        let scheduler_config: SchedulerConfig = self.config.get_scheduler();
-        self.scheduler_handle = Some(SchedulerHandle::start(scheduler_config, handler));
+        let scheduler_config: SchedulerConfig = self.get_config().get_scheduler();
+        self.set_scheduler_handle(Some(SchedulerHandle::start(scheduler_config, handler)));
     }
 
     /// Stops the game loop and cancels any pending animation frame request.
     pub fn stop(&self) {
-        if let Some(handle) = &self.scheduler_handle {
+        if let Some(handle) = self.try_get_scheduler_handle().as_ref() {
             handle.stop();
         }
     }
@@ -192,7 +193,7 @@ impl EngineHandle {
     ///
     /// - `bool` - `true` if the scheduler is running.
     pub fn is_running(&self) -> bool {
-        self.scheduler_handle
+        self.try_get_scheduler_handle()
             .as_ref()
             .is_some_and(|handle: &SchedulerHandle| handle.is_running())
     }

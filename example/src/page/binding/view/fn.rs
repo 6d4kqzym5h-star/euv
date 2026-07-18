@@ -59,7 +59,7 @@ pub(crate) fn limited_counter(node: VirtualNode<LimitedCounterProps>) -> Virtual
                     disabled: disabled
                 }
             }
-            if { disabled.get() } {
+            if { disabled } {
                 p {
                     class: c_binding_typed_warning()
                     "Counter is disabled!"

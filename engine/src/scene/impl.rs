@@ -116,7 +116,7 @@ impl SceneManager {
     ///
     /// - `&CanvasRenderingContext2d` - The canvas rendering context.
     pub fn render(&self, context: &CanvasRenderingContext2d) {
-        let Some(current_name) = self.current_scene_name.as_ref() else {
+        let Some(current_name) = self.try_get_current_scene_name().as_ref() else {
             return;
         };
         let Some(scene) = self.get_scenes().get(current_name) else {
@@ -147,7 +147,7 @@ impl SceneManager {
     ///
     /// - `Option<&str>` - The current scene name, or `None`.
     pub fn current_name(&self) -> Option<&str> {
-        self.current_scene_name.as_deref()
+        self.try_get_current_scene_name().as_deref()
     }
 }
 

@@ -105,7 +105,7 @@ impl EngineConfig {
     ///
     /// - `EngineConfig` - The updated engine configuration.
     pub fn with_scheduler(mut self, scheduler: SchedulerConfig) -> EngineConfig {
-        self.scheduler = scheduler;
+        self.set_scheduler(scheduler);
         self
     }
 }

@@ -18,7 +18,6 @@ use crate::*;
 pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
     let _page_game_3d_props: PageGame3DProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<Game3DTab> = App::use_signal(Game3DTab::default);
-    let webgpu_state: UseGame3DWebGpu = use_game_3d_webgpu_state();
     html! {
         div {
             class: c_page_container()
@@ -50,22 +49,34 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                         "WebGPU"
                     }
                 }
-                div {
-                    if { tab.get() == Game3DTab::Canvas2D } {
-                        game_3d_canvas_tab()
+                match { tab } {
+                    Game3DTab::Canvas2D => {
+                        div {
+                            game_3d_canvas_tab()
+                        }
                     }
-                }
-                div {
-                    if { tab.get() == Game3DTab::WebGpu } {
-                        game_3d_webgpu_tab(webgpu_state)
+                    Game3DTab::WebGpu => {
+                        div {
+                            game_3d_webgpu_tab(use_game_3d_webgpu_state())
+                        }
                     }
                 }
             }
             euv_card {
                 title: "3D Engine Features"
-                p {
-                    class: c_game_description()
-                    "This demo uses euv-engine's 3D math: Vector3D for positions, Quaternion for rotation, Matrix4x4 for view/projection transforms, Camera3D for orbit camera with perspective projection, and Transform3D for cube transforms. Features include back-face culling, painter's algorithm depth sorting, and quaternion-based angular velocity integration. The WebGPU tab demonstrates GPU-accelerated rendering with a WGSL shader pipeline."
+                match { tab } {
+                    Game3DTab::Canvas2D => {
+                        p {
+                            class: c_game_description()
+                            "This demo uses euv-engine's 3D math: Vector3D for positions, Quaternion for rotation, Matrix4x4 for view/projection transforms, Camera3D for orbit camera with perspective projection, and Transform3D for cube transforms. Features include back-face culling, painter's algorithm depth sorting, and quaternion-based angular velocity integration. The WebGPU tab demonstrates GPU-accelerated rendering with a WGSL shader pipeline."
+                        }
+                    }
+                    Game3DTab::WebGpu => {
+                        p {
+                            class: c_game_description()
+                            "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader with pseudo-3D perspective, and render a colored triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
+                        }
+                    }
                 }
             }
         }
@@ -241,10 +252,6 @@ fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
                     id: GAME_3D_WEBGPU_CANVAS_ID
                     class: c_game_3d_canvas()
                 }
-            }
-            p {
-                class: c_game_description()
-                "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader with pseudo-3D perspective, and render a colored triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
             }
         }
     }

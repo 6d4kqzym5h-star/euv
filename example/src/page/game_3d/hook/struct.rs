@@ -71,12 +71,6 @@ pub(crate) struct UseGame3DWebGpu {
     #[get(type(copy))]
     pub(crate) active: Signal<bool>,
     /// Whether the WebGPU render loop has been kicked off in this component tree.
-    ///
-    /// Allocated by `use_game_3d_webgpu_state` so it owns a stable hook slot
-    /// that the Canvas 3D tab cannot collide with. Without this, the Canvas
-    /// 3D tab's `loop_started` signal (a plain `use_signal(|| false)`) would
-    /// land on the same global hook index as the WebGPU tab's signal and be
-    /// reused as `true`, silently skipping the WebGPU init.
     #[get(type(copy))]
     pub(crate) loop_started: Signal<bool>,
 }
