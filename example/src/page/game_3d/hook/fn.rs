@@ -532,7 +532,7 @@ pub(crate) fn start_game_3d_loop(
         frame_clone.set(frame_clone.get() + 1);
         fps_clone.set(fps_clone.get() + frame_time);
         if fps_clone.get() >= 1.0 {
-            let fps: f64 = frame_clone.get() as f64 / fps_clone.get();
+            let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
             state_clone.get_fps().set(fps);
             frame_clone.set(0);
             fps_clone.set(0.0);
@@ -884,4 +884,195 @@ pub(crate) fn game_3d_on_touch_end(
         }
         last_pointer.set(None);
     }))
+}
+
+/// Creates the reactive state signals for the 3D WebGPU demo.
+///
+/// # Returns
+///
+/// - `UseGame3DWebGpu` - The WebGPU demo state.
+pub(crate) fn use_game_3d_webgpu_state() -> UseGame3DWebGpu {
+    UseGame3DWebGpu {
+        fps: App::use_signal(|| 0.0),
+        loaded: App::use_signal(|| false),
+        active: App::use_signal(|| false),
+        loop_started: App::use_signal(|| false),
+    }
+}
+
+/// Creates a click event handler that selects a tab on the 3D game page.
+///
+/// # Arguments
+///
+/// - `Signal<Game3DTab>` - The tab signal to update.
+/// - `Game3DTab` - The tab variant to set.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - A click handler that sets the active tab.
+pub(crate) fn game_3d_on_tab_select(
+    tab: Signal<Game3DTab>,
+    value: Game3DTab,
+) -> Option<Rc<dyn Fn(Event)>> {
+    Some(Rc::new(move |_: Event| {
+        tab.set(value);
+    }))
+}
+
+/// Starts the 3D WebGPU render loop driven by `requestAnimationFrame`.
+///
+/// Asynchronously initializes a `WebGpuRenderer`, creates a render pipeline
+/// from a WGSL shader with pseudo-3D perspective, and runs a
+/// `requestAnimationFrame` loop that renders the triangle with an animated
+/// clear color each frame.
+///
+/// # Arguments
+///
+/// - `UseGame3DWebGpu` - The WebGPU demo state for signal updates.
+pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
+    let init_state: UseGame3DWebGpu = state;
+    let loop_state: UseGame3DWebGpu = state;
+    spawn_local(async move {
+        let config: RenderConfig = RenderConfig::webgpu(
+            GAME_3D_WEBGPU_CANVAS_SELECTOR,
+            GAME_3D_CANVAS_WIDTH,
+            GAME_3D_CANVAS_HEIGHT,
+        );
+        let Some(renderer) = Engine::webgpu_renderer(&config).await else {
+            init_state.get_loaded().set(true);
+            return;
+        };
+        let pipeline: JsValue = renderer.create_render_pipeline(GAME_3D_WEBGPU_SHADER);
+        init_state.get_active().set(true);
+        init_state.get_loaded().set(true);
+        let renderer_rc: Rc<RefCell<Option<WebGpuRenderer>>> =
+            Rc::new(RefCell::new(Some(renderer)));
+        let pipeline_rc: Rc<JsValue> = Rc::new(pipeline);
+        let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+        let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
+        let last_time: Rc<Cell<f64>> = Rc::new(Cell::new(-1.0));
+        let frame_count: Rc<Cell<u32>> = Rc::new(Cell::new(0));
+        let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+        let resize_dirty: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+        let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+        let renderer_for_loop: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
+        let pipeline_for_loop: Rc<JsValue> = pipeline_rc.clone();
+        let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
+        let cell_clone: RafClosureCell = closure_cell.clone();
+        let last_clone: Rc<Cell<f64>> = last_time.clone();
+        let frame_clone: Rc<Cell<u32>> = frame_count.clone();
+        let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
+        let resize_dirty_for_loop: Rc<Cell<bool>> = resize_dirty.clone();
+        let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            let window_value: Window = window().expect("no global window exists");
+            let performance: Performance = window_value
+                .performance()
+                .expect("performance should exist");
+            let current_time: f64 = performance.now() / 1000.0;
+            let prev: f64 = last_clone.get();
+            let frame_time: f64 = if prev < 0.0 {
+                GAME_3D_FIXED_TIMESTEP
+            } else {
+                (current_time - prev).min(0.25)
+            };
+            last_clone.set(current_time);
+            if resize_dirty_for_loop.get() {
+                resize_dirty_for_loop.set(false);
+                let window_for_dpr: Window = window().expect("no global window exists");
+                let dpr: f64 = Reflect::get(
+                    window_for_dpr.as_ref(),
+                    &JsValue::from_str("devicePixelRatio"),
+                )
+                .ok()
+                .and_then(|value: JsValue| value.as_f64())
+                .filter(|value: &f64| value.is_finite() && *value >= 1.0)
+                .unwrap_or(1.0);
+                let new_physical_width: u32 = (GAME_3D_CANVAS_WIDTH * dpr).round() as u32;
+                let new_physical_height: u32 = (GAME_3D_CANVAS_HEIGHT * dpr).round() as u32;
+                if let Some(renderer) = renderer_for_loop.borrow_mut().as_mut() {
+                    let _ = renderer.resize(new_physical_width, new_physical_height);
+                }
+            }
+            if let Some(renderer) = renderer_for_loop.borrow().as_ref() {
+                let t: f64 = current_time;
+                let r: f64 = (t * 0.3 + 1.0).sin() * 0.3 + 0.1;
+                let g: f64 = (t * 0.5 + 3.0).sin() * 0.3 + 0.1;
+                let b: f64 = (t * 0.8).sin() * 0.3 + 0.1;
+                renderer.render_frame(&pipeline_for_loop, (r, g, b, 1.0), 3);
+            }
+            frame_clone.set(frame_clone.get() + 1);
+            fps_clone.set(fps_clone.get() + frame_time);
+            if fps_clone.get() >= 1.0 {
+                let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
+                loop_state.get_fps().set(fps);
+                frame_clone.set(0);
+                fps_clone.set(0.0);
+            }
+            let next_id: i32 = window_value
+                .request_animation_frame(
+                    cell_clone
+                        .borrow()
+                        .as_ref()
+                        .expect("raf closure should exist")
+                        .as_ref()
+                        .unchecked_ref(),
+                )
+                .unwrap_or(0);
+            raf_clone.set(Some(next_id));
+        }));
+        *closure_cell.borrow_mut() = Some(raf_closure);
+        let start_window: Window = window().expect("no global window exists");
+        let start_id: i32 = start_window
+            .request_animation_frame(
+                closure_cell
+                    .borrow()
+                    .as_ref()
+                    .expect("raf closure should exist")
+                    .as_ref()
+                    .unchecked_ref(),
+            )
+            .unwrap_or(0);
+        raf_id.set(Some(start_id));
+        let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
+        let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
+        let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            resize_dirty_for_event.set(true);
+        }));
+        let debounce_callback: Function = debounce_closure
+            .as_ref()
+            .unchecked_ref::<Function>()
+            .clone();
+        debounce_closure.forget();
+        let resize_window: Window = window().expect("no global window exists");
+        App::use_window_event("resize", move || {
+            let old_timer: Option<i32> = resize_timer_for_event.get();
+            if let Some(timer_id) = old_timer {
+                let clear_window: Window = window().expect("no global window exists");
+                clear_window.clear_timeout_with_handle(timer_id);
+            }
+            let new_timer: i32 = resize_window
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    &debounce_callback,
+                    GAME_3D_RESIZE_DEBOUNCE_MILLIS,
+                )
+                .unwrap_or_default();
+            resize_timer_for_event.set(Some(new_timer));
+        });
+        let raf_for_cleanup: Rc<Cell<Option<i32>>> = raf_id.clone();
+        let cell_for_cleanup: RafClosureCell = closure_cell.clone();
+        let renderer_for_cleanup: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
+        let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
+        App::use_cleanup(move || {
+            if let Some(cancel_id) = raf_for_cleanup.get() {
+                let window_value: Window = window().expect("no global window exists");
+                let _ = window_value.cancel_animation_frame(cancel_id);
+            }
+            if let Some(timer_id) = resize_timer_for_cleanup.get() {
+                let window_value: Window = window().expect("no global window exists");
+                window_value.clear_timeout_with_handle(timer_id);
+            }
+            cell_for_cleanup.borrow_mut().take();
+            *renderer_for_cleanup.borrow_mut() = None;
+        });
+    });
 }

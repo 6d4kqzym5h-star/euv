@@ -9,7 +9,7 @@ use crate::*;
 /// # Returns
 ///
 /// - `TokenStream` - The generated token stream constructing `Css` functions.
-pub fn parse_class(input: TokenStream) -> TokenStream {
+pub(crate) fn parse_class(input: TokenStream) -> TokenStream {
     let tokens: proc_macro2::TokenStream = match parse::<ClassInput>(input) {
         Ok(class_input) => class_input.into_token_stream(),
         Err(error) => return error.to_compile_error().into(),

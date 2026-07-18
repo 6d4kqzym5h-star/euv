@@ -137,3 +137,45 @@ pub(crate) const GAME_3D_CUBE_EDGES: [(usize, usize); 12] = [
     (2, 6),
     (3, 7),
 ];
+
+/// The HTML `id` attribute value for the 3D WebGPU canvas element.
+pub(crate) const GAME_3D_WEBGPU_CANVAS_ID: &str = "game-3d-webgpu-canvas";
+
+/// The CSS selector used to query the 3D WebGPU canvas element from the DOM.
+pub(crate) const GAME_3D_WEBGPU_CANVAS_SELECTOR: &str = "#game-3d-webgpu-canvas";
+
+/// The WGSL shader source for the 3D WebGPU demo.
+///
+/// Renders a triangle with pseudo-3D perspective by dividing the x and y
+/// coordinates by the negative z coordinate. Vertex colors are interpolated
+/// across the triangle surface.
+pub(crate) const GAME_3D_WEBGPU_SHADER: &str = r#"
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) color: vec3<f32>,
+};
+
+@vertex
+fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
+    var p = array<vec3<f32>, 3>(
+        vec3<f32>(0.0, 0.5, -1.5),
+        vec3<f32>(-0.5, -0.5, -2.5),
+        vec3<f32>(0.5, -0.5, -1.0),
+    );
+    var c = array<vec3<f32>, 3>(
+        vec3<f32>(0.2, 0.8, 1.0),
+        vec3<f32>(0.8, 0.2, 1.0),
+        vec3<f32>(0.2, 1.0, 0.8),
+    );
+    let pos = p[vi];
+    var out: VertexOutput;
+    out.position = vec4<f32>(pos.x / -pos.z, pos.y / -pos.z, 0.0, 1.0);
+    out.color = c[vi];
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    return vec4<f32>(in.color, 1.0);
+}
+"#;

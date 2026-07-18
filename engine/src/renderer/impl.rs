@@ -1195,11 +1195,18 @@ impl CanvasRenderer {
 
 /// Implements the `RenderBackend` trait for `CanvasRenderer`, providing
 /// a backend-agnostic rendering interface.
+///
+/// Each method forwards to the inherent `CanvasRenderer` method of the
+/// same name, so the per-call documentation lives on the trait definition
+/// in `engine::renderer::trait` — the inherent method is the source of
+/// truth, this impl is the trait bridge.
 impl RenderBackend for CanvasRenderer {
+    /// Forwards to [`CanvasRenderer::clear`].
     fn clear(&self) {
         self.clear();
     }
 
+    /// Forwards to [`CanvasRenderer::clear_color`].
     fn clear_color<C>(&self, color: C)
     where
         C: AsRef<str>,
@@ -1207,79 +1214,808 @@ impl RenderBackend for CanvasRenderer {
         self.clear_color(color);
     }
 
+    /// Forwards to [`CanvasRenderer::save`].
     fn save(&self) {
         self.save();
     }
 
+    /// Forwards to [`CanvasRenderer::restore`].
     fn restore(&self) {
         self.restore();
     }
 
+    /// Forwards to [`CanvasRenderer::set_fill_color`].
     fn set_fill_color(&self, color: &str) {
         self.set_fill_color(color);
     }
 
+    /// Forwards to [`CanvasRenderer::set_stroke_color`].
     fn set_stroke_color(&self, color: &str) {
         self.set_stroke_color(color);
     }
 
+    /// Forwards to [`CanvasRenderer::set_line_width`].
     fn set_line_width(&self, width: f64) {
         self.set_line_width(width);
     }
 
+    /// Forwards to [`CanvasRenderer::set_global_alpha`].
     fn set_global_alpha(&self, alpha: f64) {
         self.set_global_alpha(alpha);
     }
 
+    /// Forwards to [`CanvasRenderer::set_blend_mode`].
     fn set_blend_mode(&self, mode: BlendMode) {
         self.set_blend_mode(mode);
     }
 
+    /// Forwards to [`CanvasRenderer::set_shadow`].
     fn set_shadow(&self, config: &ShadowConfig) {
         self.set_shadow(config);
     }
 
+    /// Forwards to [`CanvasRenderer::clear_shadow`].
     fn clear_shadow(&self) {
         self.clear_shadow();
     }
 
+    /// Forwards to [`CanvasRenderer::fill_rect`].
     fn fill_rect(&self, position: Vector2D, width: f64, height: f64) {
         self.fill_rect(position, width, height);
     }
 
+    /// Forwards to [`CanvasRenderer::stroke_rect`].
     fn stroke_rect(&self, position: Vector2D, width: f64, height: f64) {
         self.stroke_rect(position, width, height);
     }
 
+    /// Forwards to [`CanvasRenderer::fill_circle`].
     fn fill_circle(&self, center: Vector2D, radius: f64) {
         self.fill_circle(center, radius);
     }
 
+    /// Forwards to [`CanvasRenderer::stroke_circle`].
     fn stroke_circle(&self, center: Vector2D, radius: f64) {
         self.stroke_circle(center, radius);
     }
 
+    /// Forwards to [`CanvasRenderer::draw_line`].
     fn draw_line(&self, start: Vector2D, end: Vector2D) {
         self.draw_line(start, end);
     }
 
+    /// Forwards to [`CanvasRenderer::fill_text`].
     fn fill_text(&self, text: &str, position: Vector2D) {
         self.fill_text(text, position);
     }
 
+    /// Forwards to [`CanvasRenderer::set_font`].
     fn set_font(&self, font: &str) {
         self.set_font(font);
     }
 
+    /// Forwards to [`CanvasRenderer::draw_image`].
     fn draw_image(&self, image: &HtmlImageElement, position: Vector2D, width: f64, height: f64) {
         self.draw_image(image, position, width, height);
     }
 
+    /// Forwards to [`CanvasRenderer::set_linear_gradient_fill`].
     fn set_linear_gradient_fill(&self, gradient: &LinearGradient) {
         self.set_linear_gradient_fill(gradient);
     }
 
+    /// Forwards to [`CanvasRenderer::set_radial_gradient_fill`].
     fn set_radial_gradient_fill(&self, gradient: &RadialGradient) {
         self.set_radial_gradient_fill(gradient);
+    }
+}
+
+/// Implements async initialization and GPU resource creation for `WebGpuRenderer`.
+impl WebGpuRenderer {
+    /// Asynchronously initializes a WebGPU renderer from the given render configuration.
+    ///
+    /// Requests a GPU adapter and device, obtains the WebGPU canvas context,
+    /// and configures it with the preferred texture format. Returns `None` if
+    /// WebGPU is not supported, the adapter/device request fails, or the canvas
+    /// element is not found.
+    ///
+    /// # Arguments
+    ///
+    /// - `&RenderConfig` - The rendering configuration.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<WebGpuRenderer>` - The initialized renderer, or `None` on failure.
+    ///   Maximum time in milliseconds to wait for `requestAdapter` and
+    ///   `requestDevice` before treating them as failed.
+    ///
+    /// Some browser GPU states (headless, no GPU, sandboxed, device-lost)
+    /// leave the WebGPU adapter/device promises permanently pending instead
+    /// of resolving to `null` or rejecting. Without a timeout the
+    /// `JsFuture::from(...).await` inside `init` would hang forever and
+    /// the UI would stay stuck on `Initializing...`. Wrapping each promise
+    /// in `Promise.race` against a timer-rejected sibling forces the
+    /// future to resolve so the caller's `let Some(...) = ... else { ... }`
+    /// branch can run and report `WebGPU Not Supported`.
+    /// Returns a Promise that rejects after `INIT_PROMISE_TIMEOUT_MILLIS`.
+    fn timeout_promise() -> Promise {
+        let window_value: Window = window().expect("no global window exists");
+        Promise::new(&mut |_resolve: Function, reject: Function| {
+            let reject_fn: Function = reject.clone();
+            let timer: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+                let _ = reject_fn.call1(
+                    &JsValue::UNDEFINED,
+                    &JsValue::from_str(RENDERER_TIMEOUT_ERROR_MESSAGE),
+                );
+            }));
+            let _ = window_value.set_timeout_with_callback_and_timeout_and_arguments_0(
+                timer.as_ref().unchecked_ref(),
+                INIT_PROMISE_TIMEOUT_MILLIS,
+            );
+            timer.forget();
+        })
+    }
+
+    /// Wraps `promise` in `Promise.race([promise, timeout_promise()])` so that
+    /// awaiting it never blocks longer than `INIT_PROMISE_TIMEOUT_MILLIS`.
+    ///
+    /// Calls `Promise.race` via reflection because wasm-bindgen does not
+    /// currently expose the static `race` method on `js_sys::Promise`.
+    fn race_with_timeout(promise: Promise) -> Promise {
+        let array: Array = Array::of2(&promise, &Self::timeout_promise());
+        Promise::race(&array)
+    }
+
+    /// Asynchronously initializes a WebGPU renderer from the given render configuration.
+    ///
+    /// Requests a GPU adapter and device, obtains the WebGPU canvas context,
+    /// and configures it with the preferred texture format. Returns `None` if
+    /// WebGPU is not supported, the adapter/device request fails, the canvas
+    /// element is not found, or the adapter/device request hangs beyond
+    /// `INIT_PROMISE_TIMEOUT_MILLIS` (a defensive timeout for browser GPU
+    /// states that leave the WebGPU promises permanently pending).
+    ///
+    /// Every early return logs a `console.error` describing the specific
+    /// failure so the user can diagnose from DevTools why their environment
+    /// can't render with WebGPU.
+    ///
+    /// # Arguments
+    ///
+    /// - `&RenderConfig` - The rendering configuration.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<WebGpuRenderer>` - The initialized renderer, or `None` on failure.
+    pub async fn init(config: &RenderConfig) -> Option<WebGpuRenderer> {
+        let window: Window = window().expect("no global window exists");
+        let navigator: Navigator = window.navigator();
+        let gpu_result: Result<JsValue, JsValue> =
+            Reflect::get(navigator.as_ref(), &JsValue::from_str(WEBGPU_CONTEXT_TYPE));
+        let gpu: JsValue = match gpu_result {
+            Ok(value) => value,
+            Err(err) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: Reflect::get(navigator, webgpu) failed: {:?}",
+                    err,
+                )));
+                return None;
+            }
+        };
+        if gpu.is_undefined() || gpu.is_null() {
+            web_sys::console::error_1(&JsValue::from_str(
+                "[euv-engine][webgpu] init: navigator.gpu is missing - \
+                 browser does not expose WebGPU on this origin",
+            ));
+            return None;
+        }
+        let adapter_options: Object = Object::new();
+        let _ = Reflect::set(
+            &adapter_options,
+            &JsValue::from_str(WEBGPU_PROPERTY_POWER_PREFERENCE),
+            &JsValue::from_str(config.power_preference.to_web_sys_string()),
+        );
+        let request_adapter_fn: Function =
+            match Reflect::get(&gpu, &JsValue::from_str(WEBGPU_METHOD_REQUEST_ADAPTER)) {
+                Ok(value) => value.unchecked_into(),
+                Err(err) => {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "[euv-engine][webgpu] init: Reflect::get(gpu, requestAdapter) failed: {:?}",
+                        err,
+                    )));
+                    return None;
+                }
+            };
+        let adapter_promise: Promise = match request_adapter_fn.call1(&gpu, &adapter_options) {
+            Ok(value) => value.unchecked_into(),
+            Err(err) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: gpu.requestAdapter() threw: {:?}",
+                    err,
+                )));
+                return None;
+            }
+        };
+        let adapter_value: JsValue =
+            match JsFuture::from(Self::race_with_timeout(adapter_promise)).await {
+                Ok(value) => value,
+                Err(err) => {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "[euv-engine][webgpu] init: adapter promise rejected or timed out: {:?}",
+                        err,
+                    )));
+                    return None;
+                }
+            };
+        if adapter_value.is_null() || adapter_value.is_undefined() {
+            web_sys::console::error_1(&JsValue::from_str(
+                "[euv-engine][webgpu] init: requestAdapter returned null - \
+                 no compatible GPU adapter for the requested powerPreference",
+            ));
+            return None;
+        }
+        let device_descriptor: Object = Object::new();
+        let request_device_fn: Function = match Reflect::get(
+            &adapter_value,
+            &JsValue::from_str(WEBGPU_METHOD_REQUEST_DEVICE),
+        ) {
+            Ok(value) => value.unchecked_into(),
+            Err(err) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: Reflect::get(adapter, requestDevice) failed: {:?}",
+                    err,
+                )));
+                return None;
+            }
+        };
+        let device_promise: Promise =
+            match request_device_fn.call1(&adapter_value, &device_descriptor) {
+                Ok(value) => value.unchecked_into(),
+                Err(err) => {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "[euv-engine][webgpu] init: adapter.requestDevice() threw: {:?}",
+                        err,
+                    )));
+                    return None;
+                }
+            };
+        let device_value: JsValue =
+            match JsFuture::from(Self::race_with_timeout(device_promise)).await {
+                Ok(value) => value,
+                Err(err) => {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "[euv-engine][webgpu] init: device promise rejected or timed out: {:?}",
+                        err,
+                    )));
+                    return None;
+                }
+            };
+        if device_value.is_null() || device_value.is_undefined() {
+            web_sys::console::error_1(&JsValue::from_str(
+                "[euv-engine][webgpu] init: requestDevice returned null - \
+                 adapter could not allocate a device (possibly device-lost)",
+            ));
+            return None;
+        }
+        let document: Document = window.document().expect("should have a document");
+        let element: Element = match document.query_selector(&config.canvas_selector) {
+            Ok(Some(el)) => el,
+            Ok(None) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: canvas element {:?} not found in DOM",
+                    &config.canvas_selector,
+                )));
+                return None;
+            }
+            Err(err) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: querySelector threw: {:?}",
+                    err,
+                )));
+                return None;
+            }
+        };
+        let canvas: HtmlCanvasElement = element.unchecked_into();
+        let context_object: Option<Object> = canvas.get_context(WEBGPU_CONTEXT_TYPE).ok().flatten();
+        let context_object: Object = match context_object {
+            Some(c) => c,
+            None => {
+                web_sys::console::error_1(&JsValue::from_str(
+                    "[euv-engine][webgpu] init: canvas.get_context('webgpu') returned null - \
+                     the canvas may already be using another context type or WebGPU is disabled",
+                ));
+                return None;
+            }
+        };
+        let context: JsValue = context_object.into();
+        let get_format_fn: Function = match Reflect::get(
+            &gpu,
+            &JsValue::from_str(WEBGPU_METHOD_GET_PREFERRED_FORMAT),
+        ) {
+            Ok(value) => value.unchecked_into(),
+            Err(err) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: Reflect::get(gpu, getPreferredCanvasFormat) failed: {:?}",
+                    err,
+                )));
+                return None;
+            }
+        };
+        let format_value: JsValue = match get_format_fn.call0(&gpu) {
+            Ok(value) => value,
+            Err(err) => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: gpu.getPreferredCanvasFormat() threw: {:?}",
+                    err,
+                )));
+                return None;
+            }
+        };
+        let format: String = match format_value.as_string() {
+            Some(s) => s,
+            None => {
+                web_sys::console::error_1(&JsValue::from_str(&format!(
+                    "[euv-engine][webgpu] init: getPreferredCanvasFormat returned non-string: {:?}",
+                    format_value,
+                )));
+                return None;
+            }
+        };
+        // WebGPU's `configure` requires the canvas backing-store size to be
+        // set BEFORE calling configure, otherwise the swap chain is created
+        // at 0x0 and the first getCurrentTexture() returns an error.
+        let dpr: f64 = CanvasRenderer::detect_dpr();
+        let physical_width: u32 = (config.width * dpr).round() as u32;
+        let physical_height: u32 = (config.height * dpr).round() as u32;
+        canvas.set_width(physical_width);
+        canvas.set_height(physical_height);
+        let canvas_config: Object = Object::new();
+        let _ = Reflect::set(
+            &canvas_config,
+            &JsValue::from_str(WEBGPU_PROPERTY_DEVICE),
+            &device_value,
+        );
+        let _ = Reflect::set(
+            &canvas_config,
+            &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+            &format_value,
+        );
+        let configure_fn: Function =
+            match Reflect::get(&context, &JsValue::from_str(WEBGPU_METHOD_CONFIGURE)) {
+                Ok(value) => value.unchecked_into(),
+                Err(err) => {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "[euv-engine][webgpu] init: Reflect::get(context, configure) failed: {:?}",
+                        err,
+                    )));
+                    return None;
+                }
+            };
+        let _ = configure_fn.call1(&context, &canvas_config);
+        let queue: JsValue =
+            match Reflect::get(&device_value, &JsValue::from_str(WEBGPU_PROPERTY_QUEUE)) {
+                Ok(value) => value,
+                Err(err) => {
+                    web_sys::console::error_1(&JsValue::from_str(&format!(
+                        "[euv-engine][webgpu] init: Reflect::get(device, queue) failed: {:?}",
+                        err,
+                    )));
+                    return None;
+                }
+            };
+        Some(WebGpuRenderer {
+            device: device_value,
+            queue,
+            context,
+            canvas,
+            format,
+            width: physical_width,
+            height: physical_height,
+            antialias: config.antialias,
+        })
+    }
+
+    /// Resizes the canvas backing store and reconfigures the swap chain.
+    ///
+    /// WebGPU's `GpuCanvasContext.configure` is sticky: it sets the texture
+    /// format and device once, but the swap chain tracks the canvas's
+    /// `width`/`height` attributes. When the CSS layout size changes (a
+    /// window resize, a panel toggle, a DPR change) the canvas keeps its
+    /// old physical dimensions unless we explicitly update `width`/`height`
+    /// and call `configure` again. Without this, subsequent
+    /// `getCurrentTexture()` calls return a texture that no longer matches
+    /// the visible region and the frame either stretches or freezes.
+    ///
+    /// Re-`configure`ing with the same `device` + `format` is the
+    /// spec-defined way to swap in a fresh swap chain bound to the new
+    /// backing-store size.
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - The new physical pixel width (already multiplied by DPR).
+    /// - `u32` - The new physical pixel height.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` on success, `false` if the swap chain or canvas
+    ///   handles were missing or `configure` failed.
+    pub fn resize(&mut self, physical_width: u32, physical_height: u32) -> bool {
+        if self.canvas.is_null() || self.context.is_null() || self.device.is_undefined() {
+            return false;
+        }
+        self.canvas.set_width(physical_width);
+        self.canvas.set_height(physical_height);
+        let format_value: JsValue = JsValue::from_str(&self.format);
+        let canvas_config: Object = Object::new();
+        let _ = Reflect::set(
+            &canvas_config,
+            &JsValue::from_str(WEBGPU_PROPERTY_DEVICE),
+            &self.device,
+        );
+        let _ = Reflect::set(
+            &canvas_config,
+            &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+            &format_value,
+        );
+        let configure_fn: Function =
+            Reflect::get(&self.context, &JsValue::from_str(WEBGPU_METHOD_CONFIGURE))
+                .ok()
+                .and_then(|value: JsValue| value.dyn_into::<Function>().ok())
+                .unwrap_or_else(|| Function::new_no_args(""));
+        if configure_fn.call1(&self.context, &canvas_config).is_err() {
+            return false;
+        }
+        self.width = physical_width;
+        self.height = physical_height;
+        true
+    }
+
+    /// Creates a shader module from WGSL source code.
+    ///
+    /// # Arguments
+    ///
+    /// - `S: AsRef<str>` - The WGSL shader source code.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created shader module as a JavaScript value.
+    pub(crate) fn create_shader_module<S>(&self, code: S) -> JsValue
+    where
+        S: AsRef<str>,
+    {
+        let descriptor: Object = Object::new();
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_CODE),
+            &JsValue::from_str(code.as_ref()),
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_SHADER_MODULE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Creates a new command encoder for recording GPU commands.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created command encoder as a JavaScript value.
+    pub(crate) fn create_command_encoder(&self) -> JsValue {
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_COMMAND_ENCODER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call0(self.get_device())
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Returns the current texture view from the canvas swap chain.
+    ///
+    /// This texture view should be used as the color attachment target for
+    /// render passes. The texture is automatically presented to the canvas
+    /// when the command buffer is submitted.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The current frame's texture view as a JavaScript value.
+    pub(crate) fn get_current_texture_view(&self) -> JsValue {
+        let get_texture_fn: Function = Reflect::get(
+            self.get_context(),
+            &JsValue::from_str(WEBGPU_METHOD_GET_CURRENT_TEXTURE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let texture: JsValue = get_texture_fn
+            .call0(self.get_context())
+            .unwrap_or(JsValue::UNDEFINED);
+        let create_view_fn: Function =
+            Reflect::get(&texture, &JsValue::from_str(WEBGPU_METHOD_CREATE_VIEW))
+                .unwrap_or(JsValue::UNDEFINED)
+                .unchecked_into();
+        create_view_fn.call0(&texture).unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Begins a render pass on the given command encoder with a clear color.
+    ///
+    /// The render pass targets the canvas's current texture and clears it
+    /// to the specified color. The returned `JsValue` is a `GpuRenderPassEncoder`
+    /// that can be used to issue draw commands. The pass must be ended (via `end()`)
+    /// before the command encoder is finished.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The command encoder to begin the pass on.
+    /// - `(f64, f64, f64, f64)` - The clear color as (r, g, b, a) in 0.0–1.0 range.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The active render pass encoder as a JavaScript value.
+    pub(crate) fn begin_render_pass(
+        &self,
+        encoder: &JsValue,
+        clear_color: (f64, f64, f64, f64),
+    ) -> JsValue {
+        let view: JsValue = self.get_current_texture_view();
+        let color_dict: Object = Object::new();
+        let _ = Reflect::set(
+            &color_dict,
+            &JsValue::from_str(WEBGPU_PROPERTY_R),
+            &JsValue::from_f64(clear_color.0),
+        );
+        let _ = Reflect::set(
+            &color_dict,
+            &JsValue::from_str(WEBGPU_PROPERTY_G),
+            &JsValue::from_f64(clear_color.1),
+        );
+        let _ = Reflect::set(
+            &color_dict,
+            &JsValue::from_str(WEBGPU_PROPERTY_B),
+            &JsValue::from_f64(clear_color.2),
+        );
+        let _ = Reflect::set(
+            &color_dict,
+            &JsValue::from_str(WEBGPU_PROPERTY_A),
+            &JsValue::from_f64(clear_color.3),
+        );
+        let attachment: Object = Object::new();
+        let _ = Reflect::set(&attachment, &JsValue::from_str(WEBGPU_PROPERTY_VIEW), &view);
+        let _ = Reflect::set(
+            &attachment,
+            &JsValue::from_str(WEBGPU_PROPERTY_LOAD_OP),
+            &JsValue::from_str(WEBGPU_LOAD_OP_CLEAR),
+        );
+        let _ = Reflect::set(
+            &attachment,
+            &JsValue::from_str(WEBGPU_PROPERTY_STORE_OP),
+            &JsValue::from_str(WEBGPU_STORE_OP_STORE),
+        );
+        let _ = Reflect::set(
+            &attachment,
+            &JsValue::from_str(WEBGPU_PROPERTY_CLEAR_VALUE),
+            &color_dict,
+        );
+        let color_attachments: Array = Array::new();
+        color_attachments.push(&attachment);
+        let descriptor: Object = Object::new();
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_COLOR_ATTACHMENTS),
+            &color_attachments,
+        );
+        let begin_fn: Function =
+            Reflect::get(encoder, &JsValue::from_str(WEBGPU_METHOD_BEGIN_RENDER_PASS))
+                .unwrap_or(JsValue::UNDEFINED)
+                .unchecked_into();
+        begin_fn
+            .call1(encoder, &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Submits an array of command buffers to the GPU queue for execution.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[JsValue]` - The command buffers to submit.
+    pub(crate) fn submit(&self, command_buffers: &[JsValue]) {
+        let array: Array = Array::new();
+        for buffer in command_buffers {
+            array.push(buffer);
+        }
+        let submit_fn: Function =
+            Reflect::get(self.get_queue(), &JsValue::from_str(WEBGPU_METHOD_SUBMIT))
+                .unwrap_or(JsValue::UNDEFINED)
+                .unchecked_into();
+        let _ = submit_fn.call1(self.get_queue(), &array);
+    }
+
+    /// Creates a simple render pipeline from a single WGSL shader source.
+    ///
+    /// The shader must contain `@vertex fn vs_main(...)` and
+    /// `@fragment fn fs_main(...)` entry points. No vertex buffers are used;
+    /// vertex positions should be derived from `@builtin(vertex_index)` in
+    /// the shader. The pipeline uses auto-layout (`layout: null`), which works
+    /// when the shader has no bind groups.
+    ///
+    /// # Arguments
+    ///
+    /// - `S: AsRef<str>` - The WGSL shader source code.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created render pipeline as a JavaScript value.
+    pub fn create_render_pipeline<S>(&self, shader_code: S) -> JsValue
+    where
+        S: AsRef<str>,
+    {
+        let module: JsValue = self.create_shader_module(shader_code);
+        let vertex_state: Object = Object::new();
+        let _ = Reflect::set(
+            &vertex_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_MODULE),
+            &module,
+        );
+        let _ = Reflect::set(
+            &vertex_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
+            &JsValue::from_str(WEBGPU_VERTEX_ENTRY_POINT),
+        );
+        let _ = Reflect::set(
+            &vertex_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_BUFFERS),
+            &Array::new(),
+        );
+        let target: Object = Object::new();
+        let _ = Reflect::set(
+            &target,
+            &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+            &JsValue::from_str(&self.format),
+        );
+        let targets: Array = Array::new();
+        targets.push(&target);
+        let fragment_state: Object = Object::new();
+        let _ = Reflect::set(
+            &fragment_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_MODULE),
+            &module,
+        );
+        let _ = Reflect::set(
+            &fragment_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
+            &JsValue::from_str(WEBGPU_FRAGMENT_ENTRY_POINT),
+        );
+        let _ = Reflect::set(
+            &fragment_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_TARGETS),
+            &targets,
+        );
+        let primitive: Object = Object::new();
+        let _ = Reflect::set(
+            &primitive,
+            &JsValue::from_str(WEBGPU_PROPERTY_TOPOLOGY),
+            &JsValue::from_str(WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
+        );
+        let descriptor: Object = Object::new();
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_LAYOUT),
+            &JsValue::null(),
+        );
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_VERTEX),
+            &vertex_state,
+        );
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_FRAGMENT),
+            &fragment_state,
+        );
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_PRIMITIVE),
+            &primitive,
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_RENDER_PIPELINE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Sets the render pipeline on a render pass encoder.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pass encoder.
+    /// - `&JsValue` - The render pipeline to set.
+    pub(crate) fn set_pipeline(&self, pass: &JsValue, pipeline: &JsValue) {
+        let set_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_PIPELINE))
+            .unwrap_or(JsValue::UNDEFINED)
+            .unchecked_into();
+        let _ = set_fn.call1(pass, pipeline);
+    }
+
+    /// Draws primitives on a render pass encoder.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pass encoder.
+    /// - `u32` - The number of vertices to draw.
+    /// - `u32` - The number of instances to draw.
+    pub(crate) fn draw(&self, pass: &JsValue, vertex_count: u32, instance_count: u32) {
+        let draw_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_DRAW))
+            .unwrap_or(JsValue::UNDEFINED)
+            .unchecked_into();
+        let _ = draw_fn.call2(
+            pass,
+            &JsValue::from_f64(f64::from(vertex_count)),
+            &JsValue::from_f64(f64::from(instance_count)),
+        );
+    }
+
+    /// Ends a render pass on the given pass encoder.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pass encoder to end.
+    pub(crate) fn end_render_pass(&self, pass: &JsValue) {
+        let end_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_END))
+            .unwrap_or(JsValue::UNDEFINED)
+            .unchecked_into();
+        let _ = end_fn.call0(pass);
+    }
+
+    /// Finishes a command encoder and returns the resulting command buffer.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The command encoder to finish.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The finished command buffer.
+    pub(crate) fn finish_command_encoder(&self, encoder: &JsValue) -> JsValue {
+        let finish_fn: Function = Reflect::get(encoder, &JsValue::from_str(WEBGPU_METHOD_FINISH))
+            .unwrap_or(JsValue::UNDEFINED)
+            .unchecked_into();
+        finish_fn.call0(encoder).unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Renders a complete frame with a pipeline and animated clear color.
+    ///
+    /// This is a convenience method that creates a command encoder, begins a
+    /// render pass with the given clear color, sets the pipeline, draws the
+    /// specified number of vertices, ends the pass, finishes the encoder, and
+    /// submits the command buffer.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pipeline to use.
+    /// - `(f64, f64, f64, f64)` - The clear color as (r, g, b, a) in 0.0–1.0 range.
+    /// - `u32` - The number of vertices to draw.
+    pub fn render_frame(
+        &self,
+        pipeline: &JsValue,
+        clear_color: (f64, f64, f64, f64),
+        vertex_count: u32,
+    ) {
+        let encoder: JsValue = self.create_command_encoder();
+        let pass: JsValue = self.begin_render_pass(&encoder, clear_color);
+        self.set_pipeline(&pass, pipeline);
+        self.draw(&pass, vertex_count, 1);
+        self.end_render_pass(&pass);
+        let command_buffer: JsValue = self.finish_command_encoder(&encoder);
+        self.submit(&[command_buffer]);
     }
 }

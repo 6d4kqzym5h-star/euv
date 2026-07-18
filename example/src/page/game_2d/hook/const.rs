@@ -68,3 +68,60 @@ pub(crate) const GAME_2D_BALL_COLORS: &[&str] = &[
     "#e94560", "#0f3460", "#16c79a", "#f5b461", "#ec524b", "#41b883", "#6c5ce7", "#fd79a8",
     "#00cec9", "#fab1a0",
 ];
+
+/// The number of physics substeps performed per fixed timestep.
+///
+/// Splits the fixed `1/60s` timestep into smaller slices so a fast ball never
+/// moves more than its own radius between collision checks, preventing the
+/// "tunneling" effect where one ball passes through another in a single step.
+pub(crate) const GAME_2D_PHYSICS_SUBSTEPS: usize = 4;
+
+/// The number of ball-to-ball collision resolution passes per substep.
+///
+/// A single pass is insufficient when a ball is squeezed between two or more
+/// other balls: resolving the overlap with ball A can leave the ball still
+/// overlapping with ball C. Repeating the pass lets the correction propagate
+/// through the contact graph until every overlap is cleared (or a stable
+/// stacking configuration is reached).
+pub(crate) const GAME_2D_COLLISION_ITERATIONS: usize = 4;
+
+/// The HTML `id` attribute value for the 2D WebGPU canvas element.
+pub(crate) const GAME_2D_WEBGPU_CANVAS_ID: &str = "game-2d-webgpu-canvas";
+
+/// The CSS selector used to query the 2D WebGPU canvas element from the DOM.
+pub(crate) const GAME_2D_WEBGPU_CANVAS_SELECTOR: &str = "#game-2d-webgpu-canvas";
+
+/// The WGSL shader source for the 2D WebGPU demo.
+///
+/// Renders a classic RGB triangle (red, green, blue vertices) with
+/// interpolated vertex colors. Vertex positions are derived from
+/// `@builtin(vertex_index)` so no vertex buffer is needed.
+pub(crate) const GAME_2D_WEBGPU_SHADER: &str = r#"
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) color: vec3<f32>,
+};
+
+@vertex
+fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
+    var p = array<vec2<f32>, 3>(
+        vec2<f32>(0.0, 0.5),
+        vec2<f32>(-0.5, -0.5),
+        vec2<f32>(0.5, -0.5),
+    );
+    var c = array<vec3<f32>, 3>(
+        vec3<f32>(1.0, 0.0, 0.0),
+        vec3<f32>(0.0, 1.0, 0.0),
+        vec3<f32>(0.0, 0.0, 1.0),
+    );
+    var out: VertexOutput;
+    out.position = vec4<f32>(p[vi], 0.0, 1.0);
+    out.color = c[vi];
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    return vec4<f32>(in.color, 1.0);
+}
+"#;

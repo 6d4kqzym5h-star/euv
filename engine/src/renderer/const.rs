@@ -141,3 +141,143 @@ pub(crate) const RENDERER_LAYER_FOREGROUND: i32 = 100;
 
 /// The default render layer z-index for UI overlay elements.
 pub(crate) const RENDERER_LAYER_UI: i32 = 1000;
+
+/// The JavaScript property name for `powerPreference` on `GpuRequestAdapterOptions`.
+pub(crate) const WEBGPU_PROPERTY_POWER_PREFERENCE: &str = "powerPreference";
+
+/// The WebGPU context type string used to obtain a `GpuCanvasContext` from a canvas element.
+pub(crate) const WEBGPU_CONTEXT_TYPE: &str = "webgpu";
+
+/// The JavaScript method name `requestAdapter` on `Gpu`.
+pub(crate) const WEBGPU_METHOD_REQUEST_ADAPTER: &str = "requestAdapter";
+
+/// The JavaScript method name `requestDevice` on `GpuAdapter`.
+pub(crate) const WEBGPU_METHOD_REQUEST_DEVICE: &str = "requestDevice";
+
+/// The JavaScript method name `getPreferredCanvasFormat` on `Gpu`.
+pub(crate) const WEBGPU_METHOD_GET_PREFERRED_FORMAT: &str = "getPreferredCanvasFormat";
+
+/// Error message used when the WebGPU init promise race loses to the
+/// `INIT_PROMISE_TIMEOUT_MILLIS` timer. Surfaced to `JsFuture::await` as
+/// `Err`, which causes the caller to fall into its `WebGPU Not Supported`
+/// branch instead of leaving the UI stuck on `Initializing...`.
+pub(crate) const RENDERER_TIMEOUT_ERROR_MESSAGE: &str = "WebGPU initialization timed out";
+
+/// The JavaScript method name `configure` on `GpuCanvasContext`.
+pub(crate) const WEBGPU_METHOD_CONFIGURE: &str = "configure";
+
+/// The JavaScript property name `queue` on `GpuDevice`.
+pub(crate) const WEBGPU_PROPERTY_QUEUE: &str = "queue";
+
+/// The JavaScript property name `device` on `GpuCanvasConfiguration`.
+pub(crate) const WEBGPU_PROPERTY_DEVICE: &str = "device";
+
+/// The JavaScript property name `format` on `GpuCanvasConfiguration`.
+pub(crate) const WEBGPU_PROPERTY_FORMAT: &str = "format";
+
+/// The JavaScript method name `createShaderModule` on `GpuDevice`.
+pub(crate) const WEBGPU_METHOD_CREATE_SHADER_MODULE: &str = "createShaderModule";
+
+/// The JavaScript property name `code` on `GpuShaderModuleDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_CODE: &str = "code";
+
+/// The JavaScript method name `createCommandEncoder` on `GpuDevice`.
+pub(crate) const WEBGPU_METHOD_CREATE_COMMAND_ENCODER: &str = "createCommandEncoder";
+
+/// The JavaScript method name `getCurrentTexture` on `GpuCanvasContext`.
+pub(crate) const WEBGPU_METHOD_GET_CURRENT_TEXTURE: &str = "getCurrentTexture";
+
+/// The JavaScript method name `createView` on `GpuTexture`.
+pub(crate) const WEBGPU_METHOD_CREATE_VIEW: &str = "createView";
+
+/// The JavaScript method name `beginRenderPass` on `GpuCommandEncoder`.
+pub(crate) const WEBGPU_METHOD_BEGIN_RENDER_PASS: &str = "beginRenderPass";
+
+/// The JavaScript method name `end` on `GpuRenderPassEncoder`.
+pub(crate) const WEBGPU_METHOD_END: &str = "end";
+
+/// The JavaScript method name `finish` on `GpuCommandEncoder`.
+pub(crate) const WEBGPU_METHOD_FINISH: &str = "finish";
+
+/// The JavaScript method name `submit` on `GpuQueue`.
+pub(crate) const WEBGPU_METHOD_SUBMIT: &str = "submit";
+
+/// The JavaScript property name `view` on `GpuRenderPassColorAttachment`.
+pub(crate) const WEBGPU_PROPERTY_VIEW: &str = "view";
+
+/// The JavaScript property name `loadOp` on `GpuRenderPassColorAttachment`.
+pub(crate) const WEBGPU_PROPERTY_LOAD_OP: &str = "loadOp";
+
+/// The JavaScript property name `storeOp` on `GpuRenderPassColorAttachment`.
+pub(crate) const WEBGPU_PROPERTY_STORE_OP: &str = "storeOp";
+
+/// The JavaScript property name `clearValue` on `GpuRenderPassColorAttachment`.
+pub(crate) const WEBGPU_PROPERTY_CLEAR_VALUE: &str = "clearValue";
+
+/// The JavaScript property name `colorAttachments` on `GpuRenderPassDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_COLOR_ATTACHMENTS: &str = "colorAttachments";
+
+/// The JavaScript property name `r` on `GpuColorDict`.
+pub(crate) const WEBGPU_PROPERTY_R: &str = "r";
+
+/// The JavaScript property name `g` on `GpuColorDict`.
+pub(crate) const WEBGPU_PROPERTY_G: &str = "g";
+
+/// The JavaScript property name `b` on `GpuColorDict`.
+pub(crate) const WEBGPU_PROPERTY_B: &str = "b";
+
+/// The JavaScript property name `a` on `GpuColorDict`.
+pub(crate) const WEBGPU_PROPERTY_A: &str = "a";
+
+/// The WebGPU `clear` load operation string.
+pub(crate) const WEBGPU_LOAD_OP_CLEAR: &str = "clear";
+
+/// The WebGPU `store` store operation string.
+pub(crate) const WEBGPU_STORE_OP_STORE: &str = "store";
+
+/// The JavaScript method name `createRenderPipeline` on `GpuDevice`.
+pub(crate) const WEBGPU_METHOD_CREATE_RENDER_PIPELINE: &str = "createRenderPipeline";
+
+/// The JavaScript method name `setPipeline` on `GpuRenderPassEncoder`.
+pub(crate) const WEBGPU_METHOD_SET_PIPELINE: &str = "setPipeline";
+
+/// The JavaScript method name `draw` on `GpuRenderPassEncoder`.
+pub(crate) const WEBGPU_METHOD_DRAW: &str = "draw";
+
+/// The JavaScript property name `vertex` on `GpuRenderPipelineDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_VERTEX: &str = "vertex";
+
+/// The JavaScript property name `fragment` on `GpuRenderPipelineDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_FRAGMENT: &str = "fragment";
+
+/// The JavaScript property name `module` on `GpuVertexState` / `GpuFragmentState`.
+pub(crate) const WEBGPU_PROPERTY_MODULE: &str = "module";
+
+/// The JavaScript property name `entryPoint` on `GpuVertexState` / `GpuFragmentState`.
+pub(crate) const WEBGPU_PROPERTY_ENTRY_POINT: &str = "entryPoint";
+
+/// The JavaScript property name `buffers` on `GpuVertexState`.
+pub(crate) const WEBGPU_PROPERTY_BUFFERS: &str = "buffers";
+
+/// The JavaScript property name `targets` on `GpuFragmentState`.
+pub(crate) const WEBGPU_PROPERTY_TARGETS: &str = "targets";
+
+/// The JavaScript property name `primitive` on `GpuRenderPipelineDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_PRIMITIVE: &str = "primitive";
+
+/// The JavaScript property name `topology` on `GpuPrimitiveState`.
+pub(crate) const WEBGPU_PROPERTY_TOPOLOGY: &str = "topology";
+
+/// The JavaScript property name `layout` on `GpuRenderPipelineDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_LAYOUT: &str = "layout";
+
+/// The vertex shader entry point name used in WGSL shaders.
+pub(crate) const WEBGPU_VERTEX_ENTRY_POINT: &str = "vs_main";
+
+/// The fragment shader entry point name used in WGSL shaders.
+pub(crate) const WEBGPU_FRAGMENT_ENTRY_POINT: &str = "fs_main";
+
+/// The WebGPU primitive topology string for triangle lists.
+pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: &str = "triangle-list";
+
+pub(crate) const INIT_PROMISE_TIMEOUT_MILLIS: i32 = 3000;

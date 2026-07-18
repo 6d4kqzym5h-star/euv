@@ -8,12 +8,78 @@ use crate::*;
 /// quaternion-based angular velocity integration. Features back-face
 /// culling and painter's algorithm depth sorting.
 ///
+/// A tab bar allows switching between the Canvas 2D backend and the
+/// WebGPU backend for comparison.
+///
 /// # Returns
 ///
 /// - `VirtualNode` - The 3D game demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
     let _page_game_3d_props: PageGame3DProps = node.try_get_props().unwrap_or_default();
+    let tab: Signal<Game3DTab> = App::use_signal(Game3DTab::default);
+    let webgpu_state: UseGame3DWebGpu = use_game_3d_webgpu_state();
+    html! {
+        div {
+            class: c_page_container()
+            euv_header {
+                icon: "🎲"
+                title: "3D Game Engine"
+                subtitle: "A rotating cubes 3D demo powered by euv-engine's Vector3D, Quaternion, Matrix4x4, and Camera3D. Drag to orbit the camera. Switch tabs to compare Canvas 2D and WebGPU rendering backends."
+            }
+            euv_card {
+                title: "3D Rendering Demo"
+                div {
+                    class: c_tab_bar()
+                    div {
+                        class: if { tab.get() == Game3DTab::Canvas2D } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_3d_on_tab_select(tab, Game3DTab::Canvas2D)
+                        "Canvas 2D"
+                    }
+                    div {
+                        class: if { tab.get() == Game3DTab::WebGpu } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_3d_on_tab_select(tab, Game3DTab::WebGpu)
+                        "WebGPU"
+                    }
+                }
+                div {
+                    if { tab.get() == Game3DTab::Canvas2D } {
+                        game_3d_canvas_tab()
+                    }
+                }
+                div {
+                    if { tab.get() == Game3DTab::WebGpu } {
+                        game_3d_webgpu_tab(webgpu_state)
+                    }
+                }
+            }
+            euv_card {
+                title: "3D Engine Features"
+                p {
+                    class: c_game_description()
+                    "This demo uses euv-engine's 3D math: Vector3D for positions, Quaternion for rotation, Matrix4x4 for view/projection transforms, Camera3D for orbit camera with perspective projection, and Transform3D for cube transforms. Features include back-face culling, painter's algorithm depth sorting, and quaternion-based angular velocity integration. The WebGPU tab demonstrates GPU-accelerated rendering with a WGSL shader pipeline."
+                }
+            }
+        }
+    }
+}
+
+/// Renders the Canvas 2D rotating cubes demo tab content.
+///
+/// Contains the full Canvas 2D game with stats bar, canvas, and controls.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The Canvas 2D tab virtual DOM tree.
+fn game_3d_canvas_tab() -> VirtualNode {
     let state: UseGame3D = use_game_3d_state();
     let cubes_store: Signal<CubeStore> = App::use_signal(|| {
         let cubes: Rc<RefCell<Vec<Cube3D>>> = Rc::new(RefCell::new(create_initial_cubes()));
@@ -55,73 +121,130 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
     };
     html! {
         div {
-            class: c_page_container()
-            euv_header {
-                icon: "🎲"
-                title: "3D Game Engine"
-                subtitle: "A rotating cubes 3D demo powered by euv-engine's Vector3D, Quaternion, Matrix4x4, and Camera3D. Drag to orbit the camera."
-            }
-            euv_card {
-                title: "3D Rotating Cubes"
-                div {
-                    class: c_game_stats_bar()
+            div {
+                class: c_game_stats_bar()
+                span {
+                    class: c_game_stats_label()
+                    "FPS: "
                     span {
-                        class: c_game_stats_label()
-                        "FPS: "
-                        span {
-                            class: c_game_stats_fps_value()
-                            fps_display
-                        }
-                    }
-                    span {
-                        class: c_game_stats_label()
-                        "Cubes: "
-                        span {
-                            class: c_game_stats_count_value()
-                            cube_count
-                        }
+                        class: c_game_stats_fps_value()
+                        fps_display
                     }
                 }
-                div {
-                    class: c_game_canvas_wrapper(&format!("{GAME_3D_CANVAS_WIDTH} / {GAME_3D_CANVAS_HEIGHT}"))
-                    canvas {
-                        id: GAME_3D_CANVAS_ID
-                        class: c_game_3d_canvas()
-                        onmousedown: on_pointer_down.clone()
-                        onmousemove: on_pointer_move.clone()
-                        onmouseup: on_pointer_up.clone()
-                        onmouseleave: on_pointer_up.clone()
-                        ontouchstart: on_touch_start.clone()
-                        ontouchmove: on_touch_move.clone()
-                        ontouchend: on_touch_end.clone()
-                        ontouchcancel: on_touch_end.clone()
-                    }
-                }
-                div {
-                    class: c_button_controls()
-                    euv_button {
-                        variant: EuvButtonVariant::Primary
-                        label: pause_label
-                        onclick: on_toggle_pause
-                    }
-                    euv_button {
-                        variant: EuvButtonVariant::Primary
-                        label: auto_rotate_label
-                        onclick: on_toggle_auto_rotate
-                    }
-                    euv_button {
-                        variant: EuvButtonVariant::Primary
-                        label: "Reset Camera"
-                        onclick: on_reset_camera
+                span {
+                    class: c_game_stats_label()
+                    "Cubes: "
+                    span {
+                        class: c_game_stats_count_value()
+                        cube_count
                     }
                 }
             }
-            euv_card {
-                title: "3D Engine Features"
-                p {
-                    class: c_game_description()
-                    "This demo uses euv-engine's 3D math: Vector3D for positions, Quaternion for rotation, Matrix4x4 for view/projection transforms, Camera3D for orbit camera with perspective projection, and Transform3D for cube transforms. Features include back-face culling, painter's algorithm depth sorting, and quaternion-based angular velocity integration."
+            div {
+                class: c_game_canvas_wrapper(&format!("{GAME_3D_CANVAS_WIDTH} / {GAME_3D_CANVAS_HEIGHT}"))
+                canvas {
+                    id: GAME_3D_CANVAS_ID
+                    class: c_game_3d_canvas()
+                    onmousedown: on_pointer_down.clone()
+                    onmousemove: on_pointer_move.clone()
+                    onmouseup: on_pointer_up.clone()
+                    onmouseleave: on_pointer_up.clone()
+                    ontouchstart: on_touch_start.clone()
+                    ontouchmove: on_touch_move.clone()
+                    ontouchend: on_touch_end.clone()
+                    ontouchcancel: on_touch_end.clone()
                 }
+            }
+            div {
+                class: c_button_controls()
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: pause_label
+                    onclick: on_toggle_pause
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: auto_rotate_label
+                    onclick: on_toggle_auto_rotate
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: "Reset Camera"
+                    onclick: on_reset_camera
+                }
+            }
+        }
+    }
+}
+
+/// Renders the WebGPU demo tab content for the 3D game page.
+///
+/// Initializes a WebGPU renderer and renders a pseudo-3D perspective triangle
+/// with an animated background color. Shows FPS and WebGPU status.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The WebGPU tab virtual DOM tree.
+fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
+    let loop_started: Signal<bool> = state.get_loop_started();
+    if !loop_started.get() {
+        loop_started.set(true);
+        start_game_3d_webgpu_loop(state);
+    }
+    let fps_display: String = format!("{:.1}", state.get_fps().get());
+    let loaded: bool = state.get_loaded().get();
+    let active: bool = state.get_active().get();
+    let status_text: &str = if !loaded {
+        "Initializing..."
+    } else if active {
+        "WebGPU Active"
+    } else {
+        // Distinguish the three common reasons "not supported" so users
+        // know whether to enable WebGPU in browser flags, switch to
+        // HTTPS / localhost, or upgrade their browser.
+        if Reflect::get(
+            web_sys::Window::navigator(&web_sys::window().unwrap()).as_ref(),
+            &JsValue::from_str("gpu"),
+        )
+        .map(|v: JsValue| v.is_undefined() || v.is_null())
+        .unwrap_or(true)
+        {
+            "WebGPU needs HTTPS or localhost"
+        } else {
+            "WebGPU Not Supported"
+        }
+    };
+    html! {
+        div {
+            div {
+                class: c_game_stats_bar()
+                span {
+                    class: c_game_stats_label()
+                    "FPS: "
+                    span {
+                        class: c_game_stats_fps_value()
+                        fps_display
+                    }
+                }
+                span {
+                    class: c_game_stats_label()
+                    "Status: "
+                    span {
+                        class: c_game_stats_count_value()
+                        status_text
+                    }
+                }
+            }
+            div {
+                class: c_game_canvas_wrapper(&format!("{GAME_3D_CANVAS_WIDTH} / {GAME_3D_CANVAS_HEIGHT}"))
+                canvas {
+                    id: GAME_3D_WEBGPU_CANVAS_ID
+                    class: c_game_3d_canvas()
+                }
+            }
+            p {
+                class: c_game_description()
+                "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader with pseudo-3D perspective, and render a colored triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
             }
         }
     }

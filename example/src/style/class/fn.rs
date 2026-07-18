@@ -26,8 +26,9 @@ class! {
     }
 
     pub c_game_description {
-        line-height: "1.6";
+        line-height: "1.5";
         color: "inherit";
+        margin-bottom: var!(gap-component);
     }
 
     pub c_game_canvas_wrapper(aspect_ratio: &str) {

@@ -1,11 +1,14 @@
 use crate::*;
 
-/// A 2D bouncing balls physics game demo powered by the euv-engine.
+/// A 2D bouncing balls physics game demo powered by the euv_engine.
 ///
 /// Click on the canvas to spawn balls. Each ball is affected by gravity,
 /// bounces off walls with restitution, and collides with other balls
 /// using impulse-based physics. The game loop runs at a fixed 60 Hz
 /// timestep with interpolation via `requestAnimationFrame`.
+///
+/// A tab bar allows switching between the Canvas 2D backend and the
+/// WebGPU backend for comparison.
 ///
 /// # Returns
 ///
@@ -13,6 +16,69 @@ use crate::*;
 #[component]
 pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
     let PageGame2DProps = node.try_get_props().unwrap_or_default();
+    let tab: Signal<Game2DTab> = App::use_signal(Game2DTab::default);
+    let webgpu_state: UseGame2DWebGpu = use_game_2d_webgpu_state();
+    html! {
+        div {
+            class: c_page_container()
+            euv_header {
+                icon: "🎮"
+                title: "2D Game Engine"
+                subtitle: "A bouncing balls physics demo powered by euv-engine. Click on the canvas to spawn balls. Each ball has gravity, wall bouncing with restitution, and impulse-based ball-to-ball collision. Switch tabs to compare Canvas 2D and WebGPU rendering backends."
+            }
+            euv_card {
+                title: "2D Rendering Demo"
+                div {
+                    class: c_tab_bar()
+                    div {
+                        class: if { tab.get() == Game2DTab::Canvas2D } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_2d_on_tab_select(tab, Game2DTab::Canvas2D)
+                        "Canvas 2D"
+                    }
+                    div {
+                        class: if { tab.get() == Game2DTab::WebGpu } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_2d_on_tab_select(tab, Game2DTab::WebGpu)
+                        "WebGPU"
+                    }
+                }
+                div {
+                    if { tab.get() == Game2DTab::Canvas2D } {
+                        game_2d_canvas_tab()
+                    }
+                }
+                div {
+                    if { tab.get() == Game2DTab::WebGpu } {
+                        game_2d_webgpu_tab(webgpu_state)
+                    }
+                }
+            }
+            euv_card {
+                title: "2D Engine Features"
+                p {
+                    class: c_game_description()
+                    "This demo uses euv-engine's Vector2D for position/velocity math, impulse-based collision resolution with mass proportional to radius squared, wall reflection with configurable restitution, and a fixed-timestep game loop with accumulator pattern for deterministic physics at 60 Hz. The WebGPU tab demonstrates GPU-accelerated rendering with a WGSL shader pipeline."
+                }
+            }
+        }
+    }
+}
+
+/// Renders the Canvas 2D bouncing balls demo tab content.
+///
+/// Contains the full Canvas 2D game with stats bar, canvas, and controls.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The Canvas 2D tab virtual DOM tree.
+fn game_2d_canvas_tab() -> VirtualNode {
     let state: UseGame2D = use_game_2d_state();
     let balls_store: Signal<BallStore> = App::use_signal(|| {
         let balls: Rc<RefCell<Vec<Ball>>> = Rc::new(RefCell::new(Vec::new()));
@@ -57,70 +123,127 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
     };
     html! {
         div {
-            class: c_page_container()
-            euv_header {
-                icon: "🎮"
-                title: "2D Game Engine"
-                subtitle: "A bouncing balls physics demo powered by euv-engine. Click on the canvas to spawn balls. Each ball has gravity, wall bouncing with restitution, and impulse-based ball-to-ball collision."
-            }
-            euv_card {
-                title: "Bouncing Balls"
-                div {
-                    class: c_game_stats_bar()
+            div {
+                class: c_game_stats_bar()
+                span {
+                    class: c_game_stats_label()
+                    "FPS: "
                     span {
-                        class: c_game_stats_label()
-                        "FPS: "
-                        span {
-                            class: c_game_stats_fps_value()
-                            fps_display
-                        }
-                    }
-                    span {
-                        class: c_game_stats_label()
-                        "Balls: "
-                        span {
-                            class: c_game_stats_count_value()
-                            ball_count
-                        }
-                    }
-                    span {
-                        class: c_game_stats_label()
-                        "Total: "
-                        span {
-                            class: c_game_stats_total_value()
-                            total
-                        }
+                        class: c_game_stats_fps_value()
+                        fps_display
                     }
                 }
-                div {
-                    class: c_game_canvas_wrapper(&format!("{GAME_2D_CANVAS_WIDTH} / {GAME_2D_CANVAS_HEIGHT}"))
-                    canvas {
-                        id: GAME_2D_CANVAS_ID
-                        class: c_game_2d_canvas()
-                        onclick: on_canvas_click
-                        ontouchstart: on_canvas_touch
+                span {
+                    class: c_game_stats_label()
+                    "Balls: "
+                    span {
+                        class: c_game_stats_count_value()
+                        ball_count
                     }
                 }
-                div {
-                    class: c_button_controls()
-                    euv_button {
-                        variant: EuvButtonVariant::Primary
-                        label: pause_label
-                        onclick: on_toggle_pause
-                    }
-                    euv_button {
-                        variant: EuvButtonVariant::Primary
-                        label: "Clear"
-                        onclick: on_clear
+                span {
+                    class: c_game_stats_label()
+                    "Total: "
+                    span {
+                        class: c_game_stats_total_value()
+                        total
                     }
                 }
             }
-            euv_card {
-                title: "2D Engine Features"
-                p {
-                    class: c_game_description()
-                    "This demo uses euv-engine's Vector2D for position/velocity math, impulse-based collision resolution with mass proportional to radius squared, wall reflection with configurable restitution, and a fixed-timestep game loop with accumulator pattern for deterministic physics at 60 Hz."
+            div {
+                class: c_game_canvas_wrapper(&format!("{GAME_2D_CANVAS_WIDTH} / {GAME_2D_CANVAS_HEIGHT}"))
+                canvas {
+                    id: GAME_2D_CANVAS_ID
+                    class: c_game_2d_canvas()
+                    onclick: on_canvas_click
+                    ontouchstart: on_canvas_touch
                 }
+            }
+            div {
+                class: c_button_controls()
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: pause_label
+                    onclick: on_toggle_pause
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: "Clear"
+                    onclick: on_clear
+                }
+            }
+        }
+    }
+}
+
+/// Renders the WebGPU demo tab content for the 2D game page.
+///
+/// Initializes a WebGPU renderer and renders an RGB triangle with an
+/// animated background color. Shows FPS and WebGPU status.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The WebGPU tab virtual DOM tree.
+fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
+    let loop_started: Signal<bool> = state.get_loop_started();
+    if !loop_started.get() {
+        loop_started.set(true);
+        start_game_2d_webgpu_loop(state);
+    }
+    let fps_display: String = format!("{:.1}", state.get_fps().get());
+    let loaded: bool = state.get_loaded().get();
+    let active: bool = state.get_active().get();
+    let status_text: &str = if !loaded {
+        "Initializing..."
+    } else if active {
+        "WebGPU Active"
+    } else {
+        // Distinguish the three common reasons "not supported" so users
+        // know whether to enable WebGPU in browser flags, switch to
+        // HTTPS / localhost, or upgrade their browser.
+        if Reflect::get(
+            web_sys::Window::navigator(&web_sys::window().unwrap()).as_ref(),
+            &JsValue::from_str("gpu"),
+        )
+        .map(|v: JsValue| v.is_undefined() || v.is_null())
+        .unwrap_or(true)
+        {
+            "WebGPU needs HTTPS or localhost"
+        } else {
+            "WebGPU Not Supported"
+        }
+    };
+    html! {
+        div {
+            div {
+                class: c_game_stats_bar()
+                span {
+                    class: c_game_stats_label()
+                    "FPS: "
+                    span {
+                        class: c_game_stats_fps_value()
+                        fps_display
+                    }
+                }
+                span {
+                    class: c_game_stats_label()
+                    "Status: "
+                    span {
+                        class: c_game_stats_count_value()
+                        status_text
+                    }
+                }
+            }
+            div {
+                class: c_game_canvas_wrapper(&format!("{GAME_2D_CANVAS_WIDTH} / {GAME_2D_CANVAS_HEIGHT}"))
+                canvas {
+                    id: GAME_2D_WEBGPU_CANVAS_ID
+                    class: c_game_2d_canvas()
+                }
+            }
+            p {
+                class: c_game_description()
+                "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader, and render an RGB triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
             }
         }
     }

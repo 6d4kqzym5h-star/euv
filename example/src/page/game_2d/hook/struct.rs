@@ -40,3 +40,28 @@ pub(crate) struct BallStore(pub(crate) Rc<RefCell<Vec<Ball>>>);
 /// A cached reference to the 2D game canvas element used for efficient coordinate mapping.
 #[derive(Clone, Debug)]
 pub(crate) struct CanvasCache(pub(crate) Rc<RefCell<Option<HtmlCanvasElement>>>);
+
+/// Reactive state for the 2D WebGPU demo page.
+#[derive(Clone, Copy, Data, Debug, Default, PartialEq)]
+pub(crate) struct UseGame2DWebGpu {
+    /// The current frames-per-second measurement.
+    #[get(type(copy))]
+    pub(crate) fps: Signal<f64>,
+    /// Whether the WebGPU renderer has finished initializing (success or failure).
+    #[get(type(copy))]
+    pub(crate) loaded: Signal<bool>,
+    /// Whether the WebGPU renderer is active and rendering.
+    #[get(type(copy))]
+    pub(crate) active: Signal<bool>,
+    /// Whether the WebGPU render loop has been kicked off in this component tree.
+    ///
+    /// Lives on this struct (rather than a local signal inside `game_2d_webgpu_tab`)
+    /// because euv's hook context is shared across the whole page — the
+    /// Canvas 2D tab also calls `use_signal(|| false)` for its own loop gate,
+    /// and both signals would collide on the same hook index, causing the
+    /// Canvas 2D signal (which is set to `true` first) to be reused by the
+    /// WebGPU tab and silently skip the WebGPU init. Centralising the gate
+    /// here gives it a stable hook slot allocated by `use_game_2d_webgpu_state`.
+    #[get(type(copy))]
+    pub(crate) loop_started: Signal<bool>,
+}

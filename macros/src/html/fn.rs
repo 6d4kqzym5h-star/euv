@@ -177,7 +177,7 @@ pub(crate) fn get_user_fn_props_field_types(
 /// # Returns
 ///
 /// - `TokenStream` - The generated token stream constructing the corresponding virtual node.
-pub fn parse_html(input: TokenStream) -> TokenStream {
+pub(crate) fn parse_html(input: TokenStream) -> TokenStream {
     let fn_names: HashMap<String, ComponentInfo> = load_component_registry();
     set_user_fn_names(fn_names);
     let tokens: proc_macro2::TokenStream = match parse::<HtmlRoot>(input) {

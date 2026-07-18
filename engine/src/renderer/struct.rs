@@ -178,3 +178,37 @@ pub struct SsaaCanvas {
     #[get(type(copy))]
     pub(crate) height: f64,
 }
+
+/// A WebGPU rendering backend wrapping the GPU device, queue, and canvas context
+/// for GPU-accelerated rendering on the web.
+///
+/// Created asynchronously via `WebGpuRenderer::init` because adapter and
+/// device acquisition returns JavaScript Promises that must be awaited.
+/// Once initialized, the renderer provides methods to create GPU resources
+/// (buffers, shader modules, command encoders) and execute render passes.
+///
+/// WebGPU types are stored as `JsValue` to avoid feature-gated import issues
+/// with `web_sys`. Method calls are performed via `Reflect` and `JsCast`.
+#[derive(Clone, Data)]
+pub struct WebGpuRenderer {
+    /// The WebGPU device (`GpuDevice`) used to create GPU resources.
+    pub(crate) device: JsValue,
+    /// The device's command queue (`GpuQueue`) for submitting command buffers.
+    pub(crate) queue: JsValue,
+    /// The WebGPU canvas rendering context (`GpuCanvasContext`).
+    pub(crate) context: JsValue,
+    /// The HTML canvas element backing the WebGPU context.
+    pub(crate) canvas: HtmlCanvasElement,
+    /// The texture format string used by the canvas's swap chain (e.g., `"bgra8unorm"`).
+    #[get(type(clone))]
+    pub(crate) format: String,
+    /// The physical pixel width of the canvas backing store.
+    #[get(type(copy))]
+    pub(crate) width: u32,
+    /// The physical pixel height of the canvas backing store.
+    #[get(type(copy))]
+    pub(crate) height: u32,
+    /// Whether MSAA anti-aliasing is enabled for render pipelines.
+    #[get(type(copy))]
+    pub(crate) antialias: bool,
+}
