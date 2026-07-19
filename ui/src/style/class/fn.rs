@@ -648,21 +648,10 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         box-sizing: "border-box";
-        :hover {
-            background: var!(accent);
-        }
-        :focus-visible {
-            outline: "none";
-        }
         :disabled {
             background: var!(muted-foreground);
             cursor: "not-allowed";
             opacity: "1";
-        }
-        :active {
-            background: var!(accent);
-            color: var!(text-on-accent);
-            border-color: var!(text-on-accent);
         }
     }
 
@@ -684,18 +673,13 @@ class! {
         user-select: "none";
         -webkit-user-select: "none";
         box-sizing: "border-box";
-        :hover {
-            background: var!(accent-muted);
-            border-color: var!(accent);
-            color: var!(accent);
-        }
         :focus-visible {
             outline: "none";
         }
-        :active {
-            background: "transparent";
-            color: var!(foreground);
-            border-color: var!(border);
+        :disabled {
+            background: var!(muted-foreground);
+            cursor: "not-allowed";
+            opacity: "1";
         }
     }
 

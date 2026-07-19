@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.12.20"
+version = "0.12.21"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -29,14 +29,14 @@ euv-example = { path = "example", version = "0.12.20" }
 
 log = "0.4.33"
 toml = "0.9.12"
-quote = "1.0.46"
+quote = "1.0.47"
 chrono = "0.4.45"
 ignore = "0.4.30"
 js-sys = "0.3.103"
 if-addrs = "0.15.0"
 hyperlane = "21.3.2"
 serde_json = "1.0.150"
-proc-macro2 = "1.0.106"
+proc-macro2 = "1.0.107"
 wasm-bindgen = "0.2.126"
 color-output = "10.0.6"
 hyperlane-cli = "0.1.20"
@@ -48,7 +48,7 @@ wasm-bindgen-test = "0.3.76"
 wasm-bindgen-futures = "0.4.76"
 console_error_panic_hook = "0.1.7"
 clap = { version = "4.6.2", features = ["derive"] }
-serde = { version = "1.0.228", features = ["derive"] }
+serde = { version = "1.0.229", features = ["derive"] }
 qrcode = { version = "0.14.1", default-features = false }
 syn = { version = "2.0.119", features = ["full", "extra-traits"] }
 notify = { version = "8.2.0", default-features = false, features = [
