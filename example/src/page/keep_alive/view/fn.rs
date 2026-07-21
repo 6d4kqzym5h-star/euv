@@ -360,7 +360,7 @@ pub(crate) fn keep_alive_timer_on_reset(
 /// - `VirtualNode` - The keep-alive demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_keep_alive(node: VirtualNode<PageKeepAliveProps>) -> VirtualNode {
-    let PageKeepAliveProps = node.try_get_props().unwrap_or_default();
+    let PageKeepAliveProps: PageKeepAliveProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<KeepAliveTab> = App::use_signal(KeepAliveTab::default);
     html! {
         div {

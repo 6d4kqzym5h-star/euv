@@ -265,7 +265,7 @@ impl<T> VirtualNode<T> {
                 key,
                 props,
             } => {
-                let mut attrs = attributes;
+                let mut attrs: Vec<AttributeEntry> = attributes;
                 attrs.extend(extra);
                 Self::Element {
                     tag,

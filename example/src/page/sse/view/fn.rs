@@ -10,7 +10,7 @@ use crate::*;
 /// - `VirtualNode` - The SSE demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_sse(node: VirtualNode<PageSseProps>) -> VirtualNode {
-    let PageSseProps = node.try_get_props().unwrap_or_default();
+    let PageSseProps: PageSseProps = node.try_get_props().unwrap_or_default();
     let state: UseSse = use_sse();
     sse_cleanup(state);
     html! {

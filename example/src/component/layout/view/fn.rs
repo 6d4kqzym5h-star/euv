@@ -108,14 +108,14 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
         panel_open,
         drawer_open,
     }: MobileLayoutProps = node.try_get_props().unwrap_or_default();
-    let on_overlay_click = move |_: Event| {
+    let on_overlay_click: Box<dyn FnMut(Event)> = Box::new(move |_: Event| {
         Router::overlay_stack_close();
         drawer_open.set(false);
-    };
-    let on_drawer_close_click = move |_: Event| {
+    });
+    let on_drawer_close_click: Box<dyn FnMut(Event)> = Box::new(move |_: Event| {
         Router::overlay_stack_close();
         drawer_open.set(false);
-    };
+    });
     html! {
         div {
             class: root_class_signal
@@ -457,7 +457,7 @@ async fn try_notify_native_once() -> Result<(UpdateStatus, UpdateResultPayload),
         .await
         .map_err(|error: JsValue| error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string()))?;
     let payload: UpdateResultPayload = serde_wasm_bindgen::from_value(value)
-        .map_err(|error| format!("failed to deserialize update_cache result: {error}"))?;
+        .map_err(|error: serde_wasm_bindgen::Error| format!("failed to deserialize update_cache result: {error}"))?;
     Ok((payload.result, payload))
 }
 

@@ -103,7 +103,7 @@ impl AssetLoader {
         let url_for_onload: String = url.clone();
         let url_for_onerror: String = url.clone();
         let onload_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let mut cache_ref = cache_clone.borrow_mut();
+            let mut cache_ref: RefMut<'_, AssetCache> = cache_clone.borrow_mut();
             if let Some(mut entry) = cache_ref.get_entries().get(&url_for_onload).cloned() {
                 entry.set_state(AssetState::Loaded);
                 cache_ref
@@ -113,7 +113,7 @@ impl AssetLoader {
         }));
         let cache_clone_err: Rc<RefCell<AssetCache>> = self.get_cache().clone();
         let onerror_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let mut cache_ref = cache_clone_err.borrow_mut();
+            let mut cache_ref: RefMut<'_, AssetCache> = cache_clone_err.borrow_mut();
             if let Some(mut entry) = cache_ref.get_entries().get(&url_for_onerror).cloned() {
                 entry.set_state(AssetState::Error);
                 cache_ref
@@ -159,7 +159,7 @@ impl AssetLoader {
     ///
     /// - `f64` - The ratio in the range 0.0 to 1.0.
     pub fn progress(&self) -> f64 {
-        let cache_ref = self.get_cache().borrow();
+        let cache_ref: Ref<'_, AssetCache> = self.get_cache().borrow();
         let total: usize = cache_ref.get_entries().len();
         if total == 0 {
             return 1.0;

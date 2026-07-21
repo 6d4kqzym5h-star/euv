@@ -73,7 +73,7 @@ impl SchedulerHandle {
     /// Stops the scheduler and cancels any pending animation frame request.
     pub fn stop(&self) {
         let state_rc: Rc<RefCell<SchedulerState>> = self.get_state().clone();
-        let mut state = state_rc.borrow_mut();
+        let mut state: RefMut<'_, SchedulerState> = state_rc.borrow_mut();
         state.set_running(false);
         if let Some(id) = state.get_mut_raf_id().take() {
             let window_value: Window = window().expect("no global window exists");
@@ -133,7 +133,7 @@ impl SchedulerHandle {
         let handler_clone: TickHandlerRc = handler.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             {
-                let mut state_ref = state_clone.borrow_mut();
+                let mut state_ref: RefMut<'_, SchedulerState> = state_clone.borrow_mut();
                 if !state_ref.get_running() {
                     return;
                 }

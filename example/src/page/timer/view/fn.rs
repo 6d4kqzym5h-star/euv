@@ -22,7 +22,7 @@ fn format_time(total_seconds: i32) -> String {
 /// - `VirtualNode` - The timer demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_timer(node: VirtualNode<PageTimerProps>) -> VirtualNode {
-    let PageTimerProps = node.try_get_props().unwrap_or_default();
+    let PageTimerProps: PageTimerProps = node.try_get_props().unwrap_or_default();
     let stopwatch: UseStopwatch = use_stopwatch();
     let countdown: UseCountdown = use_countdown();
     App::use_cleanup(move || {

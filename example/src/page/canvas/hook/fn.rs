@@ -769,10 +769,10 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
         if let Some(target) = event.target()
             && let Ok(input) = target.dyn_into::<HtmlInputElement>()
         {
-            let min = input.min().parse::<f64>().unwrap_or(1.0);
-            let max = input.max().parse::<f64>().unwrap_or(30.0);
-            let range = max - min;
-            let percent = if range > 0.0 {
+            let min: f64 = input.min().parse::<f64>().unwrap_or(1.0);
+            let max: f64 = input.max().parse::<f64>().unwrap_or(30.0);
+            let range: f64 = max - min;
+            let percent: f64 = if range > 0.0 {
                 ((new_width - min) / range * 100.0).clamp(0.0, 100.0)
             } else {
                 0.0

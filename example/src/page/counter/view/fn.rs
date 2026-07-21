@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The counter demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_counter(node: VirtualNode<PageCounterProps>) -> VirtualNode {
-    let PageCounterProps = node.try_get_props().unwrap_or_default();
+    let PageCounterProps: PageCounterProps = node.try_get_props().unwrap_or_default();
     let count: Signal<i32> = App::use_signal(|| 0);
     html! {
         div {

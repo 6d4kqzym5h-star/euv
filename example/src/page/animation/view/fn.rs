@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The animation demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_animation(node: VirtualNode<PageAnimationProps>) -> VirtualNode {
-    let PageAnimationProps = node.try_get_props().unwrap_or_default();
+    let PageAnimationProps: PageAnimationProps = node.try_get_props().unwrap_or_default();
     let box_visible: Signal<bool> = App::use_signal(|| false);
     let spin_active: Signal<bool> = App::use_signal(|| false);
     let pulse_active: Signal<bool> = App::use_signal(|| false);

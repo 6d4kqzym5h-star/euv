@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The badge demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_badge(node: VirtualNode<PageBadgeProps>) -> VirtualNode {
-    let PageBadgeProps = node.try_get_props().unwrap_or_default();
+    let PageBadgeProps: PageBadgeProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_page_container()

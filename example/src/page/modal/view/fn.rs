@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The modal demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_modal(node: VirtualNode<PageModalProps>) -> VirtualNode {
-    let PageModalProps = node.try_get_props().unwrap_or_default();
+    let PageModalProps: PageModalProps = node.try_get_props().unwrap_or_default();
     let state: UseModal = use_modal();
     html! {
         div {

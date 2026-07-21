@@ -441,7 +441,7 @@ pub(crate) fn draw_game_3d_loading() {
                 .get_computed_style(&element)
                 .ok()
                 .flatten()
-                .and_then(|style| style.get_property_value(GAME_3D_LOADING_COLOR_VAR).ok())
+                .and_then(|style: CssStyleDeclaration| style.get_property_value(GAME_3D_LOADING_COLOR_VAR).ok())
         })
         .unwrap_or_else(|| "#ffffff".to_string());
     let fill_style_key: JsValue = JsValue::from_str(GAME_3D_PROPERTY_FILL_STYLE);

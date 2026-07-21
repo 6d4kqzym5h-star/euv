@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The select demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_select(node: VirtualNode<PageSelectProps>) -> VirtualNode {
-    let PageSelectProps = node.try_get_props().unwrap_or_default();
+    let PageSelectProps: PageSelectProps = node.try_get_props().unwrap_or_default();
     let state: UseSelect = use_select();
     html! {
         div {

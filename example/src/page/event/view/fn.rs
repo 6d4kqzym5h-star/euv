@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The event demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
-    let PageEventProps = node.try_get_props().unwrap_or_default();
+    let PageEventProps: PageEventProps = node.try_get_props().unwrap_or_default();
     let keyboard: UseKeyboardEvent = use_keyboard_event();
     let mouse: UseMouseEvent = use_mouse_event();
     let focus: UseFocusEvent = use_focus_event();

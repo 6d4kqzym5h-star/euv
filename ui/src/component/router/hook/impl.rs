@@ -276,12 +276,12 @@ impl Router {
                 .pop()
                 .map(|entry: OverlayEntry| entry.closer)
         });
-        if let Some(ref c) = closer {
+        if let Some(ref closer_ref) = closer {
             MODAL_STACK.with(|stack: &ModalStack| {
-                let mut entries = stack.borrow_mut();
+                let mut entries: RefMut<'_, Vec<ModalStackEntry>> = stack.borrow_mut();
                 if let Some(index) = entries
                     .iter()
-                    .rposition(|(_, closer): &ModalStackEntry| Rc::ptr_eq(closer, c))
+                    .rposition(|(_, closer): &ModalStackEntry| Rc::ptr_eq(closer, closer_ref))
                 {
                     entries.remove(index);
                 }
@@ -349,7 +349,7 @@ impl Router {
     /// - `Signal<bool>` - The visibility signal identifying the modal to remove.
     pub fn modal_close_via_ui(visible: Signal<bool>) {
         let removed: bool = MODAL_STACK.with(|stack: &ModalStack| {
-            let mut entries = stack.borrow_mut();
+            let mut entries: RefMut<'_, Vec<ModalStackEntry>> = stack.borrow_mut();
             if let Some(index) = entries
                 .iter()
                 .rposition(|(signal, _): &ModalStackEntry| *signal == visible)

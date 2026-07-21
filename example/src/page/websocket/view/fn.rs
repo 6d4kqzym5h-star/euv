@@ -11,7 +11,7 @@ use crate::*;
 /// - `VirtualNode` - The WebSocket chat page virtual DOM tree.
 #[component]
 pub(crate) fn page_websocket(node: VirtualNode<PageWebsocketProps>) -> VirtualNode {
-    let PageWebsocketProps = node.try_get_props().unwrap_or_default();
+    let PageWebsocketProps: PageWebsocketProps = node.try_get_props().unwrap_or_default();
     let state: UseWebSocket = use_websocket();
     ws_cleanup(state);
     html! {

@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The 404 page virtual DOM tree.
 #[component]
 pub(crate) fn page_not_found(node: VirtualNode<PageNotFoundProps>) -> VirtualNode {
-    let PageNotFoundProps = node.try_get_props().unwrap_or_default();
+    let PageNotFoundProps: PageNotFoundProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
             class: c_page_container()

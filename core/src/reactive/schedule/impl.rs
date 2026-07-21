@@ -17,7 +17,7 @@ impl Scheduler {
     /// This prevents memory leaks by freeing slots for dynamic nodes that
     /// have been removed from the DOM.
     fn sweep_removed_entries() {
-        Registry::get_mut_update_registry().retain(|_key, entry| {
+        Registry::get_mut_update_registry().retain(|_key: &usize, entry: &mut SignalUpdateEntry| {
             let slot: &SignalUpdateSlot = unsafe { &**entry };
             if slot.get_removed() {
                 unsafe {

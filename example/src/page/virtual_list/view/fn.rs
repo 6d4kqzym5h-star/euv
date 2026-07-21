@@ -11,7 +11,7 @@ use crate::*;
 /// - `VirtualNode` - The virtual list demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_virtual_list(node: VirtualNode<PageVirtualListProps>) -> VirtualNode {
-    let PageVirtualListProps = node.try_get_props().unwrap_or_default();
+    let PageVirtualListProps: PageVirtualListProps = node.try_get_props().unwrap_or_default();
     let visible_range: Signal<(usize, usize)> = App::use_signal(|| (0, 0));
     let item_renderer: VirtualListItemRenderer = Rc::new(|index: usize| {
         html! {

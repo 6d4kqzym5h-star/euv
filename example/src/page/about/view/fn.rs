@@ -34,7 +34,7 @@ pub(crate) fn get_next_route(current_route: &str) -> &'static str {
 /// - `VirtualNode` - The home page virtual DOM tree.
 #[component]
 pub(crate) fn page_about(node: VirtualNode<PageAboutProps>) -> VirtualNode {
-    let PageAboutProps = node.try_get_props().unwrap_or_default();
+    let PageAboutProps: PageAboutProps = node.try_get_props().unwrap_or_default();
     let native_bridge_state: UseEuvNativeBridge = UseEuvNativeBridge::use_bridge_state();
     native_bridge_state.load_data(None);
     let version: String = format!("v{EUV_VERSION}");

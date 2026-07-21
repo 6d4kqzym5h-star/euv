@@ -11,7 +11,7 @@ pub use {component::*, style::*};
 use euv::*;
 
 use std::{
-    cell::{Cell, RefCell, UnsafeCell},
+    cell::{Cell, RefCell, RefMut, UnsafeCell},
     collections::HashSet,
     ops::Deref,
     rc::Rc,

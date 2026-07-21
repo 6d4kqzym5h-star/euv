@@ -70,15 +70,19 @@ where
                     } else {
                         let trimmed_body: &str = formatted_body.trim();
                         let last_newline_pos: usize =
-                            result.rfind(CHAR_NEWLINE).map(|i| i + 1).unwrap_or(0);
+                            result.rfind(CHAR_NEWLINE).map(|position: usize| position + 1).unwrap_or(0);
                         let macro_indent: usize = result[last_newline_pos..]
                             .chars()
-                            .take_while(|&c| c == CHAR_SPACE)
+                            .take_while(|character: &char| *character == CHAR_SPACE)
                             .count();
                         let min_indent: usize = body_content
                             .lines()
-                            .filter(|line| !line.trim().is_empty())
-                            .map(|line| line.chars().take_while(|c| c.is_whitespace()).count())
+                            .filter(|line: &&str| !line.trim().is_empty())
+                            .map(|line: &str| {
+                                line.chars()
+                                    .take_while(|character: &char| character.is_whitespace())
+                                    .count()
+                            })
                             .min()
                             .unwrap_or(0);
                         let base_indent: usize = if min_indent > 0 {
@@ -89,7 +93,7 @@ where
                         let indent_str: String = " ".repeat(base_indent);
                         let indented_body: String = trimmed_body
                             .lines()
-                            .map(|line| {
+                            .map(|line: &str| {
                                 if line.trim().is_empty() {
                                     line.to_string()
                                 } else {

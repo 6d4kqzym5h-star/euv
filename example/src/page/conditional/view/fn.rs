@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The conditional demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_conditional(node: VirtualNode<PageConditionalProps>) -> VirtualNode {
-    let PageConditionalProps = node.try_get_props().unwrap_or_default();
+    let PageConditionalProps: PageConditionalProps = node.try_get_props().unwrap_or_default();
     let show_details: Signal<bool> = App::use_signal(|| false);
     let user_type: Signal<ConditionalUserType> = App::use_signal(ConditionalUserType::default);
     let tab: Signal<ConditionalTab> = App::use_signal(ConditionalTab::default);

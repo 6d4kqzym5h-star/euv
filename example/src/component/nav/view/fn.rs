@@ -75,7 +75,7 @@ pub(crate) fn build_desktop_nav_items(node: VirtualNode<BuildDesktopNavItemsProp
     html! {
         div {
             class: c_nav_items_scroll()
-            NAV_ITEMS.iter().map(|&(icon, label, target)| {
+            NAV_ITEMS.iter().map(|&(icon, label, target): &(&str, &str, &str)| {
                 html! {
                     nav_item {
                         route_signal: route_signal
@@ -110,7 +110,7 @@ pub(crate) fn build_mobile_nav_items(node: VirtualNode<BuildMobileNavItemsProps>
     html! {
         div {
             class: c_nav_items_scroll()
-            NAV_ITEMS.iter().map(|&(icon, label, target)| {
+            NAV_ITEMS.iter().map(|&(icon, label, target): &(&str, &str, &str)| {
                 html! {
                     mobile_nav_item {
                         route_signal: route_signal

@@ -212,8 +212,8 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
             let parsed: i32 = input.value().parse().unwrap_or_default();
-            let clamped = parsed.clamp(0, 255);
-            let percent = (clamped as f64 / 255.0 * 100.0).clamp(0.0, 100.0);
+            let clamped: i32 = parsed.clamp(0, 255);
+            let percent: f64 = (clamped as f64 / 255.0 * 100.0).clamp(0.0, 100.0);
             input
                 .style()
                 .set_property("--value", &format!("{percent}%"))

@@ -15,7 +15,7 @@ use crate::*;
 /// - `VirtualNode` - The 2D game demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
-    let PageGame2DProps = node.try_get_props().unwrap_or_default();
+    let PageGame2DProps: PageGame2DProps = node.try_get_props().unwrap_or_default();
     let tab: Signal<Game2DTab> = App::use_signal(Game2DTab::default);
     html! {
         div {

@@ -7,7 +7,7 @@ use crate::*;
 /// - `VirtualNode` - The browser API demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_browser(node: VirtualNode<PageBrowserProps>) -> VirtualNode {
-    let PageBrowserProps = node.try_get_props().unwrap_or_default();
+    let PageBrowserProps: PageBrowserProps = node.try_get_props().unwrap_or_default();
     let state: UseEuvBrowser = UseEuvBrowser::use_browser_state();
     html! {
         div {
