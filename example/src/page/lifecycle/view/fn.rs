@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A lifecycle demo page showing mount and update tracking.
 ///

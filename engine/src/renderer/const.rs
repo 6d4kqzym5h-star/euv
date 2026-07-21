@@ -7,36 +7,6 @@ pub(crate) const RENDERER_DEFAULT_FONT_FAMILY: &str = "sans-serif";
 /// The default font size in pixels.
 pub(crate) const RENDERER_DEFAULT_FONT_SIZE: f64 = 16.0;
 
-/// The canvas context property name for fill style.
-pub(crate) const RENDERER_PROPERTY_FILL_STYLE: &str = "fillStyle";
-
-/// The canvas context property name for stroke style.
-pub(crate) const RENDERER_PROPERTY_STROKE_STYLE: &str = "strokeStyle";
-
-/// The canvas context property name for line width.
-pub(crate) const RENDERER_PROPERTY_LINE_WIDTH: &str = "lineWidth";
-
-/// The canvas context property name for font.
-pub(crate) const RENDERER_PROPERTY_FONT: &str = "font";
-
-/// The canvas context property name for global alpha.
-pub(crate) const RENDERER_PROPERTY_GLOBAL_ALPHA: &str = "globalAlpha";
-
-/// The canvas context property name for global composite operation (blend mode).
-pub(crate) const RENDERER_PROPERTY_GLOBAL_COMPOSITE_OPERATION: &str = "globalCompositeOperation";
-
-/// The canvas context property name for shadow color.
-pub(crate) const RENDERER_PROPERTY_SHADOW_COLOR: &str = "shadowColor";
-
-/// The canvas context property name for shadow blur.
-pub(crate) const RENDERER_PROPERTY_SHADOW_BLUR: &str = "shadowBlur";
-
-/// The canvas context property name for shadow offset x.
-pub(crate) const RENDERER_PROPERTY_SHADOW_OFFSET_X: &str = "shadowOffsetX";
-
-/// The canvas context property name for shadow offset y.
-pub(crate) const RENDERER_PROPERTY_SHADOW_OFFSET_Y: &str = "shadowOffsetY";
-
 /// The default camera zoom level.
 pub(crate) const RENDERER_DEFAULT_CAMERA_ZOOM: f64 = 1.0;
 
@@ -54,9 +24,6 @@ pub(crate) const RENDERER_PROPERTY_DEVICE_PIXEL_RATIO: &str = "devicePixelRatio"
 
 /// The fallback device pixel ratio when window detection fails.
 pub(crate) const RENDERER_DEFAULT_DEVICE_PIXEL_RATIO: f64 = 1.0;
-
-/// The canvas context property name for image smoothing enabled.
-pub(crate) const RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED: &str = "imageSmoothingEnabled";
 
 /// The canvas context property name for image smoothing quality.
 pub(crate) const RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY: &str = "imageSmoothingQuality";

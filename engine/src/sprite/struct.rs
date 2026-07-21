@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Defines a single frame in a sprite animation.
 #[derive(Clone, Copy, Data, Debug, Default, New, PartialEq, PartialOrd)]

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// An alert component that displays contextual messages with semantic styling.
 ///

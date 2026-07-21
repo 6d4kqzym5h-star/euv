@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Rendering configuration controlling the backend type, canvas target,
 /// viewport dimensions, quality, and backend-specific options.

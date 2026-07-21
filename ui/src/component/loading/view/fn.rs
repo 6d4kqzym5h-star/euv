@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A loading indicator component with spinner and optional subtitle.
 ///

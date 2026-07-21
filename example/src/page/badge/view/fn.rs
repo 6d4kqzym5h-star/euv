@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A badge demo page showcasing status indicators with click support.
 ///

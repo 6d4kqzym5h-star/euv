@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Formats a single Rust source file by reformatting all euv macro invocations.
 ///
@@ -69,8 +69,10 @@ where
                         result.push(CHAR_BRACE_RIGHT);
                     } else {
                         let trimmed_body: &str = formatted_body.trim();
-                        let last_newline_pos: usize =
-                            result.rfind(CHAR_NEWLINE).map(|position: usize| position + 1).unwrap_or(0);
+                        let last_newline_pos: usize = result
+                            .rfind(CHAR_NEWLINE)
+                            .map(|position: usize| position + 1)
+                            .unwrap_or(0);
                         let macro_indent: usize = result[last_newline_pos..]
                             .chars()
                             .take_while(|character: &char| *character == CHAR_SPACE)

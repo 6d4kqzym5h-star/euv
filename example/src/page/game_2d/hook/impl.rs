@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 impl PartialEq for BallStore {
     fn eq(&self, _other: &Self) -> bool {

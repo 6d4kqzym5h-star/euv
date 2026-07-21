@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A single WebSocket message with its display text and timestamp.
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

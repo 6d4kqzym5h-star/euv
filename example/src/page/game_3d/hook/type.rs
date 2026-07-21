@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Type alias for a single non-passive event listener closure paired with its
 /// event name, used for direct `addEventListener` registration on the canvas.

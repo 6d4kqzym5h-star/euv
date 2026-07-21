@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Provides a default empty form state with all signals initialized.
 impl Default for UseForm {

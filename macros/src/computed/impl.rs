@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of `Parse` for `ComputedInput`, parsing the `computed!` macro input.
 ///

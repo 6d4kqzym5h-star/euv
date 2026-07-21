@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates progress bar state with a running signal.
 ///

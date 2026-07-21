@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of `Parse` for `WatchInput`, parsing the `watch!` macro input.
 ///

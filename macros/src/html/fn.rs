@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Parses a Rust expression from the parse stream, stopping before a top-level brace.
 ///

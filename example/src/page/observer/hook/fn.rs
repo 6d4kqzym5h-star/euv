@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates an `IntersectionObserver` stored on `window.__euv_observer_instance`
 /// that observes the container element matching `selector`.

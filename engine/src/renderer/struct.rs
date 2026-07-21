@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A 2D camera that defines the viewport into the game world.
 #[derive(Clone, Copy, Data, Debug, New, PartialEq, PartialOrd)]
@@ -141,6 +141,22 @@ pub struct RenderLayer {
     /// Whether objects in this layer should be rendered.
     #[get(type(copy))]
     pub(crate) visible: bool,
+}
+
+/// An ordered buffer of deferred draw commands recorded during a frame.
+///
+/// Scenes and components push `DrawCommand`s into the list during `on_render`
+/// instead of drawing immediately. The engine then replays the whole list once
+/// per frame via `CanvasRenderer::replay`, which batches consecutive same-style
+/// shapes into a single path and skips redundant canvas state changes. The
+/// backing `Vec` is reused across frames via `clear()` to avoid reallocation.
+#[derive(Clone, Data, Debug, Default, New)]
+pub struct DrawList {
+    /// The recorded draw commands for the current frame.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) commands: Vec<DrawCommand>,
 }
 
 /// A supersampling anti-aliasing (SSAA) canvas wrapper that renders at a higher

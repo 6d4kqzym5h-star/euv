@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for the Server-Sent Events (SSE) demo page.
 #[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]

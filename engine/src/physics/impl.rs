@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements `Default` for `BodyCollider`, returning an AABB collider with default values.
 impl Default for BodyCollider {
@@ -163,7 +163,9 @@ impl PhysicsWorld2D {
     ///
     /// - `PhysicsWorld2D` - The new world.
     pub fn with_config(config: PhysicsConfig) -> PhysicsWorld2D {
-        PhysicsWorld2D::new(config)
+        let mut world: PhysicsWorld2D = PhysicsWorld2D::new(config);
+        world.set_grid(SpatialHashGrid2D::with_default_size());
+        world
     }
 
     /// Adds a rigid body to the world.
@@ -219,7 +221,7 @@ impl PhysicsWorld2D {
 /// Implements `Default` for `PhysicsWorld2D` as an empty world.
 impl Default for PhysicsWorld2D {
     fn default() -> PhysicsWorld2D {
-        PhysicsWorld2D::new(PhysicsConfig::default())
+        PhysicsWorld2D::with_config(PhysicsConfig::default())
     }
 }
 
@@ -334,24 +336,25 @@ impl PhysicsWorld2D {
     /// - `f64` - The fixed delta time in seconds.
     pub fn step(&mut self, delta_time: f64) {
         let config: PhysicsConfig = self.get_config();
+        // Hoist loop-invariant damping factors out of the per-body loop.
+        let damping_factor: f64 = (1.0 - config.get_linear_damping() * delta_time).max(0.0);
+        let angular_damping: f64 = (1.0 - config.get_angular_damping() * delta_time).max(0.0);
+        let gravity: Vector2D = config.get_gravity();
         for body in self.get_mut_bodies() {
             if !body.is_dynamic() {
                 continue;
             }
             let body_mass: f64 = body.get_mass();
             let body_inverse_mass: f64 = body.get_inverse_mass();
-            *body.get_mut_force_accumulator() += config.get_gravity().scaled(body_mass);
+            *body.get_mut_force_accumulator() += gravity.scaled(body_mass);
             let force: Vector2D = body.get_force_accumulator();
             *body.get_mut_velocity() += force.scaled(body_inverse_mass * delta_time);
-            let damping_factor: f64 = (1.0 - config.get_linear_damping() * delta_time).max(0.0);
-            let velocity: Vector2D = body.get_velocity();
-            body.set_velocity(velocity.scaled(damping_factor));
+            // In-place damping and integration avoid temporary vector copies.
+            *body.get_mut_velocity() *= damping_factor;
             let current_velocity: Vector2D = body.get_velocity();
             *body.get_mut_position() += current_velocity.scaled(delta_time);
             body.set_force_accumulator(Vector2D::zero());
-            let angular_damping: f64 = (1.0 - config.get_angular_damping() * delta_time).max(0.0);
-            let angular_velocity: f64 = body.get_angular_velocity();
-            *body.get_mut_angular_velocity() = angular_velocity * angular_damping;
+            *body.get_mut_angular_velocity() *= angular_damping;
             let current_angular_velocity: f64 = body.get_angular_velocity();
             *body.get_mut_rotation() += current_angular_velocity * delta_time;
         }
@@ -368,36 +371,48 @@ impl PhysicsWorld2D {
         if body_count < 2 {
             return;
         }
-        let mut grid: SpatialHashGrid2D = SpatialHashGrid2D::with_default_size();
-        for (index, body) in self.get_bodies().iter().enumerate() {
-            if let Some(bbox) = body.bounding_box() {
-                grid.insert(index, bbox.min(), bbox.max());
+        // Rebuild the persistent grid once per step and collect the candidate
+        // pair list once; every solver iteration then reuses both (the grid is
+        // unchanged between iterations), eliminating per-iteration re-queries and
+        // per-query allocations.
+        let mut pairs: Vec<(usize, usize)> = Vec::new();
+        {
+            let (bodies, grid, query_buffer, query_seen) = (
+                &self.bodies,
+                &mut self.grid,
+                &mut self.query_buffer,
+                &mut self.query_seen,
+            );
+            grid.clear();
+            for (index, body) in bodies.iter().enumerate() {
+                if let Some(bbox) = body.bounding_box() {
+                    grid.insert(index, bbox.min(), bbox.max());
+                }
+            }
+            for (i, body) in bodies.iter().enumerate() {
+                let Some(bbox) = body.bounding_box() else {
+                    continue;
+                };
+                grid.query_into(bbox.min(), bbox.max(), query_buffer, query_seen);
+                for &j in query_buffer.iter() {
+                    if j > i {
+                        pairs.push((i, j));
+                    }
+                }
             }
         }
         for iteration in 0..PHYSICS_MAX_ITERATIONS {
             let mut any_collision: bool = false;
-            for i in 0..body_count {
-                let candidates: Vec<usize> = {
-                    let body: &RigidBody2D = &self.get_bodies()[i];
-                    match body.bounding_box() {
-                        Some(bbox) => grid.query(bbox.min(), bbox.max()),
-                        None => Vec::new(),
-                    }
-                };
-                for j in candidates {
-                    if j <= i {
-                        continue;
-                    }
-                    let (left, right) = self.get_mut_bodies().split_at_mut(j);
-                    let body_a: &mut RigidBody2D = &mut left[i];
-                    let body_b: &mut RigidBody2D = &mut right[0];
-                    if body_a.get_inverse_mass() == 0.0 && body_b.get_inverse_mass() == 0.0 {
-                        continue;
-                    }
-                    if let Some(result) = body_a.check_collision_with(body_b) {
-                        body_a.resolve_collision_with(body_b, &result);
-                        any_collision = true;
-                    }
+            for &(i, j) in pairs.iter() {
+                let (left, right) = self.get_mut_bodies().split_at_mut(j);
+                let body_a: &mut RigidBody2D = &mut left[i];
+                let body_b: &mut RigidBody2D = &mut right[0];
+                if body_a.get_inverse_mass() == 0.0 && body_b.get_inverse_mass() == 0.0 {
+                    continue;
+                }
+                if let Some(result) = body_a.check_collision_with(body_b) {
+                    body_a.resolve_collision_with(body_b, &result);
+                    any_collision = true;
                 }
             }
             if !any_collision {
@@ -571,7 +586,9 @@ impl PhysicsWorld3D {
     ///
     /// - `PhysicsWorld3D` - The new world.
     pub fn with_config(config: PhysicsConfig3D) -> PhysicsWorld3D {
-        PhysicsWorld3D::new(config)
+        let mut world: PhysicsWorld3D = PhysicsWorld3D::new(config);
+        world.set_grid(SpatialHashGrid3D::with_default_size());
+        world
     }
 
     /// Adds a rigid body to the world.
@@ -633,24 +650,26 @@ impl PhysicsWorld3D {
     /// - `f64` - The fixed delta time in seconds.
     pub fn step(&mut self, delta_time: f64) {
         let config: PhysicsConfig3D = self.get_config();
+        // Hoist loop-invariant damping factors out of the per-body loop.
+        let damping_factor: f64 = (1.0 - config.get_linear_damping() * delta_time).max(0.0);
+        let angular_damping: f64 = (1.0 - config.get_angular_damping() * delta_time).max(0.0);
+        let gravity: Vector3D = config.get_gravity();
         for body in self.get_mut_bodies() {
             if !body.is_dynamic() {
                 continue;
             }
             let body_mass: f64 = body.get_mass();
             let body_inverse_mass: f64 = body.get_inverse_mass();
-            *body.get_mut_force_accumulator() += config.get_gravity().scaled(body_mass);
+            *body.get_mut_force_accumulator() += gravity.scaled(body_mass);
             let force: Vector3D = body.get_force_accumulator();
             *body.get_mut_velocity() += force.scaled(body_inverse_mass * delta_time);
-            let damping_factor: f64 = (1.0 - config.get_linear_damping() * delta_time).max(0.0);
-            let velocity: Vector3D = body.get_velocity();
-            body.set_velocity(velocity.scaled(damping_factor));
+            // In-place damping and integration avoid temporary vector copies.
+            *body.get_mut_velocity() *= damping_factor;
             let current_velocity: Vector3D = body.get_velocity();
             *body.get_mut_position() += current_velocity.scaled(delta_time);
             body.set_force_accumulator(Vector3D::zero());
-            let angular_damping: f64 = (1.0 - config.get_angular_damping() * delta_time).max(0.0);
-            let angular_velocity: Vector3D = body.get_angular_velocity().scaled(angular_damping);
-            body.set_angular_velocity(angular_velocity);
+            *body.get_mut_angular_velocity() *= angular_damping;
+            let angular_velocity: Vector3D = body.get_angular_velocity();
             let rotation_delta: Quaternion = Quaternion::new(
                 angular_velocity.get_x() * delta_time * 0.5,
                 angular_velocity.get_y() * delta_time * 0.5,
@@ -673,36 +692,48 @@ impl PhysicsWorld3D {
         if body_count < 2 {
             return;
         }
-        let mut grid: SpatialHashGrid3D = SpatialHashGrid3D::with_default_size();
-        for (index, body) in self.get_bodies().iter().enumerate() {
-            if let Some(bbox) = body.bounding_box() {
-                grid.insert(index, bbox.get_min(), bbox.get_max());
+        // Rebuild the persistent grid once per step and collect the candidate
+        // pair list once; every solver iteration then reuses both (the grid is
+        // unchanged between iterations), eliminating per-iteration re-queries and
+        // per-query allocations.
+        let mut pairs: Vec<(usize, usize)> = Vec::new();
+        {
+            let (bodies, grid, query_buffer, query_seen) = (
+                &self.bodies,
+                &mut self.grid,
+                &mut self.query_buffer,
+                &mut self.query_seen,
+            );
+            grid.clear();
+            for (index, body) in bodies.iter().enumerate() {
+                if let Some(bbox) = body.bounding_box() {
+                    grid.insert(index, bbox.get_min(), bbox.get_max());
+                }
+            }
+            for (i, body) in bodies.iter().enumerate() {
+                let Some(bbox) = body.bounding_box() else {
+                    continue;
+                };
+                grid.query_into(bbox.get_min(), bbox.get_max(), query_buffer, query_seen);
+                for &j in query_buffer.iter() {
+                    if j > i {
+                        pairs.push((i, j));
+                    }
+                }
             }
         }
         for iteration in 0..PHYSICS_MAX_ITERATIONS {
             let mut any_collision: bool = false;
-            for i in 0..body_count {
-                let candidates: Vec<usize> = {
-                    let body: &RigidBody3D = &self.get_bodies()[i];
-                    match body.bounding_box() {
-                        Some(bbox) => grid.query(bbox.get_min(), bbox.get_max()),
-                        None => Vec::new(),
-                    }
-                };
-                for j in candidates {
-                    if j <= i {
-                        continue;
-                    }
-                    let (left, right) = self.get_mut_bodies().split_at_mut(j);
-                    let body_a: &mut RigidBody3D = &mut left[i];
-                    let body_b: &mut RigidBody3D = &mut right[0];
-                    if body_a.get_inverse_mass() == 0.0 && body_b.get_inverse_mass() == 0.0 {
-                        continue;
-                    }
-                    if let Some(result) = Self::check_collision_3d(body_a, body_b) {
-                        Self::resolve_collision_3d(body_a, body_b, &result);
-                        any_collision = true;
-                    }
+            for &(i, j) in pairs.iter() {
+                let (left, right) = self.get_mut_bodies().split_at_mut(j);
+                let body_a: &mut RigidBody3D = &mut left[i];
+                let body_b: &mut RigidBody3D = &mut right[0];
+                if body_a.get_inverse_mass() == 0.0 && body_b.get_inverse_mass() == 0.0 {
+                    continue;
+                }
+                if let Some(result) = Self::check_collision_3d(body_a, body_b) {
+                    Self::resolve_collision_3d(body_a, body_b, &result);
+                    any_collision = true;
                 }
             }
             if !any_collision {
@@ -810,6 +841,6 @@ impl PhysicsWorld3D {
 /// Implements `Default` for `PhysicsWorld3D` as an empty world.
 impl Default for PhysicsWorld3D {
     fn default() -> PhysicsWorld3D {
-        PhysicsWorld3D::new(PhysicsConfig3D::default())
+        PhysicsWorld3D::with_config(PhysicsConfig3D::default())
     }
 }

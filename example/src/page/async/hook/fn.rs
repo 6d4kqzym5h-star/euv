@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates fetch state signals wrapped in a `UseFetch` struct.
 ///

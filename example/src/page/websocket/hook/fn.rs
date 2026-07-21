@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Generates a random UUID v4 string using `Math::random`.
 ///

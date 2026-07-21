@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A counter demo page showcasing reactive signal-driven state updates.
 ///

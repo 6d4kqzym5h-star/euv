@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Global storage for the Console log signal.
 ///

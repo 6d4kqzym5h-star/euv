@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Represents a single touch point from a multi-touch event.
 ///

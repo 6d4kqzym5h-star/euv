@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements cache query and management for `AssetCache`.
 impl AssetCache {

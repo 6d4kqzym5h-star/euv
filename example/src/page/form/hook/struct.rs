@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for a registration form feature.
 #[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

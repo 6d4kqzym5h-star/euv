@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Configuration parameters for the fixed-timestep scheduler.
 #[derive(Clone, Copy, Data, Debug, New, PartialEq, PartialOrd)]

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// An event handling demo page showcasing all supported browser event types.
 ///

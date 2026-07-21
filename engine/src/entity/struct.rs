@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// The fundamental entity in the engine, combining a transform with
 /// a collection of behavior-defining components.

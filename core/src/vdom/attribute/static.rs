@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Global set of CSS class names that have already been injected into the DOM.
 ///

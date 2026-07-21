@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of `Parse` for `HtmlRoot`, parsing zero or more HTML nodes.
 impl Parse for HtmlRoot {

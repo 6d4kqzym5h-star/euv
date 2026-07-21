@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A browser API demo page showcasing localStorage, sessionStorage, clipboard, window, navigator, and location.
 ///

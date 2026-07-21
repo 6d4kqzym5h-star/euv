@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Checks whether `wasm_pack_args` already contains a build mode flag.
 ///
@@ -84,7 +84,7 @@ pub fn reconcile_args(args: &mut ModeArgs) {
     let mut dev: Option<bool> = None;
     let mut release: Option<bool> = None;
     let mut profiling: Option<bool> = None;
-    let mut iter: std::slice::Iter<String> = wasm_pack_args.iter();
+    let mut iter: Iter<String> = wasm_pack_args.iter();
     while let Some(arg) = iter.next() {
         match arg.as_str() {
             CRATE_PATH_ARG | CRATE_PATH_ARG_SHORT => {
@@ -261,7 +261,7 @@ async fn build_gitignore(root: &PathBuf) -> Gitignore {
 ///
 /// - `Option<String>` - The value of `--out-name` if found.
 fn extract_out_name(wasm_pack_args: &[String]) -> Option<String> {
-    let mut iter = wasm_pack_args.iter();
+    let mut iter: Iter<'_, String> = wasm_pack_args.iter();
     while let Some(arg) = iter.next() {
         if arg == OUT_NAME_ARG {
             return iter.next().cloned();
@@ -285,7 +285,7 @@ fn extract_out_name(wasm_pack_args: &[String]) -> Option<String> {
 ///
 /// - `Option<String>` - The value of `--out-dir` if found.
 fn extract_out_dir(wasm_pack_args: &[String]) -> Option<String> {
-    let mut iter = wasm_pack_args.iter();
+    let mut iter: Iter<'_, String> = wasm_pack_args.iter();
     while let Some(arg) = iter.next() {
         if arg == OUT_DIR_ARG {
             return iter.next().cloned();

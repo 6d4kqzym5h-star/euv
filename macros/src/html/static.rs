@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Global mutable storage for component function names and their metadata.
 ///

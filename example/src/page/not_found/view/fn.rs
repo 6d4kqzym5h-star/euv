@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A 404 not found page component.
 ///

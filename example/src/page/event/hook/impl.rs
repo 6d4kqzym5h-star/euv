@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Provides a default empty keyboard event state with placeholder signals.
 impl Default for UseKeyboardEvent {

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// The parsed input of the `watch!` macro.
 ///

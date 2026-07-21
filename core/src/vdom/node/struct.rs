@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Inner storage for a dynamic node render closure.
 ///

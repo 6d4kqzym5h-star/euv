@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A `Sync` wrapper for single-threaded global `Option<HookContextRc>` access.
 ///

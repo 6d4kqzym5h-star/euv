@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A labeled checkbox component with two-way binding via a signal.
 ///

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements `Display` for `EuvError` to provide human-readable error messages.
 impl std::fmt::Display for EuvError {

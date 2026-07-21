@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// SAFETY: `HandlerRegistryCell` is only used in single-threaded WASM contexts.
 unsafe impl Sync for HandlerRegistryCell {}
@@ -143,7 +143,10 @@ impl Registry {
                 && let Ok(euv_id) = euv_id_str.parse::<usize>()
             {
                 let handler_found: Option<NativeEventHandler> = Self::get_handler_registry()
-                    .get(&(euv_id, event_name))
+                    .get(&euv_id)
+                    .and_then(|event_map: &HashMap<&'static str, HandlerEntry>| {
+                        event_map.get(event_name)
+                    })
                     .and_then(|entry: &HandlerEntry| {
                         let slot: &HandlerSlot = unsafe { &**entry };
                         slot.try_get_handler().as_ref().cloned()
@@ -271,25 +274,20 @@ impl Registry {
     /// - `usize` - The element's unique `data-euv-id` value.
     pub(crate) fn cleanup_element(euv_id: usize) {
         let registry_ref: &mut HandlerRegistryMap = Self::get_mut_handler_registry();
-        let keys_to_remove: Vec<(usize, &'static str)> = registry_ref
-            .keys()
-            .filter(|(id, _): &&(usize, &'static str)| *id == euv_id)
-            .copied()
-            .collect();
-        for key in keys_to_remove {
-            if let Some(entry) = registry_ref.remove(&key) {
-                let slot: &mut HandlerSlot = unsafe { &mut *entry };
-                if let Some(element) = slot.try_get_element().as_ref().cloned()
-                    && let Some(listener_function) = slot.get_mut_listener_function().take()
-                {
-                    let event_name: &str = key.1;
-                    let listener: &Function = listener_function.unchecked_ref::<Function>();
-                    let _ = element.remove_event_listener_with_callback(event_name, listener);
-                }
-                slot.set_handler(None);
-                unsafe {
-                    let _ = Box::from_raw(entry);
-                }
+        let Some(event_map) = registry_ref.remove(&euv_id) else {
+            return;
+        };
+        for (event_name, entry) in event_map {
+            let slot: &mut HandlerSlot = unsafe { &mut *entry };
+            if let Some(element) = slot.try_get_element().as_ref().cloned()
+                && let Some(listener_function) = slot.get_mut_listener_function().take()
+            {
+                let listener: &Function = listener_function.unchecked_ref::<Function>();
+                let _ = element.remove_event_listener_with_callback(event_name, listener);
+            }
+            slot.set_handler(None);
+            unsafe {
+                let _ = Box::from_raw(entry);
             }
         }
     }

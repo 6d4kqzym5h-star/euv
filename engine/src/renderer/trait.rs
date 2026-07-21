@@ -1,14 +1,14 @@
-use crate::*;
+use super::*;
 
-/// A trait for objects that can be rendered onto a canvas.
+/// A trait for objects that can record themselves into a draw list.
 pub trait Renderable {
-    /// Draws this object onto the given canvas rendering context.
+    /// Records this object's draw commands into the given draw list.
     ///
     /// # Arguments
     ///
-    /// - `&CanvasRenderingContext2d` - The canvas 2D rendering context.
+    /// - `&mut DrawList` - The draw list to record commands into.
     /// - `&Transform2D` - The world-space transform to apply.
-    fn draw(&self, context: &CanvasRenderingContext2d, transform: &Transform2D);
+    fn draw(&self, draw_list: &mut DrawList, transform: &Transform2D);
 }
 
 /// An abstract rendering backend that decouples draw calls from the concrete

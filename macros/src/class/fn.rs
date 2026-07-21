@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Parses the `class!` macro input and generates `Css` function definitions.
 ///
@@ -37,7 +37,7 @@ pub(crate) fn parse_class_prop_key(input: ParseStream) -> syn::Result<ClassPropK
         let expr: Expr = content.parse()?;
         Ok(ClassPropKey::Dynamic(expr.to_token_stream()))
     } else {
-        let mut tokens = proc_macro2::TokenStream::new();
+        let mut tokens: proc_macro2::TokenStream = proc_macro2::TokenStream::new();
         while !input.peek(Token![:]) && !input.is_empty() {
             let token: proc_macro2::TokenTree = input.parse()?;
             tokens.extend(Some(token));

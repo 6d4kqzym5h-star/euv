@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for a lifecycle demo feature.
 #[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]

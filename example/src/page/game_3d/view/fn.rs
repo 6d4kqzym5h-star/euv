@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A 3D rotating cubes demo powered by the euv-engine 3D math library.
 ///

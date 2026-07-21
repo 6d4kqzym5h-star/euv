@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A reference-counted, interior-mutable tick handler.
 pub type TickHandlerRc = Rc<RefCell<dyn TickHandler>>;

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements `ServerHook` for `RequestMiddleware` to inject cache-control headers.
 impl ServerHook for RequestMiddleware {

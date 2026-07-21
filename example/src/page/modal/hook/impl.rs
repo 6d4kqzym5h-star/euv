@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Provides a default empty modal state with all signals initialized.
 impl Default for UseModal {

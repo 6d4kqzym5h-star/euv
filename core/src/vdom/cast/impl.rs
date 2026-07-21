@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Converts a `Vec<VirtualNode>` into a `VirtualNode::Fragment`.
 ///

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A tag component for displaying semantic status indicators.
 ///

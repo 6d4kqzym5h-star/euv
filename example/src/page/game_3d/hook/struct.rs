@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A 3D cube instance with position, rotation, scale, and color.
 #[derive(Clone, Debug, PartialEq)]

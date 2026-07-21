@@ -7,3 +7,5 @@ mod r#type;
 pub use {r#struct::*, r#trait::*, r#type::*};
 
 pub(crate) use r#const::*;
+
+use super::*;

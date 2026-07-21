@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Trait for types that can be converted into a reactive text `VirtualNode`.
 ///

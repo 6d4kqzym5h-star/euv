@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Resolves the current route to the corresponding page virtual DOM tree.
 ///

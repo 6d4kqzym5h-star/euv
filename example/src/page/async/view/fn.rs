@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// An async data demo page simulating network requests.
 ///

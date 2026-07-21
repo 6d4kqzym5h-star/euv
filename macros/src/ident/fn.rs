@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Checks whether the current position in the parse stream starts an attribute
 /// key pattern (e.g., `type:`, `async-onclick:`, `r#box-shadow:`).

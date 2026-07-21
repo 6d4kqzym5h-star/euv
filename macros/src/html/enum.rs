@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Represents a single HTML node, which may be an element or text.
 ///

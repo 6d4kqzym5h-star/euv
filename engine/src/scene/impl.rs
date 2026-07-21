@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements static scene creation for `SceneManager`.
 impl SceneManager {
@@ -110,19 +110,31 @@ impl SceneManager {
         scene.borrow_mut().on_update(delta_time);
     }
 
-    /// Calls `on_render` on the current scene.
+    /// Calls `on_render` on the current scene, recording into the shared draw list.
+    ///
+    /// The manager's reusable `DrawList` is cleared, filled by the scene, and
+    /// left populated for the caller to replay (e.g. via
+    /// `CanvasRenderer::replay`). Reusing the list avoids per-frame allocation.
     ///
     /// # Arguments
     ///
-    /// - `&CanvasRenderingContext2d` - The canvas rendering context.
-    pub fn render(&self, context: &CanvasRenderingContext2d) {
+    /// - `&CanvasRenderingContext2d` - The canvas rendering context used to replay
+    ///   the recorded commands.
+    pub fn render(&mut self, context: &CanvasRenderingContext2d) {
         let Some(current_name) = self.try_get_current_scene_name().as_ref() else {
             return;
         };
-        let Some(scene) = self.get_scenes().get(current_name) else {
+        // Clone the `Rc` so the immutable borrow of the scenes map ends before
+        // we mutably borrow the draw list.
+        let Some(scene) = self.get_scenes().get(current_name).cloned() else {
             return;
         };
-        scene.borrow().on_render(context);
+        self.get_mut_draw_list().clear();
+        {
+            let draw_list: &mut DrawList = self.get_mut_draw_list();
+            scene.borrow().on_render(draw_list);
+        }
+        CanvasRenderer::replay_context(context, self.get_draw_list());
     }
 
     /// Returns whether a scene with the given name is registered.

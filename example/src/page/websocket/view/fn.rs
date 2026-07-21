@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A WebSocket chat page with auto-generated UUID and Ping keep-alive.
 ///

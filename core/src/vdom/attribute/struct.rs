@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Represents a single attribute on a virtual DOM node.
 ///

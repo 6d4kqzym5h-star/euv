@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A single bouncing ball in the 2D physics demo game.
 #[derive(Clone, Debug, PartialEq)]

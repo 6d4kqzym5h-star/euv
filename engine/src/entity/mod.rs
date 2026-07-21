@@ -9,3 +9,5 @@ mod r#type;
 pub use {r#enum::*, r#struct::*, r#trait::*, r#type::*};
 
 pub(crate) use {r#const::*, r#static::*};
+
+use super::*;

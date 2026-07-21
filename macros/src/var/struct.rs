@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A parameter definition in a parameterized vars block.
 ///

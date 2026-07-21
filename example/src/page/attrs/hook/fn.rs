@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates an input event handler that updates the dynamic attribute key signal.
 ///

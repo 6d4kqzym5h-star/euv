@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Guards the single-container variant (`schedule_measure`). `true` while an
 /// animation frame is pending, cleared when the callback fires.

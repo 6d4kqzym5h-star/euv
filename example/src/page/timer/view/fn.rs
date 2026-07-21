@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Formats a duration in seconds into a MM:SS display string.
 ///

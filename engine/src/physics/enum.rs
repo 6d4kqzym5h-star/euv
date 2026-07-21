@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Defines how a rigid body participates in the physics simulation.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]

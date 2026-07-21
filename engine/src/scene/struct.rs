@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Manages scene registration, transitions, and lifecycle.
 #[derive(Clone, Data, New)]
@@ -21,4 +21,11 @@ pub struct SceneManager {
     #[set(pub(crate))]
     #[new(skip)]
     pub(crate) pending_scene_name: Option<String>,
+    /// The reusable per-frame draw list. Cleared and refilled each render call
+    /// so the backing `Vec` capacity is reused across frames.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    #[new(skip)]
+    pub(crate) draw_list: DrawList,
 }

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for the camera, including camera control,
 /// facing mode, and QR code scanning results.

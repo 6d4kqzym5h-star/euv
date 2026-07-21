@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Scheduling flag to batch signal updates within a single tick.
 ///

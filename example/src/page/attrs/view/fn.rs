@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A custom attributes demo page showcasing static and dynamic attribute keys and values.
 ///

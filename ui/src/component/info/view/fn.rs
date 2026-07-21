@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A key-value information row component with label and value display.
 ///

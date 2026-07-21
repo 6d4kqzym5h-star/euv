@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates a click event handler that logs a badge click message at the appropriate level.
 ///

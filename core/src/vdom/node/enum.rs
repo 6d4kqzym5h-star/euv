@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Represents the type of an HTML tag or a component.
 ///

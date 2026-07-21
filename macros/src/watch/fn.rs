@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Parses the `watch!` macro input and generates reactive subscription code.
 ///

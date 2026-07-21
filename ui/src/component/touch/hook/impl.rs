@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of touch point extraction from DOM touch events.
 impl NativeTouchPoint {

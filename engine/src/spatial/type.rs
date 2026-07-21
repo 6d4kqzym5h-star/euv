@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A grid cell key for 2D spatial partitioning, combining x and y indices.
 pub type CellKey2D = (i32, i32);

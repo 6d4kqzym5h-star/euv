@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for an async data fetch feature.
 #[derive(Clone, Copy, Data, Debug, Default, Eq, Hash, New, Ord, PartialEq, PartialOrd)]

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Renders a vConsole-style floating debug panel with a toggle button and a half-page drawer.
 ///

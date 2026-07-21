@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.12.22"
+version = "0.12.23"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -31,30 +31,30 @@ log = "0.4.33"
 toml = "0.9.12"
 quote = "1.0.47"
 chrono = "0.4.45"
-ignore = "0.4.30"
+ignore = "0.4.31"
 js-sys = "0.3.103"
 if-addrs = "0.15.0"
-hyperlane = "21.3.3"
-serde_json = "1.0.150"
+hyperlane = "21.3.4"
+serde_json = "1.0.151"
 proc-macro2 = "1.0.107"
 wasm-bindgen = "0.2.126"
-color-output = "10.0.7"
-hyperlane-cli = "0.1.21"
-lombok-macros = "2.0.32"
-compare_version = "2.0.10"
+color-output = "10.0.8"
+hyperlane-cli = "0.1.22"
+lombok-macros = "2.0.33"
+compare_version = "2.0.11"
 alloc-no-stdlib = "=2.0.4"
 serde-wasm-bindgen = "0.6.5"
 wasm-bindgen-test = "0.3.76"
 wasm-bindgen-futures = "0.4.76"
 console_error_panic_hook = "0.1.7"
-clap = { version = "4.6.2", features = ["derive"] }
+clap = { version = "4.6.3", features = ["derive"] }
 serde = { version = "1.0.229", features = ["derive"] }
 qrcode = { version = "0.14.1", default-features = false }
 syn = { version = "2.0.119", features = ["full", "extra-traits"] }
 notify = { version = "8.2.0", default-features = false, features = [
     "macos_fsevent",
 ] }
-tokio = { version = "1.53.0", features = [
+tokio = { version = "1.53.1", features = [
     "rt-multi-thread",
     "macros",
     "process",

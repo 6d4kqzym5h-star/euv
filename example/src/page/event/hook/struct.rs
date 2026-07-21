@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for the keyboard events demo.
 #[derive(Clone, Copy, Data, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

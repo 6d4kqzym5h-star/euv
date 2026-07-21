@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Type alias for the handler registry value.
 ///
@@ -16,9 +16,11 @@ pub(crate) type SignalUpdateEntry = *mut SignalUpdateSlot;
 
 /// Type alias for the handler registry map.
 ///
-/// Uses `&'static str` for event names to avoid allocation on every dispatch lookup.
+/// Nested by element ID first so that removing all handlers for one element is a
+/// single `HashMap::remove(&euv_id)` instead of a full-registry scan. Uses
+/// `&'static str` for event names to avoid allocation on every dispatch lookup.
 /// Known event names are compile-time constants; custom names are leaked once via `as_str()`.
-pub(crate) type HandlerRegistryMap = HashMap<(usize, &'static str), HandlerEntry>;
+pub(crate) type HandlerRegistryMap = HashMap<usize, HashMap<&'static str, HandlerEntry>>;
 
 /// Type alias for a single window event handler entry in the proxy registry.
 ///

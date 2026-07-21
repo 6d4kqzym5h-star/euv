@@ -7,3 +7,5 @@ pub(crate) use r#fn::{
 };
 
 pub(crate) use r#struct::*;
+
+use super::*;

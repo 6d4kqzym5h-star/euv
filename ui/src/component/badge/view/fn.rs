@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A badge component for displaying status indicators with black/white colour scheme.
 ///

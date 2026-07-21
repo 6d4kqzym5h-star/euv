@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements static math utility methods on the `Numeric` namespace struct.
 impl Numeric {
@@ -853,11 +853,26 @@ impl Color {
     ///
     /// - `String` - The CSS color string.
     pub fn to_css_rgba(&self) -> String {
+        let mut buffer: String = String::with_capacity(32);
+        self.write_css_rgba(&mut buffer);
+        buffer
+    }
+
+    /// Writes the CSS `rgba()` representation into the provided buffer.
+    ///
+    /// Reuses the caller's allocation so per-frame color conversions in tight
+    /// render loops avoid the `format!` machinery and repeated allocation.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut String` - The buffer to append the CSS color string to.
+    pub fn write_css_rgba(&self, buffer: &mut String) {
+        use std::fmt::Write as _;
         let red: i32 = (self.get_red() * 255.0).round() as i32;
         let green: i32 = (self.get_green() * 255.0).round() as i32;
         let blue: i32 = (self.get_blue() * 255.0).round() as i32;
         let alpha: f64 = self.get_alpha();
-        format!("rgba({red}, {green}, {blue}, {alpha})")
+        let _ = write!(buffer, "rgba({red}, {green}, {blue}, {alpha})");
     }
 
     /// Returns black (0, 0, 0, 1).

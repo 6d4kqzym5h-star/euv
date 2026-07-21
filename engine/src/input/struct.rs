@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A zero-sized namespace struct providing static input event extraction methods.
 ///

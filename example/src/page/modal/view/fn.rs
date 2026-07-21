@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A modal demo page showcasing different modal variations.
 ///

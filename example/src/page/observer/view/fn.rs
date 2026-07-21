@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// An IntersectionObserver demo page showcasing viewport intersection detection.
 ///

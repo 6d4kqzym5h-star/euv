@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Type alias for the virtual list item renderer callback.
 pub type VirtualListItemRenderer = Rc<dyn Fn(usize) -> VirtualNode>;

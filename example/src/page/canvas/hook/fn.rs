@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates a click event handler that enters fullscreen drawing mode.
 ///

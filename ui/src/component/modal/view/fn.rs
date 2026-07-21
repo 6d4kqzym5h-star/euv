@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A modal dialog component with overlay, title, and close handler.
 ///

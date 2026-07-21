@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of owned pointer for heap-allocated renderer state.
 ///
@@ -62,9 +62,12 @@ impl Renderer {
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
-        let old_tree: Option<VirtualNode> = self.try_get_current_tree().clone();
-        if let Some(old_vnode) = old_tree {
-            self.patch_root(&old_vnode, &new_unwrapped);
+        // Take the old tree out (leaving `None`) so we can patch against it by
+        // reference without deep-cloning the entire previous VDOM. The new tree
+        // is stored back below.
+        let old_tree: Option<VirtualNode> = std::mem::take(self.get_mut_current_tree());
+        if let Some(old_vnode) = old_tree.as_ref() {
+            self.patch_root(old_vnode, &new_unwrapped);
         } else {
             while let Some(child) = self.get_root().first_child() {
                 if let Some(element) = child.dyn_ref::<Element>() {
@@ -217,21 +220,20 @@ impl Renderer {
         old_attrs: &[AttributeEntry],
         new_attrs: &[AttributeEntry],
     ) {
-        let old_map: HashMap<&str, &AttributeValue> = old_attrs
-            .iter()
-            .map(|attr: &AttributeEntry| (attr.get_name().as_str(), attr.get_value()))
-            .collect();
-        let new_map: HashMap<&str, ()> = new_attrs
-            .iter()
-            .map(|attr: &AttributeEntry| (attr.get_name().as_str(), ()))
-            .collect();
         for old_attr in old_attrs {
-            if !new_map.contains_key(old_attr.get_name().as_str()) {
+            let old_name: &str = old_attr.get_name().as_str();
+            let still_present: bool = new_attrs
+                .iter()
+                .any(|attr: &AttributeEntry| attr.get_name().as_str() == old_name);
+            if !still_present {
                 if let AttributeValue::Event(handler) = old_attr.get_value()
                     && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                     && let Ok(euv_id) = euv_id_str.parse::<usize>()
                     && let Some(entry) = Registry::get_mut_handler_registry()
-                        .remove(&(euv_id, handler.get_event_name()))
+                        .get_mut(&euv_id)
+                        .and_then(|event_map: &mut HashMap<&'static str, HandlerEntry>| {
+                            event_map.remove(&handler.get_event_name())
+                        })
                 {
                     let slot: &mut HandlerSlot = unsafe { &mut *entry };
                     if let Some(listener_element) = slot.try_get_element().as_ref().cloned()
@@ -256,8 +258,11 @@ impl Renderer {
                     self.attach_event_listener(element, handler);
                 }
                 _ => {
-                    let old_value: Option<&AttributeValue> =
-                        old_map.get(new_attr.get_name().as_str()).copied();
+                    let new_name: &str = new_attr.get_name().as_str();
+                    let old_value: Option<&AttributeValue> = old_attrs
+                        .iter()
+                        .find(|attr: &&AttributeEntry| attr.get_name().as_str() == new_name)
+                        .map(|attr: &AttributeEntry| attr.get_value());
                     let should_set: bool = match old_value {
                         Some(old_val) => old_val != new_attr.get_value(),
                         None => true,
@@ -427,14 +432,14 @@ impl Renderer {
         }
         for (new_index, new_child) in new_children.iter().enumerate() {
             let new_key: &str = Self::get_node_key(new_child).unwrap_or_default();
+            let current_children: NodeList = parent.child_nodes();
+            let target_index: u32 = new_index as u32;
+            let current_at_target: Option<Node> = current_children.get(target_index);
             if let Some((old_vnode_index, dom_node)) = old_key_to_node.remove(new_key) {
                 let old_child: &VirtualNode = &old_children[old_vnode_index];
                 if let Some(element) = dom_node.dyn_ref::<Element>() {
                     self.patch_node(old_child, new_child, element);
                 }
-                let current_children: NodeList = parent.child_nodes();
-                let target_index: u32 = new_index as u32;
-                let current_at_target: Option<Node> = current_children.get(target_index);
                 if current_at_target.as_ref() != Some(&dom_node) {
                     if let Some(reference_node) = current_at_target {
                         let _ = parent.insert_before(&dom_node, Some(&reference_node));
@@ -444,9 +449,7 @@ impl Renderer {
                 }
             } else {
                 let new_dom_node: Node = self.create_dom_node(new_child);
-                let current_children: NodeList = parent.child_nodes();
-                let target_index: u32 = new_index as u32;
-                if let Some(reference_node) = current_children.get(target_index) {
+                if let Some(reference_node) = current_at_target {
                     let _ = parent.insert_before(&new_dom_node, Some(&reference_node));
                 } else {
                     let _ = parent.append_child(&new_dom_node);
@@ -771,11 +774,11 @@ impl Renderer {
                 key,
                 ..
             } => {
-                if !children.iter().any(Self::subtree_has_component) {
-                    return node.clone();
-                }
-                let unwrapped_children: Vec<VirtualNode> =
-                    children.iter().map(Self::unwrap_component).collect();
+                let unwrapped_children: Vec<VirtualNode> = children
+                    .iter()
+                    .cloned()
+                    .map(Self::unwrap_component_owned)
+                    .collect();
                 VirtualNode::Element {
                     tag: tag.clone(),
                     attributes: attributes.clone(),
@@ -785,38 +788,74 @@ impl Renderer {
                 }
             }
             VirtualNode::Fragment(children) => {
-                if !children.iter().any(Self::subtree_has_component) {
-                    return node.clone();
-                }
-                let unwrapped_children: Vec<VirtualNode> =
-                    children.iter().map(Self::unwrap_component).collect();
+                let unwrapped_children: Vec<VirtualNode> = children
+                    .iter()
+                    .cloned()
+                    .map(Self::unwrap_component_owned)
+                    .collect();
                 VirtualNode::Fragment(unwrapped_children)
             }
             other => other.clone(),
         }
     }
 
-    /// Returns `true` if the given subtree contains any `Tag::Component` nodes
-    /// that need unwrapping.
+    /// Unwraps an owned virtual node, expanding any `Tag::Component` nodes.
+    ///
+    /// Single fused pass: detection and expansion happen together with no separate
+    /// `subtree_has_component` pre-walk. Component-free subtrees are returned by
+    /// move (zero extra allocation beyond the edge clone performed by the caller).
     ///
     /// # Arguments
     ///
-    /// - `&VirtualNode` - The virtual node to check.
+    /// - `VirtualNode` - The owned virtual node to unwrap.
     ///
     /// # Returns
     ///
-    /// - `bool` - `true` if the subtree contains a component node.
-    fn subtree_has_component(node: &VirtualNode) -> bool {
+    /// - `VirtualNode` - The unwrapped virtual node with all components expanded.
+    fn unwrap_component_owned(node: VirtualNode) -> VirtualNode {
         match node {
             VirtualNode::Element {
                 tag: Tag::Component(_),
+                children,
                 ..
-            } => true,
-            VirtualNode::Element { children, .. } => {
-                children.iter().any(Self::subtree_has_component)
+            } => {
+                if children.len() == 1 {
+                    match children.into_iter().next() {
+                        Some(child) => Self::unwrap_component_owned(child),
+                        None => VirtualNode::Fragment(Vec::new()),
+                    }
+                } else {
+                    VirtualNode::Fragment(
+                        children
+                            .into_iter()
+                            .map(Self::unwrap_component_owned)
+                            .collect(),
+                    )
+                }
             }
-            VirtualNode::Fragment(children) => children.iter().any(Self::subtree_has_component),
-            _ => false,
+            VirtualNode::Element {
+                tag,
+                attributes,
+                children,
+                key,
+                props,
+            } => VirtualNode::Element {
+                tag,
+                attributes,
+                children: children
+                    .into_iter()
+                    .map(Self::unwrap_component_owned)
+                    .collect(),
+                key,
+                props,
+            },
+            VirtualNode::Fragment(children) => VirtualNode::Fragment(
+                children
+                    .into_iter()
+                    .map(Self::unwrap_component_owned)
+                    .collect(),
+            ),
+            other => other,
         }
     }
 
@@ -959,15 +998,20 @@ impl Renderer {
         };
         let event_name: &'static str = handler.get_event_name();
         if Registry::is_non_bubbling(event_name) {
-            let key: (usize, &'static str) = (euv_id, event_name);
             let registry_ref: &mut HandlerRegistryMap = Registry::get_mut_handler_registry();
-            if let Some(existing_entry) = registry_ref.get(&key) {
+            if let Some(existing_entry) = registry_ref.get(&euv_id).and_then(
+                |event_map: &HashMap<&'static str, HandlerEntry>| event_map.get(&event_name),
+            ) {
                 let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
                 slot.set_handler(Some(handler.clone()));
             } else {
                 let closure: Closure<dyn FnMut(Event)> =
                     Closure::wrap(Box::new(move |event: Event| {
-                        if let Some(entry) = Registry::get_handler_registry().get(&key) {
+                        if let Some(entry) = Registry::get_handler_registry().get(&euv_id).and_then(
+                            |event_map: &HashMap<&'static str, HandlerEntry>| {
+                                event_map.get(&event_name)
+                            },
+                        ) {
                             let slot: &HandlerSlot = unsafe { &**entry };
                             if let Some(active_handler) = slot.try_get_handler().as_ref().cloned() {
                                 active_handler.handle(event);
@@ -983,13 +1027,17 @@ impl Renderer {
                     Some(listener_function),
                     Some(element.clone()),
                 )));
-                registry_ref.insert(key, handler_slot);
+                registry_ref
+                    .entry(euv_id)
+                    .or_default()
+                    .insert(event_name, handler_slot);
             }
         } else {
             Registry::delegation(event_name);
-            let key: (usize, &'static str) = (euv_id, event_name);
             let registry_ref: &mut HandlerRegistryMap = Registry::get_mut_handler_registry();
-            if let Some(existing_entry) = registry_ref.get(&key) {
+            if let Some(existing_entry) = registry_ref.get(&euv_id).and_then(
+                |event_map: &HashMap<&'static str, HandlerEntry>| event_map.get(&event_name),
+            ) {
                 let slot: &mut HandlerSlot = unsafe { &mut **existing_entry };
                 slot.set_handler(Some(handler.clone()));
             } else {
@@ -998,7 +1046,10 @@ impl Renderer {
                     None,
                     None,
                 )));
-                registry_ref.insert(key, handler_slot);
+                registry_ref
+                    .entry(euv_id)
+                    .or_default()
+                    .insert(event_name, handler_slot);
             }
         }
     }
@@ -1019,13 +1070,7 @@ impl Renderer {
     where
         T: AsRef<Node>,
     {
-        let node_ref: &Node = node.as_ref();
-        let result: Result<JsValue, JsValue> =
-            Reflect::get(node_ref.as_ref(), &JsValue::from_str(IS_CONNECTED));
-        match result {
-            Ok(value) => value.is_truthy(),
-            Err(_) => false,
-        }
+        node.as_ref().is_connected()
     }
 }
 

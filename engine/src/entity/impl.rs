@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements static factory and ID generation methods for `Entity`.
 impl Entity {
@@ -122,18 +122,18 @@ impl Entity {
         }
     }
 
-    /// Calls `on_render` on all active components.
+    /// Calls `on_render` on all active components, recording into the draw list.
     ///
     /// # Arguments
     ///
-    /// - `&CanvasRenderingContext2d` - The canvas rendering context.
-    pub fn render(&self, context: &CanvasRenderingContext2d) {
+    /// - `&mut DrawList` - The draw list to record commands into.
+    pub fn render(&self, draw_list: &mut DrawList) {
         if !self.get_active() {
             return;
         }
         let transform: Transform2D = self.get_transform();
         for component in self.get_components() {
-            component.borrow_mut().on_render(context, &transform);
+            component.borrow_mut().on_render(draw_list, &transform);
         }
     }
 

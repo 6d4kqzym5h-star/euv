@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Configuration for a virtual list instance.
 ///

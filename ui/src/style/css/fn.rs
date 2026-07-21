@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Injects application-level global CSS into the DOM.
 ///

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Custom logger implementation for the euv CLI.
 ///

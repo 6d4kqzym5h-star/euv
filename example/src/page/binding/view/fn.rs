@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A limited counter component that receives strongly-typed (non-String) props.
 ///

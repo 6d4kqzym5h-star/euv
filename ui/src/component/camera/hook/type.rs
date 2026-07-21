@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Type alias for QR code detection callback.
 pub type QrDetectedCallback = Rc<dyn Fn(&str)>;

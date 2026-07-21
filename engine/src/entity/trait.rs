@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// The base trait for all entity components.
 ///
@@ -16,13 +16,13 @@ pub trait Component {
     /// - `f64` - The delta time in seconds.
     fn on_update(&mut self, delta_time: f64);
 
-    /// Called every render frame to draw the component onto the canvas.
+    /// Called every render frame to record the component's draw commands.
     ///
     /// # Arguments
     ///
-    /// - `&CanvasRenderingContext2d` - The canvas 2D rendering context.
+    /// - `&mut DrawList` - The draw list to record commands into.
     /// - `&Transform2D` - The world-space transform of the owning entity.
-    fn on_render(&self, context: &CanvasRenderingContext2d, transform: &Transform2D);
+    fn on_render(&self, draw_list: &mut DrawList, transform: &Transform2D);
 
     /// Called once when the component is being removed or the entity is destroyed.
     fn on_destroy(&mut self);

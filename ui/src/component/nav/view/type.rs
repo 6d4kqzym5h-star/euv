@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Type alias for navigation item click callback.
 pub type NavItemClickCallback = Rc<dyn Fn(&str)>;

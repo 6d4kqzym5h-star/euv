@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements construction, insertion, and querying for `SpatialHashGrid2D`.
 impl SpatialHashGrid2D {
@@ -87,6 +87,45 @@ impl SpatialHashGrid2D {
     /// Removes all entries from the grid, preparing it for a fresh insertion pass.
     pub fn clear(&mut self) {
         self.get_mut_cells().clear();
+    }
+
+    /// Appends all candidate body indices overlapping the query box into `out`,
+    /// deduplicating via the caller-provided `seen` set.
+    ///
+    /// Both `out` and `seen` are cleared first, so the caller can reuse the same
+    /// buffers across all queries in a step without any per-query allocation.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - The minimum corner of the query box.
+    /// - `Vector2D` - The maximum corner of the query box.
+    /// - `&mut Vec<usize>` - The output buffer, cleared then filled with candidates.
+    /// - `&mut HashSet<usize>` - The dedup scratch set, cleared then reused.
+    pub fn query_into(
+        &self,
+        min: Vector2D,
+        max: Vector2D,
+        out: &mut Vec<usize>,
+        seen: &mut HashSet<usize>,
+    ) {
+        out.clear();
+        seen.clear();
+        let inv: f64 = self.get_inverse_cell_size();
+        let min_col: i32 = (min.get_x() * inv).floor() as i32;
+        let min_row: i32 = (min.get_y() * inv).floor() as i32;
+        let max_col: i32 = (max.get_x() * inv).floor() as i32;
+        let max_row: i32 = (max.get_y() * inv).floor() as i32;
+        for col in min_col..=max_col {
+            for row in min_row..=max_row {
+                if let Some(entries) = self.get_cells().get(&(col, row)) {
+                    for index in entries {
+                        if seen.insert(*index) {
+                            out.push(*index);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -186,9 +225,50 @@ impl SpatialHashGrid3D {
     pub fn clear(&mut self) {
         self.get_mut_cells().clear();
     }
-}
 
-/// Implements `Default` for `SpatialHashGrid2D` with the default cell size.
+    /// Appends all candidate body indices overlapping the query box into `out`,
+    /// deduplicating via the caller-provided `seen` set.
+    ///
+    /// Both `out` and `seen` are cleared first, so the caller can reuse the same
+    /// buffers across all queries in a step without any per-query allocation.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector3D` - The minimum corner of the query box.
+    /// - `Vector3D` - The maximum corner of the query box.
+    /// - `&mut Vec<usize>` - The output buffer, cleared then filled with candidates.
+    /// - `&mut HashSet<usize>` - The dedup scratch set, cleared then reused.
+    pub fn query_into(
+        &self,
+        min: Vector3D,
+        max: Vector3D,
+        out: &mut Vec<usize>,
+        seen: &mut HashSet<usize>,
+    ) {
+        out.clear();
+        seen.clear();
+        let inv: f64 = self.get_inverse_cell_size();
+        let min_col: i32 = (min.get_x() * inv).floor() as i32;
+        let min_row: i32 = (min.get_y() * inv).floor() as i32;
+        let min_layer: i32 = (min.get_z() * inv).floor() as i32;
+        let max_col: i32 = (max.get_x() * inv).floor() as i32;
+        let max_row: i32 = (max.get_y() * inv).floor() as i32;
+        let max_layer: i32 = (max.get_z() * inv).floor() as i32;
+        for col in min_col..=max_col {
+            for row in min_row..=max_row {
+                for layer in min_layer..=max_layer {
+                    if let Some(entries) = self.get_cells().get(&(col, row, layer)) {
+                        for index in entries {
+                            if seen.insert(*index) {
+                                out.push(*index);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 impl Default for SpatialHashGrid2D {
     fn default() -> SpatialHashGrid2D {
         SpatialHashGrid2D::with_default_size()

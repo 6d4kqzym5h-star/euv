@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A card component that wraps children with a styled container.
 ///

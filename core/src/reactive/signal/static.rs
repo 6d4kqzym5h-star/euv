@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Global registry tracking heap-allocated `SignalInner<T>` pointer addresses.
 ///

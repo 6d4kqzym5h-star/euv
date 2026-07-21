@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Default camera angles providing a pleasant initial orbit view.
 impl Default for CameraAngles {

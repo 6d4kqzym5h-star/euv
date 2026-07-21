@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates keyboard event state signals wrapped in a `UseKeyboardEvent` struct.
 ///

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A camera page component that opens the device camera with QR code
 /// scanning on user action. When a QR code containing a valid HTTP or

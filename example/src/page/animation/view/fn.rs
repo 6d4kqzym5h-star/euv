@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// An animation demo page showcasing CSS animations and transitions.
 ///

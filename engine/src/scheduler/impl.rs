@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements default configuration and state initialization for scheduler types.
 impl Default for SchedulerConfig {

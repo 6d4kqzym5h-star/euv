@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Global auto-incrementing ID counter for DOM elements.
 pub(crate) static NEXT_EUV_ID: AtomicUsize = AtomicUsize::new(0);

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of `Parse` for `ClassInput`, parsing the `class!` macro input.
 impl Parse for ClassInput {

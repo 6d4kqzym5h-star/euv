@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Renders a branded logo element displaying the "E" letter with a gradient background.
 ///

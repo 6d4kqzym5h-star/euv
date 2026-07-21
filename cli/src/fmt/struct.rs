@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Result of formatting a single file.
 ///

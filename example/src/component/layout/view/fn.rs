@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Renders the desktop layout with a persistent left sidebar navigation.
 ///
@@ -456,8 +456,10 @@ async fn try_notify_native_once() -> Result<(UpdateStatus, UpdateResultPayload),
     let value: JsValue = JsFuture::from(promise)
         .await
         .map_err(|error: JsValue| error.as_string().unwrap_or(ERROR_NULL_TEXT.to_string()))?;
-    let payload: UpdateResultPayload = serde_wasm_bindgen::from_value(value)
-        .map_err(|error: serde_wasm_bindgen::Error| format!("failed to deserialize update_cache result: {error}"))?;
+    let payload: UpdateResultPayload =
+        serde_wasm_bindgen::from_value(value).map_err(|error: serde_wasm_bindgen::Error| {
+            format!("failed to deserialize update_cache result: {error}")
+        })?;
     Ok((payload.result, payload))
 }
 

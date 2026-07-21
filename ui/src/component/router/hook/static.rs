@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 thread_local! {
     /// Flag indicating that the next `popstate` event should consume the

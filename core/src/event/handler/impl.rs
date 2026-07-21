@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of event handler construction and invocation.
 impl NativeEventHandler {

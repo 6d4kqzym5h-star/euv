@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of input functionality.
 impl UseEuvInput {

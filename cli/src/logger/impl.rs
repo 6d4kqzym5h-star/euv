@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of the `log::Log` trait for colored console output.
 impl log::Log for Logger {

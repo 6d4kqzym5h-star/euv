@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates a click event handler that sets the active tab signal for the keep-alive demo.
 ///

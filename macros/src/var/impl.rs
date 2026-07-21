@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of `Parse` for `VarsInput`, parsing the `vars!` macro input.
 impl Parse for VarsInput {

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Inner state of a signal, holding the value and subscribed listeners.
 ///

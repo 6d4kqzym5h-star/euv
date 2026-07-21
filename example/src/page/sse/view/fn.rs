@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A Server-Sent Events (SSE) demo page showcasing real-time streaming from an SSE endpoint.
 ///

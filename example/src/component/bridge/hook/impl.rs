@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Hand-written `Deserialize` for `UpdateStatus` so the wire-tag mapping is
 /// expressed as Rust control flow against the canonical constants in

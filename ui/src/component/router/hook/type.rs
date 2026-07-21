@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A single entry in the modal stack, pairing a modal's visibility signal
 /// with its close callback.

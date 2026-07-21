@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements `Default` for `RenderConfig` with sensible default values.
 impl Default for RenderConfig {

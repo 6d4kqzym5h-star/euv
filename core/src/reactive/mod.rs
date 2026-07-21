@@ -6,3 +6,5 @@ mod signal;
 pub use {hook::*, signal::*};
 
 pub(crate) use schedule::*;
+
+use super::*;

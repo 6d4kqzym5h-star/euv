@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A console abstraction providing web console API methods.
 ///

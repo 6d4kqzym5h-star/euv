@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Parses the `computed!` macro input and generates a computed signal.
 ///

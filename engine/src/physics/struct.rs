@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Configuration parameters for the physics world simulation.
 #[derive(Clone, Copy, Data, Debug, New, PartialEq, PartialOrd)]
@@ -81,6 +81,25 @@ pub struct PhysicsWorld2D {
     /// The simulation configuration.
     #[get(type(copy))]
     pub(crate) config: PhysicsConfig,
+    /// The persistent broad-phase grid, cleared and re-inserted each step so its
+    /// `HashMap` allocation is reused instead of rebuilt per step.
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    #[new(skip)]
+    pub(crate) grid: SpatialHashGrid2D,
+    /// Scratch buffer reused by grid queries to avoid a per-query `Vec` allocation.
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) query_buffer: Vec<usize>,
+    /// Scratch `HashSet` reused by grid queries for candidate dedup.
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) query_seen: HashSet<usize>,
+    /// Reusable broad-phase candidate pair list, rebuilt once per step and
+    /// iterated by every solver iteration (the grid is unchanged between them).
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) pair_buffer: Vec<(usize, usize)>,
 }
 
 /// Configuration parameters for the 3D physics world simulation.
@@ -170,4 +189,23 @@ pub struct PhysicsWorld3D {
     /// The simulation configuration.
     #[get(type(copy))]
     pub(crate) config: PhysicsConfig3D,
+    /// The persistent broad-phase grid, cleared and re-inserted each step so its
+    /// `HashMap` allocation is reused instead of rebuilt per step.
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    #[new(skip)]
+    pub(crate) grid: SpatialHashGrid3D,
+    /// Scratch buffer reused by grid queries to avoid a per-query `Vec` allocation.
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) query_buffer: Vec<usize>,
+    /// Scratch `HashSet` reused by grid queries for candidate dedup.
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) query_seen: HashSet<usize>,
+    /// Reusable broad-phase candidate pair list, rebuilt once per step and
+    /// iterated by every solver iteration (the grid is unchanged between them).
+    #[get_mut(pub(crate))]
+    #[new(skip)]
+    pub(crate) pair_buffer: Vec<(usize, usize)>,
 }

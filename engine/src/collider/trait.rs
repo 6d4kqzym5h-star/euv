@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A trait for objects that can participate in collision detection.
 pub trait Collider {

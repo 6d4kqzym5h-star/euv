@@ -1,11 +1,11 @@
-use crate::*;
+use super::*;
 
 /// A uniform-grid spatial hash for broad-phase collision culling in 2D.
 ///
 /// Bodies are inserted by their world-space axis-aligned bounding box.
 /// A query returns all candidate indices whose AABBs overlap the query region,
 /// dramatically reducing narrow-phase collision checks from O(n²) to near O(n).
-#[derive(Clone, Data, New, PartialEq)]
+#[derive(Clone, Data, Debug, New, PartialEq)]
 pub struct SpatialHashGrid2D {
     /// The world-space size of each grid cell.
     #[get(type(copy))]
@@ -26,7 +26,7 @@ pub struct SpatialHashGrid2D {
 /// Bodies are inserted by their world-space axis-aligned bounding box.
 /// A query returns all candidate indices whose AABBs overlap the query region,
 /// dramatically reducing narrow-phase collision checks from O(n²) to near O(n).
-#[derive(Clone, Data, New, PartialEq)]
+#[derive(Clone, Data, Debug, New, PartialEq)]
 pub struct SpatialHashGrid3D {
     /// The world-space size of each grid cell.
     #[get(type(copy))]

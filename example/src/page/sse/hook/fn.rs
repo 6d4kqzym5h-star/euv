@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates SSE state signals wrapped in a `UseSse` struct.
 ///

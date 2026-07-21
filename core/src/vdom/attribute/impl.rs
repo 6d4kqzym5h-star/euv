@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// SAFETY: `InjectedClassesCell` is only used in single-threaded WASM contexts.
 unsafe impl Sync for InjectedClassesCell {}

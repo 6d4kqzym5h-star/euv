@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements camera transformation methods for `Camera2D`.
 impl Camera2D {
@@ -166,11 +166,7 @@ impl CanvasRenderer {
     /// - `RenderQuality` - The quality preset to apply.
     pub(crate) fn apply_quality(context: &CanvasRenderingContext2d, quality: RenderQuality) {
         let smoothing_enabled: bool = !matches!(quality, RenderQuality::Low);
-        let _ = Reflect::set(
-            context,
-            &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_ENABLED),
-            &JsValue::from_bool(smoothing_enabled),
-        );
+        context.set_image_smoothing_enabled(smoothing_enabled);
         let quality_value: &str = match quality {
             RenderQuality::Low => RENDERER_IMAGE_SMOOTHING_QUALITY_LOW,
             RenderQuality::Medium => RENDERER_IMAGE_SMOOTHING_QUALITY_MEDIUM,
@@ -205,7 +201,195 @@ impl Color {
     }
 }
 
+/// Returns the command slice of a `DrawList` for replay iteration.
+fn self_commands(list: &DrawList) -> &[DrawCommand] {
+    list.get_commands().as_slice()
+}
+
+/// Draws a transformed sprite immediately with a single `set_transform`.
+///
+/// Mirrors the `SpriteSheet::draw_frame` fast path: the TRS matrix is composed
+/// in Rust (scale signs flip) and applied once, then reset to identity.
+fn draw_sprite_immediate(
+    context: &CanvasRenderingContext2d,
+    image: &HtmlImageElement,
+    source: &Rect,
+    transform: &Transform2D,
+) {
+    let rotation: f64 = transform.get_rotation();
+    let cos: f64 = rotation.cos();
+    let sin: f64 = rotation.sin();
+    let scale_x: f64 = transform.get_scale().get_x();
+    let scale_y: f64 = transform.get_scale().get_y();
+    let _ = context.set_transform(
+        cos * scale_x,
+        sin * scale_x,
+        -sin * scale_y,
+        cos * scale_y,
+        transform.get_position().get_x(),
+        transform.get_position().get_y(),
+    );
+    let _ = context.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+        image,
+        source.get_x(),
+        source.get_y(),
+        source.get_width(),
+        source.get_height(),
+        -source.get_width() * 0.5,
+        -source.get_height() * 0.5,
+        source.get_width(),
+        source.get_height(),
+    );
+    let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+}
+
 /// Implements drawing and camera management methods for `CanvasRenderer`.
+/// Implements recording and replay for `DrawList`.
+impl DrawList {
+    /// Creates an empty draw list.
+    ///
+    /// # Returns
+    ///
+    /// - `DrawList` - The new empty draw list.
+    pub fn create() -> DrawList {
+        DrawList::new(Vec::new())
+    }
+
+    /// Returns whether the list contains no commands.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if there are no recorded commands.
+    pub fn is_empty(&self) -> bool {
+        self.get_commands().is_empty()
+    }
+
+    /// Returns the number of recorded commands.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The command count.
+    pub fn len(&self) -> usize {
+        self.get_commands().len()
+    }
+
+    /// Removes all recorded commands, keeping the allocated capacity for reuse
+    /// on the next frame.
+    pub fn clear(&mut self) {
+        self.get_mut_commands().clear();
+    }
+
+    /// Records a fill-rectangle command.
+    pub fn fill_rect(&mut self, position: Vector2D, width: f64, height: f64, color: Color) {
+        self.get_mut_commands().push(DrawCommand::FillRect {
+            position,
+            width,
+            height,
+            color,
+        });
+    }
+
+    /// Records a stroke-rectangle command.
+    pub fn stroke_rect(
+        &mut self,
+        position: Vector2D,
+        width: f64,
+        height: f64,
+        color: Color,
+        line_width: f64,
+    ) {
+        self.get_mut_commands().push(DrawCommand::StrokeRect {
+            position,
+            width,
+            height,
+            color,
+            line_width,
+        });
+    }
+
+    /// Records a fill-circle command.
+    pub fn fill_circle(&mut self, center: Vector2D, radius: f64, color: Color) {
+        self.get_mut_commands().push(DrawCommand::FillCircle {
+            center,
+            radius,
+            color,
+        });
+    }
+
+    /// Records a stroke-circle command.
+    pub fn stroke_circle(&mut self, center: Vector2D, radius: f64, color: Color, line_width: f64) {
+        self.get_mut_commands().push(DrawCommand::StrokeCircle {
+            center,
+            radius,
+            color,
+            line_width,
+        });
+    }
+
+    /// Records a line-segment command.
+    pub fn draw_line(&mut self, start: Vector2D, end: Vector2D, color: Color, line_width: f64) {
+        self.get_mut_commands().push(DrawCommand::Line {
+            start,
+            end,
+            color,
+            line_width,
+        });
+    }
+
+    /// Records a fill-text command.
+    pub fn fill_text<T, F>(&mut self, text: T, position: Vector2D, color: Color, font: F)
+    where
+        T: AsRef<str>,
+        F: AsRef<str>,
+    {
+        self.get_mut_commands().push(DrawCommand::FillText {
+            text: text.as_ref().to_string(),
+            position,
+            color,
+            font: font.as_ref().to_string(),
+        });
+    }
+
+    /// Records a transformed sprite draw command.
+    pub fn draw_sprite(&mut self, image: &HtmlImageElement, source: Rect, transform: Transform2D) {
+        self.get_mut_commands().push(DrawCommand::DrawSprite {
+            image: image.clone(),
+            source,
+            transform,
+        });
+    }
+
+    /// Records an image sub-region draw command (no rotation).
+    pub fn draw_image_rect(
+        &mut self,
+        image: &HtmlImageElement,
+        source: Rect,
+        dest_position: Vector2D,
+        dest_width: f64,
+        dest_height: f64,
+    ) {
+        self.get_mut_commands().push(DrawCommand::DrawImageRect {
+            image: image.clone(),
+            source,
+            dest_position,
+            dest_width,
+            dest_height,
+        });
+    }
+
+    /// Records a global-alpha state change.
+    pub fn set_global_alpha(&mut self, alpha: f64) {
+        self.get_mut_commands()
+            .push(DrawCommand::SetGlobalAlpha { alpha });
+    }
+
+    /// Records a blend-mode state change.
+    pub fn set_blend_mode(&mut self, mode: BlendMode) {
+        self.get_mut_commands()
+            .push(DrawCommand::SetBlendMode { mode });
+    }
+}
+
 impl CanvasRenderer {
     /// Creates a new renderer from a canvas element selector and viewport dimensions.
     ///
@@ -275,11 +459,7 @@ impl CanvasRenderer {
     where
         C: AsRef<str>,
     {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(color.as_ref()),
-        );
+        self.get_context().set_fill_style_str(color.as_ref());
         self.get_context().fill_rect(
             0.0,
             0.0,
@@ -296,6 +476,195 @@ impl CanvasRenderer {
     /// Restores the most recently saved canvas state.
     pub fn restore(&self) {
         self.get_context().restore();
+    }
+
+    /// Replays a recorded `DrawList` onto this renderer's canvas.
+    ///
+    /// Convenience wrapper around `replay_context` using this renderer's context.
+    ///
+    /// # Arguments
+    ///
+    /// - `&DrawList` - The recorded commands to replay.
+    pub fn replay(&self, list: &DrawList) {
+        Self::replay_context(self.get_context(), list);
+    }
+
+    /// Replays a recorded `DrawList` onto an arbitrary canvas 2D context in a
+    /// single batched pass.
+    ///
+    /// Consecutive same-style shapes are merged into one path (one `begin_path`
+    /// plus one `fill`/`stroke` per style run), fill/stroke colors and line
+    /// widths are only re-applied when they change, and sprites are drawn with a
+    /// single `set_transform` rather than a save/restore pair. This collapses
+    /// the per-shape canvas state churn of immediate-mode drawing.
+    ///
+    /// The canvas transform and global alpha are reset to identity / 1.0 when
+    /// replay finishes, so callers can sandwich the call between
+    /// `save()`/`apply_camera()` and `restore()` without leaking state.
+    ///
+    /// # Arguments
+    ///
+    /// - `&CanvasRenderingContext2d` - The target canvas 2D context.
+    /// - `&DrawList` - The recorded commands to replay.
+    pub fn replay_context(context: &CanvasRenderingContext2d, list: &DrawList) {
+        let mut current_fill: Option<Color> = None;
+        let mut current_stroke: Option<Color> = None;
+        let mut current_line_width: f64 = f64::NAN;
+        // Whether a same-style path run is currently open.
+        let mut run_open: bool = false;
+        let mut run_is_fill: bool = true;
+        let mut run_key: Option<(u8, Color, f64)> = None;
+
+        // Returns the style key for a path-batchable command, or `None` for
+        // commands that break a run (sprites, images, text, state changes).
+        fn batch_key(command: &DrawCommand) -> Option<(u8, Color, f64)> {
+            match command {
+                DrawCommand::FillRect { color, .. } | DrawCommand::FillCircle { color, .. } => {
+                    Some((0, *color, 0.0))
+                }
+                DrawCommand::StrokeRect {
+                    color, line_width, ..
+                }
+                | DrawCommand::StrokeCircle {
+                    color, line_width, ..
+                }
+                | DrawCommand::Line {
+                    color, line_width, ..
+                } => Some((1, *color, *line_width)),
+                _ => None,
+            }
+        }
+
+        // Emits a single path-batchable command's geometry into the open path.
+        fn emit_geometry(context: &CanvasRenderingContext2d, command: &DrawCommand) {
+            match command {
+                DrawCommand::FillRect {
+                    position,
+                    width,
+                    height,
+                    ..
+                }
+                | DrawCommand::StrokeRect {
+                    position,
+                    width,
+                    height,
+                    ..
+                } => {
+                    context.rect(position.get_x(), position.get_y(), *width, *height);
+                }
+                DrawCommand::FillCircle { center, radius, .. }
+                | DrawCommand::StrokeCircle { center, radius, .. } => {
+                    context.move_to(center.get_x() + radius, center.get_y());
+                    let _ = context.arc(center.get_x(), center.get_y(), *radius, 0.0, TWO_PI);
+                }
+                DrawCommand::Line { start, end, .. } => {
+                    context.move_to(start.get_x(), start.get_y());
+                    context.line_to(end.get_x(), end.get_y());
+                }
+                _ => {}
+            }
+        }
+
+        for command in self_commands(list) {
+            let key: Option<(u8, Color, f64)> = batch_key(command);
+            // Close the open run if this command breaks it or starts a new style.
+            if run_open && key != run_key {
+                if run_is_fill {
+                    context.fill();
+                } else {
+                    context.stroke();
+                }
+                run_open = false;
+            }
+            if let Some(current_key) = key {
+                // Begin (or continue) a same-style path run.
+                if !run_open {
+                    let (kind, color, line_width) = current_key;
+                    if kind == 0 {
+                        if current_fill != Some(color) {
+                            context.set_fill_style_str(&Color::to_css(&color));
+                            current_fill = Some(color);
+                        }
+                        run_is_fill = true;
+                    } else {
+                        if current_stroke != Some(color) {
+                            context.set_stroke_style_str(&Color::to_css(&color));
+                            current_stroke = Some(color);
+                        }
+                        if current_line_width != line_width {
+                            context.set_line_width(line_width);
+                            current_line_width = line_width;
+                        }
+                        run_is_fill = false;
+                    }
+                    context.begin_path();
+                    run_open = true;
+                    run_key = Some(current_key);
+                }
+                emit_geometry(context, command);
+                continue;
+            }
+            // Non-batchable command: draw it immediately.
+            match command {
+                DrawCommand::FillText {
+                    text,
+                    position,
+                    color,
+                    font,
+                } => {
+                    if current_fill != Some(*color) {
+                        context.set_fill_style_str(&Color::to_css(color));
+                        current_fill = Some(*color);
+                    }
+                    context.set_font(font);
+                    let _ = context.fill_text(text, position.get_x(), position.get_y());
+                }
+                DrawCommand::DrawSprite {
+                    image,
+                    source,
+                    transform,
+                } => {
+                    draw_sprite_immediate(context, image, source, transform);
+                }
+                DrawCommand::DrawImageRect {
+                    image,
+                    source,
+                    dest_position,
+                    dest_width,
+                    dest_height,
+                } => {
+                    let _ = context
+                        .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+                            image,
+                            source.get_x(),
+                            source.get_y(),
+                            source.get_width(),
+                            source.get_height(),
+                            dest_position.get_x(),
+                            dest_position.get_y(),
+                            *dest_width,
+                            *dest_height,
+                        );
+                }
+                DrawCommand::SetGlobalAlpha { alpha } => {
+                    context.set_global_alpha(Numeric::clamp(*alpha, 0.0, 1.0));
+                }
+                DrawCommand::SetBlendMode { mode } => {
+                    let _ = context.set_global_composite_operation(mode.to_css());
+                }
+                _ => {}
+            }
+        }
+        // Flush any trailing open run.
+        if run_open {
+            if run_is_fill {
+                context.fill();
+            } else {
+                context.stroke();
+            }
+        }
+        let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        context.set_global_alpha(1.0);
     }
 
     /// Applies the camera transform to the canvas context.
@@ -327,11 +696,7 @@ impl CanvasRenderer {
     where
         C: AsRef<str>,
     {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(color.as_ref()),
-        );
+        self.get_context().set_fill_style_str(color.as_ref());
     }
 
     /// Sets the stroke color for subsequent stroke operations.
@@ -343,11 +708,7 @@ impl CanvasRenderer {
     where
         C: AsRef<str>,
     {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
-            &JsValue::from_str(color.as_ref()),
-        );
+        self.get_context().set_stroke_style_str(color.as_ref());
     }
 
     /// Sets the line width for subsequent stroke operations.
@@ -356,11 +717,7 @@ impl CanvasRenderer {
     ///
     /// - `f64` - The line width in pixels.
     pub fn set_line_width(&self, width: f64) {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_LINE_WIDTH),
-            &JsValue::from_f64(width),
-        );
+        self.get_context().set_line_width(width);
     }
 
     /// Sets the global alpha (opacity) for all subsequent drawing operations.
@@ -369,11 +726,8 @@ impl CanvasRenderer {
     ///
     /// - `f64` - The alpha value in the range 0.0 to 1.0.
     pub fn set_global_alpha(&self, alpha: f64) {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_GLOBAL_ALPHA),
-            &JsValue::from_f64(Numeric::clamp(alpha, 0.0, 1.0)),
-        );
+        self.get_context()
+            .set_global_alpha(Numeric::clamp(alpha, 0.0, 1.0));
     }
 
     /// Fills a rectangle at the given world-space position and dimensions.
@@ -465,11 +819,7 @@ impl CanvasRenderer {
     where
         F: AsRef<str>,
     {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_FONT),
-            &JsValue::from_str(font.as_ref()),
-        );
+        self.get_context().set_font(font.as_ref());
     }
 
     /// Draws an image element at the given world-space position and dimensions.
@@ -849,11 +1199,8 @@ impl SsaaCanvas {
     where
         C: AsRef<str>,
     {
-        let _ = Reflect::set(
-            self.get_offscreen_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-            &JsValue::from_str(color.as_ref()),
-        );
+        self.get_offscreen_context()
+            .set_fill_style_str(color.as_ref());
         self.get_offscreen_context()
             .fill_rect(0.0, 0.0, self.get_width(), self.get_height());
     }
@@ -1073,11 +1420,9 @@ impl CanvasRenderer {
     ///
     /// - `BlendMode` - The blend mode to apply.
     pub fn set_blend_mode(&self, mode: BlendMode) {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_GLOBAL_COMPOSITE_OPERATION),
-            &JsValue::from_str(mode.to_css()),
-        );
+        let _ = self
+            .get_context()
+            .set_global_composite_operation(mode.to_css());
     }
 
     /// Applies a shadow configuration for subsequent draw operations.
@@ -1086,50 +1431,21 @@ impl CanvasRenderer {
     ///
     /// - `&ShadowConfig` - The shadow configuration to apply.
     pub fn set_shadow(&self, config: &ShadowConfig) {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_COLOR),
-            &JsValue::from_str(config.get_color().as_str()),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_BLUR),
-            &JsValue::from_f64(config.get_blur()),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_X),
-            &JsValue::from_f64(config.get_offset_x()),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_Y),
-            &JsValue::from_f64(config.get_offset_y()),
-        );
+        self.get_context()
+            .set_shadow_color(config.get_color().as_str());
+        self.get_context().set_shadow_blur(config.get_blur());
+        self.get_context()
+            .set_shadow_offset_x(config.get_offset_x());
+        self.get_context()
+            .set_shadow_offset_y(config.get_offset_y());
     }
 
     /// Clears any previously applied shadow, disabling shadow rendering.
     pub fn clear_shadow(&self) {
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_COLOR),
-            &JsValue::from_str("rgba(0, 0, 0, 0)"),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_BLUR),
-            &JsValue::from_f64(0.0),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_X),
-            &JsValue::from_f64(0.0),
-        );
-        let _ = Reflect::set(
-            self.get_context(),
-            &JsValue::from_str(RENDERER_PROPERTY_SHADOW_OFFSET_Y),
-            &JsValue::from_f64(0.0),
-        );
+        self.get_context().set_shadow_color("rgba(0, 0, 0, 0)");
+        self.get_context().set_shadow_blur(0.0);
+        self.get_context().set_shadow_offset_x(0.0);
+        self.get_context().set_shadow_offset_y(0.0);
     }
 
     /// Applies a linear gradient as the fill style for subsequent operations.
@@ -1139,11 +1455,8 @@ impl CanvasRenderer {
     /// - `&LinearGradient` - The linear gradient to use as fill style.
     pub fn set_linear_gradient_fill(&self, gradient: &LinearGradient) {
         if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
-            let _ = Reflect::set(
-                self.get_context(),
-                &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-                &canvas_gradient,
-            );
+            self.get_context()
+                .set_fill_style_canvas_gradient(&canvas_gradient);
         }
     }
 
@@ -1154,11 +1467,8 @@ impl CanvasRenderer {
     /// - `&RadialGradient` - The radial gradient to use as fill style.
     pub fn set_radial_gradient_fill(&self, gradient: &RadialGradient) {
         if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
-            let _ = Reflect::set(
-                self.get_context(),
-                &JsValue::from_str(RENDERER_PROPERTY_FILL_STYLE),
-                &canvas_gradient,
-            );
+            self.get_context()
+                .set_fill_style_canvas_gradient(&canvas_gradient);
         }
     }
 
@@ -1169,11 +1479,8 @@ impl CanvasRenderer {
     /// - `&LinearGradient` - The linear gradient to use as stroke style.
     pub fn set_linear_gradient_stroke(&self, gradient: &LinearGradient) {
         if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
-            let _ = Reflect::set(
-                self.get_context(),
-                &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
-                &canvas_gradient,
-            );
+            self.get_context()
+                .set_stroke_style_canvas_gradient(&canvas_gradient);
         }
     }
 
@@ -1184,11 +1491,8 @@ impl CanvasRenderer {
     /// - `&RadialGradient` - The radial gradient to use as stroke style.
     pub fn set_radial_gradient_stroke(&self, gradient: &RadialGradient) {
         if let Some(canvas_gradient) = gradient.to_gradient(self.get_context()) {
-            let _ = Reflect::set(
-                self.get_context(),
-                &JsValue::from_str(RENDERER_PROPERTY_STROKE_STYLE),
-                &canvas_gradient,
-            );
+            self.get_context()
+                .set_stroke_style_canvas_gradient(&canvas_gradient);
         }
     }
 }

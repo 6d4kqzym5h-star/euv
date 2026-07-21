@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A virtual list demo page showcasing high-performance rendering of 10,000 items.
 ///

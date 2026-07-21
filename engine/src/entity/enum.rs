@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Events that can be emitted by entities for inter-entity communication.
 ///

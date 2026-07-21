@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Represents the value of an HTML attribute.
 ///

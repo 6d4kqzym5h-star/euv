@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A dynamic tag demo page showcasing runtime tag switching.
 ///
@@ -12,7 +12,8 @@ use crate::*;
 /// - `VirtualNode` - The dynamic component demo page virtual DOM tree.
 #[component]
 pub(crate) fn page_dynamic_component(node: VirtualNode<PageDynamicComponentProps>) -> VirtualNode {
-    let PageDynamicComponentProps: PageDynamicComponentProps = node.try_get_props().unwrap_or_default();
+    let PageDynamicComponentProps: PageDynamicComponentProps =
+        node.try_get_props().unwrap_or_default();
     let tag_name_opt: Signal<DynamicTagType> = App::use_signal(DynamicTagType::default);
     let content: Signal<String> = App::use_signal(|| "Hello, dynamic tag!".to_string());
     html! {

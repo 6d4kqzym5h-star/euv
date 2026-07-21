@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// The result of a collision check between two colliders, containing
 /// the contact normal and penetration depth if they overlap.

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements the Console struct providing web console API methods.
 ///

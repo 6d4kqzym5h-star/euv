@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// An entry in the asset cache containing the loaded data and its state.
 #[derive(Clone, Data, Debug, New, PartialEq)]

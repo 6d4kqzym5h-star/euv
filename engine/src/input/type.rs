@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A set of keyboard key code strings currently in a given state.
 pub type KeyStateSet = HashSet<String>;

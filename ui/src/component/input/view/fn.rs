@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A custom input component with label and event handling.
 ///

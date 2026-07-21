@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Parses the `vars!` macro input and generates `Css` function definitions.
 ///

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates a click event handler that navigates to the home page.
 ///

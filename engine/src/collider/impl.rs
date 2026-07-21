@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements `Collider` trait and convenience methods for `AabbCollider`.
 impl AabbCollider {

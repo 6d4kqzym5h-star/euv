@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Converts a static `String` into a text attribute value.
 impl From<String> for AttributeValue {

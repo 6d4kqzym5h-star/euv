@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A wrapper around `Option<NativeEventHandler>` that enables `From<usize>` conversions.
 ///

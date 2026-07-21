@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Reactive state for the native bridge system info feature.
 ///

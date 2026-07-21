@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A canvas drawing board page component that shows a preview of the
 /// drawing and a button to enter fullscreen drawing mode.

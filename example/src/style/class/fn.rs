@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 class! {
     pub c_game_stats_bar {

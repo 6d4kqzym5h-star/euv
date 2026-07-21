@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Returns the next route path based on the navigation items order.
 ///

@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates stopwatch state signals wrapped in a `UseStopwatch` struct.
 ///

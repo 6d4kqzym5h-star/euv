@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A type alias for a list of HTML attribute key-value pairs.
 ///

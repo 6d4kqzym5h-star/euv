@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Visual equality comparison for text nodes.
 ///

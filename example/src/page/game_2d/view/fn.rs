@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// A 2D bouncing balls physics game demo powered by the euv_engine.
 ///

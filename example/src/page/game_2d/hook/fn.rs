@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Creates the 2D bouncing balls game reactive state signals wrapped in a `UseGame2D` struct.
 ///
@@ -452,7 +452,9 @@ pub(crate) fn draw_game_2d_loading() {
                 .get_computed_style(&element)
                 .ok()
                 .flatten()
-                .and_then(|style: CssStyleDeclaration| style.get_property_value(GAME_2D_LOADING_COLOR_VAR).ok())
+                .and_then(|style: CssStyleDeclaration| {
+                    style.get_property_value(GAME_2D_LOADING_COLOR_VAR).ok()
+                })
         })
         .unwrap_or_else(|| "#ffffff".to_string());
     let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);

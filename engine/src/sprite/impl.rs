@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements frame extraction, rendering, and animation creation for `SpriteSheet`.
 impl SpriteSheet {
@@ -93,13 +93,22 @@ impl SpriteSheet {
         transform: &Transform2D,
     ) {
         let source: Rect = self.frame_source(frame_index);
-        context.save();
-        let _ = context.translate(
+        // Compose the TRS matrix in Rust and apply it with a single `set_transform`
+        // instead of save/translate/rotate/scale/restore (5 FFI calls + a canvas
+        // state-stack push/pop per sprite). Scale signs handle flipping.
+        let rotation: f64 = transform.get_rotation();
+        let cos: f64 = rotation.cos();
+        let sin: f64 = rotation.sin();
+        let scale_x: f64 = transform.get_scale().get_x();
+        let scale_y: f64 = transform.get_scale().get_y();
+        let _ = context.set_transform(
+            cos * scale_x,
+            sin * scale_x,
+            -sin * scale_y,
+            cos * scale_y,
             transform.get_position().get_x(),
             transform.get_position().get_y(),
         );
-        let _ = context.rotate(transform.get_rotation());
-        let _ = context.scale(transform.get_scale().get_x(), transform.get_scale().get_y());
         let _ = context
             .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
                 self.get_image(),
@@ -112,7 +121,7 @@ impl SpriteSheet {
                 source.get_width(),
                 source.get_height(),
             );
-        context.restore();
+        let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
     }
 }
 
@@ -265,23 +274,28 @@ impl Animator {
         let Some(source) = self.current_frame_source() else {
             return;
         };
-        context.save();
-        let _ = context.translate(
+        // Compose the TRS matrix in Rust (flip signs folded into scale) and apply
+        // it with a single `set_transform` instead of save/translate/rotate/scale/restore.
+        let rotation: f64 = transform.get_rotation();
+        let cos: f64 = rotation.cos();
+        let sin: f64 = rotation.sin();
+        let scale_x: f64 = if self.get_flip_x() {
+            -transform.get_scale().get_x()
+        } else {
+            transform.get_scale().get_x()
+        };
+        let scale_y: f64 = if self.get_flip_y() {
+            -transform.get_scale().get_y()
+        } else {
+            transform.get_scale().get_y()
+        };
+        let _ = context.set_transform(
+            cos * scale_x,
+            sin * scale_x,
+            -sin * scale_y,
+            cos * scale_y,
             transform.get_position().get_x(),
             transform.get_position().get_y(),
-        );
-        let _ = context.rotate(transform.get_rotation());
-        let _ = context.scale(
-            if self.get_flip_x() {
-                -transform.get_scale().get_x()
-            } else {
-                transform.get_scale().get_x()
-            },
-            if self.get_flip_y() {
-                -transform.get_scale().get_y()
-            } else {
-                transform.get_scale().get_y()
-            },
         );
         let _ = context
             .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
@@ -295,7 +309,7 @@ impl Animator {
                 source.get_width(),
                 source.get_height(),
             );
-        context.restore();
+        let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
     }
 }
 

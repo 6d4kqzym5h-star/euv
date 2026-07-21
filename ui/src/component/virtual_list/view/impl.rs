@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implementation of default configuration for virtual list.
 impl Default for EuvVirtualListConfig {

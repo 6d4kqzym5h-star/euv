@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Encapsulated access to the global pending measurement set.
 impl PendingMeasureCell {

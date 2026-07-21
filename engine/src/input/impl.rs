@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Implements static event extraction methods on the `Input` namespace struct.
 impl Input {

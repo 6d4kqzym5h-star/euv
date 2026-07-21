@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Props for the `euv_nav_item` component.
 ///
