@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.12.23"
+version = "0.12.24"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -47,7 +47,7 @@ serde-wasm-bindgen = "0.6.5"
 wasm-bindgen-test = "0.3.76"
 wasm-bindgen-futures = "0.4.76"
 console_error_panic_hook = "0.1.7"
-clap = { version = "4.6.3", features = ["derive"] }
+clap = { version = "4.6.4", features = ["derive"] }
 serde = { version = "1.0.229", features = ["derive"] }
 qrcode = { version = "0.14.1", default-features = false }
 syn = { version = "2.0.119", features = ["full", "extra-traits"] }

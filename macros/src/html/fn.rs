@@ -1169,11 +1169,33 @@ pub(crate) fn children_to_flattened_tokens(children: &[HtmlNode]) -> proc_macro2
                 let iterable_tokens: proc_macro2::TokenStream =
                     auto_get_expr_tokens(iterable, html_for.get_is_reactive());
                 let body_tokens: proc_macro2::TokenStream = children_to_tokens(html_for.get_body());
-                parts.push(quote! {
-                    for #pattern in #iterable_tokens {
-                        __euv_nodes.extend(#body_tokens);
-                    }
-                });
+                if html_for.get_is_reactive() {
+                    // A braced reactive iterable (`for x in { signal }`) must
+                    // re-run whenever the signal changes. The inline snapshot
+                    // loop below would run exactly once at mount outside any
+                    // tracking scope, registering no dependent, so the list
+                    // would never update. Wrap the loop in a dynamic node
+                    // instead: its render closure runs with an active tracking
+                    // id, so `Signal::get` subscribes this node, and `Signal::set`
+                    // later marks it dirty and re-renders the `Fragment`.
+                    parts.push(quote! {
+                        __euv_nodes.push(::euv::VirtualNode::create_dynamic(
+                            move |_: &mut ::euv::HookContext| {
+                                let mut __euv_inner: Vec<::euv::VirtualNode> = Vec::new();
+                                for #pattern in #iterable_tokens {
+                                    __euv_inner.extend(#body_tokens);
+                                }
+                                ::euv::VirtualNode::Fragment(__euv_inner)
+                            }
+                        ));
+                    });
+                } else {
+                    parts.push(quote! {
+                        for #pattern in #iterable_tokens {
+                            __euv_nodes.extend(#body_tokens);
+                        }
+                    });
+                }
             }
             HtmlNode::If(html_if) if !html_if.get_is_reactive() => {
                 let if_chain: proc_macro2::TokenStream =
