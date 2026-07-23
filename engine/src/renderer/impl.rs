@@ -1918,7 +1918,96 @@ impl WebGpuRenderer {
             width: physical_width,
             height: physical_height,
             antialias: config.antialias,
+            multisample_texture: None,
+            multisample_view: None,
         })
+    }
+
+    /// Allocates the multisampled intermediate texture used for MSAA.
+    ///
+    /// The returned tuple is `(GpuTexture, GpuTextureView)`:
+    /// - `GpuTexture` has `sampleCount: 4` and `usage: RENDER_ATTACHMENT`
+    ///   so it can be bound as a color attachment in `beginRenderPass`.
+    /// - `GpuTextureView` is the default 2D view used as the color
+    ///   attachment; the swap chain view is the `resolveTarget`.
+    ///
+    /// The texture size must match the swap chain physical size; mismatches
+    /// are a WebGPU validation error. Returns `(JsValue::UNDEFINED,
+    /// JsValue::UNDEFINED)` when allocation fails so callers can detect and
+    /// fall back to MSAA=1.
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - Physical pixel width (DPR-multiplied).
+    /// - `u32` - Physical pixel height.
+    ///
+    /// # Returns
+    ///
+    /// - `(JsValue, JsValue)` - The new texture and its default view, or
+    ///   `JsValue::UNDEFINED` for both on allocation failure.
+    fn create_multisample_texture(
+        &self,
+        physical_width: u32,
+        physical_height: u32,
+    ) -> (JsValue, JsValue) {
+        let extent: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_WIDTH),
+            &JsValue::from_f64(f64::from(physical_width)),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_HEIGHT),
+            &JsValue::from_f64(f64::from(physical_height)),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_DEPTH),
+            &JsValue::from_f64(1.0),
+        );
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+            &extent,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE_FORMAT),
+            &JsValue::from_str(&self.get_format()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
+            &JsValue::from_f64(WEBGPU_TEXTURE_USAGE_RENDER_ATTACHMENT),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_SAMPLE_COUNT),
+            &JsValue::from_f64(4.0),
+        );
+        let create_texture_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_TEXTURE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let texture: JsValue = create_texture_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED);
+        if texture.is_undefined() {
+            return (JsValue::UNDEFINED, JsValue::UNDEFINED);
+        }
+        let create_view_fn: Function =
+            Reflect::get(&texture, &JsValue::from_str(WEBGPU_METHOD_CREATE_VIEW))
+                .unwrap_or(JsValue::UNDEFINED)
+                .unchecked_into();
+        let view: JsValue = create_view_fn.call0(&texture).unwrap_or(JsValue::UNDEFINED);
+        if view.is_undefined() {
+            return (texture, JsValue::UNDEFINED);
+        }
+        (texture, view)
     }
 
     /// Resizes the canvas backing store and reconfigures the swap chain.
@@ -1981,6 +2070,23 @@ impl WebGpuRenderer {
         }
         self.set_width(physical_width);
         self.set_height(physical_height);
+        // Rebuild the multisampled color texture to match the new backing
+        // store size. `GpuTexture` width/height are immutable, so MSAA
+        // requires recreating it on every resize. The previous texture (if
+        // any) is left to the GPU's GC; we do not explicitly destroy it
+        // because `destroy()` is a synchronous WebGPU call and the old
+        // texture is no longer referenced by any in-flight command buffer
+        // at this point in the frame loop.
+        if self.get_antialias() {
+            let (texture, view) = self.create_multisample_texture(physical_width, physical_height);
+            if !view.is_undefined() {
+                self.set_multisample_texture(Some(texture));
+                self.set_multisample_view(Some(view));
+            } else {
+                self.set_multisample_texture(None);
+                self.set_multisample_view(None);
+            }
+        }
         true
     }
 
@@ -2118,11 +2224,50 @@ impl WebGpuRenderer {
     ///
     /// - `JsValue` - The active render pass encoder as a JavaScript value.
     pub(crate) fn begin_render_pass(
-        &self,
+        &mut self,
         encoder: &JsValue,
         clear_color: (f64, f64, f64, f64),
     ) -> JsValue {
-        let view: JsValue = self.get_current_texture_view();
+        let swap_chain_view: JsValue = self.get_current_texture_view();
+        // Select the color attachment view and the resolve target based on
+        // whether MSAA is enabled. With MSAA=4 we draw into a multisampled
+        // intermediate texture and resolve into the swap chain at the end
+        // of the pass; without MSAA we draw directly into the swap chain
+        // and omit `resolveTarget`.
+        let (color_view, resolve_view): (JsValue, Option<JsValue>) = if self.get_antialias() {
+            let multisample_view: Option<JsValue> = self
+                .get_multisample_view()
+                .clone()
+                .filter(|value: &JsValue| !value.is_undefined());
+            let resolved: Option<JsValue> = match multisample_view {
+                Some(view) => Some(view),
+                None => {
+                    // Lazy-init: the first render after `init()` or
+                    // `resize()` finds an empty multisample view slot.
+                    // Build it now (using the swap chain's current
+                    // physical size) and cache it on the struct.
+                    let width: u32 = self.get_width();
+                    let height: u32 = self.get_height();
+                    let (texture, view): (JsValue, JsValue) =
+                        self.create_multisample_texture(width, height);
+                    if !view.is_undefined() {
+                        self.set_multisample_texture(Some(texture));
+                        self.set_multisample_view(Some(view.clone()));
+                        Some(view)
+                    } else {
+                        self.set_multisample_texture(None);
+                        self.set_multisample_view(None);
+                        None
+                    }
+                }
+            };
+            match resolved {
+                Some(view) => (view, Some(swap_chain_view.clone())),
+                None => (swap_chain_view.clone(), None),
+            }
+        } else {
+            (swap_chain_view.clone(), None)
+        };
         let color_dict: Object = Object::new();
         let _: Result<bool, JsValue> = Reflect::set(
             &color_dict,
@@ -2145,8 +2290,11 @@ impl WebGpuRenderer {
             &JsValue::from_f64(clear_color.3),
         );
         let attachment: Object = Object::new();
-        let _: Result<bool, JsValue> =
-            Reflect::set(&attachment, &JsValue::from_str(WEBGPU_PROPERTY_VIEW), &view);
+        let _: Result<bool, JsValue> = Reflect::set(
+            &attachment,
+            &JsValue::from_str(WEBGPU_PROPERTY_VIEW),
+            &color_view,
+        );
         let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
             &JsValue::from_str(WEBGPU_PROPERTY_LOAD_OP),
@@ -2162,6 +2310,13 @@ impl WebGpuRenderer {
             &JsValue::from_str(WEBGPU_PROPERTY_CLEAR_VALUE),
             &color_dict,
         );
+        if let Some(target) = resolve_view.as_ref() {
+            let _: Result<bool, JsValue> = Reflect::set(
+                &attachment,
+                &JsValue::from_str(WEBGPU_PROPERTY_RESOLVE_TARGET),
+                target,
+            );
+        }
         let color_attachments: Array = Array::new();
         color_attachments.push(&attachment);
         let descriptor: Object = Object::new();
@@ -2262,6 +2417,19 @@ impl WebGpuRenderer {
             &JsValue::from_str(WEBGPU_PROPERTY_TOPOLOGY),
             &JsValue::from_str(WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
         );
+        // Wire the renderer-level `antialias` flag through to MSAA sample count.
+        // Previously the flag was stored on the struct but never read by the
+        // pipeline builder, leaving every pipeline at MSAA=1 (no anti-aliasing)
+        // — visible as sub-pixel aliasing on triangle edges, particularly at
+        // small canvas sizes like the 600x400 game_2d example. Enabling MSAA=4
+        // when `antialias` is true restores hardware multisampling so edges
+        // resolve cleanly without per-edge shader work.
+        let multisample: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &multisample,
+            &JsValue::from_str(WEBGPU_PROPERTY_COUNT),
+            &JsValue::from_f64(if self.get_antialias() { 4.0 } else { 1.0 }),
+        );
         let descriptor: Object = Object::new();
         let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
@@ -2282,6 +2450,11 @@ impl WebGpuRenderer {
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_PRIMITIVE),
             &primitive,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_MULTISAMPLE),
+            &multisample,
         );
         let create_fn: Function = Reflect::get(
             self.get_device(),
@@ -2366,7 +2539,7 @@ impl WebGpuRenderer {
     /// - `(f64, f64, f64, f64)` - The clear color as (r, g, b, a) in 0.0–1.0 range.
     /// - `u32` - The number of vertices to draw.
     pub fn render_frame(
-        &self,
+        &mut self,
         pipeline: &JsValue,
         clear_color: (f64, f64, f64, f64),
         vertex_count: u32,

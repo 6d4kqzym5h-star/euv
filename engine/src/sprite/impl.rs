@@ -256,6 +256,19 @@ impl Animator {
     }
 }
 
+/// Forwards `Animator::update` through the [`Updatable`] trait so that
+/// collections of heterogeneous updateable objects (entities, animators,
+/// physics worlds, scene managers) can be driven by a single scheduler loop.
+///
+/// The inherent [`Animator::update`] method is the canonical implementation;
+/// this impl exists purely for trait dispatch. The inherent call resolves
+/// first when both are in scope, so there is no recursion.
+impl Updatable for Animator {
+    fn update(&mut self, delta_time: f64) {
+        Animator::update(self, delta_time);
+    }
+}
+
 /// Implements animated sprite rendering for `Animator`.
 impl Animator {
     /// Draws the current frame of this animator onto the canvas.

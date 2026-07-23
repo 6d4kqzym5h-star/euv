@@ -165,6 +165,19 @@ impl SceneManager {
     }
 }
 
+/// Forwards `SceneManager::update` through the [`Updatable`] trait so that
+/// scene managers can be driven alongside entities, animators, and physics
+/// worlds in a single homogeneous update loop.
+///
+/// The inherent [`SceneManager::update`] method is the canonical implementation;
+/// this impl exists purely for trait dispatch. The inherent call resolves
+/// first when both are in scope, so there is no recursion.
+impl Updatable for SceneManager {
+    fn update(&mut self, delta_time: f64) {
+        SceneManager::update(self, delta_time);
+    }
+}
+
 /// Implements `Default` for `SceneManager` as a new empty manager.
 impl Default for SceneManager {
     fn default() -> SceneManager {

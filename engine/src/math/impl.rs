@@ -256,6 +256,43 @@ impl Interpolable for f64 {
     }
 }
 
+/// Implements the [`Vector`] trait for `Vector2D`, forwarding every method to
+/// the inherent implementation on the struct.
+///
+/// `Vector2D` also offers 2D-specific operations that are not part of the
+/// trait surface: `perp`, `cross` (returning `f64`), `from_angle`, `angle`,
+/// `angle_to`, `rotated`, `rotate`, `distance_to`, `distance_squared_to`,
+/// `direction_to`, `scale`, and `normalize`. These remain inherent.
+impl Vector for Vector2D {
+    fn zero() -> Vector2D {
+        Vector2D::zero()
+    }
+
+    fn dot(&self, other: Vector2D) -> f64 {
+        Vector2D::dot(self, other)
+    }
+
+    fn magnitude(&self) -> f64 {
+        Vector2D::magnitude(self)
+    }
+
+    fn magnitude_squared(&self) -> f64 {
+        Vector2D::magnitude_squared(self)
+    }
+
+    fn normalized(&self) -> Vector2D {
+        Vector2D::normalized(self)
+    }
+
+    fn scaled(&self, scalar: f64) -> Vector2D {
+        Vector2D::scaled(self, scalar)
+    }
+
+    fn lerp(&self, other: Vector2D, t: f64) -> Vector2D {
+        Vector2D::lerp(self, other, t)
+    }
+}
+
 /// Implements methods and operator overloading for `Vector2D`.
 impl Vector2D {
     /// Returns the zero vector (0.0, 0.0).
@@ -907,6 +944,42 @@ impl Color {
 impl Default for Color {
     fn default() -> Color {
         Color::black()
+    }
+}
+
+/// Implements the [`Vector`] trait for `Vector3D`, forwarding every method to
+/// the inherent implementation on the struct.
+///
+/// `Vector3D` also offers 3D-specific operations that are not part of the
+/// trait surface: `cross` (returning `Vector3D`), `direction_to`,
+/// `distance_to`, `scale`, and `normalize`. These remain inherent.
+impl Vector for Vector3D {
+    fn zero() -> Vector3D {
+        Vector3D::zero()
+    }
+
+    fn dot(&self, other: Vector3D) -> f64 {
+        Vector3D::dot(self, other)
+    }
+
+    fn magnitude(&self) -> f64 {
+        Vector3D::magnitude(self)
+    }
+
+    fn magnitude_squared(&self) -> f64 {
+        Vector3D::magnitude_squared(self)
+    }
+
+    fn normalized(&self) -> Vector3D {
+        Vector3D::normalized(self)
+    }
+
+    fn scaled(&self, scalar: f64) -> Vector3D {
+        Vector3D::scaled(self, scalar)
+    }
+
+    fn lerp(&self, other: Vector3D, t: f64) -> Vector3D {
+        Vector3D::lerp(self, other, t)
     }
 }
 

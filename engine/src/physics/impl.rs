@@ -423,6 +423,18 @@ impl PhysicsWorld2D {
     }
 }
 
+/// Forwards `PhysicsWorld2D::step` through the [`Updatable`] trait so that
+/// physics worlds participate in the same update loop as entities, animators,
+/// and scene managers. The inherent [`PhysicsWorld2D::step`] method is the
+/// canonical implementation; this impl exists purely for trait dispatch.
+/// The inherent call resolves first when both are in scope, so there is no
+/// recursion.
+impl Updatable for PhysicsWorld2D {
+    fn update(&mut self, delta_time: f64) {
+        PhysicsWorld2D::step(self, delta_time);
+    }
+}
+
 /// Implements default configuration for `PhysicsConfig3D`.
 impl Default for PhysicsConfig3D {
     fn default() -> PhysicsConfig3D {
@@ -835,6 +847,18 @@ impl PhysicsWorld3D {
             .scaled((result.get_depth() * PHYSICS_POSITION_PERCENT / inverse_mass_sum).max(0.0));
         *a.get_mut_position() -= correction.scaled(a_inverse_mass);
         *b.get_mut_position() += correction.scaled(b_inverse_mass);
+    }
+}
+
+/// Forwards `PhysicsWorld3D::step` through the [`Updatable`] trait so that
+/// 3D physics worlds participate in the same update loop as their 2D
+/// counterparts, entities, animators, and scene managers. The inherent
+/// [`PhysicsWorld3D::step`] method is the canonical implementation; this impl
+/// exists purely for trait dispatch. The inherent call resolves first when
+/// both are in scope, so there is no recursion.
+impl Updatable for PhysicsWorld3D {
+    fn update(&mut self, delta_time: f64) {
+        PhysicsWorld3D::step(self, delta_time);
     }
 }
 

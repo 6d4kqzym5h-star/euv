@@ -174,6 +174,18 @@ impl Entity {
     }
 }
 
+/// Forwards `Entity::update` through the [`Updatable`] trait so that collections
+/// of heterogeneous updateable objects can be driven by the scheduler.
+///
+/// The inherent [`Entity::update`] method is the canonical implementation;
+/// this impl exists purely for trait dispatch. The inherent call resolves
+/// first when both are in scope, so there is no recursion.
+impl Updatable for Entity {
+    fn update(&mut self, delta_time: f64) {
+        Entity::update(self, delta_time);
+    }
+}
+
 /// Implements event subscription, emission, and management for `EventBus`.
 impl EventBus {
     /// Creates a new empty event bus.

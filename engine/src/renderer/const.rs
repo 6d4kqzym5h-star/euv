@@ -290,4 +290,72 @@ pub(crate) const WEBGPU_FRAGMENT_ENTRY_POINT: &str = "fs_main";
 /// The WebGPU primitive topology string for triangle lists.
 pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST: &str = "triangle-list";
 
+/// The `GpuMultisampleState` property key in a render pipeline descriptor.
+pub(crate) const WEBGPU_PROPERTY_MULTISAMPLE: &str = "multisample";
+
+/// The `count` property key inside `GpuMultisampleState`.
+///
+/// When `count` is `1`, MSAA is disabled (one sample per pixel). Values like
+/// `4` enable 4x multisample anti-aliasing.
+pub(crate) const WEBGPU_PROPERTY_COUNT: &str = "count";
+
+/// The `sampleCount` property key inside `GpuTextureDescriptor`.
+///
+/// Sets the multisample count for the texture. Must be `1` for non-multisampled
+/// textures or `4` (or `8`, depending on adapter support) for MSAA textures.
+pub(crate) const WEBGPU_PROPERTY_SAMPLE_COUNT: &str = "sampleCount";
+
+/// The `usage` property key inside `GpuTextureDescriptor`.
+///
+/// Bitmask of `GpuTextureUsage` flags. We use `RENDER_ATTACHMENT` (bit 0x10)
+/// for the multisample color buffer that render passes draw into and from
+/// which the swap chain resolves.
+pub(crate) const WEBGPU_PROPERTY_USAGE: &str = "usage";
+
+/// The bitmask value for `GpuTextureUsage.RENDER_ATTACHMENT`.
+///
+/// WebGPU spec defines this as `0x10`. The multisample texture must carry this
+/// usage so it can be bound as a color attachment in `beginRenderPass`.
+pub(crate) const WEBGPU_TEXTURE_USAGE_RENDER_ATTACHMENT: f64 = 16.0;
+
+/// The `format` property key inside `GpuTextureDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_TEXTURE_FORMAT: &str = "format";
+
+/// The `size` property key inside `GpuTextureDescriptor`.
+///
+/// Holds a `GpuExtent3dDict` describing width/height/depth of the texture.
+pub(crate) const WEBGPU_PROPERTY_SIZE: &str = "size";
+
+/// The `width` property key inside `GpuExtent3dDict`.
+pub(crate) const WEBGPU_PROPERTY_EXTENT_WIDTH: &str = "width";
+
+/// The `height` property key inside `GpuExtent3dDict`.
+pub(crate) const WEBGPU_PROPERTY_EXTENT_HEIGHT: &str = "height";
+
+/// The `depthOrArrayLayers` property key inside `GpuExtent3dDict`.
+///
+/// Always `1` for 2D textures; required by the spec even when unused.
+pub(crate) const WEBGPU_PROPERTY_EXTENT_DEPTH: &str = "depthOrArrayLayers";
+
+/// The JavaScript method name `createTexture` on `GpuDevice`.
+pub(crate) const WEBGPU_METHOD_CREATE_TEXTURE: &str = "createTexture";
+
+/// The `resolveTarget` property key inside `GpuRenderPassColorAttachment`.
+///
+/// Holds the destination `GpuTextureView` for MSAA resolve. Omit when MSAA is
+/// disabled; present when the attachment's texture has `sampleCount > 1`.
+pub(crate) const WEBGPU_PROPERTY_RESOLVE_TARGET: &str = "resolveTarget";
+
+/// Upper bound, in milliseconds, for how long [`WebGpuRenderer::init`] is
+/// allowed to wait on the adapter and device promises before falling into
+/// the `WebGPU Not Supported` branch.
+///
+/// The browser's `navigator.gpu.requestAdapter()` / `requestDevice()`
+/// promises are not always guaranteed to settle — headless contexts,
+/// sandboxed iframes, and some GPU device-lost paths leave them pending
+/// indefinitely. To keep the UI from stalling on `Initializing...` in those
+/// cases, each promise is raced against a timer that rejects after this
+/// many milliseconds (see `timeout_promise` / `with_timeout` in
+/// `impl.rs`); on timeout the caller surfaces `RENDERER_TIMEOUT_ERROR_MESSAGE`
+/// and treats the outcome the same as "no adapter available".
 pub(crate) const INIT_PROMISE_TIMEOUT_MILLIS: i32 = 3000;

@@ -225,6 +225,23 @@ pub struct WebGpuRenderer {
     #[get(type(copy))]
     pub(crate) height: u32,
     /// Whether MSAA anti-aliasing is enabled for render pipelines.
+    ///
+    /// When `true`, the renderer allocates a multisampled intermediate texture
+    /// (`sampleCount: 4`) and resolves into the swap chain each frame; when
+    /// `false`, render passes attach directly to the swap chain view at
+    /// `sampleCount: 1`.
     #[get(type(copy))]
     pub(crate) antialias: bool,
+    /// The multisampled color texture used when `antialias` is `true`.
+    ///
+    /// `None` when MSAA is disabled. Rebuilt on every resize because the
+    /// `width`/`height` are immutable for a given `GpuTexture`.
+    #[get(type(clone))]
+    pub(crate) multisample_texture: Option<JsValue>,
+    /// The default `GpuTextureView` into `multisample_texture`.
+    ///
+    /// Cached at texture-create time so `begin_render_pass` does not have to
+    /// recreate the view each frame. `None` when MSAA is disabled.
+    #[get(type(clone))]
+    pub(crate) multisample_view: Option<JsValue>,
 }
