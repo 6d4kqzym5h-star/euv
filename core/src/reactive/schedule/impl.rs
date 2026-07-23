@@ -22,7 +22,7 @@ impl Scheduler {
                 let slot: &SignalUpdateSlot = unsafe { &**entry };
                 if slot.get_removed() {
                     unsafe {
-                        let _ = Box::from_raw(*entry);
+                        let _: Box<SignalUpdateSlot> = Box::from_raw(*entry);
                     }
                     false
                 } else {
@@ -166,7 +166,7 @@ impl Scheduler {
                 let slot: &mut SignalUpdateSlot = unsafe { &mut *entry };
                 if slot.get_removed() {
                     unsafe {
-                        let _ = Box::from_raw(entry);
+                        let _: Box<SignalUpdateSlot> = Box::from_raw(entry);
                     }
                     continue;
                 }
@@ -182,7 +182,7 @@ impl Scheduler {
                 let slot: &SignalUpdateSlot = unsafe { &*entry };
                 if slot.get_removed() {
                     unsafe {
-                        let _ = Box::from_raw(entry);
+                        let _: Box<SignalUpdateSlot> = Box::from_raw(entry);
                     }
                     continue;
                 }
@@ -190,7 +190,7 @@ impl Scheduler {
                     Registry::get_mut_update_registry();
                 if registry.contains_key(&key) {
                     unsafe {
-                        let _ = Box::from_raw(entry);
+                        let _: Box<SignalUpdateSlot> = Box::from_raw(entry);
                     }
                     continue;
                 }

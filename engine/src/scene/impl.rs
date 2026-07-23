@@ -15,7 +15,9 @@ impl SceneManager {
     where
         T: Scene + 'static,
     {
-        Rc::new(RefCell::new(scene))
+        // `EngineCell<T: ?Sized>` accepts `dyn Scene` directly,
+        // so we do not need an intermediate `Box`.
+        Rc::new(EngineCell::new(scene))
     }
 }
 
@@ -67,11 +69,11 @@ impl SceneManager {
         if let Some(name) = current_name.as_ref()
             && let Some(current_scene) = self.get_scenes().get(name)
         {
-            current_scene.borrow_mut().on_exit();
+            current_scene.get_mut().on_exit();
         }
         self.set_current_scene_name(Some(name_ref.to_string()));
         if let Some(new_scene) = self.get_scenes().get(name_ref) {
-            new_scene.borrow_mut().on_enter();
+            new_scene.get_mut().on_enter();
         }
         true
     }
@@ -107,7 +109,7 @@ impl SceneManager {
         let Some(scene) = self.get_scenes().get(current_name) else {
             return;
         };
-        scene.borrow_mut().on_update(delta_time);
+        scene.get_mut().on_update(delta_time);
     }
 
     /// Calls `on_render` on the current scene, recording into the shared draw list.
@@ -132,7 +134,7 @@ impl SceneManager {
         self.get_mut_draw_list().clear();
         {
             let draw_list: &mut DrawList = self.get_mut_draw_list();
-            scene.borrow().on_render(draw_list);
+            scene.get().on_render(draw_list);
         }
         CanvasRenderer::replay_context(context, self.get_draw_list());
     }

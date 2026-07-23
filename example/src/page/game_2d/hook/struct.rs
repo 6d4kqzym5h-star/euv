@@ -56,4 +56,12 @@ pub(crate) struct UseGame2DWebGpu {
     /// Whether the WebGPU render loop has been kicked off in this component tree.
     #[get(type(copy))]
     pub(crate) loop_started: Signal<bool>,
+    /// The most recent init error code as a stable string.
+    ///
+    /// Empty string means "no error" (init still in flight or not started).
+    /// The view uses this code alongside the canonical
+    /// `WebGpuRenderer::is_available()` probe to choose the diagnostic
+    /// banner shown when `loaded` is true but `active` is false.
+    #[get(type(copy))]
+    pub(crate) init_error_code: Signal<&'static str>,
 }

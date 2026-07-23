@@ -128,7 +128,7 @@ pub(crate) fn start_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     CanvasRenderer::enable_smoothing_on(&context_2d);
     context_2d.begin_path();
-    let _ = Reflect::set(
+    let _: Result<bool, JsValue> = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
         &JsValue::from_str(&state.get_stroke_color().get()),
@@ -179,7 +179,7 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     CanvasRenderer::enable_smoothing_on(&context_2d);
-    let _ = Reflect::set(
+    let _: Result<bool, JsValue> = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
         &JsValue::from_str(&state.get_stroke_color().get()),
@@ -235,7 +235,7 @@ pub(crate) fn clear_canvas(canvas_selector: &str) {
     };
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     context_2d.clear_rect(0.0, 0.0, width, height);
-    let _ = Reflect::set(
+    let _: Result<bool, JsValue> = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_FILL_STYLE),
         &JsValue::from_str(CANVAS_BACKGROUND_COLOR),
@@ -341,7 +341,7 @@ pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_full
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
     let stroke_color: String = state.get_stroke_color().get();
     let line_width: f64 = state.get_line_width().get().max(CANVAS_MIN_LINE_WIDTH);
-    let _ = Reflect::set(
+    let _: Result<bool, JsValue> = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
         &JsValue::from_str(&stroke_color),
@@ -405,7 +405,7 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
     let context_2d: CanvasRenderingContext2d = context_object.unchecked_into();
     CanvasRenderer::enable_smoothing_on(&context_2d);
     let canvas_rect: DomRect = canvas_element.get_bounding_client_rect();
-    let _ = Reflect::set(
+    let _: Result<bool, JsValue> = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_STROKE_STYLE),
         &JsValue::from_str(&state.get_stroke_color().get()),
@@ -535,7 +535,8 @@ pub(crate) fn enter_fullscreen(state: UseCanvas) {
         resize_fullscreen_canvas(&snapshot_data_url);
     }));
     let window_value: Window = window().expect("no global window exists");
-    let _ = window_value.request_animation_frame(resize_closure.as_ref().unchecked_ref());
+    let _: Result<i32, JsValue> =
+        window_value.request_animation_frame(resize_closure.as_ref().unchecked_ref());
     resize_closure.forget();
 }
 
@@ -613,7 +614,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     context_2d
         .scale(device_pixel_ratio, device_pixel_ratio)
         .unwrap_or(());
-    let _ = Reflect::set(
+    let _: Result<bool, JsValue> = Reflect::set(
         &context_2d,
         &JsValue::from_str(CANVAS_CONTEXT_PROPERTY_FILL_STYLE),
         &JsValue::from_str(CANVAS_BACKGROUND_COLOR),
@@ -626,7 +627,7 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     image.set_src(snapshot_data_url);
     let draw_image: HtmlImageElement = image.clone();
     let draw_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let _ = context_2d.draw_image_with_html_image_element_and_dw_and_dh(
+        let _: Result<(), JsValue> = context_2d.draw_image_with_html_image_element_and_dw_and_dh(
             &draw_image,
             0.0,
             0.0,

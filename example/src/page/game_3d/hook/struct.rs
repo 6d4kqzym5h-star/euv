@@ -73,4 +73,13 @@ pub(crate) struct UseGame3DWebGpu {
     /// Whether the WebGPU render loop has been kicked off in this component tree.
     #[get(type(copy))]
     pub(crate) loop_started: Signal<bool>,
+    /// The most recent init error code as a stable string.
+    ///
+    /// Drives the diagnostic banner shown when `loaded` is true but
+    /// `active` is false. The empty string means "no error" (i.e. init is
+    /// still in flight or has not started). Storing a stable code rather
+    /// than the full `WebGpuInitError` keeps this state `Copy` and avoids
+    /// surfacing JS error detail into the reactive UI tree.
+    #[get(type(copy))]
+    pub(crate) init_error_code: Signal<&'static str>,
 }

@@ -113,7 +113,24 @@ pub(crate) const RENDERER_LAYER_UI: i32 = 1000;
 pub(crate) const WEBGPU_PROPERTY_POWER_PREFERENCE: &str = "powerPreference";
 
 /// The WebGPU context type string used to obtain a `GpuCanvasContext` from a canvas element.
+///
+/// This is the argument to `HTMLCanvasElement.getContext(...)` - **not** a
+/// property name on `Navigator`. The browser exposes WebGPU via
+/// `Navigator.gpu` (the string `"gpu"`), which is a separate concept.
+/// Mixing the two up is a long-standing bug; see
+/// [`WEBGPU_NAVIGATOR_GPU_KEY`] for the navigator-side key.
 pub(crate) const WEBGPU_CONTEXT_TYPE: &str = "webgpu";
+
+/// The `Navigator` property name that exposes the WebGPU `GPU` interface.
+///
+/// Per the WebGPU spec and MDN (`Navigator.gpu`), browsers expose the
+/// entry point to the API under the property name `"gpu"` - not
+/// `"webgpu"`. Using [`WEBGPU_CONTEXT_TYPE`] (which is `"webgpu"`)
+/// as the key for `Reflect::get(navigator, ...)` always returns
+/// `undefined`, even when WebGPU is fully supported, because
+/// `navigator` does not have a `"webgpu"` property. This constant
+/// exists to make the correct key explicit at every probe site.
+pub(crate) const WEBGPU_NAVIGATOR_GPU_KEY: &str = "gpu";
 
 /// The JavaScript method name `requestAdapter` on `Gpu`.
 pub(crate) const WEBGPU_METHOD_REQUEST_ADAPTER: &str = "requestAdapter";
@@ -132,6 +149,21 @@ pub(crate) const RENDERER_TIMEOUT_ERROR_MESSAGE: &str = "WebGPU initialization t
 
 /// The JavaScript method name `configure` on `GpuCanvasContext`.
 pub(crate) const WEBGPU_METHOD_CONFIGURE: &str = "configure";
+
+/// The JavaScript method name `unconfigure` on `GpuCanvasContext`.
+///
+/// Releases the GPU resources associated with the canvas context so that
+/// the DOM canvas can be detached/GCed and the WebGPU device can be
+/// safely destroyed. Called from `WebGpuRenderer::dispose` to tear down
+/// a renderer cleanly when its host component is unmounted.
+pub(crate) const WEBGPU_METHOD_UNCONFIGURE: &str = "unconfigure";
+
+/// The JavaScript method name `destroy` on `GpuDevice`.
+///
+/// Used by `WebGpuRenderer::dispose` to release GPU memory. After
+/// `destroy` is called any further use of the device raises a JS
+/// error, so this must only run as the final teardown step.
+pub(crate) const WEBGPU_METHOD_DESTROY: &str = "destroy";
 
 /// The JavaScript property name `queue` on `GpuDevice`.
 pub(crate) const WEBGPU_PROPERTY_QUEUE: &str = "queue";
@@ -237,6 +269,17 @@ pub(crate) const WEBGPU_PROPERTY_TOPOLOGY: &str = "topology";
 
 /// The JavaScript property name `layout` on `GpuRenderPipelineDescriptor`.
 pub(crate) const WEBGPU_PROPERTY_LAYOUT: &str = "layout";
+
+/// The spec-compliant value for `GPURenderPipelineDescriptor.layout`
+/// when no explicit `GPUPipelineLayout` is supplied.
+///
+/// Per the WebGPU spec, `layout` is `GPUPipelineLayout | "auto"`. The
+/// string `"auto"` instructs the implementation to derive an implicit
+/// pipeline layout from the shader bindings. Setting `layout` to JS
+/// `null` works on some browsers but is NOT spec-compliant and produces
+/// a pipeline that the GPU driver may reject silently (the symptom we
+/// saw: `WebGPU: No pipeline set.` at draw time, with no create error).
+pub(crate) const WEBGPU_AUTO_LAYOUT: &str = "auto";
 
 /// The vertex shader entry point name used in WGSL shaders.
 pub(crate) const WEBGPU_VERTEX_ENTRY_POINT: &str = "vs_main";

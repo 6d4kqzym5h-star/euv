@@ -307,7 +307,7 @@ pub(crate) fn is_element_selector_block(input: ParseStream) -> bool {
             return false;
         }
         if forked.peek(Token![:]) && !forked.peek2(Token![:]) {
-            let _ = forked.parse::<Token![:]>();
+            let _: Result<Token![:], syn::Error> = forked.parse::<Token![:]>();
             if forked.peek(Brace) {
                 return false;
             }
@@ -315,14 +315,14 @@ pub(crate) fn is_element_selector_block(input: ParseStream) -> bool {
                 if forked.peek(Semi) || forked.peek(Brace) {
                     break;
                 }
-                let _ = forked.parse::<TokenTree>();
+                let _: Result<TokenTree, syn::Error> = forked.parse::<TokenTree>();
             }
             if forked.peek(Brace) {
                 return true;
             }
             return false;
         }
-        let _ = forked.parse::<TokenTree>();
+        let _: Result<TokenTree, syn::Error> = forked.parse::<TokenTree>();
     }
     false
 }
@@ -517,7 +517,7 @@ pub(crate) fn peek_at_rule(input: ParseStream) -> bool {
         return false;
     }
     let forked: ParseBuffer<'_> = input.fork();
-    let _ = forked.parse::<Token![@]>();
+    let _: Result<Token![@], syn::Error> = forked.parse::<Token![@]>();
     if let Ok(ident) = forked.parse::<Ident>() {
         let ident_str: String = ident.to_string();
         return lookup_at_rule_kind(&ident_str).is_some();

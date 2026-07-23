@@ -45,7 +45,7 @@ impl UseEuvBrowser {
             Ok(Some(local_storage)) => local_storage,
             _ => return,
         };
-        let _ = storage.set_item(key.as_ref(), value.as_ref());
+        let _: Result<(), JsValue> = storage.set_item(key.as_ref(), value.as_ref());
     }
 
     /// Removes a key from the browser localStorage.
@@ -62,7 +62,7 @@ impl UseEuvBrowser {
             Ok(Some(local_storage)) => local_storage,
             _ => return,
         };
-        let _ = storage.remove_item(key.as_ref());
+        let _: Result<(), JsValue> = storage.remove_item(key.as_ref());
     }
 
     /// Reads a value from the browser sessionStorage.
@@ -99,7 +99,7 @@ impl UseEuvBrowser {
             Ok(Some(session_storage)) => session_storage,
             _ => return,
         };
-        let _ = storage.set_item(key.as_ref(), value.as_ref());
+        let _: Result<(), JsValue> = storage.set_item(key.as_ref(), value.as_ref());
     }
 
     /// Removes a key from the browser sessionStorage.
@@ -116,7 +116,7 @@ impl UseEuvBrowser {
             Ok(Some(session_storage)) => session_storage,
             _ => return,
         };
-        let _ = storage.remove_item(key.as_ref());
+        let _: Result<(), JsValue> = storage.remove_item(key.as_ref());
     }
 
     /// Reads text from the system clipboard asynchronously.

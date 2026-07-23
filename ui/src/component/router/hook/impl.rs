@@ -178,10 +178,12 @@ impl Router {
                         - (container_height - active_height) / 2.0;
                     scroll_html_element.set_scroll_top(target_scroll_top.max(0.0) as i32);
                 }));
-                let _ = inner_raf.request_animation_frame(inner_closure.as_ref().unchecked_ref());
+                let _: Result<i32, JsValue> =
+                    inner_raf.request_animation_frame(inner_closure.as_ref().unchecked_ref());
                 inner_closure.forget();
             }));
-            let _ = outer_raf.request_animation_frame(outer_closure.as_ref().unchecked_ref());
+            let _: Result<i32, JsValue> =
+                outer_raf.request_animation_frame(outer_closure.as_ref().unchecked_ref());
             outer_closure.forget();
         });
     }
@@ -225,7 +227,7 @@ impl Router {
     pub fn overlay_push_state() {
         let window: Window = window().expect("no global window exists");
         let history: History = window.history().expect("no history object exists");
-        let _ = history.push_state(&JsValue::NULL, "");
+        let _: Result<(), JsValue> = history.push_state(&JsValue::NULL, "");
     }
 
     /// Performs a programmatic `history.back()` to consume the overlay's
@@ -242,7 +244,7 @@ impl Router {
         }
         let window: Window = window().expect("no global window exists");
         let history: History = window.history().expect("no history object exists");
-        let _ = history.back();
+        let _: Result<(), JsValue> = history.back();
     }
 
     /// Pushes an overlay close callback onto the unified `OVERLAY_STACK` and
@@ -384,7 +386,7 @@ impl Router {
         if let Ok(open_fn) = Reflect::get(&window_value, &JsValue::from_str("open"))
             .and_then(|value: JsValue| value.dyn_into::<Function>())
         {
-            let _ = open_fn.call2(
+            let _: Result<JsValue, JsValue> = open_fn.call2(
                 &window_value,
                 &JsValue::from_str(url.as_ref()),
                 &JsValue::from_str(SYSTEM_BROWSER_TARGET),

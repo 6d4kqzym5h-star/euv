@@ -101,7 +101,7 @@ impl SpriteSheet {
         let sin: f64 = rotation.sin();
         let scale_x: f64 = transform.get_scale().get_x();
         let scale_y: f64 = transform.get_scale().get_y();
-        let _ = context.set_transform(
+        let _: Result<(), JsValue> = context.set_transform(
             cos * scale_x,
             sin * scale_x,
             -sin * scale_y,
@@ -109,7 +109,7 @@ impl SpriteSheet {
             transform.get_position().get_x(),
             transform.get_position().get_y(),
         );
-        let _ = context
+        let _: Result<(), JsValue> = context
             .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
                 self.get_image(),
                 source.get_x(),
@@ -121,7 +121,7 @@ impl SpriteSheet {
                 source.get_width(),
                 source.get_height(),
             );
-        let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let _: Result<(), JsValue> = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
     }
 }
 
@@ -289,7 +289,7 @@ impl Animator {
         } else {
             transform.get_scale().get_y()
         };
-        let _ = context.set_transform(
+        let _: Result<(), JsValue> = context.set_transform(
             cos * scale_x,
             sin * scale_x,
             -sin * scale_y,
@@ -297,7 +297,7 @@ impl Animator {
             transform.get_position().get_x(),
             transform.get_position().get_y(),
         );
-        let _ = context
+        let _: Result<(), JsValue> = context
             .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
                 sheet.get_image(),
                 source.get_x(),
@@ -309,7 +309,7 @@ impl Animator {
                 source.get_width(),
                 source.get_height(),
             );
-        let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let _: Result<(), JsValue> = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
     }
 }
 

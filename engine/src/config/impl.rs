@@ -123,8 +123,8 @@ impl GpuPowerPreference {
     /// - `&'static str` - The WebGPU power preference string (e.g., `"low-power"`).
     pub fn to_web_sys_string(&self) -> &'static str {
         match self {
-            GpuPowerPreference::LowPower => "low-power",
-            GpuPowerPreference::HighPerformance => "high-performance",
+            GpuPowerPreference::LowPower => GPU_POWER_PREFERENCE_LOW_POWER,
+            GpuPowerPreference::HighPerformance => GPU_POWER_PREFERENCE_HIGH_PERFORMANCE,
         }
     }
 }

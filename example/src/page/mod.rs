@@ -25,6 +25,7 @@ mod select;
 mod sse;
 mod timer;
 mod virtual_list;
+mod webgpu_status;
 mod websocket;
 
 pub(crate) use {

@@ -124,7 +124,7 @@ impl UseEuvInput {
             if let Ok(Some(main_el)) = element.closest("main")
                 && let Ok(main) = main_el.dyn_into::<HtmlElement>()
             {
-                let _ = main
+                let _: Result<(), JsValue> = main
                     .style()
                     .set_property("padding-bottom", KEYBOARD_EXTRA_PADDING);
             }
@@ -146,10 +146,11 @@ impl UseEuvInput {
                     window_clone.scroll_by_with_x_and_y(0.0, scroll_amount);
                 }
             }));
-            let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref::<Function>(),
-                FOCUS_SCROLL_DELAY_MILLIS,
-            );
+            let _: Result<i32, JsValue> = window
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    closure.as_ref().unchecked_ref::<Function>(),
+                    FOCUS_SCROLL_DELAY_MILLIS,
+                );
             closure.forget();
         }))
     }
@@ -174,7 +175,7 @@ impl UseEuvInput {
             if let Ok(Some(main_el)) = element.closest("main")
                 && let Ok(main) = main_el.dyn_into::<HtmlElement>()
             {
-                let _ = main.style().remove_property("padding-bottom");
+                let _: Result<String, JsValue> = main.style().remove_property("padding-bottom");
             }
         }))
     }

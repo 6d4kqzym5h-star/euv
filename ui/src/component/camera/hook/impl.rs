@@ -46,7 +46,7 @@ impl UseEuvCamera {
             EuvCameraFacing::Environment => CAMERA_FACING_MODE_ENVIRONMENT,
         };
         let video_constraint: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &video_constraint,
             &JsValue::from_str("facingMode"),
             &JsValue::from_str(facing_mode),
@@ -67,14 +67,14 @@ impl UseEuvCamera {
                 if let Some(element) = document.query_selector(&selector).ok().flatten() {
                     let video_element: HtmlVideoElement = element.unchecked_into();
                     video_element.set_src_object(Some(&stream));
-                    let _ = video_element.play();
+                    let _: Result<Promise, JsValue> = video_element.play();
                 }
             }));
         let on_rejected: Closure<dyn FnMut(JsValue)> =
             Closure::wrap(Box::new(move |error: JsValue| {
                 web_sys::console::log_2(&wasm_bindgen::JsValue::from_str("[euv-camera]"), &error);
             }));
-        let _ = promise.then(&on_fulfilled).catch(&on_rejected);
+        let _: Promise = promise.then(&on_fulfilled).catch(&on_rejected);
         on_fulfilled.forget();
         on_rejected.forget();
         Ok(())
@@ -206,7 +206,8 @@ impl UseEuvCamera {
         let formats_array: Array = Array::new();
         formats_array.push(&JsValue::from_str("qr_code"));
         let init_object: Object = Object::new();
-        let _ = Reflect::set(&init_object, &JsValue::from_str("formats"), &formats_array);
+        let _: Result<bool, JsValue> =
+            Reflect::set(&init_object, &JsValue::from_str("formats"), &formats_array);
         let args_array: Array = Array::new();
         args_array.push(&init_object.into());
         let detector: JsValue = match Reflect::construct(&barcode_detector_constructor, &args_array)
@@ -271,7 +272,7 @@ impl UseEuvCamera {
                 }));
             let on_scan_error: Closure<dyn FnMut(JsValue)> =
                 Closure::wrap(Box::new(move |_error: JsValue| {}));
-            let _ = promise.then(&on_detected).catch(&on_scan_error);
+            let _: Promise = promise.then(&on_detected).catch(&on_scan_error);
             on_detected.forget();
             on_scan_error.forget();
         });
@@ -408,13 +409,13 @@ impl UseEuvCamera {
             return;
         }
         if Self::is_private_host(&url_hostname) {
-            let _ = window_value.location().set_href(url);
+            let _: Result<(), JsValue> = window_value.location().set_href(url);
             return;
         }
         if let Ok(open_fn) = Reflect::get(&window_value, &JsValue::from_str("open"))
             .and_then(|value: JsValue| value.dyn_into::<Function>())
         {
-            let _ = open_fn.call2(
+            let _: Result<JsValue, JsValue> = open_fn.call2(
                 &window_value,
                 &JsValue::from_str(url),
                 &JsValue::from_str(SYSTEM_BROWSER_TARGET),

@@ -12,3 +12,17 @@ pub(crate) const CONFIG_DEFAULT_SSAA_SCALE_FACTOR: f64 = 2.0;
 
 /// Whether anti-aliasing (MSAA) is enabled by default for the WebGPU backend.
 pub(crate) const CONFIG_DEFAULT_ANTIALIAS: bool = true;
+
+/// The WebGPU `powerPreference` value that hints "prefer low-power GPU".
+///
+/// Per the WebGPU spec (`GpuPowerPreference`), the W3C-defined string is
+/// `"low-power"`. Centralized here so any future change to the
+/// spec value is a single-file edit.
+pub(crate) const GPU_POWER_PREFERENCE_LOW_POWER: &str = "low-power";
+
+/// The WebGPU `powerPreference` value that hints "prefer high-performance GPU".
+///
+/// Per the WebGPU spec (`GpuPowerPreference`), the W3C-defined string is
+/// `"high-performance"`. Centralized here so any future change to the
+/// spec value is a single-file edit.
+pub(crate) const GPU_POWER_PREFERENCE_HIGH_PERFORMANCE: &str = "high-performance";

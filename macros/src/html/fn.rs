@@ -356,7 +356,7 @@ fn try_save_cache(
 ) {
     if let Ok(data) = serde_json::to_string(registry) {
         let content: String = format!("{fingerprint}{CHAR_NEWLINE}{data}");
-        let _ = std::fs::write(cache_path, content);
+        let _: std::io::Result<()> = write(cache_path, content);
     }
 }
 

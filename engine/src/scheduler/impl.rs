@@ -58,12 +58,12 @@ impl SchedulerState {
         let clamped_frame_time: f64 = frame_time.min(config.get_max_frame_time());
         *self.get_mut_accumulator() += clamped_frame_time;
         while self.get_accumulator() >= config.get_fixed_timestep() {
-            handler.borrow_mut().on_update(config.get_fixed_timestep());
+            handler.get_mut().on_update(config.get_fixed_timestep());
             *self.get_mut_accumulator() -= config.get_fixed_timestep();
             *self.get_mut_update_count() += 1;
         }
         let interpolation: f64 = self.get_accumulator() / config.get_fixed_timestep();
-        handler.borrow_mut().on_render(interpolation);
+        handler.get_mut().on_render(interpolation);
         *self.get_mut_frame_count() += 1;
     }
 }
@@ -72,15 +72,14 @@ impl SchedulerState {
 impl SchedulerHandle {
     /// Stops the scheduler and cancels any pending animation frame request.
     pub fn stop(&self) {
-        let state_rc: Rc<RefCell<SchedulerState>> = self.get_state().clone();
-        let mut state: RefMut<'_, SchedulerState> = state_rc.borrow_mut();
+        let state: &mut SchedulerState = self.get_state().get_mut();
         state.set_running(false);
         if let Some(id) = state.get_mut_raf_id().take() {
             let window_value: Window = window().expect("no global window exists");
-            let _ = window_value.cancel_animation_frame(id);
+            let _: Result<(), JsValue> = window_value.cancel_animation_frame(id);
         }
-        drop(state);
-        self.get_closure_cell().borrow_mut().take();
+        // Drop the closure so the box can be collected.
+        let _ = self.get_closure_cell().try_take();
     }
 
     /// Returns whether the scheduler is currently running.
@@ -89,7 +88,9 @@ impl SchedulerHandle {
     ///
     /// - `bool` - True if the scheduler is running.
     pub fn is_running(&self) -> bool {
-        self.get_state().borrow().get_running()
+        // SAFETY: caller contract - no mutable access to the same
+        // SchedulerState can be alive alongside this call.
+        self.get_state().get().get_running()
     }
 
     /// Returns the total number of fixed update steps executed.
@@ -98,7 +99,7 @@ impl SchedulerHandle {
     ///
     /// - `u64` - The update count.
     pub fn update_count(&self) -> u64 {
-        self.get_state().borrow().get_update_count()
+        self.get_state().get().get_update_count()
     }
 
     /// Returns the total number of render frames executed.
@@ -107,7 +108,7 @@ impl SchedulerHandle {
     ///
     /// - `u64` - The frame count.
     pub fn frame_count(&self) -> u64 {
-        self.get_state().borrow().get_frame_count()
+        self.get_state().get().get_frame_count()
     }
 
     /// Starts the scheduler with the given configuration and handler.
@@ -124,42 +125,46 @@ impl SchedulerHandle {
     ///
     /// - `SchedulerHandle` - A handle to control the running scheduler.
     pub fn start(config: SchedulerConfig, handler: TickHandlerRc) -> SchedulerHandle {
-        let state: Rc<RefCell<SchedulerState>> =
-            Rc::new(RefCell::new(SchedulerState::new(UNINITIALIZED_TIME)));
-        let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
-        state.borrow_mut().set_running(true);
-        let state_clone: Rc<RefCell<SchedulerState>> = state.clone();
+        let state: Rc<EngineCell<SchedulerState>> =
+            Rc::new(EngineCell::new(SchedulerState::new(UNINITIALIZED_TIME)));
+        let closure_cell: RafClosureCell = Rc::new(MaybeEngineCell::new());
+        // Install the initial closure once spawn starts.
+        let state_ref_init: &mut SchedulerState = state.get_mut();
+        state_ref_init.set_running(true);
+        let state_clone: Rc<EngineCell<SchedulerState>> = state.clone();
         let closure_cell_clone: RafClosureCell = closure_cell.clone();
         let handler_clone: TickHandlerRc = handler.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             {
-                let mut state_ref: RefMut<'_, SchedulerState> = state_clone.borrow_mut();
+                let state_ref: &mut SchedulerState = state_clone.get_mut();
                 if !state_ref.get_running() {
                     return;
                 }
                 state_ref.tick(&config, &handler_clone);
             }
-            if state_clone.borrow().get_running() {
+            let state_ro: &SchedulerState = state_clone.get();
+            if state_ro.get_running() {
                 let window_value: Window = window().expect("no global window exists");
                 let cell: RafClosureCell = closure_cell_clone.clone();
                 let id: i32 = window_value
                     .request_animation_frame(
-                        cell.borrow()
-                            .as_ref()
+                        cell.try_get()
                             .expect("raf closure should exist")
                             .as_ref()
                             .unchecked_ref(),
                     )
                     .unwrap_or(0);
-                state_clone.borrow_mut().set_raf_id(Some(id));
+                let state_ref_id: &mut SchedulerState = state_clone.get_mut();
+                state_ref_id.set_raf_id(Some(id));
             }
         }));
         let window_value: Window = window().expect("no global window exists");
         let id: i32 = window_value
             .request_animation_frame(raf_closure.as_ref().unchecked_ref())
             .unwrap_or(0);
-        state.borrow_mut().set_raf_id(Some(id));
-        *closure_cell.borrow_mut() = Some(raf_closure);
+        let state_ref_id: &mut SchedulerState = state.get_mut();
+        state_ref_id.set_raf_id(Some(id));
+        let _ = closure_cell.try_set(raf_closure);
         SchedulerHandle::new(state, closure_cell)
     }
 }

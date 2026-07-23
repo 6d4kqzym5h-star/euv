@@ -79,7 +79,7 @@ impl ElementExt for Element {
                 return;
             }
         }
-        let _ = self.remove_attribute(name);
+        let _: Result<(), JsValue> = self.remove_attribute(name);
     }
 
     /// Sets an attribute or property on the element.
@@ -157,7 +157,7 @@ impl ElementExt for Element {
                 return;
             }
         }
-        let _ = self.set_attribute(name, value);
+        let _: Result<(), JsValue> = self.set_attribute(name, value);
     }
 
     /// Tracks a signal address on the element for cleanup purposes.
@@ -177,6 +177,6 @@ impl ElementExt for Element {
             updated.push(CHAR_SIGNAL_ADDRS_SEPARATOR);
         }
         updated.push_str(&addr.to_string());
-        let _ = self.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated);
+        let _: Result<(), JsValue> = self.set_attribute(DATA_EUV_SIGNAL_ADDRS, &updated);
     }
 }

@@ -89,10 +89,11 @@ pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
                 html_input_clone.click();
             }));
             let window: Window = window().unwrap();
-            let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                0,
-            );
+            let _: Result<i32, JsValue> = window
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    closure.as_ref().unchecked_ref(),
+                    0,
+                );
             closure.forget();
         }
     }))

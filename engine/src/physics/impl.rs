@@ -418,7 +418,7 @@ impl PhysicsWorld2D {
             if !any_collision {
                 break;
             }
-            let _ = iteration;
+            let _: u32 = iteration;
         }
     }
 }
@@ -739,7 +739,7 @@ impl PhysicsWorld3D {
             if !any_collision {
                 break;
             }
-            let _ = iteration;
+            let _: u32 = iteration;
         }
     }
 

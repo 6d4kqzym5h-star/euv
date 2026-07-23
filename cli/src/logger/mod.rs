@@ -8,3 +8,5 @@ pub use r#struct::*;
 pub use {r#const::*, r#static::*};
 
 use super::*;
+
+use log::SetLoggerError;

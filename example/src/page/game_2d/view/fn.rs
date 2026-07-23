@@ -204,26 +204,9 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
     let fps_display: String = format!("{:.1}", state.get_fps().get());
     let loaded: bool = state.get_loaded().get();
     let active: bool = state.get_active().get();
-    let status_text: &str = if !loaded {
-        "Initializing..."
-    } else if active {
-        "WebGPU Active"
-    } else {
-        // Distinguish the three common reasons "not supported" so users
-        // know whether to enable WebGPU in browser flags, switch to
-        // HTTPS / localhost, or upgrade their browser.
-        if Reflect::get(
-            web_sys::Window::navigator(&web_sys::window().unwrap()).as_ref(),
-            &JsValue::from_str("gpu"),
-        )
-        .map(|v: JsValue| v.is_undefined() || v.is_null())
-        .unwrap_or(true)
-        {
-            "WebGPU needs HTTPS or localhost"
-        } else {
-            "WebGPU Not Supported"
-        }
-    };
+    let init_error_code: &str = state.get_init_error_code().get();
+    let status_text: &str =
+        crate::page::webgpu_status::webgpu_status_text(loaded, active, init_error_code);
     html! {
         div {
             div {

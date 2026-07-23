@@ -601,13 +601,15 @@ pub async fn run_build_pipeline(
         Ok(()) => {
             log::info!("WASM build completed successfully");
             if let Some(sender) = reload_tx {
-                let _ = sender.send(ReloadEvent::Reload);
+                let _: Result<usize, tokio::sync::broadcast::error::SendError<ReloadEvent>> =
+                    sender.send(ReloadEvent::Reload);
             }
         }
         Err(error) => {
             log::error!("WASM build failed: {error}");
             if let Some(sender) = reload_tx {
-                let _ = sender.send(ReloadEvent::Error(error.to_string()));
+                let _: Result<usize, tokio::sync::broadcast::error::SendError<ReloadEvent>> =
+                    sender.send(ReloadEvent::Error(error.to_string()));
             }
         }
     }
@@ -643,7 +645,8 @@ pub(crate) async fn watch_and_build(state: Arc<AppState>) -> Result<(), EuvError
     let mut watcher: RecommendedWatcher = RecommendedWatcher::new(
         move |result: Result<Event, notify::Error>| {
             if let Ok(event) = result {
-                let _ = tx.blocking_send(event);
+                let _: Result<(), tokio::sync::mpsc::error::SendError<Event>> =
+                    tx.blocking_send(event);
             }
         },
         Config::default(),

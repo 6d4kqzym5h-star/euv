@@ -95,15 +95,15 @@ impl AssetLoader {
             url.clone(),
         );
         self.get_cache()
-            .borrow_mut()
+            .get_mut()
             .get_mut_entries()
             .insert(url.clone(), entry);
         *self.get_mut_pending_count() += 1;
-        let cache_clone: Rc<RefCell<AssetCache>> = self.get_cache().clone();
+        let cache_clone: Rc<EngineCell<AssetCache>> = self.get_cache().clone();
         let url_for_onload: String = url.clone();
         let url_for_onerror: String = url.clone();
         let onload_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let mut cache_ref: RefMut<'_, AssetCache> = cache_clone.borrow_mut();
+            let cache_ref: &mut AssetCache = cache_clone.get_mut();
             if let Some(mut entry) = cache_ref.get_entries().get(&url_for_onload).cloned() {
                 entry.set_state(AssetState::Loaded);
                 cache_ref
@@ -111,9 +111,9 @@ impl AssetLoader {
                     .insert(url_for_onload.clone(), entry);
             }
         }));
-        let cache_clone_err: Rc<RefCell<AssetCache>> = self.get_cache().clone();
+        let cache_clone_err: Rc<EngineCell<AssetCache>> = self.get_cache().clone();
         let onerror_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let mut cache_ref: RefMut<'_, AssetCache> = cache_clone_err.borrow_mut();
+            let cache_ref: &mut AssetCache = cache_clone_err.get_mut();
             if let Some(mut entry) = cache_ref.get_entries().get(&url_for_onerror).cloned() {
                 entry.set_state(AssetState::Error);
                 cache_ref
@@ -124,8 +124,8 @@ impl AssetLoader {
         image.set_onload(Some(onload_closure.as_ref().unchecked_ref()));
         image.set_onerror(Some(onerror_closure.as_ref().unchecked_ref()));
         image.set_src(&url);
-        self.get_closures().borrow_mut().push(onload_closure);
-        self.get_closures().borrow_mut().push(onerror_closure);
+        self.get_closures().get_mut().push(onload_closure);
+        self.get_closures().get_mut().push(onerror_closure);
     }
 
     /// Returns whether all requested assets have finished loading.
@@ -134,7 +134,7 @@ impl AssetLoader {
     ///
     /// - `bool` - True if no assets are pending.
     pub fn is_all_loaded(&self) -> bool {
-        self.get_cache().borrow().is_all_loaded()
+        self.get_cache().get().is_all_loaded()
     }
 
     /// Returns the loaded image for the given URL.
@@ -150,7 +150,7 @@ impl AssetLoader {
     where
         U: AsRef<str>,
     {
-        self.get_cache().borrow().get_image(url.as_ref())
+        self.get_cache().get().get_image(url.as_ref())
     }
 
     /// Returns the progress ratio of loaded assets.
@@ -159,7 +159,7 @@ impl AssetLoader {
     ///
     /// - `f64` - The ratio in the range 0.0 to 1.0.
     pub fn progress(&self) -> f64 {
-        let cache_ref: Ref<'_, AssetCache> = self.get_cache().borrow();
+        let cache_ref: &AssetCache = self.get_cache().get();
         let total: usize = cache_ref.get_entries().len();
         if total == 0 {
             return 1.0;

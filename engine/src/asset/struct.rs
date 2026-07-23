@@ -33,7 +33,7 @@ pub struct AssetCache {
 pub struct AssetLoader {
     /// The shared cache that loaded assets are stored into.
     #[new(skip)]
-    pub(crate) cache: Rc<RefCell<AssetCache>>,
+    pub(crate) cache: Rc<EngineCell<AssetCache>>,
     /// The number of assets currently being loaded.
     #[get(pub(crate), type(copy))]
     #[get_mut(pub(crate))]

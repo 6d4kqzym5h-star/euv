@@ -72,7 +72,7 @@ impl Router {
                 let nav_window: Window = web_sys::window().expect("no global window exists");
                 let nav_location: Location = nav_window.location();
                 let nav_new_hash: String = format!("{ROUTE_HASH_PREFIX}{route_value}");
-                let _ = nav_location.set_hash(&nav_new_hash);
+                let _: Result<(), JsValue> = nav_location.set_hash(&nav_new_hash);
             }
         }));
         let window: Window = window().expect("no global window exists");

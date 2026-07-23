@@ -90,7 +90,7 @@ impl Logger {
     ///
     /// - `LevelFilter` - The maximum log level to enable.
     pub fn init(level_filter: log::LevelFilter) {
-        let _ = log::set_logger(&LOGGER);
+        let _: Result<(), SetLoggerError> = log::set_logger(&LOGGER);
         log::set_max_level(level_filter);
     }
 }

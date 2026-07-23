@@ -178,7 +178,7 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
         let raf_id: i32 = drag.get_drag_raf_id().get();
         if raf_id != -1 {
             let window: Window = window().expect("no global window exists");
-            let _ = window.cancel_animation_frame(raf_id);
+            let _: Result<(), JsValue> = window.cancel_animation_frame(raf_id);
             drag.get_drag_raf_id().set(-1);
         }
         if !drag.get_drag_pending_pos().get().is_empty() {

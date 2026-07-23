@@ -100,7 +100,7 @@ fn start_ping_timer(ping_handle_signal: Signal<Option<IntervalHandle>>) {
     let handle: IntervalHandle = App::use_interval(WEBSOCKET_PING_INTERVAL_MS, move || {
         WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
             if let Some(socket) = instance.borrow().as_ref() {
-                let _ = socket.send_with_str(WEBSOCKET_PING_MESSAGE);
+                let _: Result<(), JsValue> = socket.send_with_str(WEBSOCKET_PING_MESSAGE);
             }
         });
     });
@@ -312,7 +312,7 @@ pub(crate) fn websocket_on_send(state: UseWebSocket) -> Option<Rc<dyn Fn(Event)>
         WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
             if let Some(socket) = instance.borrow().as_ref() {
                 if socket.ready_state() == WebSocket::OPEN {
-                    let _ = socket.send_with_str(&body);
+                    let _: Result<(), JsValue> = socket.send_with_str(&body);
                 } else {
                     state.get_connected().set(false);
                     state
@@ -346,7 +346,7 @@ pub(crate) fn ws_cleanup(state: UseWebSocket) {
 fn ws_close_instance() {
     WS_INSTANCE.with(|instance: &RefCell<Option<WebSocket>>| {
         if let Some(socket) = instance.borrow_mut().take() {
-            let _ = socket.close();
+            let _: Result<(), JsValue> = socket.close();
         }
     });
 }

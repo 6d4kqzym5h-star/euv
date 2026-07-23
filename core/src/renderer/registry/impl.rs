@@ -181,7 +181,7 @@ impl Registry {
             Some(window_instance) => window_instance,
             None => return,
         };
-        let _ = window.add_event_listener_with_callback_and_bool(
+        let _: Result<(), JsValue> = window.add_event_listener_with_callback_and_bool(
             event_name,
             closure.as_ref().unchecked_ref(),
             true,
@@ -239,7 +239,7 @@ impl Registry {
         let entry: SignalUpdateEntry = Box::into_raw(slot);
         if let Some(old_entry) = Self::get_mut_update_registry().insert(dynamic_id, entry) {
             unsafe {
-                let _ = Box::from_raw(old_entry);
+                let _: Box<SignalUpdateSlot> = Box::from_raw(old_entry);
             }
         }
     }
@@ -259,7 +259,7 @@ impl Registry {
         let entry: SignalUpdateEntry = Box::into_raw(slot);
         if let Some(old_entry) = Self::get_mut_update_registry().insert(signal_key, entry) {
             unsafe {
-                let _ = Box::from_raw(old_entry);
+                let _: Box<SignalUpdateSlot> = Box::from_raw(old_entry);
             }
         }
     }
@@ -283,20 +283,23 @@ impl Registry {
                 && let Some(listener_function) = slot.get_mut_listener_function().take()
             {
                 let listener: &Function = listener_function.unchecked_ref::<Function>();
-                let _ = element.remove_event_listener_with_callback(event_name, listener);
+                let _: Result<(), JsValue> =
+                    element.remove_event_listener_with_callback(event_name, listener);
             }
             slot.set_handler(None);
             unsafe {
-                let _ = Box::from_raw(entry);
+                let _: Box<HandlerSlot> = Box::from_raw(entry);
             }
         }
     }
 
-    /// Cleans up all resources associated with a DynamicNode when its
-    /// placeholder element is removed from the DOM.
+    /// Marks the slot backing a DynamicNode as removed and clears its
+    /// callback to prevent further updates to a detached DOM subtree.
     ///
-    /// Marks the slot as removed and clears its callback to prevent
-    /// further updates to a detached DOM subtree.
+    /// Intended to be called when the placeholder element is removed
+    /// from the DOM by the surrounding diff / patch logic; this
+    /// function itself only updates the slot state and does not touch
+    /// the DOM.
     ///
     /// # Arguments
     ///
@@ -410,7 +413,7 @@ impl Registry {
             handlers.retain(|(id, ptr): &WindowEventHandlerEntry| {
                 if *id == handler_id {
                     unsafe {
-                        let _ = Box::from_raw(*ptr);
+                        let _: Box<Box<dyn FnMut()>> = Box::from_raw(*ptr);
                     }
                     false
                 } else {
@@ -452,7 +455,7 @@ impl Registry {
             Some(window_instance) => window_instance,
             None => return,
         };
-        let _ =
+        let _: Result<(), JsValue> =
             window.add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref());
         closure.forget();
     }

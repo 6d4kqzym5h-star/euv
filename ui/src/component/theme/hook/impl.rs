@@ -74,7 +74,8 @@ impl ThemeState {
                 theme_signal.set(detected);
             }
         }));
-        let _ = mql.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
+        let _: Result<(), JsValue> =
+            mql.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
         closure.forget();
     }
 

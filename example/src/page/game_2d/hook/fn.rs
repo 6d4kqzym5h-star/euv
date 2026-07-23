@@ -494,10 +494,7 @@ pub(crate) fn start_game_2d_loop(
     let frame_count: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
-    let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
-    let state_clone: UseGame2D = state;
-    let balls_clone: Rc<RefCell<Vec<Ball>>> = balls;
-    let cache_clone: CanvasCache = canvas_cache;
+    let closure_cell: RafClosureCell = Rc::new(MaybeEngineCell::new());
     let acc_clone: Rc<Cell<f64>> = accumulator.clone();
     let last_clone: Rc<Cell<f64>> = last_time.clone();
     let frame_clone: Rc<Cell<u32>> = frame_count.clone();
@@ -520,39 +517,38 @@ pub(crate) fn start_game_2d_loop(
         };
         last_clone.set(current_time);
         acc_clone.set(acc_clone.get() + frame_time);
-        if state_clone.get_running().get() {
+        if state.get_running().get() {
             while acc_clone.get() >= GAME_2D_FIXED_TIMESTEP {
-                update_balls(&mut balls_clone.borrow_mut(), GAME_2D_FIXED_TIMESTEP);
+                update_balls(&mut balls.borrow_mut(), GAME_2D_FIXED_TIMESTEP);
                 acc_clone.set(acc_clone.get() - GAME_2D_FIXED_TIMESTEP);
             }
         }
         if dirty_clone.get() {
             *context_clone.borrow_mut() = None;
-            *cache_clone.0.borrow_mut() = None;
+            *canvas_cache.0.borrow_mut() = None;
             dirty_clone.set(false);
         }
         if context_clone.borrow().is_none()
             && let Some((canvas_el, ssaa_canvas)) = acquire_game_2d_ssaa_canvas()
         {
-            *cache_clone.0.borrow_mut() = Some(canvas_el);
+            *canvas_cache.0.borrow_mut() = Some(canvas_el);
             *context_clone.borrow_mut() = Some(ssaa_canvas);
         }
         if let Some(ssaa_canvas) = context_clone.borrow().as_ref() {
-            render_balls_with_ssaa(ssaa_canvas, &balls_clone.borrow());
+            render_balls_with_ssaa(ssaa_canvas, &balls.borrow());
         }
         frame_clone.set(frame_clone.get() + 1);
         fps_clone.set(fps_clone.get() + frame_time);
         if fps_clone.get() >= 1.0 {
             let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
-            state_clone.get_fps().set(fps);
+            state.get_fps().set(fps);
             frame_clone.set(0);
             fps_clone.set(0.0);
         }
         let next_id: i32 = window_value
             .request_animation_frame(
                 cell_clone
-                    .borrow()
-                    .as_ref()
+                    .try_get()
                     .expect("raf closure should exist")
                     .as_ref()
                     .unchecked_ref(),
@@ -560,7 +556,7 @@ pub(crate) fn start_game_2d_loop(
             .unwrap_or(0);
         raf_clone.set(Some(next_id));
     }));
-    *closure_cell.borrow_mut() = Some(raf_closure);
+    let _: Result<(), _> = closure_cell.try_set(raf_closure);
     let start_timeout_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let start_timeout_clone: Rc<Cell<Option<i32>>> = start_timeout_id.clone();
     let raf_for_start: Rc<Cell<Option<i32>>> = raf_id.clone();
@@ -572,8 +568,7 @@ pub(crate) fn start_game_2d_loop(
         let start_id: i32 = start_window
             .request_animation_frame(
                 cell_for_start
-                    .borrow()
-                    .as_ref()
+                    .try_get()
                     .expect("raf closure should exist")
                     .as_ref()
                     .unchecked_ref(),
@@ -636,7 +631,7 @@ pub(crate) fn start_game_2d_loop(
             let window_value: Window = window().expect("no global window exists");
             window_value.clear_timeout_with_handle(timer_id);
         }
-        closure_cell.borrow_mut().take();
+        let _: Option<_> = closure_cell.try_take();
     });
 }
 
@@ -653,6 +648,7 @@ pub(crate) fn use_game_2d_webgpu_state() -> UseGame2DWebGpu {
         loaded: App::use_signal(|| false),
         active: App::use_signal(|| false),
         loop_started: App::use_signal(|| false),
+        init_error_code: App::use_signal(|| ""),
     }
 }
 
@@ -688,7 +684,7 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
     let init_state: UseGame2DWebGpu = state;
     let loop_state: UseGame2DWebGpu = state;
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
-    let closure_cell: RafClosureCell = Rc::new(RefCell::new(None));
+    let closure_cell: RafClosureCell = Rc::new(MaybeEngineCell::new());
     let resize_dirty: Rc<Cell<bool>> = Rc::new(Cell::new(false));
     let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let renderer_rc: Rc<RefCell<Option<WebGpuRenderer>>> = Rc::new(RefCell::new(None));
@@ -733,8 +729,15 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
             let window_value: Window = window().expect("no global window exists");
             window_value.clear_timeout_with_handle(timer_id);
         }
-        cell_for_cleanup.borrow_mut().take();
-        *renderer_for_cleanup.borrow_mut() = None;
+        let _: Option<_> = cell_for_cleanup.try_take();
+        // Release GPU resources before dropping the renderer so the
+        // device and swap chain are freed eagerly. Without this the
+        // old GPU device can linger until GC, causing a fresh
+        // WebGpuRenderer::init() either to reuse the dead device
+        // (silent black canvas) or to fail to acquire a new one.
+        if let Some(renderer) = renderer_for_cleanup.borrow_mut().take() {
+            renderer.dispose();
+        }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
     spawn_local(async move {
@@ -752,6 +755,7 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
             Ok(value) => value,
             Err(error) => {
                 Console::error(format!("[euv-engine][game_2d] webgpu init failed: {error}"));
+                init_state.get_init_error_code().set(error.code());
                 init_state.get_loaded().set(true);
                 return;
             }
@@ -772,7 +776,11 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
         let frame_clone: Rc<Cell<u32>> = frame_count.clone();
         let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
         let resize_dirty_for_loop: Rc<Cell<bool>> = resize_dirty.clone();
+        let cancelled_for_loop: Rc<Cell<bool>> = cancelled.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            if cancelled_for_loop.get() {
+                return;
+            }
             let window_value: Window = window().expect("no global window exists");
             let performance: Performance = window_value
                 .performance()
@@ -785,24 +793,50 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
-            if resize_dirty_for_loop.get() {
+            // The resize-debounce path only clears the flag and computes
+            // the new dimensions. The actual `renderer.resize(...)` call
+            // is folded into the render block below so we hold
+            // `renderer_for_loop.borrow_mut()` exactly once per frame.
+            // Otherwise we previously panicked with `RefCell already
+            // borrowed` when both blocks tried to borrow the same cell.
+            let resize_dirty: bool = if resize_dirty_for_loop.get() {
                 resize_dirty_for_loop.set(false);
-                let window_for_dpr: Window = window().expect("no global window exists");
-                let dpr: f64 = Reflect::get(
-                    window_for_dpr.as_ref(),
-                    &JsValue::from_str("devicePixelRatio"),
-                )
-                .ok()
-                .and_then(|value: JsValue| value.as_f64())
-                .filter(|value: &f64| value.is_finite() && *value >= 1.0)
-                .unwrap_or(1.0);
-                let new_physical_width: u32 = (GAME_2D_CANVAS_WIDTH * dpr).round() as u32;
-                let new_physical_height: u32 = (GAME_2D_CANVAS_HEIGHT * dpr).round() as u32;
-                if let Some(renderer) = renderer_for_loop.borrow_mut().as_mut() {
+                true
+            } else {
+                false
+            };
+            let window_for_dpr: Window = window().expect("no global window exists");
+            let dpr: f64 = Reflect::get(
+                window_for_dpr.as_ref(),
+                &JsValue::from_str("devicePixelRatio"),
+            )
+            .ok()
+            .and_then(|value: JsValue| value.as_f64())
+            .filter(|value: &f64| value.is_finite() && *value >= 1.0)
+            .unwrap_or(1.0);
+            let new_physical_width: u32 = (GAME_2D_CANVAS_WIDTH * dpr).round() as u32;
+            let new_physical_height: u32 = (GAME_2D_CANVAS_HEIGHT * dpr).round() as u32;
+            // Borrow the renderer exactly once for the entire frame. We
+            // use `borrow_mut().as_mut()` (NOT `borrow_mut().take()`) so
+            // we do not have to write back - the RefMut guard releases
+            // automatically when this block exits, avoiding a second
+            // `borrow_mut()` call that previously panicked with
+            // `RefCell already borrowed`.
+            if let Some(renderer) = renderer_for_loop.borrow_mut().as_mut() {
+                // Only re-size the backing store when the debounced
+                // resize event fired. We deliberately do NOT call
+                // sync_to_current_canvas() on every frame because
+                // `HTMLCanvasElement.clientWidth` in Chrome tracks
+                // `canvas.width` (the backing-store size), NOT the
+                // CSS layout box, so a sync loop would read its own
+                // writes and grow the texture exponentially each
+                // frame until WebGPU caps at maxTextureDimension2D
+                // and reports `Texture size exceeded`. The init-time
+                // backing store already accounts for `dpr`, so a
+                // non-resize frame needs no work here.
+                if resize_dirty {
                     let _ = renderer.resize(new_physical_width, new_physical_height);
                 }
-            }
-            if let Some(renderer) = renderer_for_loop.borrow().as_ref() {
                 let t: f64 = current_time;
                 let r: f64 = (t * 0.5).sin() * 0.3 + 0.1;
                 let g: f64 = (t * 0.3 + 2.0).sin() * 0.3 + 0.1;
@@ -820,22 +854,24 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
             let next_id: i32 = window_value
                 .request_animation_frame(
                     cell_clone
-                        .borrow()
-                        .as_ref()
+                        .try_get()
                         .expect("raf closure should exist")
                         .as_ref()
                         .unchecked_ref(),
                 )
                 .unwrap_or(0);
-            raf_clone.set(Some(next_id));
+            if cancelled_for_loop.get() {
+                raf_clone.set(None);
+            } else {
+                raf_clone.set(Some(next_id));
+            }
         }));
-        *closure_cell.borrow_mut() = Some(raf_closure);
+        let _: Result<(), _> = closure_cell.try_set(raf_closure);
         let start_window: Window = window().expect("no global window exists");
         let start_id: i32 = start_window
             .request_animation_frame(
                 closure_cell
-                    .borrow()
-                    .as_ref()
+                    .try_get()
                     .expect("raf closure should exist")
                     .as_ref()
                     .unchecked_ref(),

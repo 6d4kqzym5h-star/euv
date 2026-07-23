@@ -60,7 +60,7 @@ impl Entity {
     ///
     /// - `ComponentRc` - The component to add.
     pub fn add_component(&mut self, component: ComponentRc) {
-        component.borrow_mut().on_start();
+        component.get_mut().on_start();
         self.get_mut_components().push(component);
     }
 
@@ -81,10 +81,10 @@ impl Entity {
         let position: Option<usize> = self
             .get_components()
             .iter()
-            .position(|component: &ComponentRc| component.borrow().name() == target);
+            .position(|component: &ComponentRc| component.get().name() == target);
         let index: usize = position?;
         let removed: ComponentRc = self.get_mut_components().remove(index);
-        removed.borrow_mut().on_destroy();
+        removed.get_mut().on_destroy();
         Some(removed)
     }
 
@@ -104,7 +104,7 @@ impl Entity {
         let target: &str = name.as_ref();
         self.get_components()
             .iter()
-            .find(|component: &&ComponentRc| component.borrow().name() == target)
+            .find(|component: &&ComponentRc| component.get().name() == target)
             .cloned()
     }
 
@@ -118,7 +118,7 @@ impl Entity {
             return;
         }
         for component in self.get_components() {
-            component.borrow_mut().on_update(delta_time);
+            component.get_mut().on_update(delta_time);
         }
     }
 
@@ -133,14 +133,14 @@ impl Entity {
         }
         let transform: Transform2D = self.get_transform();
         for component in self.get_components() {
-            component.borrow_mut().on_render(draw_list, &transform);
+            component.get_mut().on_render(draw_list, &transform);
         }
     }
 
     /// Calls `on_destroy` on all components and clears the component list.
     pub fn destroy(&mut self) {
         for component in self.get_components() {
-            component.borrow_mut().on_destroy();
+            component.get_mut().on_destroy();
         }
         self.get_mut_components().clear();
     }

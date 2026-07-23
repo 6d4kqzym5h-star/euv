@@ -172,12 +172,12 @@ impl CanvasRenderer {
             RenderQuality::Medium => RENDERER_IMAGE_SMOOTHING_QUALITY_MEDIUM,
             RenderQuality::High => RENDERER_IMAGE_SMOOTHING_QUALITY_HIGH,
         };
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             context,
             &JsValue::from_str(RENDERER_PROPERTY_IMAGE_SMOOTHING_QUALITY),
             &JsValue::from_str(quality_value),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             context,
             &JsValue::from_str(RENDERER_PROPERTY_TEXT_RENDERING),
             &JsValue::from_str(RENDERER_TEXT_RENDERING_GEOMETRIC_PRECISION),
@@ -221,7 +221,7 @@ fn draw_sprite_immediate(
     let sin: f64 = rotation.sin();
     let scale_x: f64 = transform.get_scale().get_x();
     let scale_y: f64 = transform.get_scale().get_y();
-    let _ = context.set_transform(
+    let _: Result<(), JsValue> = context.set_transform(
         cos * scale_x,
         sin * scale_x,
         -sin * scale_y,
@@ -229,18 +229,19 @@ fn draw_sprite_immediate(
         transform.get_position().get_x(),
         transform.get_position().get_y(),
     );
-    let _ = context.draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
-        image,
-        source.get_x(),
-        source.get_y(),
-        source.get_width(),
-        source.get_height(),
-        -source.get_width() * 0.5,
-        -source.get_height() * 0.5,
-        source.get_width(),
-        source.get_height(),
-    );
-    let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+    let _: Result<(), JsValue> = context
+        .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
+            image,
+            source.get_x(),
+            source.get_y(),
+            source.get_width(),
+            source.get_height(),
+            -source.get_width() * 0.5,
+            -source.get_height() * 0.5,
+            source.get_width(),
+            source.get_height(),
+        );
+    let _: Result<(), JsValue> = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 }
 
 /// Implements drawing and camera management methods for `CanvasRenderer`.
@@ -555,7 +556,8 @@ impl CanvasRenderer {
                 DrawCommand::FillCircle { center, radius, .. }
                 | DrawCommand::StrokeCircle { center, radius, .. } => {
                     context.move_to(center.get_x() + radius, center.get_y());
-                    let _ = context.arc(center.get_x(), center.get_y(), *radius, 0.0, TWO_PI);
+                    let _: Result<(), JsValue> =
+                        context.arc(center.get_x(), center.get_y(), *radius, 0.0, TWO_PI);
                 }
                 DrawCommand::Line { start, end, .. } => {
                     context.move_to(start.get_x(), start.get_y());
@@ -617,7 +619,8 @@ impl CanvasRenderer {
                         current_fill = Some(*color);
                     }
                     context.set_font(font);
-                    let _ = context.fill_text(text, position.get_x(), position.get_y());
+                    let _: Result<(), JsValue> =
+                        context.fill_text(text, position.get_x(), position.get_y());
                 }
                 DrawCommand::DrawSprite {
                     image,
@@ -633,7 +636,7 @@ impl CanvasRenderer {
                     dest_width,
                     dest_height,
                 } => {
-                    let _ = context
+                    let _: Result<(), JsValue> = context
                         .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
                             image,
                             source.get_x(),
@@ -650,7 +653,8 @@ impl CanvasRenderer {
                     context.set_global_alpha(Numeric::clamp(*alpha, 0.0, 1.0));
                 }
                 DrawCommand::SetBlendMode { mode } => {
-                    let _ = context.set_global_composite_operation(mode.to_css());
+                    let _: Result<(), JsValue> =
+                        context.set_global_composite_operation(mode.to_css());
                 }
                 _ => {}
             }
@@ -663,7 +667,7 @@ impl CanvasRenderer {
                 context.stroke();
             }
         }
-        let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let _: Result<(), JsValue> = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
         context.set_global_alpha(1.0);
     }
 
@@ -673,15 +677,15 @@ impl CanvasRenderer {
     /// then offsets by the negative camera position.
     pub fn apply_camera(&self) {
         let camera: Camera2D = self.get_camera();
-        let _ = self.get_context().translate(
+        let _: Result<(), JsValue> = self.get_context().translate(
             camera.get_viewport_width() * 0.5,
             camera.get_viewport_height() * 0.5,
         );
-        let _ = self
+        let _: Result<(), JsValue> = self
             .get_context()
             .scale(camera.get_zoom(), camera.get_zoom());
-        let _ = self.get_context().rotate(camera.get_rotation());
-        let _ = self.get_context().translate(
+        let _: Result<(), JsValue> = self.get_context().rotate(camera.get_rotation());
+        let _: Result<(), JsValue> = self.get_context().translate(
             -camera.get_position().get_x(),
             -camera.get_position().get_y(),
         );
@@ -837,7 +841,7 @@ impl CanvasRenderer {
         width: f64,
         height: f64,
     ) {
-        let _ = self
+        let _: Result<(), JsValue> = self
             .get_context()
             .draw_image_with_html_image_element_and_dw_and_dh(
                 image,
@@ -865,7 +869,7 @@ impl CanvasRenderer {
         dest_width: f64,
         dest_height: f64,
     ) {
-        let _ = self
+        let _: Result<(), JsValue> = self
             .get_context()
             .draw_image_with_html_image_element_and_sw_and_sh_and_dx_and_dy_and_dw_and_dh(
                 image,
@@ -1132,7 +1136,7 @@ impl SsaaCanvas {
             .ok()
             .flatten()?;
         let display_context: CanvasRenderingContext2d = display_context_object.unchecked_into();
-        let _ = display_context.scale(device_pixel_ratio, device_pixel_ratio);
+        let _: Result<(), JsValue> = display_context.scale(device_pixel_ratio, device_pixel_ratio);
         let offscreen_canvas: HtmlCanvasElement = document_value
             .create_element(RENDERER_ELEMENT_CANVAS)
             .ok()?
@@ -1146,7 +1150,7 @@ impl SsaaCanvas {
             .ok()
             .flatten()?;
         let offscreen_context: CanvasRenderingContext2d = offscreen_context_object.unchecked_into();
-        let _ = offscreen_context.scale(
+        let _: Result<(), JsValue> = offscreen_context.scale(
             scale_factor * device_pixel_ratio,
             scale_factor * device_pixel_ratio,
         );
@@ -1173,7 +1177,7 @@ impl SsaaCanvas {
         CanvasRenderer::apply_quality(self.get_display_context(), self.get_quality());
         self.get_display_context()
             .clear_rect(0.0, 0.0, self.get_width(), self.get_height());
-        let _ = self
+        let _: Result<(), JsValue> = self
             .get_display_context()
             .draw_image_with_html_canvas_element_and_dw_and_dh(
                 self.get_offscreen_canvas(),
@@ -1280,7 +1284,7 @@ impl LinearGradient {
             self.get_end().get_y(),
         );
         for (position, color) in self.get_stops() {
-            let _ = canvas_gradient.add_color_stop(*position as f32, color);
+            let _: Result<(), JsValue> = canvas_gradient.add_color_stop(*position as f32, color);
         }
         Some(canvas_gradient)
     }
@@ -1338,7 +1342,7 @@ impl RadialGradient {
             )
             .ok()?;
         for (position, color) in self.get_stops() {
-            let _ = canvas_gradient.add_color_stop(*position as f32, color);
+            let _: Result<(), JsValue> = canvas_gradient.add_color_stop(*position as f32, color);
         }
         Some(canvas_gradient)
     }
@@ -1420,7 +1424,7 @@ impl CanvasRenderer {
     ///
     /// - `BlendMode` - The blend mode to apply.
     pub fn set_blend_mode(&self, mode: BlendMode) {
-        let _ = self
+        let _: Result<(), JsValue> = self
             .get_context()
             .set_global_composite_operation(mode.to_css());
     }
@@ -1616,6 +1620,100 @@ impl RenderBackend for CanvasRenderer {
 
 /// Implements async initialization and GPU resource creation for `WebGpuRenderer`.
 impl WebGpuRenderer {
+    /// Returns `true` if `navigator.gpu` is exposed on the current origin.
+    ///
+    /// This is the synchronous half of the canonical WebGPU capability
+    /// probe used by Three.js (`examples/jsm/capabilities/WebGPU.js`): it
+    /// only checks that the browser surfaces the `GPU` interface at all.
+    /// It does **not** request an adapter — a present `navigator.gpu`
+    /// does not guarantee that a usable GPU adapter is reachable (Linux
+    /// software-rendered sessions, headless browsers, GPU-blacklisted
+    /// devices and sandboxed iframes all expose `navigator.gpu` while
+    /// `requestAdapter()` resolves to `null` or hangs forever).
+    ///
+    /// Use this as the cheapest pre-flight check before showing a
+    /// "needs HTTPS or localhost" prompt. For a definitive answer use
+    /// [`Self::probe`] which also awaits `requestAdapter()`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `navigator.gpu` is a non-null, non-undefined
+    ///   object; `false` otherwise (including the "no `window`" runtime
+    ///   case, which `web_sys::window()` returns `None` for).
+    pub fn is_available() -> bool {
+        let window_value: Window = match window() {
+            Some(value) => value,
+            None => return false,
+        };
+        let navigator: Navigator = window_value.navigator();
+        let gpu_result: Result<JsValue, JsValue> = Reflect::get(
+            navigator.as_ref(),
+            &JsValue::from_str(WEBGPU_NAVIGATOR_GPU_KEY),
+        );
+        match gpu_result {
+            Ok(value) => !value.is_undefined() && !value.is_null(),
+            Err(_) => false,
+        }
+    }
+
+    /// Probes whether a WebGPU adapter can actually be acquired.
+    ///
+    /// Mirrors Three.js' canonical capability probe exactly:
+    /// ```text
+    /// isAvailable = (navigator.gpu !== undefined)
+    /// if (isAvailable) {
+    ///     isAvailable = Boolean(await navigator.gpu.requestAdapter())
+    /// }
+    /// ```
+    ///
+    /// Wraps the adapter request in the same `Promise.race` timeout used
+    /// by [`Self::init`] so that browsers which leave the adapter promise
+    /// permanently pending (headless, sandboxed, device-lost) do not stall
+    /// the UI forever. The timeout itself uses
+    /// [`INIT_PROMISE_TIMEOUT_MILLIS`]; on timeout, `probe` returns
+    /// `false` rather than an error so callers can treat it the same as
+    /// "no adapter".
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` only when both `navigator.gpu` is present and
+    ///   `requestAdapter()` resolves to a non-null adapter within the
+    ///   timeout window. `false` covers every other case (no `window`,
+    ///   missing `navigator.gpu`, reflect exception, adapter promise
+    ///   rejected or timed out, adapter resolved to `null`/`undefined`).
+    pub async fn probe() -> bool {
+        if !Self::is_available() {
+            return false;
+        }
+        let window_value: Window = match window() {
+            Some(value) => value,
+            None => return false,
+        };
+        let navigator: Navigator = window_value.navigator();
+        let gpu: JsValue = match Reflect::get(
+            navigator.as_ref(),
+            &JsValue::from_str(WEBGPU_NAVIGATOR_GPU_KEY),
+        ) {
+            Ok(value) => value,
+            Err(_) => return false,
+        };
+        let request_adapter_fn: Function =
+            match Reflect::get(&gpu, &JsValue::from_str(WEBGPU_METHOD_REQUEST_ADAPTER)) {
+                Ok(value) => value.unchecked_into(),
+                Err(_) => return false,
+            };
+        let adapter_promise: Promise = match request_adapter_fn.call0(&gpu) {
+            Ok(value) => value.unchecked_into(),
+            Err(_) => return false,
+        };
+        let adapter_value: JsValue =
+            match JsFuture::from(Self::race_with_timeout(adapter_promise)).await {
+                Ok(value) => value,
+                Err(_) => return false,
+            };
+        !adapter_value.is_undefined() && !adapter_value.is_null()
+    }
+
     /// Asynchronously initializes a WebGPU renderer from the given render configuration.
     ///
     /// Requests a GPU adapter and device, obtains the WebGPU canvas context,
@@ -1647,15 +1745,16 @@ impl WebGpuRenderer {
         Promise::new(&mut |_resolve: Function, reject: Function| {
             let reject_fn: Function = reject.clone();
             let timer: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                let _ = reject_fn.call1(
+                let _: Result<JsValue, JsValue> = reject_fn.call1(
                     &JsValue::UNDEFINED,
                     &JsValue::from_str(RENDERER_TIMEOUT_ERROR_MESSAGE),
                 );
             }));
-            let _ = window_value.set_timeout_with_callback_and_timeout_and_arguments_0(
-                timer.as_ref().unchecked_ref(),
-                INIT_PROMISE_TIMEOUT_MILLIS,
-            );
+            let _: Result<i32, JsValue> = window_value
+                .set_timeout_with_callback_and_timeout_and_arguments_0(
+                    timer.as_ref().unchecked_ref(),
+                    INIT_PROMISE_TIMEOUT_MILLIS,
+                );
             timer.forget();
         })
     }
@@ -1695,8 +1794,10 @@ impl WebGpuRenderer {
     pub async fn init(config: &RenderConfig) -> Result<WebGpuRenderer, WebGpuInitError> {
         let window: Window = window().expect("no global window exists");
         let navigator: Navigator = window.navigator();
-        let gpu_result: Result<JsValue, JsValue> =
-            Reflect::get(navigator.as_ref(), &JsValue::from_str(WEBGPU_CONTEXT_TYPE));
+        let gpu_result: Result<JsValue, JsValue> = Reflect::get(
+            navigator.as_ref(),
+            &JsValue::from_str(WEBGPU_NAVIGATOR_GPU_KEY),
+        );
         let gpu: JsValue = match gpu_result {
             Ok(value) => value,
             Err(err) => return Err(WebGpuInitError::NavigatorLookup(err)),
@@ -1705,7 +1806,7 @@ impl WebGpuRenderer {
             return Err(WebGpuInitError::NavigatorGpuMissing);
         }
         let adapter_options: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &adapter_options,
             &JsValue::from_str(WEBGPU_PROPERTY_POWER_PREFERENCE),
             &JsValue::from_str(config.power_preference.to_web_sys_string()),
@@ -1787,12 +1888,12 @@ impl WebGpuRenderer {
         canvas.set_width(physical_width);
         canvas.set_height(physical_height);
         let canvas_config: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &canvas_config,
             &JsValue::from_str(WEBGPU_PROPERTY_DEVICE),
             &device_value,
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &canvas_config,
             &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
             &format_value,
@@ -1802,7 +1903,7 @@ impl WebGpuRenderer {
                 Ok(value) => value.unchecked_into(),
                 Err(err) => return Err(WebGpuInitError::ConfigureLookup(err)),
             };
-        let _ = configure_fn.call1(&context, &canvas_config);
+        let _: Result<JsValue, JsValue> = configure_fn.call1(&context, &canvas_config);
         let queue: JsValue =
             match Reflect::get(&device_value, &JsValue::from_str(WEBGPU_PROPERTY_QUEUE)) {
                 Ok(value) => value,
@@ -1855,12 +1956,12 @@ impl WebGpuRenderer {
         self.get_canvas().set_height(physical_height);
         let format_value: JsValue = JsValue::from_str(&self.get_format());
         let canvas_config: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &canvas_config,
             &JsValue::from_str(WEBGPU_PROPERTY_DEVICE),
             self.get_device(),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &canvas_config,
             &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
             &format_value,
@@ -1883,6 +1984,51 @@ impl WebGpuRenderer {
         true
     }
 
+    /// Resizes the canvas backing store to match the canvas element's
+    /// current CSS-rendered size in physical pixels (DPR applied).
+    ///
+    /// This is the right entry point when the render loop does not know
+    /// the desired logical size ahead of time and wants to follow the
+    /// element's actual layout box. It is also useful as a defensive
+    /// recovery when the canvas was created while hidden (zero-sized
+    /// parent) and is later shown at its real size.
+    ///
+    /// Reads `client_width` / `client_height` from the canvas element,
+    /// multiplies by `detect_dpr()`, and forwards to [`Self::resize`].
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if the resize succeeded, `false` if the canvas
+    ///   was zero-sized (nothing to render to), detached (CSS layout
+    ///   box collapses to 0), or the underlying resize rejected.
+    pub fn sync_to_current_canvas(&mut self) -> bool {
+        let canvas_width: u32 = self.get_canvas().width();
+        let canvas_height: u32 = self.get_canvas().height();
+        let client_width: u32 = self.get_canvas().client_width().try_into().unwrap_or(0);
+        let client_height: u32 = self.get_canvas().client_height().try_into().unwrap_or(0);
+        // Prefer the CSS layout box when it is non-zero. If the canvas
+        // is hidden the client box collapses to 0; in that case fall
+        // back to the current backing-store size so we do not
+        // gratuitously resize to 0.
+        let css_w: u32 = if client_width > 0 {
+            client_width
+        } else {
+            canvas_width
+        };
+        let css_h: u32 = if client_height > 0 {
+            client_height
+        } else {
+            canvas_height
+        };
+        if css_w == 0 || css_h == 0 {
+            return false;
+        }
+        let dpr: f64 = CanvasRenderer::detect_dpr();
+        let physical_width: u32 = (f64::from(css_w) * dpr).round() as u32;
+        let physical_height: u32 = (f64::from(css_h) * dpr).round() as u32;
+        self.resize(physical_width, physical_height)
+    }
+
     /// Creates a shader module from WGSL source code.
     ///
     /// # Arguments
@@ -1897,7 +2043,7 @@ impl WebGpuRenderer {
         S: AsRef<str>,
     {
         let descriptor: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_CODE),
             &JsValue::from_str(code.as_ref()),
@@ -1978,39 +2124,40 @@ impl WebGpuRenderer {
     ) -> JsValue {
         let view: JsValue = self.get_current_texture_view();
         let color_dict: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &color_dict,
             &JsValue::from_str(WEBGPU_PROPERTY_R),
             &JsValue::from_f64(clear_color.0),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &color_dict,
             &JsValue::from_str(WEBGPU_PROPERTY_G),
             &JsValue::from_f64(clear_color.1),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &color_dict,
             &JsValue::from_str(WEBGPU_PROPERTY_B),
             &JsValue::from_f64(clear_color.2),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &color_dict,
             &JsValue::from_str(WEBGPU_PROPERTY_A),
             &JsValue::from_f64(clear_color.3),
         );
         let attachment: Object = Object::new();
-        let _ = Reflect::set(&attachment, &JsValue::from_str(WEBGPU_PROPERTY_VIEW), &view);
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> =
+            Reflect::set(&attachment, &JsValue::from_str(WEBGPU_PROPERTY_VIEW), &view);
+        let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
             &JsValue::from_str(WEBGPU_PROPERTY_LOAD_OP),
             &JsValue::from_str(WEBGPU_LOAD_OP_CLEAR),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
             &JsValue::from_str(WEBGPU_PROPERTY_STORE_OP),
             &JsValue::from_str(WEBGPU_STORE_OP_STORE),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
             &JsValue::from_str(WEBGPU_PROPERTY_CLEAR_VALUE),
             &color_dict,
@@ -2018,7 +2165,7 @@ impl WebGpuRenderer {
         let color_attachments: Array = Array::new();
         color_attachments.push(&attachment);
         let descriptor: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_COLOR_ATTACHMENTS),
             &color_attachments,
@@ -2046,7 +2193,7 @@ impl WebGpuRenderer {
             Reflect::get(self.get_queue(), &JsValue::from_str(WEBGPU_METHOD_SUBMIT))
                 .unwrap_or(JsValue::UNDEFINED)
                 .unchecked_into();
-        let _ = submit_fn.call1(self.get_queue(), &array);
+        let _: Result<JsValue, JsValue> = submit_fn.call1(self.get_queue(), &array);
     }
 
     /// Creates a simple render pipeline from a single WGSL shader source.
@@ -2070,23 +2217,23 @@ impl WebGpuRenderer {
     {
         let module: JsValue = self.create_shader_module(shader_code);
         let vertex_state: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &vertex_state,
             &JsValue::from_str(WEBGPU_PROPERTY_MODULE),
             &module,
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &vertex_state,
             &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
             &JsValue::from_str(WEBGPU_VERTEX_ENTRY_POINT),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &vertex_state,
             &JsValue::from_str(WEBGPU_PROPERTY_BUFFERS),
             &Array::new(),
         );
         let target: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &target,
             &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
             &JsValue::from_str(&self.get_format()),
@@ -2094,44 +2241,44 @@ impl WebGpuRenderer {
         let targets: Array = Array::new();
         targets.push(&target);
         let fragment_state: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &fragment_state,
             &JsValue::from_str(WEBGPU_PROPERTY_MODULE),
             &module,
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &fragment_state,
             &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
             &JsValue::from_str(WEBGPU_FRAGMENT_ENTRY_POINT),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &fragment_state,
             &JsValue::from_str(WEBGPU_PROPERTY_TARGETS),
             &targets,
         );
         let primitive: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &primitive,
             &JsValue::from_str(WEBGPU_PROPERTY_TOPOLOGY),
             &JsValue::from_str(WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
         );
         let descriptor: Object = Object::new();
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_LAYOUT),
-            &JsValue::null(),
+            &JsValue::from_str(WEBGPU_AUTO_LAYOUT),
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_VERTEX),
             &vertex_state,
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_FRAGMENT),
             &fragment_state,
         );
-        let _ = Reflect::set(
+        let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_PRIMITIVE),
             &primitive,
@@ -2157,7 +2304,7 @@ impl WebGpuRenderer {
         let set_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_PIPELINE))
             .unwrap_or(JsValue::UNDEFINED)
             .unchecked_into();
-        let _ = set_fn.call1(pass, pipeline);
+        let _: Result<JsValue, JsValue> = set_fn.call1(pass, pipeline);
     }
 
     /// Draws primitives on a render pass encoder.
@@ -2171,7 +2318,7 @@ impl WebGpuRenderer {
         let draw_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_DRAW))
             .unwrap_or(JsValue::UNDEFINED)
             .unchecked_into();
-        let _ = draw_fn.call2(
+        let _: Result<JsValue, JsValue> = draw_fn.call2(
             pass,
             &JsValue::from_f64(f64::from(vertex_count)),
             &JsValue::from_f64(f64::from(instance_count)),
@@ -2187,7 +2334,7 @@ impl WebGpuRenderer {
         let end_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_END))
             .unwrap_or(JsValue::UNDEFINED)
             .unchecked_into();
-        let _ = end_fn.call0(pass);
+        let _: Result<JsValue, JsValue> = end_fn.call0(pass);
     }
 
     /// Finishes a command encoder and returns the resulting command buffer.
@@ -2231,6 +2378,39 @@ impl WebGpuRenderer {
         self.end_render_pass(&pass);
         let command_buffer: JsValue = self.finish_command_encoder(&encoder);
         self.submit(&[command_buffer]);
+    }
+
+    /// Releases all GPU resources held by this renderer.
+    ///
+    /// The teardown order matters per the WebGPU spec:
+    ///   1. `GpuCanvasContext.unconfigure()` - releases the swap chain so
+    ///      the DOM canvas can be GCed.
+    ///   2. `GpuDevice.destroy()` - releases all child resources (buffers,
+    ///      textures, pipelines) and the device itself.
+    ///
+    /// Callers should run this from a `use_cleanup` callback whenever the
+    /// host component is being torn down (e.g. on a `match` arm switch).
+    /// Without it the previous GPU device lingers until GC, and a fresh
+    /// `init()` may either reuse the dead device (silent black canvas) or
+    /// fail to acquire a new one until the old device is collected.
+    ///
+    /// `Reflect::get` failures and JS exceptions are swallowed - this is a
+    /// best-effort cleanup path, and the engine must not panic during
+    /// teardown.
+    pub fn dispose(&self) {
+        let context: &JsValue = self.get_context();
+        if let Ok(unconfigure_fn) =
+            Reflect::get(context, &JsValue::from_str(WEBGPU_METHOD_UNCONFIGURE))
+            && let Ok(unconfigure_callable) = unconfigure_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = unconfigure_callable.call0(context);
+        }
+        let device: &JsValue = self.get_device();
+        if let Ok(destroy_fn) = Reflect::get(device, &JsValue::from_str(WEBGPU_METHOD_DESTROY))
+            && let Ok(destroy_callable) = destroy_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = destroy_callable.call0(device);
+        }
     }
 }
 

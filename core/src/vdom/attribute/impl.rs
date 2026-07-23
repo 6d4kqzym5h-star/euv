@@ -607,14 +607,14 @@ impl Css {
                     };
                 style_element_from_id.set_id(style_id);
                 if let Some(head) = document.head() {
-                    let _ = head.append_child(&style_element_from_id);
+                    let _: Result<Node, JsValue> = head.append_child(&style_element_from_id);
                 }
                 style_element_from_id
             }
         };
         if !css_text.is_empty() {
             let text_node: Text = document.create_text_node(css_text);
-            let _ = style_element.append_child(&text_node);
+            let _: Result<Node, JsValue> = style_element.append_child(&text_node);
         }
     }
 

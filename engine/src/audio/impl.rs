@@ -12,7 +12,8 @@ impl GameAudioContext {
         let master_gain: GainNode = context
             .create_gain()
             .expect("should create master gain node");
-        let _ = master_gain.connect_with_audio_node(&context.destination());
+        let _: Result<AudioNode, JsValue> =
+            master_gain.connect_with_audio_node(&context.destination());
         master_gain.gain().set_value(AUDIO_DEFAULT_VOLUME as f32);
         GameAudioContext::new(context, master_gain, AUDIO_DEFAULT_VOLUME)
     }
@@ -29,17 +30,17 @@ impl GameAudioContext {
 
     /// Resumes the audio context if it was suspended.
     pub fn resume(&self) {
-        let _ = self.get_context().resume();
+        let _: Result<Promise, JsValue> = self.get_context().resume();
     }
 
     /// Suspends the audio context, temporarily halting all audio processing.
     pub fn suspend(&self) {
-        let _ = self.get_context().suspend();
+        let _: Result<Promise, JsValue> = self.get_context().suspend();
     }
 
     /// Closes the audio context and releases all resources.
     pub fn close(&self) {
-        let _ = self.get_context().close();
+        let _: Result<Promise, JsValue> = self.get_context().close();
     }
 
     /// Returns the current sample rate of the audio context in Hz.
@@ -117,9 +118,10 @@ impl AudioClip {
             .create_gain()
             .expect("should create gain node");
         gain.gain().set_value(self.get_volume() as f32);
-        let _ = source.connect_with_audio_node(&gain);
-        let _ = gain.connect_with_audio_node(audio_context.get_master_gain());
-        let _ = source.start();
+        let _: Result<AudioNode, JsValue> = source.connect_with_audio_node(&gain);
+        let _: Result<AudioNode, JsValue> =
+            gain.connect_with_audio_node(audio_context.get_master_gain());
+        let _: Result<(), JsValue> = source.start();
         self.set_source_node(Some(source));
         self.set_state(AudioPlayState::Playing);
     }
@@ -128,8 +130,8 @@ impl AudioClip {
     pub fn stop(&mut self) {
         if let Some(source) = self.get_mut_source_node().take() {
             let scheduled: &AudioScheduledSourceNode = source.as_ref();
-            let _ = scheduled.stop_with_when(0.0);
-            let _ = source.disconnect();
+            let _: Result<(), JsValue> = scheduled.stop_with_when(0.0);
+            let _: Result<(), JsValue> = source.disconnect();
         }
         self.set_state(AudioPlayState::Stopped);
     }

@@ -54,12 +54,17 @@ pub(crate) struct SchedulerState {
 /// A handle to a running scheduler, allowing the caller to stop it later.
 #[derive(Clone, Data, New)]
 pub struct SchedulerHandle {
-    /// The shared scheduler state.
+    /// The shared scheduler state, held behind `EngineCell` (an
+    /// `UnsafeCell`-backed `Sync` newtype) so multiple closure
+    /// captures can mutate it without `RefCell`'s runtime borrow
+    /// check. Mirrors `core::reactive::schedule` shape.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) state: Rc<RefCell<SchedulerState>>,
-    /// The shared closure cell keeping the RAF callback alive.
+    pub(crate) state: Rc<EngineCell<SchedulerState>>,
+    /// The shared closure cell keeping the RAF callback alive. Held
+    /// behind `MaybeEngineCell` because the cell is empty both
+    /// before `spawn` runs and after cleanup tears the closure down.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]

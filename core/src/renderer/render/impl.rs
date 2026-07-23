@@ -44,7 +44,7 @@ impl<T> Drop for OwnedPtr<T> {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe {
-                let _ = Box::from_raw(self.ptr);
+                let _: Box<T> = Box::from_raw(self.ptr);
             }
         }
     }
@@ -73,10 +73,10 @@ impl Renderer {
                 if let Some(element) = child.dyn_ref::<Element>() {
                     Self::cleanup_subtree(element);
                 }
-                let _ = self.get_root().remove_child(&child);
+                let _: Result<Node, JsValue> = self.get_root().remove_child(&child);
             }
             let dom_node: Node = self.create_dom_node(&new_unwrapped);
-            let _ = self.get_root().append_child(&dom_node);
+            let _: Result<Node, JsValue> = self.get_root().append_child(&dom_node);
         }
         self.set_current_tree(Some(new_unwrapped));
     }
@@ -95,10 +95,10 @@ impl Renderer {
             if let Some(element) = child.dyn_ref::<Element>() {
                 Self::cleanup_subtree(element);
             }
-            let _ = self.get_root().remove_child(&child);
+            let _: Result<Node, JsValue> = self.get_root().remove_child(&child);
         }
         let dom_node: Node = self.create_dom_node(&new_unwrapped);
-        let _ = self.get_root().append_child(&dom_node);
+        let _: Result<Node, JsValue> = self.get_root().append_child(&dom_node);
         self.set_current_tree(Some(new_unwrapped));
     }
 
@@ -126,10 +126,10 @@ impl Renderer {
                 Self::cleanup_subtree(element);
             }
             let new_dom_node: Node = self.create_dom_node(new_node);
-            let _ = self.get_root().replace_child(&new_dom_node, &dom_child);
+            let _: Result<Node, JsValue> = self.get_root().replace_child(&new_dom_node, &dom_child);
         } else {
             let new_dom_node: Node = self.create_dom_node(new_node);
-            let _ = self.get_root().append_child(&new_dom_node);
+            let _: Result<Node, JsValue> = self.get_root().append_child(&new_dom_node);
         }
     }
 
@@ -172,7 +172,8 @@ impl Renderer {
                     let new_dom_node: Node = self.create_dom_node(new_node);
                     if let Some(parent) = dom_element.parent_node() {
                         Self::cleanup_subtree(dom_element);
-                        let _ = parent.replace_child(&new_dom_node, dom_element);
+                        let _: Result<Node, JsValue> =
+                            parent.replace_child(&new_dom_node, dom_element);
                     }
                     return;
                 }
@@ -187,21 +188,21 @@ impl Renderer {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     Self::cleanup_subtree(dom_element);
-                    let _ = parent.replace_child(&new_dom_node, dom_element);
+                    let _: Result<Node, JsValue> = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             (_, VirtualNode::Dynamic(_)) => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     Self::cleanup_subtree(dom_element);
-                    let _ = parent.replace_child(&new_dom_node, dom_element);
+                    let _: Result<Node, JsValue> = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
             _ => {
                 let new_dom_node: Node = self.create_dom_node(new_node);
                 if let Some(parent) = dom_element.parent_node() {
                     Self::cleanup_subtree(dom_element);
-                    let _ = parent.replace_child(&new_dom_node, dom_element);
+                    let _: Result<Node, JsValue> = parent.replace_child(&new_dom_node, dom_element);
                 }
             }
         }
@@ -241,12 +242,12 @@ impl Renderer {
                     {
                         let event_name: &str = handler.get_event_name();
                         let listener: &Function = listener_function.unchecked_ref::<Function>();
-                        let _ = listener_element
+                        let _: Result<(), JsValue> = listener_element
                             .remove_event_listener_with_callback(event_name, listener);
                     }
                     slot.set_handler(None);
                     unsafe {
-                        let _ = Box::from_raw(entry);
+                        let _: Box<HandlerSlot> = Box::from_raw(entry);
                     }
                 }
                 element.remove_attribute_or_property(old_attr.get_name());
@@ -416,7 +417,7 @@ impl Renderer {
                     if let Some(element) = dom_node.dyn_ref::<Element>() {
                         Self::cleanup_subtree(element);
                     }
-                    let _ = parent.remove_child(&dom_node);
+                    let _: Result<Node, JsValue> = parent.remove_child(&dom_node);
                 }
             } else {
                 let dom_index: u32 = index as u32;
@@ -426,7 +427,7 @@ impl Renderer {
                     if let Some(element) = dom_node.dyn_ref::<Element>() {
                         Self::cleanup_subtree(element);
                     }
-                    let _ = parent.remove_child(&dom_node);
+                    let _: Result<Node, JsValue> = parent.remove_child(&dom_node);
                 }
             }
         }
@@ -442,17 +443,19 @@ impl Renderer {
                 }
                 if current_at_target.as_ref() != Some(&dom_node) {
                     if let Some(reference_node) = current_at_target {
-                        let _ = parent.insert_before(&dom_node, Some(&reference_node));
+                        let _: Result<Node, JsValue> =
+                            parent.insert_before(&dom_node, Some(&reference_node));
                     } else {
-                        let _ = parent.append_child(&dom_node);
+                        let _: Result<Node, JsValue> = parent.append_child(&dom_node);
                     }
                 }
             } else {
                 let new_dom_node: Node = self.create_dom_node(new_child);
                 if let Some(reference_node) = current_at_target {
-                    let _ = parent.insert_before(&new_dom_node, Some(&reference_node));
+                    let _: Result<Node, JsValue> =
+                        parent.insert_before(&new_dom_node, Some(&reference_node));
                 } else {
-                    let _ = parent.append_child(&new_dom_node);
+                    let _: Result<Node, JsValue> = parent.append_child(&new_dom_node);
                 }
             }
         }
@@ -495,7 +498,8 @@ impl Renderer {
                         if let Some(child_element) = dom_child.dyn_ref::<Element>() {
                             Self::cleanup_subtree(child_element);
                         }
-                        let _ = parent_node.replace_child(&new_dom_node, &dom_child);
+                        let _: Result<Node, JsValue> =
+                            parent_node.replace_child(&new_dom_node, &dom_child);
                     }
                 }
             }
@@ -503,7 +507,7 @@ impl Renderer {
         if new_len > old_len {
             for new_child in new_children.iter().skip(common_len) {
                 let new_dom_node: Node = self.create_dom_node(new_child);
-                let _ = parent.append_child(&new_dom_node);
+                let _: Result<Node, JsValue> = parent.append_child(&new_dom_node);
             }
         } else if old_len > new_len {
             for _ in common_len..old_len {
@@ -513,7 +517,7 @@ impl Renderer {
                     Self::cleanup_subtree(element);
                 }
                 if let Some(last_child) = parent.last_child() {
-                    let _ = parent.remove_child(&last_child);
+                    let _: Result<Node, JsValue> = parent.remove_child(&last_child);
                 }
             }
         }
@@ -571,7 +575,7 @@ impl Renderer {
                 };
                 for child in children {
                     let child_node: Node = self.create_dom_with_doc(child, document);
-                    let _ = element.append_child(&child_node);
+                    let _: Result<Node, JsValue> = element.append_child(&child_node);
                 }
                 for attr in attributes {
                     match attr.get_value() {
@@ -634,10 +638,10 @@ impl Renderer {
                     Ok(created_element) => created_element,
                     Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
                 };
-                let _ = fragment.set_attribute(ATTR_STYLE, FRAGMENT_STYLE);
+                let _: Result<(), JsValue> = fragment.set_attribute(ATTR_STYLE, FRAGMENT_STYLE);
                 for child in children {
                     let child_node: Node = self.create_dom_with_doc(child, document);
-                    let _ = fragment.append_child(&child_node);
+                    let _: Result<Node, JsValue> = fragment.append_child(&child_node);
                 }
                 fragment.into()
             }
@@ -646,11 +650,12 @@ impl Renderer {
                     Ok(created_element) => created_element,
                     Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
                 };
-                let _ = placeholder.set_attribute(ATTR_STYLE, DISPLAY_CONTENTS_STYLE);
+                let _: Result<(), JsValue> =
+                    placeholder.set_attribute(ATTR_STYLE, DISPLAY_CONTENTS_STYLE);
                 let dynamic_id: usize = Self::assign_dynamic_id(&placeholder);
                 let initial_dom: Node =
                     self.setup_dynamic_node(dynamic_node, dynamic_id, &placeholder, true);
-                let _ = placeholder.append_child(&initial_dom);
+                let _: Result<Node, JsValue> = placeholder.append_child(&initial_dom);
                 placeholder.into()
             }
             VirtualNode::Empty => document.create_text_node(EMPTY_STRING).into(),
@@ -930,7 +935,8 @@ impl Renderer {
     /// - `usize` - The assigned dynamic ID.
     fn assign_dynamic_id(placeholder: &Element) -> usize {
         let dynamic_id: usize = NEXT_EUV_DYNAMIC_ID.fetch_add(1, Ordering::Relaxed);
-        let _ = placeholder.set_attribute(DATA_EUV_DYNAMIC_ID, &dynamic_id.to_string());
+        let _: Result<(), JsValue> =
+            placeholder.set_attribute(DATA_EUV_DYNAMIC_ID, &dynamic_id.to_string());
         dynamic_id
     }
 
@@ -987,12 +993,14 @@ impl Renderer {
                 .parse::<usize>()
                 .unwrap_or_else(|_error: ParseIntError| {
                     let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
-                    let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());
+                    let _: Result<(), JsValue> =
+                        element.set_attribute(DATA_EUV_ID, &new_id.to_string());
                     new_id
                 }),
             None => {
                 let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
-                let _ = element.set_attribute(DATA_EUV_ID, &new_id.to_string());
+                let _: Result<(), JsValue> =
+                    element.set_attribute(DATA_EUV_ID, &new_id.to_string());
                 new_id
             }
         };
@@ -1018,7 +1026,7 @@ impl Renderer {
                             }
                         }
                     }));
-                let _ = element
+                let _: Result<(), JsValue> = element
                     .add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref());
                 let listener_function: JsValue = closure.as_ref().clone();
                 closure.forget();

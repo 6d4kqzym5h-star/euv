@@ -166,24 +166,24 @@ impl UseEuvLayout {
             .create_element("div")
             .expect("should create div")
             .unchecked_into();
-        let _ = sentinel.style().set_property("position", "absolute");
-        let _ = sentinel.style().set_property("visibility", "hidden");
-        let _ = sentinel.style().set_property("pointer-events", "none");
-        let _ = sentinel
+        let _: Result<(), JsValue> = sentinel.style().set_property("position", "absolute");
+        let _: Result<(), JsValue> = sentinel.style().set_property("visibility", "hidden");
+        let _: Result<(), JsValue> = sentinel.style().set_property("pointer-events", "none");
+        let _: Result<(), JsValue> = sentinel
             .style()
             .set_property("padding-top", "env(safe-area-inset-top, 0px)");
-        let _ = sentinel
+        let _: Result<(), JsValue> = sentinel
             .style()
             .set_property("padding-right", "env(safe-area-inset-right, 0px)");
-        let _ = sentinel
+        let _: Result<(), JsValue> = sentinel
             .style()
             .set_property("padding-bottom", "env(safe-area-inset-bottom, 0px)");
-        let _ = sentinel
+        let _: Result<(), JsValue> = sentinel
             .style()
             .set_property("padding-left", "env(safe-area-inset-left, 0px)");
-        let _ = body.append_child(&sentinel);
+        let _: Result<Node, JsValue> = body.append_child(&sentinel);
         let Some(computed) = win.get_computed_style(&sentinel).ok().flatten() else {
-            let _ = body.remove_child(&sentinel);
+            let _: Result<Node, JsValue> = body.remove_child(&sentinel);
             return;
         };
         let top_value: String = computed
@@ -198,7 +198,7 @@ impl UseEuvLayout {
         let left_value: String = computed
             .get_property_value("padding-left")
             .unwrap_or_default();
-        let _ = body.remove_child(&sentinel);
+        let _: Result<Node, JsValue> = body.remove_child(&sentinel);
         if top_value.is_empty() || top_value == "0px" {
             return;
         }
@@ -239,16 +239,16 @@ impl UseEuvLayout {
             .document()
             .expect("should have a document");
         let apply_to = |element: &HtmlElement| {
-            let _ = element
+            let _: Result<(), JsValue> = element
                 .style()
                 .set_property("--safe-area-inset-top", &top_value);
-            let _ = element
+            let _: Result<(), JsValue> = element
                 .style()
                 .set_property("--safe-area-inset-right", &right_value);
-            let _ = element
+            let _: Result<(), JsValue> = element
                 .style()
                 .set_property("--safe-area-inset-bottom", &bottom_value);
-            let _ = element
+            let _: Result<(), JsValue> = element
                 .style()
                 .set_property("--safe-area-inset-left", &left_value);
         };

@@ -59,7 +59,7 @@ fn bind_observer(selector: &str) {
     }));
     let observer: IntersectionObserver =
         IntersectionObserver::new(callback.as_ref().unchecked_ref()).unwrap();
-    let _ = Reflect::set(&window_value, &observer_key, observer.as_ref());
+    let _: Result<bool, JsValue> = Reflect::set(&window_value, &observer_key, observer.as_ref());
     callback.forget();
     if let Some(container_element) = document_value.query_selector(selector).ok().flatten() {
         observer.observe(&container_element);
@@ -90,11 +90,11 @@ fn schedule_bind_observer(selector: String) {
     {
         return;
     }
-    let _ = Reflect::set(&window_value, &pending_key, &JsValue::TRUE);
+    let _: Result<bool, JsValue> = Reflect::set(&window_value, &pending_key, &JsValue::TRUE);
     let microtask_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let window_value: Window = window().expect("no global window exists");
         let key: JsValue = JsValue::from_str("__euv_observer_pending");
-        let _ = Reflect::set(&window_value, &key, &JsValue::UNDEFINED);
+        let _: Result<bool, JsValue> = Reflect::set(&window_value, &key, &JsValue::UNDEFINED);
         bind_observer(&selector);
     }));
     window_value.queue_microtask(microtask_closure.as_ref().unchecked_ref::<Function>());
@@ -126,7 +126,7 @@ pub(crate) fn use_intersection_observer(selector: &str) {
         .unwrap_or(JsValue::UNDEFINED)
         .is_undefined()
     {
-        let _ = Reflect::set(&window_value, &listener_key, &JsValue::TRUE);
+        let _: Result<bool, JsValue> = Reflect::set(&window_value, &listener_key, &JsValue::TRUE);
         schedule_bind_observer(init_selector);
     }
     App::use_cleanup(move || {
@@ -142,9 +142,12 @@ pub(crate) fn use_intersection_observer(selector: &str) {
         {
             observer.disconnect();
         }
-        let _ = Reflect::set(&window_value, &observer_key, &JsValue::UNDEFINED);
-        let _ = Reflect::set(&window_value, &listener_key, &JsValue::UNDEFINED);
+        let _: Result<bool, JsValue> =
+            Reflect::set(&window_value, &observer_key, &JsValue::UNDEFINED);
+        let _: Result<bool, JsValue> =
+            Reflect::set(&window_value, &listener_key, &JsValue::UNDEFINED);
         let pending_key: JsValue = JsValue::from_str("__euv_observer_pending");
-        let _ = Reflect::set(&window_value, &pending_key, &JsValue::UNDEFINED);
+        let _: Result<bool, JsValue> =
+            Reflect::set(&window_value, &pending_key, &JsValue::UNDEFINED);
     });
 }

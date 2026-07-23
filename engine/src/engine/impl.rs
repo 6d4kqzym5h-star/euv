@@ -48,7 +48,7 @@ impl Engine {
                 handle.init_canvas();
             }
             RenderBackendType::WebGpu => {
-                let _ = handle.init_webgpu().await;
+                let _: Result<WebGpuRenderer, WebGpuInitError> = handle.init_webgpu().await;
             }
         }
         handle.start(handler);
