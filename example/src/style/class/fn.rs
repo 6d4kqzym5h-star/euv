@@ -34,14 +34,6 @@ class! {
     pub c_game_canvas_wrapper(aspect_ratio: &str) {
         position: "relative";
         width: "100%";
-        // Defensive fallback for browsers that reject the `aspect-ratio`
-        // property (older WebKit, certain embedded engines). Without it
-        // the wrapper collapses to height: 0 and the canvas is not
-        // visible. The CSS values here are the largest demo canvas
-        // dimensions used on this page (800x600 logical px) so the
-        // canvas always has a non-zero layout box to render into.
-        min-width: "800px";
-        min-height: "600px";
         aspect-ratio: aspect_ratio;
     }
 
