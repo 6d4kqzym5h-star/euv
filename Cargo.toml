@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.12.27"
+version = "0.12.28"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -113,6 +113,8 @@ web-sys = { version = "0.3.103", features = [
     "MediaStream",
     "Performance",
     "SubmitEvent",
+    "WebGlBuffer",
+    "WebGlShader",
     "AudioContext",
     "DataTransfer",
     "GpuBindGroup",
@@ -121,6 +123,7 @@ web-sys = { version = "0.3.103", features = [
     "GpuQueryType",
     "MediaDevices",
     "MessageEvent",
+    "WebGlProgram",
     "gpu_map_mode",
     "AudioListener",
     "GpuBlendState",
@@ -216,6 +219,7 @@ web-sys = { version = "0.3.103", features = [
     "GpuTextureDescriptor",
     "GpuTextureSampleType",
     "IntersectionObserver",
+    "WebGlUniformLocation",
     "AudioBufferSourceNode",
     "GpuCompilationMessage",
     "GpuComputePassEncoder",
@@ -229,6 +233,8 @@ web-sys = { version = "0.3.103", features = [
     "GpuRenderBundleEncoder",
     "GpuTexelCopyBufferInfo",
     "MediaStreamConstraints",
+    "WebGl2RenderingContext",
+    "WebGlContextAttributes",
     "GpuBindGroupLayoutEntry",
     "GpuObjectDescriptorBase",
     "GpuRenderPassDescriptor",
