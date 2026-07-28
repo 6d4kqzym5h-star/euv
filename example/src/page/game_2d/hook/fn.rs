@@ -642,6 +642,7 @@ pub(crate) fn start_game_2d_loop(
 /// 2. loaded
 /// 3. active
 /// 4. loop_started
+/// 5. init_error_code
 pub(crate) fn use_game_2d_webgpu_state() -> UseGame2DWebGpu {
     UseGame2DWebGpu {
         fps: App::use_signal(|| 0.0),
@@ -649,7 +650,6 @@ pub(crate) fn use_game_2d_webgpu_state() -> UseGame2DWebGpu {
         active: App::use_signal(|| false),
         loop_started: App::use_signal(|| false),
         init_error_code: App::use_signal(|| ""),
-        pointer_text: App::use_signal(|| GAME_2D_POINTER_EMPTY_TEXT.to_string()),
     }
 }
 
@@ -661,7 +661,6 @@ pub(crate) fn use_game_2d_webgpu_state() -> UseGame2DWebGpu {
 /// 3. active
 /// 4. loop_started
 /// 5. init_error_code
-/// 6. pointer_text
 ///
 /// # Returns
 ///
@@ -673,36 +672,7 @@ pub(crate) fn use_game_2d_webgl_state() -> UseGame2DWebGl {
         active: App::use_signal(|| false),
         loop_started: App::use_signal(|| false),
         init_error_code: App::use_signal(|| ""),
-        pointer_text: App::use_signal(|| GAME_2D_POINTER_EMPTY_TEXT.to_string()),
     }
-}
-
-/// Attaches the engine's input event listeners to a canvas.
-///
-/// Builds a throwaway `EngineHandle` purely for its `register_input`
-/// wiring; the render config's backend is irrelevant to input handling,
-/// so a WebGL config is used as the neutral default. The returned cell is
-/// updated by DOM event listeners (`mousemove`, `mousedown`, touch ...)
-/// and is polled each frame from the render loop. Listeners are never
-/// detached (engine convention), so calling this twice on the same
-/// selector would double-report — each demo tab calls it exactly once.
-///
-/// # Arguments
-///
-/// - `&str` - The CSS selector of the canvas element to listen on.
-///
-/// # Returns
-///
-/// - `Option<InputStateCell>` - The shared input state cell, or `None` if
-///   the canvas element was not found in the DOM.
-pub(crate) fn attach_game_2d_input(canvas_selector: &str) -> Option<InputStateCell> {
-    let config: EngineConfig = EngineConfig::create(RenderConfig::webgl(
-        canvas_selector,
-        GAME_2D_CANVAS_WIDTH,
-        GAME_2D_CANVAS_HEIGHT,
-    ));
-    let mut handle: EngineHandle = Engine::new_handle(config);
-    handle.register_input()
 }
 
 /// Queries a canvas element by CSS selector.
@@ -724,69 +694,146 @@ pub(crate) fn game_2d_canvas_element(canvas_selector: &str) -> Option<HtmlCanvas
     Some(element.unchecked_into())
 }
 
-/// Polls the latest pointer position in client coordinates.
+/// Parses a `#rrggbb` CSS color string into 0.0-1.0 RGB floats.
 ///
-/// Mouse and touch are unified: an active primary touch wins over the
-/// mouse position (touch devices never fire `mousemove`). Until the
-/// pointer first enters the canvas the function returns `None` so the
-/// demo keeps the triangle centered and the readout empty; once seen,
-/// `has_pointer` latches and the last known position is kept even when
-/// the pointer leaves (matching how a cursor stays put).
+/// Ball colors come from the `GAME_2D_BALL_COLORS` palette, which is
+/// authored for CSS (`fillStyle`); the GPU shaders need plain floats.
+/// Malformed input falls back to white.
 ///
 /// # Arguments
 ///
-/// - `&InputStateCell` - The shared input state cell.
-/// - `&Rc<Cell<bool>>` - Latch set to `true` on the first pointer sighting.
+/// - `&str` - The CSS hex color string.
 ///
 /// # Returns
 ///
-/// - `Option<(f64, f64)>` - The client-space `(x, y)` position.
-pub(crate) fn game_2d_pointer_client_position(
-    input: &InputStateCell,
-    has_pointer: &Rc<Cell<bool>>,
-) -> Option<(f64, f64)> {
-    let state: &InputState = input.get();
-    if let Some(position) = state.primary_touch_position() {
-        has_pointer.set(true);
-        return Some((position.get_x(), position.get_y()));
-    }
-    if state.get_mouse_moved() {
-        has_pointer.set(true);
-    }
-    if !has_pointer.get() {
-        return None;
-    }
-    let position: Vector2D = state.get_mouse_position();
-    Some((position.get_x(), position.get_y()))
+/// - `(f32, f32, f32)` - The `(r, g, b)` channels in 0.0-1.0 range.
+pub(crate) fn game_2d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
+    let hex: &str = color.strip_prefix('#').unwrap_or(color);
+    let channel = |range: std::ops::Range<usize>| -> f32 {
+        hex.get(range)
+            .and_then(|part: &str| u8::from_str_radix(part, 16).ok())
+            .map(|value: u8| f32::from(value) / 255.0)
+            .unwrap_or(1.0)
+    };
+    (channel(0..2), channel(2..4), channel(4..6))
 }
 
-/// Maps a client-space pointer position to GPU clip space.
+/// Reads the computed CSS `background-color` of a canvas element.
 ///
-/// Clip space x runs -1 (left) to 1 (right) and y runs -1 (bottom) to 1
-/// (top), so the client y axis is flipped. Positions outside the canvas
-/// are NOT clamped: the triangle follows the pointer offscreen, which
-/// keeps the interaction continuous at the edges.
+/// The GPU canvases cannot be cleared to transparency (the WebGPU swap
+/// chain uses an opaque alpha mode by default), so the demo clears to
+/// the same `var!(accent)` background that shows through the
+/// transparent-cleared Canvas 2D tab. Re-reading the computed style
+/// also picks up theme toggles, which swap the accent color under the
+/// same canvas element.
 ///
 /// # Arguments
 ///
-/// - `&HtmlCanvasElement` - The canvas whose bounding rect defines the mapping.
-/// - `f64` - The client x coordinate.
-/// - `f64` - The client y coordinate.
+/// - `&str` - The CSS selector of the canvas element.
 ///
 /// # Returns
 ///
-/// - `(f32, f32)` - The clip-space `(x, y)` offset.
-pub(crate) fn game_2d_client_to_clip(
-    canvas: &HtmlCanvasElement,
-    client_x: f64,
-    client_y: f64,
-) -> (f32, f32) {
-    let rect: DomRect = canvas.get_bounding_client_rect();
-    let width: f64 = rect.width().max(1.0);
-    let height: f64 = rect.height().max(1.0);
-    let x: f32 = ((client_x - rect.left()) / width * 2.0 - 1.0) as f32;
-    let y: f32 = (1.0 - (client_y - rect.top()) / height * 2.0) as f32;
-    (x, y)
+/// - `(f64, f64, f64)` - The `(r, g, b)` clear color in 0.0-1.0 range.
+pub(crate) fn game_2d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f64) {
+    let window_value: Window = window().expect("no global window exists");
+    let background: String = window_value
+        .document()
+        .and_then(|document: Document| document.query_selector(canvas_selector).ok().flatten())
+        .and_then(|element: Element| window_value.get_computed_style(&element).ok().flatten())
+        .and_then(|style: CssStyleDeclaration| style.get_property_value("background-color").ok())
+        .unwrap_or_default();
+    // Computed colors serialize as `rgb(r, g, b)` or `rgba(r, g, b, a)`.
+    let Some(inner) = background
+        .split('(')
+        .nth(1)
+        .and_then(|value: &str| value.strip_suffix(')'))
+    else {
+        return (0.0, 0.0, 0.0);
+    };
+    let mut channels = inner
+        .split(',')
+        .filter_map(|part: &str| part.trim().parse::<f64>().ok());
+    let r: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let g: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let b: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    (r, g, b)
+}
+
+/// Converts one ball into its GPU record: `(x, y, radius, unused)` plus
+/// `(r, g, b, a)`, matching the `BallData` layout in the balls shaders.
+///
+/// # Arguments
+///
+/// - `&Ball` - The ball to convert.
+///
+/// # Returns
+///
+/// - `([f32; 4], [f32; 4])` - The `pos_radius` and `color` vec4s.
+fn game_2d_ball_gpu_record(ball: &Ball) -> ([f32; 4], [f32; 4]) {
+    let (r, g, b) = game_2d_hex_to_rgb(&ball.color);
+    (
+        [
+            ball.position.get_x() as f32,
+            ball.position.get_y() as f32,
+            ball.radius as f32,
+            0.0,
+        ],
+        [r, g, b, 1.0],
+    )
+}
+
+/// Packs the ball list into the uniform layout consumed by the WebGPU
+/// balls shader: a `canvas_size` vec2 plus padding, followed by one
+/// interleaved `BallData` (pos_radius, color) per ball. The result is
+/// always padded out to `GAME_2D_MAX_BALLS` entries so the fixed-size
+/// uniform buffer is fully overwritten each frame and stale balls from
+/// before a Clear never linger.
+///
+/// # Arguments
+///
+/// - `&[Ball]` - The ball list for this frame.
+///
+/// # Returns
+///
+/// - `Vec<f32>` - The packed uniform data (4 + `GAME_2D_MAX_BALLS * 8` floats).
+fn pack_game_2d_balls_webgpu(balls: &[Ball]) -> Vec<f32> {
+    let mut data: Vec<f32> = vec![
+        GAME_2D_CANVAS_WIDTH as f32,
+        GAME_2D_CANVAS_HEIGHT as f32,
+        0.0,
+        0.0,
+    ];
+    for ball in balls {
+        let (pos_radius, color) = game_2d_ball_gpu_record(ball);
+        data.extend_from_slice(&pos_radius);
+        data.extend_from_slice(&color);
+    }
+    data.resize(4 + GAME_2D_MAX_BALLS * 8, 0.0);
+    data
+}
+
+/// Packs the ball list into the two parallel `vec4` uniform arrays the
+/// WebGL balls shader consumes: per-ball `(x, y, radius, unused)` and
+/// `(r, g, b, a)`. Only the prefix actually drawn is uploaded; elements
+/// beyond `balls.len()` keep their previous values but are never
+/// referenced by the `ball_count * 6` vertices in the draw call.
+///
+/// # Arguments
+///
+/// - `&[Ball]` - The ball list for this frame.
+///
+/// # Returns
+///
+/// - `(Vec<f32>, Vec<f32>)` - The `pos_radius` and `color` arrays.
+fn pack_game_2d_balls_webgl(balls: &[Ball]) -> (Vec<f32>, Vec<f32>) {
+    let mut pos_radius: Vec<f32> = Vec::with_capacity(balls.len() * 4);
+    let mut colors: Vec<f32> = Vec::with_capacity(balls.len() * 4);
+    for ball in balls {
+        let (ball_pos_radius, ball_color) = game_2d_ball_gpu_record(ball);
+        pos_radius.extend_from_slice(&ball_pos_radius);
+        colors.extend_from_slice(&ball_color);
+    }
+    (pos_radius, colors)
 }
 
 /// Creates a click event handler that selects a tab on the 2D game page.
@@ -808,17 +855,27 @@ pub(crate) fn game_2d_on_tab_select(
     }))
 }
 
-/// Starts the 2D WebGPU render loop driven by `requestAnimationFrame`.
+/// Starts the 2D WebGPU bouncing balls loop driven by `requestAnimationFrame`.
 ///
-/// Asynchronously initializes a `WebGpuRenderer`, creates a render pipeline
-/// from a WGSL shader, and runs a `requestAnimationFrame` loop that renders
-/// an RGB triangle following the pointer (via a uniform buffer) with an
-/// animated clear color each frame.
+/// Mirrors [`start_game_2d_loop`]: the same fixed-timestep physics runs on
+/// the shared ball list, but rendering goes through a WGSL pipeline that
+/// draws every ball as a shader-generated quad with per-ball position,
+/// radius, and color uploaded to a uniform buffer each frame. The canvas
+/// is cleared to the element's computed CSS background color so the
+/// WebGPU output matches the transparent-cleared Canvas 2D tab exactly.
 ///
 /// # Arguments
 ///
-/// - `UseGame2DWebGpu` - The WebGPU demo state for signal updates.
-pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
+/// - `UseGame2DWebGpu` - The WebGPU backend state for signal updates.
+/// - `UseGame2D` - The shared game state (running/fps signals).
+/// - `Rc<RefCell<Vec<Ball>>>` - The shared ball list.
+/// - `CanvasCache` - The shared canvas element cache for event handlers.
+pub(crate) fn start_game_2d_webgpu_loop(
+    state: UseGame2DWebGpu,
+    game: UseGame2D,
+    balls: Rc<RefCell<Vec<Ball>>>,
+    canvas_cache: CanvasCache,
+) {
     let init_state: UseGame2DWebGpu = state;
     let loop_state: UseGame2DWebGpu = state;
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
@@ -899,13 +956,14 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
             }
         };
         let pipeline: JsValue = renderer.create_render_pipeline(GAME_2D_WEBGPU_SHADER);
-        let uniform_buffer: JsValue = renderer.create_uniform_buffer(&[0.0, 0.0]);
+        let uniform_buffer: JsValue =
+            renderer.create_uniform_buffer(&vec![0.0; 4 + GAME_2D_MAX_BALLS * 8]);
         let bind_group: JsValue = renderer.create_uniform_bind_group(&pipeline, &uniform_buffer);
-        let input: Option<InputStateCell> = attach_game_2d_input(GAME_2D_WEBGPU_CANVAS_SELECTOR);
-        let pointer_canvas: Option<HtmlCanvasElement> =
-            game_2d_canvas_element(GAME_2D_WEBGPU_CANVAS_SELECTOR);
-        let has_pointer: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let last_pointer: Rc<Cell<(f64, f64)>> = Rc::new(Cell::new((0.0, 0.0)));
+        *canvas_cache.0.borrow_mut() = game_2d_canvas_element(GAME_2D_WEBGPU_CANVAS_SELECTOR);
+        let clear_color: Rc<Cell<(f64, f64, f64)>> = Rc::new(Cell::new(
+            game_2d_canvas_clear_color(GAME_2D_WEBGPU_CANVAS_SELECTOR),
+        ));
+        let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
         init_state.get_loaded().set(true);
         *renderer_rc.borrow_mut() = Some(renderer);
@@ -919,10 +977,8 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
         let pipeline_for_loop: Rc<JsValue> = pipeline_rc.clone();
         let buffer_for_loop: Rc<JsValue> = buffer_rc.clone();
         let bind_group_for_loop: Rc<JsValue> = bind_group_rc.clone();
-        let input_for_loop: Option<InputStateCell> = input.clone();
-        let canvas_for_loop: Option<HtmlCanvasElement> = pointer_canvas.clone();
-        let has_pointer_for_loop: Rc<Cell<bool>> = has_pointer.clone();
-        let last_pointer_for_loop: Rc<Cell<(f64, f64)>> = last_pointer.clone();
+        let clear_color_for_loop: Rc<Cell<(f64, f64, f64)>> = clear_color.clone();
+        let acc_clone: Rc<Cell<f64>> = accumulator.clone();
         let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
         let cell_clone: RafClosureCell = closure_cell.clone();
         let last_clone: Rc<Cell<f64>> = last_time.clone();
@@ -946,6 +1002,13 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
+            acc_clone.set(acc_clone.get() + frame_time);
+            if game.get_running().get() {
+                while acc_clone.get() >= GAME_2D_FIXED_TIMESTEP {
+                    update_balls(&mut balls.borrow_mut(), GAME_2D_FIXED_TIMESTEP);
+                    acc_clone.set(acc_clone.get() - GAME_2D_FIXED_TIMESTEP);
+                }
+            }
             // The resize-debounce path only clears the flag and computes
             // the new dimensions. The actual `renderer.resize(...)` call
             // is folded into the render block below so we hold
@@ -990,26 +1053,17 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
                 if resize_dirty {
                     let _ = renderer.resize(new_physical_width, new_physical_height);
                 }
-                let t: f64 = current_time;
-                let r: f64 = (t * 0.5).sin() * 0.3 + 0.1;
-                let g: f64 = (t * 0.3 + 2.0).sin() * 0.3 + 0.1;
-                let b: f64 = (t * 0.7 + 4.0).sin() * 0.3 + 0.1;
-                // Poll the input state (updated by DOM listeners on the
-                // canvas) and push the pointer offset into the uniform
-                // buffer so the triangle follows the cursor/touch.
-                if let (Some(input), Some(canvas)) = (&input_for_loop, &canvas_for_loop)
-                    && let Some((client_x, client_y)) =
-                        game_2d_pointer_client_position(input, &has_pointer_for_loop)
-                {
-                    last_pointer_for_loop.set((client_x, client_y));
-                    let (offset_x, offset_y) = game_2d_client_to_clip(canvas, client_x, client_y);
-                    renderer.update_uniform_buffer(&buffer_for_loop, &[offset_x, offset_y]);
-                }
+                let borrowed_balls = balls.borrow();
+                let uniform_data: Vec<f32> = pack_game_2d_balls_webgpu(&borrowed_balls);
+                let vertex_count: u32 = (borrowed_balls.len() * 6) as u32;
+                drop(borrowed_balls);
+                renderer.update_uniform_buffer(&buffer_for_loop, &uniform_data);
+                let (r, g, b) = clear_color_for_loop.get();
                 renderer.render_frame_with_bind_group(
                     &pipeline_for_loop,
                     &bind_group_for_loop,
                     (r, g, b, 1.0),
-                    3,
+                    vertex_count,
                 );
             }
             frame_clone.set(frame_clone.get() + 1);
@@ -1017,15 +1071,11 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
-                // Refresh the pointer readout alongside the FPS counter so
-                // the page re-renders at 1 Hz instead of every frame.
-                let pointer_text: String = if has_pointer_for_loop.get() {
-                    let (pointer_x, pointer_y) = last_pointer_for_loop.get();
-                    format!("({pointer_x:.0}, {pointer_y:.0})")
-                } else {
-                    GAME_2D_POINTER_EMPTY_TEXT.to_string()
-                };
-                loop_state.get_pointer_text().set(pointer_text);
+                // Refresh the clear color alongside the FPS counter so a
+                // theme toggle is picked up within a second without paying
+                // for getComputedStyle every frame.
+                clear_color_for_loop
+                    .set(game_2d_canvas_clear_color(GAME_2D_WEBGPU_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }
@@ -1059,19 +1109,30 @@ pub(crate) fn start_game_2d_webgpu_loop(state: UseGame2DWebGpu) {
     });
 }
 
-/// Starts the 2D WebGL render loop driven by `requestAnimationFrame`.
+/// Starts the 2D WebGL bouncing balls loop driven by `requestAnimationFrame`.
 ///
-/// Initializes a `WebGlRenderer`, compiles a GLSL ES 3.00 program, and runs
-/// a `requestAnimationFrame` loop that renders an RGB triangle following
-/// the pointer (via a `vec2` uniform) with an animated clear color each
-/// frame. WebGL initialization is synchronous; the `spawn_local` wrapper
-/// only defers execution past the current render pass so the canvas
-/// element exists in the DOM.
+/// Mirrors [`start_game_2d_loop`]: the same fixed-timestep physics runs on
+/// the shared ball list, but rendering goes through a GLSL ES 3.00 program
+/// that draws every ball as a shader-generated quad with per-ball position,
+/// radius, and color uploaded to `vec4` uniform arrays each frame. The
+/// canvas is cleared to the element's computed CSS background color so the
+/// WebGL output matches the transparent-cleared Canvas 2D tab exactly.
+/// WebGL initialization is synchronous; the `spawn_local` wrapper only
+/// defers execution past the current render pass so the canvas element
+/// exists in the DOM.
 ///
 /// # Arguments
 ///
-/// - `UseGame2DWebGl` - The WebGL demo state for signal updates.
-pub(crate) fn start_game_2d_webgl_loop(state: UseGame2DWebGl) {
+/// - `UseGame2DWebGl` - The WebGL backend state for signal updates.
+/// - `UseGame2D` - The shared game state (running/fps signals).
+/// - `Rc<RefCell<Vec<Ball>>>` - The shared ball list.
+/// - `CanvasCache` - The shared canvas element cache for event handlers.
+pub(crate) fn start_game_2d_webgl_loop(
+    state: UseGame2DWebGl,
+    game: UseGame2D,
+    balls: Rc<RefCell<Vec<Ball>>>,
+    canvas_cache: CanvasCache,
+) {
     let init_state: UseGame2DWebGl = state;
     let loop_state: UseGame2DWebGl = state;
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
@@ -1157,11 +1218,11 @@ pub(crate) fn start_game_2d_webgl_loop(state: UseGame2DWebGl) {
                 return;
             }
         };
-        let input: Option<InputStateCell> = attach_game_2d_input(GAME_2D_WEBGL_CANVAS_SELECTOR);
-        let pointer_canvas: Option<HtmlCanvasElement> =
-            game_2d_canvas_element(GAME_2D_WEBGL_CANVAS_SELECTOR);
-        let has_pointer: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let last_pointer: Rc<Cell<(f64, f64)>> = Rc::new(Cell::new((0.0, 0.0)));
+        *canvas_cache.0.borrow_mut() = game_2d_canvas_element(GAME_2D_WEBGL_CANVAS_SELECTOR);
+        let clear_color: Rc<Cell<(f64, f64, f64)>> = Rc::new(Cell::new(
+            game_2d_canvas_clear_color(GAME_2D_WEBGL_CANVAS_SELECTOR),
+        ));
+        let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
         init_state.get_loaded().set(true);
         *renderer_rc.borrow_mut() = Some(renderer);
@@ -1171,10 +1232,8 @@ pub(crate) fn start_game_2d_webgl_loop(state: UseGame2DWebGl) {
         let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         let renderer_for_loop: Rc<RefCell<Option<WebGlRenderer>>> = renderer_rc.clone();
         let program_for_loop: Rc<WebGlProgram> = program_rc.clone();
-        let input_for_loop: Option<InputStateCell> = input.clone();
-        let canvas_for_loop: Option<HtmlCanvasElement> = pointer_canvas.clone();
-        let has_pointer_for_loop: Rc<Cell<bool>> = has_pointer.clone();
-        let last_pointer_for_loop: Rc<Cell<(f64, f64)>> = last_pointer.clone();
+        let clear_color_for_loop: Rc<Cell<(f64, f64, f64)>> = clear_color.clone();
+        let acc_clone: Rc<Cell<f64>> = accumulator.clone();
         let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
         let cell_clone: RafClosureCell = closure_cell.clone();
         let last_clone: Rc<Cell<f64>> = last_time.clone();
@@ -1198,6 +1257,13 @@ pub(crate) fn start_game_2d_webgl_loop(state: UseGame2DWebGl) {
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
+            acc_clone.set(acc_clone.get() + frame_time);
+            if game.get_running().get() {
+                while acc_clone.get() >= GAME_2D_FIXED_TIMESTEP {
+                    update_balls(&mut balls.borrow_mut(), GAME_2D_FIXED_TIMESTEP);
+                    acc_clone.set(acc_clone.get() - GAME_2D_FIXED_TIMESTEP);
+                }
+            }
             let resize_dirty: bool = if resize_dirty_for_loop.get() {
                 resize_dirty_for_loop.set(false);
                 true
@@ -1219,40 +1285,34 @@ pub(crate) fn start_game_2d_webgl_loop(state: UseGame2DWebGl) {
                 if resize_dirty {
                     renderer.resize(new_physical_width, new_physical_height);
                 }
-                let t: f64 = current_time;
-                let r: f64 = (t * 0.5).sin() * 0.3 + 0.1;
-                let g: f64 = (t * 0.3 + 2.0).sin() * 0.3 + 0.1;
-                let b: f64 = (t * 0.7 + 4.0).sin() * 0.3 + 0.1;
-                // Poll the input state (updated by DOM listeners on the
-                // canvas) and push the pointer offset into the `vec2`
-                // uniform so the triangle follows the cursor/touch.
-                if let (Some(input), Some(canvas)) = (&input_for_loop, &canvas_for_loop)
-                    && let Some((client_x, client_y)) =
-                        game_2d_pointer_client_position(input, &has_pointer_for_loop)
-                {
-                    last_pointer_for_loop.set((client_x, client_y));
-                    let (offset_x, offset_y) = game_2d_client_to_clip(canvas, client_x, client_y);
-                    renderer.set_uniform_2f(
-                        &program_for_loop,
-                        "u_pointer_offset",
-                        offset_x,
-                        offset_y,
-                    );
-                }
-                renderer.render_frame(&program_for_loop, (r, g, b, 1.0), 3);
+                let borrowed_balls = balls.borrow();
+                let (pos_radius_data, color_data) = pack_game_2d_balls_webgl(&borrowed_balls);
+                let vertex_count: i32 = (borrowed_balls.len() * 6) as i32;
+                drop(borrowed_balls);
+                renderer.set_uniform_2f(
+                    &program_for_loop,
+                    "u_canvas_size",
+                    GAME_2D_CANVAS_WIDTH as f32,
+                    GAME_2D_CANVAS_HEIGHT as f32,
+                );
+                renderer.set_uniform_4fv(
+                    &program_for_loop,
+                    "u_ball_pos_radius[0]",
+                    &pos_radius_data,
+                );
+                renderer.set_uniform_4fv(&program_for_loop, "u_ball_color[0]", &color_data);
+                let (r, g, b) = clear_color_for_loop.get();
+                renderer.render_frame(&program_for_loop, (r, g, b, 1.0), vertex_count);
             }
             frame_clone.set(frame_clone.get() + 1);
             fps_clone.set(fps_clone.get() + frame_time);
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
-                let pointer_text: String = if has_pointer_for_loop.get() {
-                    let (pointer_x, pointer_y) = last_pointer_for_loop.get();
-                    format!("({pointer_x:.0}, {pointer_y:.0})")
-                } else {
-                    GAME_2D_POINTER_EMPTY_TEXT.to_string()
-                };
-                loop_state.get_pointer_text().set(pointer_text);
+                // Refresh the clear color alongside the FPS counter so a
+                // theme toggle is picked up within a second without paying
+                // for getComputedStyle every frame.
+                clear_color_for_loop.set(game_2d_canvas_clear_color(GAME_2D_WEBGL_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }

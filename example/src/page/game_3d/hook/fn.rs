@@ -345,7 +345,7 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
     )
 }
 
-/// Registers non-passive event listeners directly on the 3D game canvas
+/// Registers non-passive event listeners directly on the given 3D canvas
 /// element to prevent the page from scrolling when the mouse wheel or touch
 /// gesture is used over the canvas.
 ///
@@ -358,16 +358,17 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
 /// prevents touch scrolling as a belt-and-suspenders complement to the
 /// `touch-action: none` CSS property.
 ///
+/// # Arguments
+///
+/// - `&str` - The CSS selector of the canvas element to guard.
+///
 /// # Returns
 ///
 /// - `Option<CanvasGuardEntry>` - The listener closures and element for cleanup, or `None` if the canvas was not found.
-pub(crate) fn register_canvas_scroll_guard() -> Option<CanvasGuardEntry> {
+pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<CanvasGuardEntry> {
     let window: Window = window().expect("no global window exists");
     let document: Document = window.document().expect("should have a document");
-    let canvas: Element = document
-        .query_selector(GAME_3D_CANVAS_SELECTOR)
-        .ok()
-        .flatten()?;
+    let canvas: Element = document.query_selector(canvas_selector).ok().flatten()?;
     let wheel_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         event.prevent_default();
     }));
@@ -555,7 +556,7 @@ pub(crate) fn start_game_3d_loop(
     let state_for_start: UseGame3D = state;
     let start_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         state_for_start.get_loaded().set(true);
-        *guard_for_start.borrow_mut() = register_canvas_scroll_guard();
+        *guard_for_start.borrow_mut() = register_canvas_scroll_guard(GAME_3D_CANVAS_SELECTOR);
         let start_window: Window = window().expect("no global window exists");
         let start_id: i32 = start_window
             .request_animation_frame(
@@ -894,7 +895,6 @@ pub(crate) fn use_game_3d_webgpu_state() -> UseGame3DWebGpu {
         active: App::use_signal(|| false),
         loop_started: App::use_signal(|| false),
         init_error_code: App::use_signal(|| ""),
-        pointer_text: App::use_signal(|| GAME_3D_POINTER_EMPTY_TEXT.to_string()),
     }
 }
 
@@ -910,39 +910,40 @@ pub(crate) fn use_game_3d_webgl_state() -> UseGame3DWebGl {
         active: App::use_signal(|| false),
         loop_started: App::use_signal(|| false),
         init_error_code: App::use_signal(|| ""),
-        pointer_text: App::use_signal(|| GAME_3D_POINTER_EMPTY_TEXT.to_string()),
     }
 }
 
-/// Attaches the engine's input event listeners to a canvas.
+/// Parses a `#rrggbb` CSS color string into 0.0-1.0 RGB floats.
 ///
-/// Builds a throwaway `EngineHandle` purely for its `register_input`
-/// wiring; the render config's backend is irrelevant to input handling,
-/// so a WebGL config is used as the neutral default. The returned cell is
-/// updated by DOM event listeners (`mousemove`, `mousedown`, touch ...)
-/// and is polled each frame from the render loop. Listeners are never
-/// detached (engine convention), so calling this twice on the same
-/// selector would double-report — each demo tab calls it exactly once.
+/// Cube face/edge colors are authored for CSS (`fillStyle`/`strokeStyle`);
+/// the GPU shaders need plain floats. Malformed input falls back to white.
 ///
 /// # Arguments
 ///
-/// - `&str` - The CSS selector of the canvas element to listen on.
+/// - `&str` - The CSS hex color string.
 ///
 /// # Returns
 ///
-/// - `Option<InputStateCell>` - The shared input state cell, or `None` if
-///   the canvas element was not found in the DOM.
-pub(crate) fn attach_game_3d_input(canvas_selector: &str) -> Option<InputStateCell> {
-    let config: EngineConfig = EngineConfig::create(RenderConfig::webgl(
-        canvas_selector,
-        GAME_3D_CANVAS_WIDTH,
-        GAME_3D_CANVAS_HEIGHT,
-    ));
-    let mut handle: EngineHandle = Engine::new_handle(config);
-    handle.register_input()
+/// - `(f32, f32, f32)` - The `(r, g, b)` channels in 0.0-1.0 range.
+pub(crate) fn game_3d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
+    let hex: &str = color.strip_prefix('#').unwrap_or(color);
+    let channel = |range: std::ops::Range<usize>| -> f32 {
+        hex.get(range)
+            .and_then(|part: &str| u8::from_str_radix(part, 16).ok())
+            .map(|value: u8| f32::from(value) / 255.0)
+            .unwrap_or(1.0)
+    };
+    (channel(0..2), channel(2..4), channel(4..6))
 }
 
-/// Queries a canvas element by CSS selector.
+/// Reads the computed CSS `background-color` of a canvas element.
+///
+/// The GPU canvases cannot be cleared to transparency (the WebGPU swap
+/// chain uses an opaque alpha mode by default), so the demo clears to
+/// the same `var!(accent)` background that shows through the
+/// transparent-cleared Canvas 2D tab. Re-reading the computed style
+/// also picks up theme toggles, which swap the accent color under the
+/// same canvas element.
 ///
 /// # Arguments
 ///
@@ -950,89 +951,108 @@ pub(crate) fn attach_game_3d_input(canvas_selector: &str) -> Option<InputStateCe
 ///
 /// # Returns
 ///
-/// - `Option<HtmlCanvasElement>` - The canvas element, if present.
-pub(crate) fn game_3d_canvas_element(canvas_selector: &str) -> Option<HtmlCanvasElement> {
+/// - `(f64, f64, f64)` - The `(r, g, b)` clear color in 0.0-1.0 range.
+pub(crate) fn game_3d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f64) {
     let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
-    let element: Element = document_value
-        .query_selector(canvas_selector)
-        .ok()
-        .flatten()?;
-    Some(element.unchecked_into())
+    let background: String = window_value
+        .document()
+        .and_then(|document: Document| document.query_selector(canvas_selector).ok().flatten())
+        .and_then(|element: Element| window_value.get_computed_style(&element).ok().flatten())
+        .and_then(|style: CssStyleDeclaration| style.get_property_value("background-color").ok())
+        .unwrap_or_default();
+    // Computed colors serialize as `rgb(r, g, b)` or `rgba(r, g, b, a)`.
+    let Some(inner) = background
+        .split('(')
+        .nth(1)
+        .and_then(|value: &str| value.strip_suffix(')'))
+    else {
+        return (0.0, 0.0, 0.0);
+    };
+    let mut channels = inner
+        .split(',')
+        .filter_map(|part: &str| part.trim().parse::<f64>().ok());
+    let r: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let g: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let b: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    (r, g, b)
 }
 
-/// Polls the pointer and integrates drag movement into orbit angles.
+/// Packs the scene into the uniform layout consumed by the GPU cubes
+/// shaders.
 ///
-/// Mouse and touch are unified: an active primary touch counts as
-/// "pressed" and wins over the mouse position (touch devices never fire
-/// `mousemove`). A drag only rotates the triangle while the press is
-/// continuous (`pressed` on the previous frame too), so the first frame
-/// of a new drag never applies a stale delta. Mouse drags additionally
-/// require the pointer to be inside the canvas: the engine's canvas-bound
-/// `mouseup` listener misses releases that happen outside the element,
-/// which would otherwise leave the button logically held forever.
-///
-/// Until the pointer first enters the canvas, `has_pointer` stays `false`
-/// and the readout keeps its placeholder; once seen, the latch keeps the
-/// last position even when the pointer leaves (like a cursor staying put).
+/// Layout: the column-major view-projection matrix (16 floats), the
+/// camera position plus padding (4 floats), then one `CubeData` record
+/// (rotation quaternion, position + scaled half-size, face color, edge
+/// color; 16 floats) per cube. Cubes are sorted back-to-front with the
+/// same painter's-algorithm depth key as [`render_scene`], and the
+/// result is padded out to `GAME_3D_GPU_MAX_CUBES` records so the
+/// fixed-size uniform layout is fully overwritten each frame and stale
+/// cubes never linger.
 ///
 /// # Arguments
 ///
-/// - `&InputStateCell` - The shared input state cell.
-/// - `&HtmlCanvasElement` - The canvas used for the inside-bounds check.
-/// - `&Rc<Cell<bool>>` - Latch set to `true` on the first pointer sighting.
-/// - `&Rc<Cell<bool>>` - Whether the previous frame had an active press.
-/// - `&Rc<Cell<(f64, f64)>>` - The previous frame's pointer position.
-/// - `&Rc<Cell<f64>>` - The orbit yaw angle in radians.
-/// - `&Rc<Cell<f64>>` - The orbit pitch angle in radians.
-pub(crate) fn game_3d_update_drag_rotation(
-    input: &InputStateCell,
-    canvas: &HtmlCanvasElement,
-    has_pointer: &Rc<Cell<bool>>,
-    was_pressed: &Rc<Cell<bool>>,
-    last_pointer: &Rc<Cell<(f64, f64)>>,
-    yaw: &Rc<Cell<f64>>,
-    pitch: &Rc<Cell<f64>>,
-) {
-    let state: &InputState = input.get();
-    let touch: Option<Vector2D> = state.primary_touch_position();
-    let position: Option<(f64, f64)> = match touch {
-        Some(point) => {
-            has_pointer.set(true);
-            Some((point.get_x(), point.get_y()))
-        }
-        None => {
-            if state.get_mouse_moved() {
-                has_pointer.set(true);
-            }
-            if !has_pointer.get() {
-                None
-            } else {
-                let point: Vector2D = state.get_mouse_position();
-                Some((point.get_x(), point.get_y()))
-            }
-        }
-    };
-    let Some((pointer_x, pointer_y)) = position else {
-        was_pressed.set(false);
-        return;
-    };
-    let rect: DomRect = canvas.get_bounding_client_rect();
-    let inside: bool = pointer_x >= rect.left()
-        && pointer_x <= rect.right()
-        && pointer_y >= rect.top()
-        && pointer_y <= rect.bottom();
-    let pressed: bool =
-        (touch.is_some() || state.is_mouse_button_held(MouseButton::Left)) && inside;
-    if pressed && was_pressed.get() {
-        let (last_x, last_y) = last_pointer.get();
-        yaw.set(yaw.get() + (pointer_x - last_x) * GAME_3D_DRAG_SENSITIVITY);
-        let new_pitch: f64 = (pitch.get() + (pointer_y - last_y) * GAME_3D_DRAG_SENSITIVITY)
-            .clamp(-GAME_3D_PITCH_LIMIT, GAME_3D_PITCH_LIMIT);
-        pitch.set(new_pitch);
+/// - `&[Cube3D]` - The cube list for this frame.
+/// - `&Camera3D` - The orbit camera for this frame.
+///
+/// # Returns
+///
+/// - `Vec<f32>` - The packed uniform data (20 + `GAME_3D_GPU_MAX_CUBES * 16` floats).
+fn pack_game_3d_cubes_uniform(cubes: &[Cube3D], camera: &Camera3D) -> Vec<f32> {
+    let mut sorted: Vec<(&Cube3D, f64)> = cubes
+        .iter()
+        .map(|cube: &Cube3D| {
+            let world_vertices: Vec<Vector3D> = GAME_3D_CUBE_VERTICES
+                .iter()
+                .map(|(vx, vy, vz): &(f64, f64, f64)| {
+                    transform_cube_vertex(cube, Vector3D::new(*vx, *vy, *vz))
+                })
+                .collect();
+            (cube, face_average_depth(&world_vertices, camera))
+        })
+        .collect();
+    sorted.sort_by(|a: &(&Cube3D, f64), b: &(&Cube3D, f64)| {
+        let (_, depth_a) = *a;
+        let (_, depth_b) = *b;
+        depth_a
+            .partial_cmp(&depth_b)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    let view_proj_elements: [f64; 16] = camera.view_proj_matrix().get_elements();
+    let mut data: Vec<f32> = view_proj_elements
+        .iter()
+        .map(|value: &f64| *value as f32)
+        .collect();
+    let camera_position: Vector3D = camera.get_position();
+    data.extend_from_slice(&[
+        camera_position.get_x() as f32,
+        camera_position.get_y() as f32,
+        camera_position.get_z() as f32,
+        0.0,
+    ]);
+    for (cube, _depth) in &sorted {
+        let (face_r, face_g, face_b) = game_3d_hex_to_rgb(&cube.face_color);
+        let (edge_r, edge_g, edge_b) = game_3d_hex_to_rgb(&cube.edge_color);
+        data.extend_from_slice(&[
+            cube.rotation.get_x() as f32,
+            cube.rotation.get_y() as f32,
+            cube.rotation.get_z() as f32,
+            cube.rotation.get_w() as f32,
+            cube.position.get_x() as f32,
+            cube.position.get_y() as f32,
+            cube.position.get_z() as f32,
+            (cube.scale * GAME_3D_CUBE_HALF_SIZE) as f32,
+            face_r,
+            face_g,
+            face_b,
+            1.0,
+            edge_r,
+            edge_g,
+            edge_b,
+            1.0,
+        ]);
     }
-    last_pointer.set((pointer_x, pointer_y));
-    was_pressed.set(pressed);
+    data.resize(20 + GAME_3D_GPU_MAX_CUBES * 16, 0.0);
+    data
 }
 
 /// Creates a click event handler that selects a tab on the 3D game page.
@@ -1054,18 +1074,29 @@ pub(crate) fn game_3d_on_tab_select(
     }))
 }
 
-/// Starts the 3D WebGPU render loop driven by `requestAnimationFrame`.
+/// Starts the 3D WebGPU cubes loop driven by `requestAnimationFrame`.
 ///
-/// Asynchronously initializes a `WebGpuRenderer`, creates a render pipeline
-/// from a WGSL shader with pseudo-3D perspective, and runs a
-/// `requestAnimationFrame` loop that renders the triangle with an animated
-/// clear color each frame. Dragging on the canvas orbits the triangle in
-/// place via a (yaw, pitch) uniform buffer fed by the engine input system.
+/// Mirrors [`start_game_3d_loop`]: the same fixed-timestep quaternion
+/// integration runs on the shared cube list and the same orbit camera
+/// (auto-rotation plus pointer/touch drag) drives the view, but rendering
+/// goes through a WGSL pipeline that draws every cube as 12
+/// shader-generated triangles with per-cube transform and colors uploaded
+/// to a uniform buffer each frame. The canvas is cleared to the element's
+/// computed CSS background color so the WebGPU output matches the
+/// transparent-cleared Canvas 2D tab exactly.
 ///
 /// # Arguments
 ///
-/// - `UseGame3DWebGpu` - The WebGPU demo state for signal updates.
-pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
+/// - `UseGame3DWebGpu` - The WebGPU backend state for signal updates.
+/// - `UseGame3D` - The shared game state (running/auto_rotate signals).
+/// - `Rc<RefCell<Vec<Cube3D>>>` - The shared cube list.
+/// - `CameraAngles` - The non-reactive camera orbit angles.
+pub(crate) fn start_game_3d_webgpu_loop(
+    state: UseGame3DWebGpu,
+    game: UseGame3D,
+    cubes: Rc<RefCell<Vec<Cube3D>>>,
+    angles: CameraAngles,
+) {
     let init_state: UseGame3DWebGpu = state;
     let loop_state: UseGame3DWebGpu = state;
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
@@ -1074,6 +1105,7 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
     let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let renderer_rc: Rc<RefCell<Option<WebGpuRenderer>>> = Rc::new(RefCell::new(None));
     let cancelled: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let guard_cell: CanvasGuardCell = Rc::new(RefCell::new(None));
     let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
     let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
     let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
@@ -1104,6 +1136,7 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
     let renderer_for_cleanup: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
     let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
     let cancelled_for_cleanup: Rc<Cell<bool>> = cancelled.clone();
+    let guard_for_cleanup: CanvasGuardCell = guard_cell.clone();
     App::use_cleanup(move || {
         cancelled_for_cleanup.set(true);
         if let Some(cancel_id) = raf_for_cleanup.get() {
@@ -1122,6 +1155,14 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
         // (silent black canvas) or to fail to acquire a new one.
         if let Some(renderer) = renderer_for_cleanup.borrow_mut().take() {
             renderer.dispose();
+        }
+        if let Some((listeners, element)) = guard_for_cleanup.borrow_mut().take() {
+            for (closure, event_name) in listeners {
+                let _ = element.remove_event_listener_with_callback(
+                    event_name,
+                    closure.as_ref().unchecked_ref(),
+                );
+            }
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
@@ -1146,16 +1187,14 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
             }
         };
         let pipeline: JsValue = renderer.create_render_pipeline(GAME_3D_WEBGPU_SHADER);
-        let uniform_buffer: JsValue = renderer.create_uniform_buffer(&[0.0, 0.0]);
+        let uniform_buffer: JsValue =
+            renderer.create_uniform_buffer(&vec![0.0; 20 + GAME_3D_GPU_MAX_CUBES * 16]);
         let bind_group: JsValue = renderer.create_uniform_bind_group(&pipeline, &uniform_buffer);
-        let input: Option<InputStateCell> = attach_game_3d_input(GAME_3D_WEBGPU_CANVAS_SELECTOR);
-        let pointer_canvas: Option<HtmlCanvasElement> =
-            game_3d_canvas_element(GAME_3D_WEBGPU_CANVAS_SELECTOR);
-        let has_pointer: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let was_pressed: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let last_pointer: Rc<Cell<(f64, f64)>> = Rc::new(Cell::new((0.0, 0.0)));
-        let yaw: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
-        let pitch: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+        *guard_cell.borrow_mut() = register_canvas_scroll_guard(GAME_3D_WEBGPU_CANVAS_SELECTOR);
+        let clear_color: Rc<Cell<(f64, f64, f64)>> = Rc::new(Cell::new(
+            game_3d_canvas_clear_color(GAME_3D_WEBGPU_CANVAS_SELECTOR),
+        ));
+        let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
         init_state.get_loaded().set(true);
         *renderer_rc.borrow_mut() = Some(renderer);
@@ -1169,13 +1208,8 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
         let pipeline_for_loop: Rc<JsValue> = pipeline_rc.clone();
         let buffer_for_loop: Rc<JsValue> = buffer_rc.clone();
         let bind_group_for_loop: Rc<JsValue> = bind_group_rc.clone();
-        let input_for_loop: Option<InputStateCell> = input.clone();
-        let canvas_for_loop: Option<HtmlCanvasElement> = pointer_canvas.clone();
-        let has_pointer_for_loop: Rc<Cell<bool>> = has_pointer.clone();
-        let was_pressed_for_loop: Rc<Cell<bool>> = was_pressed.clone();
-        let last_pointer_for_loop: Rc<Cell<(f64, f64)>> = last_pointer.clone();
-        let yaw_for_loop: Rc<Cell<f64>> = yaw.clone();
-        let pitch_for_loop: Rc<Cell<f64>> = pitch.clone();
+        let clear_color_for_loop: Rc<Cell<(f64, f64, f64)>> = clear_color.clone();
+        let acc_clone: Rc<Cell<f64>> = accumulator.clone();
         let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
         let cell_clone: RafClosureCell = closure_cell.clone();
         let last_clone: Rc<Cell<f64>> = last_time.clone();
@@ -1199,6 +1233,17 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
+            acc_clone.set(acc_clone.get() + frame_time);
+            if game.get_running().get() {
+                if game.get_auto_rotate().get() {
+                    let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
+                    angles.yaw.set(yaw);
+                }
+                while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                    update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
+                    acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
+                }
+            }
             // The resize-debounce path only clears the flag and computes
             // the new dimensions. The actual `renderer.resize(...)` call
             // is folded into the render block below so we hold
@@ -1243,33 +1288,18 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
                 if resize_dirty {
                     let _ = renderer.resize(new_physical_width, new_physical_height);
                 }
-                let t: f64 = current_time;
-                let r: f64 = (t * 0.3 + 1.0).sin() * 0.3 + 0.1;
-                let g: f64 = (t * 0.5 + 3.0).sin() * 0.3 + 0.1;
-                let b: f64 = (t * 0.8).sin() * 0.3 + 0.1;
-                // Poll the input state (updated by DOM listeners on the
-                // canvas) and push the drag orbit angles into the uniform
-                // buffer so the triangle rotates in place while dragging.
-                if let (Some(input), Some(canvas)) = (&input_for_loop, &canvas_for_loop) {
-                    game_3d_update_drag_rotation(
-                        input,
-                        canvas,
-                        &has_pointer_for_loop,
-                        &was_pressed_for_loop,
-                        &last_pointer_for_loop,
-                        &yaw_for_loop,
-                        &pitch_for_loop,
-                    );
-                    renderer.update_uniform_buffer(
-                        &buffer_for_loop,
-                        &[yaw_for_loop.get() as f32, pitch_for_loop.get() as f32],
-                    );
-                }
+                let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
+                let borrowed_cubes = cubes.borrow();
+                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&borrowed_cubes, &camera);
+                let vertex_count: u32 = (borrowed_cubes.len() * 36) as u32;
+                drop(borrowed_cubes);
+                renderer.update_uniform_buffer(&buffer_for_loop, &uniform_data);
+                let (r, g, b) = clear_color_for_loop.get();
                 renderer.render_frame_with_bind_group(
                     &pipeline_for_loop,
                     &bind_group_for_loop,
                     (r, g, b, 1.0),
-                    3,
+                    vertex_count,
                 );
             }
             frame_clone.set(frame_clone.get() + 1);
@@ -1277,15 +1307,11 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
-                // Refresh the pointer readout alongside the FPS counter so
-                // the page re-renders at 1 Hz instead of every frame.
-                let pointer_text: String = if has_pointer_for_loop.get() {
-                    let (pointer_x, pointer_y) = last_pointer_for_loop.get();
-                    format!("({pointer_x:.0}, {pointer_y:.0})")
-                } else {
-                    GAME_3D_POINTER_EMPTY_TEXT.to_string()
-                };
-                loop_state.get_pointer_text().set(pointer_text);
+                // Refresh the clear color alongside the FPS counter so a
+                // theme toggle is picked up within a second without paying
+                // for getComputedStyle every frame.
+                clear_color_for_loop
+                    .set(game_3d_canvas_clear_color(GAME_3D_WEBGPU_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }
@@ -1319,20 +1345,31 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
     });
 }
 
-/// Starts the 3D WebGL render loop driven by `requestAnimationFrame`.
+/// Starts the 3D WebGL cubes loop driven by `requestAnimationFrame`.
 ///
-/// Initializes a `WebGlRenderer`, compiles a GLSL ES 3.00 program with
-/// pseudo-3D perspective, and runs a `requestAnimationFrame` loop that
-/// renders the triangle with an animated clear color each frame. Dragging
-/// on the canvas orbits the triangle in place via a `vec2` uniform fed by
-/// the engine input system. WebGL initialization is synchronous; the
-/// `spawn_local` wrapper only defers execution past the current render
-/// pass so the canvas element exists in the DOM.
+/// Mirrors [`start_game_3d_loop`]: the same fixed-timestep quaternion
+/// integration runs on the shared cube list and the same orbit camera
+/// (auto-rotation plus pointer/touch drag) drives the view, but rendering
+/// goes through a GLSL ES 3.00 program that draws every cube as 12
+/// shader-generated triangles with per-cube transform and colors uploaded
+/// to `vec4` uniform arrays each frame. The canvas is cleared to the
+/// element's computed CSS background color so the WebGL output matches
+/// the transparent-cleared Canvas 2D tab exactly. WebGL initialization is
+/// synchronous; the `spawn_local` wrapper only defers execution past the
+/// current render pass so the canvas element exists in the DOM.
 ///
 /// # Arguments
 ///
-/// - `UseGame3DWebGl` - The WebGL demo state for signal updates.
-pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
+/// - `UseGame3DWebGl` - The WebGL backend state for signal updates.
+/// - `UseGame3D` - The shared game state (running/auto_rotate signals).
+/// - `Rc<RefCell<Vec<Cube3D>>>` - The shared cube list.
+/// - `CameraAngles` - The non-reactive camera orbit angles.
+pub(crate) fn start_game_3d_webgl_loop(
+    state: UseGame3DWebGl,
+    game: UseGame3D,
+    cubes: Rc<RefCell<Vec<Cube3D>>>,
+    angles: CameraAngles,
+) {
     let init_state: UseGame3DWebGl = state;
     let loop_state: UseGame3DWebGl = state;
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
@@ -1341,6 +1378,7 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
     let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let renderer_rc: Rc<RefCell<Option<WebGlRenderer>>> = Rc::new(RefCell::new(None));
     let cancelled: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let guard_cell: CanvasGuardCell = Rc::new(RefCell::new(None));
     let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
     let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
     let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
@@ -1371,6 +1409,7 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
     let renderer_for_cleanup: Rc<RefCell<Option<WebGlRenderer>>> = renderer_rc.clone();
     let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
     let cancelled_for_cleanup: Rc<Cell<bool>> = cancelled.clone();
+    let guard_for_cleanup: CanvasGuardCell = guard_cell.clone();
     App::use_cleanup(move || {
         cancelled_for_cleanup.set(true);
         if let Some(cancel_id) = raf_for_cleanup.get() {
@@ -1385,6 +1424,14 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
         // WebGL has no explicit `destroy()` on the context: dropping the
         // last JS reference lets the browser GC reclaim the GL context.
         let _: Option<WebGlRenderer> = renderer_for_cleanup.borrow_mut().take();
+        if let Some((listeners, element)) = guard_for_cleanup.borrow_mut().take() {
+            for (closure, event_name) in listeners {
+                let _ = element.remove_event_listener_with_callback(
+                    event_name,
+                    closure.as_ref().unchecked_ref(),
+                );
+            }
+        }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
     spawn_local(async move {
@@ -1418,14 +1465,11 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
                 return;
             }
         };
-        let input: Option<InputStateCell> = attach_game_3d_input(GAME_3D_WEBGL_CANVAS_SELECTOR);
-        let pointer_canvas: Option<HtmlCanvasElement> =
-            game_3d_canvas_element(GAME_3D_WEBGL_CANVAS_SELECTOR);
-        let has_pointer: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let was_pressed: Rc<Cell<bool>> = Rc::new(Cell::new(false));
-        let last_pointer: Rc<Cell<(f64, f64)>> = Rc::new(Cell::new((0.0, 0.0)));
-        let yaw: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
-        let pitch: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+        *guard_cell.borrow_mut() = register_canvas_scroll_guard(GAME_3D_WEBGL_CANVAS_SELECTOR);
+        let clear_color: Rc<Cell<(f64, f64, f64)>> = Rc::new(Cell::new(
+            game_3d_canvas_clear_color(GAME_3D_WEBGL_CANVAS_SELECTOR),
+        ));
+        let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
         init_state.get_loaded().set(true);
         *renderer_rc.borrow_mut() = Some(renderer);
@@ -1435,13 +1479,8 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
         let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         let renderer_for_loop: Rc<RefCell<Option<WebGlRenderer>>> = renderer_rc.clone();
         let program_for_loop: Rc<WebGlProgram> = program_rc.clone();
-        let input_for_loop: Option<InputStateCell> = input.clone();
-        let canvas_for_loop: Option<HtmlCanvasElement> = pointer_canvas.clone();
-        let has_pointer_for_loop: Rc<Cell<bool>> = has_pointer.clone();
-        let was_pressed_for_loop: Rc<Cell<bool>> = was_pressed.clone();
-        let last_pointer_for_loop: Rc<Cell<(f64, f64)>> = last_pointer.clone();
-        let yaw_for_loop: Rc<Cell<f64>> = yaw.clone();
-        let pitch_for_loop: Rc<Cell<f64>> = pitch.clone();
+        let clear_color_for_loop: Rc<Cell<(f64, f64, f64)>> = clear_color.clone();
+        let acc_clone: Rc<Cell<f64>> = accumulator.clone();
         let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
         let cell_clone: RafClosureCell = closure_cell.clone();
         let last_clone: Rc<Cell<f64>> = last_time.clone();
@@ -1465,6 +1504,17 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
+            acc_clone.set(acc_clone.get() + frame_time);
+            if game.get_running().get() {
+                if game.get_auto_rotate().get() {
+                    let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
+                    angles.yaw.set(yaw);
+                }
+                while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                    update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
+                    acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
+                }
+            }
             let resize_dirty: bool = if resize_dirty_for_loop.get() {
                 resize_dirty_for_loop.set(false);
                 true
@@ -1486,44 +1536,26 @@ pub(crate) fn start_game_3d_webgl_loop(state: UseGame3DWebGl) {
                 if resize_dirty {
                     renderer.resize(new_physical_width, new_physical_height);
                 }
-                let t: f64 = current_time;
-                let r: f64 = (t * 0.3 + 1.0).sin() * 0.3 + 0.1;
-                let g: f64 = (t * 0.5 + 3.0).sin() * 0.3 + 0.1;
-                let b: f64 = (t * 0.8).sin() * 0.3 + 0.1;
-                // Poll the input state (updated by DOM listeners on the
-                // canvas) and push the drag orbit angles into the `vec2`
-                // uniform so the triangle rotates in place while dragging.
-                if let (Some(input), Some(canvas)) = (&input_for_loop, &canvas_for_loop) {
-                    game_3d_update_drag_rotation(
-                        input,
-                        canvas,
-                        &has_pointer_for_loop,
-                        &was_pressed_for_loop,
-                        &last_pointer_for_loop,
-                        &yaw_for_loop,
-                        &pitch_for_loop,
-                    );
-                    renderer.set_uniform_2f(
-                        &program_for_loop,
-                        "u_rotation",
-                        yaw_for_loop.get() as f32,
-                        pitch_for_loop.get() as f32,
-                    );
-                }
-                renderer.render_frame(&program_for_loop, (r, g, b, 1.0), 3);
+                let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
+                let borrowed_cubes = cubes.borrow();
+                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&borrowed_cubes, &camera);
+                let vertex_count: i32 = (borrowed_cubes.len() * 36) as i32;
+                drop(borrowed_cubes);
+                renderer.set_uniform_4fv(&program_for_loop, "u_view_proj[0]", &uniform_data[0..16]);
+                renderer.set_uniform_4fv(&program_for_loop, "u_camera_pos", &uniform_data[16..20]);
+                renderer.set_uniform_4fv(&program_for_loop, "u_cubes[0]", &uniform_data[20..]);
+                let (r, g, b) = clear_color_for_loop.get();
+                renderer.render_frame(&program_for_loop, (r, g, b, 1.0), vertex_count);
             }
             frame_clone.set(frame_clone.get() + 1);
             fps_clone.set(fps_clone.get() + frame_time);
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
-                let pointer_text: String = if has_pointer_for_loop.get() {
-                    let (pointer_x, pointer_y) = last_pointer_for_loop.get();
-                    format!("({pointer_x:.0}, {pointer_y:.0})")
-                } else {
-                    GAME_3D_POINTER_EMPTY_TEXT.to_string()
-                };
-                loop_state.get_pointer_text().set(pointer_text);
+                // Refresh the clear color alongside the FPS counter so a
+                // theme toggle is picked up within a second without paying
+                // for getComputedStyle every frame.
+                clear_color_for_loop.set(game_3d_canvas_clear_color(GAME_3D_WEBGL_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }

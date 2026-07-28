@@ -88,13 +88,13 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                     Game3DTab::WebGpu => {
                         p {
                             class: c_game_description()
-                            "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader with pseudo-3D perspective, and render a colored triangle with an animated clear color via requestAnimationFrame. Drag on the canvas: the triangle orbits in place via a (yaw, pitch) uniform buffer fed by the engine's input system. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
+                            "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader, and render the same rotating cubes scene as the Canvas 2D tab: every cube is drawn as 12 shader-generated triangles with per-cube transform and colors uploaded to a uniform buffer each frame via requestAnimationFrame. Drag on the canvas to orbit the camera. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
                         }
                     }
                     Game3DTab::WebGl => {
                         p {
                             class: c_game_description()
-                            "This demo uses euv-engine's WebGlRenderer to acquire a WebGL 2 context, compile a GLSL ES 3.00 program with pseudo-3D perspective, and render a colored triangle with an animated clear color via requestAnimationFrame. Drag on the canvas: the triangle orbits in place via a vec2 uniform fed by the engine's input system. Works in every modern browser with WebGL 2 support."
+                            "This demo uses euv-engine's WebGlRenderer to acquire a WebGL 2 context, compile a GLSL ES 3.00 program, and render the same rotating cubes scene as the Canvas 2D tab: every cube is drawn as 12 shader-generated triangles with per-cube transform and colors uploaded to vec4 uniform arrays each frame via requestAnimationFrame. Drag on the canvas to orbit the camera. Works in every modern browser with WebGL 2 support."
                         }
                     }
                 }
@@ -208,29 +208,61 @@ fn game_3d_canvas_tab() -> VirtualNode {
     }
 }
 
-/// Renders the WebGPU demo tab content for the 3D game page.
+/// Renders the WebGPU rotating cubes demo tab content for the 3D game page.
 ///
-/// Initializes a WebGPU renderer and renders a pseudo-3D perspective
-/// triangle that orbits in place while dragging, with an animated
-/// background color. Shows FPS, WebGPU status, and the latest pointer
-/// position.
+/// Mirrors the Canvas 2D tab: the same cubes, quaternion integration,
+/// orbit camera, and pointer/touch drag, rendered through a WGSL pipeline
+/// instead of the 2D context. Adds a WebGPU status readout to the stats
+/// bar.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The WebGPU tab virtual DOM tree.
 fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
+    let game: UseGame3D = use_game_3d_state();
+    let cubes_store: Signal<CubeStore> = App::use_signal(|| {
+        let cubes: Rc<RefCell<Vec<Cube3D>>> = Rc::new(RefCell::new(create_initial_cubes()));
+        CubeStore(cubes)
+    });
+    let cubes: Rc<RefCell<Vec<Cube3D>>> = cubes_store.get().0;
+    let angles_store: Signal<CameraAngles> = App::use_signal(CameraAngles::default);
+    let angles: CameraAngles = angles_store.get();
+    let last_pointer: PointerPositionSignal = App::use_signal(|| Rc::new(Cell::new(None)));
     let loop_started: Signal<bool> = state.get_loop_started();
     if !loop_started.get() {
         loop_started.set(true);
-        start_game_3d_webgpu_loop(state);
+        game.get_cube_count().set(cubes.borrow().len());
+        start_game_3d_webgpu_loop(state, game, cubes.clone(), angles.clone());
     }
+    let on_toggle_pause: Option<Rc<dyn Fn(Event)>> = game_3d_on_toggle_pause(game);
+    let on_toggle_auto_rotate: Option<Rc<dyn Fn(Event)>> = game_3d_on_toggle_auto_rotate(game);
+    let on_reset_camera: Option<Rc<dyn Fn(Event)>> = game_3d_on_reset_camera(angles.clone());
+    let pointer_cell: Rc<Cell<Option<(f64, f64)>>> = last_pointer.get();
+    let on_pointer_down: Option<Rc<dyn Fn(Event)>> = game_3d_on_pointer_down(pointer_cell.clone());
+    let on_pointer_move: Option<Rc<dyn Fn(Event)>> =
+        game_3d_on_pointer_move(angles.clone(), pointer_cell.clone());
+    let on_pointer_up: Option<Rc<dyn Fn(Event)>> = game_3d_on_pointer_up(pointer_cell.clone());
+    let on_touch_start: Option<Rc<dyn Fn(Event)>> = game_3d_on_touch_start(pointer_cell.clone());
+    let on_touch_move: Option<Rc<dyn Fn(Event)>> =
+        game_3d_on_touch_move(angles.clone(), pointer_cell.clone());
+    let on_touch_end: Option<Rc<dyn Fn(Event)>> = game_3d_on_touch_end(pointer_cell.clone());
     let fps_display: String = format!("{:.1}", state.get_fps().get());
+    let cube_count: usize = game.get_cube_count().get();
     let loaded: bool = state.get_loaded().get();
     let active: bool = state.get_active().get();
     let init_error_code: &str = state.get_init_error_code().get();
     let status_text: &str =
         crate::page::webgpu_status::webgpu_status_text(loaded, active, init_error_code);
-    let pointer_text: String = state.get_pointer_text().get();
+    let pause_label: &str = if game.get_running().get() {
+        "Pause"
+    } else {
+        "Resume"
+    };
+    let auto_rotate_label: &str = if game.get_auto_rotate().get() {
+        "Auto: On"
+    } else {
+        "Auto: Off"
+    };
     html! {
         div {
             div {
@@ -245,18 +277,18 @@ fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
                 }
                 span {
                     class: c_game_stats_label()
-                    "Status: "
+                    "Cubes: "
                     span {
                         class: c_game_stats_count_value()
-                        status_text
+                        cube_count
                     }
                 }
                 span {
                     class: c_game_stats_label()
-                    "Pointer: "
+                    "Status: "
                     span {
                         class: c_game_stats_total_value()
-                        pointer_text
+                        status_text
                     }
                 }
             }
@@ -265,6 +297,32 @@ fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
                 canvas {
                     id: GAME_3D_WEBGPU_CANVAS_ID
                     class: c_game_3d_canvas()
+                    onmousedown: on_pointer_down.clone()
+                    onmousemove: on_pointer_move.clone()
+                    onmouseup: on_pointer_up.clone()
+                    onmouseleave: on_pointer_up.clone()
+                    ontouchstart: on_touch_start.clone()
+                    ontouchmove: on_touch_move.clone()
+                    ontouchend: on_touch_end.clone()
+                    ontouchcancel: on_touch_end.clone()
+                }
+            }
+            div {
+                class: c_button_controls()
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: pause_label
+                    onclick: on_toggle_pause
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: auto_rotate_label
+                    onclick: on_toggle_auto_rotate
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: "Reset Camera"
+                    onclick: on_reset_camera
                 }
             }
         }
@@ -301,28 +359,60 @@ fn webgl_status_text(loaded: bool, active: bool, init_error_code: &str) -> &'sta
     }
 }
 
-/// Renders the WebGL demo tab content for the 3D game page.
+/// Renders the WebGL rotating cubes demo tab content for the 3D game page.
 ///
-/// Initializes a WebGL 2 renderer and renders a pseudo-3D perspective
-/// triangle that orbits in place while dragging, with an animated
-/// background color. Shows FPS, WebGL status, and the latest pointer
-/// position.
+/// Mirrors the Canvas 2D tab: the same cubes, quaternion integration,
+/// orbit camera, and pointer/touch drag, rendered through a GLSL ES 3.00
+/// program instead of the 2D context. Adds a WebGL status readout to the
+/// stats bar.
 ///
 /// # Returns
 ///
 /// - `VirtualNode` - The WebGL tab virtual DOM tree.
 fn game_3d_webgl_tab(state: UseGame3DWebGl) -> VirtualNode {
+    let game: UseGame3D = use_game_3d_state();
+    let cubes_store: Signal<CubeStore> = App::use_signal(|| {
+        let cubes: Rc<RefCell<Vec<Cube3D>>> = Rc::new(RefCell::new(create_initial_cubes()));
+        CubeStore(cubes)
+    });
+    let cubes: Rc<RefCell<Vec<Cube3D>>> = cubes_store.get().0;
+    let angles_store: Signal<CameraAngles> = App::use_signal(CameraAngles::default);
+    let angles: CameraAngles = angles_store.get();
+    let last_pointer: PointerPositionSignal = App::use_signal(|| Rc::new(Cell::new(None)));
     let loop_started: Signal<bool> = state.get_loop_started();
     if !loop_started.get() {
         loop_started.set(true);
-        start_game_3d_webgl_loop(state);
+        game.get_cube_count().set(cubes.borrow().len());
+        start_game_3d_webgl_loop(state, game, cubes.clone(), angles.clone());
     }
+    let on_toggle_pause: Option<Rc<dyn Fn(Event)>> = game_3d_on_toggle_pause(game);
+    let on_toggle_auto_rotate: Option<Rc<dyn Fn(Event)>> = game_3d_on_toggle_auto_rotate(game);
+    let on_reset_camera: Option<Rc<dyn Fn(Event)>> = game_3d_on_reset_camera(angles.clone());
+    let pointer_cell: Rc<Cell<Option<(f64, f64)>>> = last_pointer.get();
+    let on_pointer_down: Option<Rc<dyn Fn(Event)>> = game_3d_on_pointer_down(pointer_cell.clone());
+    let on_pointer_move: Option<Rc<dyn Fn(Event)>> =
+        game_3d_on_pointer_move(angles.clone(), pointer_cell.clone());
+    let on_pointer_up: Option<Rc<dyn Fn(Event)>> = game_3d_on_pointer_up(pointer_cell.clone());
+    let on_touch_start: Option<Rc<dyn Fn(Event)>> = game_3d_on_touch_start(pointer_cell.clone());
+    let on_touch_move: Option<Rc<dyn Fn(Event)>> =
+        game_3d_on_touch_move(angles.clone(), pointer_cell.clone());
+    let on_touch_end: Option<Rc<dyn Fn(Event)>> = game_3d_on_touch_end(pointer_cell.clone());
     let fps_display: String = format!("{:.1}", state.get_fps().get());
+    let cube_count: usize = game.get_cube_count().get();
     let loaded: bool = state.get_loaded().get();
     let active: bool = state.get_active().get();
     let init_error_code: &str = state.get_init_error_code().get();
     let status_text: &str = webgl_status_text(loaded, active, init_error_code);
-    let pointer_text: String = state.get_pointer_text().get();
+    let pause_label: &str = if game.get_running().get() {
+        "Pause"
+    } else {
+        "Resume"
+    };
+    let auto_rotate_label: &str = if game.get_auto_rotate().get() {
+        "Auto: On"
+    } else {
+        "Auto: Off"
+    };
     html! {
         div {
             div {
@@ -337,18 +427,18 @@ fn game_3d_webgl_tab(state: UseGame3DWebGl) -> VirtualNode {
                 }
                 span {
                     class: c_game_stats_label()
-                    "Status: "
+                    "Cubes: "
                     span {
                         class: c_game_stats_count_value()
-                        status_text
+                        cube_count
                     }
                 }
                 span {
                     class: c_game_stats_label()
-                    "Pointer: "
+                    "Status: "
                     span {
                         class: c_game_stats_total_value()
-                        pointer_text
+                        status_text
                     }
                 }
             }
@@ -357,6 +447,32 @@ fn game_3d_webgl_tab(state: UseGame3DWebGl) -> VirtualNode {
                 canvas {
                     id: GAME_3D_WEBGL_CANVAS_ID
                     class: c_game_3d_canvas()
+                    onmousedown: on_pointer_down.clone()
+                    onmousemove: on_pointer_move.clone()
+                    onmouseup: on_pointer_up.clone()
+                    onmouseleave: on_pointer_up.clone()
+                    ontouchstart: on_touch_start.clone()
+                    ontouchmove: on_touch_move.clone()
+                    ontouchend: on_touch_end.clone()
+                    ontouchcancel: on_touch_end.clone()
+                }
+            }
+            div {
+                class: c_button_controls()
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: pause_label
+                    onclick: on_toggle_pause
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: auto_rotate_label
+                    onclick: on_toggle_auto_rotate
+                }
+                euv_button {
+                    variant: EuvButtonVariant::Primary
+                    label: "Reset Camera"
+                    onclick: on_reset_camera
                 }
             }
         }

@@ -82,13 +82,6 @@ pub(crate) struct UseGame3DWebGpu {
     /// surfacing JS error detail into the reactive UI tree.
     #[get(type(copy))]
     pub(crate) init_error_code: Signal<&'static str>,
-    /// The latest pointer position readout for the drag interaction demo.
-    ///
-    /// Formatted client coordinates (e.g. `"(123, 45)"`), or
-    /// [`GAME_3D_POINTER_EMPTY_TEXT`] before the pointer first enters the
-    /// canvas. Updated at 1 Hz together with the FPS readout so the
-    /// per-frame render loop does not re-render the page every frame.
-    pub(crate) pointer_text: Signal<String>,
 }
 
 /// Reactive state for the 3D WebGL demo page.
@@ -111,6 +104,4 @@ pub(crate) struct UseGame3DWebGl {
     /// Empty string means "no error" (init still in flight or not started).
     #[get(type(copy))]
     pub(crate) init_error_code: Signal<&'static str>,
-    /// The latest pointer position readout for the drag interaction demo.
-    pub(crate) pointer_text: Signal<String>,
 }

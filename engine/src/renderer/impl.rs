@@ -3144,6 +3144,27 @@ impl WebGlRenderer {
         self.context.uniform2f(location.as_ref(), x, y);
     }
 
+    /// Uploads a flat float slice into a `vec4` or `vec4[]` uniform.
+    ///
+    /// Used by the game demos to push per-frame instance data (ball positions
+    /// and colors, cube transforms) into shaders that index the array with
+    /// `gl_VertexID`. `data.len()` must be a multiple of 4. For array
+    /// uniforms pass the name with an explicit `[0]` index, per the WebGL
+    /// `getUniformLocation` spec. The upload writes only `data.len() / 4`
+    /// elements; untouched elements keep their previous values.
+    ///
+    /// # Arguments
+    ///
+    /// - `&WebGlProgram` - The program owning the uniform.
+    /// - `&str` - The uniform name (e.g. `"u_balls[0]"`).
+    /// - `&[f32]` - The packed float data.
+    pub fn set_uniform_4fv(&self, program: &WebGlProgram, name: &str, data: &[f32]) {
+        let location: Option<WebGlUniformLocation> =
+            self.context.get_uniform_location(program, name);
+        self.context
+            .uniform4fv_with_f32_array(location.as_ref(), data);
+    }
+
     /// Renders a complete frame: clears the canvas and draws a triangle-list
     /// primitive whose vertices are generated inside the vertex shader.
     ///

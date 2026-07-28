@@ -58,19 +58,13 @@ pub(crate) struct UseGame2DWebGpu {
     pub(crate) loop_started: Signal<bool>,
     /// The most recent init error code as a stable string.
     ///
-    /// Empty string means "no error" (init still in flight or not started).
-    /// The view uses this code alongside the canonical
-    /// `WebGpuRenderer::is_available()` probe to choose the diagnostic
-    /// banner shown when `loaded` is true but `active` is false.
+    /// Drives the diagnostic banner shown when `loaded` is true but
+    /// `active` is false. The empty string means "no error" (i.e. init is
+    /// still in flight or has not started). Storing a stable code rather
+    /// than the full `WebGpuInitError` keeps this state `Copy` and avoids
+    /// surfacing JS error detail into the reactive UI tree.
     #[get(type(copy))]
     pub(crate) init_error_code: Signal<&'static str>,
-    /// The latest pointer position readout for the interaction demo.
-    ///
-    /// Formatted client coordinates (e.g. `"(123, 45)"`), or
-    /// [`GAME_2D_POINTER_EMPTY_TEXT`] before the pointer first enters the
-    /// canvas. Updated at 1 Hz together with the FPS readout so the
-    /// per-frame render loop does not re-render the page every frame.
-    pub(crate) pointer_text: Signal<String>,
 }
 
 /// Reactive state for the 2D WebGL demo page.
@@ -93,6 +87,4 @@ pub(crate) struct UseGame2DWebGl {
     /// Empty string means "no error" (init still in flight or not started).
     #[get(type(copy))]
     pub(crate) init_error_code: Signal<&'static str>,
-    /// The latest pointer position readout for the interaction demo.
-    pub(crate) pointer_text: Signal<String>,
 }
