@@ -2526,6 +2526,150 @@ impl WebGpuRenderer {
         finish_fn.call0(encoder).unwrap_or(JsValue::UNDEFINED)
     }
 
+    /// Creates a GPU uniform buffer and initializes it with the given floats.
+    ///
+    /// The buffer is created with `UNIFORM | COPY_DST` usage so it can be
+    /// bound in a bind group and refreshed per frame via
+    /// [`WebGpuRenderer::update_uniform_buffer`]. The allocation size is
+    /// rounded up to a multiple of 16 bytes because WebGPU requires uniform
+    /// buffer bindings to be 16-byte aligned in size (a bare `vec2<f32>`
+    /// uniform is only 8 bytes).
+    ///
+    /// # Arguments
+    ///
+    /// - `&[f32]` - The initial uniform contents (e.g. `[x, y]` for a
+    ///   `vec2<f32>` uniform).
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created `GpuBuffer`.
+    pub fn create_uniform_buffer(&self, data: &[f32]) -> JsValue {
+        let byte_len: usize = data.len() * 4;
+        let size: f64 = byte_len.div_ceil(16).max(1) as f64 * 16.0;
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+            &JsValue::from_f64(size),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
+            &JsValue::from_f64(WEBGPU_BUFFER_USAGE_UNIFORM + WEBGPU_BUFFER_USAGE_COPY_DST),
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_BUFFER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let buffer: JsValue = create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED);
+        self.update_uniform_buffer(&buffer, data);
+        buffer
+    }
+
+    /// Uploads float data into an existing uniform buffer via `queue.writeBuffer`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The `GpuBuffer` previously created by
+    ///   [`WebGpuRenderer::create_uniform_buffer`].
+    /// - `&[f32]` - The new uniform contents.
+    pub fn update_uniform_buffer(&self, buffer: &JsValue, data: &[f32]) {
+        let view: js_sys::Float32Array = js_sys::Float32Array::from(data);
+        let write_fn: Function = Reflect::get(
+            self.get_queue(),
+            &JsValue::from_str(WEBGPU_METHOD_WRITE_BUFFER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let _: Result<JsValue, JsValue> =
+            write_fn.call3(self.get_queue(), buffer, &JsValue::from_f64(0.0), &view);
+    }
+
+    /// Creates a bind group for `@group(0)` of the given pipeline, binding the
+    /// given uniform buffer at `@binding(0)`.
+    ///
+    /// The pipeline must have been created with `layout: "auto"` (the default
+    /// for [`WebGpuRenderer::create_render_pipeline`]) and its WGSL shader must
+    /// declare exactly one uniform binding at group 0 / binding 0.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pipeline.
+    /// - `&JsValue` - The uniform `GpuBuffer` to bind.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created `GpuBindGroup`.
+    pub fn create_uniform_bind_group(&self, pipeline: &JsValue, buffer: &JsValue) -> JsValue {
+        let layout_fn: Function = Reflect::get(
+            pipeline,
+            &JsValue::from_str(WEBGPU_METHOD_GET_BIND_GROUP_LAYOUT),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let layout: JsValue = layout_fn
+            .call1(pipeline, &JsValue::from_f64(0.0))
+            .unwrap_or(JsValue::UNDEFINED);
+        let buffer_binding: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &buffer_binding,
+            &JsValue::from_str(WEBGPU_PROPERTY_BUFFER),
+            buffer,
+        );
+        let entry: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &entry,
+            &JsValue::from_str(WEBGPU_PROPERTY_BINDING),
+            &JsValue::from_f64(0.0),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &entry,
+            &JsValue::from_str(WEBGPU_PROPERTY_RESOURCE),
+            &buffer_binding,
+        );
+        let entries: Array = Array::new();
+        entries.push(&entry);
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_LAYOUT),
+            &layout,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_ENTRIES),
+            &entries,
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_BIND_GROUP),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Binds a bind group at the given index on a render pass encoder.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pass encoder.
+    /// - `u32` - The bind group index (`@group(N)` in WGSL).
+    /// - `&JsValue` - The bind group to bind.
+    pub(crate) fn set_bind_group(&self, pass: &JsValue, index: u32, bind_group: &JsValue) {
+        let set_fn: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_BIND_GROUP))
+            .unwrap_or(JsValue::UNDEFINED)
+            .unchecked_into();
+        let _: Result<JsValue, JsValue> =
+            set_fn.call2(pass, &JsValue::from_f64(f64::from(index)), bind_group);
+    }
+
     /// Renders a complete frame with a pipeline and animated clear color.
     ///
     /// This is a convenience method that creates a command encoder, begins a
@@ -2547,6 +2691,37 @@ impl WebGpuRenderer {
         let encoder: JsValue = self.create_command_encoder();
         let pass: JsValue = self.begin_render_pass(&encoder, clear_color);
         self.set_pipeline(&pass, pipeline);
+        self.draw(&pass, vertex_count, 1);
+        self.end_render_pass(&pass);
+        let command_buffer: JsValue = self.finish_command_encoder(&encoder);
+        self.submit(&[command_buffer]);
+    }
+
+    /// Renders a complete frame like [`WebGpuRenderer::render_frame`], but
+    /// additionally binds a uniform bind group at `@group(0)` before drawing.
+    ///
+    /// Used by shaders that read per-frame data (pointer position, rotation
+    /// angles, ...) from a uniform buffer. The bind group should be created
+    /// once via [`WebGpuRenderer::create_uniform_bind_group`] and its buffer
+    /// refreshed each frame via [`WebGpuRenderer::update_uniform_buffer`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The render pipeline to use.
+    /// - `&JsValue` - The bind group for `@group(0)`.
+    /// - `(f64, f64, f64, f64)` - The clear color as (r, g, b, a) in 0.0–1.0 range.
+    /// - `u32` - The number of vertices to draw.
+    pub fn render_frame_with_bind_group(
+        &mut self,
+        pipeline: &JsValue,
+        bind_group: &JsValue,
+        clear_color: (f64, f64, f64, f64),
+        vertex_count: u32,
+    ) {
+        let encoder: JsValue = self.create_command_encoder();
+        let pass: JsValue = self.begin_render_pass(&encoder, clear_color);
+        self.set_pipeline(&pass, pipeline);
+        self.set_bind_group(&pass, 0, bind_group);
         self.draw(&pass, vertex_count, 1);
         self.end_render_pass(&pass);
         let command_buffer: JsValue = self.finish_command_encoder(&encoder);
@@ -2794,3 +2969,317 @@ impl std::fmt::Display for WebGpuInitError {
 /// logs or prints anything; this impl exists solely so the error composes
 /// with `Result`-based APIs and `?` operator chains.
 impl std::error::Error for WebGpuInitError {}
+
+/// Implements `WebGlRenderer` context acquisition, shader program management,
+/// and per-frame drawing.
+///
+/// All methods are synchronous: WebGL has no Promise-based initialization.
+/// The renderer never logs; initialization failures are returned as
+/// `WebGlInitError` and shader failures as `WebGlProgramError` so the caller
+/// can surface them (typically via `Console::error` on the example side).
+impl WebGlRenderer {
+    /// Probes whether the browser can create a WebGL 2 context.
+    ///
+    /// Creates a throwaway off-DOM canvas and requests a `webgl2` context.
+    /// The probe is cheap (no shaders are compiled) and has no side effects
+    /// on the page.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if a `webgl2` context could be acquired.
+    pub fn is_available() -> bool {
+        let window_value: Window = window().expect("no global window exists");
+        let document_value: Document = window_value.document().expect("should have a document");
+        let element: Element = match document_value.create_element("canvas") {
+            Ok(element) => element,
+            Err(_) => return false,
+        };
+        let canvas: HtmlCanvasElement = element.unchecked_into();
+        canvas.get_context("webgl2").ok().flatten().is_some()
+    }
+
+    /// Initializes a WebGL 2 renderer from a render configuration.
+    ///
+    /// Resolves the canvas element from `config.canvas_selector`, scales the
+    /// backing store by the device pixel ratio, acquires the `webgl2`
+    /// context, and sets the initial viewport.
+    ///
+    /// # Arguments
+    ///
+    /// - `&RenderConfig` - The rendering configuration.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<WebGlRenderer, WebGlInitError>` - The initialized renderer,
+    ///   or a typed error describing the specific failure.
+    pub fn init(config: &RenderConfig) -> Result<WebGlRenderer, WebGlInitError> {
+        let window_value: Window = window().expect("no global window exists");
+        let document_value: Document = window_value.document().expect("should have a document");
+        let element: Element = document_value
+            .query_selector(config.canvas_selector.as_ref())
+            .map_err(WebGlInitError::CanvasQuery)?
+            .ok_or_else(|| WebGlInitError::CanvasNotFound(config.canvas_selector.clone()))?;
+        let canvas: HtmlCanvasElement = element.unchecked_into();
+        let dpr: f64 = CanvasRenderer::detect_dpr();
+        let physical_width: u32 = (config.width * dpr).round() as u32;
+        let physical_height: u32 = (config.height * dpr).round() as u32;
+        canvas.set_width(physical_width);
+        canvas.set_height(physical_height);
+        let context_object: Object = canvas
+            .get_context("webgl2")
+            .map_err(WebGlInitError::ContextLookup)?
+            .ok_or(WebGlInitError::ContextUnavailable)?;
+        let context: WebGl2RenderingContext = context_object
+            .dyn_into()
+            .map_err(|_| WebGlInitError::ContextCast)?;
+        context.viewport(0, 0, physical_width as i32, physical_height as i32);
+        Ok(WebGlRenderer {
+            context,
+            canvas,
+            width: physical_width,
+            height: physical_height,
+        })
+    }
+
+    /// Compiles and links a shader program from GLSL ES 3.00 sources.
+    ///
+    /// Both shaders are compiled, attached, and linked; on success the
+    /// intermediate shader objects are deleted (the program keeps the
+    /// compiled code). On failure the browser info log is returned so the
+    /// caller can surface the exact GLSL diagnostic.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The vertex shader source (`#version 300 es`).
+    /// - `&str` - The fragment shader source (`#version 300 es`).
+    ///
+    /// # Returns
+    ///
+    /// - `Result<WebGlProgram, WebGlProgramError>` - The linked program, or
+    ///   the compile/link info log.
+    pub fn create_program(
+        &self,
+        vertex_source: &str,
+        fragment_source: &str,
+    ) -> Result<WebGlProgram, WebGlProgramError> {
+        let vertex_shader: WebGlShader =
+            self.compile_shader(WebGl2RenderingContext::VERTEX_SHADER, vertex_source)?;
+        let fragment_shader: WebGlShader =
+            self.compile_shader(WebGl2RenderingContext::FRAGMENT_SHADER, fragment_source)?;
+        let program: WebGlProgram = self.context.create_program().ok_or_else(|| {
+            WebGlProgramError::ProgramLink("createProgram returned null".to_string())
+        })?;
+        self.context.attach_shader(&program, &vertex_shader);
+        self.context.attach_shader(&program, &fragment_shader);
+        self.context.link_program(&program);
+        let linked: bool = self
+            .context
+            .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
+            .as_bool()
+            .unwrap_or(false);
+        if !linked {
+            let log: String = self
+                .context
+                .get_program_info_log(&program)
+                .unwrap_or_default();
+            self.context.delete_program(Some(&program));
+            self.context.delete_shader(Some(&vertex_shader));
+            self.context.delete_shader(Some(&fragment_shader));
+            return Err(WebGlProgramError::ProgramLink(log));
+        }
+        self.context.delete_shader(Some(&vertex_shader));
+        self.context.delete_shader(Some(&fragment_shader));
+        Ok(program)
+    }
+
+    /// Compiles a single shader, returning the info log on failure.
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - The shader kind (`VERTEX_SHADER` or `FRAGMENT_SHADER`).
+    /// - `&str` - The GLSL source.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<WebGlShader, WebGlProgramError>` - The compiled shader, or
+    ///   the compile info log.
+    fn compile_shader(&self, kind: u32, source: &str) -> Result<WebGlShader, WebGlProgramError> {
+        let shader: WebGlShader = self.context.create_shader(kind).ok_or_else(|| {
+            WebGlProgramError::ShaderCompile("createShader returned null".to_string())
+        })?;
+        self.context.shader_source(&shader, source);
+        self.context.compile_shader(&shader);
+        let compiled: bool = self
+            .context
+            .get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS)
+            .as_bool()
+            .unwrap_or(false);
+        if !compiled {
+            let log: String = self
+                .context
+                .get_shader_info_log(&shader)
+                .unwrap_or_default();
+            self.context.delete_shader(Some(&shader));
+            return Err(WebGlProgramError::ShaderCompile(log));
+        }
+        Ok(shader)
+    }
+
+    /// Sets a `vec2` uniform on the given program.
+    ///
+    /// The uniform location is resolved per call; for the per-frame
+    /// interaction uniforms used by the examples this lookup cost is
+    /// negligible. A missing uniform (optimized out by the GLSL compiler)
+    /// is silently ignored, matching raw WebGL semantics.
+    ///
+    /// # Arguments
+    ///
+    /// - `&WebGlProgram` - The program owning the uniform.
+    /// - `&str` - The uniform name.
+    /// - `f32` - The x component.
+    /// - `f32` - The y component.
+    pub fn set_uniform_2f(&self, program: &WebGlProgram, name: &str, x: f32, y: f32) {
+        let location: Option<WebGlUniformLocation> =
+            self.context.get_uniform_location(program, name);
+        self.context.uniform2f(location.as_ref(), x, y);
+    }
+
+    /// Renders a complete frame: clears the canvas and draws a triangle-list
+    /// primitive whose vertices are generated inside the vertex shader.
+    ///
+    /// Mirrors [`WebGpuRenderer::render_frame`]: the vertex shader uses
+    /// `gl_VertexID` so no vertex buffers are involved. The given program
+    /// is bound before drawing; set its uniforms first via
+    /// [`WebGlRenderer::set_uniform_2f`] when the shader reads per-frame
+    /// interaction data.
+    ///
+    /// # Arguments
+    ///
+    /// - `&WebGlProgram` - The program to draw with.
+    /// - `(f64, f64, f64, f64)` - The clear color as (r, g, b, a) in 0.0–1.0 range.
+    /// - `i32` - The number of vertices to draw.
+    pub fn render_frame(
+        &self,
+        program: &WebGlProgram,
+        clear_color: (f64, f64, f64, f64),
+        vertex_count: i32,
+    ) {
+        let (r, g, b, a) = clear_color;
+        self.context
+            .viewport(0, 0, self.width as i32, self.height as i32);
+        self.context
+            .clear_color(r as f32, g as f32, b as f32, a as f32);
+        self.context.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
+        self.context.use_program(Some(program));
+        self.context
+            .draw_arrays(WebGl2RenderingContext::TRIANGLES, 0, vertex_count);
+    }
+
+    /// Resizes the canvas backing store and updates the GL viewport.
+    ///
+    /// Call this when the CSS layout size changes (window resize, DPR
+    /// change) so the drawing buffer matches the visible region.
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - The new physical pixel width (already multiplied by DPR).
+    /// - `u32` - The new physical pixel height.
+    pub fn resize(&mut self, physical_width: u32, physical_height: u32) {
+        self.canvas.set_width(physical_width);
+        self.canvas.set_height(physical_height);
+        self.width = physical_width;
+        self.height = physical_height;
+        self.context
+            .viewport(0, 0, physical_width as i32, physical_height as i32);
+    }
+}
+
+/// Implements `WebGlInitError` diagnostic helpers.
+impl WebGlInitError {
+    /// Returns a short, machine-readable identifier for this error variant.
+    ///
+    /// Suitable for use as a stable error code in logs or telemetry.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static str` - The error code (e.g. `\"WEBGL_CONTEXT_UNAVAILABLE\"`).
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::CanvasNotFound(_) => "WEBGL_CANVAS_NOT_FOUND",
+            Self::CanvasQuery(_) => "WEBGL_CANVAS_QUERY",
+            Self::ContextUnavailable => "WEBGL_CONTEXT_UNAVAILABLE",
+            Self::ContextLookup(_) => "WEBGL_CONTEXT_LOOKUP",
+            Self::ContextCast => "WEBGL_CONTEXT_CAST",
+        }
+    }
+
+    /// Returns the underlying JS error value if this variant carries one.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&JsValue>` - The captured JS error, if any.
+    pub fn js_error(&self) -> Option<&JsValue> {
+        match self {
+            Self::CanvasQuery(err) | Self::ContextLookup(err) => Some(err),
+            Self::CanvasNotFound(_) | Self::ContextUnavailable | Self::ContextCast => None,
+        }
+    }
+}
+
+/// Implements `std::fmt::Display` for `WebGlInitError`.
+///
+/// The formatted message includes the variant code plus a human-readable
+/// description; variants carrying a JS error append its rendered form.
+impl std::fmt::Display for WebGlInitError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::CanvasNotFound(selector) => write!(
+                formatter,
+                "[{}] canvas element {:?} not found in DOM",
+                self.code(),
+                selector,
+            ),
+            Self::CanvasQuery(err) => write!(
+                formatter,
+                "[{}] querySelector threw: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::ContextUnavailable => write!(
+                formatter,
+                "[{}] canvas.get_context('webgl2') returned null - the browser does not support WebGL 2 or the canvas already uses another context type",
+                self.code(),
+            ),
+            Self::ContextLookup(err) => write!(
+                formatter,
+                "[{}] canvas.get_context('webgl2') threw: {}",
+                self.code(),
+                js_error_to_string(err),
+            ),
+            Self::ContextCast => write!(
+                formatter,
+                "[{}] get_context('webgl2') result could not be cast to WebGl2RenderingContext",
+                self.code(),
+            ),
+        }
+    }
+}
+
+/// Implements the standard `std::error::Error` trait for `WebGlInitError`.
+impl std::error::Error for WebGlInitError {}
+
+/// Implements `std::fmt::Display` for `WebGlProgramError`.
+///
+/// The formatted message includes the browser-provided info log so GLSL
+/// diagnostics are visible verbatim in the console.
+impl std::fmt::Display for WebGlProgramError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ShaderCompile(log) => write!(formatter, "shader compilation failed: {log}"),
+            Self::ProgramLink(log) => write!(formatter, "program link failed: {log}"),
+        }
+    }
+}
+
+/// Implements the standard `std::error::Error` trait for `WebGlProgramError`.
+impl std::error::Error for WebGlProgramError {}

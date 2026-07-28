@@ -241,14 +241,12 @@ impl Animator {
                             *self.get_mut_current_frame_index() -= 1;
                         }
                     }
+                } else if self.get_current_frame_index() > 0 {
+                    *self.get_mut_current_frame_index() -= 1;
                 } else {
-                    if self.get_current_frame_index() > 0 {
-                        *self.get_mut_current_frame_index() -= 1;
-                    } else {
-                        self.set_direction(1);
-                        if self.get_current_frame_index() + 1 < frame_count {
-                            *self.get_mut_current_frame_index() += 1;
-                        }
+                    self.set_direction(1);
+                    if self.get_current_frame_index() + 1 < frame_count {
+                        *self.get_mut_current_frame_index() += 1;
                     }
                 }
             }

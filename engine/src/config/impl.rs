@@ -75,6 +75,30 @@ impl RenderConfig {
             ..RenderConfig::default()
         }
     }
+
+    /// Creates a rendering configuration for the WebGL 2 backend.
+    ///
+    /// # Arguments
+    ///
+    /// - `S: AsRef<str>` - The CSS selector for the canvas element.
+    /// - `f64` - The viewport width in CSS pixels.
+    /// - `f64` - The viewport height in CSS pixels.
+    ///
+    /// # Returns
+    ///
+    /// - `RenderConfig` - The WebGL 2 rendering configuration.
+    pub fn webgl<S>(canvas_selector: S, width: f64, height: f64) -> RenderConfig
+    where
+        S: AsRef<str>,
+    {
+        RenderConfig {
+            backend: RenderBackendType::WebGl,
+            canvas_selector: canvas_selector.as_ref().to_string(),
+            width,
+            height,
+            ..RenderConfig::default()
+        }
+    }
 }
 
 /// Implements construction helpers for `EngineConfig`.

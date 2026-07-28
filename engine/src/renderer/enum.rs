@@ -258,3 +258,47 @@ pub enum WebGpuInitError {
     /// `Reflect::get(device, "queue")` threw an exception.
     QueueLookup(JsValue),
 }
+
+/// Errors that can occur while initializing a `WebGlRenderer`.
+///
+/// WebGL context acquisition is synchronous, so the failure modes are far
+/// fewer than `WebGpuInitError`: the canvas must resolve and the browser
+/// must hand back a `WebGl2RenderingContext`. Each variant maps to one
+/// specific failure mode; the caller decides how to surface it (typically
+/// via `Console::error` on the example side).
+#[derive(Clone, Debug)]
+pub enum WebGlInitError {
+    /// `document.querySelector(canvas_selector)` returned `None`.
+    ///
+    /// The canvas element is not in the DOM yet (or its selector is wrong).
+    /// Carries the selector string that was queried.
+    CanvasNotFound(String),
+    /// `document.querySelector(canvas_selector)` threw an exception.
+    CanvasQuery(JsValue),
+    /// `canvas.get_context("webgl2")` returned `None`.
+    ///
+    /// The browser does not support WebGL 2, or the canvas is already bound
+    /// to a different context type.
+    ContextUnavailable,
+    /// `canvas.get_context("webgl2")` threw an exception.
+    ContextLookup(JsValue),
+    /// The object returned by `canvas.get_context("webgl2")` could not be
+    /// cast to `WebGl2RenderingContext`.
+    ContextCast,
+}
+
+/// Errors that can occur while building a WebGL shader program.
+///
+/// Each variant carries the browser-provided info log so the caller can
+/// surface the exact GLSL diagnostic without losing fidelity.
+#[derive(Clone, Debug)]
+pub enum WebGlProgramError {
+    /// Vertex or fragment shader compilation failed.
+    ///
+    /// Carries the shader info log returned by `getShaderInfoLog`.
+    ShaderCompile(String),
+    /// Program linking failed (or `createProgram` returned `None`).
+    ///
+    /// Carries the program info log returned by `getProgramInfoLog`.
+    ProgramLink(String),
+}

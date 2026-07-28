@@ -64,4 +64,35 @@ pub(crate) struct UseGame2DWebGpu {
     /// banner shown when `loaded` is true but `active` is false.
     #[get(type(copy))]
     pub(crate) init_error_code: Signal<&'static str>,
+    /// The latest pointer position readout for the interaction demo.
+    ///
+    /// Formatted client coordinates (e.g. `"(123, 45)"`), or
+    /// [`GAME_2D_POINTER_EMPTY_TEXT`] before the pointer first enters the
+    /// canvas. Updated at 1 Hz together with the FPS readout so the
+    /// per-frame render loop does not re-render the page every frame.
+    pub(crate) pointer_text: Signal<String>,
+}
+
+/// Reactive state for the 2D WebGL demo page.
+#[derive(Clone, Copy, Data, Debug, Default, PartialEq)]
+pub(crate) struct UseGame2DWebGl {
+    /// The current frames-per-second measurement.
+    #[get(type(copy))]
+    pub(crate) fps: Signal<f64>,
+    /// Whether the WebGL renderer has finished initializing (success or failure).
+    #[get(type(copy))]
+    pub(crate) loaded: Signal<bool>,
+    /// Whether the WebGL renderer is active and rendering.
+    #[get(type(copy))]
+    pub(crate) active: Signal<bool>,
+    /// Whether the WebGL render loop has been kicked off in this component tree.
+    #[get(type(copy))]
+    pub(crate) loop_started: Signal<bool>,
+    /// The most recent init error code as a stable string.
+    ///
+    /// Empty string means "no error" (init still in flight or not started).
+    #[get(type(copy))]
+    pub(crate) init_error_code: Signal<&'static str>,
+    /// The latest pointer position readout for the interaction demo.
+    pub(crate) pointer_text: Signal<String>,
 }

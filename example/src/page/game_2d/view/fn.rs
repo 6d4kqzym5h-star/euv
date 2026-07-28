@@ -47,6 +47,15 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                         onclick: game_2d_on_tab_select(tab, Game2DTab::WebGpu)
                         "WebGPU"
                     }
+                    div {
+                        class: if { tab.get() == Game2DTab::WebGl } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_2d_on_tab_select(tab, Game2DTab::WebGl)
+                        "WebGL"
+                    }
                 }
                 match { tab } {
                     Game2DTab::Canvas2D => {
@@ -57,6 +66,11 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                     Game2DTab::WebGpu => {
                         div {
                             game_2d_webgpu_tab(use_game_2d_webgpu_state())
+                        }
+                    }
+                    Game2DTab::WebGl => {
+                        div {
+                            game_2d_webgl_tab(use_game_2d_webgl_state())
                         }
                     }
                 }
@@ -73,7 +87,13 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                     Game2DTab::WebGpu => {
                         p {
                             class: c_game_description()
-                            "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader, and render an RGB triangle with an animated clear color via requestAnimationFrame. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
+                            "This demo uses euv-engine's WebGpuRenderer to initialize a GPU device, create a render pipeline from a WGSL shader, and render an RGB triangle with an animated clear color via requestAnimationFrame. Move the pointer over the canvas: the triangle follows it via a uniform buffer fed by the engine's input system. Requires a WebGPU-capable browser (Chrome 113+, Edge 113+)."
+                        }
+                    }
+                    Game2DTab::WebGl => {
+                        p {
+                            class: c_game_description()
+                            "This demo uses euv-engine's WebGlRenderer to acquire a WebGL 2 context, compile a GLSL ES 3.00 program, and render an RGB triangle with an animated clear color via requestAnimationFrame. Move the pointer over the canvas: the triangle follows it via a vec2 uniform fed by the engine's input system. Works in every modern browser with WebGL 2 support."
                         }
                     }
                 }
@@ -189,8 +209,9 @@ fn game_2d_canvas_tab() -> VirtualNode {
 
 /// Renders the WebGPU demo tab content for the 2D game page.
 ///
-/// Initializes a WebGPU renderer and renders an RGB triangle with an
-/// animated background color. Shows FPS and WebGPU status.
+/// Initializes a WebGPU renderer and renders an RGB triangle that follows
+/// the pointer, with an animated background color. Shows FPS, WebGPU
+/// status, and the latest pointer position.
 ///
 /// # Returns
 ///
@@ -207,6 +228,7 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
     let init_error_code: &str = state.get_init_error_code().get();
     let status_text: &str =
         crate::page::webgpu_status::webgpu_status_text(loaded, active, init_error_code);
+    let pointer_text: String = state.get_pointer_text().get();
     html! {
         div {
             div {
@@ -227,11 +249,110 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
                         status_text
                     }
                 }
+                span {
+                    class: c_game_stats_label()
+                    "Pointer: "
+                    span {
+                        class: c_game_stats_total_value()
+                        pointer_text
+                    }
+                }
             }
             div {
                 class: c_game_canvas_wrapper(&format!("{GAME_2D_CANVAS_WIDTH} / {GAME_2D_CANVAS_HEIGHT}"))
                 canvas {
                     id: GAME_2D_WEBGPU_CANVAS_ID
+                    class: c_game_2d_canvas()
+                }
+            }
+        }
+    }
+}
+
+/// Maps the WebGL init state plus the engine's stable error code to the
+/// banner text shown next to "Status: ".
+///
+/// WebGL 2 is supported by every modern browser, so unlike the WebGPU
+/// banner this does not need a full capability decision tree: an init
+/// failure is almost always "browser too old" or a driver blocklist hit.
+///
+/// # Arguments
+///
+/// - `bool` - Whether initialization has finished (success or failure).
+/// - `bool` - Whether the renderer is active.
+/// - `&str` - The `WebGlInitError::code()` from the last init attempt.
+///
+/// # Returns
+///
+/// - `&'static str` - The banner text.
+fn webgl_status_text(loaded: bool, active: bool, init_error_code: &str) -> &'static str {
+    if !loaded {
+        return "Initializing...";
+    }
+    if active {
+        return "WebGL Active";
+    }
+    if init_error_code.is_empty() {
+        "WebGL not supported"
+    } else {
+        "WebGL init failed"
+    }
+}
+
+/// Renders the WebGL demo tab content for the 2D game page.
+///
+/// Initializes a WebGL 2 renderer and renders an RGB triangle that follows
+/// the pointer, with an animated background color. Shows FPS, WebGL
+/// status, and the latest pointer position.
+///
+/// # Returns
+///
+/// - `VirtualNode` - The WebGL tab virtual DOM tree.
+fn game_2d_webgl_tab(state: UseGame2DWebGl) -> VirtualNode {
+    let loop_started: Signal<bool> = state.get_loop_started();
+    if !loop_started.get() {
+        loop_started.set(true);
+        start_game_2d_webgl_loop(state);
+    }
+    let fps_display: String = format!("{:.1}", state.get_fps().get());
+    let loaded: bool = state.get_loaded().get();
+    let active: bool = state.get_active().get();
+    let init_error_code: &str = state.get_init_error_code().get();
+    let status_text: &str = webgl_status_text(loaded, active, init_error_code);
+    let pointer_text: String = state.get_pointer_text().get();
+    html! {
+        div {
+            div {
+                class: c_game_stats_bar()
+                span {
+                    class: c_game_stats_label()
+                    "FPS: "
+                    span {
+                        class: c_game_stats_fps_value()
+                        fps_display
+                    }
+                }
+                span {
+                    class: c_game_stats_label()
+                    "Status: "
+                    span {
+                        class: c_game_stats_count_value()
+                        status_text
+                    }
+                }
+                span {
+                    class: c_game_stats_label()
+                    "Pointer: "
+                    span {
+                        class: c_game_stats_total_value()
+                        pointer_text
+                    }
+                }
+            }
+            div {
+                class: c_game_canvas_wrapper(&format!("{GAME_2D_CANVAS_WIDTH} / {GAME_2D_CANVAS_HEIGHT}"))
+                canvas {
+                    id: GAME_2D_WEBGL_CANVAS_ID
                     class: c_game_2d_canvas()
                 }
             }

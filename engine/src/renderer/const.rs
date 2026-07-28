@@ -340,6 +340,47 @@ pub(crate) const WEBGPU_PROPERTY_EXTENT_DEPTH: &str = "depthOrArrayLayers";
 /// The JavaScript method name `createTexture` on `GpuDevice`.
 pub(crate) const WEBGPU_METHOD_CREATE_TEXTURE: &str = "createTexture";
 
+/// The JavaScript method name `createBuffer` on `GpuDevice`.
+pub(crate) const WEBGPU_METHOD_CREATE_BUFFER: &str = "createBuffer";
+
+/// The JavaScript method name `getBindGroupLayout` on `GpuRenderPipeline`.
+///
+/// With `layout: "auto"` pipelines the bind group layout is derived from the
+/// shader; index `0` corresponds to `@group(0)` in WGSL.
+pub(crate) const WEBGPU_METHOD_GET_BIND_GROUP_LAYOUT: &str = "getBindGroupLayout";
+
+/// The JavaScript method name `createBindGroup` on `GpuDevice`.
+pub(crate) const WEBGPU_METHOD_CREATE_BIND_GROUP: &str = "createBindGroup";
+
+/// The JavaScript method name `writeBuffer` on `GpuQueue`.
+///
+/// Uploads host data into a `GpuBuffer` without a staging encoder, which is
+/// the canonical way to refresh small per-frame uniform buffers.
+pub(crate) const WEBGPU_METHOD_WRITE_BUFFER: &str = "writeBuffer";
+
+/// The JavaScript method name `setBindGroup` on `GpuRenderPassEncoder`.
+pub(crate) const WEBGPU_METHOD_SET_BIND_GROUP: &str = "setBindGroup";
+
+/// The bitmask value for `GPUBufferUsage.UNIFORM` (`0x40`).
+pub(crate) const WEBGPU_BUFFER_USAGE_UNIFORM: f64 = 64.0;
+
+/// The bitmask value for `GPUBufferUsage.COPY_DST` (`0x08`).
+///
+/// Required on any buffer that is the destination of `queue.writeBuffer`.
+pub(crate) const WEBGPU_BUFFER_USAGE_COPY_DST: f64 = 8.0;
+
+/// The `entries` property key inside `GpuBindGroupDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_ENTRIES: &str = "entries";
+
+/// The `binding` property key inside `GpuBindGroupEntry`.
+pub(crate) const WEBGPU_PROPERTY_BINDING: &str = "binding";
+
+/// The `resource` property key inside `GpuBindGroupEntry`.
+pub(crate) const WEBGPU_PROPERTY_RESOURCE: &str = "resource";
+
+/// The `buffer` property key inside `GpuBufferBinding`.
+pub(crate) const WEBGPU_PROPERTY_BUFFER: &str = "buffer";
+
 /// The `resolveTarget` property key inside `GpuRenderPassColorAttachment`.
 ///
 /// Holds the destination `GpuTextureView` for MSAA resolve. Omit when MSAA is

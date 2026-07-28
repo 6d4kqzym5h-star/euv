@@ -95,8 +95,16 @@ pub(crate) const GAME_2D_WEBGPU_CANVAS_SELECTOR: &str = "#game-2d-webgpu-canvas"
 ///
 /// Renders a classic RGB triangle (red, green, blue vertices) with
 /// interpolated vertex colors. Vertex positions are derived from
-/// `@builtin(vertex_index)` so no vertex buffer is needed.
+/// `@builtin(vertex_index)` so no vertex buffer is needed. A
+/// `vec2<f32>` uniform at `@group(0) @binding(0)` offsets the whole
+/// triangle so it follows the pointer over the canvas.
 pub(crate) const GAME_2D_WEBGPU_SHADER: &str = r#"
+struct PointerUniforms {
+    offset: vec2<f32>,
+};
+
+@group(0) @binding(0) var<uniform> u_pointer: PointerUniforms;
+
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) color: vec3<f32>,
@@ -115,7 +123,7 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
         vec3<f32>(0.0, 0.0, 1.0),
     );
     var out: VertexOutput;
-    out.position = vec4<f32>(p[vi], 0.0, 1.0);
+    out.position = vec4<f32>(p[vi] + u_pointer.offset, 0.0, 1.0);
     out.color = c[vi];
     return out;
 }
@@ -123,5 +131,56 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(in.color, 1.0);
+}
+"#;
+
+/// The HTML `id` attribute value for the 2D WebGL canvas element.
+pub(crate) const GAME_2D_WEBGL_CANVAS_ID: &str = "game-2d-webgl-canvas";
+
+/// The CSS selector used to query the 2D WebGL canvas element from the DOM.
+pub(crate) const GAME_2D_WEBGL_CANVAS_SELECTOR: &str = "#game-2d-webgl-canvas";
+
+/// The placeholder shown in the pointer readout before the pointer first
+/// enters the canvas.
+pub(crate) const GAME_2D_POINTER_EMPTY_TEXT: &str = "-";
+
+/// The GLSL ES 3.00 vertex shader source for the 2D WebGL demo.
+///
+/// Mirrors [`GAME_2D_WEBGPU_SHADER`]: vertices are generated procedurally
+/// from `gl_VertexID` (attribute-less rendering, valid in WebGL 2) and a
+/// `vec2` uniform offsets the triangle to follow the pointer.
+pub(crate) const GAME_2D_WEBGL_VERTEX_SHADER: &str = r#"#version 300 es
+
+uniform vec2 u_pointer_offset;
+
+out vec3 v_color;
+
+void main() {
+    vec2 p[3] = vec2[3](
+        vec2(0.0, 0.5),
+        vec2(-0.5, -0.5),
+        vec2(0.5, -0.5)
+    );
+    vec3 c[3] = vec3[3](
+        vec3(1.0, 0.0, 0.0),
+        vec3(0.0, 1.0, 0.0),
+        vec3(0.0, 0.0, 1.0)
+    );
+    gl_Position = vec4(p[gl_VertexID] + u_pointer_offset, 0.0, 1.0);
+    v_color = c[gl_VertexID];
+}
+"#;
+
+/// The GLSL ES 3.00 fragment shader source for the 2D WebGL demo.
+pub(crate) const GAME_2D_WEBGL_FRAGMENT_SHADER: &str = r#"#version 300 es
+
+precision mediump float;
+
+in vec3 v_color;
+
+out vec4 out_color;
+
+void main() {
+    out_color = vec4(v_color, 1.0);
 }
 "#;

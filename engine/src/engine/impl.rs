@@ -19,7 +19,7 @@ impl Engine {
     ///
     /// - `EngineHandle` - The new uninitialized engine handle.
     pub fn new_handle(config: EngineConfig) -> EngineHandle {
-        EngineHandle::new(config, None, None, None)
+        EngineHandle::new(config, None, None, None, None)
     }
 
     /// Runs the engine through its complete lifecycle in a single async call.
@@ -49,6 +49,9 @@ impl Engine {
             }
             RenderBackendType::WebGpu => {
                 let _: Result<WebGpuRenderer, WebGpuInitError> = handle.init_webgpu().await;
+            }
+            RenderBackendType::WebGl => {
+                let _: Result<WebGlRenderer, WebGlInitError> = handle.init_webgl();
             }
         }
         handle.start(handler);
@@ -109,6 +112,23 @@ impl Engine {
     pub async fn webgpu_renderer(config: &RenderConfig) -> Result<WebGpuRenderer, WebGpuInitError> {
         WebGpuRenderer::init(config).await
     }
+
+    /// Creates a WebGL 2 renderer directly from a render configuration.
+    ///
+    /// Unlike [`Engine::webgpu_renderer`] this is synchronous because WebGL
+    /// context acquisition is a plain DOM call with no Promises involved.
+    ///
+    /// # Arguments
+    ///
+    /// - `&RenderConfig` - The rendering configuration.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<WebGlRenderer, WebGlInitError>` - The initialized renderer,
+    ///   or a typed error describing the specific failure.
+    pub fn webgl_renderer(config: &RenderConfig) -> Result<WebGlRenderer, WebGlInitError> {
+        WebGlRenderer::init(config)
+    }
 }
 
 /// Implements lifecycle management for `EngineHandle`.
@@ -137,11 +157,13 @@ impl EngineHandle {
             Some(r) => {
                 self.set_canvas_renderer(Some(r));
                 self.set_webgpu_renderer(None);
+                self.set_webgl_renderer(None);
                 true
             }
             None => {
                 self.set_canvas_renderer(None);
                 self.set_webgpu_renderer(None);
+                self.set_webgl_renderer(None);
                 false
             }
         }
@@ -163,7 +185,68 @@ impl EngineHandle {
         let renderer: WebGpuRenderer = WebGpuRenderer::init(render_config).await?;
         self.set_webgpu_renderer(Some(renderer.clone()));
         self.set_canvas_renderer(None);
+        self.set_webgl_renderer(None);
         Ok(renderer)
+    }
+
+    /// Initializes the WebGL 2 rendering backend.
+    ///
+    /// On success, populates `webgl_renderer` and clears the other renderer
+    /// fields. On failure, all renderer fields remain `None` and the typed
+    /// error is returned so the caller can decide how to surface it.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<WebGlRenderer, WebGlInitError>` - The initialized renderer,
+    ///   or a typed error describing the specific failure.
+    pub fn init_webgl(&mut self) -> Result<WebGlRenderer, WebGlInitError> {
+        let render_config: &RenderConfig = &self.get_config().get_render();
+        let renderer: WebGlRenderer = WebGlRenderer::init(render_config)?;
+        self.set_webgl_renderer(Some(renderer.clone()));
+        self.set_canvas_renderer(None);
+        self.set_webgpu_renderer(None);
+        Ok(renderer)
+    }
+
+    /// Attaches DOM input listeners and stores the shared input state.
+    ///
+    /// Resolves the canvas element from the render configuration's
+    /// `canvas_selector` and routes DOM events into a shared [`InputState`]:
+    /// keyboard events bind to `window`, mouse and touch events bind to the
+    /// canvas. This works for both the Canvas 2D and WebGPU backends because
+    /// either way the same `<canvas>` element receives the pointer events.
+    ///
+    /// Returns `None` (and stores nothing) if the canvas selector does not
+    /// resolve at call time - for example when called before the canvas
+    /// element is mounted into the DOM.
+    ///
+    /// The registered listeners stay alive for the lifetime of the document
+    /// (mount-only convention; there is no matching `unregister_input`).
+    ///
+    /// # Returns
+    ///
+    /// - `Option<InputStateCell>` - The shared input state cell, or `None`
+    ///   if the canvas element was not found.
+    pub fn register_input(&mut self) -> Option<InputStateCell> {
+        if let Some(existing) = self.try_get_input_cell() {
+            return Some(existing.clone());
+        }
+        let window_value: Window = window().expect("no global window exists");
+        let document_value: Document = window_value.document().expect("should have a document");
+        let render_config: &RenderConfig = &self.get_config().get_render();
+        let canvas_selector: String = render_config.get_canvas_selector();
+        let element: Element = document_value
+            .query_selector(canvas_selector.as_ref())
+            .ok()
+            .flatten()?;
+        let target: EventTarget = element.into();
+        let cell: InputStateCell = Input::attach(
+            Rc::new(EngineCell::new(InputState::default())),
+            &window_value,
+            &target,
+        );
+        self.set_input_cell(Some(cell.clone()));
+        Some(cell)
     }
 
     /// Starts the game loop with the given tick handler.
