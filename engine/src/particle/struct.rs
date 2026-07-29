@@ -46,32 +46,32 @@ pub struct ParticleConfig {
     pub(crate) speed_max: f64,
     /// The central emission direction in radians.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) angle: f64,
     /// The total cone width around `angle` in radians within which
     /// particle directions are uniformly randomized.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) spread: f64,
     /// The constant acceleration applied to every live particle.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) gravity: Vector2D,
     /// The particle color at birth.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) color_start: Color,
     /// The particle color at death. Set its alpha to 0.0 for a fade-out.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) color_end: Color,
     /// The particle radius at birth in world units.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) size_start: f64,
     /// The particle radius at death in world units.
     #[get(type(copy))]
-    #[set(pub(crate))]
+    #[new(skip)]
     pub(crate) size_end: f64,
 }
 

@@ -518,6 +518,28 @@ pub(crate) fn draw_game_3d_loading() {
     ssaa_canvas.present();
 }
 
+/// Returns `true` when no element matches the canvas selector, meaning the
+/// page or tab was navigated away from and the game loop should stop.
+///
+/// Hook-context cleanups (`App::use_cleanup`) only run on match-arm
+/// switches, not on router navigation, so RAF loops additionally guard on
+/// canvas presence to avoid simulating and rendering against a detached
+/// canvas forever.
+///
+/// # Arguments
+///
+/// - `&str` - The CSS selector of the canvas element.
+///
+/// # Returns
+///
+/// - `bool` - Whether the canvas is absent from the document.
+pub(crate) fn game_3d_canvas_detached(canvas_selector: &str) -> bool {
+    window()
+        .and_then(|window_value: Window| window_value.document())
+        .and_then(|document: Document| document.query_selector(canvas_selector).ok().flatten())
+        .is_none()
+}
+
 /// Starts the 3D game loop driven by `requestAnimationFrame`.
 ///
 /// Runs a fixed-timestep accumulator loop that updates cube rotation at a
@@ -556,6 +578,12 @@ pub(crate) fn start_game_3d_loop(
     let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
     let prev_clone: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
     let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        if game_3d_canvas_detached(GAME_3D_CANVAS_SELECTOR) {
+            // The page or tab was navigated away from: cleanups only fire
+            // on match-arm switches, so stop here instead of simulating
+            // and rendering against a detached canvas forever.
+            return;
+        }
         let window_value: Window = window().expect("no global window exists");
         let performance: Performance = window_value
             .performance()
@@ -1288,7 +1316,9 @@ pub(crate) fn start_game_3d_webgpu_loop(
         let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
         let prev_for_loop: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            if cancelled_for_loop.get() {
+            // Stop on tab-switch cleanup (`cancelled`) or when the canvas
+            // left the document (router navigation fires no cleanup).
+            if cancelled_for_loop.get() || game_3d_canvas_detached(GAME_3D_WEBGPU_CANVAS_SELECTOR) {
                 return;
             }
             let window_value: Window = window().expect("no global window exists");
@@ -1565,7 +1595,9 @@ pub(crate) fn start_game_3d_webgl_loop(
         let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
         let prev_for_loop: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            if cancelled_for_loop.get() {
+            // Stop on tab-switch cleanup (`cancelled`) or when the canvas
+            // left the document (router navigation fires no cleanup).
+            if cancelled_for_loop.get() || game_3d_canvas_detached(GAME_3D_WEBGL_CANVAS_SELECTOR) {
                 return;
             }
             let window_value: Window = window().expect("no global window exists");

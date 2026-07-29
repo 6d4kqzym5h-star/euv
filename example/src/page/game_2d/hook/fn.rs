@@ -567,6 +567,12 @@ pub(crate) fn start_game_2d_loop(
     let dirty_clone: Rc<Cell<bool>> = resize_dirty.clone();
     let prev_clone: Rc<RefCell<Vec<Vector2D>>> = prev_positions.clone();
     let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        if game_2d_canvas_detached(GAME_2D_CANVAS_SELECTOR) {
+            // The page or tab was navigated away from: cleanups only fire
+            // on match-arm switches, so stop here instead of simulating
+            // and rendering against a detached canvas forever.
+            return;
+        }
         let window_value: Window = window().expect("no global window exists");
         let performance: Performance = window_value
             .performance()
@@ -761,6 +767,25 @@ pub(crate) fn game_2d_canvas_element(canvas_selector: &str) -> Option<HtmlCanvas
         .ok()
         .flatten()?;
     Some(element.unchecked_into())
+}
+
+/// Returns `true` when no element matches the canvas selector, meaning the
+/// page or tab was navigated away from and the game loop should stop.
+///
+/// Hook-context cleanups (`App::use_cleanup`) only run on match-arm
+/// switches, not on router navigation, so RAF loops additionally guard on
+/// canvas presence to avoid simulating and rendering against a detached
+/// canvas forever.
+///
+/// # Arguments
+///
+/// - `&str` - The CSS selector of the canvas element.
+///
+/// # Returns
+///
+/// - `bool` - Whether the canvas is absent from the document.
+pub(crate) fn game_2d_canvas_detached(canvas_selector: &str) -> bool {
+    game_2d_canvas_element(canvas_selector).is_none()
 }
 
 /// Parses a `#rrggbb` CSS color string into 0.0-1.0 RGB floats.
@@ -1058,7 +1083,9 @@ pub(crate) fn start_game_2d_webgpu_loop(
         let prev_positions: Rc<RefCell<Vec<Vector2D>>> = Rc::new(RefCell::new(Vec::new()));
         let prev_for_loop: Rc<RefCell<Vec<Vector2D>>> = prev_positions.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            if cancelled_for_loop.get() {
+            // Stop on tab-switch cleanup (`cancelled`) or when the canvas
+            // left the document (router navigation fires no cleanup).
+            if cancelled_for_loop.get() || game_2d_canvas_detached(GAME_2D_WEBGPU_CANVAS_SELECTOR) {
                 return;
             }
             let window_value: Window = window().expect("no global window exists");
@@ -1319,7 +1346,9 @@ pub(crate) fn start_game_2d_webgl_loop(
         let prev_positions: Rc<RefCell<Vec<Vector2D>>> = Rc::new(RefCell::new(Vec::new()));
         let prev_for_loop: Rc<RefCell<Vec<Vector2D>>> = prev_positions.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            if cancelled_for_loop.get() {
+            // Stop on tab-switch cleanup (`cancelled`) or when the canvas
+            // left the document (router navigation fires no cleanup).
+            if cancelled_for_loop.get() || game_2d_canvas_detached(GAME_2D_WEBGL_CANVAS_SELECTOR) {
                 return;
             }
             let window_value: Window = window().expect("no global window exists");

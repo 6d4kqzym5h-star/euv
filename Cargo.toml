@@ -298,13 +298,13 @@ wasm-opt = [
 ]
 
 [profile.dev]
-incremental = true
-opt-level = 0
-lto = false
+incremental = false
+opt-level = 3
+lto = true
 panic = "unwind"
 debug = false
-codegen-units = 16
-strip = "none"
+codegen-units = 1
+strip = "debuginfo"
 
 [profile.release]
 incremental = false
@@ -313,7 +313,10 @@ lto = true
 panic = "unwind"
 debug = false
 codegen-units = 1
-strip = true
+strip = "debuginfo"
+
+[profile.dev.package.euv-example]
+opt-level = "z"
 
 [profile.release.package.euv-example]
 opt-level = "z"

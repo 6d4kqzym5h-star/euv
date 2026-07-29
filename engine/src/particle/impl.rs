@@ -68,21 +68,21 @@ impl Default for ParticleRng {
 /// Implements `Default` for `ParticleConfig` with sensible engine defaults.
 impl Default for ParticleConfig {
     fn default() -> ParticleConfig {
-        ParticleConfig::new(
-            PARTICLE_DEFAULT_EMISSION_RATE,
-            PARTICLE_DEFAULT_MAX_COUNT,
-            PARTICLE_DEFAULT_LIFETIME_MIN,
-            PARTICLE_DEFAULT_LIFETIME_MAX,
-            PARTICLE_DEFAULT_SPEED_MIN,
-            PARTICLE_DEFAULT_SPEED_MAX,
-            PARTICLE_DEFAULT_ANGLE,
-            PARTICLE_DEFAULT_SPREAD,
-            Vector2D::zero(),
-            Color::white(),
-            Color::transparent(),
-            PARTICLE_DEFAULT_SIZE_START,
-            PARTICLE_DEFAULT_SIZE_END,
-        )
+        ParticleConfig {
+            emission_rate: PARTICLE_DEFAULT_EMISSION_RATE,
+            max_particles: PARTICLE_DEFAULT_MAX_COUNT,
+            lifetime_min: PARTICLE_DEFAULT_LIFETIME_MIN,
+            lifetime_max: PARTICLE_DEFAULT_LIFETIME_MAX,
+            speed_min: PARTICLE_DEFAULT_SPEED_MIN,
+            speed_max: PARTICLE_DEFAULT_SPEED_MAX,
+            angle: PARTICLE_DEFAULT_ANGLE,
+            spread: PARTICLE_DEFAULT_SPREAD,
+            gravity: Vector2D::zero(),
+            color_start: Color::white(),
+            color_end: Color::transparent(),
+            size_start: PARTICLE_DEFAULT_SIZE_START,
+            size_end: PARTICLE_DEFAULT_SIZE_END,
+        }
     }
 }
 
