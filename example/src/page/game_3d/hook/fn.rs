@@ -324,6 +324,64 @@ pub(crate) fn update_cubes(cubes: &mut [Cube3D], delta_time: f64) {
     }
 }
 
+/// Snapshots the current cube rotations into the previous-step buffer.
+///
+/// Truncates or extends the buffer to match the cube list so index `i`
+/// always pairs with cube `i`.
+///
+/// # Arguments
+///
+/// - `&mut Vec<Quaternion>` - The previous-step rotation buffer to overwrite.
+/// - `&[Cube3D]` - The current cube list.
+pub(crate) fn snapshot_cube_rotations(prev_rotations: &mut Vec<Quaternion>, cubes: &[Cube3D]) {
+    prev_rotations.truncate(cubes.len());
+    for (index, cube) in cubes.iter().enumerate() {
+        if index < prev_rotations.len() {
+            prev_rotations[index] = cube.rotation;
+        } else {
+            prev_rotations.push(cube.rotation);
+        }
+    }
+}
+
+/// Builds a render copy of the cube list with rotations interpolated between
+/// the previous physics step and the current one via `Quaternion::slerp`.
+///
+/// `alpha` is the leftover accumulator fraction (`accumulator / timestep`)
+/// clamped to `[0.0, 1.0]`. Interpolating at render time decouples the
+/// 60 Hz physics cadence from the display refresh rate: without it a 120 Hz
+/// display presents each physics state twice (visible stepping), and a 60 Hz
+/// display alternates zero- and double-step frames (visible judder), even
+/// though the FPS counter reads high in both cases. Cubes without a previous
+/// entry render at their current rotation.
+///
+/// # Arguments
+///
+/// - `&[Cube3D]` - The current cube list.
+/// - `&[Quaternion]` - The previous-step rotation buffer.
+/// - `f64` - The interpolation factor in `[0.0, 1.0]`.
+///
+/// # Returns
+///
+/// - `Vec<Cube3D>` - The interpolated cube list for rendering.
+pub(crate) fn interpolate_cubes(
+    cubes: &[Cube3D],
+    prev_rotations: &[Quaternion],
+    alpha: f64,
+) -> Vec<Cube3D> {
+    cubes
+        .iter()
+        .enumerate()
+        .map(|(index, cube): (usize, &Cube3D)| {
+            let mut render_cube: Cube3D = cube.clone();
+            if let Some(prev_rotation) = prev_rotations.get(index) {
+                render_cube.rotation = prev_rotation.slerp(cube.rotation, alpha);
+            }
+            render_cube
+        })
+        .collect()
+}
+
 /// Queries the canvas element and creates an `SsaaCanvas` for high-quality rendering.
 ///
 /// # Returns
@@ -463,7 +521,9 @@ pub(crate) fn draw_game_3d_loading() {
 /// Starts the 3D game loop driven by `requestAnimationFrame`.
 ///
 /// Runs a fixed-timestep accumulator loop that updates cube rotation at a
-/// constant rate and renders every frame. The canvas context is cached
+/// constant rate and renders every frame, interpolating cube rotations
+/// between the previous and current physics steps so motion stays smooth at
+/// any display refresh rate. The canvas context is cached
 /// once at startup. Updates the FPS signal approximately every second.
 ///
 /// # Arguments
@@ -493,6 +553,8 @@ pub(crate) fn start_game_3d_loop(
     let cell_clone: RafClosureCell = closure_cell.clone();
     let context_clone: Rc<RefCell<Option<SsaaCanvas>>> = canvas_ssaa.clone();
     let dirty_clone: Rc<Cell<bool>> = resize_dirty.clone();
+    let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
+    let prev_clone: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
     let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         let window_value: Window = window().expect("no global window exists");
         let performance: Performance = window_value
@@ -506,17 +568,21 @@ pub(crate) fn start_game_3d_loop(
             (current_time - prev).min(0.25)
         };
         last_clone.set(current_time);
-        acc_clone.set(acc_clone.get() + frame_time);
         if state.get_running().get() {
+            // Accumulate only while running: a paused accumulator would grow
+            // unboundedly and burst catch-up physics steps on resume.
+            acc_clone.set(acc_clone.get() + frame_time);
             if state.get_auto_rotate().get() {
                 let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
                 angles.yaw.set(yaw);
             }
             while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                snapshot_cube_rotations(&mut prev_clone.borrow_mut(), &cubes.borrow());
                 update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
                 acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
             }
         }
+        let alpha: f64 = (acc_clone.get() / GAME_3D_FIXED_TIMESTEP).clamp(0.0, 1.0);
         if dirty_clone.get() {
             *context_clone.borrow_mut() = None;
             dirty_clone.set(false);
@@ -526,7 +592,9 @@ pub(crate) fn start_game_3d_loop(
         }
         if let Some(ssaa_canvas) = context_clone.borrow().as_ref() {
             let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
-            render_scene(ssaa_canvas, &cubes.borrow(), &camera);
+            let render_cubes: Vec<Cube3D> =
+                interpolate_cubes(&cubes.borrow(), &prev_clone.borrow(), alpha);
+            render_scene(ssaa_canvas, &render_cubes, &camera);
         }
         frame_clone.set(frame_clone.get() + 1);
         fps_clone.set(fps_clone.get() + frame_time);
@@ -1217,6 +1285,8 @@ pub(crate) fn start_game_3d_webgpu_loop(
         let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
         let resize_dirty_for_loop: Rc<Cell<bool>> = resize_dirty.clone();
         let cancelled_for_loop: Rc<Cell<bool>> = cancelled.clone();
+        let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
+        let prev_for_loop: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             if cancelled_for_loop.get() {
                 return;
@@ -1233,17 +1303,21 @@ pub(crate) fn start_game_3d_webgpu_loop(
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
-            acc_clone.set(acc_clone.get() + frame_time);
             if game.get_running().get() {
+                // Accumulate only while running: a paused accumulator would grow
+                // unboundedly and burst catch-up physics steps on resume.
+                acc_clone.set(acc_clone.get() + frame_time);
                 if game.get_auto_rotate().get() {
                     let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
                     angles.yaw.set(yaw);
                 }
                 while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                    snapshot_cube_rotations(&mut prev_for_loop.borrow_mut(), &cubes.borrow());
                     update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
                     acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
                 }
             }
+            let alpha: f64 = (acc_clone.get() / GAME_3D_FIXED_TIMESTEP).clamp(0.0, 1.0);
             // The resize-debounce path only clears the flag and computes
             // the new dimensions. The actual `renderer.resize(...)` call
             // is folded into the render block below so we hold
@@ -1289,10 +1363,10 @@ pub(crate) fn start_game_3d_webgpu_loop(
                     let _ = renderer.resize(new_physical_width, new_physical_height);
                 }
                 let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
-                let borrowed_cubes = cubes.borrow();
-                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&borrowed_cubes, &camera);
-                let vertex_count: u32 = (borrowed_cubes.len() * 36) as u32;
-                drop(borrowed_cubes);
+                let render_cubes: Vec<Cube3D> =
+                    interpolate_cubes(&cubes.borrow(), &prev_for_loop.borrow(), alpha);
+                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&render_cubes, &camera);
+                let vertex_count: u32 = (render_cubes.len() * 36) as u32;
                 renderer.update_uniform_buffer(&buffer_for_loop, &uniform_data);
                 let (r, g, b) = clear_color_for_loop.get();
                 renderer.render_frame_with_bind_group(
@@ -1488,6 +1562,8 @@ pub(crate) fn start_game_3d_webgl_loop(
         let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
         let resize_dirty_for_loop: Rc<Cell<bool>> = resize_dirty.clone();
         let cancelled_for_loop: Rc<Cell<bool>> = cancelled.clone();
+        let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
+        let prev_for_loop: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             if cancelled_for_loop.get() {
                 return;
@@ -1504,17 +1580,21 @@ pub(crate) fn start_game_3d_webgl_loop(
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
-            acc_clone.set(acc_clone.get() + frame_time);
             if game.get_running().get() {
+                // Accumulate only while running: a paused accumulator would grow
+                // unboundedly and burst catch-up physics steps on resume.
+                acc_clone.set(acc_clone.get() + frame_time);
                 if game.get_auto_rotate().get() {
                     let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
                     angles.yaw.set(yaw);
                 }
                 while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                    snapshot_cube_rotations(&mut prev_for_loop.borrow_mut(), &cubes.borrow());
                     update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
                     acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
                 }
             }
+            let alpha: f64 = (acc_clone.get() / GAME_3D_FIXED_TIMESTEP).clamp(0.0, 1.0);
             let resize_dirty: bool = if resize_dirty_for_loop.get() {
                 resize_dirty_for_loop.set(false);
                 true
@@ -1537,10 +1617,10 @@ pub(crate) fn start_game_3d_webgl_loop(
                     renderer.resize(new_physical_width, new_physical_height);
                 }
                 let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
-                let borrowed_cubes = cubes.borrow();
-                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&borrowed_cubes, &camera);
-                let vertex_count: i32 = (borrowed_cubes.len() * 36) as i32;
-                drop(borrowed_cubes);
+                let render_cubes: Vec<Cube3D> =
+                    interpolate_cubes(&cubes.borrow(), &prev_for_loop.borrow(), alpha);
+                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&render_cubes, &camera);
+                let vertex_count: i32 = (render_cubes.len() * 36) as i32;
                 renderer.set_uniform_4fv(&program_for_loop, "u_view_proj[0]", &uniform_data[0..16]);
                 renderer.set_uniform_4fv(&program_for_loop, "u_camera_pos", &uniform_data[16..20]);
                 renderer.set_uniform_4fv(&program_for_loop, "u_cubes[0]", &uniform_data[20..]);
