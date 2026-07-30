@@ -4,8 +4,8 @@ pub(crate) enum Game2DTab {
     /// The Canvas 2D rendering backend tab.
     #[default]
     Canvas2D,
-    /// The WebGPU rendering backend tab.
-    WebGpu,
     /// The WebGL 2 rendering backend tab.
     WebGl,
+    /// The WebGPU rendering backend tab.
+    WebGpu,
 }

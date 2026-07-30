@@ -47,6 +47,10 @@ pub(crate) const GAME_2D_LOOP_START_DELAY_MILLIS: i32 = 360;
 /// The JavaScript property name for the canvas fill style.
 pub(crate) const GAME_2D_PROPERTY_FILL_STYLE: &str = "fillStyle";
 
+/// The CSS property name for the computed background colour, used to fill
+/// the loading overlay so the scene does not bleed through.
+pub(crate) const GAME_2D_PROPERTY_BACKGROUND_COLOR: &str = "background-color";
+
 /// The loading text displayed on the canvas before the game loop starts.
 pub(crate) const GAME_2D_LOADING_TEXT: &str = "Loading...";
 
@@ -62,6 +66,13 @@ pub(crate) const GAME_2D_LOADING_FONT_SIZE_RATIO: f64 = 0.04;
 /// and `text-on-accent` is the theme variable that contrasts with the accent
 /// color (foreground/background equal accent in this monochrome design).
 pub(crate) const GAME_2D_LOADING_COLOR_VAR: &str = "--text-on-accent";
+
+/// The minimum time in milliseconds the loading overlay stays visible.
+///
+/// Fast init paths (notably synchronous WebGL init) would otherwise add and
+/// remove the overlay canvas within a single frame, so the browser never
+/// paints the loading state on tab switches.
+pub(crate) const GAME_2D_LOADING_MIN_MILLIS: i32 = 400;
 
 /// The palette of ball colors used for random color assignment.
 pub(crate) const GAME_2D_BALL_COLORS: &[&str] = &[

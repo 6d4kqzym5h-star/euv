@@ -39,15 +39,6 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                         "2D"
                     }
                     div {
-                        class: if { tab.get() == Game2DTab::WebGpu } {
-                            c_tab_item_active()
-                        } else {
-                            c_tab_item_inactive()
-                        }
-                        onclick: game_2d_on_tab_select(tab, Game2DTab::WebGpu)
-                        "GPU"
-                    }
-                    div {
                         class: if { tab.get() == Game2DTab::WebGl } {
                             c_tab_item_active()
                         } else {
@@ -56,6 +47,15 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                         onclick: game_2d_on_tab_select(tab, Game2DTab::WebGl)
                         "GL"
                     }
+                    div {
+                        class: if { tab.get() == Game2DTab::WebGpu } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_2d_on_tab_select(tab, Game2DTab::WebGpu)
+                        "GPU"
+                    }
                 }
                 match { tab } {
                     Game2DTab::Canvas2D => {
@@ -63,14 +63,14 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                             game_2d_canvas_tab()
                         }
                     }
-                    Game2DTab::WebGpu => {
-                        div {
-                            game_2d_webgpu_tab(use_game_2d_webgpu_state())
-                        }
-                    }
                     Game2DTab::WebGl => {
                         div {
                             game_2d_webgl_tab(use_game_2d_webgl_state())
+                        }
+                    }
+                    Game2DTab::WebGpu => {
+                        div {
+                            game_2d_webgpu_tab(use_game_2d_webgpu_state())
                         }
                     }
                 }
@@ -309,9 +309,11 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
                     onclick: on_canvas_click
                     ontouchstart: on_canvas_touch
                 }
-                canvas {
-                    id: GAME_2D_WEBGPU_LOADING_CANVAS_ID
-                    class: c_game_loading_overlay()
+                if { !state.get_loaded().get() } {
+                    canvas {
+                        id: GAME_2D_WEBGPU_LOADING_CANVAS_ID
+                        class: c_game_loading_overlay()
+                    }
                 }
             }
             div {
@@ -462,9 +464,11 @@ fn game_2d_webgl_tab(state: UseGame2DWebGl) -> VirtualNode {
                     onclick: on_canvas_click
                     ontouchstart: on_canvas_touch
                 }
-                canvas {
-                    id: GAME_2D_WEBGL_LOADING_CANVAS_ID
-                    class: c_game_loading_overlay()
+                if { !state.get_loaded().get() } {
+                    canvas {
+                        id: GAME_2D_WEBGL_LOADING_CANVAS_ID
+                        class: c_game_loading_overlay()
+                    }
                 }
             }
             div {

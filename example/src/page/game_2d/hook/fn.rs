@@ -500,28 +500,44 @@ pub(crate) fn draw_game_2d_loading(target_selector: &str, color_source_selector:
     };
     let context: &CanvasRenderingContext2d = ssaa_canvas.get_offscreen_context();
     context.clear_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
-    let font_size: f64 = GAME_2D_CANVAS_HEIGHT * GAME_2D_LOADING_FONT_SIZE_RATIO;
-    let font: String = format!("{font_size}px {GAME_2D_LOADING_FONT_FAMILY}");
-    // Read the loading text color from the CSS variable via getComputedStyle.
-    // Query the source element so the theme variable (defined on a parent
-    // container, not on the document root) is inherited correctly.
-    let loading_color: String = window_value
+    let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);
+    // Read the computed style of the source element once so the theme
+    // variables (defined on a parent container, not on the document root)
+    // are inherited correctly.
+    let computed_style: Option<CssStyleDeclaration> = window_value
         .document()
         .expect("should have a document")
         .query_selector(color_source_selector)
         .ok()
         .flatten()
-        .and_then(|element: Element| {
-            window_value
-                .get_computed_style(&element)
+        .and_then(|element: Element| window_value.get_computed_style(&element).ok().flatten());
+    // Fill the canvas background colour first so the loading state reads as
+    // a solid screen and the scene behind the overlay does not bleed through.
+    let background_color: String = computed_style
+        .as_ref()
+        .and_then(|style: &CssStyleDeclaration| {
+            style
+                .get_property_value(GAME_2D_PROPERTY_BACKGROUND_COLOR)
                 .ok()
-                .flatten()
-                .and_then(|style: CssStyleDeclaration| {
-                    style.get_property_value(GAME_2D_LOADING_COLOR_VAR).ok()
-                })
         })
+        .unwrap_or_default();
+    if !background_color.is_empty() {
+        let _ = Reflect::set(
+            context,
+            &fill_style_key,
+            &JsValue::from_str(&background_color),
+        );
+        context.fill_rect(0.0, 0.0, GAME_2D_CANVAS_WIDTH, GAME_2D_CANVAS_HEIGHT);
+    }
+    let font_size: f64 = GAME_2D_CANVAS_HEIGHT * GAME_2D_LOADING_FONT_SIZE_RATIO;
+    let font: String = format!("{font_size}px {GAME_2D_LOADING_FONT_FAMILY}");
+    // Read the loading text color from the CSS variable via getComputedStyle.
+    let loading_color: String = computed_style
+        .and_then(|style: CssStyleDeclaration| {
+            style.get_property_value(GAME_2D_LOADING_COLOR_VAR).ok()
+        })
+        .filter(|color: &String| !color.is_empty())
         .unwrap_or_else(|| "#ffffff".to_string());
-    let fill_style_key: JsValue = JsValue::from_str(GAME_2D_PROPERTY_FILL_STYLE);
     let _ = Reflect::set(context, &fill_style_key, &JsValue::from_str(&loading_color));
     context.set_font(&font);
     context.set_text_align("center");
@@ -532,6 +548,28 @@ pub(crate) fn draw_game_2d_loading(target_selector: &str, color_source_selector:
         GAME_2D_CANVAS_HEIGHT * 0.5,
     );
     ssaa_canvas.present();
+}
+
+/// Sets the backend `loaded` signal after a short delay so the loading
+/// overlay is actually painted before it is removed.
+///
+/// Synchronous WebGL init (and fast WebGPU init) would otherwise add and
+/// remove the overlay canvas within a single frame, so the browser never
+/// paints the loading state when switching tabs.
+///
+/// # Arguments
+///
+/// - `Signal<bool>` - The backend `loaded` signal to set.
+/// - `i32` - The delay in milliseconds before setting the signal.
+fn set_loaded_delayed(loaded: Signal<bool>, millis: i32) {
+    let loaded_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        loaded.set(true);
+    }));
+    let loaded_callback: Function = loaded_closure.as_ref().unchecked_ref::<Function>().clone();
+    loaded_closure.forget();
+    let loaded_window: Window = window().expect("no global window exists");
+    let _ = loaded_window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(&loaded_callback, millis);
 }
 
 /// Starts the 2D game loop driven by `requestAnimationFrame`.
@@ -1041,13 +1079,10 @@ pub(crate) fn start_game_2d_webgpu_loop(
             GAME_2D_WEBGPU_CANVAS_SELECTOR,
         );
     }));
-    let loading_callback: Function = loading_closure
-        .as_ref()
-        .unchecked_ref::<Function>()
-        .clone();
+    let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
     loading_closure.forget();
-    let _ = loading_window
-        .set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
+    let _ =
+        loading_window.set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     spawn_local(async move {
         let config: RenderConfig = RenderConfig::webgpu(
             GAME_2D_WEBGPU_CANVAS_SELECTOR,
@@ -1078,7 +1113,9 @@ pub(crate) fn start_game_2d_webgpu_loop(
         ));
         let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
-        init_state.get_loaded().set(true);
+        // Delay flipping `loaded` so the loading overlay stays painted for a
+        // minimum visible duration even when init completes instantly.
+        set_loaded_delayed(init_state.get_loaded(), GAME_2D_LOADING_MIN_MILLIS);
         *renderer_rc.borrow_mut() = Some(renderer);
         let pipeline_rc: Rc<JsValue> = Rc::new(pipeline);
         let buffer_rc: Rc<JsValue> = Rc::new(uniform_buffer);
@@ -1315,13 +1352,10 @@ pub(crate) fn start_game_2d_webgl_loop(
             GAME_2D_WEBGL_CANVAS_SELECTOR,
         );
     }));
-    let loading_callback: Function = loading_closure
-        .as_ref()
-        .unchecked_ref::<Function>()
-        .clone();
+    let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
     loading_closure.forget();
-    let _ = loading_window
-        .set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
+    let _ =
+        loading_window.set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     spawn_local(async move {
         if cancelled_for_init.get() {
             return;
@@ -1359,7 +1393,9 @@ pub(crate) fn start_game_2d_webgl_loop(
         ));
         let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
-        init_state.get_loaded().set(true);
+        // Delay flipping `loaded` so the loading overlay stays painted for a
+        // minimum visible duration even when init completes instantly.
+        set_loaded_delayed(init_state.get_loaded(), GAME_2D_LOADING_MIN_MILLIS);
         *renderer_rc.borrow_mut() = Some(renderer);
         let program_rc: Rc<WebGlProgram> = Rc::new(program);
         let last_time: Rc<Cell<f64>> = Rc::new(Cell::new(-1.0));
