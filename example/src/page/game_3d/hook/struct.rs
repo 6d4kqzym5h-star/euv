@@ -83,3 +83,25 @@ pub(crate) struct UseGame3DWebGpu {
     #[get(type(copy))]
     pub(crate) init_error_code: Signal<&'static str>,
 }
+
+/// Reactive state for the 3D WebGL demo page.
+#[derive(Clone, Copy, Data, Debug, Default, PartialEq)]
+pub(crate) struct UseGame3DWebGl {
+    /// The current frames-per-second measurement.
+    #[get(type(copy))]
+    pub(crate) fps: Signal<f64>,
+    /// Whether the WebGL renderer has finished initializing (success or failure).
+    #[get(type(copy))]
+    pub(crate) loaded: Signal<bool>,
+    /// Whether the WebGL renderer is active and rendering.
+    #[get(type(copy))]
+    pub(crate) active: Signal<bool>,
+    /// Whether the WebGL render loop has been kicked off in this component tree.
+    #[get(type(copy))]
+    pub(crate) loop_started: Signal<bool>,
+    /// The most recent init error code as a stable string.
+    ///
+    /// Empty string means "no error" (init still in flight or not started).
+    #[get(type(copy))]
+    pub(crate) init_error_code: Signal<&'static str>,
+}

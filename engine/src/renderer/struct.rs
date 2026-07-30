@@ -245,3 +245,27 @@ pub struct WebGpuRenderer {
     #[get(type(clone))]
     pub(crate) multisample_view: Option<JsValue>,
 }
+
+/// A WebGL 2 rendering backend wrapping the `WebGl2RenderingContext`.
+///
+/// Unlike `WebGpuRenderer`, which stores all GPU handles as opaque `JsValue`s,
+/// WebGL exposes concrete `web_sys` types, so the context and canvas are kept
+/// as strongly typed values. Shader programs created via
+/// [`WebGlRenderer::create_program`] are managed by the caller.
+///
+/// Construct via [`WebGlRenderer::init`], which resolves the canvas from the
+/// [`RenderConfig`], applies device-pixel-ratio scaling to the backing store,
+/// and acquires the `webgl2` context.
+#[derive(Clone, Data)]
+pub struct WebGlRenderer {
+    /// The WebGL 2 rendering context used for all GL calls.
+    pub(crate) context: WebGl2RenderingContext,
+    /// The HTML canvas element backing the WebGL context.
+    pub(crate) canvas: HtmlCanvasElement,
+    /// The physical pixel width of the canvas backing store.
+    #[get(type(copy))]
+    pub(crate) width: u32,
+    /// The physical pixel height of the canvas backing store.
+    #[get(type(copy))]
+    pub(crate) height: u32,
+}

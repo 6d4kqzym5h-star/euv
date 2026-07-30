@@ -91,37 +91,129 @@ pub(crate) const GAME_2D_WEBGPU_CANVAS_ID: &str = "game-2d-webgpu-canvas";
 /// The CSS selector used to query the 2D WebGPU canvas element from the DOM.
 pub(crate) const GAME_2D_WEBGPU_CANVAS_SELECTOR: &str = "#game-2d-webgpu-canvas";
 
-/// The WGSL shader source for the 2D WebGPU demo.
+/// The WGSL shader source for the 2D WebGPU bouncing balls demo.
 ///
-/// Renders a classic RGB triangle (red, green, blue vertices) with
-/// interpolated vertex colors. Vertex positions are derived from
-/// `@builtin(vertex_index)` so no vertex buffer is needed.
+/// Renders every ball as a camera-facing quad (two triangles per ball,
+/// vertices generated procedurally from `@builtin(vertex_index)`) and
+/// discards fragments outside the unit circle in the fragment stage.
+/// Ball data (center, radius, color) and the logical canvas size are
+/// read from the `@group(0) @binding(0)` uniform buffer, which the host
+/// refreshes each frame. The draw call issues `ball_count * 6` vertices.
 pub(crate) const GAME_2D_WEBGPU_SHADER: &str = r#"
+struct BallData {
+    pos_radius: vec4<f32>,
+    color: vec4<f32>,
+};
+
+struct BallsUniforms {
+    canvas_size: vec2<f32>,
+    _pad: vec2<f32>,
+    balls: array<BallData, 100>,
+};
+
+@group(0) @binding(0) var<uniform> u_balls: BallsUniforms;
+
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
-    @location(0) color: vec3<f32>,
+    @location(0) uv: vec2<f32>,
+    @location(1) color: vec3<f32>,
 };
 
 @vertex
 fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
-    var p = array<vec2<f32>, 3>(
-        vec2<f32>(0.0, 0.5),
-        vec2<f32>(-0.5, -0.5),
-        vec2<f32>(0.5, -0.5),
+    var corners = array<vec2<f32>, 6>(
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>(1.0, -1.0),
+        vec2<f32>(1.0, 1.0),
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>(1.0, 1.0),
+        vec2<f32>(-1.0, 1.0),
     );
-    var c = array<vec3<f32>, 3>(
-        vec3<f32>(1.0, 0.0, 0.0),
-        vec3<f32>(0.0, 1.0, 0.0),
-        vec3<f32>(0.0, 0.0, 1.0),
+    let ball = u_balls.balls[vi / 6u];
+    let corner = corners[vi % 6u];
+    let world = ball.pos_radius.xy + corner * ball.pos_radius.z;
+    let clip = vec2<f32>(
+        world.x / u_balls.canvas_size.x * 2.0 - 1.0,
+        1.0 - world.y / u_balls.canvas_size.y * 2.0,
     );
     var out: VertexOutput;
-    out.position = vec4<f32>(p[vi], 0.0, 1.0);
-    out.color = c[vi];
+    out.position = vec4<f32>(clip, 0.0, 1.0);
+    out.uv = corner;
+    out.color = ball.color.rgb;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    if dot(in.uv, in.uv) > 1.0 {
+        discard;
+    }
     return vec4<f32>(in.color, 1.0);
+}
+"#;
+
+/// The HTML `id` attribute value for the 2D WebGL canvas element.
+pub(crate) const GAME_2D_WEBGL_CANVAS_ID: &str = "game-2d-webgl-canvas";
+
+/// The CSS selector used to query the 2D WebGL canvas element from the DOM.
+pub(crate) const GAME_2D_WEBGL_CANVAS_SELECTOR: &str = "#game-2d-webgl-canvas";
+
+/// The GLSL ES 3.00 vertex shader source for the 2D WebGL bouncing balls demo.
+///
+/// Mirrors the WGSL balls shader: per-ball quads are generated procedurally
+/// from `gl_VertexID` (attribute-less rendering, valid in WebGL 2), and the
+/// per-frame ball data arrives in `vec4` uniform arrays uploaded via
+/// `uniform4fv`. The draw call issues `ball_count * 6` vertices.
+pub(crate) const GAME_2D_WEBGL_VERTEX_SHADER: &str = r#"#version 300 es
+
+uniform vec2 u_canvas_size;
+uniform vec4 u_ball_pos_radius[100];
+uniform vec4 u_ball_color[100];
+
+out vec2 v_uv;
+out vec3 v_color;
+
+void main() {
+    vec2 corners[6] = vec2[6](
+        vec2(-1.0, -1.0),
+        vec2(1.0, -1.0),
+        vec2(1.0, 1.0),
+        vec2(-1.0, -1.0),
+        vec2(1.0, 1.0),
+        vec2(-1.0, 1.0)
+    );
+    int ball_index = gl_VertexID / 6;
+    vec4 ball = u_ball_pos_radius[ball_index];
+    vec2 corner = corners[gl_VertexID % 6];
+    vec2 world = ball.xy + corner * ball.z;
+    gl_Position = vec4(
+        world.x / u_canvas_size.x * 2.0 - 1.0,
+        1.0 - world.y / u_canvas_size.y * 2.0,
+        0.0,
+        1.0
+    );
+    v_uv = corner;
+    v_color = u_ball_color[ball_index].rgb;
+}
+"#;
+
+/// The GLSL ES 3.00 fragment shader source for the 2D WebGL bouncing balls demo.
+///
+/// Discards fragments outside the unit circle so each quad renders as a
+/// filled ball.
+pub(crate) const GAME_2D_WEBGL_FRAGMENT_SHADER: &str = r#"#version 300 es
+
+precision mediump float;
+
+in vec2 v_uv;
+in vec3 v_color;
+
+out vec4 out_color;
+
+void main() {
+    if (dot(v_uv, v_uv) > 1.0) {
+        discard;
+    }
+    out_color = vec4(v_color, 1.0);
 }
 "#;

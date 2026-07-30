@@ -324,6 +324,64 @@ pub(crate) fn update_cubes(cubes: &mut [Cube3D], delta_time: f64) {
     }
 }
 
+/// Snapshots the current cube rotations into the previous-step buffer.
+///
+/// Truncates or extends the buffer to match the cube list so index `i`
+/// always pairs with cube `i`.
+///
+/// # Arguments
+///
+/// - `&mut Vec<Quaternion>` - The previous-step rotation buffer to overwrite.
+/// - `&[Cube3D]` - The current cube list.
+pub(crate) fn snapshot_cube_rotations(prev_rotations: &mut Vec<Quaternion>, cubes: &[Cube3D]) {
+    prev_rotations.truncate(cubes.len());
+    for (index, cube) in cubes.iter().enumerate() {
+        if index < prev_rotations.len() {
+            prev_rotations[index] = cube.rotation;
+        } else {
+            prev_rotations.push(cube.rotation);
+        }
+    }
+}
+
+/// Builds a render copy of the cube list with rotations interpolated between
+/// the previous physics step and the current one via `Quaternion::slerp`.
+///
+/// `alpha` is the leftover accumulator fraction (`accumulator / timestep`)
+/// clamped to `[0.0, 1.0]`. Interpolating at render time decouples the
+/// 60 Hz physics cadence from the display refresh rate: without it a 120 Hz
+/// display presents each physics state twice (visible stepping), and a 60 Hz
+/// display alternates zero- and double-step frames (visible judder), even
+/// though the FPS counter reads high in both cases. Cubes without a previous
+/// entry render at their current rotation.
+///
+/// # Arguments
+///
+/// - `&[Cube3D]` - The current cube list.
+/// - `&[Quaternion]` - The previous-step rotation buffer.
+/// - `f64` - The interpolation factor in `[0.0, 1.0]`.
+///
+/// # Returns
+///
+/// - `Vec<Cube3D>` - The interpolated cube list for rendering.
+pub(crate) fn interpolate_cubes(
+    cubes: &[Cube3D],
+    prev_rotations: &[Quaternion],
+    alpha: f64,
+) -> Vec<Cube3D> {
+    cubes
+        .iter()
+        .enumerate()
+        .map(|(index, cube): (usize, &Cube3D)| {
+            let mut render_cube: Cube3D = cube.clone();
+            if let Some(prev_rotation) = prev_rotations.get(index) {
+                render_cube.rotation = prev_rotation.slerp(cube.rotation, alpha);
+            }
+            render_cube
+        })
+        .collect()
+}
+
 /// Queries the canvas element and creates an `SsaaCanvas` for high-quality rendering.
 ///
 /// # Returns
@@ -345,7 +403,7 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
     )
 }
 
-/// Registers non-passive event listeners directly on the 3D game canvas
+/// Registers non-passive event listeners directly on the given 3D canvas
 /// element to prevent the page from scrolling when the mouse wheel or touch
 /// gesture is used over the canvas.
 ///
@@ -358,16 +416,17 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
 /// prevents touch scrolling as a belt-and-suspenders complement to the
 /// `touch-action: none` CSS property.
 ///
+/// # Arguments
+///
+/// - `&str` - The CSS selector of the canvas element to guard.
+///
 /// # Returns
 ///
 /// - `Option<CanvasGuardEntry>` - The listener closures and element for cleanup, or `None` if the canvas was not found.
-pub(crate) fn register_canvas_scroll_guard() -> Option<CanvasGuardEntry> {
+pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<CanvasGuardEntry> {
     let window: Window = window().expect("no global window exists");
     let document: Document = window.document().expect("should have a document");
-    let canvas: Element = document
-        .query_selector(GAME_3D_CANVAS_SELECTOR)
-        .ok()
-        .flatten()?;
+    let canvas: Element = document.query_selector(canvas_selector).ok().flatten()?;
     let wheel_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         event.prevent_default();
     }));
@@ -459,10 +518,34 @@ pub(crate) fn draw_game_3d_loading() {
     ssaa_canvas.present();
 }
 
+/// Returns `true` when no element matches the canvas selector, meaning the
+/// page or tab was navigated away from and the game loop should stop.
+///
+/// Hook-context cleanups (`App::use_cleanup`) only run on match-arm
+/// switches, not on router navigation, so RAF loops additionally guard on
+/// canvas presence to avoid simulating and rendering against a detached
+/// canvas forever.
+///
+/// # Arguments
+///
+/// - `&str` - The CSS selector of the canvas element.
+///
+/// # Returns
+///
+/// - `bool` - Whether the canvas is absent from the document.
+pub(crate) fn game_3d_canvas_detached(canvas_selector: &str) -> bool {
+    window()
+        .and_then(|window_value: Window| window_value.document())
+        .and_then(|document: Document| document.query_selector(canvas_selector).ok().flatten())
+        .is_none()
+}
+
 /// Starts the 3D game loop driven by `requestAnimationFrame`.
 ///
 /// Runs a fixed-timestep accumulator loop that updates cube rotation at a
-/// constant rate and renders every frame. The canvas context is cached
+/// constant rate and renders every frame, interpolating cube rotations
+/// between the previous and current physics steps so motion stays smooth at
+/// any display refresh rate. The canvas context is cached
 /// once at startup. Updates the FPS signal approximately every second.
 ///
 /// # Arguments
@@ -492,7 +575,15 @@ pub(crate) fn start_game_3d_loop(
     let cell_clone: RafClosureCell = closure_cell.clone();
     let context_clone: Rc<RefCell<Option<SsaaCanvas>>> = canvas_ssaa.clone();
     let dirty_clone: Rc<Cell<bool>> = resize_dirty.clone();
+    let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
+    let prev_clone: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
     let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        if game_3d_canvas_detached(GAME_3D_CANVAS_SELECTOR) {
+            // The page or tab was navigated away from: cleanups only fire
+            // on match-arm switches, so stop here instead of simulating
+            // and rendering against a detached canvas forever.
+            return;
+        }
         let window_value: Window = window().expect("no global window exists");
         let performance: Performance = window_value
             .performance()
@@ -505,17 +596,21 @@ pub(crate) fn start_game_3d_loop(
             (current_time - prev).min(0.25)
         };
         last_clone.set(current_time);
-        acc_clone.set(acc_clone.get() + frame_time);
         if state.get_running().get() {
+            // Accumulate only while running: a paused accumulator would grow
+            // unboundedly and burst catch-up physics steps on resume.
+            acc_clone.set(acc_clone.get() + frame_time);
             if state.get_auto_rotate().get() {
                 let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
                 angles.yaw.set(yaw);
             }
             while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                snapshot_cube_rotations(&mut prev_clone.borrow_mut(), &cubes.borrow());
                 update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
                 acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
             }
         }
+        let alpha: f64 = (acc_clone.get() / GAME_3D_FIXED_TIMESTEP).clamp(0.0, 1.0);
         if dirty_clone.get() {
             *context_clone.borrow_mut() = None;
             dirty_clone.set(false);
@@ -525,7 +620,9 @@ pub(crate) fn start_game_3d_loop(
         }
         if let Some(ssaa_canvas) = context_clone.borrow().as_ref() {
             let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
-            render_scene(ssaa_canvas, &cubes.borrow(), &camera);
+            let render_cubes: Vec<Cube3D> =
+                interpolate_cubes(&cubes.borrow(), &prev_clone.borrow(), alpha);
+            render_scene(ssaa_canvas, &render_cubes, &camera);
         }
         frame_clone.set(frame_clone.get() + 1);
         fps_clone.set(fps_clone.get() + frame_time);
@@ -555,7 +652,7 @@ pub(crate) fn start_game_3d_loop(
     let state_for_start: UseGame3D = state;
     let start_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         state_for_start.get_loaded().set(true);
-        *guard_for_start.borrow_mut() = register_canvas_scroll_guard();
+        *guard_for_start.borrow_mut() = register_canvas_scroll_guard(GAME_3D_CANVAS_SELECTOR);
         let start_window: Window = window().expect("no global window exists");
         let start_id: i32 = start_window
             .request_animation_frame(
@@ -897,6 +994,163 @@ pub(crate) fn use_game_3d_webgpu_state() -> UseGame3DWebGpu {
     }
 }
 
+/// Creates the reactive state signals for the 3D WebGL demo.
+///
+/// # Returns
+///
+/// - `UseGame3DWebGl` - The WebGL demo state.
+pub(crate) fn use_game_3d_webgl_state() -> UseGame3DWebGl {
+    UseGame3DWebGl {
+        fps: App::use_signal(|| 0.0),
+        loaded: App::use_signal(|| false),
+        active: App::use_signal(|| false),
+        loop_started: App::use_signal(|| false),
+        init_error_code: App::use_signal(|| ""),
+    }
+}
+
+/// Parses a `#rrggbb` CSS color string into 0.0-1.0 RGB floats.
+///
+/// Cube face/edge colors are authored for CSS (`fillStyle`/`strokeStyle`);
+/// the GPU shaders need plain floats. Malformed input falls back to white.
+///
+/// # Arguments
+///
+/// - `&str` - The CSS hex color string.
+///
+/// # Returns
+///
+/// - `(f32, f32, f32)` - The `(r, g, b)` channels in 0.0-1.0 range.
+pub(crate) fn game_3d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
+    let hex: &str = color.strip_prefix('#').unwrap_or(color);
+    let channel = |range: std::ops::Range<usize>| -> f32 {
+        hex.get(range)
+            .and_then(|part: &str| u8::from_str_radix(part, 16).ok())
+            .map(|value: u8| f32::from(value) / 255.0)
+            .unwrap_or(1.0)
+    };
+    (channel(0..2), channel(2..4), channel(4..6))
+}
+
+/// Reads the computed CSS `background-color` of a canvas element.
+///
+/// The GPU canvases cannot be cleared to transparency (the WebGPU swap
+/// chain uses an opaque alpha mode by default), so the demo clears to
+/// the same `var!(accent)` background that shows through the
+/// transparent-cleared Canvas 2D tab. Re-reading the computed style
+/// also picks up theme toggles, which swap the accent color under the
+/// same canvas element.
+///
+/// # Arguments
+///
+/// - `&str` - The CSS selector of the canvas element.
+///
+/// # Returns
+///
+/// - `(f64, f64, f64)` - The `(r, g, b)` clear color in 0.0-1.0 range.
+pub(crate) fn game_3d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f64) {
+    let window_value: Window = window().expect("no global window exists");
+    let background: String = window_value
+        .document()
+        .and_then(|document: Document| document.query_selector(canvas_selector).ok().flatten())
+        .and_then(|element: Element| window_value.get_computed_style(&element).ok().flatten())
+        .and_then(|style: CssStyleDeclaration| style.get_property_value("background-color").ok())
+        .unwrap_or_default();
+    // Computed colors serialize as `rgb(r, g, b)` or `rgba(r, g, b, a)`.
+    let Some(inner) = background
+        .split('(')
+        .nth(1)
+        .and_then(|value: &str| value.strip_suffix(')'))
+    else {
+        return (0.0, 0.0, 0.0);
+    };
+    let mut channels = inner
+        .split(',')
+        .filter_map(|part: &str| part.trim().parse::<f64>().ok());
+    let r: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let g: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let b: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    (r, g, b)
+}
+
+/// Packs the scene into the uniform layout consumed by the GPU cubes
+/// shaders.
+///
+/// Layout: the column-major view-projection matrix (16 floats), the
+/// camera position plus padding (4 floats), then one `CubeData` record
+/// (rotation quaternion, position + scaled half-size, face color, edge
+/// color; 16 floats) per cube. Cubes are sorted back-to-front with the
+/// same painter's-algorithm depth key as [`render_scene`], and the
+/// result is padded out to `GAME_3D_GPU_MAX_CUBES` records so the
+/// fixed-size uniform layout is fully overwritten each frame and stale
+/// cubes never linger.
+///
+/// # Arguments
+///
+/// - `&[Cube3D]` - The cube list for this frame.
+/// - `&Camera3D` - The orbit camera for this frame.
+///
+/// # Returns
+///
+/// - `Vec<f32>` - The packed uniform data (20 + `GAME_3D_GPU_MAX_CUBES * 16` floats).
+fn pack_game_3d_cubes_uniform(cubes: &[Cube3D], camera: &Camera3D) -> Vec<f32> {
+    let mut sorted: Vec<(&Cube3D, f64)> = cubes
+        .iter()
+        .map(|cube: &Cube3D| {
+            let world_vertices: Vec<Vector3D> = GAME_3D_CUBE_VERTICES
+                .iter()
+                .map(|(vx, vy, vz): &(f64, f64, f64)| {
+                    transform_cube_vertex(cube, Vector3D::new(*vx, *vy, *vz))
+                })
+                .collect();
+            (cube, face_average_depth(&world_vertices, camera))
+        })
+        .collect();
+    sorted.sort_by(|a: &(&Cube3D, f64), b: &(&Cube3D, f64)| {
+        let (_, depth_a) = *a;
+        let (_, depth_b) = *b;
+        depth_a
+            .partial_cmp(&depth_b)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    let view_proj_elements: [f64; 16] = camera.view_proj_matrix().get_elements();
+    let mut data: Vec<f32> = view_proj_elements
+        .iter()
+        .map(|value: &f64| *value as f32)
+        .collect();
+    let camera_position: Vector3D = camera.get_position();
+    data.extend_from_slice(&[
+        camera_position.get_x() as f32,
+        camera_position.get_y() as f32,
+        camera_position.get_z() as f32,
+        0.0,
+    ]);
+    for (cube, _depth) in &sorted {
+        let (face_r, face_g, face_b) = game_3d_hex_to_rgb(&cube.face_color);
+        let (edge_r, edge_g, edge_b) = game_3d_hex_to_rgb(&cube.edge_color);
+        data.extend_from_slice(&[
+            cube.rotation.get_x() as f32,
+            cube.rotation.get_y() as f32,
+            cube.rotation.get_z() as f32,
+            cube.rotation.get_w() as f32,
+            cube.position.get_x() as f32,
+            cube.position.get_y() as f32,
+            cube.position.get_z() as f32,
+            (cube.scale * GAME_3D_CUBE_HALF_SIZE) as f32,
+            face_r,
+            face_g,
+            face_b,
+            1.0,
+            edge_r,
+            edge_g,
+            edge_b,
+            1.0,
+        ]);
+    }
+    data.resize(20 + GAME_3D_GPU_MAX_CUBES * 16, 0.0);
+    data
+}
+
 /// Creates a click event handler that selects a tab on the 3D game page.
 ///
 /// # Arguments
@@ -916,17 +1170,29 @@ pub(crate) fn game_3d_on_tab_select(
     }))
 }
 
-/// Starts the 3D WebGPU render loop driven by `requestAnimationFrame`.
+/// Starts the 3D WebGPU cubes loop driven by `requestAnimationFrame`.
 ///
-/// Asynchronously initializes a `WebGpuRenderer`, creates a render pipeline
-/// from a WGSL shader with pseudo-3D perspective, and runs a
-/// `requestAnimationFrame` loop that renders the triangle with an animated
-/// clear color each frame.
+/// Mirrors [`start_game_3d_loop`]: the same fixed-timestep quaternion
+/// integration runs on the shared cube list and the same orbit camera
+/// (auto-rotation plus pointer/touch drag) drives the view, but rendering
+/// goes through a WGSL pipeline that draws every cube as 12
+/// shader-generated triangles with per-cube transform and colors uploaded
+/// to a uniform buffer each frame. The canvas is cleared to the element's
+/// computed CSS background color so the WebGPU output matches the
+/// transparent-cleared Canvas 2D tab exactly.
 ///
 /// # Arguments
 ///
-/// - `UseGame3DWebGpu` - The WebGPU demo state for signal updates.
-pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
+/// - `UseGame3DWebGpu` - The WebGPU backend state for signal updates.
+/// - `UseGame3D` - The shared game state (running/auto_rotate signals).
+/// - `Rc<RefCell<Vec<Cube3D>>>` - The shared cube list.
+/// - `CameraAngles` - The non-reactive camera orbit angles.
+pub(crate) fn start_game_3d_webgpu_loop(
+    state: UseGame3DWebGpu,
+    game: UseGame3D,
+    cubes: Rc<RefCell<Vec<Cube3D>>>,
+    angles: CameraAngles,
+) {
     let init_state: UseGame3DWebGpu = state;
     let loop_state: UseGame3DWebGpu = state;
     let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
@@ -935,6 +1201,7 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
     let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
     let renderer_rc: Rc<RefCell<Option<WebGpuRenderer>>> = Rc::new(RefCell::new(None));
     let cancelled: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let guard_cell: CanvasGuardCell = Rc::new(RefCell::new(None));
     let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
     let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
     let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
@@ -965,6 +1232,7 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
     let renderer_for_cleanup: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
     let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
     let cancelled_for_cleanup: Rc<Cell<bool>> = cancelled.clone();
+    let guard_for_cleanup: CanvasGuardCell = guard_cell.clone();
     App::use_cleanup(move || {
         cancelled_for_cleanup.set(true);
         if let Some(cancel_id) = raf_for_cleanup.get() {
@@ -983,6 +1251,14 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
         // (silent black canvas) or to fail to acquire a new one.
         if let Some(renderer) = renderer_for_cleanup.borrow_mut().take() {
             renderer.dispose();
+        }
+        if let Some((listeners, element)) = guard_for_cleanup.borrow_mut().take() {
+            for (closure, event_name) in listeners {
+                let _ = element.remove_event_listener_with_callback(
+                    event_name,
+                    closure.as_ref().unchecked_ref(),
+                );
+            }
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
@@ -1007,15 +1283,29 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
             }
         };
         let pipeline: JsValue = renderer.create_render_pipeline(GAME_3D_WEBGPU_SHADER);
+        let uniform_buffer: JsValue =
+            renderer.create_uniform_buffer(&vec![0.0; 20 + GAME_3D_GPU_MAX_CUBES * 16]);
+        let bind_group: JsValue = renderer.create_uniform_bind_group(&pipeline, &uniform_buffer);
+        *guard_cell.borrow_mut() = register_canvas_scroll_guard(GAME_3D_WEBGPU_CANVAS_SELECTOR);
+        let clear_color: Rc<Cell<(f64, f64, f64)>> = Rc::new(Cell::new(
+            game_3d_canvas_clear_color(GAME_3D_WEBGPU_CANVAS_SELECTOR),
+        ));
+        let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         init_state.get_active().set(true);
         init_state.get_loaded().set(true);
         *renderer_rc.borrow_mut() = Some(renderer);
         let pipeline_rc: Rc<JsValue> = Rc::new(pipeline);
+        let buffer_rc: Rc<JsValue> = Rc::new(uniform_buffer);
+        let bind_group_rc: Rc<JsValue> = Rc::new(bind_group);
         let last_time: Rc<Cell<f64>> = Rc::new(Cell::new(-1.0));
         let frame_count: Rc<Cell<u32>> = Rc::new(Cell::new(0));
         let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
         let renderer_for_loop: Rc<RefCell<Option<WebGpuRenderer>>> = renderer_rc.clone();
         let pipeline_for_loop: Rc<JsValue> = pipeline_rc.clone();
+        let buffer_for_loop: Rc<JsValue> = buffer_rc.clone();
+        let bind_group_for_loop: Rc<JsValue> = bind_group_rc.clone();
+        let clear_color_for_loop: Rc<Cell<(f64, f64, f64)>> = clear_color.clone();
+        let acc_clone: Rc<Cell<f64>> = accumulator.clone();
         let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
         let cell_clone: RafClosureCell = closure_cell.clone();
         let last_clone: Rc<Cell<f64>> = last_time.clone();
@@ -1023,8 +1313,12 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
         let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
         let resize_dirty_for_loop: Rc<Cell<bool>> = resize_dirty.clone();
         let cancelled_for_loop: Rc<Cell<bool>> = cancelled.clone();
+        let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
+        let prev_for_loop: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            if cancelled_for_loop.get() {
+            // Stop on tab-switch cleanup (`cancelled`) or when the canvas
+            // left the document (router navigation fires no cleanup).
+            if cancelled_for_loop.get() || game_3d_canvas_detached(GAME_3D_WEBGPU_CANVAS_SELECTOR) {
                 return;
             }
             let window_value: Window = window().expect("no global window exists");
@@ -1039,6 +1333,21 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
                 (current_time - prev).min(0.25)
             };
             last_clone.set(current_time);
+            if game.get_running().get() {
+                // Accumulate only while running: a paused accumulator would grow
+                // unboundedly and burst catch-up physics steps on resume.
+                acc_clone.set(acc_clone.get() + frame_time);
+                if game.get_auto_rotate().get() {
+                    let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
+                    angles.yaw.set(yaw);
+                }
+                while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                    snapshot_cube_rotations(&mut prev_for_loop.borrow_mut(), &cubes.borrow());
+                    update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
+                    acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
+                }
+            }
+            let alpha: f64 = (acc_clone.get() / GAME_3D_FIXED_TIMESTEP).clamp(0.0, 1.0);
             // The resize-debounce path only clears the flag and computes
             // the new dimensions. The actual `renderer.resize(...)` call
             // is folded into the render block below so we hold
@@ -1083,17 +1392,282 @@ pub(crate) fn start_game_3d_webgpu_loop(state: UseGame3DWebGpu) {
                 if resize_dirty {
                     let _ = renderer.resize(new_physical_width, new_physical_height);
                 }
-                let t: f64 = current_time;
-                let r: f64 = (t * 0.3 + 1.0).sin() * 0.3 + 0.1;
-                let g: f64 = (t * 0.5 + 3.0).sin() * 0.3 + 0.1;
-                let b: f64 = (t * 0.8).sin() * 0.3 + 0.1;
-                renderer.render_frame(&pipeline_for_loop, (r, g, b, 1.0), 3);
+                let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
+                let render_cubes: Vec<Cube3D> =
+                    interpolate_cubes(&cubes.borrow(), &prev_for_loop.borrow(), alpha);
+                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&render_cubes, &camera);
+                let vertex_count: u32 = (render_cubes.len() * 36) as u32;
+                renderer.update_uniform_buffer(&buffer_for_loop, &uniform_data);
+                let (r, g, b) = clear_color_for_loop.get();
+                renderer.render_frame_with_bind_group(
+                    &pipeline_for_loop,
+                    &bind_group_for_loop,
+                    (r, g, b, 1.0),
+                    vertex_count,
+                );
             }
             frame_clone.set(frame_clone.get() + 1);
             fps_clone.set(fps_clone.get() + frame_time);
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
+                // Refresh the clear color alongside the FPS counter so a
+                // theme toggle is picked up within a second without paying
+                // for getComputedStyle every frame.
+                clear_color_for_loop
+                    .set(game_3d_canvas_clear_color(GAME_3D_WEBGPU_CANVAS_SELECTOR));
+                frame_clone.set(0);
+                fps_clone.set(0.0);
+            }
+            let next_id: i32 = window_value
+                .request_animation_frame(
+                    cell_clone
+                        .try_get()
+                        .expect("raf closure should exist")
+                        .as_ref()
+                        .unchecked_ref(),
+                )
+                .unwrap_or(0);
+            if cancelled_for_loop.get() {
+                raf_clone.set(None);
+            } else {
+                raf_clone.set(Some(next_id));
+            }
+        }));
+        let _: Result<(), _> = closure_cell.try_set(raf_closure);
+        let start_window: Window = window().expect("no global window exists");
+        let start_id: i32 = start_window
+            .request_animation_frame(
+                closure_cell
+                    .try_get()
+                    .expect("raf closure should exist")
+                    .as_ref()
+                    .unchecked_ref(),
+            )
+            .unwrap_or(0);
+        raf_id.set(Some(start_id));
+    });
+}
+
+/// Starts the 3D WebGL cubes loop driven by `requestAnimationFrame`.
+///
+/// Mirrors [`start_game_3d_loop`]: the same fixed-timestep quaternion
+/// integration runs on the shared cube list and the same orbit camera
+/// (auto-rotation plus pointer/touch drag) drives the view, but rendering
+/// goes through a GLSL ES 3.00 program that draws every cube as 12
+/// shader-generated triangles with per-cube transform and colors uploaded
+/// to `vec4` uniform arrays each frame. The canvas is cleared to the
+/// element's computed CSS background color so the WebGL output matches
+/// the transparent-cleared Canvas 2D tab exactly. WebGL initialization is
+/// synchronous; the `spawn_local` wrapper only defers execution past the
+/// current render pass so the canvas element exists in the DOM.
+///
+/// # Arguments
+///
+/// - `UseGame3DWebGl` - The WebGL backend state for signal updates.
+/// - `UseGame3D` - The shared game state (running/auto_rotate signals).
+/// - `Rc<RefCell<Vec<Cube3D>>>` - The shared cube list.
+/// - `CameraAngles` - The non-reactive camera orbit angles.
+pub(crate) fn start_game_3d_webgl_loop(
+    state: UseGame3DWebGl,
+    game: UseGame3D,
+    cubes: Rc<RefCell<Vec<Cube3D>>>,
+    angles: CameraAngles,
+) {
+    let init_state: UseGame3DWebGl = state;
+    let loop_state: UseGame3DWebGl = state;
+    let raf_id: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+    let closure_cell: RafClosureCell = Rc::new(MaybeEngineCell::new());
+    let resize_dirty: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let resize_timer: Rc<Cell<Option<i32>>> = Rc::new(Cell::new(None));
+    let renderer_rc: Rc<RefCell<Option<WebGlRenderer>>> = Rc::new(RefCell::new(None));
+    let cancelled: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let guard_cell: CanvasGuardCell = Rc::new(RefCell::new(None));
+    let resize_dirty_for_event: Rc<Cell<bool>> = resize_dirty.clone();
+    let resize_timer_for_event: Rc<Cell<Option<i32>>> = resize_timer.clone();
+    let debounce_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        resize_dirty_for_event.set(true);
+    }));
+    let debounce_callback: Function = debounce_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    debounce_closure.forget();
+    let resize_window: Window = window().expect("no global window exists");
+    App::use_window_event("resize", move || {
+        let old_timer: Option<i32> = resize_timer_for_event.get();
+        if let Some(timer_id) = old_timer {
+            let clear_window: Window = window().expect("no global window exists");
+            clear_window.clear_timeout_with_handle(timer_id);
+        }
+        let new_timer: i32 = resize_window
+            .set_timeout_with_callback_and_timeout_and_arguments_0(
+                &debounce_callback,
+                GAME_3D_RESIZE_DEBOUNCE_MILLIS,
+            )
+            .unwrap_or_default();
+        resize_timer_for_event.set(Some(new_timer));
+    });
+    let raf_for_cleanup: Rc<Cell<Option<i32>>> = raf_id.clone();
+    let cell_for_cleanup: RafClosureCell = closure_cell.clone();
+    let renderer_for_cleanup: Rc<RefCell<Option<WebGlRenderer>>> = renderer_rc.clone();
+    let resize_timer_for_cleanup: Rc<Cell<Option<i32>>> = resize_timer.clone();
+    let cancelled_for_cleanup: Rc<Cell<bool>> = cancelled.clone();
+    let guard_for_cleanup: CanvasGuardCell = guard_cell.clone();
+    App::use_cleanup(move || {
+        cancelled_for_cleanup.set(true);
+        if let Some(cancel_id) = raf_for_cleanup.get() {
+            let window_value: Window = window().expect("no global window exists");
+            let _ = window_value.cancel_animation_frame(cancel_id);
+        }
+        if let Some(timer_id) = resize_timer_for_cleanup.get() {
+            let window_value: Window = window().expect("no global window exists");
+            window_value.clear_timeout_with_handle(timer_id);
+        }
+        let _: Option<_> = cell_for_cleanup.try_take();
+        // WebGL has no explicit `destroy()` on the context: dropping the
+        // last JS reference lets the browser GC reclaim the GL context.
+        let _: Option<WebGlRenderer> = renderer_for_cleanup.borrow_mut().take();
+        if let Some((listeners, element)) = guard_for_cleanup.borrow_mut().take() {
+            for (closure, event_name) in listeners {
+                let _ = element.remove_event_listener_with_callback(
+                    event_name,
+                    closure.as_ref().unchecked_ref(),
+                );
+            }
+        }
+    });
+    let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
+    spawn_local(async move {
+        if cancelled_for_init.get() {
+            return;
+        }
+        let config: RenderConfig = RenderConfig::webgl(
+            GAME_3D_WEBGL_CANVAS_SELECTOR,
+            GAME_3D_CANVAS_WIDTH,
+            GAME_3D_CANVAS_HEIGHT,
+        );
+        let renderer: WebGlRenderer = match Engine::webgl_renderer(&config) {
+            Ok(value) => value,
+            Err(error) => {
+                Console::error(format!("[euv-engine][game_3d] webgl init failed: {error}"));
+                init_state.get_init_error_code().set(error.code());
+                init_state.get_loaded().set(true);
+                return;
+            }
+        };
+        let program: WebGlProgram = match renderer
+            .create_program(GAME_3D_WEBGL_VERTEX_SHADER, GAME_3D_WEBGL_FRAGMENT_SHADER)
+        {
+            Ok(value) => value,
+            Err(error) => {
+                Console::error(format!(
+                    "[euv-engine][game_3d] webgl program failed: {error}"
+                ));
+                init_state.get_init_error_code().set("WEBGL_PROGRAM_ERROR");
+                init_state.get_loaded().set(true);
+                return;
+            }
+        };
+        *guard_cell.borrow_mut() = register_canvas_scroll_guard(GAME_3D_WEBGL_CANVAS_SELECTOR);
+        let clear_color: Rc<Cell<(f64, f64, f64)>> = Rc::new(Cell::new(
+            game_3d_canvas_clear_color(GAME_3D_WEBGL_CANVAS_SELECTOR),
+        ));
+        let accumulator: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+        init_state.get_active().set(true);
+        init_state.get_loaded().set(true);
+        *renderer_rc.borrow_mut() = Some(renderer);
+        let program_rc: Rc<WebGlProgram> = Rc::new(program);
+        let last_time: Rc<Cell<f64>> = Rc::new(Cell::new(-1.0));
+        let frame_count: Rc<Cell<u32>> = Rc::new(Cell::new(0));
+        let fps_timer: Rc<Cell<f64>> = Rc::new(Cell::new(0.0));
+        let renderer_for_loop: Rc<RefCell<Option<WebGlRenderer>>> = renderer_rc.clone();
+        let program_for_loop: Rc<WebGlProgram> = program_rc.clone();
+        let clear_color_for_loop: Rc<Cell<(f64, f64, f64)>> = clear_color.clone();
+        let acc_clone: Rc<Cell<f64>> = accumulator.clone();
+        let raf_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
+        let cell_clone: RafClosureCell = closure_cell.clone();
+        let last_clone: Rc<Cell<f64>> = last_time.clone();
+        let frame_clone: Rc<Cell<u32>> = frame_count.clone();
+        let fps_clone: Rc<Cell<f64>> = fps_timer.clone();
+        let resize_dirty_for_loop: Rc<Cell<bool>> = resize_dirty.clone();
+        let cancelled_for_loop: Rc<Cell<bool>> = cancelled.clone();
+        let prev_rotations: Rc<RefCell<Vec<Quaternion>>> = Rc::new(RefCell::new(Vec::new()));
+        let prev_for_loop: Rc<RefCell<Vec<Quaternion>>> = prev_rotations.clone();
+        let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            // Stop on tab-switch cleanup (`cancelled`) or when the canvas
+            // left the document (router navigation fires no cleanup).
+            if cancelled_for_loop.get() || game_3d_canvas_detached(GAME_3D_WEBGL_CANVAS_SELECTOR) {
+                return;
+            }
+            let window_value: Window = window().expect("no global window exists");
+            let performance: Performance = window_value
+                .performance()
+                .expect("performance should exist");
+            let current_time: f64 = performance.now() / 1000.0;
+            let prev: f64 = last_clone.get();
+            let frame_time: f64 = if prev < 0.0 {
+                GAME_3D_FIXED_TIMESTEP
+            } else {
+                (current_time - prev).min(0.25)
+            };
+            last_clone.set(current_time);
+            if game.get_running().get() {
+                // Accumulate only while running: a paused accumulator would grow
+                // unboundedly and burst catch-up physics steps on resume.
+                acc_clone.set(acc_clone.get() + frame_time);
+                if game.get_auto_rotate().get() {
+                    let yaw: f64 = angles.yaw.get() + GAME_3D_AUTO_YAW_SPEED * frame_time;
+                    angles.yaw.set(yaw);
+                }
+                while acc_clone.get() >= GAME_3D_FIXED_TIMESTEP {
+                    snapshot_cube_rotations(&mut prev_for_loop.borrow_mut(), &cubes.borrow());
+                    update_cubes(&mut cubes.borrow_mut(), GAME_3D_FIXED_TIMESTEP);
+                    acc_clone.set(acc_clone.get() - GAME_3D_FIXED_TIMESTEP);
+                }
+            }
+            let alpha: f64 = (acc_clone.get() / GAME_3D_FIXED_TIMESTEP).clamp(0.0, 1.0);
+            let resize_dirty: bool = if resize_dirty_for_loop.get() {
+                resize_dirty_for_loop.set(false);
+                true
+            } else {
+                false
+            };
+            let window_for_dpr: Window = window().expect("no global window exists");
+            let dpr: f64 = Reflect::get(
+                window_for_dpr.as_ref(),
+                &JsValue::from_str("devicePixelRatio"),
+            )
+            .ok()
+            .and_then(|value: JsValue| value.as_f64())
+            .filter(|value: &f64| value.is_finite() && *value >= 1.0)
+            .unwrap_or(1.0);
+            let new_physical_width: u32 = (GAME_3D_CANVAS_WIDTH * dpr).round() as u32;
+            let new_physical_height: u32 = (GAME_3D_CANVAS_HEIGHT * dpr).round() as u32;
+            if let Some(renderer) = renderer_for_loop.borrow_mut().as_mut() {
+                if resize_dirty {
+                    renderer.resize(new_physical_width, new_physical_height);
+                }
+                let camera: Camera3D = create_orbit_camera(angles.yaw.get(), angles.pitch.get());
+                let render_cubes: Vec<Cube3D> =
+                    interpolate_cubes(&cubes.borrow(), &prev_for_loop.borrow(), alpha);
+                let uniform_data: Vec<f32> = pack_game_3d_cubes_uniform(&render_cubes, &camera);
+                let vertex_count: i32 = (render_cubes.len() * 36) as i32;
+                renderer.set_uniform_4fv(&program_for_loop, "u_view_proj[0]", &uniform_data[0..16]);
+                renderer.set_uniform_4fv(&program_for_loop, "u_camera_pos", &uniform_data[16..20]);
+                renderer.set_uniform_4fv(&program_for_loop, "u_cubes[0]", &uniform_data[20..]);
+                let (r, g, b) = clear_color_for_loop.get();
+                renderer.render_frame(&program_for_loop, (r, g, b, 1.0), vertex_count);
+            }
+            frame_clone.set(frame_clone.get() + 1);
+            fps_clone.set(fps_clone.get() + frame_time);
+            if fps_clone.get() >= 1.0 {
+                let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
+                loop_state.get_fps().set(fps);
+                // Refresh the clear color alongside the FPS counter so a
+                // theme toggle is picked up within a second without paying
+                // for getComputedStyle every frame.
+                clear_color_for_loop.set(game_3d_canvas_clear_color(GAME_3D_WEBGL_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }

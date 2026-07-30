@@ -174,3 +174,15 @@ pub struct Ray3D {
     #[get(type(copy))]
     pub(crate) direction: Vector3D,
 }
+
+/// A 2D ray defined by an origin point and a direction vector, used for
+/// raycasting against 2D shapes (`Rect`, `Circle`).
+#[derive(Clone, Copy, Data, Debug, Default, New, PartialEq, PartialOrd)]
+pub struct Ray2D {
+    /// The origin point of the ray.
+    #[get(type(copy))]
+    pub(crate) origin: Vector2D,
+    /// The direction vector of the ray (should be normalized).
+    #[get(type(copy))]
+    pub(crate) direction: Vector2D,
+}

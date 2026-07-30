@@ -17,6 +17,12 @@ pub(crate) enum RenderBackendType {
     /// GPU-accelerated rendering with shaders, buffers, and pipelines.
     /// Requires a WebGPU-capable browser.
     WebGpu,
+    /// The WebGL 2 rendering backend (`WebGl2RenderingContext`).
+    ///
+    /// GPU-accelerated rendering with GLSL ES 3.00 shaders. Supported by
+    /// every modern browser, making it the GPU fallback for browsers that
+    /// do not expose WebGPU.
+    WebGl,
 }
 
 /// The power preference hint passed to `navigator.gpu.requestAdapter`.

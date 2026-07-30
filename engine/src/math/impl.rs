@@ -28,8 +28,8 @@ impl Numeric {
     /// # Returns
     ///
     /// - `f64` - The interpolated value.
-    pub fn lerp(start: f64, end: f64, t: f64) -> f64 {
-        start + (end - start) * t
+    pub fn lerp(start: f64, end: f64, factor: f64) -> f64 {
+        start + (end - start) * factor
     }
 
     /// Converts an angle from degrees to radians.
@@ -103,8 +103,8 @@ impl Numeric {
     /// # Returns
     ///
     /// - `f64` - The interpolated angle in radians.
-    pub fn lerp_angle(from: f64, to: f64, t: f64) -> f64 {
-        from + Self::angle_delta(from, to) * t
+    pub fn lerp_angle(from: f64, to: f64, factor: f64) -> f64 {
+        from + Self::angle_delta(from, to) * factor
     }
 
     /// Computes the Euclidean distance between two 2D points.
@@ -251,8 +251,8 @@ impl Numeric {
 
 /// Implements the `Interpolable` trait for `f64`.
 impl Interpolable for f64 {
-    fn lerp(&self, other: f64, t: f64) -> f64 {
-        *self + (other - *self) * t
+    fn lerp(&self, other: f64, factor: f64) -> f64 {
+        *self + (other - *self) * factor
     }
 }
 
@@ -288,8 +288,8 @@ impl Vector for Vector2D {
         Vector2D::scaled(self, scalar)
     }
 
-    fn lerp(&self, other: Vector2D, t: f64) -> Vector2D {
-        Vector2D::lerp(self, other, t)
+    fn lerp(&self, other: Vector2D, factor: f64) -> Vector2D {
+        Vector2D::lerp(self, other, factor)
     }
 }
 
@@ -522,10 +522,10 @@ impl Vector2D {
     /// # Returns
     ///
     /// - `Vector2D` - The interpolated vector.
-    pub fn lerp(&self, other: Vector2D, t: f64) -> Vector2D {
+    pub fn lerp(&self, other: Vector2D, factor: f64) -> Vector2D {
         Vector2D::new(
-            self.get_x() + (other.get_x() - self.get_x()) * t,
-            self.get_y() + (other.get_y() - self.get_y()) * t,
+            self.get_x() + (other.get_x() - self.get_x()) * factor,
+            self.get_y() + (other.get_y() - self.get_y()) * factor,
         )
     }
 
@@ -555,8 +555,8 @@ impl Vector2D {
 
 /// Implements `Interpolable` for `Vector2D`.
 impl Interpolable for Vector2D {
-    fn lerp(&self, other: Vector2D, t: f64) -> Vector2D {
-        Vector2D::lerp(self, other, t)
+    fn lerp(&self, other: Vector2D, factor: f64) -> Vector2D {
+        Vector2D::lerp(self, other, factor)
     }
 }
 
@@ -938,6 +938,33 @@ impl Color {
     pub fn transparent() -> Color {
         Color::new(0.0, 0.0, 0.0, 0.0)
     }
+
+    /// Performs linear interpolation between this color and `other` by `t`,
+    /// interpolating each channel (red, green, blue, alpha) independently.
+    ///
+    /// # Arguments
+    ///
+    /// - `Color` - The target color.
+    /// - `f64` - The interpolation factor, typically in the range 0.0 to 1.0.
+    ///
+    /// # Returns
+    ///
+    /// - `Color` - The interpolated color.
+    pub fn lerp(&self, other: Color, factor: f64) -> Color {
+        Color::new(
+            self.get_red().lerp(other.get_red(), factor),
+            self.get_green().lerp(other.get_green(), factor),
+            self.get_blue().lerp(other.get_blue(), factor),
+            self.get_alpha().lerp(other.get_alpha(), factor),
+        )
+    }
+}
+
+/// Implements `Interpolable` for `Color`.
+impl Interpolable for Color {
+    fn lerp(&self, other: Color, factor: f64) -> Color {
+        Color::lerp(self, other, factor)
+    }
 }
 
 /// Implements `Default` for `Color` as opaque black.
@@ -978,8 +1005,8 @@ impl Vector for Vector3D {
         Vector3D::scaled(self, scalar)
     }
 
-    fn lerp(&self, other: Vector3D, t: f64) -> Vector3D {
-        Vector3D::lerp(self, other, t)
+    fn lerp(&self, other: Vector3D, factor: f64) -> Vector3D {
+        Vector3D::lerp(self, other, factor)
     }
 }
 
@@ -1152,11 +1179,11 @@ impl Vector3D {
     /// # Returns
     ///
     /// - `Vector3D` - The interpolated vector.
-    pub fn lerp(&self, other: Vector3D, t: f64) -> Vector3D {
+    pub fn lerp(&self, other: Vector3D, factor: f64) -> Vector3D {
         Vector3D::new(
-            self.get_x() + (other.get_x() - self.get_x()) * t,
-            self.get_y() + (other.get_y() - self.get_y()) * t,
-            self.get_z() + (other.get_z() - self.get_z()) * t,
+            self.get_x() + (other.get_x() - self.get_x()) * factor,
+            self.get_y() + (other.get_y() - self.get_y()) * factor,
+            self.get_z() + (other.get_z() - self.get_z()) * factor,
         )
     }
 
@@ -1206,8 +1233,8 @@ impl Vector3D {
 
 /// Implements `Interpolable` for `Vector3D`.
 impl Interpolable for Vector3D {
-    fn lerp(&self, other: Vector3D, t: f64) -> Vector3D {
-        Vector3D::lerp(self, other, t)
+    fn lerp(&self, other: Vector3D, factor: f64) -> Vector3D {
+        Vector3D::lerp(self, other, factor)
     }
 }
 
@@ -1412,7 +1439,7 @@ impl Quaternion {
     /// # Returns
     ///
     /// - `Quaternion` - The interpolated quaternion.
-    pub fn slerp(&self, other: Quaternion, t: f64) -> Quaternion {
+    pub fn slerp(&self, other: Quaternion, factor: f64) -> Quaternion {
         let mut cos_theta: f64 = self.dot(other);
         let target: Quaternion = if cos_theta < 0.0 {
             cos_theta = -cos_theta;
@@ -1427,17 +1454,17 @@ impl Quaternion {
         };
         if cos_theta > 1.0 - EPSILON {
             return Quaternion::new(
-                self.get_x() + (target.get_x() - self.get_x()) * t,
-                self.get_y() + (target.get_y() - self.get_y()) * t,
-                self.get_z() + (target.get_z() - self.get_z()) * t,
-                self.get_w() + (target.get_w() - self.get_w()) * t,
+                self.get_x() + (target.get_x() - self.get_x()) * factor,
+                self.get_y() + (target.get_y() - self.get_y()) * factor,
+                self.get_z() + (target.get_z() - self.get_z()) * factor,
+                self.get_w() + (target.get_w() - self.get_w()) * factor,
             )
             .normalized();
         }
         let theta: f64 = cos_theta.acos();
         let sin_theta: f64 = theta.sin();
-        let factor_a: f64 = ((1.0 - t) * theta).sin() / sin_theta;
-        let factor_b: f64 = (t * theta).sin() / sin_theta;
+        let factor_a: f64 = ((1.0 - factor) * theta).sin() / sin_theta;
+        let factor_b: f64 = (factor * theta).sin() / sin_theta;
         Quaternion::new(
             self.get_x() * factor_a + target.get_x() * factor_b,
             self.get_y() * factor_a + target.get_y() * factor_b,

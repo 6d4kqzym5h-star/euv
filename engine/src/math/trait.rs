@@ -6,13 +6,13 @@ pub trait Interpolable {
     ///
     /// # Arguments
     ///
-    /// - `f64` - The interpolation factor, typically in the range 0.0 to 1.0.
     /// - `Self` - The target value to interpolate towards.
+    /// - `f64` - The interpolation factor, typically in the range 0.0 to 1.0.
     ///
     /// # Returns
     ///
     /// - `Self` - The interpolated result.
-    fn lerp(&self, other: Self, t: f64) -> Self;
+    fn lerp(&self, other: Self, factor: f64) -> Self;
 }
 
 /// A trait abstracting the operations common to `Vector2D` and `Vector3D`.
@@ -106,11 +106,11 @@ pub trait Vector:
     ///
     /// # Arguments
     ///
-    /// - `&Self` - The target vector.
+    /// - `Self` - The target vector.
     /// - `f64` - The interpolation factor, typically in the range 0.0 to 1.0.
     ///
     /// # Returns
     ///
     /// - `Self` - The interpolated vector.
-    fn lerp(&self, other: Self, t: f64) -> Self;
+    fn lerp(&self, other: Self, factor: f64) -> Self;
 }

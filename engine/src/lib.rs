@@ -10,20 +10,25 @@ mod audio;
 mod cell;
 mod collider;
 mod config;
+mod easing;
 mod engine;
 mod entity;
 mod input;
 mod math;
+mod particle;
 mod physics;
 mod renderer;
 mod scene;
 mod scheduler;
 mod spatial;
 mod sprite;
+mod timer;
+mod tween;
 
 pub use {
-    asset::*, audio::*, cell::*, collider::*, config::*, engine::*, entity::*, input::*, math::*,
-    physics::*, renderer::*, scene::*, scheduler::*, spatial::*, sprite::*,
+    asset::*, audio::*, cell::*, collider::*, config::*, easing::*, engine::*, entity::*, input::*,
+    math::*, particle::*, physics::*, renderer::*, scene::*, scheduler::*, spatial::*, sprite::*,
+    timer::*, tween::*,
 };
 
 use euv::*;

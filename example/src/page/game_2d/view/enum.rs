@@ -6,4 +6,6 @@ pub(crate) enum Game2DTab {
     Canvas2D,
     /// The WebGPU rendering backend tab.
     WebGpu,
+    /// The WebGL 2 rendering backend tab.
+    WebGl,
 }

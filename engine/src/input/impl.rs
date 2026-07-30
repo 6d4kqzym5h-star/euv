@@ -70,6 +70,227 @@ impl Input {
     }
 }
 
+/// Implements DOM event listener registration on the `Input` namespace struct.
+///
+/// This is the wiring layer that routes DOM events into [`InputState`]:
+/// keyboard events bind to `window` (a `<canvas>` is not focusable by
+/// default), while mouse and touch events bind to the canvas element so
+/// hit-testing coordinates stay canvas-local. Registered closures are
+/// `.forget()`-ed and stay alive for the lifetime of the document,
+/// matching the engine's mount-only convention.
+impl Input {
+    /// Attaches all input listeners and returns the shared state cell.
+    ///
+    /// # Arguments
+    ///
+    /// - `InputStateCell` - The shared input state to mutate from event handlers.
+    /// - `&Window` - The global window, receiving keyboard events.
+    /// - `&EventTarget` - The pointer target (typically the canvas element).
+    ///
+    /// # Returns
+    ///
+    /// - `InputStateCell` - The same cell passed in, for convenient chaining.
+    pub fn attach(
+        state_cell: InputStateCell,
+        window: &Window,
+        pointer_target: &EventTarget,
+    ) -> InputStateCell {
+        Self::attach_keyboard(&state_cell, window);
+        Self::attach_pointer(&state_cell, pointer_target);
+        state_cell
+    }
+
+    /// Binds `keydown` / `keyup` listeners to `window`.
+    ///
+    /// Keyboard events must bind to `window` rather than the canvas: a
+    /// `<canvas>` element is not focusable unless `tabindex` is set and the
+    /// user clicks it, so canvas-bound key listeners would never fire.
+    ///
+    /// # Arguments
+    ///
+    /// - `&InputStateCell` - The shared input state.
+    /// - `&Window` - The global window.
+    pub fn attach_keyboard(state_cell: &InputStateCell, window: &Window) {
+        let state_keydown: InputStateCell = state_cell.clone();
+        let keydown_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let code: String = Input::extract_key_code(&event);
+                if code.is_empty() {
+                    return;
+                }
+                let state: &mut InputState = state_keydown.get_mut();
+                state.press_key(code);
+            }));
+        Self::register_listener(window, INPUT_EVENT_KEYDOWN, keydown_closure);
+        let state_keyup: InputStateCell = state_cell.clone();
+        let keyup_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let code: String = Input::extract_key_code(&event);
+                if code.is_empty() {
+                    return;
+                }
+                let state: &mut InputState = state_keyup.get_mut();
+                state.release_key(code);
+            }));
+        Self::register_listener(window, INPUT_EVENT_KEYUP, keyup_closure);
+    }
+
+    /// Binds mouse / touch / context-menu listeners to the pointer target.
+    ///
+    /// `touchstart` and `touchmove` call `prevent_default()` so the browser
+    /// does not interpret touches as scroll/zoom gestures before the engine
+    /// sees them. `contextmenu` is suppressed so right-click reaches the
+    /// engine as `MouseButton::Right` instead of opening the browser menu.
+    ///
+    /// # Arguments
+    ///
+    /// - `&InputStateCell` - The shared input state.
+    /// - `&EventTarget` - The pointer target (typically the canvas element).
+    pub fn attach_pointer(state_cell: &InputStateCell, target: &EventTarget) {
+        let state_mousedown: InputStateCell = state_cell.clone();
+        let mousedown_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let button: MouseButton = Input::extract_mouse_button(&event);
+                let position: Vector2D = Input::extract_mouse_position(&event);
+                let state: &mut InputState = state_mousedown.get_mut();
+                state.press_mouse_button(button, position);
+            }));
+        Self::register_listener(target, INPUT_EVENT_MOUSEDOWN, mousedown_closure);
+        let state_mouseup: InputStateCell = state_cell.clone();
+        let mouseup_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let button: MouseButton = Input::extract_mouse_button(&event);
+                let state: &mut InputState = state_mouseup.get_mut();
+                state.release_mouse_button(button);
+            }));
+        Self::register_listener(target, INPUT_EVENT_MOUSEUP, mouseup_closure);
+        let state_mousemove: InputStateCell = state_cell.clone();
+        let mousemove_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let position: Vector2D = Input::extract_mouse_position(&event);
+                let state: &mut InputState = state_mousemove.get_mut();
+                state.update_mouse_position(position);
+            }));
+        Self::register_listener(target, INPUT_EVENT_MOUSEMOVE, mousemove_closure);
+        let state_mouseleave: InputStateCell = state_cell.clone();
+        let mouseleave_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |_: Event| {
+                let state: &mut InputState = state_mouseleave.get_mut();
+                state.set_mouse_moved(false);
+                state.set_mouse_delta(Vector2D::zero());
+            }));
+        Self::register_listener(target, INPUT_EVENT_MOUSELEAVE, mouseleave_closure);
+        let state_touchstart: InputStateCell = state_cell.clone();
+        let touchstart_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                event.prevent_default();
+                let state: &mut InputState = state_touchstart.get_mut();
+                for (identifier, position) in Input::extract_touch_positions(&event) {
+                    state.start_touch(identifier, position);
+                }
+            }));
+        Self::register_listener(target, INPUT_EVENT_TOUCHSTART, touchstart_closure);
+        let state_touchmove: InputStateCell = state_cell.clone();
+        let touchmove_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                event.prevent_default();
+                let state: &mut InputState = state_touchmove.get_mut();
+                for (identifier, position) in Input::extract_touch_positions(&event) {
+                    state.update_touch(identifier, position);
+                }
+            }));
+        Self::register_listener(target, INPUT_EVENT_TOUCHMOVE, touchmove_closure);
+        let state_touchend: InputStateCell = state_cell.clone();
+        let touchend_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                let state: &mut InputState = state_touchend.get_mut();
+                for identifier in Input::extract_touch_identifiers(&event) {
+                    state.end_touch(identifier);
+                }
+            }));
+        Self::register_listener(target, INPUT_EVENT_TOUCHEND, touchend_closure);
+        let contextmenu_closure: Closure<dyn FnMut(Event)> =
+            Closure::wrap(Box::new(move |event: Event| {
+                event.prevent_default();
+            }));
+        Self::register_listener(target, INPUT_EVENT_CONTEXTMENU, contextmenu_closure);
+    }
+
+    /// Extracts `(identifier, position)` pairs for every changed touch.
+    ///
+    /// A single touch event can carry multiple changed touches, so this
+    /// iterates the whole `changedTouches` list rather than reading index 0.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Event` - The touch event.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<(i32, Vector2D)>` - The identifier and client position of each changed touch.
+    fn extract_touch_positions(event: &Event) -> Vec<(i32, Vector2D)> {
+        let touch_event: &TouchEvent = event.unchecked_ref();
+        let touches: TouchList = touch_event.changed_touches();
+        let length: u32 = touches.length();
+        let mut out: Vec<(i32, Vector2D)> = Vec::with_capacity(length as usize);
+        for index in 0..length {
+            let Some(touch) = touches.get(index) else {
+                continue;
+            };
+            let identifier: i32 = touch.identifier();
+            let position: Vector2D =
+                Vector2D::new(f64::from(touch.client_x()), f64::from(touch.client_y()));
+            out.push((identifier, position));
+        }
+        out
+    }
+
+    /// Extracts the identifier of every changed touch (for `touchend`).
+    ///
+    /// # Arguments
+    ///
+    /// - `&Event` - The touch event.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<i32>` - The identifier of each changed touch.
+    fn extract_touch_identifiers(event: &Event) -> Vec<i32> {
+        let touch_event: &TouchEvent = event.unchecked_ref();
+        let touches: TouchList = touch_event.changed_touches();
+        let length: u32 = touches.length();
+        let mut out: Vec<i32> = Vec::with_capacity(length as usize);
+        for index in 0..length {
+            let Some(touch) = touches.get(index) else {
+                continue;
+            };
+            out.push(touch.identifier());
+        }
+        out
+    }
+
+    /// Registers a closure on the target and leaks it for the document's lifetime.
+    ///
+    /// The engine follows the wasm single-page-mount convention: listeners
+    /// are never detached, so the closure is `.forget()`-ed immediately
+    /// after registration (its clone of the state cell keeps the cell
+    /// reachable through the listeners even if the caller drops its `Rc`).
+    ///
+    /// # Arguments
+    ///
+    /// - `&EventTarget` - The DOM target to listen on.
+    /// - `&str` - The DOM event name.
+    /// - `Closure<dyn FnMut(Event)>` - The handler to register.
+    fn register_listener(
+        target: &EventTarget,
+        event_name: &str,
+        closure: Closure<dyn FnMut(Event)>,
+    ) {
+        let _: Result<(), JsValue> =
+            target.add_event_listener_with_callback(event_name, closure.as_ref().unchecked_ref());
+        closure.forget();
+    }
+}
+
 /// Implements input state management for `InputState`.
 impl InputState {
     /// Records a key press event, adding to `keys_pressed` and `keys_held`.
@@ -232,6 +453,24 @@ impl InputState {
     pub fn end_touch(&mut self, identifier: i32) {
         self.get_mut_touch_points().remove(&identifier);
         self.get_mut_touch_ended().insert(identifier);
+    }
+
+    /// Returns the position of the lowest-identifier active touch point.
+    ///
+    /// Pointer-style consumers (the example pages' interactive demos) treat
+    /// the primary touch like a mouse cursor: touch events never update
+    /// `mouse_position`, so this accessor is the only public way to read a
+    /// touch position.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<Vector2D>` - The client-space position of the primary
+    ///   touch, or `None` when no touch is active.
+    pub fn primary_touch_position(&self) -> Option<Vector2D> {
+        self.touch_points
+            .iter()
+            .min_by_key(|(identifier, _)| **identifier)
+            .map(|(_, position)| *position)
     }
 
     /// Clears all per-frame input data (pressed, released, deltas).

@@ -28,6 +28,13 @@ pub struct EngineHandle {
     pub(crate) canvas_renderer: Option<CanvasRenderer>,
     /// The initialized WebGPU renderer, or `None` if the Canvas 2D backend is used or initialization has not yet happened.
     pub(crate) webgpu_renderer: Option<WebGpuRenderer>,
+    /// The initialized WebGL 2 renderer, or `None` if another backend is used or initialization has not yet happened.
+    pub(crate) webgl_renderer: Option<WebGlRenderer>,
+    /// The shared input state once `register_input` has attached the DOM
+    /// event listeners, or `None` before registration (or if the canvas
+    /// selector did not resolve at registration time).
+    #[new(skip)]
+    pub(crate) input_cell: Option<InputStateCell>,
     /// The running scheduler handle, or `None` before `start` is called.
     pub(crate) scheduler_handle: Option<SchedulerHandle>,
 }
