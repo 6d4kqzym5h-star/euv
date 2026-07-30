@@ -466,7 +466,7 @@ pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<Canv
 /// canvas shows a loading message instead of being blank. Uses an
 /// `SsaaCanvas` with a 2x scale factor on desktop and 1x on mobile for
 /// crisp text rendering.
-pub(crate) fn draw_game_3d_loading() {
+pub(crate) fn draw_game_3d_loading(target_selector: &str, color_source_selector: &str) {
     let window_value: Window = window().expect("no global window exists");
     let is_mobile: bool = window_value
         .inner_width()
@@ -475,7 +475,7 @@ pub(crate) fn draw_game_3d_loading() {
         .is_some_and(|width: f64| width < 768.0);
     let scale_factor: f64 = if is_mobile { 1.0 } else { 2.0 };
     let Some(ssaa_canvas) = SsaaCanvas::from_selector_with_scale(
-        GAME_3D_CANVAS_SELECTOR,
+        target_selector,
         GAME_3D_CANVAS_WIDTH,
         GAME_3D_CANVAS_HEIGHT,
         scale_factor,
@@ -486,13 +486,10 @@ pub(crate) fn draw_game_3d_loading() {
     context.clear_rect(0.0, 0.0, GAME_3D_CANVAS_WIDTH, GAME_3D_CANVAS_HEIGHT);
     let font_size: f64 = GAME_3D_CANVAS_HEIGHT * GAME_3D_LOADING_FONT_SIZE_RATIO;
     let font: String = format!("{font_size}px {GAME_3D_LOADING_FONT_FAMILY}");
-    // Read the loading text color from the CSS variable via getComputedStyle.
-    // Query the canvas element itself so the theme variable (defined on a
-    // parent container, not on the document root) is inherited correctly.
     let loading_color: String = window_value
         .document()
         .expect("should have a document")
-        .query_selector(GAME_3D_CANVAS_SELECTOR)
+        .query_selector(color_source_selector)
         .ok()
         .flatten()
         .and_then(|element: Element| {
@@ -676,7 +673,7 @@ pub(crate) fn start_game_3d_loop(
         .unwrap_or(0);
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        draw_game_3d_loading();
+        draw_game_3d_loading(GAME_3D_CANVAS_SELECTOR, GAME_3D_CANVAS_SELECTOR);
     }));
     let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
     loading_closure.forget();
@@ -1262,6 +1259,20 @@ pub(crate) fn start_game_3d_webgpu_loop(
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
+    let loading_window: Window = window().expect("no global window exists");
+    let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        draw_game_3d_loading(
+            GAME_3D_WEBGPU_LOADING_CANVAS_SELECTOR,
+            GAME_3D_WEBGPU_CANVAS_SELECTOR,
+        );
+    }));
+    let loading_callback: Function = loading_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    loading_closure.forget();
+    let _ = loading_window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     spawn_local(async move {
         let config: RenderConfig = RenderConfig::webgpu(
             GAME_3D_WEBGPU_CANVAS_SELECTOR,
@@ -1538,6 +1549,20 @@ pub(crate) fn start_game_3d_webgl_loop(
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
+    let loading_window: Window = window().expect("no global window exists");
+    let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        draw_game_3d_loading(
+            GAME_3D_WEBGL_LOADING_CANVAS_SELECTOR,
+            GAME_3D_WEBGL_CANVAS_SELECTOR,
+        );
+    }));
+    let loading_callback: Function = loading_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    loading_closure.forget();
+    let _ = loading_window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     spawn_local(async move {
         if cancelled_for_init.get() {
             return;

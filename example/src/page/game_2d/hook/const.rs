@@ -91,6 +91,13 @@ pub(crate) const GAME_2D_WEBGPU_CANVAS_ID: &str = "game-2d-webgpu-canvas";
 /// The CSS selector used to query the 2D WebGPU canvas element from the DOM.
 pub(crate) const GAME_2D_WEBGPU_CANVAS_SELECTOR: &str = "#game-2d-webgpu-canvas";
 
+/// The HTML `id` attribute value for the 2D WebGPU loading overlay canvas.
+/// Renders "Loading..." via a 2D context while the GPU renderer initializes.
+pub(crate) const GAME_2D_WEBGPU_LOADING_CANVAS_ID: &str = "game-2d-webgpu-loading-canvas";
+
+/// The CSS selector for the 2D WebGPU loading overlay canvas.
+pub(crate) const GAME_2D_WEBGPU_LOADING_CANVAS_SELECTOR: &str = "#game-2d-webgpu-loading-canvas";
+
 /// The WGSL shader source for the 2D WebGPU bouncing balls demo.
 ///
 /// Renders every ball as a camera-facing quad (two triangles per ball,
@@ -157,6 +164,12 @@ pub(crate) const GAME_2D_WEBGL_CANVAS_ID: &str = "game-2d-webgl-canvas";
 
 /// The CSS selector used to query the 2D WebGL canvas element from the DOM.
 pub(crate) const GAME_2D_WEBGL_CANVAS_SELECTOR: &str = "#game-2d-webgl-canvas";
+
+/// The HTML `id` attribute value for the 2D WebGL loading overlay canvas.
+pub(crate) const GAME_2D_WEBGL_LOADING_CANVAS_ID: &str = "game-2d-webgl-loading-canvas";
+
+/// The CSS selector for the 2D WebGL loading overlay canvas.
+pub(crate) const GAME_2D_WEBGL_LOADING_CANVAS_SELECTOR: &str = "#game-2d-webgl-loading-canvas";
 
 /// The GLSL ES 3.00 vertex shader source for the 2D WebGL bouncing balls demo.
 ///

@@ -306,6 +306,10 @@ fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
                     ontouchend: on_touch_end.clone()
                     ontouchcancel: on_touch_end.clone()
                 }
+                canvas {
+                    id: GAME_3D_WEBGPU_LOADING_CANVAS_ID
+                    class: c_game_loading_overlay()
+                }
             }
             div {
                 class: c_button_controls()
@@ -455,6 +459,10 @@ fn game_3d_webgl_tab(state: UseGame3DWebGl) -> VirtualNode {
                     ontouchmove: on_touch_move.clone()
                     ontouchend: on_touch_end.clone()
                     ontouchcancel: on_touch_end.clone()
+                }
+                canvas {
+                    id: GAME_3D_WEBGL_LOADING_CANVAS_ID
+                    class: c_game_loading_overlay()
                 }
             }
             div {

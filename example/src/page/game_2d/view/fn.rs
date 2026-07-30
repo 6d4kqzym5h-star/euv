@@ -309,6 +309,10 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
                     onclick: on_canvas_click
                     ontouchstart: on_canvas_touch
                 }
+                canvas {
+                    id: GAME_2D_WEBGPU_LOADING_CANVAS_ID
+                    class: c_game_loading_overlay()
+                }
             }
             div {
                 class: c_button_controls()
@@ -457,6 +461,10 @@ fn game_2d_webgl_tab(state: UseGame2DWebGl) -> VirtualNode {
                     class: c_game_2d_canvas()
                     onclick: on_canvas_click
                     ontouchstart: on_canvas_touch
+                }
+                canvas {
+                    id: GAME_2D_WEBGL_LOADING_CANVAS_ID
+                    class: c_game_loading_overlay()
                 }
             }
             div {

@@ -144,6 +144,12 @@ pub(crate) const GAME_3D_WEBGPU_CANVAS_ID: &str = "game-3d-webgpu-canvas";
 /// The CSS selector used to query the 3D WebGPU canvas element from the DOM.
 pub(crate) const GAME_3D_WEBGPU_CANVAS_SELECTOR: &str = "#game-3d-webgpu-canvas";
 
+/// The HTML `id` attribute value for the 3D WebGPU loading overlay canvas.
+pub(crate) const GAME_3D_WEBGPU_LOADING_CANVAS_ID: &str = "game-3d-webgpu-loading-canvas";
+
+/// The CSS selector for the 3D WebGPU loading overlay canvas.
+pub(crate) const GAME_3D_WEBGPU_LOADING_CANVAS_SELECTOR: &str = "#game-3d-webgpu-loading-canvas";
+
 /// The maximum number of cubes the GPU shaders can draw in one scene.
 ///
 /// The uniform layouts size their cube arrays to this value; the demo
@@ -274,6 +280,12 @@ pub(crate) const GAME_3D_WEBGL_CANVAS_ID: &str = "game-3d-webgl-canvas";
 
 /// The CSS selector used to query the 3D WebGL canvas element from the DOM.
 pub(crate) const GAME_3D_WEBGL_CANVAS_SELECTOR: &str = "#game-3d-webgl-canvas";
+
+/// The HTML `id` attribute value for the 3D WebGL loading overlay canvas.
+pub(crate) const GAME_3D_WEBGL_LOADING_CANVAS_ID: &str = "game-3d-webgl-loading-canvas";
+
+/// The CSS selector for the 3D WebGL loading overlay canvas.
+pub(crate) const GAME_3D_WEBGL_LOADING_CANVAS_SELECTOR: &str = "#game-3d-webgl-loading-canvas";
 
 /// The GLSL ES 3.00 vertex shader source for the 3D WebGL cubes demo.
 ///

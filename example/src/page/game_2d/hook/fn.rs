@@ -471,13 +471,18 @@ pub(crate) fn acquire_game_2d_ssaa_canvas() -> Option<(HtmlCanvasElement, SsaaCa
     Some((display_canvas, ssaa_canvas))
 }
 
-/// Draws the loading text centered on the 2D game canvas using SSAA.
+/// Draws the loading text centered on a 2D canvas using SSAA.
 ///
-/// Called during the startup delay before the game loop begins, so the
-/// canvas shows a loading message instead of being blank. Uses an
-/// `SsaaCanvas` with a 2x scale factor on desktop and 1x on mobile for
-/// crisp text rendering.
-pub(crate) fn draw_game_2d_loading() {
+/// Used by the Canvas 2D tab (drawn directly on the game canvas) and by
+/// the WebGPU/WebGL tabs (drawn on a separate 2D overlay canvas stacked
+/// above the GPU canvas, since the GPU canvas cannot be drawn into via a
+/// 2D context). `target_selector` is the canvas the text is rendered
+/// onto; `color_source_selector` is the element whose computed style is
+/// queried for the `--text-on-accent` CSS variable so the text colour
+/// matches the surrounding theme. The two selectors coincide for the
+/// Canvas 2D tab; for the GPU tabs the overlay canvas is the target
+/// while the GPU canvas is the colour source.
+pub(crate) fn draw_game_2d_loading(target_selector: &str, color_source_selector: &str) {
     let window_value: Window = window().expect("no global window exists");
     let is_mobile: bool = window_value
         .inner_width()
@@ -486,7 +491,7 @@ pub(crate) fn draw_game_2d_loading() {
         .is_some_and(|width: f64| width < 768.0);
     let scale_factor: f64 = if is_mobile { 1.0 } else { 2.0 };
     let Some(ssaa_canvas) = SsaaCanvas::from_selector_with_scale(
-        GAME_2D_CANVAS_SELECTOR,
+        target_selector,
         GAME_2D_CANVAS_WIDTH,
         GAME_2D_CANVAS_HEIGHT,
         scale_factor,
@@ -498,12 +503,12 @@ pub(crate) fn draw_game_2d_loading() {
     let font_size: f64 = GAME_2D_CANVAS_HEIGHT * GAME_2D_LOADING_FONT_SIZE_RATIO;
     let font: String = format!("{font_size}px {GAME_2D_LOADING_FONT_FAMILY}");
     // Read the loading text color from the CSS variable via getComputedStyle.
-    // Query the canvas element itself so the theme variable (defined on a
-    // parent container, not on the document root) is inherited correctly.
+    // Query the source element so the theme variable (defined on a parent
+    // container, not on the document root) is inherited correctly.
     let loading_color: String = window_value
         .document()
         .expect("should have a document")
-        .query_selector(GAME_2D_CANVAS_SELECTOR)
+        .query_selector(color_source_selector)
         .ok()
         .flatten()
         .and_then(|element: Element| {
@@ -662,7 +667,7 @@ pub(crate) fn start_game_2d_loop(
         .unwrap_or(0);
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        draw_game_2d_loading();
+        draw_game_2d_loading(GAME_2D_CANVAS_SELECTOR, GAME_2D_CANVAS_SELECTOR);
     }));
     let loading_callback: Function = loading_closure.as_ref().unchecked_ref::<Function>().clone();
     loading_closure.forget();
@@ -1029,6 +1034,20 @@ pub(crate) fn start_game_2d_webgpu_loop(
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
+    let loading_window: Window = window().expect("no global window exists");
+    let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        draw_game_2d_loading(
+            GAME_2D_WEBGPU_LOADING_CANVAS_SELECTOR,
+            GAME_2D_WEBGPU_CANVAS_SELECTOR,
+        );
+    }));
+    let loading_callback: Function = loading_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    loading_closure.forget();
+    let _ = loading_window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     spawn_local(async move {
         let config: RenderConfig = RenderConfig::webgpu(
             GAME_2D_WEBGPU_CANVAS_SELECTOR,
@@ -1289,6 +1308,20 @@ pub(crate) fn start_game_2d_webgl_loop(
         let _: Option<WebGlRenderer> = renderer_for_cleanup.borrow_mut().take();
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
+    let loading_window: Window = window().expect("no global window exists");
+    let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+        draw_game_2d_loading(
+            GAME_2D_WEBGL_LOADING_CANVAS_SELECTOR,
+            GAME_2D_WEBGL_CANVAS_SELECTOR,
+        );
+    }));
+    let loading_callback: Function = loading_closure
+        .as_ref()
+        .unchecked_ref::<Function>()
+        .clone();
+    loading_closure.forget();
+    let _ = loading_window
+        .set_timeout_with_callback_and_timeout_and_arguments_0(&loading_callback, 0);
     spawn_local(async move {
         if cancelled_for_init.get() {
             return;
