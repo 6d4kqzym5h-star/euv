@@ -1484,7 +1484,7 @@ class! {
         margin-bottom: var!(gap-component);
         gap: var!(gap-element);
         @media ((max-width: 767px)) {
-            flex-wrap: "wrap";
+            flex-wrap: "nowrap";
         }
     }
 

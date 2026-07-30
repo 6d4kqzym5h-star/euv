@@ -36,7 +36,7 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                             c_tab_item_inactive()
                         }
                         onclick: game_2d_on_tab_select(tab, Game2DTab::Canvas2D)
-                        "Canvas 2D"
+                        "2D"
                     }
                     div {
                         class: if { tab.get() == Game2DTab::WebGpu } {
@@ -45,7 +45,7 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                             c_tab_item_inactive()
                         }
                         onclick: game_2d_on_tab_select(tab, Game2DTab::WebGpu)
-                        "WebGPU"
+                        "GPU"
                     }
                     div {
                         class: if { tab.get() == Game2DTab::WebGl } {
@@ -54,7 +54,7 @@ pub(crate) fn page_game_2d(node: VirtualNode<PageGame2DProps>) -> VirtualNode {
                             c_tab_item_inactive()
                         }
                         onclick: game_2d_on_tab_select(tab, Game2DTab::WebGl)
-                        "WebGL"
+                        "GL"
                     }
                 }
                 match { tab } {
