@@ -60,6 +60,15 @@ class! {
         image-rendering: "crisp-edges";
     }
 
+    pub c_game_loading_overlay {
+        position: "absolute";
+        top: "0";
+        left: "0";
+        width: "100%";
+        height: "100%";
+        pointer-events: "none";
+    }
+
     pub c_keep_alive_tab_visible {
         display: "block";
     }

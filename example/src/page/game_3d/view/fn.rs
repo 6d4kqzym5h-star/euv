@@ -37,16 +37,7 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                             c_tab_item_inactive()
                         }
                         onclick: game_3d_on_tab_select(tab, Game3DTab::Canvas2D)
-                        "Canvas 2D"
-                    }
-                    div {
-                        class: if { tab.get() == Game3DTab::WebGpu } {
-                            c_tab_item_active()
-                        } else {
-                            c_tab_item_inactive()
-                        }
-                        onclick: game_3d_on_tab_select(tab, Game3DTab::WebGpu)
-                        "WebGPU"
+                        "2D"
                     }
                     div {
                         class: if { tab.get() == Game3DTab::WebGl } {
@@ -55,7 +46,16 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                             c_tab_item_inactive()
                         }
                         onclick: game_3d_on_tab_select(tab, Game3DTab::WebGl)
-                        "WebGL"
+                        "GL"
+                    }
+                    div {
+                        class: if { tab.get() == Game3DTab::WebGpu } {
+                            c_tab_item_active()
+                        } else {
+                            c_tab_item_inactive()
+                        }
+                        onclick: game_3d_on_tab_select(tab, Game3DTab::WebGpu)
+                        "GPU"
                     }
                 }
                 match { tab } {
@@ -64,14 +64,14 @@ pub(crate) fn page_game_3d(node: VirtualNode<PageGame3DProps>) -> VirtualNode {
                             game_3d_canvas_tab()
                         }
                     }
-                    Game3DTab::WebGpu => {
-                        div {
-                            game_3d_webgpu_tab(use_game_3d_webgpu_state())
-                        }
-                    }
                     Game3DTab::WebGl => {
                         div {
                             game_3d_webgl_tab(use_game_3d_webgl_state())
+                        }
+                    }
+                    Game3DTab::WebGpu => {
+                        div {
+                            game_3d_webgpu_tab(use_game_3d_webgpu_state())
                         }
                     }
                 }
@@ -306,6 +306,12 @@ fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
                     ontouchend: on_touch_end.clone()
                     ontouchcancel: on_touch_end.clone()
                 }
+                if { !state.get_loaded().get() } {
+                    canvas {
+                        id: GAME_3D_WEBGPU_LOADING_CANVAS_ID
+                        class: c_game_loading_overlay()
+                    }
+                }
             }
             div {
                 class: c_button_controls()
@@ -455,6 +461,12 @@ fn game_3d_webgl_tab(state: UseGame3DWebGl) -> VirtualNode {
                     ontouchmove: on_touch_move.clone()
                     ontouchend: on_touch_end.clone()
                     ontouchcancel: on_touch_end.clone()
+                }
+                if { !state.get_loaded().get() } {
+                    canvas {
+                        id: GAME_3D_WEBGL_LOADING_CANVAS_ID
+                        class: c_game_loading_overlay()
+                    }
                 }
             }
             div {
