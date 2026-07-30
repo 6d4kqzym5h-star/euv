@@ -1,6 +1,6 @@
 [package]
 name = "euv"
-version = "0.13.1"
+version = "0.13.2"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -287,7 +287,12 @@ euv-macros = { path = "macros" }
 euv-example = { path = "example" }
 
 [package.metadata.wasm-pack.profile.dev]
-wasm-opt = false
+wasm-opt = [
+    "-Oz",
+    "--enable-mutable-globals",
+    "--enable-bulk-memory",
+    "--enable-nontrapping-float-to-int",
+]
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = [
