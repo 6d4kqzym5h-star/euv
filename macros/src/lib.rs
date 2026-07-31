@@ -66,11 +66,19 @@ pub fn html(input: TokenStream) -> TokenStream {
 /// in `html!` via the `class:` attribute. Styles are automatically injected
 /// into the DOM on first use.
 ///
+/// Parameterized classes keep the normal function-call syntax. Wrap a
+/// parameter reference in `{}` to make it part of the generated class name
+/// by value; parameters referenced without braces keep the default
+/// type-based class name.
+///
 /// ```ignore
 /// class! {
 ///     pub container {
 ///         max_width: "800px";
 ///         margin: "0 auto";
+///     }
+///     pub color_preview(color: &str) {
+///         background: {color};
 ///     }
 ///     pub(crate) header {
 ///         font_size: "28px";
