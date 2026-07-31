@@ -271,9 +271,17 @@ impl ToTokens for ClassDef {
                         quote! { #param_name: #param_type }
                     })
                     .collect();
-                let param_names: Vec<&Ident> = params
+                let dynamic_param_names: Vec<String> = collect_dynamic_param_names(self);
+                let param_name_parts: Vec<proc_macro2::TokenStream> = params
                     .iter()
-                    .map(|param: &ClassParam| param.get_name())
+                    .map(|param: &ClassParam| {
+                        let param_name: &Ident = param.get_name();
+                        if dynamic_param_names.contains(&param_name.to_string()) {
+                            quote! { ::euv::Css::param_class_name(&(#param_name).to_string()) }
+                        } else {
+                            quote! { std::any::type_name_of_val(&#param_name).to_string() }
+                        }
+                    })
                     .collect();
                 let mut all_css_parts: Vec<proc_macro2::TokenStream> = self
                     .get_extends()
@@ -312,11 +320,11 @@ impl ToTokens for ClassDef {
                         }
                     }
                 }
-                let unique_name_expr: proc_macro2::TokenStream = if param_names.is_empty() {
+                let unique_name_expr: proc_macro2::TokenStream = if param_name_parts.is_empty() {
                     quote! { #class_name_str.to_string() }
                 } else {
                     let name_format: String = format!("{{}}{STR_HYPHEN}{{}}");
-                    quote! { format!(#name_format, #class_name_str, [#(std::any::type_name_of_val(&#param_names)), *].join(#STR_HYPHEN)) }
+                    quote! { format!(#name_format, #class_name_str, [#(#param_name_parts), *].join(#STR_HYPHEN)) }
                 };
                 let style_expr: proc_macro2::TokenStream = if all_css_parts.is_empty() {
                     quote! { #STR_EMPTY.to_string() }

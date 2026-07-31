@@ -648,6 +648,28 @@ impl Css {
             .join(&CHAR_SPACE.to_string())
     }
 
+    /// Builds a stable suffix for a class name from a dynamic parameter value.
+    ///
+    /// Used by the `class!` macro when a parameter is wrapped in `{}` in the
+    /// class body. Wrapping a parameter opts it into value-dependent class
+    /// names, so each distinct value can inject its own CSS rule.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - The dynamic parameter value.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - A stable hexadecimal suffix for the class name.
+    pub fn param_class_name(value: &str) -> String {
+        let mut hash: u64 = CLASS_PARAM_HASH_FNV_OFFSET;
+        for byte in value.as_bytes() {
+            hash ^= u64::from(*byte);
+            hash = hash.wrapping_mul(CLASS_PARAM_HASH_FNV_PRIME);
+        }
+        format!("{hash:x}")
+    }
+
     /// Builds a CSS style string from owned key-value pairs.
     ///
     /// Used by the `html!` macro for reactive style attributes (with `if`

@@ -1216,6 +1216,17 @@ pub(crate) fn start_game_2d_webgpu_loop(
                 let uniform_data: Vec<f32> = pack_game_2d_balls_webgpu(&render_balls);
                 let vertex_count: u32 = (render_balls.len() * 6) as u32;
                 renderer.update_uniform_buffer(&buffer_for_loop, &uniform_data);
+                // Refresh the clear color every frame so a theme toggle
+                // takes effect within one paint. The computed style is
+                // cached by the engine after the first read, so the only
+                // per-frame cost is a small string parse and equality
+                // check; the GPU clear value is only re-uploaded when the
+                // tuple actually changes.
+                let next_clear: (f64, f64, f64) =
+                    game_2d_canvas_clear_color(GAME_2D_WEBGPU_CANVAS_SELECTOR);
+                if clear_color_for_loop.get() != next_clear {
+                    clear_color_for_loop.set(next_clear);
+                }
                 let (r, g, b) = clear_color_for_loop.get();
                 renderer.render_frame_with_bind_group(
                     &pipeline_for_loop,
@@ -1229,11 +1240,6 @@ pub(crate) fn start_game_2d_webgpu_loop(
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
-                // Refresh the clear color alongside the FPS counter so a
-                // theme toggle is picked up within a second without paying
-                // for getComputedStyle every frame.
-                clear_color_for_loop
-                    .set(game_2d_canvas_clear_color(GAME_2D_WEBGPU_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }
@@ -1480,6 +1486,17 @@ pub(crate) fn start_game_2d_webgl_loop(
                     &pos_radius_data,
                 );
                 renderer.set_uniform_4fv(&program_for_loop, "u_ball_color[0]", &color_data);
+                // Refresh the clear color every frame so a theme toggle
+                // takes effect within one paint. The computed style is
+                // cached by the engine after the first read, so the only
+                // per-frame cost is a small string parse and equality
+                // check; the GPU clear value is only re-uploaded when the
+                // tuple actually changes.
+                let next_clear: (f64, f64, f64) =
+                    game_2d_canvas_clear_color(GAME_2D_WEBGL_CANVAS_SELECTOR);
+                if clear_color_for_loop.get() != next_clear {
+                    clear_color_for_loop.set(next_clear);
+                }
                 let (r, g, b) = clear_color_for_loop.get();
                 renderer.render_frame(&program_for_loop, (r, g, b, 1.0), vertex_count);
             }
@@ -1488,10 +1505,6 @@ pub(crate) fn start_game_2d_webgl_loop(
             if fps_clone.get() >= 1.0 {
                 let fps: f64 = f64::from(frame_clone.get()) / fps_clone.get();
                 loop_state.get_fps().set(fps);
-                // Refresh the clear color alongside the FPS counter so a
-                // theme toggle is picked up within a second without paying
-                // for getComputedStyle every frame.
-                clear_color_for_loop.set(game_2d_canvas_clear_color(GAME_2D_WEBGL_CANVAS_SELECTOR));
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }

@@ -162,6 +162,119 @@ pub(crate) fn expand_var_macros_in_tokens(
     result.into_iter().collect()
 }
 
+/// Collects parameter names that are wrapped in `{}` anywhere in a class definition.
+///
+/// A wrapped parameter is treated as a dynamic class parameter: its value contributes
+/// to the generated class name, allowing every distinct value to inject its own CSS rule.
+/// Bare parameters keep the existing type-based class-name behavior.
+///
+/// # Arguments
+///
+/// - `&ClassDef` - The class definition to scan.
+///
+/// # Returns
+///
+/// - `Vec<String>` - Unique names of parameters wrapped in `{}`.
+pub(crate) fn collect_dynamic_param_names(class_def: &ClassDef) -> Vec<String> {
+    let mut dynamic_param_names: Vec<String> = Vec::new();
+    collect_dynamic_param_names_from_properties(
+        class_def.get_properties(),
+        &mut dynamic_param_names,
+    );
+    collect_dynamic_param_names_from_selector_blocks(
+        class_def.get_selector_blocks(),
+        &mut dynamic_param_names,
+    );
+    collect_dynamic_param_names_from_at_rule_blocks(
+        class_def.get_at_rule_blocks(),
+        &mut dynamic_param_names,
+    );
+    for parent in class_def.get_extends() {
+        for arg in parent.get_args() {
+            collect_braced_idents(arg, &mut dynamic_param_names);
+        }
+    }
+    dynamic_param_names
+}
+
+fn collect_dynamic_param_names_from_properties(
+    properties: &[(ClassPropKey, ClassPropValue)],
+    dynamic_param_names: &mut Vec<String>,
+) {
+    for (key, value) in properties {
+        if let ClassPropKey::Dynamic(tokens) = key {
+            collect_braced_idents(tokens, dynamic_param_names);
+        }
+        let ClassPropValue::Expr(tokens) = value;
+        collect_braced_idents(tokens, dynamic_param_names);
+    }
+}
+
+fn collect_dynamic_param_names_from_selector_blocks(
+    selector_blocks: &[SelectorBlock],
+    dynamic_param_names: &mut Vec<String>,
+) {
+    for selector_block in selector_blocks {
+        collect_dynamic_param_names_from_properties(
+            selector_block.get_properties(),
+            dynamic_param_names,
+        );
+        collect_dynamic_param_names_from_selector_blocks(
+            selector_block.get_selector_blocks(),
+            dynamic_param_names,
+        );
+    }
+}
+
+fn collect_dynamic_param_names_from_at_rule_blocks(
+    at_rule_blocks: &[AtRuleBlock],
+    dynamic_param_names: &mut Vec<String>,
+) {
+    for at_rule_block in at_rule_blocks {
+        collect_dynamic_param_names_from_properties(
+            at_rule_block.get_properties(),
+            dynamic_param_names,
+        );
+        collect_dynamic_param_names_from_selector_blocks(
+            at_rule_block.get_selector_blocks(),
+            dynamic_param_names,
+        );
+        collect_dynamic_param_names_from_at_rule_blocks(
+            at_rule_block.get_at_rule_blocks(),
+            dynamic_param_names,
+        );
+    }
+}
+
+fn collect_braced_idents(tokens: &proc_macro2::TokenStream, dynamic_param_names: &mut Vec<String>) {
+    for token in tokens.clone() {
+        if let TokenTree::Group(group) = token {
+            if group.delimiter() == proc_macro2::Delimiter::Brace {
+                collect_all_idents(&group.stream(), dynamic_param_names);
+            }
+            collect_braced_idents(&group.stream(), dynamic_param_names);
+        }
+    }
+}
+
+fn collect_all_idents(tokens: &proc_macro2::TokenStream, dynamic_param_names: &mut Vec<String>) {
+    for token in tokens.clone() {
+        match token {
+            TokenTree::Ident(ident) => {
+                push_unique_param_name(dynamic_param_names, ident.to_string())
+            }
+            TokenTree::Group(group) => collect_all_idents(&group.stream(), dynamic_param_names),
+            _ => {}
+        }
+    }
+}
+
+fn push_unique_param_name(dynamic_param_names: &mut Vec<String>, param_name: String) {
+    if !dynamic_param_names.contains(&param_name) {
+        dynamic_param_names.push(param_name);
+    }
+}
+
 /// Checks whether a `proc_macro2::TokenStream` consists entirely of string literals,
 /// meaning its value can be computed at compile time.
 ///

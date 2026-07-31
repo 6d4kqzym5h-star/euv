@@ -70,3 +70,9 @@ pub(crate) const CHAR_HYPHEN: char = '-';
 
 /// The underscore character used in CSS class names and identifiers.
 pub(crate) const CHAR_UNDERSCORE: char = '_';
+
+/// The FNV-1a offset basis used to derive stable class-name suffixes from parameter values.
+pub(crate) const CLASS_PARAM_HASH_FNV_OFFSET: u64 = 14695981039346656037;
+
+/// The FNV-1a prime used to derive stable class-name suffixes from parameter values.
+pub(crate) const CLASS_PARAM_HASH_FNV_PRIME: u64 = 1099511628211;

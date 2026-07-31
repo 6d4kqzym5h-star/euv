@@ -82,14 +82,18 @@ class! {
     }
 
     pub c_binding_color_preview_bg(background: &str) {
-        background: background;
+        background: {
+            background
+        };
     }
 
     pub c_slider_value(value_percent: &str) {
         {
             "--value"
         }
-        : value_percent;
+        : {
+            value_percent
+        };
     }
 
     pub c_anim_scale_shrink {
