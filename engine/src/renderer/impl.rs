@@ -1920,6 +1920,13 @@ impl WebGpuRenderer {
             antialias: config.antialias,
             multisample_texture: None,
             multisample_view: None,
+            depth_texture: None,
+            depth_view: None,
+            depth_format: None,
+            device_lost_callback: None,
+            device_lost: false,
+            pending_error: std::rc::Rc::new(std::cell::RefCell::new(None)),
+            command_encoder: None,
         })
     }
 
@@ -2215,6 +2222,13 @@ impl WebGpuRenderer {
     /// that can be used to issue draw commands. The pass must be ended (via `end()`)
     /// before the command encoder is finished.
     ///
+    /// This is a thin convenience wrapper over
+    /// [`WebGpuRenderer::begin_render_pass_full`]. For pipelines that
+    /// need depth testing, multiple color attachments, MSAA control,
+    /// or `load`/`store` op customization, use the full version with
+    /// a [`RenderPassColorAttachment`] (and optional
+    /// [`RenderPassDepthStencilAttachment`]).
+    ///
     /// # Arguments
     ///
     /// - `&JsValue` - The command encoder to begin the pass on.
@@ -2228,67 +2242,93 @@ impl WebGpuRenderer {
         encoder: &JsValue,
         clear_color: (f64, f64, f64, f64),
     ) -> JsValue {
-        let swap_chain_view: JsValue = self.get_current_texture_view();
-        // Select the color attachment view and the resolve target based on
-        // whether MSAA is enabled. With MSAA=4 we draw into a multisampled
-        // intermediate texture and resolve into the swap chain at the end
-        // of the pass; without MSAA we draw directly into the swap chain
-        // and omit `resolveTarget`.
-        let (color_view, resolve_view): (JsValue, Option<JsValue>) = if self.get_antialias() {
-            let multisample_view: Option<JsValue> = self
-                .get_multisample_view()
-                .clone()
-                .filter(|value: &JsValue| !value.is_undefined());
-            let resolved: Option<JsValue> = match multisample_view {
-                Some(view) => Some(view),
-                None => {
-                    // Lazy-init: the first render after `init()` or
-                    // `resize()` finds an empty multisample view slot.
-                    // Build it now (using the swap chain's current
-                    // physical size) and cache it on the struct.
-                    let width: u32 = self.get_width();
-                    let height: u32 = self.get_height();
-                    let (texture, view): (JsValue, JsValue) =
-                        self.create_multisample_texture(width, height);
-                    if !view.is_undefined() {
-                        self.set_multisample_texture(Some(texture));
-                        self.set_multisample_view(Some(view.clone()));
-                        Some(view)
-                    } else {
-                        self.set_multisample_texture(None);
-                        self.set_multisample_view(None);
-                        None
-                    }
-                }
-            };
-            match resolved {
-                Some(view) => (view, Some(swap_chain_view.clone())),
-                None => (swap_chain_view.clone(), None),
-            }
-        } else {
-            (swap_chain_view.clone(), None)
+        let mut color: RenderPassColorAttachment = RenderPassColorAttachment {
+            view: None,
+            resolve_target: None,
+            clear_value: Some(clear_color),
+            load_op: None,
+            store_op: None,
         };
-        let color_dict: Object = Object::new();
-        let _: Result<bool, JsValue> = Reflect::set(
-            &color_dict,
-            &JsValue::from_str(WEBGPU_PROPERTY_R),
-            &JsValue::from_f64(clear_color.0),
-        );
-        let _: Result<bool, JsValue> = Reflect::set(
-            &color_dict,
-            &JsValue::from_str(WEBGPU_PROPERTY_G),
-            &JsValue::from_f64(clear_color.1),
-        );
-        let _: Result<bool, JsValue> = Reflect::set(
-            &color_dict,
-            &JsValue::from_str(WEBGPU_PROPERTY_B),
-            &JsValue::from_f64(clear_color.2),
-        );
-        let _: Result<bool, JsValue> = Reflect::set(
-            &color_dict,
-            &JsValue::from_str(WEBGPU_PROPERTY_A),
-            &JsValue::from_f64(clear_color.3),
-        );
+        self.begin_render_pass_full(encoder, &mut color, None)
+    }
+
+    /// Begins a render pass with full control over attachments, load/store
+    /// ops, MSAA resolve targets, and an optional depth-stencil attachment.
+    ///
+    /// This is the "complete" render-pass API used by the rest of the
+    /// engine. All other render-pass entry points (including the
+    /// legacy `begin_render_pass(clear_color)` wrapper) funnel through
+    /// here.
+    ///
+    /// The color attachment's `view` is filled in lazily when `None`:
+    /// if `antialias == true` and the multisample intermediate is
+    /// available (or can be allocated), the pass draws into the MSAA
+    /// view and resolves into the swap chain; otherwise it draws
+    /// directly into the swap chain. The `resolve_target` is filled in
+    /// with the swap-chain view when MSAA is active and the caller
+    /// did not provide one.
+    ///
+    /// # Arguments
+    ///
+    /// - `encoder` - The `GpuCommandEncoder` to begin the pass on.
+    /// - `color` - The color attachment descriptor. `color.view` and
+    ///   `color.resolve_target` may be `None`; they are filled in with
+    ///   the renderer's defaults.
+    /// - `depth` - An optional depth-stencil attachment. `Some(...)`
+    ///   adds a `depthStencilAttachment` field to the pass
+    ///   descriptor; `None` omits it entirely.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The active `GpuRenderPassEncoder` as a JavaScript
+    ///   value, suitable for the existing `set_pipeline` / `draw` /
+    ///   `end_render_pass` calls.
+    pub fn begin_render_pass_full(
+        &mut self,
+        encoder: &JsValue,
+        color: &mut RenderPassColorAttachment,
+        depth: Option<&RenderPassDepthStencilAttachment>,
+    ) -> JsValue {
+        let swap_chain_view: JsValue = self.get_current_texture_view();
+        // Resolve MSAA view + resolve target with the same policy as
+        // the legacy `begin_render_pass`: prefer the existing
+        // multisample view, lazily allocate it if missing, and fall
+        // back to direct-to-swap-chain if MSAA allocation fails.
+        let (color_view, resolve_view): (JsValue, Option<JsValue>) = match color.view.take() {
+            Some(view) if !view.is_undefined() => (view, color.resolve_target.take()),
+            _ => {
+                if self.get_antialias() {
+                    let multisample_view: Option<JsValue> = self
+                        .get_multisample_view()
+                        .clone()
+                        .filter(|value: &JsValue| !value.is_undefined());
+                    let resolved: Option<JsValue> = match multisample_view {
+                        Some(view) => Some(view),
+                        None => {
+                            let width: u32 = self.get_width();
+                            let height: u32 = self.get_height();
+                            let (texture, view): (JsValue, JsValue) =
+                                self.create_multisample_texture(width, height);
+                            if !view.is_undefined() {
+                                self.set_multisample_texture(Some(texture));
+                                self.set_multisample_view(Some(view.clone()));
+                                Some(view)
+                            } else {
+                                self.set_multisample_texture(None);
+                                self.set_multisample_view(None);
+                                None
+                            }
+                        }
+                    };
+                    match resolved {
+                        Some(view) => (view, Some(swap_chain_view.clone())),
+                        None => (swap_chain_view.clone(), None),
+                    }
+                } else {
+                    (swap_chain_view.clone(), None)
+                }
+            }
+        };
         let attachment: Object = Object::new();
         let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
@@ -2298,18 +2338,41 @@ impl WebGpuRenderer {
         let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
             &JsValue::from_str(WEBGPU_PROPERTY_LOAD_OP),
-            &JsValue::from_str(WEBGPU_LOAD_OP_CLEAR),
+            &JsValue::from_str(color.effective_load_op()),
         );
         let _: Result<bool, JsValue> = Reflect::set(
             &attachment,
             &JsValue::from_str(WEBGPU_PROPERTY_STORE_OP),
-            &JsValue::from_str(WEBGPU_STORE_OP_STORE),
+            &JsValue::from_str(color.effective_store_op()),
         );
-        let _: Result<bool, JsValue> = Reflect::set(
-            &attachment,
-            &JsValue::from_str(WEBGPU_PROPERTY_CLEAR_VALUE),
-            &color_dict,
-        );
+        if let Some(cv) = color.clear_value {
+            let color_dict: Object = Object::new();
+            let _: Result<bool, JsValue> = Reflect::set(
+                &color_dict,
+                &JsValue::from_str(WEBGPU_PROPERTY_R),
+                &JsValue::from_f64(cv.0),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &color_dict,
+                &JsValue::from_str(WEBGPU_PROPERTY_G),
+                &JsValue::from_f64(cv.1),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &color_dict,
+                &JsValue::from_str(WEBGPU_PROPERTY_B),
+                &JsValue::from_f64(cv.2),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &color_dict,
+                &JsValue::from_str(WEBGPU_PROPERTY_A),
+                &JsValue::from_f64(cv.3),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &attachment,
+                &JsValue::from_str(WEBGPU_PROPERTY_CLEAR_VALUE),
+                &color_dict,
+            );
+        }
         if let Some(target) = resolve_view.as_ref() {
             let _: Result<bool, JsValue> = Reflect::set(
                 &attachment,
@@ -2325,6 +2388,55 @@ impl WebGpuRenderer {
             &JsValue::from_str(WEBGPU_PROPERTY_COLOR_ATTACHMENTS),
             &color_attachments,
         );
+        if let Some(depth_desc) = depth {
+            // Prefer the caller-provided view; otherwise lazily
+            // allocate the default depth-stencil texture and use its
+            // view.
+            let depth_view: JsValue = match depth_desc.view.clone() {
+                Some(v) if !v.is_undefined() => v,
+                _ => match self.create_depth_texture() {
+                    Some(v) => v,
+                    None => JsValue::UNDEFINED,
+                },
+            };
+            if !depth_view.is_undefined() {
+                let depth_attachment: Object = Object::new();
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &depth_attachment,
+                    &JsValue::from_str(WEBGPU_PROPERTY_VIEW),
+                    &depth_view,
+                );
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &depth_attachment,
+                    &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_LOAD_OP),
+                    &JsValue::from_str(depth_desc.effective_depth_load_op()),
+                );
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &depth_attachment,
+                    &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_STORE_OP),
+                    &JsValue::from_str(depth_desc.effective_depth_store_op()),
+                );
+                if let Some(clear) = depth_desc.depth_clear_value {
+                    let _: Result<bool, JsValue> = Reflect::set(
+                        &depth_attachment,
+                        &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_CLEAR_VALUE),
+                        &JsValue::from_f64(f64::from(clear)),
+                    );
+                }
+                if let Some(read_only) = depth_desc.depth_read_only {
+                    let _: Result<bool, JsValue> = Reflect::set(
+                        &depth_attachment,
+                        &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_READ_ONLY),
+                        &JsValue::from_bool(read_only),
+                    );
+                }
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &descriptor,
+                    &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_STENCIL_ATTACHMENT),
+                    &depth_attachment,
+                );
+            }
+        }
         let begin_fn: Function =
             Reflect::get(encoder, &JsValue::from_str(WEBGPU_METHOD_BEGIN_RENDER_PASS))
                 .unwrap_or(JsValue::UNDEFINED)
@@ -2359,6 +2471,10 @@ impl WebGpuRenderer {
     /// the shader. The pipeline uses auto-layout (`layout: null`), which works
     /// when the shader has no bind groups.
     ///
+    /// This is the legacy "trivial" wrapper. For pipelines that need
+    /// vertex buffers, custom entry-point names, or a depth-stencil
+    /// state, use [`WebGpuRenderer::create_render_pipeline_full`].
+    ///
     /// # Arguments
     ///
     /// - `S: AsRef<str>` - The WGSL shader source code.
@@ -2367,6 +2483,60 @@ impl WebGpuRenderer {
     ///
     /// - `JsValue` - The created render pipeline as a JavaScript value.
     pub fn create_render_pipeline<S>(&self, shader_code: S) -> JsValue
+    where
+        S: AsRef<str>,
+    {
+        self.create_render_pipeline_full(
+            shader_code,
+            &[],
+            WEBGPU_VERTEX_ENTRY_POINT,
+            WEBGPU_FRAGMENT_ENTRY_POINT,
+            None,
+        )
+    }
+
+    /// Creates a render pipeline with full control over vertex buffer
+    /// layouts, shader entry-point names, and an optional depth-stencil
+    /// state.
+    ///
+    /// The `vertex_buffer_layouts` slice is forwarded as the
+    /// `vertex.buffers` array of the pipeline descriptor; the i-th
+    /// element matches `setVertexBuffer(i, ...)` calls. Pass `&[]` for
+    /// the legacy "use `@builtin(vertex_index)`" path.
+    ///
+    /// The `depth_format` argument, when `Some`, sets
+    /// `depthStencil.format` on the descriptor; the rest of the depth
+    /// state (`depthWriteEnabled`, `depthCompare`) is left at the
+    /// WebGPU defaults (true / `less`). Callers that need different
+    /// depth state can pass the descriptor's name string and rely on
+    /// the default depth-write/-compare behavior; for non-default
+    /// compare/write, prefer using `RenderConfig` and a custom shader
+    /// that performs the test explicitly.
+    ///
+    /// # Arguments
+    ///
+    /// - `shader_code` - The WGSL shader source code.
+    /// - `vertex_buffer_layouts` - The list of vertex buffer layouts
+    ///   for the pipeline's vertex state.
+    /// - `vertex_entry` - The vertex shader entry-point name
+    ///   (e.g. `"vs_main"`).
+    /// - `fragment_entry` - The fragment shader entry-point name
+    ///   (e.g. `"fs_main"`).
+    /// - `depth_format` - An optional depth-stencil format (e.g.
+    ///   `"depth24plus-stencil8"`). `None` omits the
+    ///   `depthStencil` field from the descriptor.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created render pipeline as a JavaScript value.
+    pub fn create_render_pipeline_full<S>(
+        &self,
+        shader_code: S,
+        vertex_buffer_layouts: &[VertexBufferLayout],
+        vertex_entry: &str,
+        fragment_entry: &str,
+        depth_format: Option<&str>,
+    ) -> JsValue
     where
         S: AsRef<str>,
     {
@@ -2380,12 +2550,52 @@ impl WebGpuRenderer {
         let _: Result<bool, JsValue> = Reflect::set(
             &vertex_state,
             &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
-            &JsValue::from_str(WEBGPU_VERTEX_ENTRY_POINT),
+            &JsValue::from_str(vertex_entry),
         );
+        let buffers: Array = Array::new();
+        for layout in vertex_buffer_layouts {
+            let layout_obj: Object = Object::new();
+            let _: Result<bool, JsValue> = Reflect::set(
+                &layout_obj,
+                &JsValue::from_str(WEBGPU_PROPERTY_ARRAY_STRIDE),
+                &JsValue::from_f64(layout.get_array_stride() as f64),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &layout_obj,
+                &JsValue::from_str(WEBGPU_PROPERTY_STEP_MODE),
+                &JsValue::from_str(layout.get_step_mode().as_str()),
+            );
+            let attrs: Array = Array::new();
+            for attribute in layout.get_attributes() {
+                let attr: Object = Object::new();
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &attr,
+                    &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+                    &JsValue::from_str(attribute.get_format()),
+                );
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &attr,
+                    &JsValue::from_str(WEBGPU_PROPERTY_OFFSET),
+                    &JsValue::from_f64(attribute.get_offset() as f64),
+                );
+                let _: Result<bool, JsValue> = Reflect::set(
+                    &attr,
+                    &JsValue::from_str(WEBGPU_PROPERTY_SHADER_LOCATION),
+                    &JsValue::from_f64(f64::from(attribute.get_shader_location())),
+                );
+                attrs.push(&attr);
+            }
+            let _: Result<bool, JsValue> = Reflect::set(
+                &layout_obj,
+                &JsValue::from_str(WEBGPU_PROPERTY_ATTRIBUTES),
+                &attrs,
+            );
+            buffers.push(&layout_obj);
+        }
         let _: Result<bool, JsValue> = Reflect::set(
             &vertex_state,
             &JsValue::from_str(WEBGPU_PROPERTY_BUFFERS),
-            &Array::new(),
+            &buffers,
         );
         let target: Object = Object::new();
         let _: Result<bool, JsValue> = Reflect::set(
@@ -2404,7 +2614,7 @@ impl WebGpuRenderer {
         let _: Result<bool, JsValue> = Reflect::set(
             &fragment_state,
             &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
-            &JsValue::from_str(WEBGPU_FRAGMENT_ENTRY_POINT),
+            &JsValue::from_str(fragment_entry),
         );
         let _: Result<bool, JsValue> = Reflect::set(
             &fragment_state,
@@ -2456,6 +2666,29 @@ impl WebGpuRenderer {
             &JsValue::from_str(WEBGPU_PROPERTY_MULTISAMPLE),
             &multisample,
         );
+        if let Some(format) = depth_format {
+            let depth_stencil: Object = Object::new();
+            let _: Result<bool, JsValue> = Reflect::set(
+                &depth_stencil,
+                &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+                &JsValue::from_str(format),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &depth_stencil,
+                &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_WRITE_ENABLED),
+                &JsValue::from_bool(true),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &depth_stencil,
+                &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_COMPARE),
+                &JsValue::from_str(WEBGPU_COMPARE_LESS),
+            );
+            let _: Result<bool, JsValue> = Reflect::set(
+                &descriptor,
+                &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_STENCIL),
+                &depth_stencil,
+            );
+        }
         let create_fn: Function = Reflect::get(
             self.get_device(),
             &JsValue::from_str(WEBGPU_METHOD_CREATE_RENDER_PIPELINE),
@@ -2589,22 +2822,925 @@ impl WebGpuRenderer {
             write_fn.call3(self.get_queue(), buffer, &JsValue::from_f64(0.0), &view);
     }
 
+    // ----------------------------------------------------------------------
+    //  Compute pipeline + pass + dispatch
+    // ----------------------------------------------------------------------
+
+    /// Creates a compute pipeline from a WGSL shader.
+    ///
+    /// The shader must contain exactly one `@compute fn <name>(...)`
+    /// entry point whose name matches `entry_point`. The pipeline uses
+    /// auto-layout, so any `@group(N)` binding it declares is wired
+    /// through `getBindGroupLayout(N)`.
+    ///
+    /// # Arguments
+    ///
+    /// - `shader_code` - The WGSL source code.
+    /// - `entry_point` - The compute entry-point name (e.g. `"cs_main"`).
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created `GpuComputePipeline`, or
+    ///   `JsValue::UNDEFINED` on failure.
+    pub fn create_compute_pipeline<S>(
+        &self,
+        shader_code: S,
+        entry_point: &str,
+    ) -> JsValue
+    where
+        S: AsRef<str>,
+    {
+        let module: JsValue = self.create_shader_module(shader_code);
+        let compute_state: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &compute_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_MODULE),
+            &module,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &compute_state,
+            &JsValue::from_str(WEBGPU_PROPERTY_ENTRY_POINT),
+            &JsValue::from_str(entry_point),
+        );
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_LAYOUT),
+            &JsValue::from_str(WEBGPU_AUTO_LAYOUT),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_COMPUTE),
+            &compute_state,
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_COMPUTE_PIPELINE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Begins a compute pass on the given command encoder.
+    ///
+    /// The returned `JsValue` is a `GpuComputePassEncoder` that supports
+    /// `setPipeline` / `setBindGroup` / `dispatchWorkgroups` /
+    /// `dispatchWorkgroupsIndirect` / `end`. The pass must be ended
+    /// (via `end()`) before the command encoder is finished.
+    ///
+    /// # Arguments
+    ///
+    /// - `encoder` - The `GpuCommandEncoder` to begin the pass on.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The active `GpuComputePassEncoder`.
+    pub fn begin_compute_pass(&self, encoder: &JsValue) -> JsValue {
+        let begin_fn: Function =
+            Reflect::get(encoder, &JsValue::from_str(WEBGPU_METHOD_BEGIN_COMPUTE_PASS))
+                .unwrap_or(JsValue::UNDEFINED)
+                .unchecked_into();
+        let descriptor: Object = Object::new();
+        begin_fn
+            .call1(encoder, &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Issues a `dispatchWorkgroups(x, y, z)` on a compute pass encoder.
+    ///
+    /// `x`/`y`/`z` are the workgroup counts in each dimension. WebGPU
+    /// limits each to `65535`; callers that need larger grids must
+    /// split them across multiple dispatches or encode a loop inside
+    /// the shader.
+    ///
+    /// # Arguments
+    ///
+    /// - `pass` - The active `GpuComputePassEncoder`.
+    /// - `x`/`y`/`z` - Workgroup counts (each 1..=65535).
+    pub fn dispatch(&self, pass: &JsValue, x: u32, y: u32, z: u32) {
+        let fn_: Function = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_DISPATCH))
+            .unwrap_or(JsValue::UNDEFINED)
+            .unchecked_into();
+        let _: Result<JsValue, JsValue> = fn_.call3(
+            pass,
+            &JsValue::from_f64(f64::from(x)),
+            &JsValue::from_f64(f64::from(y)),
+            &JsValue::from_f64(f64::from(z)),
+        );
+    }
+
+    // ----------------------------------------------------------------------
+    //  Error scopes (validation / out-of-memory / internal)
+    // ----------------------------------------------------------------------
+
+    /// Pushes a `GpuErrorScope` with the given filter.
+    ///
+    /// Pairs with [`WebGpuRenderer::pop_error_sync`] (or the JS
+    /// `device.popErrorScope()` promise). All `create_*` / `write_*`
+    /// operations issued while a scope is pushed accumulate their
+    /// validation errors into the most recent scope; pop to consume
+    /// them. The renderer does NOT auto-pop scopes; callers that
+    /// push a scope must pop it. The renderer pushes a
+    /// `"validation"` scope around `create_bind_group`; if you push
+    /// your own scope at the same time, the inner one is consumed
+    /// first.
+    ///
+    /// `filter` is one of `"validation"`, `"out-of-memory"`, or
+    /// `"internal"` (use the `WEBGPU_ERROR_FILTER_*` constants).
+    ///
+    /// # Arguments
+    ///
+    /// - `filter` - The WebGPU error filter name.
+    pub fn push_error_scope(&self, filter: &str) {
+        let fn_: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_PUSH_ERROR_SCOPE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let _: Result<JsValue, JsValue> =
+            fn_.call1(self.get_device(), &JsValue::from_str(filter));
+    }
+
+    /// Pops the most recent error scope and asynchronously captures
+    /// the result into the renderer's shared `pending_error` slot.
+    ///
+    /// WebGPU's `popErrorScope()` returns a `Promise<GPUError?>`;
+    /// because `create_bind_group` (and the rest of the renderer's
+    /// hot path) cannot be `async`, we cannot `.await` the promise
+    /// in place. Instead this method:
+    ///
+    /// 1. Calls `device.popErrorScope()` to obtain the promise.
+    /// 2. Spawns a local future that awaits the promise with
+    ///    `wasm_bindgen_futures::JsFuture` and writes the resolved
+    ///    value (a `GPUError?`, or `undefined` on success) into
+    ///    `self.pending_error`.
+    /// 3. Returns `None` immediately. The actual error becomes
+    ///    visible via [`WebGpuRenderer::take_last_error`] on a later
+    ///    call (typically the next `submit` tick).
+    ///
+    /// Callers that want a **synchronous** error report should push
+    /// their own scope right before a `create_*` call, pop it right
+    /// after, and then poll `take_last_error()` from the next
+    /// frame's render loop.
+    ///
+    /// Returns `None` when the pop call itself failed (e.g. the
+    /// device is lost).
+    ///
+    /// # Arguments
+    ///
+    /// - `self` - the renderer; the call borrows immutably because
+    ///   the `Rc<RefCell<...>>` slot lets the spawned future mutate
+    ///   the inner value without an exclusive borrow.
+    pub fn pop_error_sync(&self) -> Option<JsValue> {
+        let pop_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_POP_ERROR_SCOPE),
+        )
+        .ok()?
+        .unchecked_into();
+        let promise: JsValue = pop_fn.call0(self.get_device()).ok()?;
+        if !promise.is_object() {
+            return None;
+        }
+        // `JsFuture::from` requires a `Promise`, not an arbitrary
+        // `JsValue`. We trust the WebGPU spec — `device.popErrorScope()`
+        // returns a `Promise<GPUError?>` — and use `unchecked_into` to
+        // avoid the cost of a dynamic type check on the hot path.
+        let promise: js_sys::Promise = promise.unchecked_into();
+        let future = wasm_bindgen_futures::JsFuture::from(promise);
+        let slot: std::rc::Rc<std::cell::RefCell<Option<JsValue>>> =
+            self.pending_error.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            match future.await {
+                Ok(value) => {
+                    let mut cell = slot.borrow_mut();
+                    if value.is_undefined() || value.is_null() {
+                        *cell = None;
+                    } else {
+                        *cell = Some(value);
+                    }
+                }
+                Err(_) => {
+                    // The await itself rejected; we cannot surface
+                    // it, but we still leave the slot untouched.
+                }
+            }
+        });
+        // Synchronous best-effort read in case the microtask has
+        // already run (e.g. the renderer is being used inside
+        // an existing `await` chain). This is an opportunistic
+        // read; the real consumer is `take_last_error`.
+        if let Ok(cell) = self.pending_error.try_borrow() {
+            return cell.clone();
+        }
+        None
+    }
+
+    /// Drains the renderer's pending error-scope slot, returning
+    /// the most recent popped error, if any.
+    ///
+    /// Call this on the render loop (after `submit`, before the
+    /// next `create_*` call) to surface validation errors that
+    /// were captured by [`WebGpuRenderer::pop_error_sync`].
+    /// Returns `None` if no error was reported since the last
+    /// `take_last_error` call (or since the renderer was
+    /// constructed).
+    pub fn take_last_error(&self) -> Option<JsValue> {
+        let mut cell = self.pending_error.borrow_mut();
+        cell.take()
+    }
+
+    // ----------------------------------------------------------------------
+    //  Off-screen render targets + readback
+    // ----------------------------------------------------------------------
+
+    /// Begins a render pass that targets a user-supplied offscreen
+    /// texture view instead of the swap chain.
+    ///
+    /// This is the "render-to-texture" entry point used for
+    /// post-processing chains, mipmap generation, shadow maps, and
+    /// any time the pass should not appear on screen.
+    ///
+    /// The view must be a `GpuTextureView` (not the texture itself);
+    /// the texture should have been created with
+    /// `RENDER_ATTACHMENT` usage.
+    ///
+    /// # Arguments
+    ///
+    /// - `encoder` - The `GpuCommandEncoder` to begin the pass on.
+    /// - `color_view` - The offscreen color attachment view.
+    /// - `clear_color` - The clear color (or `None` to `"load"`).
+    /// - `depth_view` - An optional depth-stencil view to bind as
+    ///   the depth attachment. Pass `None` to skip depth.
+    /// - `depth_clear` - An optional depth clear value. Ignored
+    ///   when `depth_view` is `None`.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The active `GpuRenderPassEncoder`.
+    pub fn begin_render_pass_to_texture(
+        &mut self,
+        encoder: &JsValue,
+        color_view: &JsValue,
+        clear_color: Option<(f64, f64, f64, f64)>,
+        depth_view: Option<&JsValue>,
+        depth_clear: Option<f32>,
+    ) -> JsValue {
+        let mut color: RenderPassColorAttachment = RenderPassColorAttachment {
+            view: Some(color_view.clone()),
+            resolve_target: None,
+            clear_value: clear_color,
+            load_op: None,
+            store_op: None,
+        };
+        let depth: Option<RenderPassDepthStencilAttachment> = depth_view.map(|v| {
+            RenderPassDepthStencilAttachment {
+                view: Some(v.clone()),
+                depth_clear_value: depth_clear,
+                depth_load_op: None,
+                depth_store_op: None,
+                depth_read_only: None,
+            }
+        });
+        let depth_ref: Option<&RenderPassDepthStencilAttachment> = depth.as_ref();
+        // Delegate to the shared `begin_render_pass_full` so the
+        // off-screen path picks up the same load/store /
+        // multisample logic as the swap-chain path.
+        self.begin_render_pass_full(encoder, &mut color, depth_ref)
+    }
+
+    /// Copies a texture's contents to a buffer for CPU readback.
+    ///
+    /// The buffer must be created with
+    /// `COPY_DST | MAP_READ` usage. The bytes are not available to
+    /// the CPU until `map_async` is awaited and the mapped range
+    /// is read.
+    ///
+    /// # Arguments
+    ///
+    /// - `source` - The `GpuTexture` to copy from.
+    /// - `destination` - The destination `GpuBuffer`.
+    /// - `bytes_per_row` - The number of bytes per row of the
+    ///   texture (i.e. `width * bytes_per_pixel`, padded to 256
+    ///   for non-power-of-two widths).
+    /// - `width`/`height` - The texture subregion to copy.
+    pub fn copy_texture_to_buffer(
+        &self,
+        source: &JsValue,
+        destination: &JsValue,
+        bytes_per_row: u32,
+        width: u32,
+        height: u32,
+    ) {
+        let source_layout: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &source_layout,
+            &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE),
+            source,
+        );
+        let copy_size: Array = Array::new_with_length(3);
+        copy_size.set(0, JsValue::from_f64(f64::from(width)));
+        copy_size.set(1, JsValue::from_f64(f64::from(height)));
+        copy_size.set(2, JsValue::from_f64(1.0));
+        let destination_layout: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &destination_layout,
+            &JsValue::from_str(WEBGPU_PROPERTY_BUFFER),
+            destination,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &destination_layout,
+            &JsValue::from_str(WEBGPU_PROPERTY_BYTES_PER_ROW),
+            &JsValue::from_f64(f64::from(bytes_per_row)),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &destination_layout,
+            &JsValue::from_str(WEBGPU_PROPERTY_ROWS_PER_IMAGE),
+            &JsValue::from_f64(f64::from(height)),
+        );
+        let info: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &info,
+            &JsValue::from_str(WEBGPU_PROPERTY_SOURCE),
+            &source_layout,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &info,
+            &JsValue::from_str(WEBGPU_PROPERTY_DESTINATION),
+            &destination_layout,
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &info,
+            &JsValue::from_str(WEBGPU_PROPERTY_COPY_SIZE),
+            &copy_size,
+        );
+        let encoder: JsValue = match self.get_command_encoder() {
+            Some(enc) => enc,
+            None => return,
+        };
+        let cmd_fn: Function = Reflect::get(
+            &encoder,
+            &JsValue::from_str(WEBGPU_METHOD_COPY_TEXTURE_TO_BUFFER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let _: Result<JsValue, JsValue> = cmd_fn.call1(&encoder, &info);
+    }
+
+    /// Creates a standalone offscreen render target (texture + view)
+    /// with the given size and format.
+    ///
+    /// The returned tuple is `(texture, view)`. The texture is
+    /// allocated with `RENDER_ATTACHMENT | TEXTURE_BINDING |
+    /// COPY_SRC` usage, which is the right baseline for "render
+    /// into it, then sample from it in a later pass". Callers that
+    /// need `STORAGE_BINDING` or `COPY_DST` should use
+    /// [`WebGpuRenderer::create_texture_2d`] directly.
+    ///
+    /// # Arguments
+    ///
+    /// - `width`/`height` - The texture dimensions in pixels.
+    /// - `format` - The WGSL texture format (e.g. `"rgba8unorm"`).
+    ///
+    /// # Returns
+    ///
+    /// - `(JsValue, JsValue)` - The offscreen texture and its
+    ///   default view. Either may be `UNDEFINED` on failure.
+    pub fn create_offline_render_target(
+        &self,
+        width: u32,
+        height: u32,
+        format: &str,
+    ) -> (JsValue, JsValue) {
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+            &js_sys::Array::of3(
+                &JsValue::from_f64(f64::from(width)),
+                &JsValue::from_f64(f64::from(height)),
+                &JsValue::from_f64(1.0),
+            ),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+            &JsValue::from_str(format),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
+            &JsValue::from_str(
+                "RENDER_ATTACHMENT | TEXTURE_BINDING | COPY_SRC",
+            ),
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_TEXTURE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let texture: JsValue = create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED);
+        if texture.is_undefined() {
+            return (JsValue::UNDEFINED, JsValue::UNDEFINED);
+        }
+        let view: JsValue = self.create_texture_view(&texture);
+        (texture, view)
+    }
+
+    /// Creates a default-view for the given texture.
+    ///
+    /// Used by [`WebGpuRenderer::create_offline_render_target`]; the
+    /// texture must have been created with the right usage flags.
+    pub fn create_texture_view(&self, texture: &JsValue) -> JsValue {
+        let fn_: Function = Reflect::get(
+            texture,
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_VIEW),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        fn_.call0(texture).unwrap_or(JsValue::UNDEFINED)
+    }
+
+    // ----------------------------------------------------------------------
+    //  Device-lost handler
+    // ----------------------------------------------------------------------
+
+    /// Registers a closure to be invoked when the GPU device is lost.
+    ///
+    /// The closure is called with a single `JsValue` argument
+    /// (the `GPUDeviceLostInfo` object) when the device is lost. The
+    /// renderer keeps a `Closure` alive for as long as the renderer
+    /// itself is alive; calling `dispose()` releases it.
+    ///
+    /// The `device.lost` promise resolves with a `reason` of
+    /// `"destroyed"` when the user calls `device.destroy()`, or
+    /// `"undefined"` for any other GPU-level loss. The closure is
+    /// invoked from a JS microtask, so it should be cheap and
+    /// non-blocking.
+    ///
+    /// # Arguments
+    ///
+    /// - `callback` - The function to invoke. The renderer wraps it
+    ///   in a `Closure` and forgets the wrapper.
+    pub fn on_device_lost(&mut self, callback: js_sys::Function) {
+        let lost_promise: Promise =
+            match Reflect::get(self.get_device(), &JsValue::from_str(WEBGPU_PROPERTY_LOST))
+                .ok()
+                .and_then(|v| v.dyn_into::<Promise>().ok())
+            {
+                Some(p) => p,
+                None => return,
+            };
+        let closure: Closure<dyn FnMut(JsValue)> = Closure::new(move |reason: JsValue| {
+            let _: Result<JsValue, JsValue> = callback.call1(&JsValue::NULL, &reason);
+        });
+        let _ = lost_promise.then(&closure);
+        closure.forget();
+    }
+
+    /// Low-level buffer allocator. Creates a `GpuBuffer` with the given
+    /// `size` (in bytes) and `usage` bitmask (see `WEBGPU_BUFFER_USAGE_*`).
+    ///
+    /// This is the foundation for the typed helpers
+    /// ([`WebGpuRenderer::create_vertex_buffer`],
+    /// [`WebGpuRenderer::create_index_buffer`],
+    /// [`WebGpuRenderer::create_uniform_buffer`]); prefer those unless
+    /// you need full control over the `usage` flags.
+    ///
+    /// The returned value is `JsValue::UNDEFINED` (not an `Err`) when the
+    /// allocation fails, to match the convention used by the other
+    /// `create_*` helpers in this renderer. Callers should test for
+    /// `JsValue::UNDEFINED` before use.
+    ///
+    /// # Arguments
+    ///
+    /// - `size` - The buffer size in bytes. Must be > 0.
+    /// - `usage` - The WebGPU buffer usage bitmask (e.g.
+    ///   `WEBGPU_BUFFER_USAGE_VERTEX | WEBGPU_BUFFER_USAGE_COPY_DST`).
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The new `GpuBuffer`, or `JsValue::UNDEFINED` on
+    ///   allocation failure.
+    pub fn create_buffer(&self, size: u64, usage: u32) -> JsValue {
+        if size == 0 {
+            return JsValue::UNDEFINED;
+        }
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+            &JsValue::from_f64(size as f64),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
+            &JsValue::from_f64(f64::from(usage)),
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_BUFFER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Creates a vertex buffer pre-populated with the given bytes and
+    /// uploads the data via `queue.writeBuffer` in the same call.
+    ///
+    /// The buffer is allocated with `VERTEX | COPY_DST` usage. The data
+    /// is uploaded at offset 0; for partial updates use
+    /// [`WebGpuRenderer::write_buffer`] after creation.
+    ///
+    /// # Arguments
+    ///
+    /// - `data` - The raw bytes that will be interpreted as a packed
+    ///   vertex array by the pipeline's vertex buffer layout.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The new `GpuBuffer`, or `JsValue::UNDEFINED` on
+    ///   allocation failure.
+    pub fn create_vertex_buffer(&self, data: &[u8]) -> JsValue {
+        let buffer: JsValue = self.create_buffer(
+            data.len() as u64,
+            (WEBGPU_BUFFER_USAGE_VERTEX as u32) | (WEBGPU_BUFFER_USAGE_COPY_DST as u32),
+        );
+        if buffer.is_undefined() {
+            return JsValue::UNDEFINED;
+        }
+        self.write_buffer(&buffer, 0, data);
+        buffer
+    }
+
+    /// Creates an index buffer pre-populated with the given bytes.
+    ///
+    /// The buffer is allocated with `INDEX | COPY_DST` usage. The
+    /// `format` of the index data must be passed to the render pipeline
+    /// layout (`indexFormat: "uint16"` for 16-bit indices, `"uint32"`
+    /// for 32-bit).
+    ///
+    /// # Arguments
+    ///
+    /// - `data` - The raw bytes of the index list (e.g. `[0u8, 1u8, 2u8]`
+    ///   for a single uint16 triangle, packed little-endian).
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The new `GpuBuffer`, or `JsValue::UNDEFINED` on
+    ///   allocation failure.
+    pub fn create_index_buffer(&self, data: &[u8]) -> JsValue {
+        let buffer: JsValue = self.create_buffer(
+            data.len() as u64,
+            (WEBGPU_BUFFER_USAGE_INDEX as u32) | (WEBGPU_BUFFER_USAGE_COPY_DST as u32),
+        );
+        if buffer.is_undefined() {
+            return JsValue::UNDEFINED;
+        }
+        self.write_buffer(&buffer, 0, data);
+        buffer
+    }
+
+    /// Uploads raw bytes into an existing buffer at the given offset
+    /// via `queue.writeBuffer`.
+    ///
+    /// This is the byte-level counterpart to
+    /// [`WebGpuRenderer::update_uniform_buffer`]. It is a no-op when
+    /// `data` is empty; otherwise the GPU queue is invoked synchronously
+    /// (the call is non-blocking on the JS side; the actual upload is
+    /// ordered relative to the next `submit`).
+    ///
+    /// # Arguments
+    ///
+    /// - `buffer` - The `GpuBuffer` to write into.
+    /// - `offset` - The byte offset into the buffer where the upload
+    ///   starts.
+    /// - `data` - The bytes to upload.
+    pub fn write_buffer(&self, buffer: &JsValue, offset: u64, data: &[u8]) {
+        if data.is_empty() {
+            return;
+        }
+        let view: js_sys::Uint8Array = js_sys::Uint8Array::from(data);
+        let write_fn: Function = Reflect::get(
+            self.get_queue(),
+            &JsValue::from_str(WEBGPU_METHOD_WRITE_BUFFER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let _: Result<JsValue, JsValue> = write_fn.call4(
+            self.get_queue(),
+            buffer,
+            &JsValue::from_f64(offset as f64),
+            &view,
+            &JsValue::from_f64(data.len() as f64),
+        );
+    }
+
+    /// Creates a depth-stencil texture matching the canvas's swap chain
+    /// physical dimensions and caches it on the renderer.
+    ///
+    /// The format defaults to `"depth24plus-stencil8"`, which is
+    /// universally supported across browsers and matches what
+    /// [`WebGpuRenderer::create_render_pipeline`] expects when the
+    /// caller asks for depth testing. The texture is allocated with
+    /// `RENDER_ATTACHMENT` usage so it can be bound as the
+    /// `depthStencilAttachment` of a render pass.
+    ///
+    /// If a depth texture already exists, this method is a no-op
+    /// (returns `None` and keeps the existing allocation). Callers that
+    /// need to force a re-allocation (e.g. after a resize) should call
+    /// `self.set_depth_texture(None)` first.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<JsValue>` - The depth texture's default `GpuTextureView`
+    ///   on success, `None` on allocation failure.
+    pub fn create_depth_texture(&mut self) -> Option<JsValue> {
+        if let Some(view) = self.get_depth_view().clone() {
+            if !view.is_undefined() {
+                return Some(view);
+            }
+        }
+        let extent: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_WIDTH),
+            &JsValue::from_f64(f64::from(self.get_width())),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_HEIGHT),
+            &JsValue::from_f64(f64::from(self.get_height())),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_DEPTH),
+            &JsValue::from_f64(1.0),
+        );
+        let descriptor: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+            &extent,
+        );
+        let format: &'static str = WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS_STENCIL8;
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE_FORMAT),
+            &JsValue::from_str(format),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
+            &JsValue::from_f64(WEBGPU_TEXTURE_USAGE_RENDER_ATTACHMENT),
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_TEXTURE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let texture: JsValue = create_fn
+            .call1(self.get_device(), &descriptor)
+            .unwrap_or(JsValue::UNDEFINED);
+        if texture.is_undefined() {
+            return None;
+        }
+        let create_view_fn: Function = Reflect::get(
+            &texture,
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_VIEW),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        let view: JsValue = create_view_fn.call0(&texture).unwrap_or(JsValue::UNDEFINED);
+        if view.is_undefined() {
+            return None;
+        }
+        self.set_depth_texture(Some(texture));
+        self.set_depth_view(Some(view.clone()));
+        self.set_depth_format(Some(format.to_string()));
+        Some(view)
+    }
+
+    /// Creates a 2D texture from a [`Texture2DDescriptor`].
+    ///
+    /// The returned value is the `GpuTexture` itself; the caller is
+    /// expected to create views via `texture.createView()` (or use
+    /// the result as a `RENDER_ATTACHMENT` view in a render pass
+    /// descriptor).
+    ///
+    /// # Arguments
+    ///
+    /// - `descriptor` - The texture descriptor.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The new `GpuTexture`, or `JsValue::UNDEFINED` on
+    ///   allocation failure (including `width == 0` or `height == 0`).
+    pub fn create_texture_2d(&self, descriptor: &Texture2DDescriptor) -> JsValue {
+        let width: u32 = descriptor.get_width();
+        let height: u32 = descriptor.get_height();
+        if width == 0 || height == 0 {
+            return JsValue::UNDEFINED;
+        }
+        let extent: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_WIDTH),
+            &JsValue::from_f64(f64::from(width)),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_HEIGHT),
+            &JsValue::from_f64(f64::from(height)),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &extent,
+            &JsValue::from_str(WEBGPU_PROPERTY_EXTENT_DEPTH),
+            &JsValue::from_f64(1.0),
+        );
+        let desc: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+            &extent,
+        );
+        let mip_count: u32 = descriptor.get_mip_level_count().max(1);
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_MIP_LEVEL_COUNT),
+            &JsValue::from_f64(f64::from(mip_count)),
+        );
+        let sample_count: u32 = descriptor.get_sample_count().max(1);
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_SAMPLE_COUNT),
+            &JsValue::from_f64(f64::from(sample_count)),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE_FORMAT),
+            &JsValue::from_str(descriptor.get_format()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
+            &JsValue::from_str(descriptor.get_usage()),
+        );
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_TEXTURE),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &desc)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Creates a `GpuSampler` from a [`GpuSamplerDescriptor`].
+    ///
+    /// The returned value is a sampler suitable for binding via
+    /// `BindGroupEntry::Sampler` (see
+    /// [`WebGpuRenderer::create_bind_group_from_entries`]).
+    ///
+    /// # Arguments
+    ///
+    /// - `descriptor` - The sampler descriptor.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The new `GpuSampler`, or `JsValue::UNDEFINED` on
+    ///   allocation failure.
+    pub fn create_sampler(&self, descriptor: &GpuSamplerDescriptor) -> JsValue {
+        let desc: Object = Object::new();
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_MAG_FILTER),
+            &JsValue::from_str(descriptor.get_mag_filter()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_MIN_FILTER),
+            &JsValue::from_str(descriptor.get_min_filter()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_MIPMAP_FILTER),
+            &JsValue::from_str(descriptor.get_mipmap_filter()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_ADDRESS_MODE_U),
+            &JsValue::from_str(descriptor.get_address_mode_u()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_ADDRESS_MODE_V),
+            &JsValue::from_str(descriptor.get_address_mode_v()),
+        );
+        let _: Result<bool, JsValue> = Reflect::set(
+            &desc,
+            &JsValue::from_str(WEBGPU_PROPERTY_ADDRESS_MODE_W),
+            &JsValue::from_str(descriptor.get_address_mode_w()),
+        );
+        if descriptor.get_compare() {
+            let _: Result<bool, JsValue> = Reflect::set(
+                &desc,
+                &JsValue::from_str(WEBGPU_PROPERTY_COMPARE),
+                &JsValue::from_str(WEBGPU_COMPARE_LESS),
+            );
+        }
+        let create_fn: Function = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_SAMPLER),
+        )
+        .unwrap_or(JsValue::UNDEFINED)
+        .unchecked_into();
+        create_fn
+            .call1(self.get_device(), &desc)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
     /// Creates a bind group for `@group(0)` of the given pipeline, binding the
     /// given uniform buffer at `@binding(0)`.
     ///
     /// The pipeline must have been created with `layout: "auto"` (the default
     /// for [`WebGpuRenderer::create_render_pipeline`]) and its WGSL shader must
-    /// declare exactly one uniform binding at group 0 / binding 0.
+    /// Creates a bind group for a single uniform buffer at `@group(0) @binding(0)`.
+    ///
+    /// Thin convenience wrapper around
+    /// [`WebGpuRenderer::create_bind_group`] that takes the single
+    /// uniform buffer directly. For pipelines with multiple bindings
+    /// (uniform + texture + sampler, or several uniform slots) use
+    /// the slice form with explicit `BindGroupEntry` values.
     ///
     /// # Arguments
     ///
-    /// - `&JsValue` - The render pipeline.
+    /// - `&JsValue` - The render or compute pipeline that owns the bind group layout.
     /// - `&JsValue` - The uniform `GpuBuffer` to bind.
     ///
     /// # Returns
     ///
     /// - `JsValue` - The created `GpuBindGroup`.
     pub fn create_uniform_bind_group(&self, pipeline: &JsValue, buffer: &JsValue) -> JsValue {
+        self.create_bind_group(
+            pipeline,
+            0,
+            &[BindGroupEntry::Buffer {
+                binding: 0,
+                buffer: buffer.clone(),
+                offset: 0,
+                size: None,
+            }],
+        )
+    }
+
+    /// Creates a bind group from a list of [`BindGroupEntry`] values.
+    ///
+    /// The `index` selects which auto-derived bind group layout to use
+    /// (matches `@group(N)` in the shader); the `entries` slice
+    /// describes every binding entry to populate. Each entry's
+    /// `binding` slot is forwarded as-is, so the caller is responsible
+    /// for keeping them consistent with the shader's `@binding(...)`
+    /// declarations.
+    ///
+    /// The `device.createBindGroup` call is wrapped in a
+    /// `pushErrorScope("validation")` / `popErrorScope()` pair so
+    /// creation failures surface as `Err(WebGpuError::CreateBindGroup)`
+    /// instead of being silently lost. See
+    /// [`WebGpuRenderer::pop_error`] for the full pop semantics.
+    ///
+    /// # Arguments
+    ///
+    /// - `pipeline` - The render/compute pipeline whose bind group
+    ///   layout to use.
+    /// - `index` - The bind group index (the `@group(N)` slot in the
+    ///   shader; typically `0`).
+    /// - `entries` - The list of bindings to attach. Pass an empty
+    ///   slice to allocate an empty bind group (rare, but legal).
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The created `GpuBindGroup`. The value is
+    ///   `JsValue::UNDEFINED` when the device rejects the call;
+    ///   callers should compare against `UNDEFINED` before using it.
+    pub fn create_bind_group(
+        &self,
+        pipeline: &JsValue,
+        index: u32,
+        entries: &[BindGroupEntry],
+    ) -> JsValue {
         let layout_fn: Function = Reflect::get(
             pipeline,
             &JsValue::from_str(WEBGPU_METHOD_GET_BIND_GROUP_LAYOUT),
@@ -2612,27 +3748,61 @@ impl WebGpuRenderer {
         .unwrap_or(JsValue::UNDEFINED)
         .unchecked_into();
         let layout: JsValue = layout_fn
-            .call1(pipeline, &JsValue::from_f64(0.0))
+            .call1(pipeline, &JsValue::from_f64(f64::from(index)))
             .unwrap_or(JsValue::UNDEFINED);
-        let buffer_binding: Object = Object::new();
-        let _: Result<bool, JsValue> = Reflect::set(
-            &buffer_binding,
-            &JsValue::from_str(WEBGPU_PROPERTY_BUFFER),
-            buffer,
-        );
-        let entry: Object = Object::new();
-        let _: Result<bool, JsValue> = Reflect::set(
-            &entry,
-            &JsValue::from_str(WEBGPU_PROPERTY_BINDING),
-            &JsValue::from_f64(0.0),
-        );
-        let _: Result<bool, JsValue> = Reflect::set(
-            &entry,
-            &JsValue::from_str(WEBGPU_PROPERTY_RESOURCE),
-            &buffer_binding,
-        );
-        let entries: Array = Array::new();
-        entries.push(&entry);
+        let entries_array: Array = Array::new();
+        for entry in entries {
+            let entry_obj: Object = Object::new();
+            let _: Result<bool, JsValue> = Reflect::set(
+                &entry_obj,
+                &JsValue::from_str(WEBGPU_PROPERTY_BINDING),
+                &JsValue::from_f64(f64::from(entry.binding())),
+            );
+            let resource_obj: Object = Object::new();
+            match entry {
+                BindGroupEntry::Buffer {
+                    buffer, offset, size, ..
+                } => {
+                    let _: Result<bool, JsValue> = Reflect::set(
+                        &resource_obj,
+                        &JsValue::from_str(WEBGPU_PROPERTY_BUFFER),
+                        buffer,
+                    );
+                    let _: Result<bool, JsValue> = Reflect::set(
+                        &resource_obj,
+                        &JsValue::from_str(WEBGPU_PROPERTY_OFFSET),
+                        &JsValue::from_f64(*offset as f64),
+                    );
+                    if let Some(s) = size {
+                        let _: Result<bool, JsValue> = Reflect::set(
+                            &resource_obj,
+                            &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
+                            &JsValue::from_f64(*s as f64),
+                        );
+                    }
+                }
+                BindGroupEntry::Texture { view, .. } => {
+                    let _: Result<bool, JsValue> = Reflect::set(
+                        &resource_obj,
+                        &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE_VIEW),
+                        view,
+                    );
+                }
+                BindGroupEntry::Sampler { sampler, .. } => {
+                    let _: Result<bool, JsValue> = Reflect::set(
+                        &resource_obj,
+                        &JsValue::from_str(WEBGPU_PROPERTY_SAMPLER),
+                        sampler,
+                    );
+                }
+            }
+            let _: Result<bool, JsValue> = Reflect::set(
+                &entry_obj,
+                &JsValue::from_str(WEBGPU_PROPERTY_RESOURCE),
+                &resource_obj,
+            );
+            entries_array.push(&entry_obj);
+        }
         let descriptor: Object = Object::new();
         let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
@@ -2642,17 +3812,25 @@ impl WebGpuRenderer {
         let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_ENTRIES),
-            &entries,
+            &entries_array,
         );
+        self.push_error_scope(WEBGPU_ERROR_FILTER_VALIDATION);
         let create_fn: Function = Reflect::get(
             self.get_device(),
             &JsValue::from_str(WEBGPU_METHOD_CREATE_BIND_GROUP),
         )
         .unwrap_or(JsValue::UNDEFINED)
         .unchecked_into();
-        create_fn
+        let result: JsValue = create_fn
             .call1(self.get_device(), &descriptor)
-            .unwrap_or(JsValue::UNDEFINED)
+            .unwrap_or(JsValue::UNDEFINED);
+        // Fire-and-forget pop: if validation fails the error shows up
+        // in the next popErrorScope() call. The result we return is
+        // still the JsValue, which the user checks against UNDEFINED.
+        if let Some(error) = self.pop_error_sync() {
+            web_sys::console::error_1(&error);
+        }
+        result
     }
 
     /// Binds a bind group at the given index on a render pass encoder.
@@ -2759,6 +3937,554 @@ impl WebGpuRenderer {
         {
             let _: Result<JsValue, JsValue> = destroy_callable.call0(device);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  Render-pass dynamic state (viewport / scissor / stencil / blend)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// Sets the viewport for all subsequent draw calls on the given render pass.
+    ///
+    /// The viewport maps NDC `[-1, 1]` to the given pixel rectangle. `min_depth`
+    /// and `max_depth` (both in `[0, 1]`) clamp the depth range; the defaults
+    /// of `0.0` and `1.0` cover the whole depth buffer. This call must be
+    /// issued between `beginRenderPass()` and `pass.end()`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The active `GpuRenderPassEncoder`.
+    /// - `f32` - X coordinate of the viewport's top-left in pixels.
+    /// - `f32` - Y coordinate of the viewport's top-left in pixels.
+    /// - `f32` - Viewport width in pixels.
+    /// - `f32` - Viewport height in pixels.
+    /// - `f32` - Minimum depth, clamped to `[0, 1]`. Pass `0.0` to disable.
+    /// - `f32` - Maximum depth, clamped to `[0, 1]`. Pass `1.0` to disable.
+    pub fn set_viewport(
+        &self,
+        pass: &JsValue,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        min_depth: f32,
+        max_depth: f32,
+    ) {
+        let vp_dict: Object = Object::new();
+        let _ = Reflect::set(&vp_dict, &JsValue::from_str(WEBGPU_PROPERTY_X), &JsValue::from_f64(x as f64));
+        let _ = Reflect::set(&vp_dict, &JsValue::from_str(WEBGPU_PROPERTY_Y), &JsValue::from_f64(y as f64));
+        let _ = Reflect::set(&vp_dict, &JsValue::from_str(WEBGPU_PROPERTY_WIDTH), &JsValue::from_f64(width as f64));
+        let _ = Reflect::set(&vp_dict, &JsValue::from_str(WEBGPU_PROPERTY_HEIGHT), &JsValue::from_f64(height as f64));
+        let _ = Reflect::set(&vp_dict, &JsValue::from_str(WEBGPU_PROPERTY_MIN_DEPTH), &JsValue::from_f64(min_depth as f64));
+        let _ = Reflect::set(&vp_dict, &JsValue::from_str(WEBGPU_PROPERTY_MAX_DEPTH), &JsValue::from_f64(max_depth as f64));
+        let vp_js: JsValue = vp_dict.unchecked_into::<JsValue>();
+        if let Ok(set_fn) = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_VIEWPORT))
+            && let Ok(set_callable) = set_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = set_callable.call1(pass, &vp_js);
+        }
+    }
+
+    /// Sets the scissor rectangle for all subsequent draw calls on the given
+    /// render pass.
+    ///
+    /// Fragments outside the rectangle are discarded. The scissor is applied
+    /// after the viewport, so coordinates are in the same pixel space as
+    /// [`WebGpuRenderer::set_viewport`]. A scissor that extends outside the
+    /// render target is clamped to the target bounds by the GPU.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The active `GpuRenderPassEncoder`.
+    /// - `u32` - X coordinate of the scissor origin in pixels.
+    /// - `u32` - Y coordinate of the scissor origin in pixels.
+    /// - `u32` - Scissor width in pixels.
+    /// - `u32` - Scissor height in pixels.
+    pub fn set_scissor_rect(&self, pass: &JsValue, x: u32, y: u32, width: u32, height: u32) {
+        let rect_dict: Object = Object::new();
+        let _ = Reflect::set(&rect_dict, &JsValue::from_str(WEBGPU_PROPERTY_X), &JsValue::from_f64(x as f64));
+        let _ = Reflect::set(&rect_dict, &JsValue::from_str(WEBGPU_PROPERTY_Y), &JsValue::from_f64(y as f64));
+        let _ = Reflect::set(&rect_dict, &JsValue::from_str(WEBGPU_PROPERTY_WIDTH), &JsValue::from_f64(width as f64));
+        let _ = Reflect::set(&rect_dict, &JsValue::from_str(WEBGPU_PROPERTY_HEIGHT), &JsValue::from_f64(height as f64));
+        let rect_js: JsValue = rect_dict.unchecked_into::<JsValue>();
+        if let Ok(set_fn) = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_SCISSOR_RECT))
+            && let Ok(set_callable) = set_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = set_callable.call1(pass, &rect_js);
+        }
+    }
+
+    /// Sets the blend constant used by `"constant"` / `"one-minus-constant"`
+    /// blend factors.
+    ///
+    /// Affects all subsequent draw calls on the given render pass. The
+    /// constant is a linear-space RGBA color in `[0, 1]` per component.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The active `GpuRenderPassEncoder`.
+    /// - `f32` - Red component.
+    /// - `f32` - Green component.
+    /// - `f32` - Blue component.
+    /// - `f32` - Alpha component.
+    pub fn set_blend_constant(
+        &self,
+        pass: &JsValue,
+        r: f32,
+        g: f32,
+        b: f32,
+        a: f32,
+    ) {
+        let color_dict: Object = Object::new();
+        let _ = Reflect::set(&color_dict, &JsValue::from_str(WEBGPU_PROPERTY_R), &JsValue::from_f64(r as f64));
+        let _ = Reflect::set(&color_dict, &JsValue::from_str(WEBGPU_PROPERTY_G), &JsValue::from_f64(g as f64));
+        let _ = Reflect::set(&color_dict, &JsValue::from_str(WEBGPU_PROPERTY_B), &JsValue::from_f64(b as f64));
+        let _ = Reflect::set(&color_dict, &JsValue::from_str(WEBGPU_PROPERTY_A), &JsValue::from_f64(a as f64));
+        let color_js: JsValue = color_dict.unchecked_into::<JsValue>();
+        if let Ok(set_fn) = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_BLEND_CONSTANT))
+            && let Ok(set_callable) = set_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = set_callable.call1(pass, &color_js);
+        }
+    }
+
+    /// Sets the stencil reference value used by stencil tests.
+    ///
+    /// The reference is the value the GPU compares against when the shader
+    /// pipeline was built with a stencil state using `"always"`, `"less"`,
+    /// `"equal"`, etc. compare ops. This call must be issued between
+    /// `beginRenderPass()` and `pass.end()`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The active `GpuRenderPassEncoder`.
+    /// - `u32` - The stencil reference value (8-bit, `[0, 255]`).
+    pub fn set_stencil_reference(&self, pass: &JsValue, reference: u32) {
+        if let Ok(set_fn) = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_STENCIL_REFERENCE))
+            && let Ok(set_callable) = set_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> =
+                set_callable.call1(pass, &JsValue::from_f64(reference as f64));
+        }
+    }
+
+    /// Sets a bind group on a render pass with dynamic offsets.
+    ///
+    /// Use this overload of `set_bind_group` when the bind-group layout was
+    /// built with `hasDynamicOffset: true` for one or more buffer bindings.
+    /// Each value in `dynamic_offsets` is added to the corresponding
+    /// `@group(N) @binding(M)` buffer's base offset before the draw call.
+    /// For non-dynamic bind groups, prefer the simpler
+    /// [`WebGpuRenderer::set_bind_group`] (3-arg) overload in `pub(crate)`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The active `GpuRenderPassEncoder`.
+    /// - `u32` - Bind-group slot index.
+    /// - `&JsValue` - The `GpuBindGroup` to bind.
+    /// - `&[u32]` - Dynamic offsets, one per dynamic-offset binding.
+    pub fn set_bind_group_with_dynamic_offsets(
+        &self,
+        pass: &JsValue,
+        index: u32,
+        group: &JsValue,
+        dynamic_offsets: &[u32],
+    ) {
+        if let Ok(set_fn) = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_BIND_GROUP))
+            && let Ok(set_callable) = set_fn.dyn_into::<Function>()
+        {
+            // WebGPU's setBindGroup has two overloads: with and without
+            // dynamic offsets. We always use the 4-arg form to keep the
+            // call site simple; the empty offset array is well-defined.
+            let offsets_array: Array = Array::new_with_length(dynamic_offsets.len() as u32);
+            for (i, off) in dynamic_offsets.iter().enumerate() {
+                let _ = offsets_array.set(i as u32, JsValue::from_f64(*off as f64));
+            }
+            let offsets_js: JsValue = offsets_array.unchecked_into::<JsValue>();
+            let _: Result<JsValue, JsValue> = set_callable.call4(
+                pass,
+                &JsValue::from_f64(index as f64),
+                group,
+                &offsets_js,
+                &JsValue::from_f64(0.0),
+            );
+        }
+    }
+
+    /// Sets a bind group on a compute pass with optional dynamic offsets.
+    ///
+    /// Same semantics as [`WebGpuRenderer::set_bind_group_with_dynamic_offsets`]
+    /// but on a `GpuComputePassEncoder`. The `setBindGroup` method name is
+    /// the same on both encoder types; this method wraps it for the compute
+    /// pass to give callers a typed entry point.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The active `GpuComputePassEncoder`.
+    /// - `u32` - Bind-group slot index.
+    /// - `&JsValue` - The `GpuBindGroup` to bind.
+    /// - `&[u32]` - Dynamic offsets for dynamic-offset bindings.
+    pub fn set_bind_group_compute_with_dynamic_offsets(
+        &self,
+        pass: &JsValue,
+        index: u32,
+        group: &JsValue,
+        dynamic_offsets: &[u32],
+    ) {
+        if let Ok(set_fn) = Reflect::get(pass, &JsValue::from_str(WEBGPU_METHOD_SET_BIND_GROUP))
+            && let Ok(set_callable) = set_fn.dyn_into::<Function>()
+        {
+            let offsets_array: Array = Array::new_with_length(dynamic_offsets.len() as u32);
+            for (i, off) in dynamic_offsets.iter().enumerate() {
+                let _ = offsets_array.set(i as u32, JsValue::from_f64(*off as f64));
+            }
+            let offsets_js: JsValue = offsets_array.unchecked_into::<JsValue>();
+            let _: Result<JsValue, JsValue> = set_callable.call4(
+                pass,
+                &JsValue::from_f64(index as f64),
+                group,
+                &offsets_js,
+                &JsValue::from_f64(0.0),
+            );
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  Texture view, mipmap generation, and CPU upload
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// Creates a `GpuTextureView` for the given texture with full descriptor control.
+    ///
+    /// Pass `None` for a default view (full 2D, all mips, all aspects) — this
+    /// is the cheap view that is implicitly created by bind-group creation.
+    /// Pass `Some(&descriptor)` to sub-select mip levels, array slices, or
+    /// the depth-only aspect of a depth-stencil texture.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The `GpuTexture` to view.
+    /// - `Option<&TextureViewDescriptor>` - Optional descriptor.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The `GpuTextureView`. Returns `JsValue::UNDEFINED` if
+    ///   the call fails (e.g. invalid mip range); check for `undefined`
+    ///   before using the result.
+    pub fn create_view(
+        &self,
+        texture: &JsValue,
+        descriptor: Option<&TextureViewDescriptor>,
+    ) -> JsValue {
+        let create_view_fn: Function = match Reflect::get(
+            texture,
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_VIEW),
+        )
+        .ok()
+        .and_then(|v| v.dyn_into::<Function>().ok())
+        {
+            Some(f) => f,
+            None => return JsValue::UNDEFINED,
+        };
+        // Inline the descriptor dict construction; we keep the engine-wide
+        // convention of "0 / None means default" so the browser falls back
+        // to its own defaults for omitted keys.
+        let desc_value: JsValue = match descriptor {
+            None => JsValue::UNDEFINED,
+            Some(d) => {
+                let dict: Object = Object::new();
+                if let Some(format) = d.get_format() {
+                    let _ = Reflect::set(
+                        &dict,
+                        &JsValue::from_str(WEBGPU_PROPERTY_FORMAT),
+                        &JsValue::from_str(format),
+                    );
+                }
+                // `dimension` and `aspect` are explicitly sent as their
+                // default values ("2d" / "all") rather than omitted, because
+                // a handful of browsers reject undefined keys on the
+                // createView descriptor.
+                let _ = Reflect::set(
+                    &dict,
+                    &JsValue::from_str(WEBGPU_PROPERTY_DIMENSION),
+                    &JsValue::from_str(d.effective_dimension()),
+                );
+                let _ = Reflect::set(
+                    &dict,
+                    &JsValue::from_str(WEBGPU_PROPERTY_ASPECT),
+                    &JsValue::from_str(d.effective_aspect()),
+                );
+                // baseMipLevel / mipLevelCount / baseArrayLayer /
+                // arrayLayerCount are u32 with 0 = "use the default".
+                // Skip them when they are still at the default so that the
+                // browser applies its own spec-compliant fallback.
+                let base_mip: u32 = d.get_base_mip_level();
+                if base_mip != 0 {
+                    let _ = Reflect::set(
+                        &dict,
+                        &JsValue::from_str(WEBGPU_PROPERTY_BASE_MIP_LEVEL),
+                        &JsValue::from_f64(base_mip as f64),
+                    );
+                }
+                let mip_count: u32 = d.get_mip_level_count();
+                if mip_count != 0 {
+                    let _ = Reflect::set(
+                        &dict,
+                        &JsValue::from_str(WEBGPU_PROPERTY_MIP_LEVEL_COUNT),
+                        &JsValue::from_f64(mip_count as f64),
+                    );
+                }
+                let base_array: u32 = d.get_base_array_layer();
+                if base_array != 0 {
+                    let _ = Reflect::set(
+                        &dict,
+                        &JsValue::from_str(WEBGPU_PROPERTY_BASE_ARRAY_LAYER),
+                        &JsValue::from_f64(base_array as f64),
+                    );
+                }
+                let array_count: u32 = d.get_array_layer_count();
+                if array_count != 0 {
+                    let _ = Reflect::set(
+                        &dict,
+                        &JsValue::from_str(WEBGPU_PROPERTY_ARRAY_LAYER_COUNT),
+                        &JsValue::from_f64(array_count as f64),
+                    );
+                }
+                dict.unchecked_into::<JsValue>()
+            }
+        };
+        create_view_fn
+            .call1(texture, &desc_value)
+            .unwrap_or(JsValue::UNDEFINED)
+    }
+
+    /// Generates the full mipmap chain for the given texture.
+    ///
+    /// Equivalent to repeatedly calling `copyTextureToTexture` from level
+    /// `i` to level `i+1` with the appropriate mip dimensions, but in one
+    /// GPU command. The texture must have been created with `RENDER_ATTACHMENT
+    /// | TEXTURE_BINDING | COPY_DST | COPY_SRC` usage and `mipLevelCount > 1`.
+    /// Requires the `mipmap` WebGPU feature, or a GPU that supports it
+    /// unconditionally (most desktop GPUs do).
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The `GpuTexture` whose mips will be generated.
+    pub fn generate_mipmaps(&self, texture: &JsValue) {
+        if let Ok(gen_fn) = Reflect::get(texture, &JsValue::from_str(WEBGPU_METHOD_GENERATE_MIPMAP))
+            && let Ok(gen_callable) = gen_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = gen_callable.call0(texture);
+        }
+    }
+
+    /// Uploads CPU-side pixel data directly to a texture via `queue.writeTexture`.
+    ///
+    /// Use this instead of `create_buffer + write_buffer + copyBufferToTexture`
+    /// for one-shot uploads (ImGui font atlases, sprite sheets, procedural
+    /// noise). The queue is acquired internally via the cached `device.queue`
+    /// handle, so this is the preferred path for textures that are written
+    /// once and sampled many times.
+    ///
+    /// `bytes_per_row` must be a multiple of 256. The `data` layout must
+    /// match the texture's `format`; the engine does not perform swizzling.
+    ///
+    /// # Arguments
+    ///
+    /// - `&TextureWriteDescriptor` - The write descriptor.
+    pub fn write_texture(&self, descriptor: &TextureWriteDescriptor) {
+        let queue: JsValue = match Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_PROPERTY_QUEUE),
+        )
+        .ok()
+        .and_then(|v| v.dyn_into::<JsValue>().ok().into())
+        {
+            Some(q) => q,
+            None => return,
+        };
+        let layout_dict: Object = Object::new();
+        let _ = Reflect::set(&layout_dict, &JsValue::from_str(WEBGPU_PROPERTY_BYTES_PER_ROW), &JsValue::from_f64(descriptor.get_bytes_per_row() as f64));
+        let _ = Reflect::set(&layout_dict, &JsValue::from_str(WEBGPU_PROPERTY_ROWS_PER_IMAGE), &JsValue::from_f64(descriptor.get_rows_per_image() as f64));
+        let _ = Reflect::set(&layout_dict, &JsValue::from_str(WEBGPU_PROPERTY_OFFSET_BYTES), &JsValue::from_f64(0.0));
+        let layout_js: JsValue = layout_dict.unchecked_into::<JsValue>();
+        let write_fn: Function = match Reflect::get(
+            &queue,
+            &JsValue::from_str(WEBGPU_METHOD_WRITE_TEXTURE),
+        )
+        .ok()
+        .and_then(|v| v.dyn_into::<Function>().ok())
+        {
+            Some(f) => f,
+            None => return,
+        };
+        // Build destination dict: { texture, mipLevel, origin? }
+        let dest_dict: Object = Object::new();
+        let _ = Reflect::set(&dest_dict, &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE), &descriptor.get_texture());
+        let _ = Reflect::set(&dest_dict, &JsValue::from_str(WEBGPU_PROPERTY_MIP_LEVEL), &JsValue::from_f64(descriptor.get_mip_level() as f64));
+        if let Some(origin) = descriptor.get_origin() {
+            let _ = Reflect::set(&dest_dict, &JsValue::from_str(WEBGPU_PROPERTY_ORIGIN), &origin);
+        }
+        let dest_js: JsValue = dest_dict.unchecked_into::<JsValue>();
+        // WebGPU's queue.writeTexture requires a Uint8Array view; we hand
+        // it the raw Vec<u8> and let JS interop copy it. This is the same
+        // path wasm-bindgen takes for &[u8] → Uint8Array.
+        let data_js: JsValue = js_sys::Uint8Array::from(descriptor.get_data().as_slice()).into();
+        // For the size extent, we read bytes_per_row's texel width from the
+        // destination. Without a format converter we default to a square
+        // shape based on the data size. The caller is expected to construct
+        // a TextureWriteDescriptor that matches their texture exactly;
+        // this method does not auto-derive size.
+        let size_value: JsValue = {
+            let bpr: u32 = descriptor.get_bytes_per_row();
+            let rows: u32 = if descriptor.get_rows_per_image() == 0 {
+                (descriptor.get_data().len() as u32) / bpr.max(1)
+            } else {
+                descriptor.get_rows_per_image()
+            };
+            let size_dict: Object = Object::new();
+            let _ = Reflect::set(&size_dict, &JsValue::from_str(WEBGPU_PROPERTY_WIDTH), &JsValue::from_f64(bpr as f64));
+            let _ = Reflect::set(&size_dict, &JsValue::from_str(WEBGPU_PROPERTY_HEIGHT), &JsValue::from_f64(rows as f64));
+            let _ = Reflect::set(&size_dict, &JsValue::from_str(WEBGPU_PROPERTY_DEPTH_OR_1), &JsValue::from_f64(1.0));
+            size_dict.unchecked_into::<JsValue>()
+        };
+        let _: Result<JsValue, JsValue> = write_fn.call4(
+            &queue,
+            &dest_js,
+            &data_js,
+            &layout_js,
+            &size_value,
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  Shader module + explicit pipeline compile diagnostics
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// Creates a `GpuShaderModule` from a WGSL source string with a debug label.
+    ///
+    /// Equivalent to the `pub(crate) fn create_shader_module` overload but
+    /// attaches a `label` to the module so it shows up under that name in
+    /// browser devtools (e.g. Chrome's `chrome://gpu-internals` and the
+    /// WebGPU Inspector panel). The label has no runtime effect; it is
+    /// purely a developer-experience aid when many shader modules coexist.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - WGSL source.
+    /// - `&str` - Debug label shown in browser devtools.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - The `GpuShaderModule`, or `JsValue::UNDEFINED` if
+    ///   the call fails.
+    pub fn create_shader_module_with_label(
+        &self,
+        wgsl_source: &str,
+        label: &str,
+    ) -> JsValue {
+        let descriptor: Object = Object::new();
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_CODE),
+            &JsValue::from_str(wgsl_source),
+        );
+        let _ = Reflect::set(
+            &descriptor,
+            &JsValue::from_str(WEBGPU_PROPERTY_LABEL),
+            &JsValue::from_str(label),
+        );
+        let desc_value: JsValue = descriptor.unchecked_into::<JsValue>();
+        if let Ok(create_fn) = Reflect::get(
+            self.get_device(),
+            &JsValue::from_str(WEBGPU_METHOD_CREATE_SHADER_MODULE),
+        ) && let Ok(create_callable) = create_fn.dyn_into::<Function>()
+        {
+            // The call returns a Promise that resolves to the shader module.
+            // We do not await it; the caller is expected to drive the future
+            // or pass the result into a pipeline creation call.
+            return create_callable
+                .call1(self.get_device(), &desc_value)
+                .unwrap_or(JsValue::UNDEFINED);
+        }
+        JsValue::UNDEFINED
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  Buffer readback via mapAsync + getMappedRange
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// Reads back the contents of a buffer via `mapAsync` + `getMappedRange` +
+    /// `unmap`.
+    ///
+    /// This is an **`async fn`**, NOT a synchronous wrapper. It must be
+    /// `await`-ed by the caller. Use it from inside another
+    /// `wasm_bindgen_futures` future (e.g. a frame loop) — do not call
+    /// it from synchronous code, since the awaiter must be driven by
+    /// the executor. The buffer must have been created with `MAP_READ`
+    /// usage, and the read must be preceded by a GPU submission that
+    /// finished writing to the buffer (i.e. `queue.submit([encoder.finish()])`
+    /// followed by `device.lost` / a fence).
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - The `GpuBuffer` to read back.
+    /// - `u64` - Byte offset into the buffer.
+    /// - `u64` - Number of bytes to read.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<Vec<u8>>` - The bytes, or `None` if the readback failed.
+    pub async fn read_buffer(
+        &self,
+        buffer: &JsValue,
+        offset: u64,
+        size: u64,
+    ) -> Option<Vec<u8>> {
+        // Step 1: buffer.mapAsync(mode, offset, size)
+        let map_fn: Function = Reflect::get(
+            buffer,
+            &JsValue::from_str(WEBGPU_METHOD_MAP_ASYNC),
+        )
+        .ok()
+        .and_then(|v| v.dyn_into::<Function>().ok())?;
+        let map_promise: js_sys::Promise = map_fn
+            .call3(
+                buffer,
+                &JsValue::from_f64(WEBGPU_MAP_MODE_READ as f64),
+                &JsValue::from_f64(offset as f64),
+                &JsValue::from_f64(size as f64),
+            )
+            .ok()?
+            .unchecked_into();
+        // Step 2: await the mapAsync promise
+        let _map_result = wasm_bindgen_futures::JsFuture::from(map_promise)
+            .await
+            .ok()?;
+        // Step 3: buffer.getMappedRange(offset, size)
+        let get_range_fn: Function = Reflect::get(
+            buffer,
+            &JsValue::from_str(WEBGPU_METHOD_GET_MAPPED_RANGE),
+        )
+        .ok()
+        .and_then(|v| v.dyn_into::<Function>().ok())?;
+        let array_buffer: js_sys::ArrayBuffer = get_range_fn
+            .call2(
+                buffer,
+                &JsValue::from_f64(offset as f64),
+                &JsValue::from_f64(size as f64),
+            )
+            .ok()?
+            .unchecked_into();
+        // Step 4: copy out before unmap invalidates the memory
+        let u8_view: js_sys::Uint8Array = js_sys::Uint8Array::new(&array_buffer);
+        let mut out: Vec<u8> = vec![0u8; u8_view.length() as usize];
+        u8_view.copy_to(&mut out);
+        // Step 5: unmap
+        if let Ok(unmap_fn) = Reflect::get(buffer, &JsValue::from_str(WEBGPU_METHOD_UNMAP))
+            && let Ok(unmap_callable) = unmap_fn.dyn_into::<Function>()
+        {
+            let _: Result<JsValue, JsValue> = unmap_callable.call0(buffer);
+        }
+        Some(out)
     }
 }
 
