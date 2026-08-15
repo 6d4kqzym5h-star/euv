@@ -1925,7 +1925,7 @@ impl WebGpuRenderer {
             depth_format: None,
             device_lost_callback: None,
             device_lost: false,
-            pending_error: std::rc::Rc::new(std::cell::RefCell::new(None)),
+            pending_error: Rc::new(RefCell::new(None)),
             command_encoder: None,
         })
     }

@@ -297,7 +297,7 @@ pub struct WebGpuRenderer {
     /// its own handle independently of `&self`, so the renderer's
     /// borrow checker stays happy. The slot is empty (`None`) by
     /// default and after each successful take.
-    pub(crate) pending_error: std::rc::Rc<std::cell::RefCell<Option<JsValue>>>,
+    pub(crate) pending_error: Rc<RefCell<Option<JsValue>>>,
     /// The currently-open `GpuCommandEncoder`, if any.
     ///
     /// WebGPU expects the application to encode all work for a
