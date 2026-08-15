@@ -1,19 +1,4 @@
 
-// All constants in this file are engine-internal values (Canvas 2D
-// context type tags, WebGPU method/property names, default font
-// metrics, blend-mode strings, etc.). None of them are part of the
-// `euv-engine` public API — they are implementation details of the
-// renderer that need to be shared between `const.rs` (the values
-// themselves), `impl.rs` (the methods that read them), and the
-// `pub(crate)` free functions in `impl.rs` that combine them into
-// runtime bitmasks. Visibility is therefore `pub(crate)` rather
-// than `pub`: the constants are reachable from any module inside
-// the `euv-engine` crate, but they do not leak through the
-// `pub use renderer::*` re-export in `lib.rs` to the top-level
-// `euv` crate. Callers outside the engine should not need to name
-// a method-string like `WEBGPU_METHOD_CONFIGURE`; if they do, the
-// engine needs a typed wrapper first.
-
 /// The canvas 2D rendering context type identifier.
 pub(crate) const RENDERER_CONTEXT_TYPE_2D: &str = "2d";
 
