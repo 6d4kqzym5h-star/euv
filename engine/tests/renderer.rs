@@ -1,29 +1,6 @@
-// Compile-shape and pure-logic smoke tests for the WebGpuRenderer
-// completion work.
-//
-// This file pins two things for downstream consumers:
-//
-// 1. The **signatures** of every `pub` WebGPU API the engine added to
-//    `WebGpuRenderer` to reach a real WebGPU grade surface
-//    (descriptor defaults, dynamic offsets, async readback, error
-//    scope, mipmaps, writeTexture). Pinning the shape catches
-//    accidental signature changes in CI without needing a browser.
-//
-// 2. The **pub** descriptor constructors —
-//    `TextureViewDescriptor::full`, `GpuSamplerDescriptor::default_sampler`.
-//    `pub(crate)` helpers (`effective_*`) are NOT exercised here
-//    because integration tests live outside the engine crate.
-//
-// Methods that *do* touch `JsValue` / `Reflect` (e.g. `set_viewport`,
-// `begin_render_pass_full`, `read_buffer`) are pinned at the type
-// level only — the body still requires a browser.
 
 use euv_engine::*;
 use wasm_bindgen::JsValue;
-
-// ---------------------------------------------------------------------
-// 1. Compile-shape pinning of every new WebGpuRenderer API.
-// ---------------------------------------------------------------------
 
 /// `set_viewport(pass, x, y, w, h, min_depth, max_depth)` is a 7-arg
 /// render-pipe helper. Pin the shape so the engine demo's
@@ -176,10 +153,6 @@ fn push_error_scope_signature_pinned() {
     let _: fn(&WebGpuRenderer, &str) = WebGpuRenderer::push_error_scope;
 }
 
-// ---------------------------------------------------------------------
-// 2. Pure-logic descriptor constructors (the `pub` ones).
-// ---------------------------------------------------------------------
-
 /// `TextureViewDescriptor::full()` is the canonical "default 2D view"
 /// shape. Every field stays at zero / None.
 #[test]
@@ -208,3 +181,4 @@ fn gpu_sampler_descriptor_default_returns_nearest_clamp() {
     assert_eq!(s.get_address_mode_w(), "clamp-to-edge");
     assert!(!s.get_compare());
 }
+

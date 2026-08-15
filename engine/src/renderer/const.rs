@@ -1,17 +1,3 @@
-// `WebGPU` descriptor surface: formats, usage flags, method names, property keys.
-//
-// Every constant in this module is part of the engine's **public API surface**:
-// downstream code (the `euv` crate, end-user applications, third-party
-// renderer modules) can `use euv_engine::WEBGPU_*` to build descriptors
-// without re-defining the magic numbers / strings. Because these
-// constants are reachable from outside the `euv-engine` crate, the
-// compiler does not flag any of them as dead code even if the engine's
-// own `impl` layer only references a subset in any given build.
-//
-// If you need a constant the impl layer does not yet call, prefer
-// adding the call site in `impl.rs` over deleting the constant here
-// — these mirror the WebGPU spec 1:1 and dropping them would create
-// gaps in the public API.
 
 
 /// The canvas 2D rendering context type identifier.
@@ -417,8 +403,6 @@ pub const WEBGPU_PROPERTY_RESOLVE_TARGET: &str = "resolveTarget";
 /// and treats the outcome the same as "no adapter available".
 pub const INIT_PROMISE_TIMEOUT_MILLIS: i32 = 3000;
 
-// --- WebGPU sampler / filter / address constants (for samplers + texture view) ---
-
 /// Minification / magnification filter mode that picks the nearest texel.
 pub const WEBGPU_FILTER_MODE_NEAREST: &str = "nearest";
 
@@ -438,8 +422,6 @@ pub const WEBGPU_TEXTURE_ASPECT_ALL: &str = "all";
 /// Aspect selector that restricts a depth-stencil view to its depth channel.
 pub const WEBGPU_TEXTURE_ASPECT_DEPTH_ONLY: &str = "depth-only";
 
-// --- WebGPU buffer usage flags (bitfield values per the WebGPU spec) ---
-
 /// Buffer usage: mappable + can be the source of a copy.
 pub const WEBGPU_BUFFER_USAGE_COPY_SRC: f64 = 1.0;
 /// Buffer usage: index buffer for `setIndexBuffer`.
@@ -452,8 +434,6 @@ pub const WEBGPU_BUFFER_USAGE_STORAGE: f64 = 32.0;
 pub const WEBGPU_BUFFER_USAGE_INDIRECT: f64 = 64.0;
 /// Buffer usage: query-set resolve destination.
 pub const WEBGPU_BUFFER_USAGE_QUERY_RESOLVE: f64 = 128.0;
-
-// --- WebGPU depth formats (the ones we actually need for 2D + 3D) ---
 
 /// 24-bit depth, 8-bit stencil, no multisample. The most common choice
 /// for a render pass's depth-stencil attachment.
@@ -471,13 +451,9 @@ pub const WEBGPU_DEPTH_FORMAT_DEPTH32_FLOAT: &str = "depth32float";
 /// and other single-sample depth render targets.
 pub const WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS: &str = "depth24plus";
 
-// --- WebGPU error filter (for `GPUDevice.pushErrorScope(filter)`) ---
-
 /// Validation-layer error filter; catches shader compile/link errors,
 /// bind-group mismatches, OOB draws, etc.
 pub const WEBGPU_ERROR_FILTER_VALIDATION: &str = "validation";
-
-// --- WebGPU load / store ops (for render-pass attachments) ---
 
 /// `loadOp` / `depthLoadOp` value that preserves the previous contents
 /// of the attachment.
@@ -489,16 +465,11 @@ pub const WEBGPU_LOAD_OP_LOAD: &str = "load";
 /// will not read it back, e.g. the depth buffer at the end of a pass).
 pub const WEBGPU_STORE_OP_DISCARD: &str = "discard";
 
-// --- WebGPU buffer map mode (for `GPUBuffer.mapAsync(mode, ...)`) ---
-
 /// Map a buffer for CPU readback. Requires `MAP_READ` usage.
 pub const WEBGPU_MAP_MODE_READ: f64 = 1.0;
 
 /// Map a buffer for CPU write. Requires `MAP_WRITE` usage.
 pub const WEBGPU_MAP_MODE_WRITE: f64 = 2.0;
-
-// --- WebGPU primitive topology (for `GpuRenderPipelineDescriptor.primitive`) ---
-
 
 /// Triangle strip: each new vertex forms a triangle with the previous two.
 pub const WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: &str = "triangle-strip";
@@ -512,8 +483,6 @@ pub const WEBGPU_PRIMITIVE_TOPOLOGY_LINE_STRIP: &str = "line-strip";
 /// Point list: 1 vertex per point.
 pub const WEBGPU_PRIMITIVE_TOPOLOGY_POINT_LIST: &str = "point-list";
 
-// --- WebGPU texture usage flags (bitfield values per the WebGPU spec) ---
-
 /// Texture usage: read in a shader (sampled texture / uniform texel buffer).
 pub const WEBGPU_TEXTURE_USAGE_COPY_SRC: f64 = 1.0;
 /// Texture usage: written in a shader (storage texture).
@@ -522,8 +491,6 @@ pub const WEBGPU_TEXTURE_USAGE_COPY_DST: f64 = 2.0;
 pub const WEBGPU_TEXTURE_USAGE_TEXTURE_BINDING: f64 = 8.0;
 /// Texture usage: storage texture binding.
 pub const WEBGPU_TEXTURE_USAGE_STORAGE_BINDING: f64 = 16.0;
-
-// --- WebGPU method name string constants (looked up via Reflect) ---
 
 /// `GpuCommandEncoder.beginComputePass(descriptor)` method name.
 pub const WEBGPU_METHOD_BEGIN_COMPUTE_PASS: &str = "beginComputePass";
@@ -589,8 +556,6 @@ pub const WEBGPU_METHOD_WRITE_TEXTURE: &str = "writeTexture";
 
 /// `GpuComputePassEncoder.dispatch(x, y, z)` method name.
 pub const WEBGPU_METHOD_DISPATCH: &str = "dispatch";
-
-// --- WebGPU property name string constants (for descriptor property keys) ---
 
 /// `arrayStride` property key inside `GpuVertexBufferLayout`.
 pub const WEBGPU_PROPERTY_ARRAY_STRIDE: &str = "arrayStride";
