@@ -1,10 +1,6 @@
-//! Compile-shape smoke tests for the engine input wiring.
-//!
-//! These tests pin the accessor shapes produced by the Lombok derives so
-//! downstream consumers (game loops, the engine input demo page) keep
-//! compiling.
+use super::*;
 
-use euv_engine::*;
+
 
 /// Verifies that a fresh `EngineHandle` starts without a registered input
 /// cell and that `register_input`'s accessor has the expected shape.

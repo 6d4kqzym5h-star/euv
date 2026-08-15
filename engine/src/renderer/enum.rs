@@ -302,3 +302,47 @@ pub enum WebGlProgramError {
     /// Carries the program info log returned by `getProgramInfoLog`.
     ProgramLink(String),
 }
+
+/// Whether a vertex buffer is consumed per-vertex or per-instance.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum VertexStepMode {
+    /// Advance the buffer one vertex at a time.
+    #[default]
+    Vertex,
+    /// Advance the buffer one entry at a time, for all vertices of an
+    /// instance.
+    Instance,
+}
+
+/// A single binding entry inside a `BindGroupDescriptor`.
+#[derive(Clone, Debug)]
+pub enum BindGroupEntry {
+    /// A uniform/storage buffer binding.
+    Buffer {
+        /// The binding slot (matches `@binding(N)` in the shader).
+        binding: u32,
+        /// The `GpuBuffer` handle.
+        buffer: JsValue,
+        /// The byte offset into the buffer where the binding starts.
+        offset: u64,
+        /// The size in bytes of the binding. `None` means "until the end
+        /// of the buffer".
+        size: Option<u64>,
+    },
+    /// A sampled texture binding.
+    Texture {
+        /// The binding slot.
+        binding: u32,
+        /// The `GpuTextureView` handle.
+        view: JsValue,
+    },
+    /// A sampler binding.
+    Sampler {
+        /// The binding slot.
+        binding: u32,
+        /// The `GpuSampler` handle.
+        sampler: JsValue,
+    },
+}
+
+

@@ -23,6 +23,10 @@ mod scheduler;
 mod spatial;
 mod sprite;
 mod timer;
+
+#[cfg(test)]
+mod tests;
+
 mod tween;
 
 pub use {
@@ -46,3 +50,4 @@ use {
     js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::JsFuture,
     web_sys::*,
 };
+

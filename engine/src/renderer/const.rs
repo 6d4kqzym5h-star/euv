@@ -1,3 +1,4 @@
+
 /// The canvas 2D rendering context type identifier.
 pub(crate) const RENDERER_CONTEXT_TYPE_2D: &str = "2d";
 
@@ -387,7 +388,7 @@ pub(crate) const WEBGPU_PROPERTY_BUFFER: &str = "buffer";
 /// disabled; present when the attachment's texture has `sampleCount > 1`.
 pub(crate) const WEBGPU_PROPERTY_RESOLVE_TARGET: &str = "resolveTarget";
 
-/// Upper bound, in milliseconds, for how long [`WebGpuRenderer::init`] is
+/// Upper bound, in milliseconds, for how long `WebGpuRenderer::init` is
 /// allowed to wait on the adapter and device promises before falling into
 /// the `WebGPU Not Supported` branch.
 ///
@@ -400,3 +401,299 @@ pub(crate) const WEBGPU_PROPERTY_RESOLVE_TARGET: &str = "resolveTarget";
 /// `impl.rs`); on timeout the caller surfaces `RENDERER_TIMEOUT_ERROR_MESSAGE`
 /// and treats the outcome the same as "no adapter available".
 pub(crate) const INIT_PROMISE_TIMEOUT_MILLIS: i32 = 3000;
+
+/// Minification / magnification filter mode that picks the nearest texel.
+pub(crate) const WEBGPU_FILTER_MODE_NEAREST: &str = "nearest";
+
+/// `clamp-to-edge` address mode for U / V / W sampler axes.
+pub(crate) const WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE: &str = "clamp-to-edge";
+
+/// `textureSampleCompare` comparison function: keep fragments closer to
+/// the camera than the reference depth.
+pub(crate) const WEBGPU_COMPARE_LESS: &str = "less";
+
+/// 2D view dimension (the default for `GpuTexture.createView`).
+pub(crate) const WEBGPU_TEXTURE_VIEW_DIMENSION_2D: &str = "2d";
+
+/// Aspect selector that exposes every channel of a multi-aspect texture.
+pub(crate) const WEBGPU_TEXTURE_ASPECT_ALL: &str = "all";
+
+/// Aspect selector that restricts a depth-stencil view to its depth channel.
+pub(crate) const WEBGPU_TEXTURE_ASPECT_DEPTH_ONLY: &str = "depth-only";
+
+/// Buffer usage: mappable + can be the source of a copy.
+pub(crate) const WEBGPU_BUFFER_USAGE_COPY_SRC: f64 = 1.0;
+/// Buffer usage: index buffer for `setIndexBuffer`.
+pub(crate) const WEBGPU_BUFFER_USAGE_INDEX: f64 = 4.0;
+/// Buffer usage: vertex buffer for `setVertexBuffer`.
+pub(crate) const WEBGPU_BUFFER_USAGE_VERTEX: f64 = 8.0;
+/// Buffer usage: storage buffer for `createBindGroup` (read-only).
+pub(crate) const WEBGPU_BUFFER_USAGE_STORAGE: f64 = 32.0;
+/// Buffer usage: indirect draw / dispatch arguments.
+pub(crate) const WEBGPU_BUFFER_USAGE_INDIRECT: f64 = 64.0;
+/// Buffer usage: query-set resolve destination.
+pub(crate) const WEBGPU_BUFFER_USAGE_QUERY_RESOLVE: f64 = 128.0;
+
+/// 24-bit depth, 8-bit stencil, no multisample. The most common choice
+/// for a render pass's depth-stencil attachment.
+pub(crate) const WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS_STENCIL8: &str = "depth24plus-stencil8";
+
+/// 16-bit unorm depth, no stencil. Cheaper than depth24plus, but no
+/// stencil, slightly more z-fighting.
+pub(crate) const WEBGPU_DEPTH_FORMAT_DEPTH16_UNORM: &str = "depth16unorm";
+
+/// 32-bit float depth, no stencil. Required for view-space z-buffers
+/// used in deferred renderers.
+pub(crate) const WEBGPU_DEPTH_FORMAT_DEPTH32_FLOAT: &str = "depth32float";
+
+/// 24-bit depth (no stencil) without MSAA. The default for shadow maps
+/// and other single-sample depth render targets.
+pub(crate) const WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS: &str = "depth24plus";
+
+/// Validation-layer error filter; catches shader compile/link errors,
+/// bind-group mismatches, OOB draws, etc.
+pub(crate) const WEBGPU_ERROR_FILTER_VALIDATION: &str = "validation";
+
+/// `loadOp` / `depthLoadOp` value that preserves the previous contents
+/// of the attachment.
+pub(crate) const WEBGPU_LOAD_OP_LOAD: &str = "load";
+
+
+
+/// `storeOp` value that discards the result (saves bandwidth when we
+/// will not read it back, e.g. the depth buffer at the end of a pass).
+pub(crate) const WEBGPU_STORE_OP_DISCARD: &str = "discard";
+
+/// Map a buffer for CPU readback. Requires `MAP_READ` usage.
+pub(crate) const WEBGPU_MAP_MODE_READ: f64 = 1.0;
+
+/// Map a buffer for CPU write. Requires `MAP_WRITE` usage.
+pub(crate) const WEBGPU_MAP_MODE_WRITE: f64 = 2.0;
+
+/// Triangle strip: each new vertex forms a triangle with the previous two.
+pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: &str = "triangle-strip";
+
+/// Line list: 2 vertices per line, no sharing.
+pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_LINE_LIST: &str = "line-list";
+
+/// Line strip: each new vertex extends the current line.
+pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_LINE_STRIP: &str = "line-strip";
+
+/// Point list: 1 vertex per point.
+pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_POINT_LIST: &str = "point-list";
+
+/// Texture usage: read in a shader (sampled texture / uniform texel buffer).
+pub(crate) const WEBGPU_TEXTURE_USAGE_COPY_SRC: f64 = 1.0;
+/// Texture usage: written in a shader (storage texture).
+pub(crate) const WEBGPU_TEXTURE_USAGE_COPY_DST: f64 = 2.0;
+/// Texture usage: sampled texture binding.
+pub(crate) const WEBGPU_TEXTURE_USAGE_TEXTURE_BINDING: f64 = 8.0;
+/// Texture usage: storage texture binding.
+pub(crate) const WEBGPU_TEXTURE_USAGE_STORAGE_BINDING: f64 = 16.0;
+
+/// `GpuCommandEncoder.beginComputePass(descriptor)` method name.
+pub(crate) const WEBGPU_METHOD_BEGIN_COMPUTE_PASS: &str = "beginComputePass";
+
+
+/// `GpuCommandEncoder.copyTextureToBuffer(...)` method name.
+pub(crate) const WEBGPU_METHOD_COPY_TEXTURE_TO_BUFFER: &str = "copyTextureToBuffer";
+
+
+/// `GpuDevice.createBindGroupLayout(descriptor)` method name.
+pub(crate) const WEBGPU_METHOD_CREATE_BIND_GROUP_LAYOUT: &str = "createBindGroupLayout";
+
+
+
+/// `GpuDevice.createComputePipeline(descriptor)` method name.
+pub(crate) const WEBGPU_METHOD_CREATE_COMPUTE_PIPELINE: &str = "createComputePipeline";
+
+/// `GpuDevice.createPipelineLayout(descriptor)` method name.
+pub(crate) const WEBGPU_METHOD_CREATE_PIPELINE_LAYOUT: &str = "createPipelineLayout";
+
+
+/// `GpuDevice.createSampler(descriptor)` method name.
+pub(crate) const WEBGPU_METHOD_CREATE_SAMPLER: &str = "createSampler";
+
+
+
+
+/// `GpuTexture.generateMipmap()` method name (Chrome extension, not spec).
+pub(crate) const WEBGPU_METHOD_GENERATE_MIPMAP: &str = "generateMipmap";
+
+/// `GpuBuffer.getMappedRange(offset, size)` method name.
+pub(crate) const WEBGPU_METHOD_GET_MAPPED_RANGE: &str = "getMappedRange";
+
+/// `GpuBuffer.mapAsync(mode, offset, size)` method name.
+pub(crate) const WEBGPU_METHOD_MAP_ASYNC: &str = "mapAsync";
+
+/// `GpuDevice.popErrorScope()` method name.
+pub(crate) const WEBGPU_METHOD_POP_ERROR_SCOPE: &str = "popErrorScope";
+
+/// `GpuDevice.pushErrorScope(filter)` method name.
+pub(crate) const WEBGPU_METHOD_PUSH_ERROR_SCOPE: &str = "pushErrorScope";
+
+
+/// `GpuRenderPassEncoder.setBlendConstant(color)` method name.
+pub(crate) const WEBGPU_METHOD_SET_BLEND_CONSTANT: &str = "setBlendConstant";
+
+
+/// `GpuRenderPassEncoder.setScissorRect(x, y, w, h)` method name.
+pub(crate) const WEBGPU_METHOD_SET_SCISSOR_RECT: &str = "setScissorRect";
+
+/// `GpuRenderPassEncoder.setStencilReference(value)` method name.
+pub(crate) const WEBGPU_METHOD_SET_STENCIL_REFERENCE: &str = "setStencilReference";
+
+/// `GpuRenderPassEncoder.setViewport(x, y, w, h, minDepth, maxDepth)` method name.
+pub(crate) const WEBGPU_METHOD_SET_VIEWPORT: &str = "setViewport";
+
+/// `GpuBuffer.unmap()` method name.
+pub(crate) const WEBGPU_METHOD_UNMAP: &str = "unmap";
+
+
+/// `GpuQueue.writeTexture(destination, data, dataLayout, size)` method name.
+pub(crate) const WEBGPU_METHOD_WRITE_TEXTURE: &str = "writeTexture";
+
+/// `GpuComputePassEncoder.dispatch(x, y, z)` method name.
+pub(crate) const WEBGPU_METHOD_DISPATCH: &str = "dispatch";
+
+/// `arrayStride` property key inside `GpuVertexBufferLayout`.
+pub(crate) const WEBGPU_PROPERTY_ARRAY_STRIDE: &str = "arrayStride";
+
+/// `stepMode` property key inside `GpuVertexBufferLayout`.
+pub(crate) const WEBGPU_PROPERTY_STEP_MODE: &str = "stepMode";
+
+/// `attributes` property key inside `GpuVertexBufferLayout`.
+pub(crate) const WEBGPU_PROPERTY_ATTRIBUTES: &str = "attributes";
+
+/// `shaderLocation` property key inside `GpuVertexAttribute`.
+pub(crate) const WEBGPU_PROPERTY_SHADER_LOCATION: &str = "shaderLocation";
+
+/// `offset` property key inside `GpuVertexAttribute`.
+pub(crate) const WEBGPU_PROPERTY_OFFSET: &str = "offset";
+
+
+/// `dimension` property key inside `GpuTextureViewDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_DIMENSION: &str = "dimension";
+
+/// `aspect` property key inside `GpuTextureViewDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_ASPECT: &str = "aspect";
+
+/// `baseMipLevel` property key inside `GpuTextureViewDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_BASE_MIP_LEVEL: &str = "baseMipLevel";
+
+/// `mipLevelCount` property key inside `GpuTextureViewDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_MIP_LEVEL_COUNT: &str = "mipLevelCount";
+
+/// `baseArrayLayer` property key inside `GpuTextureViewDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_BASE_ARRAY_LAYER: &str = "baseArrayLayer";
+
+/// `arrayLayerCount` property key inside `GpuTextureViewDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_ARRAY_LAYER_COUNT: &str = "arrayLayerCount";
+
+/// `addressModeU` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_ADDRESS_MODE_U: &str = "addressModeU";
+
+/// `addressModeV` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_ADDRESS_MODE_V: &str = "addressModeV";
+
+/// `addressModeW` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_ADDRESS_MODE_W: &str = "addressModeW";
+
+/// `magFilter` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_MAG_FILTER: &str = "magFilter";
+
+/// `minFilter` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_MIN_FILTER: &str = "minFilter";
+
+/// `mipmapFilter` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_MIPMAP_FILTER: &str = "mipmapFilter";
+
+/// `compare` property key inside `GpuSamplerDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_COMPARE: &str = "compare";
+
+/// `sampler` property key inside a sampler binding entry.
+pub(crate) const WEBGPU_PROPERTY_SAMPLER: &str = "sampler";
+
+/// `texture` property key inside a texture binding entry / `writeTexture` dest.
+pub(crate) const WEBGPU_PROPERTY_TEXTURE: &str = "texture";
+
+/// `mipLevel` property key inside a texture binding entry / `writeTexture` dest.
+pub(crate) const WEBGPU_PROPERTY_MIP_LEVEL: &str = "mipLevel";
+
+/// `origin` property key inside `GpuImageCopyTexture`.
+pub(crate) const WEBGPU_PROPERTY_ORIGIN: &str = "origin";
+
+/// `bytesPerRow` property key inside `GpuImageDataLayout`.
+pub(crate) const WEBGPU_PROPERTY_BYTES_PER_ROW: &str = "bytesPerRow";
+
+/// `rowsPerImage` property key inside `GpuImageDataLayout`.
+pub(crate) const WEBGPU_PROPERTY_ROWS_PER_IMAGE: &str = "rowsPerImage";
+
+/// `offsetBytes` property key inside `GpuImageDataLayout` (used by `copyTextureToBuffer`).
+pub(crate) const WEBGPU_PROPERTY_OFFSET_BYTES: &str = "offsetBytes";
+
+/// `source` property key inside `GpuImageCopyTexture` (used by `copyTextureToBuffer`).
+pub(crate) const WEBGPU_PROPERTY_SOURCE: &str = "source";
+
+/// `destination` property key inside `GpuImageCopyTexture` (used by `writeTexture`).
+pub(crate) const WEBGPU_PROPERTY_DESTINATION: &str = "destination";
+
+/// `copySize` property key inside `GpuImageCopyTexture` (used by `copyTextureToBuffer`).
+pub(crate) const WEBGPU_PROPERTY_COPY_SIZE: &str = "copySize";
+
+/// `width` property key (used by `GpuExtent3D`, `GpuOrigin3D`, viewport / scissor).
+pub(crate) const WEBGPU_PROPERTY_WIDTH: &str = "width";
+
+/// `height` property key (used by `GpuExtent3D`, `GpuOrigin3D`, viewport / scissor).
+pub(crate) const WEBGPU_PROPERTY_HEIGHT: &str = "height";
+
+/// `depthOrArrayLayers` property key inside `GpuExtent3D`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_OR_1: &str = "depthOrArrayLayers";
+
+/// `x` property key (used by `GpuOrigin3D` and viewport / scissor).
+pub(crate) const WEBGPU_PROPERTY_X: &str = "x";
+
+/// `y` property key (used by `GpuOrigin3D` and viewport / scissor).
+pub(crate) const WEBGPU_PROPERTY_Y: &str = "y";
+
+/// `minDepth` property key inside `setViewport`.
+pub(crate) const WEBGPU_PROPERTY_MIN_DEPTH: &str = "minDepth";
+
+/// `maxDepth` property key inside `setViewport`.
+pub(crate) const WEBGPU_PROPERTY_MAX_DEPTH: &str = "maxDepth";
+
+/// `depthClearValue` property key inside `GpuRenderPassDepthStencilAttachment`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_CLEAR_VALUE: &str = "depthClearValue";
+
+/// `depthLoadOp` property key inside `GpuRenderPassDepthStencilAttachment`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_LOAD_OP: &str = "depthLoadOp";
+
+/// `depthStoreOp` property key inside `GpuRenderPassDepthStencilAttachment`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_STORE_OP: &str = "depthStoreOp";
+
+/// `depthReadOnly` property key inside `GpuRenderPassDepthStencilAttachment`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_READ_ONLY: &str = "depthReadOnly";
+
+/// `depthCompare` property key inside `GpuDepthStencilState`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_COMPARE: &str = "depthCompare";
+
+/// `depthWriteEnabled` property key inside `GpuDepthStencilState`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_WRITE_ENABLED: &str = "depthWriteEnabled";
+
+/// `depthStencil` property key inside `GpuRenderPassDescriptor`.
+pub(crate) const WEBGPU_PROPERTY_DEPTH_STENCIL: &str = "depthStencil";
+
+/// `depthStencilAttachment` property key inside `GpuRenderPassDescriptor` (alt spelling).
+pub(crate) const WEBGPU_PROPERTY_DEPTH_STENCIL_ATTACHMENT: &str = "depthStencilAttachment";
+
+/// `compute` property key inside `GpuRenderPassDescriptor` (compute-pass dispatch).
+pub(crate) const WEBGPU_PROPERTY_COMPUTE: &str = "compute";
+
+/// `label` property key (debug marker string, set on every WebGPU object).
+pub(crate) const WEBGPU_PROPERTY_LABEL: &str = "label";
+
+/// `lost` property key inside the `GpuDevice.lost` Promise.
+pub(crate) const WEBGPU_PROPERTY_LOST: &str = "lost";
+
+/// `textureView` property key inside `GpuTextureBinding`.
+pub(crate) const WEBGPU_PROPERTY_TEXTURE_VIEW: &str = "textureView";

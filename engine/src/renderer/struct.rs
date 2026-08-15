@@ -244,6 +244,80 @@ pub struct WebGpuRenderer {
     /// recreate the view each frame. `None` when MSAA is disabled.
     #[get(type(clone))]
     pub(crate) multisample_view: Option<JsValue>,
+    /// The depth-stencil texture used for depth-tested passes.
+    ///
+    /// Created lazily on the first call to [`WebGpuRenderer::begin_render_pass`]
+    /// that includes a `depthStencil` attachment. Rebuilt on every resize
+    /// because the dimensions are immutable for a given `GpuTexture`. The
+    /// matching default view is cached in `depth_view`.
+    ///
+    /// `None` until the first depth-tested render pass is opened.
+    #[get(type(clone))]
+    pub(crate) depth_texture: Option<JsValue>,
+    /// The default `GpuTextureView` into `depth_texture`.
+    ///
+    /// `None` when no depth texture has been allocated.
+    #[get(type(clone))]
+    pub(crate) depth_view: Option<JsValue>,
+    /// The depth-stencil format used for `depth_texture`.
+    ///
+    /// Stored so subsequent render-pass openers can pass the same format
+    /// to the pipeline layout without having to remember it externally.
+    /// `None` until the first depth texture is allocated.
+    #[get(type(clone))]
+    pub(crate) depth_format: Option<String>,
+    /// User-supplied closure fired when the underlying `GpuDevice` enters
+    /// the `lost` state (browser-initiated context loss, OS driver crash,
+    /// `device.destroy()`, ...).
+    ///
+    /// `None` until the caller calls [`WebGpuRenderer::on_device_lost`].
+    /// The renderer also stores a separate `device_lost_handle` that
+    /// forwards the `GPUDeviceLostInfo` JS value into this callback.
+    #[get(type(clone))]
+    pub(crate) device_lost_callback: Option<js_sys::Function>,
+    /// Whether the device is currently in the `lost` state.
+    ///
+    /// Once flipped to `true`, every GPU operation returns
+    /// `Err(WebGpuError::RendererDisposed)` until the caller destroys the
+    /// renderer and creates a new one (WebGPU has no "recover from lost
+    /// device" API).
+    #[get(type(copy))]
+    pub(crate) device_lost: bool,
+    /// Shared slot for the most recent popped error-scope value.
+    ///
+    /// `device.popErrorScope()` returns a `Promise<GPUError?>`; we
+    /// cannot `.await` it from a sync call site. Instead, every
+    /// `push_error_scope` + `pop_error_scope` pair registers a
+    /// microtask via `wasm_bindgen_futures::spawn_local` that stores
+    /// the resolved value here. Callers that want the error
+    /// synchronously call [`WebGpuRenderer::take_last_error`] to
+    /// drain the slot.
+    ///
+    /// Holding a `Rc<PendingErrorCell>` lets the spawn_local future
+    /// own its own handle independently of `&self`, so the
+    /// renderer's borrow checker stays happy. The slot is empty
+    /// (`None`) by default and after each successful take.
+    ///
+    /// The cell is intentionally `PendingErrorCell` (a `Sync`
+    /// `UnsafeCell` newtype, see [`crate::renderer::static`]) rather
+    /// than `Rc<RefCell<...>>`: the WASM single-threaded scheduler
+    /// makes the runtime borrow check `RefCell` provides unreachable
+    /// in practice, so we trade it for a raw `UnsafeCell` deref
+    /// confined to two call sites. This mirrors how euv-core
+    /// implements its global registries
+    /// (`core/src/renderer/registry/struct.rs:62`).
+    pub(crate) pending_error: Rc<PendingErrorCell>,
+    /// The currently-open `GpuCommandEncoder`, if any.
+    ///
+    /// WebGPU expects the application to encode all work for a
+    /// frame (clear, render passes, compute passes, copy ops) into
+    /// a single command encoder, then call `encoder.finish()` to
+    /// produce a `GpuCommandBuffer` and submit it to the queue.
+    /// The encoder is `None` after `submit()` finishes and must
+    /// be re-acquired via `device.createCommandEncoder()` before
+    /// the next frame.
+    #[get(type(clone))]
+    pub(crate) command_encoder: Option<JsValue>,
 }
 
 /// A WebGL 2 rendering backend wrapping the `WebGl2RenderingContext`.
@@ -269,3 +343,306 @@ pub struct WebGlRenderer {
     #[get(type(copy))]
     pub(crate) height: u32,
 }
+
+// =====================================================================
+// WebGPU: descriptor & data structs (consumed by the WebGpuRenderer API)
+// =====================================================================
+
+/// A single vertex attribute within a vertex buffer layout.
+///
+/// Mirrors the fields of `GPUVertexAttribute` exactly. The shader location
+/// is the `@location(N)` qualifier in the WGSL source. The offset is in
+/// bytes from the start of the vertex, and `format` is one of the
+/// WGSL vertex format strings (e.g. `"float32x4"`, `"unorm8x4"`).
+#[derive(Clone, Copy, Debug, New, PartialEq, Eq, Hash, Getter)]
+pub struct VertexAttribute {
+    /// The shader location the attribute maps to.
+    #[get(type(copy))]
+    pub(crate) shader_location: u32,
+    /// The byte offset from the start of the vertex.
+    #[get(type(copy))]
+    pub(crate) offset: u64,
+    /// The WGSL vertex format (e.g. `"float32x4"`).
+    #[get(type(clone))]
+    pub(crate) format: &'static str,
+}
+
+/// The layout of a single vertex buffer, expressed as an array stride plus
+/// a list of attributes.
+///
+/// Mirrors `GPUVertexBufferLayout` from the WebGPU spec. The renderer
+/// passes the assembled descriptor straight to `createRenderPipeline` via
+/// `Reflect`.
+#[derive(Clone, Debug, New, Getter)]
+pub struct VertexBufferLayout {
+    /// The byte stride of one vertex in the buffer.
+    #[get(type(copy))]
+    pub(crate) array_stride: u64,
+    /// Whether the buffer should be advanced per-instance (`true`) or
+    /// per-vertex (`false`).
+    #[get(type(copy))]
+    pub(crate) step_mode: VertexStepMode,
+    /// The attributes that describe how to interpret the bytes of one
+    /// vertex.
+    pub(crate) attributes: Vec<VertexAttribute>,
+}
+
+/// A 2D texture descriptor for `create_texture_2d`.
+///
+/// Defaults produce a 1x1 RGBA8 texture with `TEXTURE_BINDING | COPY_DST
+/// | COPY_SRC` usage, which is the right baseline for a sampled color
+/// texture that is uploaded to via `queue.writeTexture`. Override fields
+/// after constructing to set `mip_level_count`, `sample_count`, or
+/// different `usage` flags.
+#[derive(Clone, Debug, New, Getter)]
+pub struct Texture2DDescriptor {
+    /// The texture width in pixels. Must be > 0.
+    #[get(type(copy))]
+    pub(crate) width: u32,
+    /// The texture height in pixels. Must be > 0.
+    #[get(type(copy))]
+    pub(crate) height: u32,
+    /// The WGSL texture format (e.g. `"rgba8unorm"`, `"bgra8unorm"`,
+    /// `"rgba16float"`, `"depth24plus-stencil8"`).
+    #[get(type(clone))]
+    pub(crate) format: &'static str,
+    /// The number of mip levels. `0` is treated as `1`.
+    #[get(type(copy))]
+    #[new(skip)]
+    pub(crate) mip_level_count: u32,
+    /// The number of samples per texel (`1` for non-MSAA, `4` for MSAA).
+    #[get(type(copy))]
+    #[new(skip)]
+    pub(crate) sample_count: u32,
+    /// The WGSL usage flags (e.g. `"RENDER_ATTACHMENT | TEXTURE_BINDING |
+    /// COPY_DST | COPY_SRC"`).
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) usage: &'static str,
+}
+
+/// A sampler descriptor for `create_sampler`.
+///
+/// Defaults produce a non-filtering clamp-to-edge sampler. Override
+/// fields after constructing to enable linear filtering, repeat
+/// addressing, or depth comparison.
+#[derive(Clone, Debug, New, Getter)]
+pub struct GpuSamplerDescriptor {
+    /// Minification filter.
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) mag_filter: &'static str,
+    /// Magnification filter.
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) min_filter: &'static str,
+    /// Mipmap filter.
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) mipmap_filter: &'static str,
+    /// U address mode.
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) address_mode_u: &'static str,
+    /// V address mode.
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) address_mode_v: &'static str,
+    /// W address mode.
+    #[get(type(clone))]
+    #[new(skip)]
+    pub(crate) address_mode_w: &'static str,
+    /// Whether the sampler is a comparison sampler.
+    #[get(type(copy))]
+    #[new(skip)]
+    pub(crate) compare: bool,
+}
+
+/// The descriptor for a single (color or depth-stencil) render pass
+/// attachment, used as input to `begin_render_pass` / `begin_render_pass_to_texture`.
+#[derive(Clone, Debug)]
+pub struct RenderPassColorAttachment {
+    /// The texture view to draw into.
+    ///
+    /// When `None`, the renderer uses the swap-chain view (or the MSAA
+    /// intermediate view if `antialias == true`).
+    pub(crate) view: Option<JsValue>,
+    /// An optional resolve target for MSAA.
+    ///
+    /// `None` when MSAA is disabled. The renderer fills in the default
+    /// resolve target (the swap-chain view) when MSAA is enabled and the
+    /// caller leaves this as `None`.
+    pub(crate) resolve_target: Option<JsValue>,
+    /// The clear color as `(r, g, b, a)` in `0.0..=1.0`. `None` means
+    /// `"load"` (keep the previous contents).
+    pub(crate) clear_value: Option<(f64, f64, f64, f64)>,
+    /// The load operation. `None` → `"clear"` when `clear_value` is
+    /// `Some`, otherwise `"load"`.
+    pub(crate) load_op: Option<&'static str>,
+    /// The store operation. `None` → `"store"`.
+    pub(crate) store_op: Option<&'static str>,
+}
+
+/// The depth-stencil portion of a `RenderPassDescriptor`, used as input to
+/// `begin_render_pass` / `begin_render_pass_to_texture`.
+#[derive(Clone, Debug)]
+pub struct RenderPassDepthStencilAttachment {
+    /// The depth-stencil texture view to use.
+    ///
+    /// When `None`, the renderer uses the default view into its
+    /// `depth_texture` field, allocating the depth texture lazily if
+    /// needed.
+    pub(crate) view: Option<JsValue>,
+    /// The depth clear value in `0.0..=1.0`. `None` means
+    /// `"load"` (keep previous depth).
+    pub(crate) depth_clear_value: Option<f32>,
+    /// The depth load op. `None` → `"clear"` when
+    /// `depth_clear_value` is `Some`, otherwise `"load"`.
+    pub(crate) depth_load_op: Option<&'static str>,
+    /// The depth store op. `None` → `"store"`.
+    pub(crate) depth_store_op: Option<&'static str>,
+    /// Whether depth reads should be enabled. `None` → `false`.
+    pub(crate) depth_read_only: Option<bool>,
+}
+
+/// Descriptor for `GpuTexture.createView(descriptor)`.
+///
+/// Sub-selects a single cube face / mip / array slice / depth-aspect of a
+/// texture. When you need the full texture as a 2D view (the common case),
+/// just call `create_view` without a descriptor; the new method accepts an
+/// `Option<&TextureViewDescriptor>` for callers that need the full
+/// flexibility of the WebGPU spec.
+#[derive(Clone, Debug, New, Getter)]
+pub struct TextureViewDescriptor {
+    /// View format override, or `None` to use the texture's own format.
+    #[get(type(clone))]
+    #[new(value = "None")]
+    pub(crate) format: Option<&'static str>,
+    /// View dimension (`"2d"`, `"2d-array"`, `"cube"`, `"cube-array"`, ...).
+    /// `None` means the dimension is inferred from the texture.
+    #[get(type(clone))]
+    #[new(value = "None")]
+    pub(crate) dimension: Option<&'static str>,
+    /// Most significant mip level (inclusive). `None` → `0`.
+    #[get(type(copy))]
+    #[new(value = "0")]
+    pub(crate) base_mip_level: u32,
+    /// Number of mip levels in the view. `0` → all the way to the top.
+    #[get(type(copy))]
+    #[new(value = "0")]
+    pub(crate) mip_level_count: u32,
+    /// First array layer (inclusive). `None` → `0`. Only meaningful for
+    /// `2d-array` / `cube` / `cube-array` views.
+    #[get(type(copy))]
+    #[new(value = "0")]
+    pub(crate) base_array_layer: u32,
+    /// Number of array layers. `0` → all remaining layers.
+    #[get(type(copy))]
+    #[new(value = "0")]
+    pub(crate) array_layer_count: u32,
+    /// Which aspect of the texture to expose. One of:
+    /// `"all"`, `"depth-only"`, `"stencil-only"`. `None` → `"all"`.
+    #[get(type(clone))]
+    #[new(value = "None")]
+    pub(crate) aspect: Option<&'static str>,
+}
+
+/// Descriptor for `queue.writeTexture(destination, data, dataLayout, size)`.
+///
+/// WebGPU's `writeTexture` lets you upload CPU-side pixel data directly to a
+/// texture without staging through a buffer. Use it for: ImGui font atlases,
+/// procedural noise textures, sprite sheets, `ImageBitmap` pixels, etc.
+#[derive(Clone, Debug, New, Getter)]
+pub struct TextureWriteDescriptor {
+    /// The pixel data to upload. Bytes are laid out according to
+    /// `bytes_per_row` / `rows_per_image`.
+    #[get(type(clone))]
+    pub(crate) data: Vec<u8>,
+    /// Bytes per row of the source data. Must be a multiple of 256.
+    #[get(type(copy))]
+    pub(crate) bytes_per_row: u32,
+    /// Number of rows per image. `0` for 2D textures without mip chains.
+    #[get(type(copy))]
+    pub(crate) rows_per_image: u32,
+    /// Destination mip level to write into.
+    #[get(type(copy))]
+    pub(crate) mip_level: u32,
+    /// Destination texture to write into.
+    #[get(type(clone))]
+    pub(crate) texture: JsValue,
+    /// Origin within the destination texture. `None` → `(0, 0, 0)`.
+    #[get(type(clone))]
+    #[new(value = "None")]
+    pub(crate) origin: Option<JsValue>,
+    /// Whether to flip the source data vertically before writing.
+    /// `true` is essential when uploading from `<img>` / `<canvas>` whose
+    /// rows are top-to-bottom but WebGPU textures are bottom-to-top.
+    #[get(type(copy))]
+    #[new(value = "false")]
+    pub(crate) flip_y: bool,
+}
+
+/// Interior-mutable slot for the renderer's pending error-scope value.
+///
+/// This is the `euv-engine` analog of euv-core's `HandlerRegistryCell`
+/// (`core/src/renderer/registry/struct.rs:62`): a single-element
+/// `Sync` wrapper that holds an `Option<JsValue>` behind an
+/// `UnsafeCell`.
+///
+/// # Why this type exists
+///
+/// `WebGpuRenderer::pending_error` needs interior mutability
+/// because:
+///
+/// 1. `pop_error_sync` takes `&self` (the WebGPU hot path cannot
+///    be `async`), but the spawned `wasm_bindgen_futures::spawn_local`
+///    future must mutate the slot to store the resolved
+///    `Promise<GPUError?>` value.
+/// 2. `take_last_error` also takes `&self` and drains the slot
+///    on the next render tick.
+///
+/// The first implementation used `Rc<RefCell<Option<JsValue>>>`,
+/// which works but pays for:
+///
+/// - a `RefCell::borrow_mut` runtime borrow check on every
+///   write (the panic path is unreachable in practice — only
+///   the spawn_local future and `take_last_error` ever touch
+///   the slot, and they never overlap because the future is
+///   a microtask drained before the next render tick).
+/// - a heap allocation for the `RefCell`'s borrow state.
+///
+/// The newtype keeps the interior-mutability primitive (`Rc`),
+/// because the spawn_local future needs its own owning handle,
+/// but swaps the inner cell from `RefCell` to `UnsafeCell`:
+///
+/// - zero runtime borrow check (the WASM single-threaded
+///   scheduler makes the borrow impossible to violate).
+/// - zero allocation (the cell is just a `*mut Option<JsValue>`
+///   sitting inside the `Rc`-managed box).
+///
+/// # Sync safety
+///
+/// `PendingErrorCell` is **not** `Sync` by default (`UnsafeCell`
+/// explicitly opts out). We hand-implement `Sync` for it because
+/// the renderer is only ever used in the WASM single-threaded
+/// runtime; the `Rc` ensures the same instance is never shared
+/// across threads (it is not `Send`/`Sync` either), and the
+/// WASM main thread is the only place that ever touches the
+/// slot. This matches euv-core's pattern
+/// (`unsafe impl Sync for HandlerRegistryCell {}`).
+///
+/// If the engine is ever compiled for a multi-threaded target
+/// (native, `wasm-bindgen-rayon`), this `unsafe impl Sync` is
+/// unsound and must be removed.
+pub struct PendingErrorCell(
+    /// Interior-mutable storage for the optional `JsValue`.
+    ///
+    /// Marked `pub(crate)` (not just `pub`) because the field is
+    /// only meant to be touched from inside the renderer module —
+    /// specifically from the `impl PendingErrorCell` block in
+    /// `impl.rs`. The struct itself stays `pub` so external code
+    /// can name the type, but the raw `UnsafeCell` is an
+    /// implementation detail.
+    pub(crate) UnsafeCell<Option<JsValue>>,
+);
+
