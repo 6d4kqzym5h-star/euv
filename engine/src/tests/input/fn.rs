@@ -1,9 +1,5 @@
 use super::*;
 
-// =====================================================================
-// input tests
-// =====================================================================
-
 
 
 /// Verifies that a fresh `EngineHandle` starts without a registered input
