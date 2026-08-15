@@ -38,7 +38,7 @@ pub use {
 use euv::*;
 
 use std::{
-    cell::{RefCell, UnsafeCell},
+    cell::UnsafeCell,
     collections::{HashMap, HashSet},
     fmt::Debug,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},

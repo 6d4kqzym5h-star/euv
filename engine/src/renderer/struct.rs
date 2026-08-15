@@ -293,11 +293,20 @@ pub struct WebGpuRenderer {
     /// synchronously call [`WebGpuRenderer::take_last_error`] to
     /// drain the slot.
     ///
-    /// Holding a `Rc<RefCell<...>>` lets the spawn_local future own
-    /// its own handle independently of `&self`, so the renderer's
-    /// borrow checker stays happy. The slot is empty (`None`) by
-    /// default and after each successful take.
-    pub(crate) pending_error: Rc<RefCell<Option<JsValue>>>,
+    /// Holding a `Rc<PendingErrorCell>` lets the spawn_local future
+    /// own its own handle independently of `&self`, so the
+    /// renderer's borrow checker stays happy. The slot is empty
+    /// (`None`) by default and after each successful take.
+    ///
+    /// The cell is intentionally `PendingErrorCell` (a `Sync`
+    /// `UnsafeCell` newtype, see [`crate::renderer::static`]) rather
+    /// than `Rc<RefCell<...>>`: the WASM single-threaded scheduler
+    /// makes the runtime borrow check `RefCell` provides unreachable
+    /// in practice, so we trade it for a raw `UnsafeCell` deref
+    /// confined to two call sites. This mirrors how euv-core
+    /// implements its global registries
+    /// (`core/src/renderer/registry/struct.rs:62`).
+    pub(crate) pending_error: Rc<PendingErrorCell>,
     /// The currently-open `GpuCommandEncoder`, if any.
     ///
     /// WebGPU expects the application to encode all work for a

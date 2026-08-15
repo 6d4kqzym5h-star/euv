@@ -1925,7 +1925,7 @@ impl WebGpuRenderer {
             depth_format: None,
             device_lost_callback: None,
             device_lost: false,
-            pending_error: Rc::new(RefCell::new(None)),
+            pending_error: Rc::new(PendingErrorCell::new(None)),
             command_encoder: None,
         })
     }
@@ -2993,8 +2993,8 @@ impl WebGpuRenderer {
     /// # Arguments
     ///
     /// - `self` - the renderer; the call borrows immutably because
-    ///   the `Rc<RefCell<...>>` slot lets the spawned future mutate
-    ///   the inner value without an exclusive borrow.
+    ///   the `Rc<PendingErrorCell>` slot lets the spawned future
+    ///   mutate the inner value without an exclusive borrow.
     pub fn pop_error_sync(&self) -> Option<JsValue> {
         let pop_fn: Function = Reflect::get(
             self.get_device(),
@@ -3012,12 +3012,16 @@ impl WebGpuRenderer {
         // avoid the cost of a dynamic type check on the hot path.
         let promise: js_sys::Promise = promise.unchecked_into();
         let future = wasm_bindgen_futures::JsFuture::from(promise);
-        let slot: std::rc::Rc<std::cell::RefCell<Option<JsValue>>> =
-            self.pending_error.clone();
+        let slot: std::rc::Rc<PendingErrorCell> = self.pending_error.clone();
         wasm_bindgen_futures::spawn_local(async move {
             match future.await {
                 Ok(value) => {
-                    let mut cell = slot.borrow_mut();
+                    // SAFETY: the WASM single-threaded scheduler drains
+                    // this microtask before the next render tick. The
+                    // only other writer is `take_last_error`, which is
+                    // called from the render loop and therefore cannot
+                    // overlap with this future.
+                    let cell: &mut Option<JsValue> = unsafe { &mut *slot.as_ptr() };
                     if value.is_undefined() || value.is_null() {
                         *cell = None;
                     } else {
@@ -3034,10 +3038,11 @@ impl WebGpuRenderer {
         // already run (e.g. the renderer is being used inside
         // an existing `await` chain). This is an opportunistic
         // read; the real consumer is `take_last_error`.
-        if let Ok(cell) = self.pending_error.try_borrow() {
-            return cell.clone();
-        }
-        None
+        // SAFETY: see the note above; the future either has not
+        // started yet (in which case this read sees `None`) or
+        // has fully completed (in which case the future is gone).
+        let cell: &mut Option<JsValue> = unsafe { &mut *self.pending_error.as_ptr() };
+        cell.take()
     }
 
     /// Drains the renderer's pending error-scope slot, returning
@@ -3050,7 +3055,13 @@ impl WebGpuRenderer {
     /// `take_last_error` call (or since the renderer was
     /// constructed).
     pub fn take_last_error(&self) -> Option<JsValue> {
-        let mut cell = self.pending_error.borrow_mut();
+        // SAFETY: the WASM single-threaded scheduler ensures no
+        // other writer is alive at the same time. The only other
+        // writer is the `spawn_local` future inside
+        // `pop_error_sync`, which is a microtask drained before
+        // the next render tick — the usual call site for this
+        // method.
+        let cell: &mut Option<JsValue> = unsafe { &mut *self.pending_error.as_ptr() };
         cell.take()
     }
 
