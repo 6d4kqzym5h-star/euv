@@ -1,4 +1,3 @@
-
 /// The canvas 2D rendering context type identifier.
 pub(crate) const RENDERER_CONTEXT_TYPE_2D: &str = "2d";
 
@@ -458,8 +457,6 @@ pub(crate) const WEBGPU_ERROR_FILTER_VALIDATION: &str = "validation";
 /// of the attachment.
 pub(crate) const WEBGPU_LOAD_OP_LOAD: &str = "load";
 
-
-
 /// `storeOp` value that discards the result (saves bandwidth when we
 /// will not read it back, e.g. the depth buffer at the end of a pass).
 pub(crate) const WEBGPU_STORE_OP_DISCARD: &str = "discard";
@@ -494,15 +491,11 @@ pub(crate) const WEBGPU_TEXTURE_USAGE_STORAGE_BINDING: f64 = 16.0;
 /// `GpuCommandEncoder.beginComputePass(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_BEGIN_COMPUTE_PASS: &str = "beginComputePass";
 
-
 /// `GpuCommandEncoder.copyTextureToBuffer(...)` method name.
 pub(crate) const WEBGPU_METHOD_COPY_TEXTURE_TO_BUFFER: &str = "copyTextureToBuffer";
 
-
 /// `GpuDevice.createBindGroupLayout(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_CREATE_BIND_GROUP_LAYOUT: &str = "createBindGroupLayout";
-
-
 
 /// `GpuDevice.createComputePipeline(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_CREATE_COMPUTE_PIPELINE: &str = "createComputePipeline";
@@ -510,12 +503,8 @@ pub(crate) const WEBGPU_METHOD_CREATE_COMPUTE_PIPELINE: &str = "createComputePip
 /// `GpuDevice.createPipelineLayout(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_CREATE_PIPELINE_LAYOUT: &str = "createPipelineLayout";
 
-
 /// `GpuDevice.createSampler(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_CREATE_SAMPLER: &str = "createSampler";
-
-
-
 
 /// `GpuTexture.generateMipmap()` method name (Chrome extension, not spec).
 pub(crate) const WEBGPU_METHOD_GENERATE_MIPMAP: &str = "generateMipmap";
@@ -532,10 +521,8 @@ pub(crate) const WEBGPU_METHOD_POP_ERROR_SCOPE: &str = "popErrorScope";
 /// `GpuDevice.pushErrorScope(filter)` method name.
 pub(crate) const WEBGPU_METHOD_PUSH_ERROR_SCOPE: &str = "pushErrorScope";
 
-
 /// `GpuRenderPassEncoder.setBlendConstant(color)` method name.
 pub(crate) const WEBGPU_METHOD_SET_BLEND_CONSTANT: &str = "setBlendConstant";
-
 
 /// `GpuRenderPassEncoder.setScissorRect(x, y, w, h)` method name.
 pub(crate) const WEBGPU_METHOD_SET_SCISSOR_RECT: &str = "setScissorRect";
@@ -548,7 +535,6 @@ pub(crate) const WEBGPU_METHOD_SET_VIEWPORT: &str = "setViewport";
 
 /// `GpuBuffer.unmap()` method name.
 pub(crate) const WEBGPU_METHOD_UNMAP: &str = "unmap";
-
 
 /// `GpuQueue.writeTexture(destination, data, dataLayout, size)` method name.
 pub(crate) const WEBGPU_METHOD_WRITE_TEXTURE: &str = "writeTexture";
@@ -570,7 +556,6 @@ pub(crate) const WEBGPU_PROPERTY_SHADER_LOCATION: &str = "shaderLocation";
 
 /// `offset` property key inside `GpuVertexAttribute`.
 pub(crate) const WEBGPU_PROPERTY_OFFSET: &str = "offset";
-
 
 /// `dimension` property key inside `GpuTextureViewDescriptor`.
 pub(crate) const WEBGPU_PROPERTY_DIMENSION: &str = "dimension";

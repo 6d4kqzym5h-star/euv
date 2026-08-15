@@ -50,4 +50,3 @@ use {
     js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, wasm_bindgen_futures::JsFuture,
     web_sys::*,
 };
-

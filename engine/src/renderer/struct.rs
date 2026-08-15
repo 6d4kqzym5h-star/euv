@@ -645,4 +645,3 @@ pub struct PendingErrorCell(
     /// implementation detail.
     pub(crate) UnsafeCell<Option<JsValue>>,
 );
-

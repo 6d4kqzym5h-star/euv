@@ -344,5 +344,3 @@ pub enum BindGroupEntry {
         sampler: JsValue,
     },
 }
-
-
