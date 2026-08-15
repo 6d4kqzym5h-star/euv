@@ -23,6 +23,10 @@ mod scheduler;
 mod spatial;
 mod sprite;
 mod timer;
+
+#[cfg(test)]
+mod tests;
+
 mod tween;
 
 pub use {
@@ -47,5 +51,3 @@ use {
     web_sys::*,
 };
 
-#[cfg(test)]
-mod tests;
