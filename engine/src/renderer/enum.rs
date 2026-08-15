@@ -314,16 +314,6 @@ pub enum VertexStepMode {
     Instance,
 }
 
-impl VertexStepMode {
-    /// Returns the WGSL / WebGPU string representation.
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Vertex => "vertex",
-            Self::Instance => "instance",
-        }
-    }
-}
-
 /// A single binding entry inside a `BindGroupDescriptor`.
 #[derive(Clone, Debug)]
 pub enum BindGroupEntry {
@@ -355,15 +345,4 @@ pub enum BindGroupEntry {
     },
 }
 
-impl BindGroupEntry {
-    /// Returns the `@binding(N)` slot this entry occupies. The renderer
-    /// uses this when assembling the bind-group descriptor so the
-    /// caller does not need to know the JS-side `binding` field name.
-    pub(crate) fn binding(&self) -> u32 {
-        match self {
-            Self::Buffer { binding, .. }
-            | Self::Texture { binding, .. }
-            | Self::Sampler { binding, .. } => *binding,
-        }
-    }
-}
+

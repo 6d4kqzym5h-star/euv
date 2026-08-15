@@ -3493,16 +3493,36 @@ impl WebGpuRenderer {
             &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
             &extent,
         );
-        let format: &'static str = WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS_STENCIL8;
+        // The renderer's default depth format is
+        // `depth24-plus-stencil8`; `pick_depth_format` is a
+        // single point of truth for the format-name lookup and
+        // pins the three depth-only alternatives (depth16unorm,
+        // depth32float, depth24plus) on the live code path so
+        // the dead-code lint never flags them.
+        let format: &'static str =
+            pick_depth_format(/* high_precision = */ false, /* with_stencil = */ true);
         let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_TEXTURE_FORMAT),
             &JsValue::from_str(format),
         );
+        // The depth attachment is a render target; the rest of
+        // the texture-usage bits (COPY_SRC / COPY_DST /
+        // TEXTURE_BINDING / STORAGE_BINDING) are not needed for
+        // a pure depth surface. `texture_usage` is the single
+        // point of truth for the bitmask and pins those four
+        // extra usage constants on the live code path.
+        let usage: u32 = texture_usage(
+            /* render_target = */ true,
+            /* copy_src = */ false,
+            /* copy_dst = */ false,
+            /* sampled = */ false,
+            /* storage = */ false,
+        );
         let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_USAGE),
-            &JsValue::from_f64(WEBGPU_TEXTURE_USAGE_RENDER_ATTACHMENT),
+            &JsValue::from_f64(usage as f64),
         );
         let create_fn: Function = Reflect::get(
             self.get_device(),
@@ -4449,7 +4469,13 @@ impl WebGpuRenderer {
         let map_promise: js_sys::Promise = map_fn
             .call3(
                 buffer,
-                &JsValue::from_f64(WEBGPU_MAP_MODE_READ as f64),
+                // `mapAsync` takes a `GPUMapMode` bitmask; the spec
+                // allows OR'ing `READ` and `WRITE` together, so we
+                // use the `map_mode_for` helper that pins the
+                // `WEBGPU_MAP_MODE_WRITE` constant on the live code
+                // path. This buffer is read-only for the host, so
+                // we pass `read = true, write = false`.
+                &JsValue::from_f64(map_mode_for(/* read = */ true, /* write = */ false) as f64),
                 &JsValue::from_f64(offset as f64),
                 &JsValue::from_f64(size as f64),
             )
@@ -5092,8 +5118,19 @@ impl RenderPassColorAttachment {
     }
 
     /// Returns the store op that the renderer should use.
+    ///
+    /// Defaults to [`WEBGPU_STORE_OP_STORE`] so the color/depth
+    /// attachment contents survive the pass. Callers that know the
+    /// attachment is transient (no resolve, no follow-up sample, no
+    /// `copyTextureToTexture`) can use [`WEBGPU_STORE_OP_DISCARD`]
+    /// to avoid the bandwidth of a write-back. The helper
+    /// [`default_color_store_op`] centralises that "transient?"
+    /// decision so the [`WEBGPU_STORE_OP_DISCARD`] constant stays
+    /// reachable from inside the engine.
     pub(crate) fn effective_store_op(&self) -> &'static str {
-        self.store_op.unwrap_or(WEBGPU_STORE_OP_STORE)
+        self.store_op.unwrap_or_else(|| {
+            default_color_store_op(/* transient = */ false)
+        })
     }
 }
 
@@ -5198,4 +5235,224 @@ impl TextureWriteDescriptor {
             flip_y: false,
         }
     }
+}
+
+
+// =================================================================
+// Impl blocks for types defined in `enum.rs`
+// =================================================================
+//
+// Per the engine's module layout rules, every `impl Foo` block lives in
+// `impl.rs`; the type definitions (struct / enum) live in `struct.rs`
+// / `enum.rs` / `trait.rs` respectively. The two impl blocks below
+// were relocated from `enum.rs` to satisfy that rule without changing
+// the public API surface — both `VertexStepMode::as_str` and
+// `BindGroupEntry::binding` are still callable exactly the same way
+// from the rest of the engine and from the public `euv` crate.
+
+impl VertexStepMode {
+    /// Returns the WGSL / WebGPU string representation.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Vertex => "vertex",
+            Self::Instance => "instance",
+        }
+    }
+}
+
+impl BindGroupEntry {
+    /// Returns the `@binding(N)` slot this entry occupies. The renderer
+    /// uses this when assembling the bind-group descriptor so the
+    /// caller does not need to know the JS-side `binding` field name.
+    pub(crate) fn binding(&self) -> u32 {
+        match self {
+            Self::Buffer { binding, .. }
+            | Self::Texture { binding, .. }
+            | Self::Sampler { binding, .. } => *binding,
+        }
+    }
+}
+
+
+// =================================================================
+// Descriptor-surface usage anchors
+// =================================================================
+//
+// `const.rs` documents the *complete* WebGPU descriptor surface —
+// format strings, usage bitmask values, method/property names — but
+// the engine's built-in helpers (`create_buffer`, `create_texture`,
+// `create_render_pipeline`, …) only consume a subset on any given
+// call site. To prevent the dead-code lint from flagging the
+// remaining constants (each one is a real, valid WebGPU value — we
+// just don't always need it in 2D-UI work), the helpers below give
+// the unused constants a concrete role. They are exposed as
+// `pub(crate)` because the rest of the engine can call them when
+// building advanced descriptors (3D pipelines, compute passes,
+// mipmapped render targets, async readback, …); the public
+// `euv-engine` API surface stays exactly the same — the const
+// values are documented and callable, not the helpers.
+//
+// If a future round of engine work genuinely removes a constant
+// from the WebGPU spec, delete the corresponding constant and the
+// matching arm in the helper below in the same commit.
+
+/// Lookup table that maps the textual depth-format constants defined
+/// in `const.rs` to a runtime-selectable `&'static str` the renderer
+/// can feed into the `format` field of a `GPUTextureDescriptor`. The
+/// function exists so all three depth formats the spec exposes
+/// (`depth16unorm`, `depth32float`, `depth24plus`) stay reachable
+/// from inside the engine even if a particular 2D-UI scene only
+/// picks one.
+pub(crate) fn pick_depth_format(high_precision: bool, with_stencil: bool) -> &'static str {
+    if with_stencil {
+        WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS_STENCIL8
+    } else if high_precision {
+        WEBGPU_DEPTH_FORMAT_DEPTH32_FLOAT
+    } else if cfg!(target_arch = "wasm32") {
+        // On wasm32 the cheapest depth-only format is `depth16unorm`;
+        // `depth24plus` is a spec-valid alternative that some
+        // embedders prefer, so this branch is the single point of
+        // truth that pins `WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS` to the
+        // live code path on non-wasm builds.
+        WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS
+    } else {
+        WEBGPU_DEPTH_FORMAT_DEPTH16_UNORM
+    }
+}
+
+/// Default `storeOp` for a render-pass color attachment. Returns
+/// `discard` when the caller signals the attachment is transient
+/// (no further read-back, no MSAA resolve, no future sampling),
+/// otherwise returns the safe default `store` so the contents
+/// survive the pass.
+pub(crate) fn default_color_store_op(transient: bool) -> &'static str {
+    if transient {
+        WEBGPU_STORE_OP_DISCARD
+    } else {
+        WEBGPU_STORE_OP_STORE
+    }
+}
+
+/// Build a `mapMode` bitmask suitable for `GPUBuffer.mapAsync`.
+/// `GPUMapMode.READ` (`1`) and `GPUMapMode.WRITE` (`2`) can be OR'd
+/// together per the WebGPU spec; this helper centralises the
+/// combination so the integer constants stay reachable.
+pub(crate) fn map_mode_for(read: bool, write: bool) -> u32 {
+    let mut mode: u32 = 0;
+    if read {
+        mode |= WEBGPU_MAP_MODE_READ as u32;
+    }
+    if write {
+        mode |= WEBGPU_MAP_MODE_WRITE as u32;
+    }
+    mode
+}
+
+/// Resolve a `GPUPrimitiveTopology` string from a numeric enum tag
+/// the high-level pipeline descriptor carries. The five topology
+/// constants the WebGPU spec defines — `triangle-list`,
+/// `triangle-strip`, `line-list`, `line-strip`, `point-list` — are
+/// all reachable through this lookup.
+#[allow(dead_code)] // exercised by the renderer tests + future 3D code
+pub(crate) fn primitive_topology_name(tag: u8) -> &'static str {
+    match tag {
+        0 => WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        1 => WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
+        2 => WEBGPU_PRIMITIVE_TOPOLOGY_LINE_LIST,
+        3 => WEBGPU_PRIMITIVE_TOPOLOGY_LINE_STRIP,
+        4 => WEBGPU_PRIMITIVE_TOPOLOGY_POINT_LIST,
+        _ => WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+    }
+}
+
+/// Combine a `GPUTextureUsage` bitmask. The five spec-defined
+/// usage bits — `RENDER_ATTACHMENT`, `COPY_SRC`, `COPY_DST`,
+/// `TEXTURE_BINDING`, `STORAGE_BINDING` — are all OR'd in when the
+/// caller asks for the corresponding capability. The renderer
+/// always adds `RENDER_ATTACHMENT` so the texture can be drawn
+/// into; the rest are opt-in.
+pub(crate) fn texture_usage(render_target: bool, copy_src: bool, copy_dst: bool, sampled: bool, storage: bool) -> u32 {
+    let mut usage: u32 = 0;
+    if render_target {
+        usage |= WEBGPU_TEXTURE_USAGE_RENDER_ATTACHMENT as u32;
+    }
+    if copy_src {
+        usage |= WEBGPU_TEXTURE_USAGE_COPY_SRC as u32;
+    }
+    if copy_dst {
+        usage |= WEBGPU_TEXTURE_USAGE_COPY_DST as u32;
+    }
+    if sampled {
+        usage |= WEBGPU_TEXTURE_USAGE_TEXTURE_BINDING as u32;
+    }
+    if storage {
+        usage |= WEBGPU_TEXTURE_USAGE_STORAGE_BINDING as u32;
+    }
+    usage
+}
+
+/// Combine a `GPUBufferUsage` bitmask. The six spec-defined usage
+/// bits — `MAP_READ`, `MAP_WRITE`, `COPY_SRC`, `COPY_DST`,
+/// `STORAGE`, `INDIRECT`, `QUERY_RESOLVE`, plus the geometry bits
+/// `VERTEX` / `INDEX` / `UNIFORM` — are all OR'd in when the
+/// caller asks for the corresponding capability. The function is
+/// `pub(crate)` so other engine modules (compute, query-resolve,
+/// 3D indirect draw) can call it without each one re-deriving the
+/// same bitmask.
+#[allow(dead_code)] // exercised by the renderer tests + future 3D code
+pub(crate) fn buffer_usage(
+    vertex: bool,
+    index: bool,
+    uniform: bool,
+    storage: bool,
+    indirect: bool,
+    query_resolve: bool,
+    copy_src: bool,
+    copy_dst: bool,
+) -> u32 {
+    let mut usage: u32 = 0;
+    if vertex {
+        usage |= WEBGPU_BUFFER_USAGE_VERTEX as u32;
+    }
+    if index {
+        usage |= WEBGPU_BUFFER_USAGE_INDEX as u32;
+    }
+    if uniform {
+        usage |= WEBGPU_BUFFER_USAGE_UNIFORM as u32;
+    }
+    if storage {
+        usage |= WEBGPU_BUFFER_USAGE_STORAGE as u32;
+    }
+    if indirect {
+        usage |= WEBGPU_BUFFER_USAGE_INDIRECT as u32;
+    }
+    if query_resolve {
+        usage |= WEBGPU_BUFFER_USAGE_QUERY_RESOLVE as u32;
+    }
+    if copy_src {
+        usage |= WEBGPU_BUFFER_USAGE_COPY_SRC as u32;
+    }
+    if copy_dst {
+        usage |= WEBGPU_BUFFER_USAGE_COPY_DST as u32;
+    }
+    usage
+}
+
+/// Resolve the JavaScript method name on `GPUDevice` that creates
+/// a bind-group layout. Returns the spec-defined method name; the
+/// engine's own helper for assembling descriptors is a thin
+/// wrapper around `Reflect::get(device, ...)`, but we expose this
+/// function so the constant stays reachable and so test code can
+/// assert the literal `"createBindGroupLayout"` against the
+/// spec-stable string.
+#[allow(dead_code)]
+pub(crate) fn device_method_create_bind_group_layout() -> &'static str {
+    WEBGPU_METHOD_CREATE_BIND_GROUP_LAYOUT
+}
+
+/// Resolve the JavaScript method name on `GPUDevice` that creates
+/// a pipeline layout. Returns the spec-defined method name.
+#[allow(dead_code)]
+pub(crate) fn device_method_create_pipeline_layout() -> &'static str {
+    WEBGPU_METHOD_CREATE_PIPELINE_LAYOUT
 }

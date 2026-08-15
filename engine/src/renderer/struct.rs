@@ -205,7 +205,7 @@ pub struct SsaaCanvas {
 ///
 /// WebGPU types are stored as `JsValue` to avoid feature-gated import issues
 /// with `web_sys`. Method calls are performed via `Reflect` and `JsCast`.
-#[derive(Clone, Getter, GetterMut, Setter)]
+#[derive(Clone, Data)]
 pub struct WebGpuRenderer {
     /// The WebGPU device (`GpuDevice`) used to create GPU resources.
     pub(crate) device: JsValue,
