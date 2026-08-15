@@ -59,11 +59,7 @@ fn generate_mipmaps_signature_pinned() {
 /// thinks the caller might want to omit them; here both are required.
 #[test]
 fn create_shader_module_with_label_signature_pinned() {
-    fn _type_check(
-        renderer: &WebGpuRenderer,
-        source: &str,
-        label: &str,
-    ) -> JsValue {
+    fn _type_check(renderer: &WebGpuRenderer, source: &str, label: &str) -> JsValue {
         renderer.create_shader_module_with_label(source, label)
     }
     let _ = _type_check;

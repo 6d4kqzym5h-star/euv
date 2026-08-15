@@ -1,7 +1,5 @@
 use super::*;
 
-
-
 /// Verifies that a fresh `EngineHandle` starts without a registered input
 /// cell and that `register_input`'s accessor has the expected shape.
 #[test]
