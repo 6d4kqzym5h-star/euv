@@ -378,71 +378,6 @@ pub struct VertexBufferLayout {
     pub(crate) attributes: Vec<VertexAttribute>,
 }
 
-/// Whether a vertex buffer is consumed per-vertex or per-instance.
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub enum VertexStepMode {
-    /// Advance the buffer one vertex at a time.
-    #[default]
-    Vertex,
-    /// Advance the buffer one entry at a time, for all vertices of an
-    /// instance.
-    Instance,
-}
-
-impl VertexStepMode {
-    /// Returns the WGSL / WebGPU string representation.
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Vertex => "vertex",
-            Self::Instance => "instance",
-        }
-    }
-}
-
-/// A single binding entry inside a `BindGroupDescriptor`.
-#[derive(Clone, Debug)]
-pub enum BindGroupEntry {
-    /// A uniform/storage buffer binding.
-    Buffer {
-        /// The binding slot (matches `@binding(N)` in the shader).
-        binding: u32,
-        /// The `GpuBuffer` handle.
-        buffer: JsValue,
-        /// The byte offset into the buffer where the binding starts.
-        offset: u64,
-        /// The size in bytes of the binding. `None` means "until the end
-        /// of the buffer".
-        size: Option<u64>,
-    },
-    /// A sampled texture binding.
-    Texture {
-        /// The binding slot.
-        binding: u32,
-        /// The `GpuTextureView` handle.
-        view: JsValue,
-    },
-    /// A sampler binding.
-    Sampler {
-        /// The binding slot.
-        binding: u32,
-        /// The `GpuSampler` handle.
-        sampler: JsValue,
-    },
-}
-
-impl BindGroupEntry {
-    /// Returns the `@binding(N)` slot this entry occupies. The renderer
-    /// uses this when assembling the bind-group descriptor so the
-    /// caller does not need to know the JS-side `binding` field name.
-    pub(crate) fn binding(&self) -> u32 {
-        match self {
-            Self::Buffer { binding, .. }
-            | Self::Texture { binding, .. }
-            | Self::Sampler { binding, .. } => *binding,
-        }
-    }
-}
-
 /// A 2D texture descriptor for `create_texture_2d`.
 ///
 /// Defaults produce a 1x1 RGBA8 texture with `TEXTURE_BINDING | COPY_DST
@@ -475,36 +410,6 @@ pub struct Texture2DDescriptor {
     #[get(type(clone))]
     #[new(skip)]
     pub(crate) usage: &'static str,
-}
-
-impl Texture2DDescriptor {
-    /// Returns a descriptor with the most common defaults applied.
-    ///
-    /// This is the same as calling the generated `new` constructor and
-    /// then explicitly setting the defaults; we provide it so callers
-    /// can do `Texture2DDescriptor::default_for(w, h, format)` instead of
-    /// having to remember which fields to set.
-    ///
-    /// # Arguments
-    ///
-    /// - `width` - The texture width in pixels.
-    /// - `height` - The texture height in pixels.
-    /// - `format` - The WGSL texture format.
-    ///
-    /// # Returns
-    ///
-    /// - A new descriptor with `mip_level_count = 1`, `sample_count = 1`,
-    ///   and usage `"TEXTURE_BINDING | COPY_DST | COPY_SRC"`.
-    pub fn default_for(width: u32, height: u32, format: &'static str) -> Self {
-        Self {
-            width,
-            height,
-            format,
-            mip_level_count: 1,
-            sample_count: 1,
-            usage: "TEXTURE_BINDING | COPY_DST | COPY_SRC",
-        }
-    }
 }
 
 /// A sampler descriptor for `create_sampler`.
@@ -544,22 +449,6 @@ pub struct GpuSamplerDescriptor {
     pub(crate) compare: bool,
 }
 
-impl GpuSamplerDescriptor {
-    /// Returns a descriptor with the most common defaults applied:
-    /// nearest filtering and clamp-to-edge addressing on all axes.
-    pub fn default_sampler() -> Self {
-        Self {
-            mag_filter: WEBGPU_FILTER_MODE_NEAREST,
-            min_filter: WEBGPU_FILTER_MODE_NEAREST,
-            mipmap_filter: WEBGPU_FILTER_MODE_NEAREST,
-            address_mode_u: WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE,
-            address_mode_v: WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE,
-            address_mode_w: WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE,
-            compare: false,
-        }
-    }
-}
-
 /// The descriptor for a single (color or depth-stencil) render pass
 /// attachment, used as input to `begin_render_pass` / `begin_render_pass_to_texture`.
 #[derive(Clone, Debug)]
@@ -585,22 +474,6 @@ pub struct RenderPassColorAttachment {
     pub(crate) store_op: Option<&'static str>,
 }
 
-impl RenderPassColorAttachment {
-    /// Returns the load op that the renderer should use.
-    pub(crate) fn effective_load_op(&self) -> &'static str {
-        match (self.load_op, self.clear_value) {
-            (Some(op), _) => op,
-            (None, Some(_)) => WEBGPU_LOAD_OP_CLEAR,
-            (None, None) => WEBGPU_LOAD_OP_LOAD,
-        }
-    }
-
-    /// Returns the store op that the renderer should use.
-    pub(crate) fn effective_store_op(&self) -> &'static str {
-        self.store_op.unwrap_or(WEBGPU_STORE_OP_STORE)
-    }
-}
-
 /// The depth-stencil portion of a `RenderPassDescriptor`, used as input to
 /// `begin_render_pass` / `begin_render_pass_to_texture`.
 #[derive(Clone, Debug)]
@@ -621,22 +494,6 @@ pub struct RenderPassDepthStencilAttachment {
     pub(crate) depth_store_op: Option<&'static str>,
     /// Whether depth reads should be enabled. `None` → `false`.
     pub(crate) depth_read_only: Option<bool>,
-}
-
-impl RenderPassDepthStencilAttachment {
-    /// Returns the depth load op that the renderer should use.
-    pub(crate) fn effective_depth_load_op(&self) -> &'static str {
-        match (self.depth_load_op, self.depth_clear_value) {
-            (Some(op), _) => op,
-            (None, Some(_)) => WEBGPU_LOAD_OP_CLEAR,
-            (None, None) => WEBGPU_LOAD_OP_LOAD,
-        }
-    }
-
-    /// Returns the depth store op that the renderer should use.
-    pub(crate) fn effective_depth_store_op(&self) -> &'static str {
-        self.depth_store_op.unwrap_or(WEBGPU_STORE_OP_STORE)
-    }
 }
 
 /// Descriptor for `GpuTexture.createView(descriptor)`.
@@ -681,70 +538,6 @@ pub struct TextureViewDescriptor {
     pub(crate) aspect: Option<&'static str>,
 }
 
-impl TextureViewDescriptor {
-    /// Returns a descriptor that selects the full texture as a 2D view.
-    /// This is the cheapest view you can make; equivalent to calling
-    /// `texture.createView()` with no argument.
-    pub fn full() -> Self {
-        Self {
-            format: None,
-            dimension: None,
-            base_mip_level: 0,
-            mip_level_count: 0,
-            base_array_layer: 0,
-            array_layer_count: 0,
-            aspect: None,
-        }
-    }
-
-    /// The dimension string the renderer will send to `createView`.
-    ///
-    /// We default `None` to `"2d"` instead of omitting the key, because
-    /// every other descriptor in the engine uses the explicit-string
-    /// form, and a few browsers reject `dimension: undefined`.
-    pub(crate) fn effective_dimension(&self) -> &'static str {
-        self.dimension.unwrap_or(WEBGPU_TEXTURE_VIEW_DIMENSION_2D)
-    }
-
-    /// The aspect string the renderer will send to `createView`.
-    ///
-    /// Defaults to `"all"`, which is the spec's "expose every channel"
-    /// option and the only correct choice for color textures.
-    pub(crate) fn effective_aspect(&self) -> &'static str {
-        self.aspect.unwrap_or(WEBGPU_TEXTURE_ASPECT_ALL)
-    }
-
-    /// Returns a descriptor that selects a single mip level of the texture.
-    /// Useful when you want to read back a specific mip (e.g. the half-res
-    /// blur output of a downsampling pass) without exposing the rest.
-    pub fn mip(level: u32) -> Self {
-        Self {
-            format: None,
-            dimension: None,
-            base_mip_level: level,
-            mip_level_count: 1,
-            base_array_layer: 0,
-            array_layer_count: 0,
-            aspect: None,
-        }
-    }
-
-    /// Returns a descriptor that selects the depth-only aspect of a
-    /// depth-stencil texture. Required when sampling depth in a shader
-    /// (`textureSample(t, s, uv)` where `t` is a depth texture).
-    pub fn depth_only() -> Self {
-        Self {
-            format: None,
-            dimension: None,
-            base_mip_level: 0,
-            mip_level_count: 0,
-            base_array_layer: 0,
-            array_layer_count: 0,
-            aspect: Some(WEBGPU_TEXTURE_ASPECT_DEPTH_ONLY),
-        }
-    }
-}
-
 /// Descriptor for `queue.writeTexture(destination, data, dataLayout, size)`.
 ///
 /// WebGPU's `writeTexture` lets you upload CPU-side pixel data directly to a
@@ -778,24 +571,5 @@ pub struct TextureWriteDescriptor {
     #[get(type(copy))]
     #[new(value = "false")]
     pub(crate) flip_y: bool,
-}
-
-impl TextureWriteDescriptor {
-    /// Convenience constructor for the common 2D upload case.
-    ///
-    /// - `data`: packed pixel bytes (format-dependent).
-    /// - `bytes_per_row`: row stride of `data`, must be a multiple of 256.
-    /// - `texture`: the destination `GpuTexture` handle.
-    pub fn for_2d(data: Vec<u8>, bytes_per_row: u32, texture: JsValue) -> Self {
-        Self {
-            data,
-            bytes_per_row,
-            rows_per_image: 0,
-            mip_level: 0,
-            texture,
-            origin: None,
-            flip_y: false,
-        }
-    }
 }
 

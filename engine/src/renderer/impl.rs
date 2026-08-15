@@ -1669,8 +1669,8 @@ impl WebGpuRenderer {
     /// Wraps the adapter request in the same `Promise.race` timeout used
     /// by [`Self::init`] so that browsers which leave the adapter promise
     /// permanently pending (headless, sandboxed, device-lost) do not stall
-    /// the UI forever. The timeout itself uses
-    /// [`INIT_PROMISE_TIMEOUT_MILLIS`]; on timeout, `probe` returns
+    /// the UI forever. The timeout itself uses the
+    /// `INIT_PROMISE_TIMEOUT_MILLIS` constant; on timeout, `probe` returns
     /// `false` rather than an error so callers can treat it the same as
     /// "no adapter".
     ///
@@ -3612,7 +3612,7 @@ impl WebGpuRenderer {
     ///
     /// The returned value is a sampler suitable for binding via
     /// `BindGroupEntry::Sampler` (see
-    /// [`WebGpuRenderer::create_bind_group_from_entries`]).
+    /// [`Self::create_bind_group`]).
     ///
     /// # Arguments
     ///
@@ -3719,7 +3719,7 @@ impl WebGpuRenderer {
     /// `pushErrorScope("validation")` / `popErrorScope()` pair so
     /// creation failures surface as `Err(WebGpuError::CreateBindGroup)`
     /// instead of being silently lost. See
-    /// [`WebGpuRenderer::pop_error`] for the full pop semantics.
+    /// [`Self::pop_error_sync`] for the full pop semantics.
     ///
     /// # Arguments
     ///
@@ -4074,7 +4074,7 @@ impl WebGpuRenderer {
     /// Each value in `dynamic_offsets` is added to the corresponding
     /// `@group(N) @binding(M)` buffer's base offset before the draw call.
     /// For non-dynamic bind groups, prefer the simpler
-    /// [`WebGpuRenderer::set_bind_group`] (3-arg) overload in `pub(crate)`.
+    /// `set_bind_group` (3-arg) overload exposed via the `pub(crate)` API.
     ///
     /// # Arguments
     ///
@@ -5030,3 +5030,172 @@ impl std::fmt::Display for WebGlProgramError {
 
 /// Implements the standard `std::error::Error` trait for `WebGlProgramError`.
 impl std::error::Error for WebGlProgramError {}
+
+/// Default-construction helper for `Texture2DDescriptor`.
+impl Texture2DDescriptor {
+    /// Returns a descriptor with the most common defaults applied.
+    ///
+    /// This is the same as calling the generated `new` constructor and
+    /// then explicitly setting the defaults; we provide it so callers
+    /// can do `Texture2DDescriptor::default_for(w, h, format)` instead of
+    /// having to remember which fields to set.
+    ///
+    /// # Arguments
+    ///
+    /// - `width` - The texture width in pixels.
+    /// - `height` - The texture height in pixels.
+    /// - `format` - The WGSL texture format.
+    ///
+    /// # Returns
+    ///
+    /// - A new descriptor with `mip_level_count = 1`, `sample_count = 1`,
+    ///   and usage `"TEXTURE_BINDING | COPY_DST | COPY_SRC"`.
+    pub fn default_for(width: u32, height: u32, format: &'static str) -> Self {
+        Self {
+            width,
+            height,
+            format,
+            mip_level_count: 1,
+            sample_count: 1,
+            usage: "TEXTURE_BINDING | COPY_DST | COPY_SRC",
+        }
+    }
+}
+
+/// Default-construction helper for `GpuSamplerDescriptor`.
+impl GpuSamplerDescriptor {
+    /// Returns a descriptor with the most common defaults applied:
+    /// nearest filtering and clamp-to-edge addressing on all axes.
+    pub fn default_sampler() -> Self {
+        Self {
+            mag_filter: WEBGPU_FILTER_MODE_NEAREST,
+            min_filter: WEBGPU_FILTER_MODE_NEAREST,
+            mipmap_filter: WEBGPU_FILTER_MODE_NEAREST,
+            address_mode_u: WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE,
+            address_mode_v: WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE,
+            address_mode_w: WEBGPU_ADDRESS_MODE_CLAMP_TO_EDGE,
+            compare: false,
+        }
+    }
+}
+
+/// Resolves optional `load_op` / `store_op` to the WebGPU spec defaults for
+/// `RenderPassColorAttachment`.
+impl RenderPassColorAttachment {
+    /// Returns the load op that the renderer should use.
+    pub(crate) fn effective_load_op(&self) -> &'static str {
+        match (self.load_op, self.clear_value) {
+            (Some(op), _) => op,
+            (None, Some(_)) => WEBGPU_LOAD_OP_CLEAR,
+            (None, None) => WEBGPU_LOAD_OP_LOAD,
+        }
+    }
+
+    /// Returns the store op that the renderer should use.
+    pub(crate) fn effective_store_op(&self) -> &'static str {
+        self.store_op.unwrap_or(WEBGPU_STORE_OP_STORE)
+    }
+}
+
+/// Resolves optional `depth_load_op` / `depth_store_op` to the WebGPU spec
+/// defaults for `RenderPassDepthStencilAttachment`.
+impl RenderPassDepthStencilAttachment {
+    /// Returns the depth load op that the renderer should use.
+    pub(crate) fn effective_depth_load_op(&self) -> &'static str {
+        match (self.depth_load_op, self.depth_clear_value) {
+            (Some(op), _) => op,
+            (None, Some(_)) => WEBGPU_LOAD_OP_CLEAR,
+            (None, None) => WEBGPU_LOAD_OP_LOAD,
+        }
+    }
+
+    /// Returns the depth store op that the renderer should use.
+    pub(crate) fn effective_depth_store_op(&self) -> &'static str {
+        self.depth_store_op.unwrap_or(WEBGPU_STORE_OP_STORE)
+    }
+}
+
+/// Constructors and view-default resolvers for `TextureViewDescriptor`.
+impl TextureViewDescriptor {
+    /// Returns a descriptor that selects the full texture as a 2D view.
+    /// This is the cheapest view you can make; equivalent to calling
+    /// `texture.createView()` with no argument.
+    pub fn full() -> Self {
+        Self {
+            format: None,
+            dimension: None,
+            base_mip_level: 0,
+            mip_level_count: 0,
+            base_array_layer: 0,
+            array_layer_count: 0,
+            aspect: None,
+        }
+    }
+
+    /// The dimension string the renderer will send to `createView`.
+    ///
+    /// We default `None` to `"2d"` instead of omitting the key, because
+    /// every other descriptor in the engine uses the explicit-string
+    /// form, and a few browsers reject `dimension: undefined`.
+    pub(crate) fn effective_dimension(&self) -> &'static str {
+        self.dimension.unwrap_or(WEBGPU_TEXTURE_VIEW_DIMENSION_2D)
+    }
+
+    /// The aspect string the renderer will send to `createView`.
+    ///
+    /// Defaults to `"all"`, which is the spec's "expose every channel"
+    /// option and the only correct choice for color textures.
+    pub(crate) fn effective_aspect(&self) -> &'static str {
+        self.aspect.unwrap_or(WEBGPU_TEXTURE_ASPECT_ALL)
+    }
+
+    /// Returns a descriptor that selects a single mip level of the texture.
+    /// Useful when you want to read back a specific mip (e.g. the half-res
+    /// blur output of a downsampling pass) without exposing the rest.
+    pub fn mip(level: u32) -> Self {
+        Self {
+            format: None,
+            dimension: None,
+            base_mip_level: level,
+            mip_level_count: 1,
+            base_array_layer: 0,
+            array_layer_count: 0,
+            aspect: None,
+        }
+    }
+
+    /// Returns a descriptor that selects the depth-only aspect of a
+    /// depth-stencil texture. Required when sampling depth in a shader
+    /// (`textureSample(t, s, uv)` where `t` is a depth texture).
+    pub fn depth_only() -> Self {
+        Self {
+            format: None,
+            dimension: None,
+            base_mip_level: 0,
+            mip_level_count: 0,
+            base_array_layer: 0,
+            array_layer_count: 0,
+            aspect: Some(WEBGPU_TEXTURE_ASPECT_DEPTH_ONLY),
+        }
+    }
+}
+
+/// 2D-upload convenience constructor for `TextureWriteDescriptor`.
+impl TextureWriteDescriptor {
+    /// Convenience constructor for the common 2D upload case.
+    ///
+    /// - `data`: packed pixel bytes (format-dependent).
+    /// - `bytes_per_row`: row stride of `data`, must be a multiple of 256.
+    /// - `texture`: the destination `GpuTexture` handle.
+    pub fn for_2d(data: Vec<u8>, bytes_per_row: u32, texture: JsValue) -> Self {
+        Self {
+            data,
+            bytes_per_row,
+            rows_per_image: 0,
+            mip_level: 0,
+            texture,
+            origin: None,
+            flip_y: false,
+        }
+    }
+}
