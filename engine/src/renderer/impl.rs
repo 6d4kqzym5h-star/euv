@@ -1925,7 +1925,7 @@ impl WebGpuRenderer {
             depth_format: None,
             device_lost_callback: None,
             device_lost: false,
-            pending_error: Rc::new(PendingErrorCell::new(None)),
+            pending_error: Rc::new(PendingErrorCell::new()),
             command_encoder: None,
         })
     }
@@ -5467,3 +5467,68 @@ pub(crate) fn device_method_create_bind_group_layout() -> &'static str {
 pub(crate) fn device_method_create_pipeline_layout() -> &'static str {
     WEBGPU_METHOD_CREATE_PIPELINE_LAYOUT
 }
+
+// ============================================================================
+// `PendingErrorCell` — interior-mutable slot for the renderer's
+// pending WebGPU error-scope value. Defined as a tuple struct in
+// `struct.rs`; this block attaches its `impl` block + the hand-written
+// `Sync` impl required for sharing through `Rc` on the WASM single-threaded
+// runtime.
+//
+// See the doc comment on `struct.rs::PendingErrorCell` for the full design
+// rationale (why `UnsafeCell` over `RefCell`, why a hand-rolled `Sync` is
+// sound here, and what would have to change for multi-threaded targets).
+// ============================================================================
+
+impl PendingErrorCell {
+    /// Construct a new, empty pending-error slot.
+    ///
+    /// The inner `UnsafeCell<Option<JsValue>>` starts as `None`; the
+    /// WebGPU `pop_error_sync` microtask is the only thing that ever
+    /// writes to it, and `take_last_error` is the only reader.
+    pub fn new() -> Self {
+        Self(UnsafeCell::new(None))
+    }
+
+    /// Hand out a raw pointer to the inner cell for the
+    /// `wasm_bindgen_futures::spawn_local` closure to write through.
+    ///
+    /// # Safety
+    ///
+    /// The returned pointer is only valid for the lifetime of `&self`,
+    /// and only safe to write to on the WASM main thread. The caller
+    /// must guarantee that no other code is reading the same
+    /// `PendingErrorCell` concurrently — this is enforced by the
+    /// single-threaded scheduler: the spawned future is drained
+    /// before the next render tick's `take_last_error` runs.
+    pub fn as_ptr(&self) -> *mut Option<JsValue> {
+        self.0.get()
+    }
+}
+
+impl Default for PendingErrorCell {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// SAFETY: see the doc comment on `struct.rs::PendingErrorCell`.
+//
+// `PendingErrorCell` wraps `UnsafeCell`, which is `!Sync` by design.
+// We hand-implement `Sync` because:
+//
+// - The renderer is compiled for `wasm32` and runs on the WASM
+//   single-threaded scheduler; there is no other thread to race
+//   against.
+// - The owning pointer is held inside an `Rc<PendingErrorCell>`, and
+//   `Rc` is itself `!Send`/`!Sync`, so the value cannot escape the
+//   current thread even if the type were `Sync`.
+// - The `pop_error_sync` future and `take_last_error` never overlap
+//   in wall-clock time: the future is a microtask that resolves
+//   before the next render tick drains the slot.
+//
+// If `euv-engine` is ever built for a multi-threaded target
+// (native, `wasm-bindgen-rayon`, `wasm32-atomics`), this `unsafe impl`
+// becomes unsound and must be removed — at that point the renderer
+// will need a real `Mutex` or `RwLock` around the slot.
+unsafe impl Sync for PendingErrorCell {}

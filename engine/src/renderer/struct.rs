@@ -582,3 +582,67 @@ pub struct TextureWriteDescriptor {
     pub(crate) flip_y: bool,
 }
 
+/// Interior-mutable slot for the renderer's pending error-scope value.
+///
+/// This is the `euv-engine` analog of euv-core's `HandlerRegistryCell`
+/// (`core/src/renderer/registry/struct.rs:62`): a single-element
+/// `Sync` wrapper that holds an `Option<JsValue>` behind an
+/// `UnsafeCell`.
+///
+/// # Why this type exists
+///
+/// `WebGpuRenderer::pending_error` needs interior mutability
+/// because:
+///
+/// 1. `pop_error_sync` takes `&self` (the WebGPU hot path cannot
+///    be `async`), but the spawned `wasm_bindgen_futures::spawn_local`
+///    future must mutate the slot to store the resolved
+///    `Promise<GPUError?>` value.
+/// 2. `take_last_error` also takes `&self` and drains the slot
+///    on the next render tick.
+///
+/// The first implementation used `Rc<RefCell<Option<JsValue>>>`,
+/// which works but pays for:
+///
+/// - a `RefCell::borrow_mut` runtime borrow check on every
+///   write (the panic path is unreachable in practice — only
+///   the spawn_local future and `take_last_error` ever touch
+///   the slot, and they never overlap because the future is
+///   a microtask drained before the next render tick).
+/// - a heap allocation for the `RefCell`'s borrow state.
+///
+/// The newtype keeps the interior-mutability primitive (`Rc`),
+/// because the spawn_local future needs its own owning handle,
+/// but swaps the inner cell from `RefCell` to `UnsafeCell`:
+///
+/// - zero runtime borrow check (the WASM single-threaded
+///   scheduler makes the borrow impossible to violate).
+/// - zero allocation (the cell is just a `*mut Option<JsValue>`
+///   sitting inside the `Rc`-managed box).
+///
+/// # Sync safety
+///
+/// `PendingErrorCell` is **not** `Sync` by default (`UnsafeCell`
+/// explicitly opts out). We hand-implement `Sync` for it because
+/// the renderer is only ever used in the WASM single-threaded
+/// runtime; the `Rc` ensures the same instance is never shared
+/// across threads (it is not `Send`/`Sync` either), and the
+/// WASM main thread is the only place that ever touches the
+/// slot. This matches euv-core's pattern
+/// (`unsafe impl Sync for HandlerRegistryCell {}`).
+///
+/// If the engine is ever compiled for a multi-threaded target
+/// (native, `wasm-bindgen-rayon`), this `unsafe impl Sync` is
+/// unsound and must be removed.
+pub struct PendingErrorCell(
+    /// Interior-mutable storage for the optional `JsValue`.
+    ///
+    /// Marked `pub(crate)` (not just `pub`) because the field is
+    /// only meant to be touched from inside the renderer module —
+    /// specifically from the `impl PendingErrorCell` block in
+    /// `impl.rs`. The struct itself stays `pub` so external code
+    /// can name the type, but the raw `UnsafeCell` is an
+    /// implementation detail.
+    pub(crate) UnsafeCell<Option<JsValue>>,
+);
+
