@@ -1,22 +1,22 @@
-//! Compile-shape and pure-logic smoke tests for the WebGpuRenderer
-//! completion work.
-//!
-//! This file pins two things for downstream consumers:
-//!
-//! 1. The **signatures** of every `pub` WebGPU API the engine added to
-//!    `WebGpuRenderer` to reach a real WebGPU grade surface
-//!    (descriptor defaults, dynamic offsets, async readback, error
-//!    scope, mipmaps, writeTexture). Pinning the shape catches
-//!    accidental signature changes in CI without needing a browser.
-//!
-//! 2. The **pub** descriptor constructors —
-//!    `TextureViewDescriptor::full`, `GpuSamplerDescriptor::default_sampler`.
-//!    `pub(crate)` helpers (`effective_*`) are NOT exercised here
-//!    because integration tests live outside the engine crate.
-//!
-//! Methods that *do* touch `JsValue` / `Reflect` (e.g. `set_viewport`,
-//! `begin_render_pass_full`, `read_buffer`) are pinned at the type
-//! level only — the body still requires a browser.
+// Compile-shape and pure-logic smoke tests for the WebGpuRenderer
+// completion work.
+//
+// This file pins two things for downstream consumers:
+//
+// 1. The **signatures** of every `pub` WebGPU API the engine added to
+//    `WebGpuRenderer` to reach a real WebGPU grade surface
+//    (descriptor defaults, dynamic offsets, async readback, error
+//    scope, mipmaps, writeTexture). Pinning the shape catches
+//    accidental signature changes in CI without needing a browser.
+//
+// 2. The **pub** descriptor constructors —
+//    `TextureViewDescriptor::full`, `GpuSamplerDescriptor::default_sampler`.
+//    `pub(crate)` helpers (`effective_*`) are NOT exercised here
+//    because integration tests live outside the engine crate.
+//
+// Methods that *do* touch `JsValue` / `Reflect` (e.g. `set_viewport`,
+// `begin_render_pass_full`, `read_buffer`) are pinned at the type
+// level only — the body still requires a browser.
 
 use euv_engine::*;
 use wasm_bindgen::JsValue;

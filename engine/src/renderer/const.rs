@@ -1,17 +1,17 @@
-//! `WebGPU` descriptor surface: formats, usage flags, method names, property keys.
-//!
-//! Every constant in this module is part of the engine's **public API surface**:
-//! downstream code (the `euv` crate, end-user applications, third-party
-//! renderer modules) can `use euv_engine::WEBGPU_*` to build descriptors
-//! without re-defining the magic numbers / strings. Because these
-//! constants are reachable from outside the `euv-engine` crate, the
-//! compiler does not flag any of them as dead code even if the engine's
-//! own `impl` layer only references a subset in any given build.
-//!
-//! If you need a constant the impl layer does not yet call, prefer
-//! adding the call site in `impl.rs` over deleting the constant here
-//! — these mirror the WebGPU spec 1:1 and dropping them would create
-//! gaps in the public API.
+// `WebGPU` descriptor surface: formats, usage flags, method names, property keys.
+//
+// Every constant in this module is part of the engine's **public API surface**:
+// downstream code (the `euv` crate, end-user applications, third-party
+// renderer modules) can `use euv_engine::WEBGPU_*` to build descriptors
+// without re-defining the magic numbers / strings. Because these
+// constants are reachable from outside the `euv-engine` crate, the
+// compiler does not flag any of them as dead code even if the engine's
+// own `impl` layer only references a subset in any given build.
+//
+// If you need a constant the impl layer does not yet call, prefer
+// adding the call site in `impl.rs` over deleting the constant here
+// — these mirror the WebGPU spec 1:1 and dropping them would create
+// gaps in the public API.
 
 
 /// The canvas 2D rendering context type identifier.
