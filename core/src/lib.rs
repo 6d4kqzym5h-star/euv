@@ -9,6 +9,9 @@ mod reactive;
 mod renderer;
 mod vdom;
 
+#[cfg(test)]
+mod tests;
+
 pub use {app::*, event::*, reactive::*, vdom::*};
 
 pub(crate) use renderer::*;

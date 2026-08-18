@@ -354,7 +354,7 @@ pub struct WebGlRenderer {
 /// is the `@location(N)` qualifier in the WGSL source. The offset is in
 /// bytes from the start of the vertex, and `format` is one of the
 /// WGSL vertex format strings (e.g. `"float32x4"`, `"unorm8x4"`).
-#[derive(Clone, Copy, Debug, New, PartialEq, Eq, Hash, Getter)]
+#[derive(Clone, Copy, Debug, Eq, Getter, Hash, New, PartialEq)]
 pub struct VertexAttribute {
     /// The shader location the attribute maps to.
     #[get(type(copy))]
@@ -373,7 +373,7 @@ pub struct VertexAttribute {
 /// Mirrors `GPUVertexBufferLayout` from the WebGPU spec. The renderer
 /// passes the assembled descriptor straight to `createRenderPipeline` via
 /// `Reflect`.
-#[derive(Clone, Debug, New, Getter)]
+#[derive(Clone, Debug, Getter, New)]
 pub struct VertexBufferLayout {
     /// The byte stride of one vertex in the buffer.
     #[get(type(copy))]
@@ -394,7 +394,7 @@ pub struct VertexBufferLayout {
 /// texture that is uploaded to via `queue.writeTexture`. Override fields
 /// after constructing to set `mip_level_count`, `sample_count`, or
 /// different `usage` flags.
-#[derive(Clone, Debug, New, Getter)]
+#[derive(Clone, Debug, Getter, New)]
 pub struct Texture2DDescriptor {
     /// The texture width in pixels. Must be > 0.
     #[get(type(copy))]
@@ -426,7 +426,7 @@ pub struct Texture2DDescriptor {
 /// Defaults produce a non-filtering clamp-to-edge sampler. Override
 /// fields after constructing to enable linear filtering, repeat
 /// addressing, or depth comparison.
-#[derive(Clone, Debug, New, Getter)]
+#[derive(Clone, Debug, Getter, New)]
 pub struct GpuSamplerDescriptor {
     /// Minification filter.
     #[get(type(clone))]
@@ -512,7 +512,7 @@ pub struct RenderPassDepthStencilAttachment {
 /// just call `create_view` without a descriptor; the new method accepts an
 /// `Option<&TextureViewDescriptor>` for callers that need the full
 /// flexibility of the WebGPU spec.
-#[derive(Clone, Debug, New, Getter)]
+#[derive(Clone, Debug, Getter, New)]
 pub struct TextureViewDescriptor {
     /// View format override, or `None` to use the texture's own format.
     #[get(type(clone))]
@@ -552,7 +552,7 @@ pub struct TextureViewDescriptor {
 /// WebGPU's `writeTexture` lets you upload CPU-side pixel data directly to a
 /// texture without staging through a buffer. Use it for: ImGui font atlases,
 /// procedural noise textures, sprite sheets, `ImageBitmap` pixels, etc.
-#[derive(Clone, Debug, New, Getter)]
+#[derive(Clone, Debug, Getter, New)]
 pub struct TextureWriteDescriptor {
     /// The pixel data to upload. Bytes are laid out according to
     /// `bytes_per_row` / `rows_per_image`.

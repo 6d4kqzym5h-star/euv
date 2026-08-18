@@ -116,6 +116,21 @@ pub(crate) struct SignalInnerRegistryCell(
     pub(crate) UnsafeCell<HashSet<usize>>,
 );
 
+/// A `Sync` wrapper for single-threaded global `HashMap` access.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct BridgeRefsCell(
+    /// Interior-mutable storage for the bridge dependency reverse-index.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<HashMap<usize, HashSet<usize>>>,
+);
+
 /// A handle to a leaked `FnMut()` closure, stored as the closure's heap address.
 ///
 /// The closure is double-boxed (`Box<Box<dyn FnMut()>>`) and leaked, so its

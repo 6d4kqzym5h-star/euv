@@ -226,6 +226,11 @@ impl AttributeValue {
         source_for_sub.subscribe(move || {
             string_signal_clone.set(source_for_sub.get().to_string());
         });
+        // The closure above captures `string_signal_clone` (which aliases
+        // `string_signal`), so `source` now transitively keeps the bridge
+        // alive. Register that dependency so the bridge's heap allocation
+        // can be reclaimed once `source` is deactivated.
+        BridgeRefsCell::track(string_signal.get_inner(), source_for_sub.get_inner());
         AttributeValue::Signal(string_signal)
     }
 }

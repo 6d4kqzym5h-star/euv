@@ -136,6 +136,30 @@ where
         inner.set_alive(false);
         inner.get_mut_listeners().clear();
         inner.get_mut_dependents().clear();
+        // Remove this signal as a subscriber from every bridge it currently
+        // depends on. Any bridge whose dependency set becomes empty AND has
+        // already been detached (no longer in `SIGNAL_INNER_REGISTRY`) is
+        // fully reclaimed by freeing its `SignalInner<T>` heap allocation.
+        // Bridges still in the registry are kept alive because their bound
+        // DOM element still references them via `data-euv-signal-addrs`.
+        let self_addr: usize = self.get_inner();
+        let mut ready_to_free: Vec<usize> = Vec::new();
+        for (bridge_addr, sources) in BridgeRefsCell::map_mut().iter_mut() {
+            if sources.remove(&self_addr) && sources.is_empty() {
+                // The bridge has no remaining source subscribers; it can
+                // be freed if it has already been deactivated (i.e. its
+                // element was detached and `clear_listeners` ran).
+                if !Self::registry().contains(bridge_addr) {
+                    ready_to_free.push(*bridge_addr);
+                }
+            }
+        }
+        for bridge_addr in ready_to_free {
+            BridgeRefsCell::map_mut().remove(&bridge_addr);
+            unsafe {
+                let _: Box<SignalInner<T>> = Box::from_raw(bridge_addr as *mut SignalInner<T>);
+            }
+        }
     }
 
     /// Core implementation of value update and listener notification.
@@ -238,9 +262,9 @@ where
         unsafe { &mut *(addr as *mut SignalInner<T>) }
     }
 
-    /// Returns whether the signal allocation at `addr` is still present in
-    /// the global registry (i.e. has not been freed).
-    fn is_alive(addr: usize) -> bool {
+    /// Returns whether the signal allocation at `addr` is still present
+    /// in the global registry (i.e. has not been freed).
+    pub(crate) fn is_alive(addr: usize) -> bool {
         Self::registry().contains(&addr)
     }
 }
@@ -368,6 +392,52 @@ where
 /// Concurrent access from multiple threads would be undefined behavior.
 unsafe impl Sync for SignalInnerRegistryCell {}
 
+/// Marks `BridgeRefsCell` as `Sync` for single-threaded WASM contexts.
+///
+/// SAFETY: `BridgeRefsCell` is only used in single-threaded WASM contexts.
+/// Concurrent access from multiple threads would be undefined behavior.
+unsafe impl Sync for BridgeRefsCell {}
+
+/// Static methods for the bridge dependency reverse-index.
+impl BridgeRefsCell {
+    /// Returns a mutable reference to the underlying `HashMap`. Bypasses
+    /// `Lombok`'s auto-generated `get_mut` so call sites can mutate the map
+    /// directly via the `&mut` borrow lifetime.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut HashMap<usize, HashSet<usize>>` - A mutable reference
+    ///   to the global bridge dependency reverse-index.
+    #[allow(static_mut_refs)]
+    pub(crate) fn map_mut() -> &'static mut HashMap<usize, HashSet<usize>> {
+        unsafe { &mut *BRIDGE_REFS.deref().get_0().get() }
+    }
+
+    /// Records that `source_addr` has registered a `subscribe` closure which
+    /// captures `bridge_addr`. Used by bridge-signal creation sites so the
+    /// framework can safely reclaim the bridge's heap allocation once
+    /// `source` is deactivated.
+    ///
+    /// Bridge signals live inside framework-internal code paths only
+    /// (`create_dom_with_doc`, `as_reactive_text`, `bool_to_attr`); user code
+    /// never needs to call this directly. The companion lookup happens in
+    /// `Signal::deactivate` (removes `source_addr` from every bridge's
+    /// dependency set) and `Signal::<String>::clear_listeners` (marks the
+    /// bridge as eligible for reclamation once its dependency set is empty).
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - The bridge signal's heap address (must currently be in
+    ///   `SIGNAL_INNER_REGISTRY`).
+    /// - `usize` - The source signal's heap address.
+    pub(crate) fn track(bridge_addr: usize, source_addr: usize) {
+        Self::map_mut()
+            .entry(bridge_addr)
+            .or_default()
+            .insert(source_addr);
+    }
+}
+
 /// String-specific signal operations.
 impl Signal<String> {
     /// Clears DOM-binding listeners on a bridge signal identified by its inner
@@ -388,15 +458,40 @@ impl Signal<String> {
     /// the original string data, and `alive` is set to `false` so that any
     /// stale async references become safe no-ops.
     ///
+    /// The `Box<SignalInner<String>>` heap allocation is intentionally NOT
+    /// freed here. `Signal<T>` is `Copy` and a closure registered on the
+    /// backing source signal via `subscribe` captures the bridge address by
+    /// `move`; if that source signal is still alive when the bound element
+    /// is detached (e.g., a `use_window_event` / `use_interval` callback, or
+    /// any source signal whose hook context hasn't been torn down yet), the
+    /// closure may still fire and call `bridge.get()` / `bridge.set()` on a
+    /// freed pointer — undefined behaviour. Mirrors the contract documented
+    /// on `Signal::deactivate`; see the SPA-sweep note there for a future
+    /// safe reclamation path.
+    ///
+    /// This function is idempotent: calling it a second time on the same
+    /// address is a safe no-op because `is_alive` returns `false` after the
+    /// first call.
+    ///
     /// # Arguments
     ///
     /// - `usize` - The inner pointer address of the bridge signal.
     pub(crate) fn clear_listeners(addr: usize) {
+        if !Self::is_alive(addr) {
+            return;
+        }
         let inner: &mut SignalInner<String> = Self::inner_mut(addr);
         inner.get_mut_listeners().clear();
         inner.set_alive(false);
         inner.set_value(String::new());
         Registry::cleanup_attr_slot(addr);
+        // The bridge's element is gone; remove it from the global registry
+        // so subsequent reads via `is_alive` return false. The heap
+        // allocation itself is NOT freed here — that happens in
+        // `Signal::deactivate` once every source signal still subscribed to
+        // this bridge has been deactivated (so no stale closure can fire).
+        // See `BridgeRefsCell::track`.
+        Self::registry_mut().remove(&addr);
     }
 }
 
