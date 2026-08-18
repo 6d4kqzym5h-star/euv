@@ -3468,10 +3468,10 @@ impl WebGpuRenderer {
     /// - `Option<JsValue>` - The depth texture's default `GpuTextureView`
     ///   on success, `None` on allocation failure.
     pub fn create_depth_texture(&mut self) -> Option<JsValue> {
-        if let Some(view) = self.get_depth_view().clone() {
-            if !view.is_undefined() {
-                return Some(view);
-            }
+        if let Some(view) = self.get_depth_view().clone()
+            && !view.is_undefined()
+        {
+            return Some(view);
         }
         let extent: Object = Object::new();
         let _: Result<bool, JsValue> = Reflect::set(
@@ -4166,7 +4166,7 @@ impl WebGpuRenderer {
             // call site simple; the empty offset array is well-defined.
             let offsets_array: Array = Array::new_with_length(dynamic_offsets.len() as u32);
             for (i, off) in dynamic_offsets.iter().enumerate() {
-                let _ = offsets_array.set(i as u32, JsValue::from_f64(*off as f64));
+                offsets_array.set(i as u32, JsValue::from_f64(*off as f64));
             }
             let offsets_js: JsValue = offsets_array.unchecked_into::<JsValue>();
             let _: Result<JsValue, JsValue> = set_callable.call4(
@@ -4204,7 +4204,7 @@ impl WebGpuRenderer {
         {
             let offsets_array: Array = Array::new_with_length(dynamic_offsets.len() as u32);
             for (i, off) in dynamic_offsets.iter().enumerate() {
-                let _ = offsets_array.set(i as u32, JsValue::from_f64(*off as f64));
+                offsets_array.set(i as u32, JsValue::from_f64(*off as f64));
             }
             let offsets_js: JsValue = offsets_array.unchecked_into::<JsValue>();
             let _: Result<JsValue, JsValue> = set_callable.call4(
@@ -4361,7 +4361,7 @@ impl WebGpuRenderer {
         let queue: JsValue =
             match Reflect::get(self.get_device(), &JsValue::from_str(WEBGPU_PROPERTY_QUEUE))
                 .ok()
-                .and_then(|v| v.dyn_into::<JsValue>().ok().into())
+                .and_then(|v| v.dyn_into::<JsValue>().ok())
             {
                 Some(q) => q,
                 None => return,

@@ -166,6 +166,11 @@ where
         source.subscribe(move || {
             string_signal_clone.set(source.get().to_string());
         });
+        // The closure above captures `string_signal_clone` (which aliases
+        // `string_signal`), so `source` now transitively keeps the bridge
+        // alive. Register that dependency so the bridge's heap allocation
+        // can be reclaimed once `source` is deactivated.
+        BridgeRefsCell::track(string_signal.get_inner(), source.get_inner());
         VirtualNode::Text(TextNode::new(string_signal.get(), Some(string_signal)))
     }
 }

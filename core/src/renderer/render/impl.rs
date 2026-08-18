@@ -600,6 +600,12 @@ impl Renderer {
                             signal.subscribe(move || {
                                 bridge_signal.set(signal.get());
                             });
+                            // The closure above captures `bridge_signal`, so
+                            // `signal` (the source) now transitively keeps the
+                            // bridge alive. Register that dependency so the
+                            // bridge's heap allocation can be reclaimed once
+                            // `signal` is deactivated.
+                            BridgeRefsCell::track(bridge_signal.get_inner(), signal.get_inner());
                         }
                         AttributeValue::Event(handler) => {
                             self.attach_event_listener(&element, handler);
@@ -630,6 +636,7 @@ impl Renderer {
                     signal.subscribe(move || {
                         bridge_signal.set(signal.get());
                     });
+                    BridgeRefsCell::track(bridge_signal.get_inner(), signal.get_inner());
                 }
                 text.into()
             }

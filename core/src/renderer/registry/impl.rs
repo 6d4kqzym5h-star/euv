@@ -293,38 +293,48 @@ impl Registry {
         }
     }
 
-    /// Marks the slot backing a DynamicNode as removed and clears its
-    /// callback to prevent further updates to a detached DOM subtree.
+    /// Marks the slot backing a DynamicNode as removed and frees its backing
+    /// allocation.
     ///
     /// Intended to be called when the placeholder element is removed
     /// from the DOM by the surrounding diff / patch logic; this
-    /// function itself only updates the slot state and does not touch
+    /// function itself only updates the registry and does not touch
     /// the DOM.
+    ///
+    /// The `SignalUpdateSlot` is removed from the registry and its
+    /// `Box` is freed immediately rather than waiting for the next
+    /// dispatch cycle's sweep, so that detached subtrees do not pin
+    /// their callback allocations in the registry between unmount and
+    /// the next scheduled update. This is safe because the registry is
+    /// only mutated from the main thread; if a dispatch is in progress
+    /// it is running in a separate microtask turn and cannot observe
+    /// a stale `Some(entry)` here.
     ///
     /// # Arguments
     ///
     /// - `usize` - The dynamic node's unique ID.
     pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
-        if let Some(entry) = Self::get_mut_update_registry().get(&dynamic_id) {
-            let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
-            slot.set_removed(true);
-            slot.set_callback(None);
+        if let Some(entry) = Self::get_mut_update_registry().remove(&dynamic_id) {
+            unsafe {
+                let _: Box<SignalUpdateSlot> = Box::from_raw(entry);
+            }
         }
     }
 
     /// Removes the signal update slot for an attribute signal from the registry.
     ///
-    /// Marks the attribute slot as removed and clears its callback,
-    /// preventing further updates to detached DOM elements.
+    /// Marks the attribute slot as removed, frees its backing allocation
+    /// eagerly (see `cleanup_dynamic_node` for the rationale), and
+    /// prevents further updates to detached DOM elements.
     ///
     /// # Arguments
     ///
     /// - `usize` - The signal's inner address used as the registry key.
     pub(crate) fn cleanup_attr_slot(addr: usize) {
-        if let Some(entry) = Self::get_mut_update_registry().get(&addr) {
-            let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
-            slot.set_removed(true);
-            slot.set_callback(None);
+        if let Some(entry) = Self::get_mut_update_registry().remove(&addr) {
+            unsafe {
+                let _: Box<SignalUpdateSlot> = Box::from_raw(entry);
+            }
         }
     }
 
