@@ -177,6 +177,19 @@ impl Renderer {
                     }
                     return;
                 }
+                // Portal markers carry the original `data-euv-portal`
+                // attribute set at mount time. The actual children
+                // live in a separate DOM subtree (the resolved
+                // target), so neither the children nor the attributes
+                // contributed by the user should be re-applied to the
+                // marker. We deliberately skip both
+                // `patch_children` and `patch_attributes` here and
+                // rely on `render_full_replace` (the match-arm
+                // switcher) to remount portals when their
+                // declaration in the tree changes.
+                if matches!(old_tag, Tag::Portal(_)) {
+                    return;
+                }
                 self.patch_children(dom_element, old_children, new_children);
                 self.patch_attributes(dom_element, old_attrs, new_attrs);
             }
@@ -284,6 +297,17 @@ impl Renderer {
                                     .set_attribute_or_property(new_attr.get_name(), css.get_name());
                             }
                             AttributeValue::Event(_) => unreachable!(),
+                            AttributeValue::InnerHtml(html) => {
+                                element.set_inner_html(html);
+                            }
+                            AttributeValue::InnerHtmlSignal(signal) => {
+                                let value: String = signal.get();
+                                element.set_inner_html(&value);
+                            }
+                            AttributeValue::Ref(node_ref) => {
+                                let element_value: JsValue = element.clone().into();
+                                node_ref.set(element_value);
+                            }
                         }
                     }
                 }
@@ -572,10 +596,64 @@ impl Renderer {
                         let unwrapped: VirtualNode = Self::unwrap_component(node);
                         return self.create_dom_with_doc(&unwrapped, document);
                     }
+                    Tag::Portal(selector) => {
+                        // Portal mount protocol:
+                        //
+                        // 1. Insert a hidden marker `<div
+                        //    data-euv-portal="<selector>">` at the
+                        //    declared position. The marker is a
+                        //    real Element so the parent's
+                        //    `patch_children_positional` loop treats
+                        //    it as a regular child (no Comment-node
+                        //    handling, no special-casing in the
+                        //    patch code).
+                        //
+                        // 2. Resolve the target element via
+                        //    `document.query_selector(selector)`,
+                        //    falling back to `document.body()` if
+                        //    the selector doesn't match anything.
+                        //
+                        // 3. Append each child node to the target
+                        //    element rather than to the marker.
+                        //
+                        // The marker carries the original selector
+                        // in `data-euv-portal`, so future patch
+                        // passes can detect "this child is a
+                        // portal" by querying the attribute. See
+                        // `is_portal_marker` below.
+                        let marker: Element = document
+                            .create_element("div")
+                            .unwrap_or_else(|_| document.create_element("div").expect("div"));
+                        let _: Result<(), JsValue> =
+                            marker.set_attribute("data-euv-portal", selector);
+                        let _: Result<(), JsValue> = marker.set_attribute("style", "display:none");
+                        let target: Element = document
+                            .query_selector(selector)
+                            .ok()
+                            .flatten()
+                            .or_else(|| document.body().map(HtmlElement::into))
+                            .unwrap_or_else(|| marker.clone());
+                        for child in children {
+                            let child_node: Node = self.create_dom_with_doc(child, document);
+                            let _: Result<Node, JsValue> = target.append_child(&child_node);
+                        }
+                        return marker.into();
+                    }
                 };
-                for child in children {
-                    let child_node: Node = self.create_dom_with_doc(child, document);
-                    let _: Result<Node, JsValue> = element.append_child(&child_node);
+                let inner_html_payload: Option<String> =
+                    attributes
+                        .iter()
+                        .find_map(|attr: &AttributeEntry| match attr.get_value() {
+                            AttributeValue::InnerHtml(html) => Some(html.clone()),
+                            _ => None,
+                        });
+                if let Some(html) = inner_html_payload.as_deref() {
+                    element.set_inner_html(html);
+                } else {
+                    for child in children {
+                        let child_node: Node = self.create_dom_with_doc(child, document);
+                        let _: Result<Node, JsValue> = element.append_child(&child_node);
+                    }
                 }
                 for attr in attributes {
                     match attr.get_value() {
@@ -614,6 +692,28 @@ impl Renderer {
                         AttributeValue::Css(css) => {
                             css.inject_style();
                             element.set_attribute_or_property(attr.get_name(), css.get_name());
+                        }
+                        AttributeValue::InnerHtml(_) => {
+                            // Already applied above before the children
+                            // loop ran; nothing more to do here.
+                        }
+                        AttributeValue::InnerHtmlSignal(signal) => {
+                            let signal: Signal<String> = *signal;
+                            let initial_value: String = signal.get();
+                            element.set_inner_html(&initial_value);
+                            element.track_signal_addr(signal.get_inner());
+                            let element_clone: Element = element.clone();
+                            signal.subscribe(move || {
+                                if !Renderer::is_node_connected(&element_clone) {
+                                    return;
+                                }
+                                let new_value: String = signal.get();
+                                element_clone.set_inner_html(&new_value);
+                            });
+                        }
+                        AttributeValue::Ref(node_ref) => {
+                            let element_value: JsValue = element.clone().into();
+                            node_ref.set(element_value);
                         }
                     }
                 }

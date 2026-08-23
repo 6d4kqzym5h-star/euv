@@ -5,6 +5,7 @@ mod button;
 mod camera;
 mod card;
 mod checkbox;
+mod debug;
 mod field;
 mod header;
 mod info;
@@ -22,7 +23,7 @@ mod vconsole;
 mod virtual_list;
 
 pub use {
-    alert::*, badge::*, browser::*, button::*, camera::*, card::*, checkbox::*, field::*,
+    alert::*, badge::*, browser::*, button::*, camera::*, card::*, checkbox::*, debug::*, field::*,
     header::*, info::*, input::*, layout::*, loading::*, logo::*, modal::*, nav::*, router::*,
     tag::*, theme::*, touch::*, vconsole::*, virtual_list::*,
 };

@@ -163,4 +163,123 @@ impl App {
     {
         HookContext::window_event(event_name, callback)
     }
+
+    /// Creates a reactive handle that the renderer will populate with the
+    /// DOM element after the corresponding virtual node is mounted.
+    ///
+    /// The returned [`NodeRef<T>`] is empty (`None`) until a virtual node
+    /// in the same render carries a `ref:` attribute pointing to a clone
+    /// of this handle, at which point the renderer calls
+    /// [`NodeRef::set`] with the underlying `JsValue`. On unmount the
+    /// handle is cleared so subsequent reads return `None` again.
+    ///
+    /// The handle is stored in the current hook context, so subsequent
+    /// re-renders at the same hook index return the same instance. This
+    /// means cloning a ref into an event handler closure will keep the
+    /// ref pointing at the live DOM element across re-renders.
+    ///
+    /// # Arguments
+    ///
+    /// - No arguments; the element type is inferred from how the handle is
+    ///   used (`NodeRef<HtmlInputElement>`, `NodeRef<HtmlDivElement>`, …).
+    ///
+    /// # Returns
+    ///
+    /// - `NodeRef<T>` - A reactive handle to the eventual DOM element.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let input_ref: NodeRef<HtmlInputElement> = App::use_node_ref();
+    /// html! {
+    ///     input { ref: input_ref.clone() type: "text" }
+    /// }
+    /// // Later, in an event handler or another component:
+    /// input_ref.get_cloned().map(|el| el.focus());
+    /// ```
+    pub fn use_node_ref<T>() -> NodeRef<T>
+    where
+        T: ?Sized + 'static,
+    {
+        HookContext::noderef()
+    }
+
+    /// Returns a `TransitionState` bound to the current
+    /// hook context, configured with `config`.
+    ///
+    /// First render constructs a fresh `TransitionState`
+    /// in the `Exited` state with `progress = 0.0`, then
+    /// slots it into the hook chain. Subsequent renders
+    /// at the same hook index return the same state — the
+    /// in-flight phase and progress persist across
+    /// re-renders.
+    ///
+    /// The consumer drives the animation forward via
+    /// `tick(elapsed_ms)` from a `setInterval` /
+    /// `requestAnimationFrame` loop on wasm, or via
+    /// `tick_until_done(step_ms)` on native (useful for
+    /// tests).
+    pub fn use_transition(config: TransitionConfig) -> TransitionState {
+        HookContext::transition(config)
+    }
+
+    /// Returns the profiler handle for the current hook context.
+    ///
+    /// First render constructs a fresh `ProfilerHandle` with an
+    /// empty entries signal and slots it into the hook chain.
+    /// Subsequent renders at the same hook index return the
+    /// same handle — measurements recorded across renders
+    /// accumulate in `entries()` and trigger reactive updates
+    /// for any subscriber.
+    ///
+    /// Typical usage: wrap an expensive operation in
+    /// `profiler.measure("render-list", || { ... })` and then
+    /// render `profiler.entries().get()` inside an
+    /// `euv_debug` (or any reactive read) to see the live
+    /// timeline of measurements.
+    ///
+    /// # Returns
+    ///
+    /// - `ProfilerHandle` - Cheap to clone, holds an internal
+    ///   signal of `Vec<ProfileEntry>`.
+    pub fn use_profiler() -> ProfilerHandle {
+        HookContext::profiler()
+    }
+
+    /// Returns a `FormState` bound to the current hook
+    /// context.
+    ///
+    /// First render constructs a fresh `FormState` with
+    /// empty `values` / `errors` / `touched` maps and a
+    /// `false` `submitting` flag, then slots it into the
+    /// hook chain. Subsequent renders at the same hook
+    /// index return the same state — values written from
+    /// earlier renders remain visible across re-renders.
+    ///
+    /// Pair with `euv_input { value: state.field_signal(...) }`
+    /// (planned UI integration) or call `state.set_field`
+    /// directly from any `oninput` handler.
+    ///
+    /// # Returns
+    ///
+    /// - `FormState` - Cheap to clone. Each `FormState`
+    ///   holds four internal `Signal`s, all of which are
+    ///   `Copy`-by-pointer.
+    pub fn use_form() -> FormState {
+        HookContext::form()
+    }
+
+    /// Returns an `I18n` bound to the current hook
+    /// context.
+    ///
+    /// First render constructs a fresh `I18n` with
+    /// `locale = "en"`, `fallback_locale = "en"`, and an
+    /// empty messages map, then slots it into the hook
+    /// chain. Subsequent renders at the same hook index
+    /// return the same `I18n` — translations registered
+    /// earlier in the app's lifecycle remain visible
+    /// across re-renders.
+    pub fn use_i18n() -> I18n {
+        HookContext::i18n()
+    }
 }

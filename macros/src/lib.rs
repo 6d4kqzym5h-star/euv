@@ -10,6 +10,7 @@ mod class;
 mod computed;
 mod html;
 mod ident;
+mod raw_html;
 mod var;
 mod watch;
 
@@ -188,6 +189,24 @@ pub fn vars(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn var(input: TokenStream) -> TokenStream {
     parse_var(input)
+}
+
+/// The `unsafe_no_inline!` macro — escape hatch for raw HTML.
+///
+/// Accepts a string literal and emits a `euv::vdom::RawHtml` value
+/// constructed via `RawHtml::new`. The `unsafe_no_` prefix is a
+/// deliberately loud warning that the string is NOT escaped; treat
+/// it like `Element.innerHTML` in JavaScript.
+///
+/// ```ignore
+/// use euv::vdom::RawHtml;
+///
+/// let raw: RawHtml = unsafe_no_inline!("<svg viewBox=\"0 0 10 10\"/>");
+/// assert_eq!(raw.content(), "<svg viewBox=\"0 0 10 10\"/>");
+/// ```
+#[proc_macro]
+pub fn unsafe_no_inline(input: TokenStream) -> TokenStream {
+    crate::raw_html::parse_unsafe_no_inline(input)
 }
 
 /// The `component` attribute macro for marking component functions.

@@ -5,14 +5,15 @@
 
 mod app;
 mod event;
+mod noderef;
 mod reactive;
 mod renderer;
-mod vdom;
+pub mod vdom;
 
 #[cfg(test)]
 mod tests;
 
-pub use {app::*, event::*, reactive::*, vdom::*};
+pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
 
 pub(crate) use renderer::*;
 

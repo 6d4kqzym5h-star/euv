@@ -7,11 +7,12 @@
 mod build;
 mod error;
 mod fmt;
+mod hmr;
 mod logger;
 mod mode;
 mod server;
 
-pub use {build::*, error::*, fmt::*, logger::*, mode::*, server::*};
+pub use {build::*, error::*, fmt::*, hmr::*, logger::*, mode::*, server::*};
 
 use std::{
     ffi,
