@@ -27,43 +27,43 @@ fn unkeyed_element(tag: &str) -> VirtualNode {
 #[test]
 fn node_key_returns_element_key() {
     let node: VirtualNode = keyed_element("a", "div");
-    assert_eq!(node_key(&node), Some("a"));
+    assert_eq!(node.key(), Some("a"));
 }
 
 #[test]
 fn node_key_returns_none_for_unkeyed_element() {
     let node: VirtualNode = unkeyed_element("div");
-    assert_eq!(node_key(&node), None);
+    assert_eq!(node.key(), None);
 }
 
 #[test]
 fn node_key_returns_none_for_text() {
     let node: VirtualNode = VirtualNode::Text(TextNode::new("hello".to_string(), None));
-    assert_eq!(node_key(&node), None);
+    assert_eq!(node.key(), None);
 }
 
 #[test]
 fn node_key_returns_none_for_fragment() {
     let node: VirtualNode = VirtualNode::Fragment(vec![]);
-    assert_eq!(node_key(&node), None);
+    assert_eq!(node.key(), None);
 }
 
 #[test]
 fn node_key_returns_none_for_empty() {
     let node: VirtualNode = VirtualNode::Empty;
-    assert_eq!(node_key(&node), None);
+    assert_eq!(node.key(), None);
 }
 
 #[test]
 fn node_has_key_matches_node_key_some() {
     let node: VirtualNode = keyed_element("a", "div");
-    assert!(node_has_key(&node));
+    assert!(node.has_key());
 }
 
 #[test]
 fn node_has_key_matches_node_key_none() {
     let node: VirtualNode = unkeyed_element("div");
-    assert!(!node_has_key(&node));
+    assert!(!node.has_key());
 }
 
 #[test]

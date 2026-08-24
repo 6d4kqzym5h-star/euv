@@ -302,6 +302,33 @@ impl<T> VirtualNode<T> {
     pub fn get_child_node(&self) -> VirtualNode {
         self.try_get_child_node().unwrap_or_default()
     }
+
+    /// Returns the diffing key of this node, if it has one.
+    ///
+    /// Recognizes keys on `Element` variants. Other variants
+    /// (`Text`, `Fragment`, `Dynamic`, `Empty`) do not have keys.
+    /// This matches the renderer's `get_node_key` semantics
+    /// in `core/src/renderer/render/impl.rs`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<&str>` - The key, or `None` if this node has no key
+    ///   or is not an `Element` variant.
+    pub fn key(&self) -> Option<&str> {
+        match self {
+            Self::Element { key, .. } => key.as_deref(),
+            _ => None,
+        }
+    }
+
+    /// Returns `true` if this node has a non-`None` diffing key.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` if `key()` returns `Some`, `false` otherwise.
+    pub fn has_key(&self) -> bool {
+        self.key().is_some()
+    }
 }
 
 /// Implementation of virtual node construction for `VirtualNode<()>`.

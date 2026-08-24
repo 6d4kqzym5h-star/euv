@@ -62,31 +62,13 @@
 
 use super::*;
 
-/// Returns the key of a `VirtualNode` if it has one.
-///
-/// Recognizes keys on `Element` variants. Other variants
-/// (Text, Fragment, Dynamic, Empty) do not have keys.
-/// This matches the renderer's `get_node_key` semantics
-/// in `core/src/renderer/render/impl.rs`.
-pub fn node_key(node: &VirtualNode) -> Option<&str> {
-    match node {
-        VirtualNode::Element { key, .. } => key.as_deref(),
-        _ => None,
-    }
-}
-
 /// Returns `true` if every node in the slice has a key.
 ///
 /// Returns `false` if the slice is empty (an empty list
 /// trivially has no keys; treating it as keyed would
 /// cause a fallback when both sides are empty).
 pub fn all_have_keys(children: &[VirtualNode]) -> bool {
-    !children.is_empty() && children.iter().all(node_has_key)
-}
-
-/// Returns `true` if the node has a non-None key.
-pub fn node_has_key(node: &VirtualNode) -> bool {
-    node_key(node).is_some()
+    !children.is_empty() && children.iter().all(VirtualNode::has_key)
 }
 
 /// Computes the diff between two virtual-DOM child lists.
@@ -110,7 +92,7 @@ pub fn diff_keyed(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     let mut new_key_set: std::collections::HashSet<&str> =
         std::collections::HashSet::with_capacity(new.len());
     for new_child in new.iter() {
-        if let Some(key) = node_key(new_child) {
+        if let Some(key) = new_child.key() {
             new_key_set.insert(key);
         }
     }
@@ -128,10 +110,10 @@ pub fn diff_keyed(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     // node" based on its own bookkeeping. This keeps
     // the diff algorithm pure and trivially testable.
     for (new_index, new_child) in new.iter().enumerate() {
-        let Some(key) = node_key(new_child) else {
+        let Some(key) = new_child.key() else {
             continue;
         };
-        let existed_in_old: bool = old.iter().any(|old_child| node_key(old_child) == Some(key));
+        let existed_in_old: bool = old.iter().any(|old_child| old_child.key() == Some(key));
         if existed_in_old {
             ops.push(DiffOp::Update { index: new_index });
         } else {
@@ -145,7 +127,7 @@ pub fn diff_keyed(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     // Iterate in reverse order so removals don't shift
     // earlier indices.
     for (old_index, old_child) in old.iter().enumerate().rev() {
-        let Some(key) = node_key(old_child) else {
+        let Some(key) = old_child.key() else {
             continue;
         };
         if !new_key_set.contains(key) {
