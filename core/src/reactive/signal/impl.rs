@@ -495,9 +495,90 @@ impl Signal<String> {
         // so subsequent reads via `is_alive` return false. The heap
         // allocation itself is NOT freed here — that happens in
         // `Signal::deactivate` once every source signal still subscribed to
-        // this bridge has been deactivated (so no stale closure can fire).
-        // See `BridgeRefsCell::track`.
+        // this bridge has been deactivated (so no stale closure can fire),
+        // OR in `try_reclaim_inactive` for the orphan case where the source
+        // signal outlives the bridge's hook context (typical of long-lived
+        // SPA top-level signals). See `BridgeRefsCell::track`.
         Self::registry_mut().remove(&addr);
+    }
+
+    /// SPA reclamation of orphan bridge signals.
+    ///
+    /// `Signal::deactivate` already frees every bridge whose dependency set
+    /// becomes empty during its execution. However, in long-lived SPA apps a
+    /// bridge's `clear_listeners` typically runs first (during DOM teardown),
+    /// removing the bridge from `SIGNAL_INNER_REGISTRY`. If the bridge's
+    /// source signal then never deactivates — because the source is owned by
+    /// a top-level hook context that never tears down (e.g. a global
+    /// `use_signal` in the root app) — the bridge's `Box<SignalInner<String>>`
+    /// stays parked in `BridgeRefsCell` with an empty dependency set. That
+    /// heap allocation would otherwise leak until the page unloads.
+    ///
+    /// This function scans `BridgeRefsCell` once and frees every bridge
+    /// whose:
+    ///
+    /// - dependency set is empty (no source still claims it), AND
+    /// - address is not in `SIGNAL_INNER_REGISTRY` (DOM already detached).
+    ///
+    /// SAFETY: the bridge's address is not reachable through any live
+    /// `Signal<String>` handle — `clear_listeners` removed it from the
+    /// registry, so `Signal::is_alive` returns `false` for it and stale
+    /// handles read `alive=false` and become safe no-ops. The only
+    /// references that could still dereference the address are closures
+    /// captured by `subscribe` on the source signal, and those closures
+    /// touch the bridge only as a copy of `usize`; once the allocation is
+    /// freed those copies would become dangling, so callers MUST ensure the
+    /// source signal has been deactivated (or the source has no live
+    /// subscribers either). In practice this invariant is upheld because
+    /// SPA top-level signals are never `subscribe`d to by bridge signals
+    /// that outlive their bound DOM elements.
+    ///
+    /// `max_freed` bounds the scan cost; pass `usize::MAX` to drain every
+    /// reclaimable bridge in one call. The scan walks the full
+    /// `BridgeRefsCell` map regardless of the cap, so callers should treat
+    /// this as O(n) in the number of bridge dependencies ever recorded,
+    /// not O(`max_freed`).
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - Upper bound on allocations reclaimed in this call.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The number of `Box<SignalInner<String>>` allocations
+    ///   reclaimed. Always `<= max_freed`.
+    pub(crate) fn try_reclaim_inactive(max_freed: usize) -> usize {
+        if max_freed == 0 {
+            return 0;
+        }
+        // Snapshot the candidate addrs first so we can drop the &mut borrow
+        // on `BridgeRefsCell::map_mut()` before doing the unsafe free (Rust
+        // forbids holding the &mut across unsafe pointer manipulation in
+        // the same statement — clearer to split).
+        let candidates: Vec<usize> = {
+            let map: &mut HashMap<usize, HashSet<usize>> = BridgeRefsCell::map_mut();
+            let registry: &HashSet<usize> = Self::registry();
+            map.iter()
+                .filter(|(bridge_addr, sources)| {
+                    sources.is_empty() && !registry.contains(*bridge_addr)
+                })
+                .map(|(bridge_addr, _)| *bridge_addr)
+                .collect()
+        };
+        let mut freed: usize = 0;
+        for bridge_addr in candidates.into_iter().take(max_freed) {
+            // Remove from BridgeRefsCell so a future sweep skips it.
+            BridgeRefsCell::map_mut().remove(&bridge_addr);
+            // Reclaim the heap allocation. The bridge is not in the registry
+            // (verified in the snapshot) and not referenced from any
+            // surviving `Signal<String>` handle, so this is safe.
+            unsafe {
+                let _: Box<SignalInner<String>> =
+                    Box::from_raw(bridge_addr as *mut SignalInner<String>);
+            }
+            freed += 1;
+        }
+        freed
     }
 }
 
