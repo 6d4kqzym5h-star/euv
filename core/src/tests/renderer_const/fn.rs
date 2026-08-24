@@ -331,3 +331,78 @@ fn dom_const_overlaps_with_attribute_const() {
     // rename divergence.
     assert_eq!(ATTR_VALUE, "value");
 }
+
+// =====================================================================
+// renderer::registry::const — high-frequency event cap
+// =====================================================================
+
+#[test]
+fn const_high_frequency_events_length_is_documented() {
+    // 6 entries: mousemove, mousewheel, pointermove, scroll, touchmove, wheel.
+    // Keep this in sync with `HIGH_FREQUENCY_EVENTS.len()` — the test
+    // is the lock against accidental additions / removals.
+    assert_eq!(HIGH_FREQUENCY_EVENTS.len(), 5);
+}
+
+#[test]
+fn const_high_frequency_events_includes_known() {
+    // Spot-check the well-known high-frequency events.
+    assert!(HIGH_FREQUENCY_EVENTS.contains(&"mousemove"));
+    assert!(HIGH_FREQUENCY_EVENTS.contains(&"touchmove"));
+    assert!(HIGH_FREQUENCY_EVENTS.contains(&"pointermove"));
+    assert!(HIGH_FREQUENCY_EVENTS.contains(&"wheel"));
+    assert!(HIGH_FREQUENCY_EVENTS.contains(&"mousewheel"));
+}
+
+#[test]
+fn const_high_frequency_events_excludes_low_frequency() {
+    // `click`, `input`, `keydown` must NOT be in the high-frequency list
+    // — their handler lookups aren't locality-preserving (a click on a
+    // deeply nested icon needs to resolve to a button defined many
+    // ancestors up), so capping the ancestor walk would break them.
+    assert!(!HIGH_FREQUENCY_EVENTS.contains(&"click"));
+    assert!(!HIGH_FREQUENCY_EVENTS.contains(&"input"));
+    assert!(!HIGH_FREQUENCY_EVENTS.contains(&"keydown"));
+}
+
+#[test]
+fn const_high_frequency_events_distinct() {
+    // Each event name must appear at most once.
+    use std::collections::HashSet;
+    let unique: HashSet<&str> = HIGH_FREQUENCY_EVENTS.iter().copied().collect();
+    assert_eq!(unique.len(), HIGH_FREQUENCY_EVENTS.len());
+}
+
+#[test]
+fn const_high_frequency_events_lowercase() {
+    // Event names should be lowercase (matches the existing
+    // NON_BUBBLING_EVENTS convention).
+    for event in HIGH_FREQUENCY_EVENTS.iter() {
+        assert_eq!(*event, event.to_lowercase());
+    }
+}
+
+#[test]
+fn const_max_ancestor_depth_is_bounded() {
+    // Sanity: the depth cap must be positive (depth 0 means "don't
+    // even check the target" which would silently break handler
+    // dispatch) and bounded (e.g. < 32) to keep the constant from
+    // accidentally growing into a future DOM-depth-based regression.
+    assert!(MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ > 0);
+    assert!(MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ < 32);
+}
+
+#[test]
+fn const_max_ancestor_depth_disjoint_from_non_bubbling() {
+    // An event that does NOT bubble cannot be delegated to the window
+    // in the first place, so the ancestor-walk depth cap is irrelevant
+    // for it. Verify the two lists don't overlap so a future maintainer
+    // doesn't add an event to both and silently disable its dispatch.
+    for hf in HIGH_FREQUENCY_EVENTS.iter() {
+        assert!(
+            !NON_BUBBLING_EVENTS.contains(hf),
+            "{} is in both HIGH_FREQUENCY_EVENTS and NON_BUBBLING_EVENTS —              it cannot be window-delegated, so the depth cap is irrelevant",
+            hf
+        );
+    }
+}

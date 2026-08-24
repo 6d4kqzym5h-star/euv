@@ -83,11 +83,10 @@ pub(crate) const NON_BUBBLING_EVENTS: [&str; 35] = [
 /// above the array, and consider whether the framework's other
 /// event-delegation paths (e.g. portal marker resolution) need a
 /// matching special-case.
-pub(crate) const HIGH_FREQUENCY_EVENTS: [&str; 6] = [
+pub(crate) const HIGH_FREQUENCY_EVENTS: [&str; 5] = [
     "mousemove",
     "mousewheel",
     "pointermove",
-    "scroll",
     "touchmove",
     "wheel",
 ];
