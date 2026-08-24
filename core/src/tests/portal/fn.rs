@@ -1,5 +1,4 @@
 use super::*;
-use std::borrow::Cow;
 
 /// `Tag` derives `Clone`, which the renderer's patch loop relies on
 /// when comparing old/new tag pointers.

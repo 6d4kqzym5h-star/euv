@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use super::*;
 
 /// Substitutes `{name}`-style placeholders in `template`
 /// with values from `vars`.

@@ -3,9 +3,7 @@
 //! see `reactive/profiler/handle.rs` for prior art and the
 //! reasoning behind the downcast-ref + index-increment
 //! implementation.
-
 use super::*;
-use std::collections::{HashMap, HashSet};
 
 impl HookContextFormExt for HookContext {
     fn form() -> FormState {

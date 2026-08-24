@@ -1,7 +1,5 @@
 use super::*;
-use std::cell::Cell;
 use std::panic;
-use std::rc::Rc;
 
 /// Regression test: `Signal::clear_listeners` must be idempotent so that
 /// `cleanup_subtree` can be safely invoked multiple times on the same element

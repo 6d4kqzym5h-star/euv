@@ -1,7 +1,5 @@
 use super::*;
 
-use std::rc::Rc;
-
 impl<T> Default for LoadState<T> {
     fn default() -> Self {
         LoadState::Pending

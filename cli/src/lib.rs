@@ -12,6 +12,8 @@ mod logger;
 mod mode;
 mod server;
 
+use log::SetLoggerError;
+use std::collections::HashMap;
 pub use {build::*, error::*, fmt::*, hmr::*, logger::*, mode::*, server::*};
 
 use std::{

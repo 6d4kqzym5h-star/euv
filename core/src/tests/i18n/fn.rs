@@ -1,9 +1,7 @@
 use super::*;
+use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use crate::{HashMap, I18n, MessageEntry, Signal};
-use std::cell::Cell;
-use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::rc::Rc;
 
 fn run_with_signal_capture<F>(f: F) -> bool
 where

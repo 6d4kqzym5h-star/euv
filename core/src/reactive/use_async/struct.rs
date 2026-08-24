@@ -1,8 +1,5 @@
 use super::*;
 
-use std::cell::Cell;
-use std::rc::Rc;
-
 /// `use_async`'s reactive handle, stored in the hook context slot and
 /// returned to the user on each render.
 ///

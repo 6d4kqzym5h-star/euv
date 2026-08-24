@@ -29,6 +29,7 @@ mod tests;
 
 mod tween;
 
+use wasm_bindgen::JsValue;
 pub use {
     asset::*, audio::*, cell::*, collider::*, config::*, easing::*, engine::*, entity::*, input::*,
     math::*, particle::*, physics::*, renderer::*, scene::*, scheduler::*, spatial::*, sprite::*,

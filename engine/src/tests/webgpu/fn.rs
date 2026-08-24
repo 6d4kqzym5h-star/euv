@@ -1,7 +1,5 @@
 use super::*;
 
-use wasm_bindgen::JsValue;
-
 /// `set_viewport(pass, x, y, w, h, min_depth, max_depth)` is a 7-arg
 /// render-pipe helper. Pin the shape so the engine demo's
 /// `requestAnimationFrame` loop never silently breaks.

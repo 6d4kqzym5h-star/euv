@@ -1,5 +1,4 @@
 use super::*;
-
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn run_with_signal_capture<F>(f: F) -> bool

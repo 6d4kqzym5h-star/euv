@@ -1,7 +1,5 @@
 use super::*;
-use std::cell::Cell;
 use std::panic;
-use std::rc::Rc;
 
 // =====================================================================
 // HookContext::current / HookContext::with

@@ -20,9 +20,12 @@ pub(crate) use renderer::*;
 use std::{
     any::Any,
     borrow::Cow,
-    cell::{Ref, RefCell, UnsafeCell},
+    cell::{Cell, Ref, RefCell, UnsafeCell},
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
+    future::Future,
+    hash::Hash,
+    iter::Iterator,
     marker::PhantomData,
     mem::{swap, take},
     num::ParseIntError,
@@ -32,6 +35,7 @@ use std::{
         LazyLock,
         atomic::{AtomicBool, AtomicUsize, Ordering},
     },
+    vec::Vec,
 };
 
 use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, web_sys::*};

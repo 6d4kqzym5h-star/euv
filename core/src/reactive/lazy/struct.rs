@@ -1,7 +1,6 @@
 //! `LazyComponent<T>` implementation.
 
 use super::*;
-use std::rc::Rc;
 
 /// A lazy component that defers factory invocation until
 /// first access.

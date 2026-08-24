@@ -1,9 +1,5 @@
 use super::*;
 
-use std::cell::Cell;
-use std::future::Future;
-use std::rc::Rc;
-
 impl<T, L> Drop for UseAsyncSlot<T, L>
 where
     T: Clone + PartialEq + 'static,

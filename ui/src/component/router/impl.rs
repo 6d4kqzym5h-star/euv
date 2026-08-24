@@ -54,7 +54,6 @@
 //!   treated as the same path.
 //! - Empty paths and `/` are treated as the root
 //!   route.
-
 use super::*;
 
 impl NestedRouteConfig {

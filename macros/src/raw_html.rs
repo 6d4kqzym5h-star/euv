@@ -1,4 +1,5 @@
 //! `unsafe_no_inline!` macro implementation.
+
 //!
 //! Parses a string literal and emits a `RawHtml` value
 //! constructed via `RawHtml::new`. The macro enforces
@@ -9,7 +10,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{LitStr, parse_macro_input};
-
 /// Parses the input of the `unsafe_no_inline!` macro.
 ///
 /// Accepts a single string literal and emits

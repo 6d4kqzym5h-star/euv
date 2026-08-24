@@ -1,7 +1,5 @@
 use super::*;
 
-use std::iter::Iterator;
-
 impl<K, V> LruCache<K, V>
 where
     K: Clone + Eq + std::hash::Hash,

@@ -1,8 +1,5 @@
 use super::*;
 
-use lombok_macros::{Data, New};
-use std::collections::{HashMap, HashSet};
-
 /// The aggregate form state.
 ///
 /// Constructed once per `<form>` via `App::use_form()`,

@@ -1,7 +1,5 @@
 use super::*;
 
-use lombok_macros::{Data, New};
-
 /// Configuration for a `TransitionState`.
 ///
 /// Both fields are reactive (the underlying state holds a

@@ -1,3 +1,5 @@
+use super::*;
+
 /// The four phases of a transition lifecycle.
 ///
 /// Lifecycle: `Exited` → `Entering` → `Entered` →

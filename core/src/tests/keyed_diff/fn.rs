@@ -1,5 +1,4 @@
 use super::*;
-use std::borrow::Cow;
 
 /// Helper: build a keyed `Element` virtual node.
 fn keyed_element(key: &str, tag: &str) -> VirtualNode {

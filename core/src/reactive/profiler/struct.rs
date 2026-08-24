@@ -2,10 +2,8 @@
 //!
 //! Data containers for the profiler (`ProfileEntry`, `ProfilerHandle`,
 //! `ProfilerMark`).
-
 use super::*;
 
-use lombok_macros::{Data, New};
 /// A single recorded measurement.
 ///
 /// Pushed onto the `ProfilerHandle`'s entries signal every time

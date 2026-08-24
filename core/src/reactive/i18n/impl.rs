@@ -1,9 +1,7 @@
 //! `App::use_i18n` and the matching `HookContext::i18n`
 //! factory. Same pattern as the profiler / form factories —
 //! see `reactive/profiler/handle.rs` for prior art.
-
 use super::*;
-use std::collections::HashMap;
 
 impl HookContextI18nExt for HookContext {
     fn i18n() -> I18n {

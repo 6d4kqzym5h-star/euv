@@ -1,7 +1,5 @@
 use super::*;
 
-use lombok_macros::{Data, New};
-use std::collections::HashMap;
 /// The aggregate i18n state.
 ///
 /// Constructed once per app via `App::use_i18n()`, threaded
