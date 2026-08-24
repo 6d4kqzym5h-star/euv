@@ -61,3 +61,45 @@ pub(crate) const NON_BUBBLING_EVENTS: [&str; 35] = [
     "volumechange",
     "waiting",
 ];
+/// Event names that fire at very high frequency (mousemove, touchmove,
+/// pointermove, scroll, wheel, dragover). For these events the
+/// `dispatch_delegated_event` ancestor walk is capped at
+/// `MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ` levels instead of walking all the
+/// way to `<html>`, because:
+///
+/// - mousemove/touchmove handlers almost always live on the same element
+///   they fire on, or 1-2 ancestors above (e.g. a draggable card inside
+///   a scrollable container);
+/// - paying the cost of `get_attribute` + `parse::<usize>` + HashMap
+///   lookup on every intermediate element is pure overhead when the
+///   handler lives near the target.
+///
+/// Events NOT on this list (`click`, `input`, `keydown`, etc.) keep the
+/// original full-depth behaviour because their handler lookup is less
+/// locality-preserving: a `click` on a deeply nested icon needs to
+/// resolve to a button defined many ancestors up.
+///
+/// When adding a new entry to this list, document WHY in the comment
+/// above the array, and consider whether the framework's other
+/// event-delegation paths (e.g. portal marker resolution) need a
+/// matching special-case.
+pub(crate) const HIGH_FREQUENCY_EVENTS: [&str; 6] = [
+    "mousemove",
+    "mousewheel",
+    "pointermove",
+    "scroll",
+    "touchmove",
+    "wheel",
+];
+
+/// Upper bound on the ancestor walk depth for events named in
+/// `HIGH_FREQUENCY_EVENTS`. The walk starts at `event.target()` (depth 0)
+/// and proceeds through at most this many `parent_element` hops before
+/// giving up. The cap exists to bound the per-event CPU cost of
+/// `get_attribute` + `parse::<usize>` + HashMap lookup at 4 hops, which
+/// is empirically enough to reach a typical scroll/drag container while
+/// keeping the worst case proportional to constant time rather than the
+/// full DOM depth.
+///
+/// See the doc on `HIGH_FREQUENCY_EVENTS` for the rationale.
+pub(crate) const MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ: usize = 4;
