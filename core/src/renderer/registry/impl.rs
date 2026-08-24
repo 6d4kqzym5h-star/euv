@@ -9,6 +9,9 @@ unsafe impl Sync for DelegatedEventsCell {}
 /// SAFETY: `SignalUpdateRegistryCell` is only used in single-threaded WASM contexts.
 unsafe impl Sync for SignalUpdateRegistryCell {}
 
+/// SAFETY: `DirtyUpdateIdsCell` is only used in single-threaded WASM contexts.
+unsafe impl Sync for DirtyUpdateIdsCell {}
+
 /// SAFETY: `WindowEventRegistryCell` is only used in single-threaded WASM contexts.
 unsafe impl Sync for WindowEventRegistryCell {}
 
@@ -59,16 +62,6 @@ impl Registry {
         unsafe { &mut *DELEGATED_EVENTS.deref().get_0().get() }
     }
 
-    /// Returns a shared reference to the signal update registry.
-    ///
-    /// # Returns
-    ///
-    /// - `&'static HashMap<usize, SignalUpdateEntry>` - A shared reference to the global signal update registry.
-    #[allow(static_mut_refs)]
-    pub(crate) fn get_update_registry() -> &'static HashMap<usize, SignalUpdateEntry> {
-        unsafe { &*SIGNAL_UPDATE_REGISTRY.deref().get_0().get() }
-    }
-
     /// Returns a mutable reference to the signal update registry.
     ///
     /// # Returns
@@ -77,6 +70,17 @@ impl Registry {
     #[allow(static_mut_refs)]
     pub(crate) fn get_mut_update_registry() -> &'static mut HashMap<usize, SignalUpdateEntry> {
         unsafe { &mut *SIGNAL_UPDATE_REGISTRY.deref().get_0().get() }
+    }
+
+    /// Returns a mutable reference to the dirty-id set used by the OPT 6
+    /// dispatcher fast path.
+    ///
+    /// # Returns
+    ///
+    /// - `&'static mut HashSet<usize>` - A mutable reference to the global dirty-id set.
+    #[allow(static_mut_refs)]
+    pub(crate) fn get_mut_dirty_update_ids() -> &'static mut HashSet<usize> {
+        unsafe { &mut *DIRTY_UPDATE_IDS.deref().get_0().get() }
     }
 
     /// Returns a shared reference to the window event registry.
@@ -195,33 +199,51 @@ impl Registry {
     /// Called when a signal changes to notify all dependent dynamic nodes
     /// that they need to update their DOM representation.
     ///
+    /// OPT 6: also inserts each id into `DIRTY_UPDATE_IDS` so the
+    /// dispatcher's `drain()` loop only visits dynamic nodes that actually
+    /// changed, instead of scanning the whole registry. The previous
+    /// `has_dirty` implementation iterated every registry entry and
+    /// dereferenced a raw pointer per entry just to read the `dirty` flag.
+    ///
     /// # Arguments
     ///
     /// - `&[usize]` - The dynamic node IDs to mark as dirty.
     pub(crate) fn mark_dirty(dynamic_ids: &[usize]) {
+        let dirty_ids: &mut HashSet<usize> = Self::get_mut_dirty_update_ids();
+        for dynamic_id in dynamic_ids {
+            dirty_ids.insert(*dynamic_id);
+        }
         let registry: &mut HashMap<usize, SignalUpdateEntry> = Self::get_mut_update_registry();
         for dynamic_id in dynamic_ids {
             if let Some(entry) = registry.get(dynamic_id) {
                 let slot: &mut SignalUpdateSlot = unsafe { &mut **entry };
                 if !slot.get_removed() {
                     slot.set_dirty(true);
+                } else {
+                    dirty_ids.remove(dynamic_id);
                 }
+            } else {
+                dirty_ids.remove(dynamic_id);
             }
         }
     }
 
     /// Returns whether the signal update registry contains any dirty slots.
     ///
+    /// OPT 6: now an O(1) check against `DIRTY_UPDATE_IDS` instead of an
+    /// O(N) scan of every dynamic node.
+    ///
     /// # Returns
     ///
     /// - `bool` - `true` if at least one dynamic node is marked dirty and not removed.
     pub(crate) fn has_dirty() -> bool {
-        Self::get_update_registry()
-            .values()
-            .any(|entry: &SignalUpdateEntry| {
+        Self::get_mut_dirty_update_ids().iter().any(|id: &usize| {
+            let registry: &HashMap<usize, SignalUpdateEntry> = Self::get_mut_update_registry();
+            registry.get(id).is_some_and(|entry: &SignalUpdateEntry| {
                 let slot: &SignalUpdateSlot = unsafe { &**entry };
-                slot.get_dirty() && !slot.get_removed()
+                !slot.get_removed()
             })
+        })
     }
 
     /// Registers a signal update callback for a DynamicNode placeholder.
@@ -310,10 +332,14 @@ impl Registry {
     /// it is running in a separate microtask turn and cannot observe
     /// a stale `Some(entry)` here.
     ///
+    /// OPT 6: also drops the id from `DIRTY_UPDATE_IDS` so the
+    /// dispatcher does not re-discover a freed pointer on the next tick.
+    ///
     /// # Arguments
     ///
     /// - `usize` - The dynamic node's unique ID.
     pub(crate) fn cleanup_dynamic_node(dynamic_id: usize) {
+        Self::get_mut_dirty_update_ids().remove(&dynamic_id);
         if let Some(entry) = Self::get_mut_update_registry().remove(&dynamic_id) {
             unsafe {
                 let _: Box<SignalUpdateSlot> = Box::from_raw(entry);
@@ -327,10 +353,15 @@ impl Registry {
     /// eagerly (see `cleanup_dynamic_node` for the rationale), and
     /// prevents further updates to detached DOM elements.
     ///
+    /// OPT 6: also drops the address from `DIRTY_UPDATE_IDS` so a
+    /// recycled heap address does not pick up a stale dispatch slot
+    /// the next time `mark_dirty` runs.
+    ///
     /// # Arguments
     ///
     /// - `usize` - The signal's inner address used as the registry key.
     pub(crate) fn cleanup_attr_slot(addr: usize) {
+        Self::get_mut_dirty_update_ids().remove(&addr);
         if let Some(entry) = Self::get_mut_update_registry().remove(&addr) {
             unsafe {
                 let _: Box<SignalUpdateSlot> = Box::from_raw(entry);

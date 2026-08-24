@@ -1,9 +1,10 @@
 use super::*;
+use std::borrow::Cow;
 
 /// Helper: build a keyed `Element` virtual node.
 fn keyed_element(key: &str, tag: &str) -> VirtualNode {
     VirtualNode::Element {
-        tag: Tag::Element(tag.to_string()),
+        tag: Tag::Element(Cow::Owned(tag.to_string())),
         attributes: vec![],
         children: vec![],
         key: Some(key.to_string()),
@@ -14,7 +15,7 @@ fn keyed_element(key: &str, tag: &str) -> VirtualNode {
 /// Helper: build an unkeyed `Element` virtual node.
 fn unkeyed_element(tag: &str) -> VirtualNode {
     VirtualNode::Element {
-        tag: Tag::Element(tag.to_string()),
+        tag: Tag::Element(Cow::Owned(tag.to_string())),
         attributes: vec![],
         children: vec![],
         key: None,

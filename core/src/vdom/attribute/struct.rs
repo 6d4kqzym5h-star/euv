@@ -3,12 +3,20 @@ use super::*;
 /// Represents a single attribute on a virtual DOM node.
 ///
 /// Combines an attribute name with its corresponding value.
+///
+/// OPT 2: attribute names are `Cow<'static, str>`. The `html!` macro
+/// emits `Cow::Borrowed("class")` for the common literal case so
+/// attribute keys share a single static slice across the whole rendered
+/// DOM, removing the per-attribute `String` heap allocation. The
+/// `AttributeValue::Text(String)` payload keeps its owned allocation
+/// (text values are user-supplied strings that almost always come
+/// from string interpolation or runtime formatting).
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) name: String,
+    pub(crate) name: Cow<'static, str>,
     /// The value of the attribute.
     #[debug(skip)]
     #[get(pub(crate))]

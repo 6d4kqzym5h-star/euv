@@ -6,37 +6,29 @@ use super::*;
 /// Concurrent access from multiple threads would be undefined behavior.
 unsafe impl Sync for CurrentHookContextCell {}
 
+/// Marks `MicrotaskCacheCell` as `Sync` for single-threaded WASM contexts.
+///
+/// SAFETY: only mutated through `UnsafeCell` interior-mutability on
+/// the WASM single-threaded runtime.
+unsafe impl Sync for MicrotaskCacheCell {}
+
 /// Static methods for scheduling signal update dispatch and batching.
 ///
 /// Provides centralized scheduling for reactive updates, ensuring efficient
 /// batching and dispatch of signal changes to dependent dynamic nodes.
 impl Scheduler {
-    /// Removes all entries from the signal update registry that have been
-    /// marked as `removed`. Called after each dispatch cycle completes.
-    ///
-    /// This prevents memory leaks by freeing slots for dynamic nodes that
-    /// have been removed from the DOM.
-    fn sweep_removed_entries() {
-        Registry::get_mut_update_registry().retain(
-            |_key: &usize, entry: &mut SignalUpdateEntry| {
-                let slot: &SignalUpdateSlot = unsafe { &**entry };
-                if slot.get_removed() {
-                    unsafe {
-                        let _: Box<SignalUpdateSlot> = Box::from_raw(*entry);
-                    }
-                    false
-                } else {
-                    true
-                }
-            },
-        );
-    }
-
     /// Schedules a deferred signal update with precise dirty marking.
     ///
     /// Marks the specified dynamic nodes as dirty and queues a microtask
     /// to dispatch updates. Uses `queueMicrotask` if available, falling
     /// back to `setTimeout` or `requestAnimationFrame`.
+    ///
+    /// OPT 7: the cached `queueMicrotask` `Function` and dispatch
+    /// closure `Function` are read once per call from
+    /// `MICROTASK_CACHE` / `DISPATCH_CLOSURE`, instead of being looked
+    /// up via `Reflect::get(&window, "queueMicrotask")` and
+    /// `Closure::as_ref().unchecked_ref::<Function>()` three times per
+    /// signal update.
     ///
     /// # Arguments
     ///
@@ -57,19 +49,41 @@ impl Scheduler {
                 return;
             }
         };
-        let queued_microtask: bool =
-            DISPATCH_CLOSURE.with(|dispatch_closure: &Closure<dyn FnMut()>| {
-                let dispatch_function: &Function =
-                    dispatch_closure.as_ref().unchecked_ref::<Function>();
-                let queue_microtask_value: JsValue =
-                    Reflect::get(&window_value, &JsValue::from_str(QUEUE_MICROTASK))
-                        .unwrap_or(JsValue::UNDEFINED);
-                matches!(
-                    queue_microtask_value.dyn_into::<Function>(),
-                    Ok(queue_microtask)
-                        if queue_microtask.call1(&window_value, dispatch_function).is_ok()
-                )
-            });
+        let queued_microtask: bool = MICROTASK_CACHE.with(|cache: &MicrotaskCacheCell| {
+            let cache_ptr: *mut MicrotaskCache = cache.get_0().get();
+            let cache_ref: &MicrotaskCache = unsafe { &*cache_ptr };
+            if cache_ref.queue_microtask.is_none() {
+                if let Some(window_value_inner) = window() {
+                    let queue_microtask_value: JsValue =
+                        Reflect::get(&window_value_inner, &JsValue::from_str(QUEUE_MICROTASK))
+                            .unwrap_or(JsValue::UNDEFINED);
+                    if let Ok(queue_microtask) = queue_microtask_value.dyn_into::<Function>() {
+                        unsafe {
+                            (*cache_ptr).queue_microtask = Some(queue_microtask);
+                        }
+                    }
+                }
+                let cache_ref: &MicrotaskCache = unsafe { &*cache_ptr };
+                if let Some(queue_microtask) = &cache_ref.queue_microtask {
+                    // SAFETY: `DISPATCH_CLOSURE` lives for the duration of
+                    // the program (it is leaked via `Closure::wrap` /
+                    // `Closure::forget` semantics inside the macro).
+                    let dispatch_function: &Function = DISPATCH_CLOSURE.with(|closure| unsafe {
+                        &*(closure.as_ref() as *const _ as *const Function)
+                    });
+                    return queue_microtask
+                        .call1(&window_value, dispatch_function)
+                        .is_ok();
+                }
+                return false;
+            }
+            let queue_microtask: &Function = cache_ref.queue_microtask.as_ref().unwrap();
+            let dispatch_function: &Function = DISPATCH_CLOSURE
+                .with(|closure| unsafe { &*(closure.as_ref() as *const _ as *const Function) });
+            queue_microtask
+                .call1(&window_value, dispatch_function)
+                .is_ok()
+        });
         if queued_microtask {
             return;
         }
@@ -132,8 +146,14 @@ impl Scheduler {
     /// were added during callback execution. If so, performs additional
     /// passes until the registry stabilizes, up to a maximum iteration limit.
     ///
-    /// After all dispatch passes complete, sweeps the registry to remove
-    /// entries that have been marked as `removed`.
+    /// OPT 6: replaces the per-tick `O(累计动态节点数)` registry scan
+    /// with an `O(脏节点数)` drain over `DIRTY_UPDATE_IDS`. Each id is
+    /// pulled from the set exactly once per dispatch, then removed so a
+    /// second pass does not re-fire it. The previous
+    /// `sweep_removed_entries` step is gone: every `cleanup_*` path
+    /// already pulls its id from both the registry and the dirty set,
+    /// so the registry holds no removed entries by the time the next
+    /// `mark_dirty` arrives.
     pub(crate) fn dispatch_updates() {
         if SIGNAL_UPDATE_DISPATCHING.load(Ordering::Relaxed) {
             return;
@@ -141,19 +161,13 @@ impl Scheduler {
         SIGNAL_UPDATE_DISPATCHING.store(true, Ordering::Relaxed);
         let mut iterations: usize = 0;
         loop {
-            let registry: &mut HashMap<usize, SignalUpdateEntry> =
-                Registry::get_mut_update_registry();
-            let dirty_keys: Vec<usize> = registry
-                .iter()
-                .filter_map(|(key, entry): (&usize, &SignalUpdateEntry)| {
-                    let slot: &SignalUpdateSlot = unsafe { &**entry };
-                    if slot.get_dirty() && !slot.get_removed() {
-                        Some(*key)
-                    } else {
-                        None
-                    }
-                })
-                .collect();
+            // OPT 6: drain the dirty set rather than scanning the registry.
+            // `std::mem::take` swaps in a fresh empty set so the dirty-set
+            // borrow is released before we mutate `SIGNAL_UPDATE_REGISTRY`
+            // in the loop body below. (`HashSet::drain` requires the
+            // `RangeFull` pattern which Rust 2024 reserves as the
+            // struct-update syntax shorthand.)
+            let dirty_keys: HashSet<usize> = std::mem::take(Registry::get_mut_dirty_update_ids());
             if dirty_keys.is_empty() {
                 break;
             }
@@ -201,7 +215,6 @@ impl Scheduler {
                 break;
             }
         }
-        Self::sweep_removed_entries();
         SIGNAL_UPDATE_DISPATCHING.store(false, Ordering::Relaxed);
     }
 }

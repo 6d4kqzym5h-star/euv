@@ -28,6 +28,7 @@
 //!   variants).
 
 use super::*;
+use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -355,7 +356,7 @@ fn attribute_entry_with_text_value() {
     // wasm-portable one; we use it to verify
     // AttributeEntry construction.
     let entry: AttributeEntry = AttributeEntry::new(
-        String::from("class"),
+        Cow::Borrowed("class"),
         AttributeValue::Text(String::from("btn")),
     );
     assert_eq!(entry.get_name(), "class");
@@ -364,7 +365,7 @@ fn attribute_entry_with_text_value() {
 #[test]
 fn attribute_entry_clone_preserves_name() {
     let entry: AttributeEntry = AttributeEntry::new(
-        String::from("id"),
+        Cow::Borrowed("id"),
         AttributeValue::Text(String::from("main")),
     );
     let cloned: AttributeEntry = entry.clone();
@@ -374,15 +375,15 @@ fn attribute_entry_clone_preserves_name() {
 #[test]
 fn attribute_entry_set_name_replaces() {
     let mut entry: AttributeEntry =
-        AttributeEntry::new(String::from("first"), AttributeValue::Text(String::new()));
-    entry.set_name(String::from("second"));
+        AttributeEntry::new(Cow::Borrowed("first"), AttributeValue::Text(String::new()));
+    entry.set_name(Cow::Borrowed("second"));
     assert_eq!(entry.get_name(), "second");
 }
 
 #[test]
 fn attribute_entry_debug_format_works() {
     let entry: AttributeEntry = AttributeEntry::new(
-        String::from("class"),
+        Cow::Borrowed("class"),
         AttributeValue::Text(String::from("btn")),
     );
     let formatted: String = format!("{:?}", entry);

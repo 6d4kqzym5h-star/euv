@@ -215,9 +215,23 @@ where
     /// # Arguments
     ///
     /// - `usize` - The dynamic node ID to register as a dependent.
+    ///
+    /// OPT 9: the common rendering case is "this dependent was just added
+    /// (last element of the list)". A `deps.last() == Some(&dynamic_id)`
+    /// check short-circuits the `Vec::contains` linear scan, turning the
+    /// typical append-into-existing-list call from O(N) to O(1). Only the
+    /// rare cases (first add, or `dynamic_id` re-added after a previous
+    /// unsubscription) fall back to the full scan + push.
     pub(crate) fn add_dependent(&self, dynamic_id: usize) {
         let deps: &mut Vec<usize> = Self::inner_mut(self.get_inner()).get_mut_dependents();
-        if !deps.contains(&dynamic_id) {
+        if let Some(last) = deps.last() {
+            if *last == dynamic_id {
+                return;
+            }
+            if !deps.contains(&dynamic_id) {
+                deps.push(dynamic_id);
+            }
+        } else {
             deps.push(dynamic_id);
         }
     }

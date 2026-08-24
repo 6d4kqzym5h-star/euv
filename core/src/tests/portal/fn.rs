@@ -14,12 +14,13 @@
 //!   name.
 
 use super::*;
+use std::borrow::Cow;
 
 /// `Tag` derives `Clone`, which the renderer's patch loop relies on
 /// when comparing old/new tag pointers.
 #[test]
 fn portal_tag_is_clone() {
-    let tag: Tag = Tag::Portal(String::from("#modal-root"));
+    let tag: Tag = Tag::Portal(Cow::Borrowed("#modal-root"));
     let cloned: Tag = tag.clone();
     assert_eq!(tag, cloned);
 }
@@ -30,16 +31,16 @@ fn portal_tag_is_clone() {
 #[test]
 fn portal_tag_partial_eq_distinguishes_selectors() {
     assert_eq!(
-        Tag::Portal(String::from("#a")),
-        Tag::Portal(String::from("#a")),
+        Tag::Portal(Cow::Borrowed("#a")),
+        Tag::Portal(Cow::Borrowed("#a")),
     );
     assert_ne!(
-        Tag::Portal(String::from("#a")),
-        Tag::Portal(String::from("#b")),
+        Tag::Portal(Cow::Borrowed("#a")),
+        Tag::Portal(Cow::Borrowed("#b")),
     );
     assert_ne!(
-        Tag::Portal(String::from("body")),
-        Tag::Element(String::from("body")),
+        Tag::Portal(Cow::Borrowed("body")),
+        Tag::Element(Cow::Borrowed("body")),
         "Portal(\"body\") must not equal Element(\"body\")",
     );
 }
@@ -51,9 +52,9 @@ fn portal_tag_partial_eq_distinguishes_selectors() {
 fn portal_tag_is_hashable() {
     use std::collections::HashSet;
     let mut set: HashSet<Tag> = HashSet::new();
-    set.insert(Tag::Portal(String::from("#a")));
-    set.insert(Tag::Portal(String::from("#a")));
-    set.insert(Tag::Portal(String::from("#b")));
+    set.insert(Tag::Portal(Cow::Borrowed("#a")));
+    set.insert(Tag::Portal(Cow::Borrowed("#a")));
+    set.insert(Tag::Portal(Cow::Borrowed("#b")));
     assert_eq!(set.len(), 2, "selectors collapse by equality, not identity");
 }
 
@@ -61,7 +62,7 @@ fn portal_tag_is_hashable() {
 /// for element nodes; portals need a stable string representation.
 #[test]
 fn portal_tag_debug_names_variant() {
-    let formatted: String = format!("{:?}", Tag::Portal(String::from("#x")));
+    let formatted: String = format!("{:?}", Tag::Portal(Cow::Borrowed("#x")));
     assert!(
         formatted.contains("Portal"),
         "Debug output must name the variant, got: {formatted}",
@@ -79,7 +80,7 @@ fn portal_tag_debug_names_variant() {
 #[test]
 fn virtual_node_try_get_tag_name_returns_none_for_portal() {
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Portal(String::from("#toast-host")),
+        tag: Tag::Portal(Cow::Borrowed("#toast-host")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: None,
@@ -98,7 +99,7 @@ fn virtual_node_try_get_tag_name_returns_none_for_portal() {
 #[test]
 fn virtual_node_try_get_tag_name_still_works_for_element() {
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("div")),
+        tag: Tag::Element(Cow::Borrowed("div")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: None,
@@ -117,7 +118,7 @@ fn virtual_node_try_get_tag_name_still_works_for_element() {
 #[test]
 fn virtual_node_try_get_tag_name_still_works_for_component() {
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Component(String::from("euv_button")),
+        tag: Tag::Component(Cow::Borrowed("euv_button")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: None,
@@ -136,8 +137,8 @@ fn virtual_node_try_get_tag_name_still_works_for_component() {
 /// subtree.
 #[test]
 fn portal_tag_partial_eq_same_selector_equals() {
-    let a: Tag = Tag::Portal(String::from("#modal-root"));
-    let b: Tag = Tag::Portal(String::from("#modal-root"));
+    let a: Tag = Tag::Portal(Cow::Borrowed("#modal-root"));
+    let b: Tag = Tag::Portal(Cow::Borrowed("#modal-root"));
     assert!(a == b, "same-selector portals must compare equal");
 }
 
@@ -146,6 +147,6 @@ fn portal_tag_partial_eq_same_selector_equals() {
 /// pass-through arm).
 #[test]
 fn portal_tag_supports_empty_selector() {
-    let tag: Tag = Tag::Portal(String::new());
+    let tag: Tag = Tag::Portal(Cow::Owned(String::new()));
     assert_eq!(tag.clone(), tag, "empty selector must round-trip");
 }

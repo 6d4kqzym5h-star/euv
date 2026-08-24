@@ -18,6 +18,7 @@
 //! (`euv run --dev`) plus a small dedicated example added in this PR.
 
 use super::*;
+use std::borrow::Cow;
 
 /// `AttributeValue::InnerHtml(String)` round-trips through Clone and
 /// retains the payload bytes intact.
@@ -157,7 +158,7 @@ fn existing_variants_still_construct() {
 #[test]
 fn attribute_entry_clone_preserves_inner_html() {
     let attr: AttributeEntry = AttributeEntry::new(
-        String::from("inner_html"),
+        Cow::Borrowed("inner_html"),
         AttributeValue::InnerHtml(String::from("<x/>")),
     );
     let cloned: AttributeEntry = attr.clone();

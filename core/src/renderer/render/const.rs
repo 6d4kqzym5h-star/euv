@@ -1,3 +1,5 @@
+use super::*;
+
 /// The DOM attribute name used to store the dynamic node identifier on a placeholder element.
 ///
 /// This attribute is assigned to every DynamicNode placeholder so the framework
@@ -44,3 +46,39 @@ pub(crate) const CLASS_SELECTOR_PREFIX: &str = ".";
 
 /// The HTML `body` tag name, used as a default mount target.
 pub(crate) const BODY_TAG: &str = "body";
+
+/// Returns the cached `Document` for the current page, falling back to
+/// `window().document()` on the first call. `Document` is page-scoped (it
+/// stays valid until the document is replaced), so a single resolved
+/// reference is safe to reuse across the lifetime of an `euv-example`
+/// mount. Subsequent calls just clone the cached handle, eliminating the
+/// two JS-boundary crossings (`window()` + `document()`) every DOM node
+/// creation used to pay.
+///
+/// OPT 8: per-page `Document` cache via `thread_local!`. The lazy
+/// `OnceCell`-style fallback makes this safe even before
+/// `App::mount` has finished initialising.
+pub(crate) fn cached_document() -> Option<Document> {
+    DOCUMENT_CACHE.with(|cell: &UnsafeCell<Option<Document>>| {
+        let cached_ptr: *mut Option<Document> = cell.get();
+        unsafe {
+            if let Some(doc) = &*cached_ptr {
+                return Some(doc.clone());
+            }
+        }
+        let window_value: Window = window()?;
+        let document: Document = window_value.document()?;
+        DOCUMENT_CACHE.with(|cell: &UnsafeCell<Option<Document>>| unsafe {
+            *cell.get() = Some(document.clone());
+        });
+        Some(document)
+    })
+}
+
+thread_local! {
+    /// Single-threaded cache for the page's `Document`. SAFETY: euv
+    /// runs on the main thread in WASM contexts, and `Document::clone`
+    /// is a cheap reference count bump on the underlying `JsValue`.
+    pub(crate) static DOCUMENT_CACHE: UnsafeCell<Option<Document>> =
+        UnsafeCell::new(None);
+}

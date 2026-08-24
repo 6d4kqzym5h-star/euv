@@ -36,6 +36,7 @@
 //!   in the implementation module.
 
 use super::*;
+use std::borrow::Cow;
 
 // =====================================================================
 // Tag
@@ -43,7 +44,7 @@ use super::*;
 
 #[test]
 fn tag_element_constructs() {
-    let tag: Tag = Tag::Element(String::from("div"));
+    let tag: Tag = Tag::Element(Cow::Borrowed("div"));
     match &tag {
         Tag::Element(name) => assert_eq!(name, "div"),
         Tag::Component(_) => panic!("expected Element"),
@@ -53,7 +54,7 @@ fn tag_element_constructs() {
 
 #[test]
 fn tag_component_constructs() {
-    let tag: Tag = Tag::Component(String::from("MyButton"));
+    let tag: Tag = Tag::Component(Cow::Borrowed("MyButton"));
     match &tag {
         Tag::Component(name) => assert_eq!(name, "MyButton"),
         Tag::Element(_) => panic!("expected Component"),
@@ -63,13 +64,13 @@ fn tag_component_constructs() {
 
 #[test]
 fn tag_clone_preserves_variant() {
-    let element: Tag = Tag::Element(String::from("span"));
+    let element: Tag = Tag::Element(Cow::Borrowed("span"));
     let cloned_element: Tag = element.clone();
     match &cloned_element {
         Tag::Element(name) => assert_eq!(name, "span"),
         _ => panic!("expected Element"),
     }
-    let component: Tag = Tag::Component(String::from("Header"));
+    let component: Tag = Tag::Component(Cow::Borrowed("Header"));
     let cloned_component: Tag = component.clone();
     match &cloned_component {
         Tag::Component(name) => assert_eq!(name, "Header"),
@@ -79,22 +80,22 @@ fn tag_clone_preserves_variant() {
 
 #[test]
 fn tag_equality_same_variant() {
-    let a: Tag = Tag::Element(String::from("div"));
-    let b: Tag = Tag::Element(String::from("div"));
+    let a: Tag = Tag::Element(Cow::Borrowed("div"));
+    let b: Tag = Tag::Element(Cow::Borrowed("div"));
     assert_eq!(a, b);
 }
 
 #[test]
 fn tag_equality_different_variants() {
-    let element: Tag = Tag::Element(String::from("div"));
-    let component: Tag = Tag::Component(String::from("div"));
+    let element: Tag = Tag::Element(Cow::Borrowed("div"));
+    let component: Tag = Tag::Component(Cow::Borrowed("div"));
     assert_ne!(element, component);
 }
 
 #[test]
 fn tag_equality_different_inner_values() {
-    let a: Tag = Tag::Element(String::from("div"));
-    let b: Tag = Tag::Element(String::from("span"));
+    let a: Tag = Tag::Element(Cow::Borrowed("div"));
+    let b: Tag = Tag::Element(Cow::Borrowed("span"));
     assert_ne!(a, b);
 }
 
@@ -102,8 +103,8 @@ fn tag_equality_different_inner_values() {
 fn tag_hash_same_for_equal_tags() {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
-    let a: Tag = Tag::Element(String::from("div"));
-    let b: Tag = Tag::Element(String::from("div"));
+    let a: Tag = Tag::Element(Cow::Borrowed("div"));
+    let b: Tag = Tag::Element(Cow::Borrowed("div"));
     let mut h1: DefaultHasher = DefaultHasher::new();
     let mut h2: DefaultHasher = DefaultHasher::new();
     a.hash(&mut h1);
@@ -113,7 +114,7 @@ fn tag_hash_same_for_equal_tags() {
 
 #[test]
 fn tag_debug_format_works() {
-    let tag: Tag = Tag::Element(String::from("div"));
+    let tag: Tag = Tag::Element(Cow::Borrowed("div"));
     let formatted: String = format!("{:?}", tag);
     assert!(formatted.contains("Element"));
     assert!(formatted.contains("div"));
@@ -150,7 +151,7 @@ fn virtual_node_empty_debug_format() {
 #[test]
 fn virtual_node_element_with_no_attributes_no_children() {
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("div")),
+        tag: Tag::Element(Cow::Borrowed("div")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: None,
@@ -169,11 +170,11 @@ fn virtual_node_element_with_no_attributes_no_children() {
 fn virtual_node_element_with_text_attribute() {
     let mut attributes: Vec<AttributeEntry> = Vec::new();
     attributes.push(AttributeEntry::new(
-        String::from("class"),
+        Cow::Borrowed("class"),
         AttributeValue::Text(String::from("btn")),
     ));
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("button")),
+        tag: Tag::Element(Cow::Borrowed("button")),
         attributes,
         children: Vec::new(),
         key: None,
@@ -197,7 +198,7 @@ fn virtual_node_element_with_text_attribute() {
 #[test]
 fn virtual_node_element_with_key() {
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("li")),
+        tag: Tag::Element(Cow::Borrowed("li")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: Some(String::from("item-1")),
@@ -213,14 +214,14 @@ fn virtual_node_element_with_key() {
 #[test]
 fn virtual_node_element_with_nested_children() {
     let inner: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("span")),
+        tag: Tag::Element(Cow::Borrowed("span")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: None,
         props: None,
     };
     let outer: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("div")),
+        tag: Tag::Element(Cow::Borrowed("div")),
         attributes: Vec::new(),
         children: vec![inner],
         key: None,
@@ -237,9 +238,9 @@ fn virtual_node_element_with_nested_children() {
 #[test]
 fn virtual_node_element_clone_deep_copies() {
     let original: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("div")),
+        tag: Tag::Element(Cow::Borrowed("div")),
         attributes: vec![AttributeEntry::new(
-            String::from("id"),
+            Cow::Borrowed("id"),
             AttributeValue::Text(String::from("root")),
         )],
         children: Vec::new(),
@@ -280,7 +281,7 @@ fn virtual_node_fragment_with_pure_rust_children() {
     let children: Vec<VirtualNode> = vec![
         VirtualNode::Empty,
         VirtualNode::Element {
-            tag: Tag::Element(String::from("br")),
+            tag: Tag::Element(Cow::Borrowed("br")),
             attributes: Vec::new(),
             children: Vec::new(),
             key: None,
@@ -374,7 +375,7 @@ fn virtual_node_empty_debug_format_includes_variant() {
 #[test]
 fn virtual_node_element_debug_format_includes_tag() {
     let node: VirtualNode = VirtualNode::Element {
-        tag: Tag::Element(String::from("div")),
+        tag: Tag::Element(Cow::Borrowed("div")),
         attributes: Vec::new(),
         children: Vec::new(),
         key: None,
@@ -402,7 +403,7 @@ fn native_virtual_node_empty_construction_does_not_panic() {
 fn native_virtual_node_element_construction_does_not_panic() {
     let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let _: VirtualNode = VirtualNode::Element {
-            tag: Tag::Element(String::from("div")),
+            tag: Tag::Element(Cow::Borrowed("div")),
             attributes: Vec::new(),
             children: Vec::new(),
             key: None,
@@ -425,8 +426,8 @@ fn native_text_node_construction_does_not_panic() {
 #[test]
 fn native_tag_construction_does_not_panic() {
     let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let _: Tag = Tag::Element(String::from("div"));
-        let _: Tag = Tag::Component(String::from("Foo"));
+        let _: Tag = Tag::Element(Cow::Borrowed("div"));
+        let _: Tag = Tag::Component(Cow::Borrowed("Foo"));
     }))
     .map_err(|_| "panic".to_string());
     assert!(result.is_ok());

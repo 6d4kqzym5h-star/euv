@@ -3,12 +3,19 @@ use super::*;
 /// Represents the type of an HTML tag or a component.
 ///
 /// Distinguishes between standard HTML elements and user-defined components.
+///
+/// OPT 2: tag names are `Cow<'static, str>`. The `html!` macro emits
+/// `Cow::Borrowed("div")` for the common static case so a single
+/// static-string slice is reused across every rendered tree without
+/// per-element heap allocation. Runtime-derived tags (rare — only
+/// used by `Tag::Portal` whose `target:` is a user expression) fall
+/// back to `Cow::Owned(String::from(expr))`.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Tag {
     /// A standard HTML element identified by its tag name.
-    Element(String),
+    Element(Cow<'static, str>),
     /// A custom component type.
-    Component(String),
+    Component(Cow<'static, str>),
     /// A portal placeholder whose children are rendered into a
     /// different DOM subtree than the rest of the virtual DOM.
     ///
@@ -33,11 +40,11 @@ pub enum Tag {
     ///   children are unmounted and the new target receives a
     ///   fresh mount.
     ///
-    /// Designed for modals, tooltips, dropdowns, and toasts —
+    /// Designed for modals, tooltips, dropdowns, and, toasts —
     /// UI that needs to escape `overflow: hidden` parents and
     /// sit at the document root regardless of where it was
-    /// declared in the virtual DOM tree.
-    Portal(String),
+    /// declared in the virtual DOM.
+    Portal(Cow<'static, str>),
 }
 
 /// Represents a node in the virtual DOM tree.

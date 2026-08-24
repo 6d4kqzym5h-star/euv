@@ -770,7 +770,7 @@ impl ToTokens for HtmlDynamicTag {
                     #(#component_match_arms)*
                     _ => {
                         ::euv::VirtualNode::Element {
-                            tag: ::euv::Tag::Element(__euv_tag_name),
+                            tag: ::euv::Tag::Element(::std::borrow::Cow::Owned(__euv_tag_name)),
                             attributes: vec![#(#attr_tokens), *],
                             children: vec![#(#child_tokens), *],
                             key: None,
@@ -793,7 +793,10 @@ impl HtmlDynamicTag {
             .iter()
             .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
                 let key_string: String = extract_attr_key_string(key);
-                let attr_name_token: proc_macro2::TokenStream = quote! { #key_string.to_string() };
+                // OPT 2: literal attribute keys become `Cow::Borrowed`,
+                // matching the static-element fast path.
+                let attr_name_token: proc_macro2::TokenStream =
+                    quote! { ::std::borrow::Cow::Borrowed(#key_string) };
                 let ctx: AttrEntryContext<'_> = AttrEntryContext::new(value, &key_string);
                 let value_tokens: proc_macro2::TokenStream = attr_value_to_entry_value_tokens(&ctx);
                 quote! {
@@ -841,7 +844,7 @@ impl HtmlDynamicTag {
             let children_token: proc_macro2::TokenStream =
                 children_to_node_tokens(self.get_children());
             quote! { #fn_ident(::euv::VirtualNode::Element {
-                tag: ::euv::Tag::Component(#fn_name_str.to_string()),
+                tag: ::euv::Tag::Component(::std::borrow::Cow::Borrowed(#fn_name_str)),
                 attributes: Vec::new(),
                 children: vec![#(#dyn_child_tokens), *],
                 key: None,
@@ -849,7 +852,7 @@ impl HtmlDynamicTag {
             }) }
         } else {
             quote! { #fn_ident(::euv::VirtualNode::Element {
-                tag: ::euv::Tag::Component(#fn_name_str.to_string()),
+                tag: ::euv::Tag::Component(::std::borrow::Cow::Borrowed(#fn_name_str)),
                 attributes: Vec::new(),
                 children: vec![#(#dyn_child_tokens), *],
                 key: None,
@@ -985,8 +988,13 @@ impl ToTokens for HtmlElement {
         let tag_name: String = self.get_tag_name().clone();
         let tag_ident: Ident = self.get_tag().clone();
         let tag_span: Span = self.get_tag().span();
-        let tag_literal: proc_macro2::TokenStream =
-            quote_spanned!(tag_span=> #tag_name.to_string());
+        // OPT 2: emit `Cow::Borrowed("div")` directly from the
+        // compile-time-known tag name string. (Previously this was
+        // `#tag_name.to_string()`, which materialised a fresh `String`
+        // per element at runtime.) The token stream below contains
+        // the literal `div` (not `"div".to_string()`), wrapped in
+        // `Cow::Borrowed(...)` at the call site.
+        let tag_literal: proc_macro2::TokenStream = quote_spanned!(tag_span=> #tag_name);
         // `portal { target: "#root" } children` is a special
         // pseudo-element handled at the macro level. It lowers to
         // `Tag::Portal(target_string)` with the children spliced
@@ -1044,7 +1052,18 @@ impl HtmlElement {
                     return None;
                 }
                 if let HtmlAttrValue::Expr(expr) = value {
-                    Some(quote! { ::std::string::String::from(#expr) })
+                    // OPT 2: portal targets are runtime expressions
+                    // (Signal<String> via `.get()`, `String::from(s)`,
+                    // plain string literal). Wrap the result in
+                    // `Cow::Owned(String::from(expr))` so the rendered
+                    // DOM still owns its selector when it really needs
+                    // to. For the literal-string case
+                    // (`target: "#root"`), `String::from` will heap
+                    // allocate once; the common dynamic-tag fast path
+                    // (in `native_element_tokens`) skips that.
+                    Some(quote! {
+                        ::std::borrow::Cow::Owned(::std::string::String::from(#expr))
+                    })
                 } else {
                     None
                 }
@@ -1063,7 +1082,7 @@ impl HtmlElement {
                 }
                 let value_tokens: proc_macro2::TokenStream =
                     attr_value_to_entry_value_tokens(&AttrEntryContext::new(value, &key_string));
-                Some(quote! { ::euv::AttributeEntry::new(#key_string.to_string(), #value_tokens) })
+                Some(quote! { ::euv::AttributeEntry::new(::std::borrow::Cow::Borrowed(#key_string), #value_tokens) })
             })
             .collect();
         let children_tokens: proc_macro2::TokenStream =
@@ -1108,7 +1127,7 @@ impl HtmlElement {
         let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(self.get_children());
         quote! {
             #tag_ident(::euv::VirtualNode::Element {
-                tag: ::euv::Tag::Component(#tag_name.to_string()),
+                tag: ::euv::Tag::Component(::std::borrow::Cow::Borrowed(#tag_name)),
                 attributes: Vec::new(),
                 children: vec![#(#child_tokens), *],
                 key: None,
@@ -1148,7 +1167,15 @@ impl HtmlElement {
             .iter()
             .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
                 let key_string: String = extract_attr_key_string(key);
-                let attr_name_token: proc_macro2::TokenStream = quote! { #key_string.to_string() };
+                // OPT 2: emit `Cow::Borrowed("class")` for literal
+                // attribute keys so the entire DOM tree shares a single
+                // static-string slice per attribute name. The `Cow`
+                // widening keeps the door open for runtime-built keys
+                // (none currently exist in the framework, but the
+                // `html!` macro is the only place that constructs
+                // `AttributeEntry` so this is a safe extension point).
+                let attr_name_token: proc_macro2::TokenStream =
+                    quote! { ::std::borrow::Cow::Borrowed(#key_string) };
                 if key_string == ATTR_KEY_KEY {
                     if let HtmlAttrValue::Expr(expr) = value {
                         key_expr = Some(quote! { Some((#expr).into()) });
@@ -1165,9 +1192,11 @@ impl HtmlElement {
         let key_token: proc_macro2::TokenStream = key_expr.unwrap_or_else(|| quote! { None });
         let children_tokens: proc_macro2::TokenStream =
             children_to_flattened_tokens(self.get_children());
+        // OPT 2: tag literal becomes `Cow::Borrowed("div")` instead of
+        // a fresh `String` allocation.
         quote! {
             ::euv::VirtualNode::Element {
-                tag: ::euv::Tag::Element(#tag_literal),
+                tag: ::euv::Tag::Element(::std::borrow::Cow::Borrowed(#tag_literal)),
                 attributes: vec![#(#attr_tokens), *],
                 children: #children_tokens,
                 key: #key_token,
