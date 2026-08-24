@@ -1,5 +1,4 @@
 use super::*;
-use std::borrow::Cow;
 
 // =====================================================================
 // Tag
@@ -65,7 +64,6 @@ fn tag_equality_different_inner_values() {
 #[test]
 fn tag_hash_same_for_equal_tags() {
     use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
     let a: Tag = Tag::Element(Cow::Borrowed("div"));
     let b: Tag = Tag::Element(Cow::Borrowed("div"));
     let mut h1: DefaultHasher = DefaultHasher::new();

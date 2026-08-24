@@ -6,6 +6,9 @@
 //! reactive side effects, the `computed!` macro for reactive computed signals,
 //! and the `component` attribute macro.
 
+#[macro_use]
+extern crate syn;
+
 mod class;
 mod computed;
 mod html;

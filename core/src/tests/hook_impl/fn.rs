@@ -1,5 +1,4 @@
 use super::*;
-use std::panic;
 
 // =====================================================================
 // HookContext::current / HookContext::with
@@ -7,7 +6,7 @@ use std::panic;
 
 #[test]
 fn hook_context_current_does_not_panic_on_native() {
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let _: HookContext = HookContext::current();
     }))
     .map_err(|_| "panic".to_string());
@@ -173,7 +172,7 @@ fn hook_context_signal_registers_cleanup() {
 #[test]
 fn hook_context_signal_does_not_panic_on_native() {
     let context: HookContext = HookContext::default();
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         HookContext::with(context, || {
             let _: Signal<i32> = HookContext::signal(|| 7);
         });
@@ -211,7 +210,7 @@ fn hook_context_cleanup_registers_closure() {
 #[test]
 fn hook_context_cleanup_does_not_panic_on_native() {
     let context: HookContext = HookContext::default();
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         HookContext::with(context, || {
             HookContext::cleanup(|| {});
         });
@@ -246,7 +245,7 @@ fn interval_handle_clear_does_not_panic_on_native() {
     // which panics on non-wasm targets ("cannot access
     // imported statics on non-wasm targets"). Wrap in
     // catch_unwind to verify the panic is contained.
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         handle.clear();
     }))
     .map_err(|_| "panic".to_string());
@@ -334,7 +333,7 @@ fn hook_context_inner_debug_format_works() {
 
 #[test]
 fn native_hook_context_signal_works_on_native() {
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let context: HookContext = HookContext::default();
         HookContext::with(context, || {
             let s: Signal<i32> = HookContext::signal(|| 1);
@@ -347,7 +346,7 @@ fn native_hook_context_signal_works_on_native() {
 
 #[test]
 fn native_hook_context_with_works_on_native() {
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let context: HookContext = HookContext::default();
         let r: i32 = HookContext::with(context, || 99);
         assert_eq!(r, 99);
@@ -358,7 +357,7 @@ fn native_hook_context_with_works_on_native() {
 
 #[test]
 fn native_hook_context_cleanup_works_on_native() {
-    let result: Result<(), String> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let context: HookContext = HookContext::default();
         HookContext::with(context, || {
             HookContext::cleanup(|| {});
@@ -524,7 +523,6 @@ fn interval_handle_clone() {
 #[test]
 fn interval_handle_is_hash() {
     use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
     let handle: IntervalHandle = IntervalHandle::default();
     let mut hasher: DefaultHasher = DefaultHasher::new();
     handle.hash(&mut hasher);
@@ -533,7 +531,7 @@ fn interval_handle_is_hash() {
 
 #[test]
 fn native_hook_context_default_does_not_panic() {
-    let result: Result<(), ()> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), ()> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let _: HookContext = HookContext::default();
     }))
     .map_err(|_| ());

@@ -1,5 +1,4 @@
 use super::*;
-use std::panic;
 
 /// Regression test: `Signal::clear_listeners` must be idempotent so that
 /// `cleanup_subtree` can be safely invoked multiple times on the same element
@@ -70,7 +69,7 @@ fn clear_listeners_then_set_via_stale_listener_is_safe() {
     // Fire the listener via `set`. On wasm this is a real dispatch; on
     // native, `App::schedule_update` panics on the `Closure::wrap` path,
     // but the listener has already fired by then.
-    let _ = panic::catch_unwind(|| {
+    let _ = super::catch_unwind(|| {
         source.set(1);
     });
     assert!(
@@ -240,7 +239,7 @@ fn signal_deactivate_does_not_panic_on_native() {
     // deactivate() may not fully work on native
     // (touches the BridgeRefsCell global which is
     // wasm-only), but it must not panic.
-    let _ = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let _ = super::catch_unwind(super::AssertUnwindSafe(|| {
         signal.deactivate();
     }));
 }
@@ -325,7 +324,6 @@ fn fire_handle_default_inner_is_zero() {
     let b: FireHandle = unsafe { std::mem::zeroed() };
     assert_eq!(a, b);
     use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
     let mut h1: DefaultHasher = DefaultHasher::new();
     let mut h2: DefaultHasher = DefaultHasher::new();
     a.hash(&mut h1);
@@ -406,7 +404,7 @@ fn fire_handle_clone_via_copy_increments_underlying_counter() {
 
 #[test]
 fn native_signal_create_and_is_alive_does_not_panic() {
-    let result: Result<(), ()> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), ()> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let signal: Signal<i32> = Signal::create(7);
         assert!(Signal::<i32>::is_alive(signal.get_inner()));
     }))
@@ -416,7 +414,7 @@ fn native_signal_create_and_is_alive_does_not_panic() {
 
 #[test]
 fn native_signal_get_does_not_panic() {
-    let result: Result<(), ()> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), ()> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let signal: Signal<i32> = Signal::create(11);
         let _: i32 = signal.get();
     }))
@@ -426,7 +424,7 @@ fn native_signal_get_does_not_panic() {
 
 #[test]
 fn native_fire_handle_fire_does_not_panic() {
-    let result: Result<(), ()> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+    let result: Result<(), ()> = super::catch_unwind(super::AssertUnwindSafe(|| {
         let handle: FireHandle = FireHandle::from(|| {});
         unsafe {
             handle.fire();

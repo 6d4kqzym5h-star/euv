@@ -7,9 +7,7 @@
 //! prefix carries its security warning forward to the
 //! call site.
 
-use proc_macro::TokenStream;
-use quote::quote;
-use syn::{LitStr, parse_macro_input};
+use super::*;
 /// Parses the input of the `unsafe_no_inline!` macro.
 ///
 /// Accepts a single string literal and emits

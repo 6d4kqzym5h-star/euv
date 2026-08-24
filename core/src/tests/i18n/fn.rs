@@ -1,5 +1,4 @@
 use super::*;
-use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use crate::{HashMap, I18n, MessageEntry, Signal};
 

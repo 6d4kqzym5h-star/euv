@@ -1,5 +1,4 @@
 use super::*;
-use std::borrow::Cow;
 
 /// `AttributeValue::InnerHtml(String)` round-trips through Clone and
 /// retains the payload bytes intact.

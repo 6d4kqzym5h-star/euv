@@ -160,7 +160,7 @@ impl<T: ?Sized> EngineCell<T> {
     /// `UnsafeCell::get()` so we can hand the caller the
     /// `&'static mut T` the rest of the engine expects.
     pub fn get_mut(&self) -> &'static mut T {
-        let inner: &UnsafeCell<T> = &self.inner;
+        let inner: &UnsafeCell<T> = self.get_inner();
         unsafe { &mut *inner.get() }
     }
 
@@ -175,7 +175,7 @@ impl<T: ?Sized> EngineCell<T> {
     ///
     /// Reads via the `get_inner` accessor + `UnsafeCell::get`.
     pub fn get(&self) -> &'static T {
-        let inner: &UnsafeCell<T> = &self.inner;
+        let inner: &UnsafeCell<T> = self.get_inner();
         unsafe { &*inner.get() }
     }
 }
@@ -194,7 +194,7 @@ impl<T> MaybeEngineCell<T> {
 
     /// If the cell contains a value, returns a shared reference to it.
     pub fn try_get(&self) -> Option<&'static T> {
-        let inner: &UnsafeCell<Option<T>> = &self.inner;
+        let inner: &UnsafeCell<Option<T>> = self.get_inner();
         let slot: &Option<T> = unsafe { &*inner.get() };
         slot.as_ref()
     }
@@ -206,7 +206,7 @@ impl<T> MaybeEngineCell<T> {
     /// Exclusivity rules from [`EngineCell::get_mut`] apply - no other
     /// borrow on the same cell may be alive.
     pub fn try_get_mut(&self) -> Option<&'static mut T> {
-        let inner: &UnsafeCell<Option<T>> = &self.inner;
+        let inner: &UnsafeCell<Option<T>> = self.get_inner();
         let slot: &mut Option<T> = unsafe { &mut *inner.get() };
         slot.as_mut()
     }
@@ -217,7 +217,7 @@ impl<T> MaybeEngineCell<T> {
     /// Reads through `get_inner` to inspect the current state without
     /// aliasing, then writes through `UnsafeCell::get` raw pointer.
     pub fn try_set(&self, value: T) -> Result<(), T> {
-        let inner: &UnsafeCell<Option<T>> = &self.inner;
+        let inner: &UnsafeCell<Option<T>> = self.get_inner();
         let slot: *mut Option<T> = inner.get();
         unsafe {
             if (*slot).is_some() {
@@ -230,13 +230,13 @@ impl<T> MaybeEngineCell<T> {
 
     /// Removes and returns the contained value, leaving the cell empty.
     pub fn try_take(&self) -> Option<T> {
-        let inner: &UnsafeCell<Option<T>> = &self.inner;
+        let inner: &UnsafeCell<Option<T>> = self.get_inner();
         unsafe { (*inner.get()).take() }
     }
 
     /// Replaces the contained value, returning the old one.
     pub fn try_replace(&self, value: T) -> Option<T> {
-        let inner: &UnsafeCell<Option<T>> = &self.inner;
+        let inner: &UnsafeCell<Option<T>> = self.get_inner();
         let slot: *mut Option<T> = inner.get();
         unsafe { (*slot).replace(value) }
     }

@@ -1,6 +1,4 @@
 use super::*;
-use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::vec::Vec;
 
 /// Runs the given closure, swallowing the native-build
 /// `Signal::set` panic that fires when `web_sys::window()`

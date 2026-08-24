@@ -47,7 +47,6 @@ fn scheduler_is_ord() {
 #[test]
 fn scheduler_is_hash() {
     use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
     let s: Scheduler = Scheduler::default();
     let mut hasher: DefaultHasher = DefaultHasher::new();
     s.hash(&mut hasher);

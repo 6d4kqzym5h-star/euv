@@ -91,8 +91,11 @@ impl ProfilerMark {
     /// invocation in well-typed code.
     pub fn end(self) {
         let ended_ms: f64 = now_ms();
-        let entry: ProfileEntry =
-            ProfileEntry::new(self.label.clone(), ended_ms - self.started_ms, ended_ms);
+        let entry: ProfileEntry = ProfileEntry::new(
+            self.get_label().clone(),
+            ended_ms - self.get_started_ms(),
+            ended_ms,
+        );
         let mut current: Vec<ProfileEntry> = self.get_entries().get();
         current.push(entry);
         self.get_entries().set(current);

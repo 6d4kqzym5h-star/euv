@@ -295,7 +295,6 @@ fn mount_is_ord() {
 #[test]
 fn mount_is_hash() {
     use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
     let m: Mount = Mount::default();
     let mut hasher: DefaultHasher = DefaultHasher::new();
     m.hash(&mut hasher);

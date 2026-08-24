@@ -13,6 +13,11 @@ pub mod vdom;
 #[cfg(test)]
 mod tests;
 
+pub use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    panic::{AssertUnwindSafe, catch_unwind},
+};
 pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
 
 pub(crate) use renderer::*;
@@ -24,7 +29,6 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     future::Future,
-    hash::Hash,
     iter::Iterator,
     marker::PhantomData,
     mem::{swap, take},
