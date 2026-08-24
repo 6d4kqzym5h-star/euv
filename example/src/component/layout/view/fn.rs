@@ -245,7 +245,9 @@ pub(crate) fn mobile_layout(node: VirtualNode<MobileLayoutProps>) -> VirtualNode
 ///
 /// - `Result<DocsStatus, ()>` — The parsed docs status on success, or an error indicator on failure.
 async fn fetch_docs_status_with_retry() -> Result<DocsStatus, ()> {
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return Err(());
+    };
     let mut attempt: u32 = 0;
     loop {
         let promise: Promise = window_value.fetch_with_str(DOCS_STATUS_URL);
@@ -476,14 +478,15 @@ async fn try_notify_native_once() -> Result<(UpdateStatus, UpdateResultPayload),
 ///
 /// - `()` — Resolves once the timer fires.
 async fn sleep_ms(millis: u32) {
-    let window: Window = window().expect("no global window exists");
-    JsFuture::from(Promise::new(&mut |resolve: Function, _reject: Function| {
-        window
-            .set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, millis as i32)
-            .expect("failed to set timeout");
-    }))
-    .await
-    .expect("timeout future failed");
+    let Some(window): Option<Window> = window() else {
+        return;
+    };
+    let _: Result<JsValue, JsValue> =
+        JsFuture::from(Promise::new(&mut |resolve: Function, _reject: Function| {
+            let _: Result<i32, JsValue> = window
+                .set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, millis as i32);
+        }))
+        .await;
 }
 
 /// Renders the application shell with navigation and route-based page content.

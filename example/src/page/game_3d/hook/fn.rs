@@ -388,7 +388,9 @@ pub(crate) fn interpolate_cubes(
 ///
 /// - `Option<SsaaCanvas>` - The SSAA canvas, or `None` if unavailable.
 pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return None;
+    };
     let is_mobile: bool = window_value
         .inner_width()
         .ok()
@@ -424,8 +426,12 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
 ///
 /// - `Option<CanvasGuardEntry>` - The listener closures and element for cleanup, or `None` if the canvas was not found.
 pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<CanvasGuardEntry> {
-    let window: Window = window().expect("no global window exists");
-    let document: Document = window.document().expect("should have a document");
+    let Some(window): Option<Window> = window() else {
+        return None;
+    };
+    let Some(document): Option<Document> = window.document() else {
+        return None;
+    };
     let canvas: Element = document.query_selector(canvas_selector).ok().flatten()?;
     let wheel_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         event.prevent_default();
@@ -467,7 +473,9 @@ pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<Canv
 /// `SsaaCanvas` with a 2x scale factor on desktop and 1x on mobile for
 /// crisp text rendering.
 pub(crate) fn draw_game_3d_loading(target_selector: &str, color_source_selector: &str) {
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
     let is_mobile: bool = window_value
         .inner_width()
         .ok()
@@ -488,9 +496,10 @@ pub(crate) fn draw_game_3d_loading(target_selector: &str, color_source_selector:
     // Read the computed style of the source element once so the theme
     // variables (defined on a parent container, not on the document root)
     // are inherited correctly.
-    let computed_style: Option<CssStyleDeclaration> = window_value
-        .document()
-        .expect("should have a document")
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
+    let computed_style: Option<CssStyleDeclaration> = document_value
         .query_selector(color_source_selector)
         .ok()
         .flatten()
@@ -551,7 +560,9 @@ fn set_loaded_delayed(loaded: Signal<bool>, millis: i32) {
     }));
     let loaded_callback: Function = loaded_closure.as_ref().unchecked_ref::<Function>().clone();
     loaded_closure.forget();
-    let loaded_window: Window = window().expect("no global window exists");
+    let Some(loaded_window): Option<Window> = window() else {
+        return;
+    };
     let _ = loaded_window
         .set_timeout_with_callback_and_timeout_and_arguments_0(&loaded_callback, millis);
 }
@@ -622,10 +633,12 @@ pub(crate) fn start_game_3d_loop(
             // and rendering against a detached canvas forever.
             return;
         }
-        let window_value: Window = window().expect("no global window exists");
-        let performance: Performance = window_value
-            .performance()
-            .expect("performance should exist");
+        let Some(window_value): Option<Window> = window() else {
+            return;
+        };
+        let Some(performance): Option<Performance> = window_value.performance() else {
+            return;
+        };
         let current_time: f64 = performance.now() / 1000.0;
         let prev: f64 = last_clone.get();
         let frame_time: f64 = if prev < 0.0 {
@@ -670,14 +683,12 @@ pub(crate) fn start_game_3d_loop(
             frame_clone.set(0);
             fps_clone.set(0.0);
         }
+        let Some(raf_closure_ref): Option<&'static Closure<dyn FnMut()>> = cell_clone.try_get()
+        else {
+            return;
+        };
         let next_id: i32 = window_value
-            .request_animation_frame(
-                cell_clone
-                    .try_get()
-                    .expect("raf closure should exist")
-                    .as_ref()
-                    .unchecked_ref(),
-            )
+            .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
             .unwrap_or(0);
         raf_clone.set(Some(next_id));
     }));
@@ -691,21 +702,23 @@ pub(crate) fn start_game_3d_loop(
     let start_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         state_for_start.get_loaded().set(true);
         *guard_for_start.borrow_mut() = register_canvas_scroll_guard(GAME_3D_CANVAS_SELECTOR);
-        let start_window: Window = window().expect("no global window exists");
+        let Some(start_window): Option<Window> = window() else {
+            return;
+        };
+        let Some(start_raf_ref): Option<&'static Closure<dyn FnMut()>> = cell_for_start.try_get()
+        else {
+            return;
+        };
         let start_id: i32 = start_window
-            .request_animation_frame(
-                cell_for_start
-                    .try_get()
-                    .expect("raf closure should exist")
-                    .as_ref()
-                    .unchecked_ref(),
-            )
+            .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
             .unwrap_or(0);
         raf_for_start.set(Some(start_id));
     }));
     let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
     start_closure.forget();
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
     let timeout_id: i32 = window_value
         .set_timeout_with_callback_and_timeout_and_arguments_0(
             &start_callback,
@@ -731,7 +744,9 @@ pub(crate) fn start_game_3d_loop(
         .unchecked_ref::<Function>()
         .clone();
     debounce_closure.forget();
-    let timeout_window: Window = window().expect("no global window exists");
+    let Some(timeout_window): Option<Window> = window() else {
+        return;
+    };
     App::use_window_event("resize", move || {
         let old_timer: Option<i32> = timer_for_event.get();
         if let Some(timer_id) = old_timer {
@@ -748,15 +763,21 @@ pub(crate) fn start_game_3d_loop(
     let guard_for_cleanup: CanvasGuardCell = guard_cell.clone();
     App::use_cleanup(move || {
         if let Some(cancel_id) = raf_id.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             let _ = window_value.cancel_animation_frame(cancel_id);
         }
         if let Some(timeout_id) = start_timeout_id.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             window_value.clear_timeout_with_handle(timeout_id);
         }
         if let Some(timer_id) = debounce_timer.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             window_value.clear_timeout_with_handle(timer_id);
         }
         let _: Option<_> = closure_cell.try_take();
@@ -1087,7 +1108,9 @@ pub(crate) fn game_3d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
 ///
 /// - `(f64, f64, f64)` - The `(r, g, b)` clear color in 0.0-1.0 range.
 pub(crate) fn game_3d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f64) {
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return (0.0, 0.0, 0.0);
+    };
     let background: String = window_value
         .document()
         .and_then(|document: Document| document.query_selector(canvas_selector).ok().flatten())
@@ -1250,11 +1273,15 @@ pub(crate) fn start_game_3d_webgpu_loop(
         .unchecked_ref::<Function>()
         .clone();
     debounce_closure.forget();
-    let resize_window: Window = window().expect("no global window exists");
+    let Some(resize_window): Option<Window> = window() else {
+        return;
+    };
     App::use_window_event("resize", move || {
         let old_timer: Option<i32> = resize_timer_for_event.get();
         if let Some(timer_id) = old_timer {
-            let clear_window: Window = window().expect("no global window exists");
+            let Some(clear_window): Option<Window> = window() else {
+                return;
+            };
             clear_window.clear_timeout_with_handle(timer_id);
         }
         let new_timer: i32 = resize_window
@@ -1274,11 +1301,15 @@ pub(crate) fn start_game_3d_webgpu_loop(
     App::use_cleanup(move || {
         cancelled_for_cleanup.set(true);
         if let Some(cancel_id) = raf_for_cleanup.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             let _ = window_value.cancel_animation_frame(cancel_id);
         }
         if let Some(timer_id) = resize_timer_for_cleanup.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             window_value.clear_timeout_with_handle(timer_id);
         }
         let _: Option<_> = cell_for_cleanup.try_take();
@@ -1300,7 +1331,9 @@ pub(crate) fn start_game_3d_webgpu_loop(
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
-    let loading_window: Window = window().expect("no global window exists");
+    let Some(loading_window): Option<Window> = window() else {
+        return;
+    };
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_3d_loading(
             GAME_3D_WEBGPU_LOADING_CANVAS_SELECTOR,
@@ -1372,10 +1405,12 @@ pub(crate) fn start_game_3d_webgpu_loop(
             if cancelled_for_loop.get() || game_3d_canvas_detached(GAME_3D_WEBGPU_CANVAS_SELECTOR) {
                 return;
             }
-            let window_value: Window = window().expect("no global window exists");
-            let performance: Performance = window_value
-                .performance()
-                .expect("performance should exist");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
+            let Some(performance): Option<Performance> = window_value.performance() else {
+                return;
+            };
             let current_time: f64 = performance.now() / 1000.0;
             let prev: f64 = last_clone.get();
             let frame_time: f64 = if prev < 0.0 {
@@ -1411,7 +1446,9 @@ pub(crate) fn start_game_3d_webgpu_loop(
             } else {
                 false
             };
-            let window_for_dpr: Window = window().expect("no global window exists");
+            let Some(window_for_dpr): Option<Window> = window() else {
+                return;
+            };
             let dpr: f64 = Reflect::get(
                 window_for_dpr.as_ref(),
                 &JsValue::from_str("devicePixelRatio"),
@@ -1476,14 +1513,12 @@ pub(crate) fn start_game_3d_webgpu_loop(
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }
+            let Some(raf_closure_ref): Option<&'static Closure<dyn FnMut()>> = cell_clone.try_get()
+            else {
+                return;
+            };
             let next_id: i32 = window_value
-                .request_animation_frame(
-                    cell_clone
-                        .try_get()
-                        .expect("raf closure should exist")
-                        .as_ref()
-                        .unchecked_ref(),
-                )
+                .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
                 .unwrap_or(0);
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
@@ -1492,15 +1527,15 @@ pub(crate) fn start_game_3d_webgpu_loop(
             }
         }));
         let _: Result<(), _> = closure_cell.try_set(raf_closure);
-        let start_window: Window = window().expect("no global window exists");
+        let Some(start_window): Option<Window> = window() else {
+            return;
+        };
+        let Some(start_raf_ref): Option<&'static Closure<dyn FnMut()>> = closure_cell.try_get()
+        else {
+            return;
+        };
         let start_id: i32 = start_window
-            .request_animation_frame(
-                closure_cell
-                    .try_get()
-                    .expect("raf closure should exist")
-                    .as_ref()
-                    .unchecked_ref(),
-            )
+            .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
             .unwrap_or(0);
         raf_id.set(Some(start_id));
     });
@@ -1550,11 +1585,15 @@ pub(crate) fn start_game_3d_webgl_loop(
         .unchecked_ref::<Function>()
         .clone();
     debounce_closure.forget();
-    let resize_window: Window = window().expect("no global window exists");
+    let Some(resize_window): Option<Window> = window() else {
+        return;
+    };
     App::use_window_event("resize", move || {
         let old_timer: Option<i32> = resize_timer_for_event.get();
         if let Some(timer_id) = old_timer {
-            let clear_window: Window = window().expect("no global window exists");
+            let Some(clear_window): Option<Window> = window() else {
+                return;
+            };
             clear_window.clear_timeout_with_handle(timer_id);
         }
         let new_timer: i32 = resize_window
@@ -1574,11 +1613,15 @@ pub(crate) fn start_game_3d_webgl_loop(
     App::use_cleanup(move || {
         cancelled_for_cleanup.set(true);
         if let Some(cancel_id) = raf_for_cleanup.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             let _ = window_value.cancel_animation_frame(cancel_id);
         }
         if let Some(timer_id) = resize_timer_for_cleanup.get() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             window_value.clear_timeout_with_handle(timer_id);
         }
         let _: Option<_> = cell_for_cleanup.try_take();
@@ -1595,7 +1638,9 @@ pub(crate) fn start_game_3d_webgl_loop(
         }
     });
     let cancelled_for_init: Rc<Cell<bool>> = cancelled.clone();
-    let loading_window: Window = window().expect("no global window exists");
+    let Some(loading_window): Option<Window> = window() else {
+        return;
+    };
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_3d_loading(
             GAME_3D_WEBGL_LOADING_CANVAS_SELECTOR,
@@ -1670,10 +1715,12 @@ pub(crate) fn start_game_3d_webgl_loop(
             if cancelled_for_loop.get() || game_3d_canvas_detached(GAME_3D_WEBGL_CANVAS_SELECTOR) {
                 return;
             }
-            let window_value: Window = window().expect("no global window exists");
-            let performance: Performance = window_value
-                .performance()
-                .expect("performance should exist");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
+            let Some(performance): Option<Performance> = window_value.performance() else {
+                return;
+            };
             let current_time: f64 = performance.now() / 1000.0;
             let prev: f64 = last_clone.get();
             let frame_time: f64 = if prev < 0.0 {
@@ -1703,7 +1750,9 @@ pub(crate) fn start_game_3d_webgl_loop(
             } else {
                 false
             };
-            let window_for_dpr: Window = window().expect("no global window exists");
+            let Some(window_for_dpr): Option<Window> = window() else {
+                return;
+            };
             let dpr: f64 = Reflect::get(
                 window_for_dpr.as_ref(),
                 &JsValue::from_str("devicePixelRatio"),
@@ -1748,14 +1797,12 @@ pub(crate) fn start_game_3d_webgl_loop(
                 frame_clone.set(0);
                 fps_clone.set(0.0);
             }
+            let Some(raf_closure_ref): Option<&'static Closure<dyn FnMut()>> = cell_clone.try_get()
+            else {
+                return;
+            };
             let next_id: i32 = window_value
-                .request_animation_frame(
-                    cell_clone
-                        .try_get()
-                        .expect("raf closure should exist")
-                        .as_ref()
-                        .unchecked_ref(),
-                )
+                .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
                 .unwrap_or(0);
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
@@ -1764,15 +1811,15 @@ pub(crate) fn start_game_3d_webgl_loop(
             }
         }));
         let _: Result<(), _> = closure_cell.try_set(raf_closure);
-        let start_window: Window = window().expect("no global window exists");
+        let Some(start_window): Option<Window> = window() else {
+            return;
+        };
+        let Some(start_raf_ref): Option<&'static Closure<dyn FnMut()>> = closure_cell.try_get()
+        else {
+            return;
+        };
         let start_id: i32 = start_window
-            .request_animation_frame(
-                closure_cell
-                    .try_get()
-                    .expect("raf closure should exist")
-                    .as_ref()
-                    .unchecked_ref(),
-            )
+            .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
             .unwrap_or(0);
         raf_id.set(Some(start_id));
     });

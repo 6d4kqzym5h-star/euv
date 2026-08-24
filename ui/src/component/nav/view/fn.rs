@@ -128,7 +128,6 @@ pub fn euv_nav_items(node: VirtualNode<EuvNavItemsProps>) -> VirtualNode {
         drawer_open,
         on_item_click,
     }: EuvNavItemsProps = node.try_get_props().unwrap_or_default();
-    let is_mobile: bool = drawer_open.is_some();
     let children: Vec<VirtualNode> =
         items
             .into_iter()
@@ -138,7 +137,7 @@ pub fn euv_nav_items(node: VirtualNode<EuvNavItemsProps>) -> VirtualNode {
                     label,
                     target,
                 } = item;
-                if is_mobile {
+                if let Some(drawer_open_signal) = drawer_open {
                     let on_navigate: Option<NavEventCallback> = on_item_click.as_ref().map(
                         |cb: &NavItemClickCallback| -> NavEventCallback {
                             let callback: NavItemClickCallback = cb.clone();
@@ -149,7 +148,7 @@ pub fn euv_nav_items(node: VirtualNode<EuvNavItemsProps>) -> VirtualNode {
                     html! {
                         euv_mobile_nav_item {
                             route_signal: route_signal
-                            drawer_open: drawer_open.unwrap()
+                            drawer_open: drawer_open_signal
                             icon: icon
                             label: label
                             target: target

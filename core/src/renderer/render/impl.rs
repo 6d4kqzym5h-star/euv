@@ -312,7 +312,7 @@ impl Renderer {
                                 element
                                     .set_attribute_or_property(new_attr.get_name(), css.get_name());
                             }
-                            AttributeValue::Event(_) => unreachable!(),
+                            AttributeValue::Event(_) => {}
                             AttributeValue::InnerHtml(html) => {
                                 element.set_inner_html(html);
                             }

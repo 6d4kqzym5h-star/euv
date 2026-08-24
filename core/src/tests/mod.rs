@@ -13,6 +13,7 @@ mod portal;
 mod profiler;
 mod raw_html;
 mod renderer_const;
+mod schedule;
 mod r#signal;
 mod suspense;
 mod transition;

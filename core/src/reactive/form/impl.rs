@@ -5,7 +5,6 @@
 //! implementation.
 
 use super::*;
-use crate::{HookContext, Signal};
 use std::collections::{HashMap, HashSet};
 
 /// Extension trait that exposes the hook-context factory

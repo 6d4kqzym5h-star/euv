@@ -78,8 +78,12 @@ pub(crate) fn use_canvas_state() -> UseCanvas {
 ///
 /// - `UseCanvas` - The canvas drawing board state.
 pub(crate) fn update_snapshot(state: UseCanvas) {
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let Some(element) = document_value
         .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
@@ -108,8 +112,12 @@ pub(crate) fn start_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
     state.get_drawing().set(true);
     state.get_last_x().set(offset_x);
     state.get_last_y().set(offset_y);
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let Some(element) = document_value
         .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
@@ -160,8 +168,12 @@ pub(crate) fn continue_drawing(state: UseCanvas, offset_x: f64, offset_y: f64) {
     let prev_y: f64 = state.get_last_y().get();
     state.get_last_x().set(offset_x);
     state.get_last_y().set(offset_y);
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let Some(element) = document_value
         .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
@@ -214,8 +226,12 @@ pub(crate) fn stop_drawing(state: UseCanvas) {
 ///
 /// - `&str` - The CSS selector of the `<canvas>` element to clear.
 pub(crate) fn clear_canvas(canvas_selector: &str) {
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let Some(element) = document_value
         .query_selector(canvas_selector)
         .ok()
@@ -319,8 +335,12 @@ pub(crate) fn get_mouse_client(event: &Event) -> (f64, f64) {
 /// - `bool` - Whether the canvas is in fullscreen mode.
 pub(crate) fn start_drawing_multi_touch(state: UseCanvas, event: &Event, is_fullscreen: bool) {
     let points: Vec<NativeTouchPointF64> = NativeTouchPointF64::extract_all(event);
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let Some(element) = document_value
         .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
@@ -385,8 +405,12 @@ pub(crate) fn continue_drawing_multi_touch(state: UseCanvas, event: &Event, is_f
         return;
     }
     let points: Vec<NativeTouchPointF64> = NativeTouchPointF64::extract_all(event);
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let Some(element) = document_value
         .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
@@ -500,8 +524,12 @@ pub(crate) fn map_rotated_offset(
     if !is_fullscreen {
         return (offset_x, offset_y);
     }
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return (offset_x, offset_y);
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return (offset_x, offset_y);
+    };
     let Some(element) = document_value
         .query_selector(CANVAS_DRAWING_SELECTOR)
         .ok()
@@ -534,7 +562,9 @@ pub(crate) fn enter_fullscreen(state: UseCanvas) {
     let resize_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         resize_fullscreen_canvas(&snapshot_data_url);
     }));
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
     let _: Result<i32, JsValue> =
         window_value.request_animation_frame(resize_closure.as_ref().unchecked_ref());
     resize_closure.forget();
@@ -554,8 +584,12 @@ pub(crate) fn enter_fullscreen(state: UseCanvas) {
 /// - `&str` - The snapshot data URL to draw onto the canvas.
 pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     UseEuvLayout::apply_cached_insets();
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let device_pixel_ratio: f64 = Reflect::get(
         window_value.as_ref(),
         &JsValue::from_str(CANVAS_EVENT_PROPERTY_DEVICE_PIXEL_RATIO),
@@ -623,7 +657,9 @@ pub(crate) fn resize_fullscreen_canvas(snapshot_data_url: &str) {
     if snapshot_data_url.is_empty() {
         return;
     }
-    let image: HtmlImageElement = HtmlImageElement::new().expect("should create image element");
+    let Ok(image): Result<HtmlImageElement, JsValue> = HtmlImageElement::new() else {
+        return;
+    };
     image.set_src(snapshot_data_url);
     let draw_image: HtmlImageElement = image.clone();
     let draw_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
@@ -790,7 +826,9 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
         let pending_for_raf: Rc<Cell<f64>> = pending_value.clone();
         let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
         let line_width_signal: Signal<f64> = state.get_line_width();
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value): Option<Window> = window() else {
+            return;
+        };
         let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
             raf_id_clone.set(None);
             let current_width: f64 = pending_for_raf.get();

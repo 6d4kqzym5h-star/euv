@@ -24,7 +24,6 @@
 //! same single-slot pattern).
 
 use super::*;
-use crate::Signal;
 use std::cell::Cell;
 use std::future::Future;
 use std::rc::Rc;

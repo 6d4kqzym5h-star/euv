@@ -64,7 +64,6 @@ pub trait HasLoadingHint: Clone + 'static {
 }
 
 impl HasLoadingHint for () {
-    #[inline]
     fn empty() -> Self {}
 }
 

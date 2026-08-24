@@ -1,6 +1,5 @@
 use super::*;
 
-use crate::Signal;
 use lombok_macros::{Data, New};
 use std::collections::HashMap;
 /// The aggregate i18n state.

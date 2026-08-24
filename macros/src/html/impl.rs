@@ -833,11 +833,10 @@ impl HtmlDynamicTag {
             self.dyn_non_prop_attr_tokens(attr_tokens);
         let props_init_tokens: proc_macro2::TokenStream = if prop_field_tokens.is_empty() {
             quote! { #props_ident::default() }
+        } else if prop_field_tokens.len() == props_fields.len() {
+            quote! { #props_ident { #(#prop_field_tokens), * } }
         } else {
-            quote! {
-                #[allow(clippy::needless_update)]
-                #props_ident { #(#prop_field_tokens), *, ..Default::default() }
-            }
+            quote! { #props_ident { #(#prop_field_tokens), *, ..Default::default() } }
         };
         let has_children_field: bool = props_fields.contains(&ATTR_KEY_CHILDREN.to_string());
         let component_call_tokens: proc_macro2::TokenStream = if has_children_field {
@@ -1118,11 +1117,10 @@ impl HtmlElement {
             self.prop_field_tokens(&props_field_types);
         let props_init_tokens: proc_macro2::TokenStream = if prop_field_tokens.is_empty() {
             quote! { #props_type_ident::default() }
+        } else if prop_field_tokens.len() == props_field_types.len() {
+            quote! { #props_type_ident { #(#prop_field_tokens), * } }
         } else {
-            quote! {
-                #[allow(clippy::needless_update)]
-                #props_type_ident { #(#prop_field_tokens), *, ..Default::default() }
-            }
+            quote! { #props_type_ident { #(#prop_field_tokens), *, ..Default::default() } }
         };
         let child_tokens: Vec<proc_macro2::TokenStream> = nodes_to_token_vec(self.get_children());
         quote! {

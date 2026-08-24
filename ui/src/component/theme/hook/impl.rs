@@ -59,7 +59,9 @@ impl ThemeState {
     ///
     /// - `Signal<String>` - The theme signal to update when the system theme changes.
     pub fn use_system_theme_change(theme_signal: Signal<String>) {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return;
+        };
         let media_query: Option<MediaQueryList> = window
             .match_media("(prefers-color-scheme: dark)")
             .ok()
@@ -89,7 +91,9 @@ impl ThemeState {
     ///
     /// - `String` - The detected system theme name ("light" or "dark").
     pub fn detect_system_theme() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return THEME_LIGHT.to_string();
+        };
         let is_dark: bool = window
             .match_media("(prefers-color-scheme: dark)")
             .ok()

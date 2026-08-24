@@ -1,6 +1,5 @@
 use super::*;
 
-use crate::Signal;
 use lombok_macros::{Data, New};
 /// The four phases of a transition lifecycle.
 ///

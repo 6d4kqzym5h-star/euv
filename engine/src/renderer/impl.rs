@@ -135,14 +135,16 @@ impl CanvasRenderer {
     /// Reads `window.devicePixelRatio` using `Reflect::get` because the
     /// `web-sys` `Window` features currently in use do not expose a native
     /// getter for this property. Falls back to
-    /// `RENDERER_DEFAULT_DEVICE_PIXEL_RATIO` (1.0) when the value is missing,
-    /// not a finite number, or below 1.0.
+    /// `RENDERER_DEFAULT_DEVICE_PIXEL_RATIO` (1.0) when the global window or
+    /// the value is missing, not a finite number, or below 1.0.
     ///
     /// # Returns
     ///
     /// - `f64` - The detected device pixel ratio (clamped to `>= 1.0`).
     pub fn detect_dpr() -> f64 {
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            return RENDERER_DEFAULT_DEVICE_PIXEL_RATIO;
+        };
         let raw: Option<f64> = Reflect::get(
             window_value.as_ref(),
             &JsValue::from_str(RENDERER_PROPERTY_DEVICE_PIXEL_RATIO),
@@ -411,8 +413,12 @@ impl CanvasRenderer {
     where
         S: AsRef<str>,
     {
-        let window_value: Window = window().expect("no global window exists");
-        let document_value: Document = window_value.document().expect("should have a document");
+        let Some(window_value) = window() else {
+            return None;
+        };
+        let Some(document_value) = window_value.document() else {
+            return None;
+        };
         let element: Element = document_value
             .query_selector(canvas_selector.as_ref())
             .ok()
@@ -1119,8 +1125,12 @@ impl SsaaCanvas {
     where
         S: AsRef<str>,
     {
-        let window_value: Window = window().expect("no global window exists");
-        let document_value: Document = window_value.document().expect("should have a document");
+        let Some(window_value) = window() else {
+            return None;
+        };
+        let Some(document_value) = window_value.document() else {
+            return None;
+        };
         let element: Element = document_value
             .query_selector(canvas_selector.as_ref())
             .ok()
@@ -1741,7 +1751,14 @@ impl WebGpuRenderer {
     /// branch can run and report `WebGPU Not Supported`.
     /// Returns a Promise that rejects after `INIT_PROMISE_TIMEOUT_MILLIS`.
     fn timeout_promise() -> Promise {
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            return Promise::new(&mut |_resolve: Function, reject: Function| {
+                let _: Result<JsValue, JsValue> = reject.call1(
+                    &JsValue::UNDEFINED,
+                    &JsValue::from_str(RENDERER_TIMEOUT_ERROR_MESSAGE),
+                );
+            });
+        };
         Promise::new(&mut |_resolve: Function, reject: Function| {
             let reject_fn: Function = reject.clone();
             let timer: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
@@ -1792,7 +1809,9 @@ impl WebGpuRenderer {
     /// - `Result<WebGpuRenderer, WebGpuInitError>` - The initialized renderer, or
     ///   a typed error describing the specific failure.
     pub async fn init(config: &RenderConfig) -> Result<WebGpuRenderer, WebGpuInitError> {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return Err(WebGpuInitError::NavigatorGpuMissing);
+        };
         let navigator: Navigator = window.navigator();
         let gpu_result: Result<JsValue, JsValue> = Reflect::get(
             navigator.as_ref(),
@@ -1849,7 +1868,11 @@ impl WebGpuRenderer {
         if device_value.is_null() || device_value.is_undefined() {
             return Err(WebGpuInitError::DeviceUnavailable);
         }
-        let document: Document = window.document().expect("should have a document");
+        let Some(document) = window.document() else {
+            return Err(WebGpuInitError::CanvasNotFound(
+                config.canvas_selector.clone(),
+            ));
+        };
         let element: Element = match document.query_selector(&config.canvas_selector) {
             Ok(Some(el)) => el,
             Ok(None) => {
@@ -4800,8 +4823,12 @@ impl WebGlRenderer {
     ///
     /// - `bool` - `true` if a `webgl2` context could be acquired.
     pub fn is_available() -> bool {
-        let window_value: Window = window().expect("no global window exists");
-        let document_value: Document = window_value.document().expect("should have a document");
+        let Some(window_value) = window() else {
+            return false;
+        };
+        let Some(document_value) = window_value.document() else {
+            return false;
+        };
         let element: Element = match document_value.create_element("canvas") {
             Ok(element) => element,
             Err(_) => return false,
@@ -4825,8 +4852,16 @@ impl WebGlRenderer {
     /// - `Result<WebGlRenderer, WebGlInitError>` - The initialized renderer,
     ///   or a typed error describing the specific failure.
     pub fn init(config: &RenderConfig) -> Result<WebGlRenderer, WebGlInitError> {
-        let window_value: Window = window().expect("no global window exists");
-        let document_value: Document = window_value.document().expect("should have a document");
+        let Some(window_value) = window() else {
+            return Err(WebGlInitError::CanvasNotFound(
+                config.canvas_selector.clone(),
+            ));
+        };
+        let Some(document_value) = window_value.document() else {
+            return Err(WebGlInitError::CanvasNotFound(
+                config.canvas_selector.clone(),
+            ));
+        };
         let element: Element = document_value
             .query_selector(config.canvas_selector.as_ref())
             .map_err(WebGlInitError::CanvasQuery)?
@@ -5406,23 +5441,6 @@ pub(crate) fn map_mode_for(read: bool, write: bool) -> u32 {
     mode
 }
 
-/// Resolve a `GPUPrimitiveTopology` string from a numeric enum tag
-/// the high-level pipeline descriptor carries. The five topology
-/// constants the WebGPU spec defines — `triangle-list`,
-/// `triangle-strip`, `line-list`, `line-strip`, `point-list` — are
-/// all reachable through this lookup.
-#[allow(dead_code)] // exercised by the renderer tests + future 3D code
-pub(crate) fn primitive_topology_name(tag: u8) -> &'static str {
-    match tag {
-        0 => WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        1 => WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
-        2 => WEBGPU_PRIMITIVE_TOPOLOGY_LINE_LIST,
-        3 => WEBGPU_PRIMITIVE_TOPOLOGY_LINE_STRIP,
-        4 => WEBGPU_PRIMITIVE_TOPOLOGY_POINT_LIST,
-        _ => WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-    }
-}
-
 /// Combine a `GPUTextureUsage` bitmask. The five spec-defined
 /// usage bits — `RENDER_ATTACHMENT`, `COPY_SRC`, `COPY_DST`,
 /// `TEXTURE_BINDING`, `STORAGE_BINDING` — are all OR'd in when the
@@ -5453,72 +5471,6 @@ pub(crate) fn texture_usage(
         usage |= WEBGPU_TEXTURE_USAGE_STORAGE_BINDING as u32;
     }
     usage
-}
-
-/// Combine a `GPUBufferUsage` bitmask. The six spec-defined usage
-/// bits — `MAP_READ`, `MAP_WRITE`, `COPY_SRC`, `COPY_DST`,
-/// `STORAGE`, `INDIRECT`, `QUERY_RESOLVE`, plus the geometry bits
-/// `VERTEX` / `INDEX` / `UNIFORM` — are all OR'd in when the
-/// caller asks for the corresponding capability. The function is
-/// `pub(crate)` so other engine modules (compute, query-resolve,
-/// 3D indirect draw) can call it without each one re-deriving the
-/// same bitmask.
-#[allow(dead_code)] // exercised by the renderer tests + future 3D code
-pub(crate) fn buffer_usage(
-    vertex: bool,
-    index: bool,
-    uniform: bool,
-    storage: bool,
-    indirect: bool,
-    query_resolve: bool,
-    copy_src: bool,
-    copy_dst: bool,
-) -> u32 {
-    let mut usage: u32 = 0;
-    if vertex {
-        usage |= WEBGPU_BUFFER_USAGE_VERTEX as u32;
-    }
-    if index {
-        usage |= WEBGPU_BUFFER_USAGE_INDEX as u32;
-    }
-    if uniform {
-        usage |= WEBGPU_BUFFER_USAGE_UNIFORM as u32;
-    }
-    if storage {
-        usage |= WEBGPU_BUFFER_USAGE_STORAGE as u32;
-    }
-    if indirect {
-        usage |= WEBGPU_BUFFER_USAGE_INDIRECT as u32;
-    }
-    if query_resolve {
-        usage |= WEBGPU_BUFFER_USAGE_QUERY_RESOLVE as u32;
-    }
-    if copy_src {
-        usage |= WEBGPU_BUFFER_USAGE_COPY_SRC as u32;
-    }
-    if copy_dst {
-        usage |= WEBGPU_BUFFER_USAGE_COPY_DST as u32;
-    }
-    usage
-}
-
-/// Resolve the JavaScript method name on `GPUDevice` that creates
-/// a bind-group layout. Returns the spec-defined method name; the
-/// engine's own helper for assembling descriptors is a thin
-/// wrapper around `Reflect::get(device, ...)`, but we expose this
-/// function so the constant stays reachable and so test code can
-/// assert the literal `"createBindGroupLayout"` against the
-/// spec-stable string.
-#[allow(dead_code)]
-pub(crate) fn device_method_create_bind_group_layout() -> &'static str {
-    WEBGPU_METHOD_CREATE_BIND_GROUP_LAYOUT
-}
-
-/// Resolve the JavaScript method name on `GPUDevice` that creates
-/// a pipeline layout. Returns the spec-defined method name.
-#[allow(dead_code)]
-pub(crate) fn device_method_create_pipeline_layout() -> &'static str {
-    WEBGPU_METHOD_CREATE_PIPELINE_LAYOUT
 }
 
 // ============================================================================

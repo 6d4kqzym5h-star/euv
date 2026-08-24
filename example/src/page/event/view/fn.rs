@@ -165,7 +165,9 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
                     pos_signal.set(pending_signal.get());
                     raf_id_signal.set(-1);
                 }));
-                let window: Window = window().expect("no global window exists");
+                let Some(window): Option<Window> = window() else {
+                    return;
+                };
                 let id: i32 = window
                     .request_animation_frame(closure.as_ref().unchecked_ref())
                     .unwrap_or(-1);
@@ -177,7 +179,9 @@ pub(crate) fn page_event(node: VirtualNode<PageEventProps>) -> VirtualNode {
     let on_drag_end = move |_: Event| {
         let raf_id: i32 = drag.get_drag_raf_id().get();
         if raf_id != -1 {
-            let window: Window = window().expect("no global window exists");
+            let Some(window): Option<Window> = window() else {
+                return;
+            };
             let _: Result<(), JsValue> = window.cancel_animation_frame(raf_id);
             drag.get_drag_raf_id().set(-1);
         }

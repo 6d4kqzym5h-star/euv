@@ -220,14 +220,15 @@ impl ToTokens for ClassDef {
                     .unwrap_or_else(|| quote! { Vec::new() });
             quote! {
                 {
-                    let mut all_pseudo = Vec::new();
+                    let mut all_pseudo: Vec<::euv::PseudoRule> = Vec::new();
                     #(all_pseudo.extend(#parent_pseudo_refs);)*
                     all_pseudo.extend(#self_pseudo);
                     all_pseudo
                 }
             }
         } else if !self.get_selector_blocks().is_empty() {
-            selector_blocks_to_tokens(self.get_selector_blocks()).unwrap()
+            selector_blocks_to_tokens(self.get_selector_blocks())
+                .unwrap_or_else(|| quote! { Vec::new() })
         } else {
             quote! { Vec::new() }
         };
@@ -250,14 +251,15 @@ impl ToTokens for ClassDef {
                     .unwrap_or_else(|| quote! { Vec::new() });
             quote! {
                 {
-                    let mut all_media = Vec::new();
+                    let mut all_media: Vec<::euv::MediaRule> = Vec::new();
                     #(all_media.extend(#parent_media_refs);)*
                     all_media.extend(#self_media);
                     all_media
                 }
             }
         } else if !self.get_at_rule_blocks().is_empty() {
-            at_rule_blocks_to_media_tokens(self.get_at_rule_blocks()).unwrap()
+            at_rule_blocks_to_media_tokens(self.get_at_rule_blocks())
+                .unwrap_or_else(|| quote! { Vec::new() })
         } else {
             quote! { Vec::new() }
         };

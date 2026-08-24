@@ -31,7 +31,9 @@ impl Router {
     ///
     /// - `String` - The hash fragment without the leading `#`, or `DEFAULT_ROUTE_PATH` if empty.
     pub fn current_route() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         let hash: String = window.location().hash().unwrap_or_default();
         let route: String = hash
             .strip_prefix(ROUTE_HASH_PREFIX)
@@ -69,13 +71,17 @@ impl Router {
             let target_route: Option<String> =
                 DEFERRED_NAVIGATION.with(|cell: &Cell<Option<String>>| cell.take());
             if let Some(route_value) = target_route {
-                let nav_window: Window = web_sys::window().expect("no global window exists");
+                let Some(nav_window) = web_sys::window() else {
+                    return;
+                };
                 let nav_location: Location = nav_window.location();
                 let nav_new_hash: String = format!("{ROUTE_HASH_PREFIX}{route_value}");
                 let _: Result<(), JsValue> = nav_location.set_hash(&nav_new_hash);
             }
         }));
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return;
+        };
         window.queue_microtask(deferred_closure.as_ref().unchecked_ref::<Function>());
         deferred_closure.forget();
     }
@@ -114,7 +120,9 @@ impl Router {
     ///
     /// - `bool` - `true` if the viewport width is less than the mobile breakpoint.
     pub fn is_mobile() -> bool {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return false;
+        };
         let width: f64 = window
             .inner_width()
             .ok()

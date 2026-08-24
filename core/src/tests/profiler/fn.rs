@@ -13,7 +13,10 @@ use std::vec::Vec;
 /// entries vector reflects the push; on native it does not,
 /// so any "did the entry actually land?" assertion must be
 /// skipped on the `false` branch.
-fn run_with_signal_capture<F: FnOnce()>(f: F) -> bool {
+fn run_with_signal_capture<F>(f: F) -> bool
+where
+    F: FnOnce(),
+{
     catch_unwind(AssertUnwindSafe(f)).is_ok()
 }
 

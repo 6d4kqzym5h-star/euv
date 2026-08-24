@@ -118,7 +118,9 @@ impl UseEuvInput {
             let Ok(element) = target.dyn_into::<HtmlElement>() else {
                 return;
             };
-            let window: Window = window().expect("no global window exists");
+            let Some(window) = window() else {
+                return;
+            };
             let element_clone: HtmlElement = element.clone();
             let window_clone: Window = window.clone();
             if let Ok(Some(main_el)) = element.closest("main")

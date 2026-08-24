@@ -26,7 +26,9 @@ impl UseEuvLayout {
             .unchecked_ref::<Function>()
             .clone();
         debounce_closure.forget();
-        let timeout_window: Window = window().expect("no global window exists");
+        let Some(timeout_window) = window() else {
+            return mobile_signal;
+        };
         App::use_window_event("resize", move || {
             let old_timer: Option<i32> = timer_signal.get();
             if let Some(timer_id) = old_timer {
@@ -96,12 +98,13 @@ impl UseEuvLayout {
     pub fn use_safe_area_fix() {
         Self::cache_safe_area_insets();
         App::use_window_event("fullscreenchange", || {
-            let is_fullscreen: bool = window()
-                .expect("no global window exists")
-                .document()
-                .expect("should have a document")
-                .fullscreen_element()
-                .is_some();
+            let Some(window_value) = window() else {
+                return;
+            };
+            let Some(document_value) = window_value.document() else {
+                return;
+            };
+            let is_fullscreen: bool = document_value.fullscreen_element().is_some();
             if is_fullscreen {
                 NATIVE_FULLSCREEN_ACTIVE.with(|flag: &Cell<bool>| flag.set(true));
                 Router::overlay_push_state();
@@ -133,10 +136,12 @@ impl UseEuvLayout {
                 return false;
             }
             NATIVE_FULLSCREEN_EXIT_BY_POPSTATE.with(|flag: &Cell<bool>| flag.set(true));
-            let document_value: Document = window()
-                .expect("no global window exists")
-                .document()
-                .expect("should have a document");
+            let Some(window_value) = window() else {
+                return false;
+            };
+            let Some(document_value) = window_value.document() else {
+                return false;
+            };
             document_value.exit_fullscreen();
             true
         }));
@@ -159,13 +164,19 @@ impl UseEuvLayout {
         if !top_cached.is_empty() {
             return;
         }
-        let win: Window = window().expect("no global window exists");
-        let document_value: Document = win.document().expect("should have a document");
-        let body: HtmlElement = document_value.body().expect("should have a body");
-        let sentinel: HtmlElement = document_value
-            .create_element("div")
-            .expect("should create div")
-            .unchecked_into();
+        let Some(win) = window() else {
+            return;
+        };
+        let Some(document_value) = win.document() else {
+            return;
+        };
+        let Some(body) = document_value.body() else {
+            return;
+        };
+        let Ok(created_element) = document_value.create_element("div") else {
+            return;
+        };
+        let sentinel: HtmlElement = created_element.unchecked_into();
         let _: Result<(), JsValue> = sentinel.style().set_property("position", "absolute");
         let _: Result<(), JsValue> = sentinel.style().set_property("visibility", "hidden");
         let _: Result<(), JsValue> = sentinel.style().set_property("pointer-events", "none");
@@ -234,10 +245,12 @@ impl UseEuvLayout {
             SAFE_AREA_INSET_BOTTOM.with(|cell: &RefCell<String>| cell.borrow().clone());
         let left_value: String =
             SAFE_AREA_INSET_LEFT.with(|cell: &RefCell<String>| cell.borrow().clone());
-        let document_value: Document = window()
-            .expect("no global window exists")
-            .document()
-            .expect("should have a document");
+        let Some(window_value) = window() else {
+            return;
+        };
+        let Some(document_value) = window_value.document() else {
+            return;
+        };
         let apply_to = |element: &HtmlElement| {
             let _: Result<(), JsValue> = element
                 .style()

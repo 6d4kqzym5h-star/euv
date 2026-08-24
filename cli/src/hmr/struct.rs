@@ -1,4 +1,7 @@
-use super::*;
+//! HMR preserved-state types.
+//!
+//! Serializable bag of state entries captured before a hot reload and
+//! restored after the new module instance mounts.
 
 use std::collections::HashMap;
 

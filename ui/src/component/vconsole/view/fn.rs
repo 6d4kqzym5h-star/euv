@@ -18,7 +18,8 @@ use super::*;
 pub fn euv_vconsole_panel(node: VirtualNode<EuvVconsolePanelProps>) -> VirtualNode {
     let EuvVconsolePanelProps { panel_open }: EuvVconsolePanelProps =
         node.try_get_props().unwrap_or_default();
-    let console_signal: Signal<Vec<ConsoleEntry>> = Console::get_signal();
+    let console_signal: Signal<Vec<ConsoleEntry>> =
+        Console::get_signal().unwrap_or_else(|| Signal::create(Vec::new()));
     html! {
         euv_vconsole_fab {
             panel_open: panel_open

@@ -80,7 +80,12 @@ pub(crate) fn file_upload_on_change(state: UseFileUpload) -> Option<Rc<dyn Fn(Ev
 /// - `Option<Rc<dyn Fn(Event)>>` - A click handler for the custom file button.
 pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |_: Event| {
-        let document: Document = window().unwrap().document().unwrap();
+        let Some(window_value): Option<Window> = window() else {
+            return;
+        };
+        let Some(document): Option<Document> = window_value.document() else {
+            return;
+        };
         if let Some(input) = document.get_element_by_id(FILE_UPLOAD_ID)
             && let Ok(html_input) = input.dyn_into::<HtmlInputElement>()
         {
@@ -88,7 +93,9 @@ pub(crate) fn file_upload_on_select() -> Option<Rc<dyn Fn(Event)>> {
             let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
                 html_input_clone.click();
             }));
-            let window: Window = window().unwrap();
+            let Some(window): Option<Window> = window() else {
+                return;
+            };
             let _: Result<i32, JsValue> = window
                 .set_timeout_with_callback_and_timeout_and_arguments_0(
                     closure.as_ref().unchecked_ref(),

@@ -347,39 +347,31 @@ where
 
     /// Stores a signal into the cell.
     ///
+    /// First write wins: if a signal has already been stored, the new
+    /// signal is dropped and the existing one is kept.
+    ///
     /// # Arguments
     ///
     /// - `Signal<T>` - The signal to store.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a signal has already been stored.
     pub fn set(&self, signal: Signal<T>) {
         unsafe {
             let ptr: &mut Option<Signal<T>> = &mut *self.get_inner().get();
-            if ptr.is_some() {
-                panic!("SignalCell::set called on an already-initialized cell");
+            if ptr.is_none() {
+                *ptr = Some(signal);
             }
-            *ptr = Some(signal);
         }
     }
 
-    /// Returns the signal stored in the cell.
+    /// Returns the signal stored in the cell, if any.
     ///
     /// # Returns
     ///
-    /// - `Signal<T>` - The stored signal.
-    ///
-    /// # Panics
-    ///
-    /// Panics if no signal has been stored via `set`.
-    pub fn get(&self) -> Signal<T> {
+    /// - `Option<Signal<T>>` - The stored signal, or `None` when no signal
+    ///   has been stored via `set` yet.
+    pub fn loaded(&self) -> Option<Signal<T>> {
         unsafe {
             let ptr: &Option<Signal<T>> = &*self.get_inner().get();
-            match ptr {
-                Some(signal) => *signal,
-                None => panic!("SignalCell::get called on an uninitialized cell"),
-            }
+            *ptr
         }
     }
 }

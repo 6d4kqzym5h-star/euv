@@ -1,4 +1,7 @@
-use super::*;
+//! Profiler data types.
+//!
+//! Pure data containers for the profiler (`ProfileEntry` and friends);
+//! no dependency on parent-module symbols, so `super::*` is not imported.
 
 use lombok_macros::{Data, New};
 /// A single recorded measurement.

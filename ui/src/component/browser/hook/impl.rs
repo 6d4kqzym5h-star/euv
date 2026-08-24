@@ -24,7 +24,9 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return None;
+        };
         let storage: Storage = window.local_storage().ok()??;
         storage.get_item(key.as_ref()).ok()?
     }
@@ -40,7 +42,9 @@ impl UseEuvBrowser {
         K: AsRef<str>,
         V: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return;
+        };
         let storage: Storage = match window.local_storage() {
             Ok(Some(local_storage)) => local_storage,
             _ => return,
@@ -57,7 +61,9 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return;
+        };
         let storage: Storage = match window.local_storage() {
             Ok(Some(local_storage)) => local_storage,
             _ => return,
@@ -78,7 +84,9 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return None;
+        };
         let storage: Storage = window.session_storage().ok()??;
         storage.get_item(key.as_ref()).ok()?
     }
@@ -94,7 +102,9 @@ impl UseEuvBrowser {
         K: AsRef<str>,
         V: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return;
+        };
         let storage: Storage = match window.session_storage() {
             Ok(Some(session_storage)) => session_storage,
             _ => return,
@@ -111,7 +121,9 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return;
+        };
         let storage: Storage = match window.session_storage() {
             Ok(Some(session_storage)) => session_storage,
             _ => return,
@@ -125,7 +137,9 @@ impl UseEuvBrowser {
     ///
     /// - `String` - The clipboard text content, or an error message.
     pub(crate) async fn clipboard_read_text() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         let navigator: Navigator = window.navigator();
         match Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
             Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
@@ -156,7 +170,9 @@ impl UseEuvBrowser {
     where
         T: AsRef<str>,
     {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return false;
+        };
         let navigator: Navigator = window.navigator();
         match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
             Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
@@ -175,7 +191,9 @@ impl UseEuvBrowser {
     ///
     /// - `(i32, i32)` - A tuple of (inner_width, inner_height).
     pub(crate) fn window_inner_size() -> (i32, i32) {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return (0, 0);
+        };
         let width: i32 = window
             .inner_width()
             .ok()
@@ -195,7 +213,9 @@ impl UseEuvBrowser {
     ///
     /// - `String` - The user agent string.
     pub(crate) fn navigator_user_agent() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         window
             .navigator()
             .user_agent()
@@ -208,7 +228,9 @@ impl UseEuvBrowser {
     ///
     /// - `String` - The preferred language string.
     pub(crate) fn navigator_language() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         window
             .navigator()
             .language()
@@ -221,7 +243,9 @@ impl UseEuvBrowser {
     ///
     /// - `String` - The current full URL.
     pub(crate) fn location_href() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         window
             .location()
             .href()
@@ -234,7 +258,9 @@ impl UseEuvBrowser {
     ///
     /// - `String` - The origin portion of the URL.
     pub(crate) fn location_origin() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         window
             .location()
             .origin()
@@ -247,7 +273,9 @@ impl UseEuvBrowser {
     ///
     /// - `String` - The pathname portion of the URL.
     pub(crate) fn location_pathname() -> String {
-        let window: Window = window().expect("no global window exists");
+        let Some(window) = window() else {
+            return String::new();
+        };
         window
             .location()
             .pathname()
@@ -391,7 +419,9 @@ impl UseEuvBrowser {
                 result.set("Please enter text to copy".to_string());
                 return;
             }
-            let window: Window = window().expect("no global window exists");
+            let Some(window) = window() else {
+                return;
+            };
             let navigator: Navigator = window.navigator();
             match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
                 Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {
@@ -423,7 +453,9 @@ impl UseEuvBrowser {
     pub fn on_clipboard_paste(self) -> Option<Rc<dyn Fn(Event)>> {
         Some(Rc::new(move |_: Event| {
             let result: Signal<String> = self.get_clipboard_result();
-            let window: Window = window().expect("no global window exists");
+            let Some(window) = window() else {
+                return;
+            };
             let navigator: Navigator = window.navigator();
             match js_sys::Reflect::get(&navigator, &JsValue::from_str("clipboard")) {
                 Ok(clipboard_obj) if !clipboard_obj.is_undefined() => {

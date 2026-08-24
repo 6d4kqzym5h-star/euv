@@ -1,5 +1,4 @@
 use super::*;
-use crate::Signal;
 use lombok_macros::{Data, New};
 
 /// A handle to the profiler registered against the current

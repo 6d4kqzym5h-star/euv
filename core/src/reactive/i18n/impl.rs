@@ -3,7 +3,6 @@
 //! see `reactive/profiler/handle.rs` for prior art.
 
 use super::*;
-use crate::{HookContext, Signal};
 use std::collections::HashMap;
 
 /// Extension trait that exposes the hook-context factory

@@ -5,7 +5,10 @@ use std::cell::Cell;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::rc::Rc;
 
-fn run_with_signal_capture<F: FnOnce()>(f: F) -> bool {
+fn run_with_signal_capture<F>(f: F) -> bool
+where
+    F: FnOnce(),
+{
     catch_unwind(AssertUnwindSafe(f)).is_ok()
 }
 

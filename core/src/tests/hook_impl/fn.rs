@@ -371,3 +371,173 @@ fn native_hook_context_cleanup_works_on_native() {
     .map_err(|_| "panic".to_string());
     assert!(result.is_ok());
 }
+
+// =====================================================================
+// HookContext (pure-Rust surface)
+// =====================================================================
+
+#[test]
+fn hook_context_default_has_zero_hook_index() {
+    let context: HookContext = HookContext::default();
+    let inner: std::cell::Ref<HookContextInner> = context.get_inner().borrow();
+    assert_eq!(inner.get_hook_index(), 0);
+}
+
+#[test]
+fn hook_context_default_has_no_hooks() {
+    let context: HookContext = HookContext::default();
+    let inner: std::cell::Ref<HookContextInner> = context.get_inner().borrow();
+    assert!(inner.get_hooks().is_empty());
+}
+
+#[test]
+fn hook_context_default_has_no_cleanups() {
+    let context: HookContext = HookContext::default();
+    let inner: std::cell::Ref<HookContextInner> = context.get_inner().borrow();
+    assert!(inner.get_cleanups().is_empty());
+}
+
+#[test]
+fn hook_context_default_arm_changed_is_zero() {
+    let context: HookContext = HookContext::default();
+    let inner: std::cell::Ref<HookContextInner> = context.get_inner().borrow();
+    assert_eq!(inner.get_arm_changed(), 0);
+}
+
+#[test]
+fn hook_context_clone_shares_inner_state() {
+    let context: HookContext = HookContext::default();
+    let clone: HookContext = context.clone();
+    assert!(Rc::ptr_eq(&context.get_inner(), &clone.get_inner(),));
+}
+
+#[test]
+fn hook_context_reset_index_resets_to_zero() {
+    let mut context: HookContext = HookContext::default();
+    context.get_inner().borrow_mut().set_hook_index(42);
+    context.reset_index();
+    assert_eq!(context.get_inner().borrow().get_hook_index(), 0);
+}
+
+#[test]
+fn hook_context_switch_arm_same_index_resets_hook_index() {
+    let mut context: HookContext = HookContext::default();
+    context.get_inner().borrow_mut().set_hook_index(99);
+    context.switch_arm(0);
+    assert_eq!(context.get_inner().borrow().get_hook_index(), 0);
+}
+
+#[test]
+fn hook_context_switch_arm_new_index_clears_hooks() {
+    let mut context: HookContext = HookContext::default();
+    context
+        .get_inner()
+        .borrow_mut()
+        .get_mut_hooks()
+        .push(Box::new(42_i32));
+    assert_eq!(context.get_inner().borrow().get_hooks().len(), 1);
+    context.switch_arm(1);
+    assert_eq!(context.get_inner().borrow().get_hooks().len(), 0);
+    assert_eq!(context.get_inner().borrow().get_arm_changed(), 1);
+}
+
+#[test]
+fn hook_context_switch_arm_runs_cleanups() {
+    let mut context: HookContext = HookContext::default();
+    let ran: Rc<Cell<bool>> = Rc::new(Cell::new(false));
+    let ran_clone: Rc<Cell<bool>> = ran.clone();
+    context
+        .get_inner()
+        .borrow_mut()
+        .get_mut_cleanups()
+        .push(Box::new(move || {
+            ran_clone.set(true);
+        }));
+    context.switch_arm(1);
+    assert!(ran.get());
+}
+
+// =====================================================================
+// HookContextInner: Default
+// =====================================================================
+
+#[test]
+fn hook_context_inner_default_has_empty_hooks() {
+    let inner: HookContextInner = HookContextInner::default();
+    assert!(inner.get_hooks().is_empty());
+}
+
+#[test]
+fn hook_context_inner_default_has_zero_hook_index() {
+    let inner: HookContextInner = HookContextInner::default();
+    assert_eq!(inner.get_hook_index(), 0);
+}
+
+#[test]
+fn hook_context_inner_default_has_zero_arm_changed() {
+    let inner: HookContextInner = HookContextInner::default();
+    assert_eq!(inner.get_arm_changed(), 0);
+}
+
+#[test]
+fn hook_context_inner_default_has_empty_cleanups() {
+    let inner: HookContextInner = HookContextInner::default();
+    assert!(inner.get_cleanups().is_empty());
+}
+
+// =====================================================================
+// IntervalHandle: ZST-like value, no native tests for clear() since
+// it requires web_sys::Window. We do cover construction.
+// =====================================================================
+
+#[test]
+fn interval_handle_default() {
+    let handle: IntervalHandle = IntervalHandle::default();
+    let _: IntervalHandle = handle;
+}
+
+#[test]
+fn interval_handle_is_copy() {
+    let handle: IntervalHandle = IntervalHandle::default();
+    let copy: IntervalHandle = handle;
+    let _: IntervalHandle = copy;
+}
+
+#[test]
+fn interval_handle_is_eq() {
+    let a: IntervalHandle = IntervalHandle::default();
+    let b: IntervalHandle = IntervalHandle::default();
+    assert_eq!(a, b);
+}
+
+#[test]
+fn interval_handle_get_interval_id_returns_zero_by_default() {
+    let handle: IntervalHandle = IntervalHandle::default();
+    assert_eq!(handle.get_interval_id(), 0);
+}
+
+#[test]
+fn interval_handle_clone() {
+    let handle: IntervalHandle = IntervalHandle::default();
+    let cloned: IntervalHandle = handle;
+    assert_eq!(handle, cloned);
+}
+
+#[test]
+fn interval_handle_is_hash() {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let handle: IntervalHandle = IntervalHandle::default();
+    let mut hasher: DefaultHasher = DefaultHasher::new();
+    handle.hash(&mut hasher);
+    let _: u64 = hasher.finish();
+}
+
+#[test]
+fn native_hook_context_default_does_not_panic() {
+    let result: Result<(), ()> = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+        let _: HookContext = HookContext::default();
+    }))
+    .map_err(|_| ());
+    assert!(result.is_ok());
+}
