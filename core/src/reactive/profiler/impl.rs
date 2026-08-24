@@ -33,9 +33,9 @@ impl ProfilerHandle {
         // `Signal<T>::set` requires `T: Clone` (which
         // `Vec<ProfileEntry>` is) but does NOT take `&mut T`
         // — the entire new value is supplied as the argument.
-        let mut current: Vec<ProfileEntry> = self.entries.get();
+        let mut current: Vec<ProfileEntry> = self.get_entries().get();
         current.push(entry);
-        self.entries.set(current);
+        self.get_entries().set(current);
         result
     }
 
@@ -58,7 +58,7 @@ impl ProfilerHandle {
     ///   to push the `ProfileEntry`; drop without `end()` to
     ///   discard the measurement.
     pub fn begin(&self, label: &str) -> ProfilerMark {
-        ProfilerMark::new(label.to_string(), now_ms(), self.entries)
+        ProfilerMark::new(label.to_string(), now_ms(), self.get_entries().clone())
     }
 
     /// Returns a clone of the entries signal so subscribers
@@ -69,14 +69,14 @@ impl ProfilerHandle {
     /// so cloning is cheap. Subscribers call `.get()` inside
     /// their render closure to subscribe to new entries.
     pub fn entries(&self) -> Signal<Vec<ProfileEntry>> {
-        self.entries
+        self.get_entries().clone()
     }
 
     /// Empties the entries vector. Useful between benchmarks
     /// ("measure just this call, not the previous ones too")
     /// and in tests ("start from a clean slate").
     pub fn clear(&self) {
-        self.entries.set(Vec::new());
+        self.get_entries().set(Vec::new());
     }
 }
 
@@ -92,9 +92,9 @@ impl ProfilerMark {
     pub fn end(self) {
         let ended_ms: f64 = now_ms();
         let entry: ProfileEntry =
-            ProfileEntry::new(self.label, ended_ms - self.started_ms, ended_ms);
-        let mut current: Vec<ProfileEntry> = self.entries.get();
+            ProfileEntry::new(self.label.clone(), ended_ms - self.started_ms, ended_ms);
+        let mut current: Vec<ProfileEntry> = self.get_entries().get();
         current.push(entry);
-        self.entries.set(current);
+        self.get_entries().set(current);
     }
 }

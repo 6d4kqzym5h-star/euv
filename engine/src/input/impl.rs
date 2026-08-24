@@ -467,7 +467,7 @@ impl InputState {
     /// - `Option<Vector2D>` - The client-space position of the primary
     ///   touch, or `None` when no touch is active.
     pub fn primary_touch_position(&self) -> Option<Vector2D> {
-        self.touch_points
+        self.get_touch_points()
             .iter()
             .min_by_key(|(identifier, _)| **identifier)
             .map(|(_, position)| *position)

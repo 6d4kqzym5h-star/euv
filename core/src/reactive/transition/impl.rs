@@ -99,41 +99,41 @@ impl TransitionState {
     /// Returns a `Signal<TransitionPhase>` clone of the
     /// current phase.
     pub fn phase(&self) -> Signal<TransitionPhase> {
-        self.phase
+        self.get_phase().clone()
     }
 
     /// Returns a `Signal<f64>` clone of the current
     /// progress.
     pub fn progress(&self) -> Signal<f64> {
-        self.progress
+        self.get_progress().clone()
     }
 
     /// Returns a `Signal<TransitionConfig>` clone of the
     /// current config.
     pub fn config(&self) -> Signal<TransitionConfig> {
-        self.config
+        self.get_config().clone()
     }
 
     /// Returns the current phase as a snapshot value.
     pub fn current_phase(&self) -> TransitionPhase {
-        self.phase.get()
+        self.get_phase().get()
     }
 
     /// Returns the current progress as a snapshot value.
     pub fn current_progress(&self) -> f64 {
-        self.progress.get()
+        self.get_progress().get()
     }
 
     /// Returns the current config as a snapshot value.
     pub fn current_config(&self) -> TransitionConfig {
-        self.config.get()
+        self.get_config().get()
     }
 
     /// Returns `true` if the element is currently
     /// animating (i.e. `Entering` or `Exiting`).
     pub fn is_animating(&self) -> bool {
         matches!(
-            self.phase.get(),
+            self.get_phase().get(),
             TransitionPhase::Entering | TransitionPhase::Exiting
         )
     }
@@ -141,13 +141,13 @@ impl TransitionState {
     /// Returns `true` if the element is fully on-screen
     /// (`Entered`).
     pub fn is_entered(&self) -> bool {
-        self.phase.get() == TransitionPhase::Entered
+        self.get_phase().get() == TransitionPhase::Entered
     }
 
     /// Returns `true` if the element is fully off-screen
     /// (`Exited`).
     pub fn is_exited(&self) -> bool {
-        self.phase.get() == TransitionPhase::Exited
+        self.get_phase().get() == TransitionPhase::Exited
     }
 
     /// Replaces the duration config.
@@ -156,41 +156,41 @@ impl TransitionState {
     /// colliding with the `set_config` setter generated
     /// by `#[derive(Data)]` on the struct field.
     pub fn change_config(&self, config: TransitionConfig) {
-        self.config.set(config);
+        self.get_config().set(config);
     }
 
     /// Starts the enter animation. Sets the phase to
     /// `Entering` and resets progress to `0.0`. No-op if
     /// the transition is already in `Entering` / `Entered`.
     pub fn enter(&self) {
-        let current: TransitionPhase = self.phase.get();
+        let current: TransitionPhase = self.get_phase().get();
         if matches!(
             current,
             TransitionPhase::Entering | TransitionPhase::Entered
         ) {
             return;
         }
-        self.phase.set(TransitionPhase::Entering);
-        self.progress.set(0.0);
+        self.get_phase().set(TransitionPhase::Entering);
+        self.get_progress().set(0.0);
     }
 
     /// Starts the exit animation. Sets the phase to
     /// `Exiting` and starts progress from `1.0`. No-op if
     /// the transition is already in `Exiting` / `Exited`.
     pub fn exit(&self) {
-        let current: TransitionPhase = self.phase.get();
+        let current: TransitionPhase = self.get_phase().get();
         if matches!(current, TransitionPhase::Exiting | TransitionPhase::Exited) {
             return;
         }
-        self.phase.set(TransitionPhase::Exiting);
-        self.progress.set(1.0);
+        self.get_phase().set(TransitionPhase::Exiting);
+        self.get_progress().set(1.0);
     }
 
     /// Toggles between `Entered` and `Exited`. Equivalent
     /// to `enter()` if currently `Exiting` / `Exited`,
     /// and `exit()` if currently `Entering` / `Entered`.
     pub fn toggle(&self) {
-        match self.phase.get() {
+        match self.get_phase().get() {
             TransitionPhase::Entered | TransitionPhase::Entering => {
                 self.exit();
             }
@@ -225,42 +225,42 @@ impl TransitionState {
     ///   than the remaining duration jumps directly to
     ///   the terminal phase.
     pub fn tick(&self, elapsed_ms: u32) {
-        match self.phase.get() {
+        match self.get_phase().get() {
             TransitionPhase::Exited | TransitionPhase::Entered => {
                 // Terminal phases don't tick.
             }
             TransitionPhase::Entering => {
-                let total: u32 = self.config.get().enter_ms;
-                let current: f64 = self.progress.get();
+                let total: u32 = self.get_config().get().enter_ms;
+                let current: f64 = self.get_progress().get();
                 if total == 0 {
                     // Zero-duration enter jumps straight
                     // to `Entered`.
-                    self.progress.set(1.0);
-                    self.phase.set(TransitionPhase::Entered);
+                    self.get_progress().set(1.0);
+                    self.get_phase().set(TransitionPhase::Entered);
                     return;
                 }
                 let next: f64 = current + (elapsed_ms as f64) / (total as f64);
                 if next >= 1.0 {
-                    self.progress.set(1.0);
-                    self.phase.set(TransitionPhase::Entered);
+                    self.get_progress().set(1.0);
+                    self.get_phase().set(TransitionPhase::Entered);
                 } else {
-                    self.progress.set(next);
+                    self.get_progress().set(next);
                 }
             }
             TransitionPhase::Exiting => {
-                let total: u32 = self.config.get().exit_ms;
-                let current: f64 = self.progress.get();
+                let total: u32 = self.get_config().get().exit_ms;
+                let current: f64 = self.get_progress().get();
                 if total == 0 {
-                    self.progress.set(0.0);
-                    self.phase.set(TransitionPhase::Exited);
+                    self.get_progress().set(0.0);
+                    self.get_phase().set(TransitionPhase::Exited);
                     return;
                 }
                 let next: f64 = current - (elapsed_ms as f64) / (total as f64);
                 if next <= 0.0 {
-                    self.progress.set(0.0);
-                    self.phase.set(TransitionPhase::Exited);
+                    self.get_progress().set(0.0);
+                    self.get_phase().set(TransitionPhase::Exited);
                 } else {
-                    self.progress.set(next);
+                    self.get_progress().set(next);
                 }
             }
         }
@@ -292,24 +292,24 @@ impl TransitionState {
     /// closed the dialog before the exit animation
     /// finished, force-reset" flows.
     pub fn reset(&self) {
-        self.phase.set(TransitionPhase::Exited);
-        self.progress.set(0.0);
+        self.get_phase().set(TransitionPhase::Exited);
+        self.get_progress().set(0.0);
     }
 
     /// Returns the time remaining (in ms) until the
     /// current transition completes. Returns `0` for
     /// terminal phases.
     pub fn remaining_ms(&self) -> u32 {
-        match self.phase.get() {
+        match self.get_phase().get() {
             TransitionPhase::Exited | TransitionPhase::Entered => 0,
             TransitionPhase::Entering => {
-                let total: u32 = self.config.get().enter_ms;
-                let current: f64 = self.progress.get() * total as f64;
+                let total: u32 = self.get_config().get().enter_ms;
+                let current: f64 = self.get_progress().get() * total as f64;
                 (total as f64 - current).max(0.0) as u32
             }
             TransitionPhase::Exiting => {
-                let total: u32 = self.config.get().exit_ms;
-                let current: f64 = self.progress.get() * total as f64;
+                let total: u32 = self.get_config().get().exit_ms;
+                let current: f64 = self.get_progress().get() * total as f64;
                 current as u32
             }
         }

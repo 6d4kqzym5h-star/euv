@@ -47,23 +47,23 @@ impl FormState {
     /// `FormState::field(name)` instead, which is a
     /// convenience that avoids re-reading the whole map.
     pub fn values(&self) -> Signal<HashMap<&'static str, String>> {
-        self.values
+        self.get_values().clone()
     }
 
     /// Returns a `Signal` clone of the `errors` map.
     pub fn errors(&self) -> Signal<HashMap<&'static str, String>> {
-        self.errors
+        self.get_errors().clone()
     }
 
     /// Returns a `Signal` clone of the `touched` set.
     pub fn touched(&self) -> Signal<HashSet<&'static str>> {
-        self.touched
+        self.get_touched().clone()
     }
 
     /// Returns a `Signal<bool>` clone of the `submitting`
     /// flag.
     pub fn submitting(&self) -> Signal<bool> {
-        self.submitting
+        self.get_submitting().clone()
     }
 
     /// Returns the current value of the named field, or
@@ -75,7 +75,11 @@ impl FormState {
     /// `state.values().get().get(name).cloned().unwrap_or_default()`
     /// instead, so the closure actually subscribes.
     pub fn field(&self, name: &'static str) -> String {
-        self.values.get().get(name).cloned().unwrap_or_default()
+        self.get_values()
+            .get()
+            .get(name)
+            .cloned()
+            .unwrap_or_default()
     }
 
     /// Returns the current error for the named field, or
@@ -84,13 +88,17 @@ impl FormState {
     /// Snapshot read — see `field` for the subscription
     /// caveat.
     pub fn error(&self, name: &'static str) -> String {
-        self.errors.get().get(name).cloned().unwrap_or_default()
+        self.get_errors()
+            .get()
+            .get(name)
+            .cloned()
+            .unwrap_or_default()
     }
 
     /// Returns `true` if the user has interacted with the
     /// named field.
     pub fn is_touched(&self, name: &'static str) -> bool {
-        self.touched.get().contains(name)
+        self.get_touched().get().contains(name)
     }
 
     /// Sets the value of the named field.
@@ -102,26 +110,26 @@ impl FormState {
     /// will repopulate it if the new value is still
     /// invalid.
     pub fn set_field(&self, name: &'static str, value: &str) {
-        let mut current: HashMap<&'static str, String> = self.values.get();
+        let mut current: HashMap<&'static str, String> = self.get_values().get();
         current.insert(name, value.to_string());
-        self.values.set(current);
+        self.get_values().set(current);
 
-        let mut touched: HashSet<&'static str> = self.touched.get();
+        let mut touched: HashSet<&'static str> = self.get_touched().get();
         touched.insert(name);
-        self.touched.set(touched);
+        self.get_touched().set(touched);
 
-        let mut errors: HashMap<&'static str, String> = self.errors.get();
+        let mut errors: HashMap<&'static str, String> = self.get_errors().get();
         errors.remove(name);
-        self.errors.set(errors);
+        self.get_errors().set(errors);
     }
 
     /// Marks the named field as touched without changing
     /// its value. Used by `onblur` handlers — "the user
     /// left this field, so it counts as interacted".
     pub fn touch(&self, name: &'static str) {
-        let mut touched: HashSet<&'static str> = self.touched.get();
+        let mut touched: HashSet<&'static str> = self.get_touched().get();
         touched.insert(name);
-        self.touched.set(touched);
+        self.get_touched().set(touched);
     }
 
     /// Runs every validator in `validators` and updates the
@@ -144,7 +152,7 @@ impl FormState {
     ///   closure that takes the current value and
     ///   returns `Some(error_message)` or `None`.
     pub fn validate(&self, validators: &HashMap<&'static str, Validator>) -> bool {
-        let values: HashMap<&'static str, String> = self.values.get();
+        let values: HashMap<&'static str, String> = self.get_values().get();
         let mut next_errors: HashMap<&'static str, String> = HashMap::new();
         let mut all_valid: bool = true;
         for (name, validator) in validators.iter() {
@@ -156,7 +164,7 @@ impl FormState {
                 next_errors.insert(name, error_message);
             }
         }
-        self.errors.set(next_errors);
+        self.get_errors().set(next_errors);
         all_valid
     }
 
@@ -197,10 +205,10 @@ impl FormState {
         if !all_valid {
             return false;
         }
-        self.submitting.set(true);
-        let snapshot: HashMap<&'static str, String> = self.values.get();
+        self.get_submitting().set(true);
+        let snapshot: HashMap<&'static str, String> = self.get_values().get();
         on_submit(&snapshot);
-        self.submitting.set(false);
+        self.get_submitting().set(false);
         true
     }
 
@@ -211,9 +219,9 @@ impl FormState {
     /// Useful for "form submitted successfully, reset for
     /// the next entry" UX flows.
     pub fn reset(&self) {
-        self.values.set(HashMap::new());
-        self.errors.set(HashMap::new());
-        self.touched.set(HashSet::new());
+        self.get_values().set(HashMap::new());
+        self.get_errors().set(HashMap::new());
+        self.get_touched().set(HashSet::new());
     }
 
     /// Returns the number of fields that currently have
@@ -221,7 +229,7 @@ impl FormState {
     /// disabled until form is valid" without re-running
     /// validation.
     pub fn error_count(&self) -> usize {
-        self.errors
+        self.get_errors()
             .get()
             .values()
             .filter(|message: &&String| !message.is_empty())
