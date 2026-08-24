@@ -77,7 +77,10 @@ impl Scheduler {
                 }
                 return false;
             }
-            let queue_microtask: &Function = cache_ref.queue_microtask.as_ref().unwrap();
+            let queue_microtask: &Function = match cache_ref.queue_microtask.as_ref() {
+                Some(queue_microtask) => queue_microtask,
+                None => return false,
+            };
             let dispatch_function: &Function = DISPATCH_CLOSURE
                 .with(|closure| unsafe { &*(closure.as_ref() as *const _ as *const Function) });
             queue_microtask

@@ -1,4 +1,6 @@
 //! `LazyComponent<T>` implementation.
+
+use super::*;
 use crate::Signal;
 use std::rc::Rc;
 /// The state of a `LazyComponent`.

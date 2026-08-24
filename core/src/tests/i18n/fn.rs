@@ -1,20 +1,3 @@
-//! Native tests for the `I18n` translation primitive.
-//!
-//! Splits the public surface into three categories:
-//!
-//! - Pure-Rust contract tests (run on every target).
-//! - Set-path coverage tests (wasm-pack exercises the
-//!   full `Signal::set` path; native wraps every write in
-//!   `catch_unwind` and gates post-write assertions on
-//!   `if ran`).
-//! - Interpolation tests (the `interpolate` helper is
-//!   pure-Rust — it never touches a signal — so all of
-//!   these run directly on every target).
-//!
-//! Follows the same `run_with_signal_capture` pattern as
-//! `tests/profiler/fn.rs` and `tests/form/fn.rs`. See those
-//! modules for the full rationale.
-
 use super::*;
 
 use crate::{HashMap, I18n, MessageEntry, Signal};

@@ -1,3 +1,5 @@
+use super::*;
+
 use std::collections::HashMap;
 
 /// A serializable bag of preserved state entries.

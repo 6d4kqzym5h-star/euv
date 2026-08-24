@@ -15,13 +15,11 @@ exclude = ["target", "Cargo.lock", "sh", ".github", "logs", "img", "**/*.log"]
 crate-type = ["rlib"]
 
 [dependencies]
-
 js-sys = { workspace = true }
 web-sys = { workspace = true }
 wasm-bindgen = { workspace = true }
 lombok-macros = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
-[dev-dependencies]
 
-euv-macros = { workspace = true }
+[dev-dependencies]
 wasm-bindgen-test = { workspace = true }

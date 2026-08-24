@@ -266,12 +266,11 @@ web-sys = { version = "0.3.103", features = [
 ] }
 
 [dependencies]
-
+euv-core = { workspace = true }
+euv-macros = { workspace = true }
 
 js-sys = { workspace = true }
 web-sys = { workspace = true }
-euv-core = { workspace = true }
-euv-macros = { workspace = true }
 wasm-bindgen = { workspace = true }
 lombok-macros = { workspace = true }
 alloc-no-stdlib = { workspace = true }

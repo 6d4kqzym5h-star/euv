@@ -1,23 +1,3 @@
-//! Tests for the `use_async` hook and its `UseAsyncHandle<T, L>` shape.
-//!
-//! These tests cover the pure-Rust surface that does not require a
-//! live browser to spawn the future:
-//!
-//! - `AsyncState` discriminant and `Debug`/`Clone`/`PartialEq` derives.
-//! - `UseAsyncHandle::default()` produces a valid handle in the
-//!   `Loading(())` state (no hook context needed).
-//! - `UseAsyncHandle::set_state` (cfg-gated to `#[cfg(test)]`) lets
-//!   tests drive the state machine directly, exercising the same
-//!   `match` arms that the user's `html!` produces.
-//! - `UseAsyncHandle::state` round-trips through `Clone`/`Copy` when
-//!   `T: Copy, L: Copy`.
-//! - `HasLoadingHint` trait works for user-defined hint types.
-//!
-//! The `wasm_bindgen_futures::spawn_local` integration (the actual
-//! future-running path) is exercised in the wasm-bindgen-test suite
-//! for the example crate, where a real browser executes the spawned
-//! future.
-
 use super::*;
 
 /// `AsyncState::Loading(())` is the default state a fresh

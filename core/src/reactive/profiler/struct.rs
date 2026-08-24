@@ -1,3 +1,5 @@
+use super::*;
+
 use lombok_macros::{Data, New};
 /// A single recorded measurement.
 ///

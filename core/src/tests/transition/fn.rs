@@ -1,25 +1,3 @@
-//! Native tests for the `TransitionState` / `TransitionConfig` /
-//! `TransitionPhase` building blocks.
-//!
-//! Covers every public method:
-//!
-//! - Constructors: `TransitionState::new`, `TransitionConfig::with_ms`,
-//!   `TransitionConfig::with_durations`, `TransitionConfig::default`.
-//! - Accessors: `phase`, `progress`, `config`,
-//!   `current_phase`, `current_progress`, `current_config`,
-//!   `is_animating`, `is_entered`, `is_exited`.
-//! - Mutators: `change_config`, `enter`, `exit`, `toggle`,
-//!   `tick`, `tick_until_done`, `reset`, `remaining_ms`.
-//! - Helpers: `TransitionConfig::duration_for`,
-//!   `TransitionPhase::exited`.
-//!
-//! Like the other reactive-primitive test modules
-//! (`tests/profiler/fn.rs`, `tests/form/fn.rs`,
-//! `tests/i18n/fn.rs`), set-path tests are gated on
-//! `if ran` so they pass on both wasm (where
-//! `Signal::set` is a real dispatch) and native (where
-//! `Signal::set` panics inside `web_sys::window()`).
-
 use super::*;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};

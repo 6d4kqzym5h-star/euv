@@ -1,34 +1,3 @@
-//! Tests for pre-existing `reactive::hook` public + pub(crate)
-//! methods.
-//!
-//! Targets the implementation methods on `HookContext` and
-//! `IntervalHandle` that are not already covered by PR#9
-//! reactive tests. Some methods touch wasm-only globals
-//! (`CURRENT_HOOK_CONTEXT`, `web_sys::Window::set_interval`,
-//! `Registry::register_window_event`); these are wrapped
-//! in `catch_unwind` to verify they don't panic on native.
-//!
-//! # What's covered here
-//!
-//! - `HookContext::current` — pub(crate) static method
-//! - `HookContext::with` — pub(crate) context-swap method
-//! - `HookContext::signal` — pub(crate) use_signal impl
-//! - `HookContext::cleanup` — pub(crate) use_cleanup impl
-//! - `HookContext::window_event` — pub(crate) window event
-//!   listener registration
-//! - `HookContext::interval` — pub(crate) interval creation
-//! - `IntervalHandle::clear` — public method
-//! - `HookContextInner` field accessor coverage (getter /
-//!   setter round-trips through `Data` derive)
-//!
-//! # What is NOT covered here
-//!
-//! - `App::use_signal` etc. — these are public re-exports
-//!   of the pub(crate) methods, but the public wrapper
-//!   path goes through `App::use_signal<F>(init)` which
-//!   calls `HookContext::signal(init)`. We exercise the
-//!   underlying `HookContext::signal` directly.
-
 use super::*;
 use std::cell::Cell;
 use std::panic;

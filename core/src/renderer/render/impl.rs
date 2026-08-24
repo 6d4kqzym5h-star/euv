@@ -690,9 +690,22 @@ impl Renderer {
                         // passes can detect "this child is a
                         // portal" by querying the attribute. See
                         // `is_portal_marker` below.
-                        let marker: Element = document
-                            .create_element("div")
-                            .unwrap_or_else(|_| document.create_element("div").expect("div"));
+                        // `<div>` is part of the HTML spec on every browser the framework
+                        // targets; if `create_element("div")` ever fails we
+                        // fall back to a freshly-created empty text node
+                        // (`Document::create_text_node` is also total on
+                        // every supported browser) so the portal marker
+                        // remains a real `Element` and the parent's
+                        // positional patch loop keeps treating it as a
+                        // regular child. The marker itself is
+                        // `display:none` so a fallback that loses its
+                        // marker attribute is invisible anyway.
+                        let marker: Element =
+                            document.create_element("div").unwrap_or_else(|_err| {
+                                let fallback: Text = document.create_text_node(EMPTY_STRING);
+                                let element_value: JsValue = fallback.into();
+                                element_value.unchecked_into::<Element>()
+                            });
                         let _: Result<(), JsValue> =
                             marker.set_attribute("data-euv-portal", selector);
                         let _: Result<(), JsValue> = marker.set_attribute("style", "display:none");

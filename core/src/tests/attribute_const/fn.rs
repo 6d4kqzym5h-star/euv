@@ -1,21 +1,3 @@
-//! Tests for pre-existing pure-Rust VDOM constants and
-//! enums.
-//!
-//! Covers `vdom::attribute::const` (string + char + u64
-//! CSS / serialization constants).
-//!
-//! What is NOT covered here:
-//!
-//! - `AttributeValue` enum variants: `Signal` / `Event`
-//!   variants contain `Signal<String>` /
-//!   `NativeEventHandler` (wasm-only). `Dynamic` and
-//!   `Text` variants are pure-Rust but instantiation
-//!   must satisfy the entire enum type.
-//! - `INJECTED_CLASSES` static: wasm-only global.
-//! - `vdom::cast` module: 477 LOC of `From<X> for
-//!   AttributeValue` impls that all touch `AttributeValue`'s
-//!   wasm-only variants.
-
 use super::*;
 
 // =====================================================================

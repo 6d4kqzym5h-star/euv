@@ -1,20 +1,3 @@
-//! Tests for the `NodeRef` type and its renderer integration.
-//!
-//! Tests are split into two groups based on which target they run on:
-//!
-//! - **native** (`#[test]`): covers value semantics that do not require
-//!   a real `JsValue` payload — empty state, `is_set`, structural
-//!   cloning, `Debug` output, hook-context fallback, and the type
-//!   erasure between `NodeRef<T>` and `AttributeValue::Ref`.
-//!
-//! - **wasm** (`#[wasm_bindgen_test]`): covers the payload round-trip
-//!   (set / get / clear) that depends on a real `JsValue` constructor.
-//!   These run via `wasm-pack test --headless --chrome` and require a
-//!   browser runtime to execute.
-//!
-//! Together the two groups exercise every public method of `NodeRef`
-//! and the `AttributeValue::Ref` variant.
-
 use super::*;
 #[cfg(all(target_arch = "wasm32", test))]
 use wasm_bindgen_test::wasm_bindgen_test;

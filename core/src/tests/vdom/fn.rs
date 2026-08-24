@@ -1,32 +1,3 @@
-//! Tests for pre-existing pure-Rust VDOM types.
-//!
-//! These tests target the data structures used to
-//! represent CSS classes, media queries, pseudo-class
-//! rules, and attribute entries. They run natively under
-//! `cargo test -p euv-core --lib` and provide coverage
-//! for `euv-core`'s VDOM data layer.
-//!
-//! # What's covered here
-//!
-//! - `vdom::attribute::Css` (CSS class wrapper)
-//! - `vdom::attribute::PseudoRule` (CSS pseudo rule)
-//! - `vdom::attribute::MediaRule` (CSS @media rule)
-//! - `vdom::attribute::AttributeEntry` (name + value pair)
-//! - `vdom::attribute::EventAdapter` (closure/event adapter)
-//! - `vdom::attribute::EventNamedAdapter` (named event adapter)
-//! - `vdom::attribute::AttrValueAdapter` (attribute value adapter)
-//! - `vdom::attribute::CallbackNamedAdapter` (named callback adapter)
-//!
-//! # What is NOT covered here
-//!
-//! - `AttributeValue::Signal` / `AttributeValue::Event` /
-//!   `AttributeValue::Dynamic` / `AttributeValue::Css`
-//!   variants — those contain wasm-only types
-//!   (`Signal<String>`, `NativeEventHandler`).
-//! - The `cast` module (190 LOC of `From<X> for AttributeValue`
-//!   impls that all touch `AttributeValue`'s wasm-only
-//!   variants).
-
 use super::*;
 use std::borrow::Cow;
 use std::collections::hash_map::DefaultHasher;

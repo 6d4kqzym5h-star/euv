@@ -1,38 +1,3 @@
-//! Tests for pre-existing pure-Rust renderer constants
-//! and zero-sized types.
-//!
-//! Covers constants used by the DOM diff / patch /
-//! dispatch pipeline that don't depend on `js-sys` /
-//! `web-sys` / `wasm-bindgen` runtime statics.
-//!
-//! # What's covered here
-//!
-//! - `renderer::dom::const::*` (DOM attribute / property
-//!   name constants)
-//! - `renderer::registry::const::*` (`DATA_EUV_ID`,
-//!   `MAX_ITERATIONS`, `NON_BUBBLING_EVENTS`)
-//! - `renderer::render::const::*` (rendering pipeline
-//!   constants: dynamic placeholder tags, fragment
-//!   styles, CSS selector prefixes)
-//! - `renderer::render::struct::Mount` (ZST providing
-//!   `mount()` static method)
-//!
-//! # What is NOT covered here
-//!
-//! - `renderer::render::struct::OwnedPtr<T>` (raw pointer
-//!   wrapper, depends on unsafe allocation conventions).
-//! - `renderer::render::struct::Renderer` (depends on
-//!   `Element` and `Option<VirtualNode>` from wasm-only
-//!   contexts).
-//! - `renderer::registry::struct::*` (HandlerSlot /
-//!   SignalUpdateSlot / various cell wrappers — all
-//!   contain `JsValue` / `Element` / `NativeEventHandler`).
-//! - `renderer::registry::type::*` (raw pointer aliases).
-//! - All `*::impl` modules (method implementations that
-//!   touch the registry globals / DOM).
-//! - `renderer::dom::trait::ElementExt` (extension trait
-//!   for `Element`, which is wasm-only).
-
 use super::*;
 
 // =====================================================================

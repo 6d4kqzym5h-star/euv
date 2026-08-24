@@ -1,18 +1,3 @@
-//! Tests for the `Tag::Portal(String)` variant and the macro's
-//! `portal { target: "..." }` lowering.
-//!
-//! These tests cover the pure-Rust surface that does not require a
-//! live browser to resolve `query_selector`:
-//!
-//! - `Tag::Portal` round-trips through `Clone`, `PartialEq`, `Hash`,
-//!   and `Debug` — the four derives the `Tag` enum ships with.
-//! - `Tag::Portal("body") != Tag::Portal("#x")` — the inner selector
-//!   contributes to equality, so a portal that flips target is
-//!   recognised as a different tag by the renderer's patch logic.
-//! - `try_get_tag_name` returns `None` for portal nodes so callers
-//!   that ask "what tag is this?" never see the internal marker
-//!   name.
-
 use super::*;
 use std::borrow::Cow;
 

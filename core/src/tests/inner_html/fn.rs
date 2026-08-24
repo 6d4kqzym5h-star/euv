@@ -1,22 +1,3 @@
-//! Tests for the `inner_html:` attribute and its `AttributeValue` route.
-//!
-//! These tests cover the pure-Rust surface:
-//!
-//! - The `AttributeValue::InnerHtml(String)` and
-//!   `AttributeValue::InnerHtmlSignal(Signal<String>)` variants exist
-//!   and round-trip through `Clone` and `Debug` (without panicking on
-//!   the inner signal's drop glue).
-//! - The `InnerHtmlAdapter` route produces the correct `AttributeValue`
-//!   for `String`, `&str`, and `Signal<String>` payloads.
-//! - `Debug` for the new variants does not leak the signal payload
-//!   (which is not `Debug`).
-//!
-//! DOM-application coverage (the `Element::set_inner_html` call site in
-//! `renderer/render/impl.rs`) cannot run under `cargo test` because
-//! `Element` is a `web_sys` wrapper that needs a live browser. That
-//! path is exercised indirectly by the existing example suite
-//! (`euv run --dev`) plus a small dedicated example added in this PR.
-
 use super::*;
 use std::borrow::Cow;
 
