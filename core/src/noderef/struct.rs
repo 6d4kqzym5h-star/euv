@@ -30,42 +30,6 @@ pub struct NodeRef<T: ?Sized> {
     pub(crate) _marker: PhantomData<fn() -> T>,
 }
 
-/// Manual `Clone` impl: `T` is `?Sized` so the `derive` macro (which
-/// requires `T: Clone`) cannot be used. `Rc` clone is cheap and shares
-/// the underlying cell with all clones.
-impl<T: ?Sized> Clone for NodeRef<T> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            _marker: PhantomData,
-        }
-    }
-}
-
-impl<T: ?Sized> Default for NodeRef<T> {
-    /// Returns an empty `NodeRef` (no element associated).
-    ///
-    /// The returned handle is independent of any hook context: it is not
-    /// registered as a hook and will never be populated by the renderer
-    /// unless it is the same instance that was returned by
-    /// [`App::use_node_ref`] and then later attached via a `ref:` attribute.
-    /// Prefer [`App::use_node_ref`] inside a component for normal usage.
-    fn default() -> Self {
-        Self {
-            inner: Rc::new(UnsafeCell::new(None)),
-            _marker: PhantomData,
-        }
-    }
-}
-
 // `Debug` is implemented manually as well: we want to skip the
 // non-`Debug` `JsValue` payload but still expose the phantom marker
 // type, which is useful for assertions in tests.
-impl<T: ?Sized> std::fmt::Debug for NodeRef<T> {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter
-            .debug_struct("NodeRef")
-            .field("is_set", &self.is_set())
-            .finish()
-    }
-}

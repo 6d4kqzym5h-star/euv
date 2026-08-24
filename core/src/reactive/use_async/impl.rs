@@ -1,51 +1,8 @@
-//! Implementation of [`super::UseAsyncHandle`] — the body of the
-//! `use_async` hook.
-//!
-//! The handle mirrors `Signal<T>`'s shape: the public type holds a
-//! raw heap-address and a phantom marker, while the live state lives
-//! in a heap-allocated `UseAsyncSlot<T, L>` reachable through that
-//! address. The `Rc<Cell<bool>>` cancellation flag is shared with
-//! the in-flight future so that when the hook context is cleared
-//! (component unmount or `match` arm switch) the future's late
-//! resolution is dropped instead of writing into a detached state.
-//!
-//! ## Why a slot, not a `Signal<AsyncState<T,L>>` directly
-//!
-//! We need three pieces of state to drive a reactive async hook:
-//!
-//! 1. The user-visible state (`AsyncState<T, L>`).
-//! 2. A cancellation flag set when the slot is dropped.
-//! 3. A way to launch a fresh future from outside the slot
-//!    (`refetch()` re-uses the same slot).
-//!
-//! Bundling all three into a single `Box<dyn Any>` is cheaper than
-//! burning three hook slots per `use_async` call (the hook index is
-//! a scarce resource per render — see `App::use_signal` for the
-//! same single-slot pattern).
-
 use super::*;
+
 use std::cell::Cell;
 use std::future::Future;
 use std::rc::Rc;
-
-/// Heap-allocated state backing a [`super::UseAsyncHandle`].
-///
-/// Reachable only through the raw address stored in the handle.
-/// Allocated by [`super::UseAsyncHandle::new_for_fallback`] for the
-/// "no hook context" case and by [`HookContext::use_async`] when
-/// the hook is registered for the first time.
-pub(crate) struct UseAsyncSlot<T, L>
-where
-    T: Clone + PartialEq + 'static,
-    L: Clone + PartialEq + HasLoadingHint + 'static,
-{
-    /// Reactive state, exposed to the user as
-    /// [`UseAsyncHandle::state`].
-    pub(crate) state: Signal<AsyncState<T, L>>,
-    /// Cancellation flag — flipped on drop. The in-flight future
-    /// reads this before writing back to `state`.
-    pub(crate) cancel: Rc<Cell<bool>>,
-}
 
 impl<T, L> Drop for UseAsyncSlot<T, L>
 where
@@ -187,5 +144,40 @@ where
         {
             drop(task);
         }
+    }
+}
+
+impl HasLoadingHint for () {
+    fn empty() -> Self {}
+}
+
+impl<T, L> core::fmt::Debug for UseAsyncHandle<T, L>
+where
+    T: Clone + PartialEq + 'static,
+    L: Clone + PartialEq + HasLoadingHint + 'static,
+{
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Avoid touching the inner pointer in `Debug` output — the
+        // address is meaningless to users and could collide with
+        // string-formatted `AsyncState` payloads.
+        f.debug_struct("UseAsyncHandle")
+            .field("inner", &format_args!("<opaque 0x{:x}>", self.inner))
+            .finish()
+    }
+}
+
+impl<T, L> Default for UseAsyncHandle<T, L>
+where
+    T: Clone + PartialEq + 'static,
+    L: Clone + PartialEq + HasLoadingHint + 'static,
+{
+    fn default() -> Self {
+        // Same fallback path as `App::use_signal` when the hook
+        // context is unavailable: a fresh state handle that points
+        // at a stand-alone `UseAsyncInner`. This means
+        // `UseAsyncHandle::default()` always gives the caller
+        // something they can `match` on, but the state will stay
+        // stuck in `Loading` because no future is wired up.
+        Self::new_for_fallback()
     }
 }

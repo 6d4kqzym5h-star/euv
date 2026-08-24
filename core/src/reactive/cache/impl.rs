@@ -1,51 +1,6 @@
-//! LRU cache implementation.
-//!
-//! Backed by a `HashMap<K, V>` for O(1) lookup and a
-//! `VecDeque<K>` for LRU order. The `VecDeque` stores
-//! keys in MRU-first order — the front is the most
-//! recently used, the back is the least recently used.
-//!
-//! # Why `VecDeque` and not a linked list?
-//!
-//! For typical cache sizes (≤ 100 entries), `VecDeque`
-//! has better cache locality than a heap-allocated
-//! linked list. The `remove` operation is O(n) per entry,
-//! which is fine at this scale — the bottleneck is the
-//! `HashMap` lookup, not the order-bookkeeping.
+use super::*;
+
 use std::iter::Iterator;
-/// A fixed-capacity LRU cache.
-///
-/// The cache holds at most `capacity` entries. When a
-/// `put` would exceed the capacity, the
-/// least-recently-used entry is evicted. `get` updates
-/// the recency so the just-read entry becomes the most-
-/// recently-used.
-///
-/// All operations are O(1) amortized (`put`, `get`,
-/// `remove`, `contains`) except `iter`, which is O(n).
-///
-/// # Capacity edge cases
-///
-/// - `capacity = 0` - the cache accepts no entries. Both
-///   `put` and `get` behave as no-ops (well, `get` still
-///   evicts because there's nothing to evict; `put`
-///   silently drops the entry).
-/// - `capacity = 1` - the cache holds exactly one entry.
-///   Every `put` evicts the previous entry.
-#[derive(Clone, Debug)]
-pub struct LruCache<K, V>
-where
-    K: Clone + Eq + std::hash::Hash,
-{
-    /// The maximum number of entries before eviction
-    /// kicks in.
-    capacity: usize,
-    /// The current entries, keyed by K.
-    map: std::collections::HashMap<K, V>,
-    /// The MRU-first order. Front = most recently used,
-    /// back = least recently used.
-    order: std::collections::VecDeque<K>,
-}
 
 impl<K, V> LruCache<K, V>
 where

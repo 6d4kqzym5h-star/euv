@@ -918,53 +918,6 @@ impl HtmlDynamicTag {
     }
 }
 
-/// Builds a single `field: expr` token used inside a component's Props
-/// struct literal, converting the attribute value to the right Rust
-/// expression for the component's Props struct field. Used by both
-/// `HtmlElement::to_tokens` (for direct component tags) and
-/// `HtmlDynamicTag::to_tokens` (for dynamic tags dispatched to a component).
-fn prop_field_token(
-    field_ident: &Ident,
-    key_string: &str,
-    value: &HtmlAttrValue,
-    props_field_types: &HashMap<String, String>,
-) -> proc_macro2::TokenStream {
-    match value {
-        HtmlAttrValue::Expr(expr) => {
-            quote! { #field_ident: #expr }
-        }
-        HtmlAttrValue::If(html_attr_if) => {
-            let else_default: proc_macro2::TokenStream = match props_field_types
-                .get(key_string)
-                .map(|field_type: &String| field_type.as_str())
-            {
-                Some(TYPE_VIRTUAL_NODE) => quote! { ::euv::VirtualNode::Empty },
-                _ => quote! { #STR_EMPTY },
-            };
-            let ctx: AttrIfContext<'_> =
-                AttrIfContext::new(html_attr_if, &else_default, AttrIfMode::Raw);
-            let if_chain: proc_macro2::TokenStream = attr_if_to_tokens(&ctx);
-            quote! { #field_ident: #if_chain }
-        }
-        HtmlAttrValue::Match(html_attr_match) => {
-            let match_expr: proc_macro2::TokenStream =
-                attr_match_to_tokens(html_attr_match, AttrIfMode::Raw);
-            quote! { #field_ident: #match_expr }
-        }
-        HtmlAttrValue::Style(props) => {
-            let has_conditional: bool = is_style_props_conditional(props);
-            if has_conditional {
-                quote! { #field_ident: #value }
-            } else {
-                quote! { #field_ident: (#value).to_string() }
-            }
-        }
-        _ => {
-            quote! { #field_ident: #value }
-        }
-    }
-}
-
 /// Implementation of `ToTokens` for `HtmlElement`, converting HTML elements into virtual element tokens.
 ///
 /// For identifier tags, the macro checks whether the tag name corresponds to a

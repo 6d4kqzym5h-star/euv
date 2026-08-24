@@ -66,3 +66,20 @@ impl<T: Clone + PartialEq + std::fmt::Debug + 'static> std::fmt::Display for Sus
         write!(formatter, "SuspenseHandle({:?})", self.phase.get())
     }
 }
+
+impl<T> Default for SuspensePhase<T> {
+    fn default() -> Self {
+        SuspensePhase::Pending
+    }
+}
+
+impl<T: PartialEq> PartialEq for SuspensePhase<T> {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (SuspensePhase::Pending, SuspensePhase::Pending) => true,
+            (SuspensePhase::Resolved(a), SuspensePhase::Resolved(b)) => a == b,
+            (SuspensePhase::Failed(a), SuspensePhase::Failed(b)) => a == b,
+            _ => false,
+        }
+    }
+}
