@@ -1,3 +1,5 @@
+use super::*;
+
 /// Represents the geometric shape of a collider.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum ColliderShape {

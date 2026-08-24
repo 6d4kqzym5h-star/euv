@@ -1,3 +1,5 @@
+use super::*;
+
 /// Display variant for the `euv_logo` component.
 ///
 /// Controls the size and positioning of the logo button:

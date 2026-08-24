@@ -1,3 +1,5 @@
+use super::*;
+
 /// Represents the available rendering backend tabs on the 2D game page.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum Game2DTab {

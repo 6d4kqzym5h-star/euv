@@ -1,3 +1,5 @@
+use super::*;
+
 /// Represents the facing direction of the camera device.
 ///
 /// Used to switch between the front (user-facing) and rear

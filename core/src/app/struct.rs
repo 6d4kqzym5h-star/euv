@@ -1,3 +1,5 @@
+use super::*;
+
 /// A zero-sized application context struct providing access to core euv framework APIs.
 ///
 /// This struct serves as a namespace for framework functions, allowing them to be

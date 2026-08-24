@@ -59,6 +59,8 @@
 /// construction via `RawHtml::new` is also supported
 /// but bypasses the macro-level `unsafe_no_` warning
 /// prefix.
+use super::*;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct RawHtml {
     /// The unescaped HTML content.

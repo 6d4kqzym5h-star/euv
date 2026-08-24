@@ -492,7 +492,10 @@ fn try_reclaim_inactive_reclaims_orphan_after_clear_listeners() {
     );
     // Sweep. The bridge satisfies both invariants, so it must be reclaimed.
     let freed: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
-    assert_eq!(freed, 1, "orphan bridge must be reclaimed in a single sweep");
+    assert_eq!(
+        freed, 1,
+        "orphan bridge must be reclaimed in a single sweep"
+    );
     // Post-sweep: the bridge is removed from BridgeRefsCell.
     assert!(
         !BridgeRefsCell::map_mut().contains_key(&bridge_addr),
