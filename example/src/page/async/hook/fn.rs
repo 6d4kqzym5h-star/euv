@@ -34,13 +34,19 @@ pub(crate) fn fetch_on_fetch(state: UseFetch) -> Option<Rc<dyn Fn(Event)>> {
         let error_signal: Signal<String> = state.get_error();
         let loading_signal: Signal<bool> = state.get_loading();
         spawn_local(async move {
-            let window: Window = window().expect("no global window exists");
+            let Some(window): Option<Window> = window() else {
+                return;
+            };
             let promise: Promise = window.fetch_with_str(ASYNC_FETCH_URL);
             let future: JsFuture = JsFuture::from(promise);
             match future.await {
                 Ok(response) => {
-                    let response_value: Response = response.dyn_into().unwrap();
-                    let text_promise: Promise = response_value.text().unwrap();
+                    let Ok(response_value): Result<Response, JsValue> = response.dyn_into() else {
+                        return;
+                    };
+                    let Ok(text_promise): Result<Promise, JsValue> = response_value.text() else {
+                        return;
+                    };
                     let text_future: JsFuture = JsFuture::from(text_promise);
                     match text_future.await {
                         Ok(text) => {

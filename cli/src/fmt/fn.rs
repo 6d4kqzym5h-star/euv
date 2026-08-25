@@ -1068,7 +1068,7 @@ fn format_brace_block(block: &str) -> String {
     let block_chars: Vec<char> = block.chars().collect();
     if block_chars.len() < 2
         || block_chars[0] != CHAR_BRACE_LEFT
-        || *block_chars.last().unwrap() != CHAR_BRACE_RIGHT
+        || block_chars.last() != Some(&CHAR_BRACE_RIGHT)
     {
         return block.to_string();
     }

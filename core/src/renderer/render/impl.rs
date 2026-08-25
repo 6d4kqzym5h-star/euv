@@ -57,14 +57,18 @@ impl Renderer {
     /// If a previous tree exists, patches the existing DOM to match the new tree.
     /// Otherwise, creates new DOM nodes from scratch and appends them to the root.
     ///
+    /// OPT 1 (zero-copy VDOM): the owned `VirtualNode` is moved into
+    /// `unwrap_component_owned`, which expands any `Tag::Component` markers
+    /// in a single fused pass without an intermediate `subtree_has_component`
+    /// pre-walk. Component-free trees are returned by move — only the edges
+    /// of the recursive descent allocate (the edge clone performed when a
+    /// component expands into its single child).
+    ///
     /// # Arguments
     ///
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
-        let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
-        // Take the old tree out (leaving `None`) so we can patch against it by
-        // reference without deep-cloning the entire previous VDOM. The new tree
-        // is stored back below.
+        let new_unwrapped: VirtualNode = Self::unwrap_component_owned(vnode);
         let old_tree: Option<VirtualNode> = std::mem::take(self.get_mut_current_tree());
         if let Some(old_vnode) = old_tree.as_ref() {
             self.patch_root(old_vnode, &new_unwrapped);
@@ -90,7 +94,7 @@ impl Renderer {
     ///
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render_full_replace(&mut self, vnode: VirtualNode) {
-        let new_unwrapped: VirtualNode = Self::unwrap_component(&vnode);
+        let new_unwrapped: VirtualNode = Self::unwrap_component_owned(vnode);
         while let Some(child) = self.get_root().first_child() {
             if let Some(element) = child.dyn_ref::<Element>() {
                 Self::cleanup_subtree(element);
@@ -177,6 +181,19 @@ impl Renderer {
                     }
                     return;
                 }
+                // Portal markers carry the original `data-euv-portal`
+                // attribute set at mount time. The actual children
+                // live in a separate DOM subtree (the resolved
+                // target), so neither the children nor the attributes
+                // contributed by the user should be re-applied to the
+                // marker. We deliberately skip both
+                // `patch_children` and `patch_attributes` here and
+                // rely on `render_full_replace` (the match-arm
+                // switcher) to remount portals when their
+                // declaration in the tree changes.
+                if matches!(old_tag, Tag::Portal(_)) {
+                    return;
+                }
                 self.patch_children(dom_element, old_children, new_children);
                 self.patch_attributes(dom_element, old_attrs, new_attrs);
             }
@@ -215,43 +232,58 @@ impl Renderer {
     /// - `&Element` - The DOM element whose attributes to patch.
     /// - `&[AttributeEntry]` - The old attribute list.
     /// - `&[AttributeEntry]` - The new attribute list.
+    ///
+    /// OPT 5: the `data-euv-id` lookup is hoisted out of the per-attribute
+    /// event-handler removal path so it only runs when at least one
+    /// removed attribute is an `Event` listener. The fast path
+    /// (`non_event` attribute removal) skips the registry entirely.
+    /// New-attribute writes use a direct `HashMap<&str, &AttributeValue>`
+    /// for O(1) lookup-by-name instead of an `O(N)` linear `find` per
+    /// attribute.
     fn patch_attributes(
         &mut self,
         element: &Element,
         old_attrs: &[AttributeEntry],
         new_attrs: &[AttributeEntry],
     ) {
+        let old_index: HashMap<&str, &AttributeValue> = old_attrs
+            .iter()
+            .map(|a| (a.get_name().as_ref(), a.get_value()))
+            .collect();
+        let new_index: HashMap<&str, &AttributeValue> = new_attrs
+            .iter()
+            .map(|a| (a.get_name().as_ref(), a.get_value()))
+            .collect();
+        let mut needs_event_cleanup: bool = false;
         for old_attr in old_attrs {
-            let old_name: &str = old_attr.get_name().as_str();
-            let still_present: bool = new_attrs
-                .iter()
-                .any(|attr: &AttributeEntry| attr.get_name().as_str() == old_name);
-            if !still_present {
-                if let AttributeValue::Event(handler) = old_attr.get_value()
-                    && let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
-                    && let Ok(euv_id) = euv_id_str.parse::<usize>()
-                    && let Some(entry) = Registry::get_mut_handler_registry()
-                        .get_mut(&euv_id)
-                        .and_then(|event_map: &mut HashMap<&'static str, HandlerEntry>| {
-                            event_map.remove(&handler.get_event_name())
-                        })
-                {
-                    let slot: &mut HandlerSlot = unsafe { &mut *entry };
-                    if let Some(listener_element) = slot.try_get_element().as_ref().cloned()
-                        && let Some(listener_function) = slot.get_mut_listener_function().take()
-                    {
-                        let event_name: &str = handler.get_event_name();
-                        let listener: &Function = listener_function.unchecked_ref::<Function>();
-                        let _: Result<(), JsValue> = listener_element
-                            .remove_event_listener_with_callback(event_name, listener);
-                    }
-                    slot.set_handler(None);
-                    unsafe {
-                        let _: Box<HandlerSlot> = Box::from_raw(entry);
-                    }
+            let old_name: &str = old_attr.get_name().as_ref();
+            if !new_index.contains_key(old_name) {
+                if let AttributeValue::Event(_) = old_attr.get_value() {
+                    needs_event_cleanup = true;
                 }
                 element.remove_attribute_or_property(old_attr.get_name());
             }
+        }
+        let cached_euv_id: usize = if needs_event_cleanup {
+            match element.get_attribute(DATA_EUV_ID) {
+                Some(id_str) => id_str.parse::<usize>().unwrap_or_else(|_| {
+                    let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
+                    let _: Result<(), JsValue> =
+                        element.set_attribute(DATA_EUV_ID, &new_id.to_string());
+                    new_id
+                }),
+                None => {
+                    let new_id: usize = NEXT_EUV_ID.fetch_add(1, Ordering::Relaxed);
+                    let _: Result<(), JsValue> =
+                        element.set_attribute(DATA_EUV_ID, &new_id.to_string());
+                    new_id
+                }
+            }
+        } else {
+            0
+        };
+        if needs_event_cleanup {
+            self.detach_removed_event_handlers(old_attrs, &new_index, cached_euv_id);
         }
         for new_attr in new_attrs {
             match new_attr.get_value() {
@@ -259,13 +291,10 @@ impl Renderer {
                     self.attach_event_listener(element, handler);
                 }
                 _ => {
-                    let new_name: &str = new_attr.get_name().as_str();
-                    let old_value: Option<&AttributeValue> = old_attrs
-                        .iter()
-                        .find(|attr: &&AttributeEntry| attr.get_name().as_str() == new_name)
-                        .map(|attr: &AttributeEntry| attr.get_value());
+                    let new_name: &str = new_attr.get_name().as_ref();
+                    let old_value: Option<&&AttributeValue> = old_index.get(new_name);
                     let should_set: bool = match old_value {
-                        Some(old_val) => old_val != new_attr.get_value(),
+                        Some(old_val) => *old_val != new_attr.get_value(),
                         None => true,
                     };
                     if should_set {
@@ -283,7 +312,18 @@ impl Renderer {
                                 element
                                     .set_attribute_or_property(new_attr.get_name(), css.get_name());
                             }
-                            AttributeValue::Event(_) => unreachable!(),
+                            AttributeValue::Event(_) => {}
+                            AttributeValue::InnerHtml(html) => {
+                                element.set_inner_html(html);
+                            }
+                            AttributeValue::InnerHtmlSignal(signal) => {
+                                let value: String = signal.get();
+                                element.set_inner_html(&value);
+                            }
+                            AttributeValue::Ref(node_ref) => {
+                                let element_value: JsValue = element.clone().into();
+                                node_ref.set(element_value);
+                            }
                         }
                     }
                 }
@@ -291,19 +331,50 @@ impl Renderer {
         }
     }
 
-    /// Gets a child node at the given index.
-    ///
-    /// # Arguments
-    ///
-    /// - `&Element` - The parent element.
-    /// - `u32` - The child index.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<Node>` - The child node at the given index, if it exists.
-    fn try_get_child_node(parent: &Element, index: u32) -> Option<Node> {
-        parent.child_nodes().get(index)
+    /// OPT 5: secondary helper that walks only the `AttributeValue::Event`
+    /// entries removed from `old_attrs` (i.e. present in `old` but absent
+    /// from `new_attrs`) and detaches them. The element's `data-euv-id`
+    /// was read once by the caller (`patch_attributes`) and passed in
+    /// here so this path does no extra attribute parsing.
+    fn detach_removed_event_handlers(
+        &self,
+        old_attrs: &[AttributeEntry],
+        new_index: &HashMap<&str, &AttributeValue>,
+        euv_id: usize,
+    ) {
+        for old_attr in old_attrs {
+            if let AttributeValue::Event(handler) = old_attr.get_value() {
+                let old_name: &str = old_attr.get_name().as_ref();
+                if new_index.contains_key(old_name) {
+                    continue;
+                }
+                if let Some(entry) = Registry::get_mut_handler_registry()
+                    .get_mut(&euv_id)
+                    .and_then(|event_map: &mut HashMap<&'static str, HandlerEntry>| {
+                        event_map.remove(&handler.get_event_name())
+                    })
+                {
+                    let slot: &mut HandlerSlot = unsafe { &mut *entry };
+                    if let Some(listener_element) = slot.try_get_element().as_ref().cloned()
+                        && let Some(listener_function) = slot.get_mut_listener_function().take()
+                    {
+                        let event_name: &str = handler.get_event_name();
+                        let listener: &Function = listener_function.unchecked_ref::<Function>();
+                        let _: Result<(), JsValue> = listener_element
+                            .remove_event_listener_with_callback(event_name, listener);
+                    }
+                    slot.set_handler(None);
+                    unsafe {
+                        let _: Box<HandlerSlot> = Box::from_raw(entry);
+                    }
+                }
+            }
+        }
     }
+
+    /// OPT 4: removed `try_get_child_node` — its sole call site in
+    /// `patch_children_positional` now reads from the hoisted NodeList
+    /// directly.
 
     /// Patches children of an element using a keyed diff algorithm when keys
     /// are available, falling back to positional diff when no keys exist.
@@ -318,6 +389,17 @@ impl Renderer {
     /// - `&Element` - The parent DOM element.
     /// - `&[VirtualNode]` - The old children list.
     /// - `&[VirtualNode]` - The new children list.
+    ///
+    /// OPT 3/4: `parent.child_nodes()` is now hoisted to a single
+    /// `NodeList` capture taken once per call, then reused across every
+    /// per-child index lookup. The previous implementation called
+    /// `parent.child_nodes()` inside the inner loop, which returned a
+    /// fresh live `NodeList` view each iteration — each lookup crossed
+    /// the JS boundary again. With the hoisted `NodeList`, the cost
+    /// per child drops from one JS round-trip to one C-side index
+    /// access. The same fast path applies to both keyed and positional
+    /// diff (the latter further drops the `try_get_child_node`
+    /// convenience wrapper that previously masked this hot path).
     fn patch_children(
         &mut self,
         parent: &Element,
@@ -389,6 +471,10 @@ impl Renderer {
         old_children: &[VirtualNode],
         new_children: &[VirtualNode],
     ) {
+        // OPT 3: hoist `parent.child_nodes()` to a single live NodeList
+        // reference taken once per call. Each subsequent `child_nodes.get(i)`
+        // is a C-side index lookup into the existing live view — no extra
+        // JS round-trip per child.
         let child_nodes: NodeList = parent.child_nodes();
         let dom_child_count: u32 = child_nodes.length();
         let mut old_key_to_node: HashMap<&str, (usize, Node)> =
@@ -433,9 +519,9 @@ impl Renderer {
         }
         for (new_index, new_child) in new_children.iter().enumerate() {
             let new_key: &str = Self::get_node_key(new_child).unwrap_or_default();
-            let current_children: NodeList = parent.child_nodes();
             let target_index: u32 = new_index as u32;
-            let current_at_target: Option<Node> = current_children.get(target_index);
+            // OPT 3: same hoisted NodeList, no re-fetch.
+            let current_at_target: Option<Node> = child_nodes.get(target_index);
             if let Some((old_vnode_index, dom_node)) = old_key_to_node.remove(new_key) {
                 let old_child: &VirtualNode = &old_children[old_vnode_index];
                 if let Some(element) = dom_node.dyn_ref::<Element>() {
@@ -471,6 +557,13 @@ impl Renderer {
     /// - `&Element` - The parent DOM element.
     /// - `&[VirtualNode]` - The old children list.
     /// - `&[VirtualNode]` - The new children list.
+    ///
+    /// OPT 4: hoists `parent.child_nodes()` to a single live NodeList
+    /// reference taken once per call. Replaces the previous per-child
+    /// `parent.child_nodes().get(index)` (which crossed the JS boundary
+    /// each iteration) with a direct index lookup into the captured
+    /// NodeList. The `try_get_child_node` helper that previously hid
+    /// this hot path is removed.
     fn patch_children_positional(
         &mut self,
         parent: &Element,
@@ -480,10 +573,14 @@ impl Renderer {
         let old_len: usize = old_children.len();
         let new_len: usize = new_children.len();
         let common_len: usize = old_len.min(new_len);
+        // OPT 4: hoisted NodeList — single JS round-trip per call, not
+        // per child. Reused across the whole positional patch loop.
+        let child_nodes: NodeList = parent.child_nodes();
         for index in 0..common_len {
             let old_child: &VirtualNode = &old_children[index];
             let new_child: &VirtualNode = &new_children[index];
-            if let Some(dom_child) = Self::try_get_child_node(parent, index as u32) {
+            let dom_index: u32 = index as u32;
+            if let Some(dom_child) = child_nodes.get(dom_index) {
                 if let Some(element) = dom_child.dyn_ref::<Element>() {
                     self.patch_node(old_child, new_child, element);
                 } else if let (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) =
@@ -534,11 +631,7 @@ impl Renderer {
     /// - `Node` - The created DOM node.
     ///
     fn create_dom_node(&mut self, node: &VirtualNode) -> Node {
-        let window_value: Window = match window() {
-            Some(window_instance) => window_instance,
-            None => return JsValue::UNDEFINED.into(),
-        };
-        let document: Document = match window_value.document() {
+        let document: Document = match cached_document() {
             Some(document_instance) => document_instance,
             None => return JsValue::UNDEFINED.into(),
         };
@@ -569,13 +662,80 @@ impl Renderer {
                         Err(_err) => return document.create_text_node(EMPTY_STRING).into(),
                     },
                     Tag::Component(_) => {
-                        let unwrapped: VirtualNode = Self::unwrap_component(node);
+                        let unwrapped: VirtualNode = Self::unwrap_component_owned(node.clone());
                         return self.create_dom_with_doc(&unwrapped, document);
                     }
+                    Tag::Portal(selector) => {
+                        // Portal mount protocol:
+                        //
+                        // 1. Insert a hidden marker `<div
+                        //    data-euv-portal="<selector>">` at the
+                        //    declared position. The marker is a
+                        //    real Element so the parent's
+                        //    `patch_children_positional` loop treats
+                        //    it as a regular child (no Comment-node
+                        //    handling, no special-casing in the
+                        //    patch code).
+                        //
+                        // 2. Resolve the target element via
+                        //    `document.query_selector(selector)`,
+                        //    falling back to `document.body()` if
+                        //    the selector doesn't match anything.
+                        //
+                        // 3. Append each child node to the target
+                        //    element rather than to the marker.
+                        //
+                        // The marker carries the original selector
+                        // in `data-euv-portal`, so future patch
+                        // passes can detect "this child is a
+                        // portal" by querying the attribute. See
+                        // `is_portal_marker` below.
+                        // `<div>` is part of the HTML spec on every browser the framework
+                        // targets; if `create_element("div")` ever fails we
+                        // fall back to a freshly-created empty text node
+                        // (`Document::create_text_node` is also total on
+                        // every supported browser) so the portal marker
+                        // remains a real `Element` and the parent's
+                        // positional patch loop keeps treating it as a
+                        // regular child. The marker itself is
+                        // `display:none` so a fallback that loses its
+                        // marker attribute is invisible anyway.
+                        let marker: Element =
+                            document.create_element("div").unwrap_or_else(|_err| {
+                                let fallback: Text = document.create_text_node(EMPTY_STRING);
+                                let element_value: JsValue = fallback.into();
+                                element_value.unchecked_into::<Element>()
+                            });
+                        let _: Result<(), JsValue> =
+                            marker.set_attribute("data-euv-portal", selector);
+                        let _: Result<(), JsValue> = marker.set_attribute("style", "display:none");
+                        let target: Element = document
+                            .query_selector(selector)
+                            .ok()
+                            .flatten()
+                            .or_else(|| document.body().map(HtmlElement::into))
+                            .unwrap_or_else(|| marker.clone());
+                        for child in children {
+                            let child_node: Node = self.create_dom_with_doc(child, document);
+                            let _: Result<Node, JsValue> = target.append_child(&child_node);
+                        }
+                        return marker.into();
+                    }
                 };
-                for child in children {
-                    let child_node: Node = self.create_dom_with_doc(child, document);
-                    let _: Result<Node, JsValue> = element.append_child(&child_node);
+                let inner_html_payload: Option<String> =
+                    attributes
+                        .iter()
+                        .find_map(|attr: &AttributeEntry| match attr.get_value() {
+                            AttributeValue::InnerHtml(html) => Some(html.clone()),
+                            _ => None,
+                        });
+                if let Some(html) = inner_html_payload.as_deref() {
+                    element.set_inner_html(html);
+                } else {
+                    for child in children {
+                        let child_node: Node = self.create_dom_with_doc(child, document);
+                        let _: Result<Node, JsValue> = element.append_child(&child_node);
+                    }
                 }
                 for attr in attributes {
                     match attr.get_value() {
@@ -588,7 +748,7 @@ impl Renderer {
                             element.set_attribute_or_property(attr.get_name(), &initial_value);
                             let bridge_signal: Signal<String> = Signal::create(initial_value);
                             element.track_signal_addr(bridge_signal.get_inner());
-                            let attr_name: String = attr.get_name().clone();
+                            let attr_name: String = attr.get_name().to_string();
                             let element_clone: Element = element.clone();
                             bridge_signal.replace_listener(move || {
                                 if !Renderer::is_node_connected(&element_clone) {
@@ -614,6 +774,28 @@ impl Renderer {
                         AttributeValue::Css(css) => {
                             css.inject_style();
                             element.set_attribute_or_property(attr.get_name(), css.get_name());
+                        }
+                        AttributeValue::InnerHtml(_) => {
+                            // Already applied above before the children
+                            // loop ran; nothing more to do here.
+                        }
+                        AttributeValue::InnerHtmlSignal(signal) => {
+                            let signal: Signal<String> = *signal;
+                            let initial_value: String = signal.get();
+                            element.set_inner_html(&initial_value);
+                            element.track_signal_addr(signal.get_inner());
+                            let element_clone: Element = element.clone();
+                            signal.subscribe(move || {
+                                if !Renderer::is_node_connected(&element_clone) {
+                                    return;
+                                }
+                                let new_value: String = signal.get();
+                                element_clone.set_inner_html(&new_value);
+                            });
+                        }
+                        AttributeValue::Ref(node_ref) => {
+                            let element_value: JsValue = element.clone().into();
+                            node_ref.set(element_value);
                         }
                     }
                 }
@@ -699,7 +881,7 @@ impl Renderer {
         let initial_vnode: VirtualNode = HookContext::with(hook_context.clone(), || {
             dynamic_node.render(&mut hook_context)
         });
-        let initial_unwrapped: VirtualNode = Self::unwrap_component(&initial_vnode);
+        let initial_unwrapped: VirtualNode = Self::unwrap_component_owned(initial_vnode);
         CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
         let initial_dom: Node = self.create_dom_node(&initial_unwrapped);
         let render_fn_rc: Rc<UnsafeCell<RenderFnInner>> = dynamic_node.get_render_fn().clone();
@@ -738,11 +920,15 @@ impl Renderer {
             if skip_equal && !arm_switched {
                 let renderer_ref: &Renderer = unsafe { &*renderer_owned.get() };
                 if let Some(old_vnode) = renderer_ref.try_get_current_tree() {
-                    let new_unwrapped: VirtualNode = Self::unwrap_component(&new_vnode);
+                    let new_unwrapped: VirtualNode = Self::unwrap_component_owned(new_vnode);
                     if Self::visual_eq(old_vnode, &new_unwrapped) {
                         CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
                         return;
                     }
+                    let renderer_mut: &mut Renderer = unsafe { &mut *renderer_owned.get() };
+                    renderer_mut.render(new_unwrapped);
+                    CURRENT_TRACKING_DYNAMIC_ID.store(usize::MAX, Ordering::Relaxed);
+                    return;
                 }
             }
             let renderer_mut: &mut Renderer = unsafe { &mut *renderer_owned.get() };
@@ -757,65 +943,31 @@ impl Renderer {
         initial_dom
     }
 
-    /// Recursively unwraps component nodes into their rendered output.
+    /// Unwraps an owned virtual node, expanding any `Tag::Component` nodes
+    /// into their rendered output.
     ///
-    /// # Arguments
+    /// OPT 1: this is the single fused expansion entry point. Two
+    /// notable performance characteristics:
     ///
-    /// - `&VirtualNode` - The virtual node to unwrap.
+    /// 1. **No pre-walk.** Component detection and expansion happen in
+    ///    one pass — the recursion carries the dispatch decision
+    ///    through its match arms, so we never spend an extra walk just
+    ///    to ask "is there a `Tag::Component` in this subtree?".
     ///
-    /// # Returns
+    /// 2. **Component-free fast path.** When the input has no
+    ///    `Tag::Component`, every match arm's `other => other` branch
+    ///    (Text / Empty) or the `_` non-component branch returns the
+    ///    owned `VirtualNode` by move, zero `clone()` calls. The deep
+    ///    tree's `Vec` allocations, `Tag` strings, and attribute vectors
+    ///    are all reused by the renderer.
     ///
-    /// - `VirtualNode` - The unwrapped virtual node with all components expanded.
-    fn unwrap_component(node: &VirtualNode) -> VirtualNode {
-        match node {
-            VirtualNode::Element {
-                tag: Tag::Component(_),
-                children,
-                ..
-            } => {
-                if children.len() == 1 {
-                    Self::unwrap_component(&children[0])
-                } else {
-                    VirtualNode::Fragment(children.clone())
-                }
-            }
-            VirtualNode::Element {
-                tag,
-                attributes,
-                children,
-                key,
-                ..
-            } => {
-                let unwrapped_children: Vec<VirtualNode> = children
-                    .iter()
-                    .cloned()
-                    .map(Self::unwrap_component_owned)
-                    .collect();
-                VirtualNode::Element {
-                    tag: tag.clone(),
-                    attributes: attributes.clone(),
-                    children: unwrapped_children,
-                    key: key.clone(),
-                    props: None,
-                }
-            }
-            VirtualNode::Fragment(children) => {
-                let unwrapped_children: Vec<VirtualNode> = children
-                    .iter()
-                    .cloned()
-                    .map(Self::unwrap_component_owned)
-                    .collect();
-                VirtualNode::Fragment(unwrapped_children)
-            }
-            other => other.clone(),
-        }
-    }
-
-    /// Unwraps an owned virtual node, expanding any `Tag::Component` nodes.
-    ///
-    /// Single fused pass: detection and expansion happen together with no separate
-    /// `subtree_has_component` pre-walk. Component-free subtrees are returned by
-    /// move (zero extra allocation beyond the edge clone performed by the caller).
+    /// The only allocation in the component-free case is the
+    /// `Box<dyn FnMut()>` owned by any `DynamicNode` payloads that
+    /// happen to be present (which is unrelated to component
+    /// expansion). Component expansion itself adds a single edge clone
+    /// per `Tag::Component` node — the original wrapper is dropped, and
+    /// its single child (or fragment of children) is moved into the
+    /// parent position.
     ///
     /// # Arguments
     ///

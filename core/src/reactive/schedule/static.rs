@@ -39,4 +39,13 @@ thread_local! {
             SCHEDULED.store(false, Ordering::Relaxed);
             Scheduler::dispatch_updates();
         }));
+
+    /// OPT 7: thread-local cache for the `Function` reference to
+    /// `window.queueMicrotask`, resolved lazily on first use. The
+    /// `Function::call1` in `Scheduler::update` skips the
+    /// `Reflect::get` / `dyn_into` lookup on every signal update.
+    pub(crate) static MICROTASK_CACHE: MicrotaskCacheCell =
+        MicrotaskCacheCell(UnsafeCell::new(MicrotaskCache {
+            queue_microtask: None,
+        }));
 }

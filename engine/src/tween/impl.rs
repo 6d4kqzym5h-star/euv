@@ -256,3 +256,37 @@ impl<T: Interpolable + Copy> Updatable for Tween<T> {
         let _: T = Tween::update(self, delta_time);
     }
 }
+
+impl<T: Interpolable + Copy> Clone for Tween<T> {
+    fn clone(&self) -> Tween<T> {
+        Tween {
+            from: self.from,
+            to: self.to,
+            duration: self.duration,
+            easing: self.easing,
+            delay: self.delay,
+            elapsed: self.elapsed,
+            state: self.state,
+            mode: self.mode,
+            direction: self.direction,
+            on_complete: self.on_complete.clone(),
+        }
+    }
+}
+
+impl<T: Interpolable + Copy + Debug> Debug for Tween<T> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Tween")
+            .field("from", &self.from)
+            .field("to", &self.to)
+            .field("duration", &self.duration)
+            .field("easing", &self.easing)
+            .field("delay", &self.delay)
+            .field("elapsed", &self.elapsed)
+            .field("state", &self.state)
+            .field("mode", &self.mode)
+            .field("direction", &self.direction)
+            .finish_non_exhaustive()
+    }
+}

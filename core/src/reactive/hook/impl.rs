@@ -41,6 +41,94 @@ impl HookContext {
         }
         self.reset_index();
     }
+
+    /// Creates or reuses a `NodeRef<T>` at the current hook index.
+    ///
+    /// On the first call at a given hook index, a fresh empty `NodeRef`
+    /// is stored. On subsequent re-renders the same instance is returned,
+    /// so a ref cloned into a closure stays attached to the live DOM
+    /// element across renders.
+    ///
+    /// The element type `T` is a phantom marker only — we downcast the
+    /// stored `Box<dyn Any>` back to `NodeRef<T>` using the same pattern
+    /// as `Signal::signal` above. Note that two calls at the same hook
+    /// index with different `T` would still match (both are `NodeRef<...>`)
+    /// because the `downcast_ref` ignores the phantom parameter.
+    pub(crate) fn noderef<T>() -> NodeRef<T>
+    where
+        T: ?Sized + 'static,
+    {
+        let hook_context: HookContext = Self::current();
+        let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
+            // Borrow failed (renderer re-entered); fall back to a fresh
+            // empty ref so the caller still gets a usable handle.
+            return NodeRef::new();
+        };
+        let index: usize = inner.get_hook_index();
+        inner.set_hook_index(index + 1);
+        if index < inner.get_hooks().len() {
+            // Re-render path: try to reuse the existing NodeRef stored at
+            // this hook index. If a different hook type was at this slot
+            // (e.g. user swapped `use_signal` for `use_node_ref`), replace
+            // it with a fresh ref rather than panicking.
+            if let Some(existing) = inner.get_hooks()[index].downcast_ref::<NodeRef<T>>() {
+                return existing.clone();
+            }
+            let new_ref: NodeRef<T> = NodeRef::new();
+            inner.get_mut_hooks()[index] = Box::new(new_ref.clone());
+            return new_ref;
+        }
+        let new_ref: NodeRef<T> = NodeRef::new();
+        inner.get_mut_hooks().push(Box::new(new_ref.clone()));
+        new_ref
+    }
+
+    /// Creates or retrieves the profiler handle for the
+    /// current hook context.
+    ///
+    /// Behaves exactly like `signal<T>`: on the first render at
+    /// this hook index, a fresh `ProfilerHandle` is constructed
+    /// with an empty entries signal and stored in the hook
+    /// slot. On every subsequent render at the same index, the
+    /// same handle is returned — measurements recorded from
+    /// earlier renders remain visible in `entries()`.
+    ///
+    /// The returned handle is `Clone`-cheap and `Send`-safe
+    /// (it only holds a `Signal<Vec<ProfileEntry>>`, which is
+    /// itself `Copy`-by-pointer). It can be passed into child
+    /// closures, captured by `move`, or returned out of the
+    /// component without lifetime gymnastics.
+    ///
+    /// # Returns
+    ///
+    /// - `ProfilerHandle` - The handle for the current hook
+    ///   context. If called outside an active hook context,
+    ///   the borrow fails silently and a fresh handle is
+    ///   returned (which is then orphaned and dropped at the
+    ///   end of the render — typically fine for "best effort"
+    ///   profiling, but callers wanting hook-context-bound
+    ///   handles should ensure they are inside an active
+    ///   `App::use_*` chain).
+    pub(crate) fn profiler() -> ProfilerHandle {
+        let hook_context: HookContext = Self::current();
+        let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
+            return ProfilerHandle::new(Signal::create(Vec::new()));
+        };
+        let index: usize = inner.get_hook_index();
+        inner.set_hook_index(index + 1);
+        if index < inner.get_hooks().len()
+            && let Some(existing) = inner.get_hooks()[index].downcast_ref::<ProfilerHandle>()
+        {
+            return existing.clone();
+        }
+        let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
+        if index < inner.get_hooks().len() {
+            inner.get_mut_hooks()[index] = Box::new(handle.clone());
+        } else {
+            inner.get_mut_hooks().push(Box::new(handle.clone()));
+        }
+        handle
+    }
 }
 
 /// Clones the hook context, sharing the same inner state.
@@ -304,13 +392,17 @@ impl HookContext {
             return *existing;
         }
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(callback));
-        let window: Window = window().expect("no global window exists");
-        let interval_id: i32 = window
-            .set_interval_with_callback_and_timeout_and_arguments_0(
-                closure.as_ref().unchecked_ref(),
-                millis,
-            )
-            .expect("failed to set interval");
+        let Some(window) = window() else {
+            closure.forget();
+            return IntervalHandle::new(0);
+        };
+        let Ok(interval_id) = window.set_interval_with_callback_and_timeout_and_arguments_0(
+            closure.as_ref().unchecked_ref(),
+            millis,
+        ) else {
+            closure.forget();
+            return IntervalHandle::new(0);
+        };
         closure.forget();
         let handle: IntervalHandle = IntervalHandle::new(interval_id);
         inner.get_mut_cleanups().push(Box::new(move || {

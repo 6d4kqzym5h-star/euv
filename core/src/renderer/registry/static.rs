@@ -9,6 +9,26 @@ pub(crate) static NEXT_EUV_DYNAMIC_ID: AtomicUsize = AtomicUsize::new(0);
 /// Whether `dispatch_updates` is currently executing.
 pub(crate) static SIGNAL_UPDATE_DISPATCHING: AtomicBool = AtomicBool::new(false);
 
+/// Set of dynamic node IDs marked dirty since the last dispatch drain.
+///
+/// OPT 6: the dispatcher's hot path used to scan the entire signal
+/// update registry (`HashMap<usize, SignalUpdateEntry>`) on every
+/// tick to find slots whose `dirty` flag was set. For a SPA with N
+/// dynamic nodes and only a handful of changed signals per tick, this
+/// was an `O(N)` scan with a `*const SignalUpdateSlot` pointer
+/// dereference + branch per entry. The dirty-set replaces it with a
+/// single `HashSet::drain()` over the IDs that were actually marked
+/// dirty — a `O(脏节点数)` operation that does no per-slot pointer
+/// traversal until the matching slot is found.
+///
+/// Populated by `Registry::mark_dirty` and drained by
+/// `Scheduler::dispatch_updates`. A redundant `dirty = true` set is a
+/// no-op thanks to `HashSet` semantics. The set survives the dispatch
+/// itself (the dirty flag is reset inside the loop); only the
+/// `mark_dirty` path inserts into it.
+pub(crate) static mut DIRTY_UPDATE_IDS: LazyLock<DirtyUpdateIdsCell> =
+    LazyLock::new(|| DirtyUpdateIdsCell(UnsafeCell::new(HashSet::new())));
+
 /// Global handler registry, mapping (element_id, event_name) to HandlerEntry.
 pub(crate) static mut HANDLER_REGISTRY: LazyLock<HandlerRegistryCell> =
     LazyLock::new(|| HandlerRegistryCell(UnsafeCell::new(HashMap::new())));

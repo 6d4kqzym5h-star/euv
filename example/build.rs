@@ -29,40 +29,38 @@ const ENV_KEY_EUV_BUILD_TIMESTAMP_KEY: &str = "EUV_BUILD_TIMESTAMP";
 /// File name of the build state marker written to `OUT_DIR`.
 const BUILD_STATE_FILE_NAME: &str = ".euv_build_state";
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir: String = env!("CARGO_MANIFEST_DIR").to_string();
-    let out_dir: String = var("OUT_DIR").expect("OUT_DIR not set");
+    let out_dir: String = var("OUT_DIR")?;
     let state_file_path: PathBuf = PathBuf::from(&out_dir).join(BUILD_STATE_FILE_NAME);
     let toml_path: PathBuf = PathBuf::from(&manifest_dir).join("Cargo.toml");
-    let toml_content: String = read_to_string(&toml_path).expect("Failed to read Cargo.toml");
-    let toml_table: Table = toml_content
-        .parse::<Table>()
-        .expect("Failed to parse Cargo.toml");
+    let toml_content: String = read_to_string(&toml_path)?;
+    let toml_table: Table = toml_content.parse::<Table>()?;
     let package: &Table = toml_table
         .get("package")
-        .expect("Missing [package] section")
+        .ok_or("Missing [package] section")?
         .as_table()
-        .expect("Package section is not a table");
+        .ok_or("Package section is not a table")?;
     let package_name: &str = package
         .get("name")
-        .expect("Missing name field")
+        .ok_or("Missing name field")?
         .as_str()
-        .expect("Name is not a string");
+        .ok_or("Name is not a string")?;
     let version_value: &str = package
         .get("version")
-        .expect("Missing version field")
+        .ok_or("Missing version field")?
         .as_str()
-        .expect("Version is not a string");
+        .ok_or("Version is not a string")?;
     let description_value: &str = package
         .get("description")
-        .expect("Missing description field")
+        .ok_or("Missing description field")?
         .as_str()
-        .expect("Description is not a string");
+        .ok_or("Description is not a string")?;
     let repository_value: &str = package
         .get("repository")
-        .expect("Missing repository field")
+        .ok_or("Missing repository field")?
         .as_str()
-        .expect("Repository is not a string");
+        .ok_or("Repository is not a string")?;
     let authors_value: String = package
         .get("authors")
         .and_then(|value: &toml::Value| value.as_array())
@@ -76,14 +74,14 @@ fn main() {
         .unwrap_or_default();
     let license_value: &str = package
         .get("license")
-        .expect("Missing license field")
+        .ok_or("Missing license field")?
         .as_str()
-        .expect("License is not a string");
+        .ok_or("License is not a string")?;
     let edition_value: &str = package
         .get("edition")
-        .expect("Missing edition field")
+        .ok_or("Missing edition field")?
         .as_str()
-        .expect("Edition is not a string");
+        .ok_or("Edition is not a string")?;
     let repository_name_value: String = repository_value
         .trim_end_matches('/')
         .trim_end_matches(".git")
@@ -99,7 +97,7 @@ fn main() {
     let build_date: String = format!("{}", Local::now().format("%Y-%m-%d"));
     let build_clock: String = format!("{}", Local::now().format("%H:%M:%S"));
     let build_timestamp: String = format!("{}", Local::now().timestamp_micros());
-    write(&state_file_path, &build_time_formatted).expect("Failed to write build state file");
+    write(&state_file_path, &build_time_formatted)?;
     println!("cargo:rustc-env={ENV_KEY_EUV_PACKAGE_NAME_KEY}={package_name}");
     println!("cargo:rustc-env={ENV_KEY_EUV_VERSION_KEY}={version_value}");
     println!("cargo:rustc-env={ENV_KEY_EUV_DESCRIPTION_KEY}={description_value}");
@@ -112,4 +110,5 @@ fn main() {
     println!("cargo:rustc-env={ENV_KEY_EUV_BUILD_DATE_KEY}={build_date}");
     println!("cargo:rustc-env={ENV_KEY_EUV_BUILD_CLOCK_KEY}={build_clock}");
     println!("cargo:rustc-env={ENV_KEY_EUV_BUILD_TIMESTAMP_KEY}={build_timestamp}");
+    Ok(())
 }

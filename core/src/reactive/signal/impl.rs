@@ -215,9 +215,23 @@ where
     /// # Arguments
     ///
     /// - `usize` - The dynamic node ID to register as a dependent.
+    ///
+    /// OPT 9: the common rendering case is "this dependent was just added
+    /// (last element of the list)". A `deps.last() == Some(&dynamic_id)`
+    /// check short-circuits the `Vec::contains` linear scan, turning the
+    /// typical append-into-existing-list call from O(N) to O(1). Only the
+    /// rare cases (first add, or `dynamic_id` re-added after a previous
+    /// unsubscription) fall back to the full scan + push.
     pub(crate) fn add_dependent(&self, dynamic_id: usize) {
         let deps: &mut Vec<usize> = Self::inner_mut(self.get_inner()).get_mut_dependents();
-        if !deps.contains(&dynamic_id) {
+        if let Some(last) = deps.last() {
+            if *last == dynamic_id {
+                return;
+            }
+            if !deps.contains(&dynamic_id) {
+                deps.push(dynamic_id);
+            }
+        } else {
             deps.push(dynamic_id);
         }
     }
@@ -333,39 +347,31 @@ where
 
     /// Stores a signal into the cell.
     ///
+    /// First write wins: if a signal has already been stored, the new
+    /// signal is dropped and the existing one is kept.
+    ///
     /// # Arguments
     ///
     /// - `Signal<T>` - The signal to store.
-    ///
-    /// # Panics
-    ///
-    /// Panics if a signal has already been stored.
     pub fn set(&self, signal: Signal<T>) {
         unsafe {
             let ptr: &mut Option<Signal<T>> = &mut *self.get_inner().get();
-            if ptr.is_some() {
-                panic!("SignalCell::set called on an already-initialized cell");
+            if ptr.is_none() {
+                *ptr = Some(signal);
             }
-            *ptr = Some(signal);
         }
     }
 
-    /// Returns the signal stored in the cell.
+    /// Returns the signal stored in the cell, if any.
     ///
     /// # Returns
     ///
-    /// - `Signal<T>` - The stored signal.
-    ///
-    /// # Panics
-    ///
-    /// Panics if no signal has been stored via `set`.
-    pub fn get(&self) -> Signal<T> {
+    /// - `Option<Signal<T>>` - The stored signal, or `None` when no signal
+    ///   has been stored via `set` yet.
+    pub fn loaded(&self) -> Option<Signal<T>> {
         unsafe {
             let ptr: &Option<Signal<T>> = &*self.get_inner().get();
-            match ptr {
-                Some(signal) => *signal,
-                None => panic!("SignalCell::get called on an uninitialized cell"),
-            }
+            *ptr
         }
     }
 }

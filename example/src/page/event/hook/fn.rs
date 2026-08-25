@@ -166,7 +166,9 @@ pub(crate) fn use_image_event() -> UseImageEvent {
 ///
 /// - `String` - The current complete URL without parameters and hash.
 pub(crate) fn current_url_without_params() -> String {
-    let window: Window = window().expect("no global window exists");
+    let Some(window): Option<Window> = window() else {
+        return String::new();
+    };
     let location: Location = window.location();
     let origin: String = location
         .origin()
@@ -214,8 +216,14 @@ fn encode_svg_for_data_url(raw: &str) -> String {
 ///
 /// - `String` - A URL-encoded SVG data URL of the QR code.
 pub(crate) fn generate_qr_code_data_url(content: &str) -> String {
-    let code: QrCode =
-        QrCode::new(content).unwrap_or_else(|_: QrError| QrCode::new("error").unwrap());
+    let initial_result: Result<QrCode, QrError> = QrCode::new(content);
+    let code: QrCode = match initial_result {
+        Ok(qr) => qr,
+        Err(_) => match QrCode::new("error") {
+            Ok(qr) => qr,
+            Err(_) => return String::new(),
+        },
+    };
     let svg_string: String = code
         .render::<svg::Color>()
         .min_dimensions(QR_CODE_MIN_DIMENSION, QR_CODE_MIN_DIMENSION)

@@ -1,7 +1,5 @@
 use super::*;
 
-use wasm_bindgen::JsValue;
-
 /// `set_viewport(pass, x, y, w, h, min_depth, max_depth)` is a 7-arg
 /// render-pipe helper. Pin the shape so the engine demo's
 /// `requestAnimationFrame` loop never silently breaks.
@@ -70,7 +68,11 @@ fn create_shader_module_with_label_signature_pinned() {
 /// accidental sync rewrites that would deadlock the wasm executor.
 #[test]
 fn read_buffer_is_async() {
-    fn assert_future<F: std::future::Future>(_: F) {}
+    fn assert_future<F>(_: F)
+    where
+        F: std::future::Future,
+    {
+    }
     // We construct a closure with the exact return type and feed a
     // dummy future through the assertion. If `read_buffer` ever
     // changes from `pub async fn ... -> Option<Vec<u8>>` to a sync
@@ -108,14 +110,17 @@ fn begin_render_pass_full_signature_pinned() {
 /// `String`, or any other `AsRef<str>`-implementing type.
 #[test]
 fn create_render_pipeline_full_signature_pinned() {
-    fn _type_check<S: AsRef<str>>(
+    fn _type_check<S>(
         renderer: &WebGpuRenderer,
         shader_code: S,
         vertex_buffer_layouts: &[VertexBufferLayout],
         vertex_entry: &str,
         fragment_entry: &str,
         depth_format: Option<&str>,
-    ) -> JsValue {
+    ) -> JsValue
+    where
+        S: AsRef<str>,
+    {
         renderer.create_render_pipeline_full(
             shader_code,
             vertex_buffer_layouts,

@@ -1,3 +1,5 @@
+use super::*;
+
 /// The DOM attribute name used to store the dynamic node identifier on a placeholder element.
 ///
 /// This attribute is assigned to every DynamicNode placeholder so the framework
@@ -44,3 +46,11 @@ pub(crate) const CLASS_SELECTOR_PREFIX: &str = ".";
 
 /// The HTML `body` tag name, used as a default mount target.
 pub(crate) const BODY_TAG: &str = "body";
+
+thread_local! {
+    /// Single-threaded cache for the page's `Document`. SAFETY: euv
+    /// runs on the main thread in WASM contexts, and `Document::clone`
+    /// is a cheap reference count bump on the underlying `JsValue`.
+    pub(crate) static DOCUMENT_CACHE: UnsafeCell<Option<Document>> =
+        UnsafeCell::new(None);
+}

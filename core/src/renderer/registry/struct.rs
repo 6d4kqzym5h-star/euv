@@ -101,6 +101,22 @@ pub(crate) struct SignalUpdateRegistryCell(
     pub(crate) UnsafeCell<HashMap<usize, SignalUpdateEntry>>,
 );
 
+/// A `Sync` wrapper for single-threaded global `HashSet` access used by
+/// the OPT 6 dirty-id fast path.
+///
+/// SAFETY: This type is only safe to use in single-threaded contexts
+/// (e.g., WASM). It implements `Sync` to allow usage as a `static mut`
+/// variable, but concurrent access from multiple threads would be
+/// undefined behavior.
+#[derive(Data, Debug, New)]
+pub(crate) struct DirtyUpdateIdsCell(
+    /// Interior-mutable storage for the dirty-id set.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) UnsafeCell<HashSet<usize>>,
+);
+
 /// A `Sync` wrapper for single-threaded global `WindowEventRegistryMap` access.
 ///
 /// SAFETY: This type is only safe to use in single-threaded contexts

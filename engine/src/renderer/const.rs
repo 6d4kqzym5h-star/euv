@@ -420,19 +420,10 @@ pub(crate) const WEBGPU_TEXTURE_ASPECT_ALL: &str = "all";
 /// Aspect selector that restricts a depth-stencil view to its depth channel.
 pub(crate) const WEBGPU_TEXTURE_ASPECT_DEPTH_ONLY: &str = "depth-only";
 
-/// Buffer usage: mappable + can be the source of a copy.
-pub(crate) const WEBGPU_BUFFER_USAGE_COPY_SRC: f64 = 1.0;
 /// Buffer usage: index buffer for `setIndexBuffer`.
 pub(crate) const WEBGPU_BUFFER_USAGE_INDEX: f64 = 4.0;
 /// Buffer usage: vertex buffer for `setVertexBuffer`.
 pub(crate) const WEBGPU_BUFFER_USAGE_VERTEX: f64 = 8.0;
-/// Buffer usage: storage buffer for `createBindGroup` (read-only).
-pub(crate) const WEBGPU_BUFFER_USAGE_STORAGE: f64 = 32.0;
-/// Buffer usage: indirect draw / dispatch arguments.
-pub(crate) const WEBGPU_BUFFER_USAGE_INDIRECT: f64 = 64.0;
-/// Buffer usage: query-set resolve destination.
-pub(crate) const WEBGPU_BUFFER_USAGE_QUERY_RESOLVE: f64 = 128.0;
-
 /// 24-bit depth, 8-bit stencil, no multisample. The most common choice
 /// for a render pass's depth-stencil attachment.
 pub(crate) const WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS_STENCIL8: &str = "depth24plus-stencil8";
@@ -467,18 +458,6 @@ pub(crate) const WEBGPU_MAP_MODE_READ: f64 = 1.0;
 /// Map a buffer for CPU write. Requires `MAP_WRITE` usage.
 pub(crate) const WEBGPU_MAP_MODE_WRITE: f64 = 2.0;
 
-/// Triangle strip: each new vertex forms a triangle with the previous two.
-pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP: &str = "triangle-strip";
-
-/// Line list: 2 vertices per line, no sharing.
-pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_LINE_LIST: &str = "line-list";
-
-/// Line strip: each new vertex extends the current line.
-pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_LINE_STRIP: &str = "line-strip";
-
-/// Point list: 1 vertex per point.
-pub(crate) const WEBGPU_PRIMITIVE_TOPOLOGY_POINT_LIST: &str = "point-list";
-
 /// Texture usage: read in a shader (sampled texture / uniform texel buffer).
 pub(crate) const WEBGPU_TEXTURE_USAGE_COPY_SRC: f64 = 1.0;
 /// Texture usage: written in a shader (storage texture).
@@ -494,14 +473,8 @@ pub(crate) const WEBGPU_METHOD_BEGIN_COMPUTE_PASS: &str = "beginComputePass";
 /// `GpuCommandEncoder.copyTextureToBuffer(...)` method name.
 pub(crate) const WEBGPU_METHOD_COPY_TEXTURE_TO_BUFFER: &str = "copyTextureToBuffer";
 
-/// `GpuDevice.createBindGroupLayout(descriptor)` method name.
-pub(crate) const WEBGPU_METHOD_CREATE_BIND_GROUP_LAYOUT: &str = "createBindGroupLayout";
-
 /// `GpuDevice.createComputePipeline(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_CREATE_COMPUTE_PIPELINE: &str = "createComputePipeline";
-
-/// `GpuDevice.createPipelineLayout(descriptor)` method name.
-pub(crate) const WEBGPU_METHOD_CREATE_PIPELINE_LAYOUT: &str = "createPipelineLayout";
 
 /// `GpuDevice.createSampler(descriptor)` method name.
 pub(crate) const WEBGPU_METHOD_CREATE_SAMPLER: &str = "createSampler";

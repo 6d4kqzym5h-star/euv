@@ -64,10 +64,14 @@ impl UseVirtualList {
             PENDING_MEASURE.store(false, Ordering::Relaxed);
             self.update_viewport_height();
         }));
-        window()
-            .expect("no global window exists")
-            .request_animation_frame(callback.as_ref().unchecked_ref())
-            .expect("failed to request animation frame");
+        let Some(window_value) = window() else {
+            PENDING_MEASURE.store(false, Ordering::Relaxed);
+            return;
+        };
+        let Ok(_) = window_value.request_animation_frame(callback.as_ref().unchecked_ref()) else {
+            PENDING_MEASURE.store(false, Ordering::Relaxed);
+            return;
+        };
         callback.forget();
     }
 
@@ -94,10 +98,14 @@ impl UseVirtualList {
                 self.get_viewport_height().set(html_element.client_height());
             }
         }));
-        window()
-            .expect("no global window exists")
-            .request_animation_frame(callback.as_ref().unchecked_ref())
-            .expect("failed to request animation frame");
+        let Some(window_value) = window() else {
+            PendingMeasureCell::get_mut_pending_measure().remove(container_id);
+            return;
+        };
+        let Ok(_) = window_value.request_animation_frame(callback.as_ref().unchecked_ref()) else {
+            PendingMeasureCell::get_mut_pending_measure().remove(container_id);
+            return;
+        };
         callback.forget();
     }
 
@@ -107,11 +115,13 @@ impl UseVirtualList {
     ///
     /// - `Option<Element>` - The container element, if found in the document.
     pub fn try_get_container() -> Option<Element> {
-        window()
-            .expect("no global window exists")
-            .document()
-            .expect("should have a document")
-            .get_element_by_id(VIRTUAL_LIST_CONTAINER_ID)
+        let Some(window_value) = window() else {
+            return None;
+        };
+        let Some(document_value) = window_value.document() else {
+            return None;
+        };
+        document_value.get_element_by_id(VIRTUAL_LIST_CONTAINER_ID)
     }
 
     /// Returns the virtual list container element by its id.
@@ -127,11 +137,13 @@ impl UseVirtualList {
     where
         C: AsRef<str>,
     {
-        window()
-            .expect("no global window exists")
-            .document()
-            .expect("should have a document")
-            .get_element_by_id(container_id.as_ref())
+        let Some(window_value) = window() else {
+            return None;
+        };
+        let Some(document_value) = window_value.document() else {
+            return None;
+        };
+        document_value.get_element_by_id(container_id.as_ref())
     }
 
     /// Computes the range of visible item indices for the virtual list.

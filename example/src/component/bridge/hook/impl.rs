@@ -234,7 +234,9 @@ impl BridgeConfig {
     /// - `bool` - `true` if the bridge core module is available.
     pub(crate) fn is_available(config: Option<&BridgeConfig>) -> bool {
         let config: BridgeConfig = config.cloned().unwrap_or_default();
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value): Option<Window> = window() else {
+            return false;
+        };
         let bridge_key: JsValue = JsValue::from_str(config.get_global_key());
         let bridge_obj: JsValue = match Reflect::get(&window_value, &bridge_key) {
             Ok(value) => value,
@@ -273,7 +275,9 @@ impl BridgeConfig {
         config: Option<&BridgeConfig>,
     ) -> Result<Promise, String> {
         let config: BridgeConfig = config.cloned().unwrap_or_default();
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value): Option<Window> = window() else {
+            return Err("no global window exists".to_string());
+        };
         let bridge_key: JsValue = JsValue::from_str(config.get_global_key());
         let bridge_obj: JsValue = Reflect::get(&window_value, &bridge_key)
             .map_err(|error: JsValue| format!("{error:?}"))?;

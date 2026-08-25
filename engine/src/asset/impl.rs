@@ -87,7 +87,9 @@ impl AssetLoader {
     ///
     /// - `String` - The URL of the image to load.
     pub fn load_image(&mut self, url: String) {
-        let image: HtmlImageElement = HtmlImageElement::new().expect("should create image element");
+        let Ok(image) = HtmlImageElement::new() else {
+            return;
+        };
         let entry: AssetEntry = AssetEntry::new(
             AssetType::Image,
             AssetState::Loading,

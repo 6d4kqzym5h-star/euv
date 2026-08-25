@@ -15,8 +15,12 @@ use super::*;
 ///
 /// - `&str` - A CSS selector string to identify the elements to observe.
 fn bind_observer(selector: &str) {
-    let window_value: Window = window().expect("no global window exists");
-    let document_value: Document = window_value.document().expect("should have a document");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
+    let Some(document_value): Option<Document> = window_value.document() else {
+        return;
+    };
     let observer_key: JsValue = JsValue::from_str("__euv_observer_instance");
     if Reflect::get(&window_value, &observer_key)
         .ok()
@@ -28,8 +32,11 @@ fn bind_observer(selector: &str) {
     let callback: Closure<dyn FnMut(Array)> = Closure::wrap(Box::new(move |entries: Array| {
         for index in 0..entries.length() {
             let entry: JsValue = entries.get(index);
-            let intersection_entry: IntersectionObserverEntry =
-                entry.dyn_into::<IntersectionObserverEntry>().unwrap();
+            let Ok(intersection_entry): Result<IntersectionObserverEntry, JsValue> =
+                entry.dyn_into::<IntersectionObserverEntry>()
+            else {
+                continue;
+            };
             if !intersection_entry.is_intersecting() {
                 continue;
             }
@@ -45,7 +52,11 @@ fn bind_observer(selector: &str) {
                     ));
                 }
                 None => {
-                    let children: NodeList = target.query_selector_all("[data_index]").unwrap();
+                    let Ok(children): Result<NodeList, JsValue> =
+                        target.query_selector_all("[data_index]")
+                    else {
+                        continue;
+                    };
                     let total_count: u32 = children.length();
                     let estimated_visible: u32 =
                         (intersection_ratio * total_count as f64).ceil() as u32;
@@ -57,8 +68,11 @@ fn bind_observer(selector: &str) {
             }
         }
     }));
-    let observer: IntersectionObserver =
-        IntersectionObserver::new(callback.as_ref().unchecked_ref()).unwrap();
+    let Ok(observer): Result<IntersectionObserver, JsValue> =
+        IntersectionObserver::new(callback.as_ref().unchecked_ref())
+    else {
+        return;
+    };
     let _: Result<bool, JsValue> = Reflect::set(&window_value, &observer_key, observer.as_ref());
     callback.forget();
     if let Some(container_element) = document_value.query_selector(selector).ok().flatten() {
@@ -83,7 +97,9 @@ fn bind_observer(selector: &str) {
 /// - `String` - A CSS selector string to identify the elements to observe.
 fn schedule_bind_observer(selector: String) {
     let pending_key: JsValue = JsValue::from_str("__euv_observer_pending");
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
     if !Reflect::get(&window_value, &pending_key)
         .unwrap_or(JsValue::UNDEFINED)
         .is_undefined()
@@ -92,7 +108,9 @@ fn schedule_bind_observer(selector: String) {
     }
     let _: Result<bool, JsValue> = Reflect::set(&window_value, &pending_key, &JsValue::TRUE);
     let microtask_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value): Option<Window> = window() else {
+            return;
+        };
         let key: JsValue = JsValue::from_str("__euv_observer_pending");
         let _: Result<bool, JsValue> = Reflect::set(&window_value, &key, &JsValue::UNDEFINED);
         bind_observer(&selector);
@@ -120,7 +138,9 @@ fn schedule_bind_observer(selector: String) {
 /// - `&str` - A CSS selector string to identify the container element to observe.
 pub(crate) fn use_intersection_observer(selector: &str) {
     let init_selector: String = selector.to_string();
-    let window_value: Window = window().expect("no global window exists");
+    let Some(window_value): Option<Window> = window() else {
+        return;
+    };
     let listener_key: JsValue = JsValue::from_str("__euv_observer_listener");
     if Reflect::get(&window_value, &listener_key)
         .unwrap_or(JsValue::UNDEFINED)

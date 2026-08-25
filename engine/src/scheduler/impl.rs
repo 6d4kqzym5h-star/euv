@@ -18,22 +18,29 @@ impl Default for SchedulerState {
 impl SchedulerState {
     /// Returns the current high-resolution timestamp in seconds from `performance.now()`.
     ///
+    /// Falls back to `0.0` when the global window or the `performance.now`
+    /// API is unavailable (for example outside a browser window context).
+    ///
     /// # Returns
     ///
-    /// - `f64` - The current time in seconds.
+    /// - `f64` - The current time in seconds, or `0.0` when unavailable.
     pub fn current_time() -> f64 {
-        let window_value: Window = window().expect("no global window exists");
-        let performance: JsValue = Reflect::get(
+        let Some(window_value) = window() else {
+            return 0.0;
+        };
+        let Ok(performance) = Reflect::get(
             window_value.as_ref(),
             &JsValue::from_str(PERFORMANCE_OBJECT),
-        )
-        .expect("performance object should exist");
-        let now_value: JsValue =
-            Reflect::get(&performance, &JsValue::from_str(PERFORMANCE_NOW_METHOD))
-                .expect("performance.now should exist");
-        let now_millis: f64 = now_value
-            .as_f64()
-            .expect("performance.now should return a number");
+        ) else {
+            return 0.0;
+        };
+        let Ok(now_value) = Reflect::get(&performance, &JsValue::from_str(PERFORMANCE_NOW_METHOD))
+        else {
+            return 0.0;
+        };
+        let Some(now_millis) = now_value.as_f64() else {
+            return 0.0;
+        };
         now_millis / 1000.0
     }
 
@@ -75,7 +82,11 @@ impl SchedulerHandle {
         let state: &mut SchedulerState = self.get_state().get_mut();
         state.set_running(false);
         if let Some(id) = state.get_mut_raf_id().take() {
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value) = window() else {
+                // Drop the closure so the box can be collected.
+                let _ = self.get_closure_cell().try_take();
+                return;
+            };
             let _: Result<(), JsValue> = window_value.cancel_animation_frame(id);
         }
         // Drop the closure so the box can be collected.
@@ -116,6 +127,9 @@ impl SchedulerHandle {
     /// Creates a `requestAnimationFrame`-driven loop that calls `tick`
     /// on each animation frame. The returned `SchedulerHandle` can be used to stop the scheduler.
     ///
+    /// When no global window exists (non-browser context), the scheduler is
+    /// not started and an already-stopped handle is returned instead.
+    ///
     /// # Arguments
     ///
     /// - `SchedulerConfig` - The scheduler configuration.
@@ -144,21 +158,28 @@ impl SchedulerHandle {
             }
             let state_ro: &SchedulerState = state_clone.get();
             if state_ro.get_running() {
-                let window_value: Window = window().expect("no global window exists");
+                let Some(window_value) = window() else {
+                    return;
+                };
                 let cell: RafClosureCell = closure_cell_clone.clone();
+                let Some(raf_closure) = cell.try_get() else {
+                    return;
+                };
                 let id: i32 = window_value
-                    .request_animation_frame(
-                        cell.try_get()
-                            .expect("raf closure should exist")
-                            .as_ref()
-                            .unchecked_ref(),
-                    )
+                    .request_animation_frame(raf_closure.as_ref().unchecked_ref())
                     .unwrap_or(0);
                 let state_ref_id: &mut SchedulerState = state_clone.get_mut();
                 state_ref_id.set_raf_id(Some(id));
             }
         }));
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            // No window context: install the closure, mark the scheduler
+            // stopped, and return an inert handle.
+            let state_ref_stop: &mut SchedulerState = state.get_mut();
+            state_ref_stop.set_running(false);
+            let _ = closure_cell.try_set(raf_closure);
+            return SchedulerHandle::new(state, closure_cell);
+        };
         let id: i32 = window_value
             .request_animation_frame(raf_closure.as_ref().unchecked_ref())
             .unwrap_or(0);

@@ -3,12 +3,20 @@ use super::*;
 /// Represents a single attribute on a virtual DOM node.
 ///
 /// Combines an attribute name with its corresponding value.
+///
+/// OPT 2: attribute names are `Cow<'static, str>`. The `html!` macro
+/// emits `Cow::Borrowed("class")` for the common literal case so
+/// attribute keys share a single static slice across the whole rendered
+/// DOM, removing the per-attribute `String` heap allocation. The
+/// `AttributeValue::Text(String)` payload keeps its owned allocation
+/// (text values are user-supplied strings that almost always come
+/// from string interpolation or runtime formatting).
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct AttributeEntry {
     /// The name of the attribute.
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) name: String,
+    pub(crate) name: Cow<'static, str>,
     /// The value of the attribute.
     #[debug(skip)]
     #[get(pub(crate))]
@@ -145,6 +153,31 @@ pub struct EventNamedAdapter<T> {
 #[derive(Data, Debug, New)]
 pub struct AttrValueAdapter<T> {
     /// The wrapped value to be adapted into an attribute.
+    #[get(pub(crate))]
+    #[get_mut(pub(crate))]
+    #[set(pub(crate))]
+    pub(crate) inner: T,
+}
+
+/// Adapts an `inner_html:` payload into the matching `AttributeValue`
+/// variant (`InnerHtml(String)` for static strings, `InnerHtmlSignal`
+/// for `Signal<String>`).
+///
+/// This is a sibling to [`AttrValueAdapter`] specialised for the
+/// `inner_html:` attribute key. The html! macro emits
+/// `InnerHtmlAdapter::new(expr).into()` whenever it sees an
+/// `inner_html: ...` binding, so that `inner_html: "raw"` and
+/// `inner_html: my_signal` route through `set_inner_html` rather than
+/// the generic `set_attribute_or_property` path used for ordinary
+/// `Text` attributes.
+///
+/// The actual `String` ↔ `Signal<String>` dispatch happens in the
+/// `From<InnerHtmlAdapter<T>> for AttributeValue` impl below, where
+/// the trait bounds on `T` decide which variant is produced.
+#[derive(Data, Debug, New)]
+pub struct InnerHtmlAdapter<T> {
+    /// The wrapped value to be adapted into an `AttributeValue` for
+    /// the `inner_html:` attribute.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]

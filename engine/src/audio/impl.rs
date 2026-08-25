@@ -6,16 +6,23 @@ impl GameAudioContext {
     ///
     /// # Returns
     ///
-    /// - `GameAudioContext` - The new audio context.
-    pub fn create() -> GameAudioContext {
-        let context: AudioContext = AudioContext::new().expect("should create audio context");
-        let master_gain: GainNode = context
-            .create_gain()
-            .expect("should create master gain node");
+    /// - `Option<GameAudioContext>` - The new audio context, or `None` when
+    ///   the browser does not expose a WebAudio `AudioContext`.
+    pub fn create() -> Option<GameAudioContext> {
+        let Ok(context) = AudioContext::new() else {
+            return None;
+        };
+        let Ok(master_gain) = context.create_gain() else {
+            return None;
+        };
         let _: Result<AudioNode, JsValue> =
             master_gain.connect_with_audio_node(&context.destination());
         master_gain.gain().set_value(AUDIO_DEFAULT_VOLUME as f32);
-        GameAudioContext::new(context, master_gain, AUDIO_DEFAULT_VOLUME)
+        Some(GameAudioContext::new(
+            context,
+            master_gain,
+            AUDIO_DEFAULT_VOLUME,
+        ))
     }
 
     /// Sets the master volume for all audio output.
@@ -62,13 +69,6 @@ impl GameAudioContext {
     }
 }
 
-/// Implements `Default` for `GameAudioContext` as a new context.
-impl Default for GameAudioContext {
-    fn default() -> GameAudioContext {
-        GameAudioContext::create()
-    }
-}
-
 /// Implements playback control for `AudioClip`.
 impl AudioClip {
     /// Creates a new audio clip from a decoded buffer.
@@ -104,19 +104,17 @@ impl AudioClip {
         if self.get_state() == AudioPlayState::Playing {
             return;
         }
-        let source: AudioBufferSourceNode = audio_context
-            .get_context()
-            .create_buffer_source()
-            .expect("should create buffer source");
+        let Ok(source) = audio_context.get_context().create_buffer_source() else {
+            return;
+        };
         source.set_buffer(Some(self.get_buffer()));
         source.set_loop(self.get_looping());
         source
             .playback_rate()
             .set_value(self.get_playback_rate() as f32);
-        let gain: GainNode = audio_context
-            .get_context()
-            .create_gain()
-            .expect("should create gain node");
+        let Ok(gain) = audio_context.get_context().create_gain() else {
+            return;
+        };
         gain.gain().set_value(self.get_volume() as f32);
         let _: Result<AudioNode, JsValue> = source.connect_with_audio_node(&gain);
         let _: Result<AudioNode, JsValue> =

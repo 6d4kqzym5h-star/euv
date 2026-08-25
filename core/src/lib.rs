@@ -5,22 +5,31 @@
 
 mod app;
 mod event;
+mod noderef;
 mod reactive;
 mod renderer;
-mod vdom;
+pub mod vdom;
 
 #[cfg(test)]
 mod tests;
 
-pub use {app::*, event::*, reactive::*, vdom::*};
+pub use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    panic::{AssertUnwindSafe, catch_unwind},
+};
+pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
 
 pub(crate) use renderer::*;
 
 use std::{
     any::Any,
-    cell::{Ref, RefCell, UnsafeCell},
+    borrow::Cow,
+    cell::{Cell, Ref, RefCell, UnsafeCell},
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
+    future::Future,
+    iter::Iterator,
     marker::PhantomData,
     mem::{swap, take},
     num::ParseIntError,
@@ -30,6 +39,7 @@ use std::{
         LazyLock,
         atomic::{AtomicBool, AtomicUsize, Ordering},
     },
+    vec::Vec,
 };
 
 use {js_sys::*, lombok_macros::*, wasm_bindgen::prelude::*, web_sys::*};

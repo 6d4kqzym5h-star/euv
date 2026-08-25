@@ -5,7 +5,7 @@
 //! `euv_engine::WebGpuInitError::code()`. Every banner string and
 //! every engine error code referenced here lives in [`super::r#const`]
 //! so renaming or localizing the banners is a single-file edit.
-use super::r#const::*;
+use super::*;
 
 /// Maps the WebGPU init state plus the engine's stable error code to
 /// the banner text shown next to "Status: ".

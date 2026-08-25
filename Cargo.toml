@@ -276,7 +276,6 @@ lombok-macros = { workspace = true }
 alloc-no-stdlib = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
 console_error_panic_hook = { workspace = true }
-
 [patch.crates-io]
 euv = { path = "." }
 euv-ui = { path = "ui" }

@@ -18,8 +18,12 @@ impl Router {
     /// - `Signal<String>` - The reactive signal holding the current route path.
     pub fn use_scroll_to_top(route_signal: Signal<String>) {
         watch!(route_signal, |_: String| {
-            let window_value: Window = window().expect("no global window exists");
-            let document_value: Document = window_value.document().expect("should have a document");
+            let Some(window_value) = window() else {
+                return;
+            };
+            let Some(document_value) = window_value.document() else {
+                return;
+            };
             if let Some(main_element) = document_value.query_selector("main").ok().flatten() {
                 let html_element: HtmlElement = main_element.unchecked_into();
                 html_element.set_scroll_top(0);
@@ -134,7 +138,9 @@ impl Router {
             if !is_open {
                 return;
             }
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value) = window() else {
+                return;
+            };
             let outer_raf: Window = window_value.clone();
             let inner_raf_clone: Window = window_value.clone();
             let inner_doc_clone: Window = window_value.clone();
@@ -142,8 +148,9 @@ impl Router {
                 let inner_raf: Window = inner_raf_clone.clone();
                 let inner_doc: Window = inner_doc_clone.clone();
                 let inner_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-                    let document_value: Document =
-                        inner_doc.document().expect("should have a document");
+                    let Some(document_value) = inner_doc.document() else {
+                        return;
+                    };
                     let Some(drawer_nav) = document_value
                         .query_selector(DRAWER_NAV_SELECTOR)
                         .ok()
@@ -225,8 +232,12 @@ impl Router {
     /// Call this when an overlay (vconsole panel) opens so that the browser
     /// back button will close the overlay instead of navigating away.
     pub fn overlay_push_state() {
-        let window: Window = window().expect("no global window exists");
-        let history: History = window.history().expect("no history object exists");
+        let Some(window) = window() else {
+            return;
+        };
+        let Ok(history) = window.history() else {
+            return;
+        };
         let _: Result<(), JsValue> = history.push_state(&JsValue::NULL, "");
     }
 
@@ -242,8 +253,12 @@ impl Router {
         if let Some(ref route) = navigate_target {
             NAVIGATE_AFTER_BACK.with(|cell: &Cell<Option<String>>| cell.set(Some(route.clone())));
         }
-        let window: Window = window().expect("no global window exists");
-        let history: History = window.history().expect("no history object exists");
+        let Some(window) = window() else {
+            return;
+        };
+        let Ok(history) = window.history() else {
+            return;
+        };
         let _: Result<(), JsValue> = history.back();
     }
 
@@ -382,7 +397,9 @@ impl Router {
     where
         U: AsRef<str>,
     {
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            return;
+        };
         if let Ok(open_fn) = Reflect::get(&window_value, &JsValue::from_str("open"))
             .and_then(|value: JsValue| value.dyn_into::<Function>())
         {

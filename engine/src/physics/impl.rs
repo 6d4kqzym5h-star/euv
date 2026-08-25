@@ -709,23 +709,30 @@ impl PhysicsWorld3D {
         // unchanged between iterations), eliminating per-iteration re-queries and
         // per-query allocations.
         let mut pairs: Vec<(usize, usize)> = Vec::new();
+        // Collect bboxes first (immutable borrow of bodies) then drain the
+        // spatial grid (mutable borrow). Splitting avoids the split-borrow
+        // limitation that method-call-based accessors introduce.
+        let bboxes: Vec<(usize, AABB3D)> = self
+            .get_bodies()
+            .iter()
+            .enumerate()
+            .filter_map(|(index, body)| body.bounding_box().map(|bbox| (index, bbox)))
+            .collect();
         {
-            let (bodies, grid, query_buffer, query_seen) = (
-                &self.bodies,
-                &mut self.grid,
-                &mut self.query_buffer,
-                &mut self.query_seen,
-            );
+            let Self {
+                grid,
+                query_buffer,
+                query_seen,
+                ..
+            } = self;
+            let grid: &mut SpatialHashGrid3D = grid;
+            let query_buffer: &mut Vec<usize> = query_buffer;
+            let query_seen: &mut HashSet<usize> = query_seen;
             grid.clear();
-            for (index, body) in bodies.iter().enumerate() {
-                if let Some(bbox) = body.bounding_box() {
-                    grid.insert(index, bbox.get_min(), bbox.get_max());
-                }
+            for (index, bbox) in &bboxes {
+                grid.insert(*index, bbox.get_min(), bbox.get_max());
             }
-            for (i, body) in bodies.iter().enumerate() {
-                let Some(bbox) = body.bounding_box() else {
-                    continue;
-                };
+            for (i, (_, bbox)) in bboxes.iter().enumerate() {
                 grid.query_into(bbox.get_min(), bbox.get_max(), query_buffer, query_seen);
                 for &j in query_buffer.iter() {
                     if j > i {

@@ -35,7 +35,9 @@ impl UseEuvCamera {
     ///
     /// - `Result<(), String>` - `Ok(())` on success, or an error message on failure.
     pub(crate) fn open(video_selector: &str, facing: EuvCameraFacing) -> Result<(), String> {
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            return Err("no global window exists".to_string());
+        };
         let navigator: Navigator = window_value.navigator();
         let media_devices: MediaDevices = navigator
             .media_devices()
@@ -60,10 +62,12 @@ impl UseEuvCamera {
         let on_fulfilled: Closure<dyn FnMut(JsValue)> =
             Closure::wrap(Box::new(move |stream_value: JsValue| {
                 let stream: MediaStream = stream_value.unchecked_into();
-                let document: Document = window()
-                    .expect("no global window exists")
-                    .document()
-                    .expect("should have a document");
+                let Some(window_value) = window() else {
+                    return;
+                };
+                let Some(document) = window_value.document() else {
+                    return;
+                };
                 if let Some(element) = document.query_selector(&selector).ok().flatten() {
                     let video_element: HtmlVideoElement = element.unchecked_into();
                     video_element.set_src_object(Some(&stream));
@@ -90,8 +94,12 @@ impl UseEuvCamera {
     ///
     /// - `&str` - The CSS selector of the `<video>` element whose stream should be stopped.
     pub(crate) fn close(video_selector: &str) {
-        let window_value: Window = window().expect("no global window exists");
-        let document: Document = window_value.document().expect("should have a document");
+        let Some(window_value) = window() else {
+            return;
+        };
+        let Some(document) = window_value.document() else {
+            return;
+        };
         if let Some(element) = document.query_selector(video_selector).ok().flatten() {
             let video_element: HtmlVideoElement = element.unchecked_into();
             if let Some(stream) = video_element.src_object() {
@@ -192,7 +200,9 @@ impl UseEuvCamera {
     pub(crate) fn start_qr_scan(self, config: Option<&EuvCameraConfig>) {
         let cfg: EuvCameraConfig =
             config.map_or_else(EuvCameraConfig::default, |c: &EuvCameraConfig| c.clone());
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            return;
+        };
         let barcode_detector_key: JsValue = JsValue::from_str("BarcodeDetector");
         let barcode_detector_constructor: Function =
             match Reflect::get(&window_value, &barcode_detector_key) {
@@ -222,10 +232,12 @@ impl UseEuvCamera {
         let video_selector: Rc<String> = Rc::new(cfg.video_selector.to_string());
         let on_qr_detected: Option<QrDetectedCallback> = cfg.on_qr_detected.clone();
         let handle: IntervalHandle = App::use_interval(cfg.scan_interval_millis, move || {
-            let document: Document = window()
-                .expect("no global window exists")
-                .document()
-                .expect("should have a document");
+            let Some(window_value) = window() else {
+                return;
+            };
+            let Some(document) = window_value.document() else {
+                return;
+            };
             let Some(element) = document.query_selector(&video_selector).ok().flatten() else {
                 return;
             };
@@ -397,7 +409,9 @@ impl UseEuvCamera {
     ///
     /// - `&str` - The URL to navigate to.
     pub(crate) fn navigate_qr_url(url: &str) {
-        let window_value: Window = window().expect("no global window exists");
+        let Some(window_value) = window() else {
+            return;
+        };
         let location: Location = window_value.location();
         let current_hostname: String = location.hostname().unwrap_or_default();
         let url_hostname: String = Self::extract_hostname(url);

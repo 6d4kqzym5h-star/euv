@@ -130,7 +130,9 @@ pub(crate) fn cross_on_input_celsius(signal: Signal<f64>) -> Option<Rc<dyn Fn(Ev
             }
             let pending_for_raf: Rc<Cell<f64>> = pending_value.clone();
             let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
                 raf_id_clone.set(None);
                 signal.set(pending_for_raf.get());
@@ -174,7 +176,9 @@ pub(crate) fn cross_on_input_fahrenheit(signal: Signal<f64>) -> Option<Rc<dyn Fn
             }
             let pending_for_raf: Rc<Cell<f64>> = pending_value.clone();
             let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
                 raf_id_clone.set(None);
                 signal.set(pending_for_raf.get());
@@ -224,7 +228,9 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
             }
             let pending_for_raf: Rc<Cell<i32>> = pending_value.clone();
             let raf_id_clone: Rc<Cell<Option<i32>>> = raf_id.clone();
-            let window_value: Window = window().expect("no global window exists");
+            let Some(window_value): Option<Window> = window() else {
+                return;
+            };
             let raf_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
                 raf_id_clone.set(None);
                 signal.set(pending_for_raf.get());

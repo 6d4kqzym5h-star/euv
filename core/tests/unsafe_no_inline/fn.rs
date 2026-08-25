@@ -1,0 +1,114 @@
+use super::*;
+
+/// Integration tests for the `RawHtml` primitive and
+/// the `unsafe_no_inline!` macro semantics.
+///
+/// The `unsafe_no_inline!` macro lives in `euv-macros`
+/// (proc-macro crate). It expands to
+/// `::euv::vdom::RawHtml::new(value.to_string())`.
+/// These tests verify that `RawHtml` is constructed
+/// correctly with the same observable behavior the macro
+/// would produce, by going through `RawHtml::new` directly.
+/// The macro itself is tested in `euv-example` where the
+/// `euv` umbrella crate is a dependency (so `::euv::vdom::RawHtml`
+/// resolves); here we test the data type the macro emits.
+
+#[test]
+fn raw_html_stores_content_verbatim() {
+    let raw: RawHtml = RawHtml::new("<svg viewBox=\"0 0 10 10\"/>".to_string());
+    assert_eq!(raw.content(), "<svg viewBox=\"0 0 10 10\"/>");
+}
+
+#[test]
+fn raw_html_default_is_empty() {
+    let raw: RawHtml = RawHtml::default();
+    assert!(raw.is_empty());
+    assert_eq!(raw.len(), 0);
+}
+
+#[test]
+fn raw_html_empty_string_is_empty() {
+    let raw: RawHtml = RawHtml::new(String::new());
+    assert!(raw.is_empty());
+    assert_eq!(raw.len(), 0);
+}
+
+#[test]
+fn raw_html_unicode_payload() {
+    let raw: RawHtml = RawHtml::new("<p>你好 🌍</p>".to_string());
+    assert_eq!(raw.content(), "<p>你好 🌍</p>");
+    assert!(raw.contains_tag());
+}
+
+#[test]
+fn raw_html_plain_text_has_no_tag() {
+    let raw: RawHtml = RawHtml::new("hello world".to_string());
+    assert_eq!(raw.content(), "hello world");
+    assert!(!raw.contains_tag());
+}
+
+#[test]
+fn raw_html_preserves_special_chars() {
+    let raw: RawHtml = RawHtml::new("<a href=\"x?a=1&b=2\">link</a>".to_string());
+    assert_eq!(raw.content(), "<a href=\"x?a=1&b=2\">link</a>");
+}
+
+#[test]
+fn raw_html_clone() {
+    let raw: RawHtml = RawHtml::new("<svg/>".to_string());
+    let cloned: RawHtml = raw.clone();
+    assert_eq!(cloned.content(), "<svg/>");
+    assert_eq!(cloned, raw);
+}
+
+#[test]
+fn raw_html_display() {
+    let raw: RawHtml = RawHtml::new("<b>bold</b>".to_string());
+    assert_eq!(format!("{}", raw), "<b>bold</b>");
+}
+
+#[test]
+fn raw_html_debug_includes_type_name() {
+    let raw: RawHtml = RawHtml::new("<svg/>".to_string());
+    let s: String = format!("{:?}", raw);
+    assert!(s.contains("RawHtml"));
+}
+
+#[test]
+fn raw_html_into_text_node_carries_content() {
+    let raw: RawHtml = RawHtml::new("<svg/>".to_string());
+    let node: VirtualNode = VirtualNode::Text(TextNode::new(raw.into_content(), None));
+    let s: String = format!("{:?}", node);
+    assert!(s.contains("svg"));
+}
+
+#[test]
+fn raw_html_contains_tag_for_html_payload() {
+    let raw: RawHtml = RawHtml::new("<svg viewBox=\"0 0 10 10\"/>".to_string());
+    assert!(raw.contains_tag());
+}
+
+#[test]
+fn raw_html_contains_tag_false_for_plain() {
+    let raw: RawHtml = RawHtml::new("hello".to_string());
+    assert!(!raw.contains_tag());
+}
+
+#[test]
+fn raw_html_from_string() {
+    let raw: RawHtml = RawHtml::from(String::from("<p>"));
+    assert_eq!(raw.content(), "<p>");
+}
+
+#[test]
+fn raw_html_from_str() {
+    let raw: RawHtml = RawHtml::from("<p>");
+    assert_eq!(raw.content(), "<p>");
+}
+
+#[test]
+fn raw_html_as_ref_str() {
+    let raw: RawHtml = RawHtml::new("<p>x</p>".to_string());
+    let s: &str = raw.as_ref();
+    assert_eq!(s, "<p>x</p>");
+}

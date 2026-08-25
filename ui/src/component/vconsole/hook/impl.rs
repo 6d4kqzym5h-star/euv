@@ -18,13 +18,12 @@ impl Console {
 
     /// Logs an informational message (equivalent to console.log).
     ///
+    /// The vConsole panel entry is appended only when `Console::init` has
+    /// been called; the browser console output always happens.
+    ///
     /// # Arguments
     ///
     /// - `M: AsRef<str>` - The message to log.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `init_console` has not been called.
     pub fn log<M>(message: M)
     where
         M: AsRef<str>,
@@ -36,13 +35,12 @@ impl Console {
 
     /// Logs a warning message (equivalent to console.warn).
     ///
+    /// The vConsole panel entry is appended only when `Console::init` has
+    /// been called; the browser console output always happens.
+    ///
     /// # Arguments
     ///
     /// - `M: AsRef<str>` - The warning message to log.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `init_console` has not been called.
     pub fn warn<M>(message: M)
     where
         M: AsRef<str>,
@@ -54,13 +52,12 @@ impl Console {
 
     /// Logs an error message (equivalent to console.error).
     ///
+    /// The vConsole panel entry is appended only when `Console::init` has
+    /// been called; the browser console output always happens.
+    ///
     /// # Arguments
     ///
     /// - `M: AsRef<str>` - The error message to log.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `init_console` has not been called.
     pub fn error<M>(message: M)
     where
         M: AsRef<str>,
@@ -72,25 +69,22 @@ impl Console {
 
     /// Clears all log entries from the vConsole panel signal.
     ///
-    /// # Panics
-    ///
-    /// Panics if `init_console` has not been called.
+    /// No-op when `Console::init` has not been called yet.
     pub fn clear() {
-        let log: Signal<Vec<ConsoleEntry>> = Self::get_signal();
+        let Some(log) = Self::get_signal() else {
+            return;
+        };
         log.set(Vec::new());
     }
 
-    /// Returns the global vConsole log signal.
+    /// Returns the global vConsole log signal, if initialized.
     ///
     /// # Returns
     ///
-    /// - `Signal<Vec<ConsoleEntry>>` - The console log signal.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `init_console` has not been called.
-    pub(crate) fn get_signal() -> Signal<Vec<ConsoleEntry>> {
-        CONSOLE_LOG_SIGNAL.get()
+    /// - `Option<Signal<Vec<ConsoleEntry>>>` - The console log signal, or
+    ///   `None` when `Console::init` has not been called yet.
+    pub(crate) fn get_signal() -> Option<Signal<Vec<ConsoleEntry>>> {
+        CONSOLE_LOG_SIGNAL.loaded()
     }
 
     /// Creates a click event handler that opens the vConsole fab panel.
@@ -147,15 +141,15 @@ impl Console {
 
     /// Appends an entry to the vConsole log signal, trimming if over capacity.
     ///
+    /// No-op when `Console::init` has not been called yet.
+    ///
     /// # Arguments
     ///
     /// - `ConsoleEntry` - The console entry to append.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `init_console` has not been called.
     fn append_entry(entry: ConsoleEntry) {
-        let log: Signal<Vec<ConsoleEntry>> = Self::get_signal();
+        let Some(log) = Self::get_signal() else {
+            return;
+        };
         let mut current: Vec<ConsoleEntry> = log.get();
         current.push(entry);
         if current.len() > MAX_CONSOLE_LOG_ENTRIES {
