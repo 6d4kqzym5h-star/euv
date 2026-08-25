@@ -36,7 +36,7 @@ fn error_boundary_phase_partial_eq_healthy_vs_caught() {
 
 #[test]
 fn new_is_healthy() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
     assert!(!matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
@@ -44,27 +44,27 @@ fn new_is_healthy() {
 
 #[test]
 fn default_is_healthy() {
-    let boundary = ErrorBoundary::default();
+    let boundary: ErrorBoundary = ErrorBoundary::default();
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn phase_returns_signal_with_healthy_value() {
-    let boundary = ErrorBoundary::new();
-    let signal = boundary.get_phase();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
+    let signal: &Signal<ErrorBoundaryPhase> = boundary.get_phase();
     assert!(matches!(signal.get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn debug_format_works() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let s: String = format!("{:?}", boundary);
     assert!(s.contains("ErrorBoundary"));
 }
 
 #[test]
 fn display_format_works() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let s: String = format!("{}", boundary);
     assert!(s.contains("ErrorBoundary"));
     assert!(s.contains("Healthy"));
@@ -72,7 +72,7 @@ fn display_format_works() {
 
 #[test]
 fn try_with_success_returns_value() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<i32, String> = boundary.try_with(|| 42);
     assert_eq!(result, Ok(42));
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
@@ -80,7 +80,7 @@ fn try_with_success_returns_value() {
 
 #[test]
 fn try_with_success_string_value() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<String, String> = boundary.try_with(|| "hello".to_string());
     assert_eq!(result, Ok("hello".to_string()));
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
@@ -88,7 +88,7 @@ fn try_with_success_string_value() {
 
 #[test]
 fn try_with_success_complex_value() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<Vec<i32>, String> = boundary.try_with(|| vec![1, 2, 3]);
     assert_eq!(result, Ok(vec![1, 2, 3]));
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
@@ -96,7 +96,7 @@ fn try_with_success_complex_value() {
 
 #[test]
 fn try_with_success_unit() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<(), String> = boundary.try_with(|| {});
     assert_eq!(result, Ok(()));
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
@@ -104,7 +104,7 @@ fn try_with_success_unit() {
 
 #[test]
 fn try_with_static_str_panic() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<(), String> = boundary.try_with(|| {
         panic!("static str panic");
     });
@@ -115,7 +115,7 @@ fn try_with_static_str_panic() {
 
 #[test]
 fn try_with_string_panic() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<(), String> = boundary.try_with(|| {
         panic!("{}", "owned string panic");
     });
@@ -126,7 +126,7 @@ fn try_with_string_panic() {
 
 #[test]
 fn try_with_non_string_panic() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let result: Result<(), String> = boundary.try_with(|| {
         std::panic::panic_any(42_i32);
     });
@@ -137,7 +137,7 @@ fn try_with_non_string_panic() {
 
 #[test]
 fn reset_from_caught_returns_to_healthy() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let _ = boundary.try_with(|| {
         panic!("boom");
     });
@@ -148,15 +148,15 @@ fn reset_from_caught_returns_to_healthy() {
 
 #[test]
 fn reset_from_healthy_is_noop() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     boundary.reset();
     assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn clone_shares_state() {
-    let boundary = ErrorBoundary::new();
-    let cloned = boundary.clone();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
+    let cloned: ErrorBoundary = boundary.clone();
     assert!(matches!(cloned.get_phase().get(), ErrorBoundaryPhase::Healthy));
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         boundary.reset();
@@ -166,8 +166,8 @@ fn clone_shares_state() {
 
 #[test]
 fn phase_signal_is_reactive() {
-    let boundary = ErrorBoundary::new();
-    let signal = boundary.get_phase();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
+    let signal: &Signal<ErrorBoundaryPhase> = boundary.get_phase();
     assert!(matches!(signal.get(), ErrorBoundaryPhase::Healthy));
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let _: Result<(), String> = boundary.try_with(|| {
@@ -183,7 +183,7 @@ fn phase_signal_is_reactive() {
 
 #[test]
 fn multiple_panics_overwrite_message() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let _ = boundary.try_with(|| {
         panic!("first");
     });
@@ -200,7 +200,7 @@ fn multiple_panics_overwrite_message() {
 
 #[test]
 fn panic_then_reset_then_success() {
-    let boundary = ErrorBoundary::new();
+    let boundary: ErrorBoundary = ErrorBoundary::new();
     let _ = boundary.try_with(|| {
         panic!("boom");
     });

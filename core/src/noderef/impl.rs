@@ -55,7 +55,7 @@ impl<T: ?Sized> NodeRef<T> {
         // the new one is stored.
         let cell: *mut Option<JsValue> = self.inner.get();
         unsafe {
-            let _ = (*cell).replace(value);
+            let _: Option<JsValue> = (*cell).replace(value);
         }
     }
 
@@ -69,7 +69,7 @@ impl<T: ?Sized> NodeRef<T> {
     pub fn clear(&self) {
         let cell: *mut Option<JsValue> = self.inner.get();
         unsafe {
-            let _ = (*cell).take();
+            let _: Option<JsValue> = (*cell).take();
         }
     }
 

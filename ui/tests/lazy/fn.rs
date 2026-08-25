@@ -11,7 +11,7 @@ fn new_is_pending() {
 #[test]
 fn get_runs_factory_on_first_call() {
     let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let counter_clone = counter.clone();
+    let counter_clone: Rc<Cell<u32>> = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
         counter_clone.get() * 10
@@ -23,7 +23,7 @@ fn get_runs_factory_on_first_call() {
 #[test]
 fn get_returns_cached_value_on_subsequent_calls() {
     let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let counter_clone = counter.clone();
+    let counter_clone: Rc<Cell<u32>> = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
         counter_clone.get()
@@ -45,7 +45,7 @@ fn prefetch_runs_factory() {
 #[test]
 fn prefetch_is_idempotent() {
     let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let counter_clone = counter.clone();
+    let counter_clone: Rc<Cell<u32>> = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
         counter_clone.get()
@@ -59,7 +59,7 @@ fn prefetch_is_idempotent() {
 #[test]
 fn prefetch_after_resolved_is_no_op() {
     let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let counter_clone = counter.clone();
+    let counter_clone: Rc<Cell<u32>> = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
         counter_clone.get()
@@ -72,7 +72,7 @@ fn prefetch_after_resolved_is_no_op() {
 #[test]
 fn reset_returns_to_pending() {
     let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let counter_clone = counter.clone();
+    let counter_clone: Rc<Cell<u32>> = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
         counter_clone.get()
@@ -112,12 +112,12 @@ fn change_factory_resets_state() {
 #[test]
 fn clone_shares_state_and_factory() {
     let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let counter_clone = counter.clone();
+    let counter_clone: Rc<Cell<u32>> = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
         counter_clone.get()
     });
-    let cloned = lazy.clone();
+    let cloned: LazyComponent<u32> = lazy.clone();
     let _ = lazy.get();
     let _ = cloned.get();
     assert_eq!(counter.get(), 1);
@@ -126,7 +126,7 @@ fn clone_shares_state_and_factory() {
 #[test]
 fn state_signal_is_reactive() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 99);
-    let signal = lazy.get_state();
+    let signal: &Signal<LoadState<i32>> = lazy.get_state();
     assert_eq!(signal.get(), LoadState::Pending);
     let _ = lazy.get();
     assert!(matches!(signal.get(), LoadState::Loaded(99)));
@@ -168,9 +168,9 @@ fn get_after_panic_returns_none() {
 #[test]
 fn reset_after_panic_allows_recovery() {
     let calls: Rc<Cell<u32>> = Rc::new(Cell::new(0));
-    let calls_clone = calls.clone();
+    let calls_clone: Rc<Cell<u32>> = calls.clone();
     let lazy: LazyComponent<i32> = LazyComponent::new(move || {
-        let n = calls_clone.get();
+        let n: u32 = calls_clone.get();
         calls_clone.set(n + 1);
         if n == 0 {
             panic!("first time");
@@ -187,7 +187,7 @@ fn reset_after_panic_allows_recovery() {
 #[test]
 fn debug_format_works() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
-    let s = format!("{:?}", lazy);
+    let s: String = format!("{:?}", lazy);
     assert!(s.contains("LazyComponent"));
 }
 
@@ -195,7 +195,7 @@ fn debug_format_works() {
 fn debug_format_after_load_works() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 42);
     let _ = lazy.get();
-    let s = format!("{:?}", lazy);
+    let s: String = format!("{:?}", lazy);
     assert!(s.contains("42"));
 }
 

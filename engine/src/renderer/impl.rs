@@ -1732,7 +1732,7 @@ impl WebGpuRenderer {
     /// awaiting it never blocks longer than `INIT_PROMISE_TIMEOUT_MILLIS`.
     ///
     /// Calls `Promise.race` via reflection because wasm-bindgen does not
-    /// currently expose the static `race` method on `js_sys::Promise`.
+    /// currently expose the static `race` method on `Promise`.
     fn race_with_timeout(promise: Promise) -> Promise {
         let array: Array = Array::of2(&promise, &Self::timeout_promise());
         Promise::race(&array)
@@ -2786,7 +2786,7 @@ impl WebGpuRenderer {
     ///   [`WebGpuRenderer::create_uniform_buffer`].
     /// - `&[f32]` - The new uniform contents.
     pub fn update_uniform_buffer(&self, buffer: &JsValue, data: &[f32]) {
-        let view: js_sys::Float32Array = js_sys::Float32Array::from(data);
+        let view: Float32Array = Float32Array::from(data);
         let write_fn: Function = Reflect::get(
             self.get_queue(),
             &JsValue::from_str(WEBGPU_METHOD_WRITE_BUFFER),
@@ -2947,7 +2947,7 @@ impl WebGpuRenderer {
     ///
     /// 1. Calls `device.popErrorScope()` to obtain the promise.
     /// 2. Spawns a local future that awaits the promise with
-    ///    `wasm_bindgen_futures::JsFuture` and writes the resolved
+    ///    `JsFuture` and writes the resolved
     ///    value (a `GPUError?`, or `undefined` on success) into
     ///    `self.pending_error`.
     /// 3. Returns `None` immediately. The actual error becomes
@@ -2982,9 +2982,9 @@ impl WebGpuRenderer {
         // `JsValue`. We trust the WebGPU spec — `device.popErrorScope()`
         // returns a `Promise<GPUError?>` — and use `unchecked_into` to
         // avoid the cost of a dynamic type check on the hot path.
-        let promise: js_sys::Promise = promise.unchecked_into();
-        let future = wasm_bindgen_futures::JsFuture::from(promise);
-        let slot: std::rc::Rc<PendingErrorCell> = self.pending_error.clone();
+        let promise: Promise = promise.unchecked_into();
+        let future: JsFuture = JsFuture::from(promise);
+        let slot: Rc<PendingErrorCell> = self.pending_error.clone();
         wasm_bindgen_futures::spawn_local(async move {
             match future.await {
                 Ok(value) => {
@@ -3202,7 +3202,7 @@ impl WebGpuRenderer {
         let _: Result<bool, JsValue> = Reflect::set(
             &descriptor,
             &JsValue::from_str(WEBGPU_PROPERTY_SIZE),
-            &js_sys::Array::of3(
+            &Array::of3(
                 &JsValue::from_f64(f64::from(width)),
                 &JsValue::from_f64(f64::from(height)),
                 &JsValue::from_f64(1.0),
@@ -3266,7 +3266,7 @@ impl WebGpuRenderer {
     ///
     /// - `callback` - The function to invoke. The renderer wraps it
     ///   in a `Closure` and forgets the wrapper.
-    pub fn on_device_lost(&mut self, callback: js_sys::Function) {
+    pub fn on_device_lost(&mut self, callback: Function) {
         let lost_promise: Promise =
             match Reflect::get(self.get_device(), &JsValue::from_str(WEBGPU_PROPERTY_LOST))
                 .ok()
@@ -3407,7 +3407,7 @@ impl WebGpuRenderer {
         if data.is_empty() {
             return;
         }
-        let view: js_sys::Uint8Array = js_sys::Uint8Array::from(data);
+        let view: Uint8Array = Uint8Array::from(data);
         let write_fn: Function = Reflect::get(
             self.get_queue(),
             &JsValue::from_str(WEBGPU_METHOD_WRITE_BUFFER),
@@ -4390,7 +4390,7 @@ impl WebGpuRenderer {
         // WebGPU's queue.writeTexture requires a Uint8Array view; we hand
         // it the raw Vec<u8> and let JS interop copy it. This is the same
         // path wasm-bindgen takes for &[u8] → Uint8Array.
-        let data_js: JsValue = js_sys::Uint8Array::from(descriptor.get_data().as_slice()).into();
+        let data_js: JsValue = Uint8Array::from(descriptor.get_data().as_slice()).into();
         // For the size extent, we read bytes_per_row's texel width from the
         // destination. Without a format converter we default to a square
         // shape based on the data size. The caller is expected to construct
@@ -4504,7 +4504,7 @@ impl WebGpuRenderer {
         let map_fn: Function = Reflect::get(buffer, &JsValue::from_str(WEBGPU_METHOD_MAP_ASYNC))
             .ok()
             .and_then(|v| v.dyn_into::<Function>().ok())?;
-        let map_promise: js_sys::Promise = map_fn
+        let map_promise: Promise = map_fn
             .call3(
                 buffer,
                 // `mapAsync` takes a `GPUMapMode` bitmask; the spec
@@ -4520,15 +4520,13 @@ impl WebGpuRenderer {
             .ok()?
             .unchecked_into();
         // Step 2: await the mapAsync promise
-        let _map_result = wasm_bindgen_futures::JsFuture::from(map_promise)
-            .await
-            .ok()?;
+        let _map_result: JsValue = JsFuture::from(map_promise).await.ok()?;
         // Step 3: buffer.getMappedRange(offset, size)
         let get_range_fn: Function =
             Reflect::get(buffer, &JsValue::from_str(WEBGPU_METHOD_GET_MAPPED_RANGE))
                 .ok()
                 .and_then(|v| v.dyn_into::<Function>().ok())?;
-        let array_buffer: js_sys::ArrayBuffer = get_range_fn
+        let array_buffer: ArrayBuffer = get_range_fn
             .call2(
                 buffer,
                 &JsValue::from_f64(offset as f64),
@@ -4537,7 +4535,7 @@ impl WebGpuRenderer {
             .ok()?
             .unchecked_into();
         // Step 4: copy out before unmap invalidates the memory
-        let u8_view: js_sys::Uint8Array = js_sys::Uint8Array::new(&array_buffer);
+        let u8_view: Uint8Array = Uint8Array::new(&array_buffer);
         let mut out: Vec<u8> = vec![0u8; u8_view.length() as usize];
         u8_view.copy_to(&mut out);
         // Step 5: unmap
@@ -5352,7 +5350,7 @@ impl PendingErrorCell {
     }
 
     /// Hand out a raw pointer to the inner cell for the
-    /// `wasm_bindgen_futures::spawn_local` closure to write through.
+    /// `spawn_local` closure to write through.
     ///
     /// # Safety
     ///

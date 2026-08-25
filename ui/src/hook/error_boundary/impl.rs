@@ -23,7 +23,7 @@ impl ErrorBoundary {
         match std::panic::catch_unwind(closure) {
             Ok(value) => Ok(value),
             Err(payload) => {
-                let message = extract_message(&payload);
+                let message: String = extract_message(&payload);
                 let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                     self.get_phase().set(ErrorBoundaryPhase::Caught(message.clone()));
                 }));

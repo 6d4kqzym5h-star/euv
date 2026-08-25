@@ -135,7 +135,7 @@ fn as_ref_str() {
 #[test]
 fn clone_copies_content() {
     let raw: RawHtml = RawHtml::new("<svg/>".to_string());
-    let cloned = raw.clone();
+    let cloned: RawHtml = raw.clone();
     assert_eq!(cloned.content(), "<svg/>");
 }
 

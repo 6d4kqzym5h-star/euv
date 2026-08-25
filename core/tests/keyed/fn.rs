@@ -89,7 +89,7 @@ fn all_have_keys_false_for_single_unkeyed() {
 fn diff_children_keyed_when_both_have_keys() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
-    let ops = diff_children(&old, &new);
+    let ops: Vec<DiffOp> = diff_children(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Update { index: 1 },]
@@ -100,7 +100,7 @@ fn diff_children_keyed_when_both_have_keys() {
 fn diff_children_positional_when_unkeyed() {
     let old: Vec<VirtualNode> = vec![unkeyed_element("div"), unkeyed_element("span")];
     let new: Vec<VirtualNode> = vec![unkeyed_element("div"), unkeyed_element("span")];
-    let ops = diff_children(&old, &new);
+    let ops: Vec<DiffOp> = diff_children(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Update { index: 1 },]
@@ -111,7 +111,7 @@ fn diff_children_positional_when_unkeyed() {
 fn diff_children_keyed_when_old_unkeyed() {
     let old: Vec<VirtualNode> = vec![unkeyed_element("div")];
     let new: Vec<VirtualNode> = vec![keyed_element("a", "div")];
-    let ops = diff_children(&old, &new);
+    let ops: Vec<DiffOp> = diff_children(&old, &new);
     assert_eq!(ops, vec![DiffOp::Update { index: 0 }]);
 }
 
@@ -145,7 +145,7 @@ fn positional_insert_at_tail() {
 fn positional_remove_from_tail() {
     let old: Vec<VirtualNode> = vec![unkeyed_element("div"), unkeyed_element("span")];
     let new: Vec<VirtualNode> = vec![unkeyed_element("div")];
-    let ops = diff_positional(&old, &new);
+    let ops: Vec<DiffOp> = diff_positional(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Remove { index: 1 },]
@@ -156,7 +156,7 @@ fn positional_remove_from_tail() {
 fn positional_empty_to_non_empty() {
     let old: Vec<VirtualNode> = vec![];
     let new: Vec<VirtualNode> = vec![unkeyed_element("div"), unkeyed_element("span")];
-    let ops = diff_positional(&old, &new);
+    let ops: Vec<DiffOp> = diff_positional(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -176,7 +176,7 @@ fn positional_empty_to_non_empty() {
 fn positional_non_empty_to_empty() {
     let old: Vec<VirtualNode> = vec![unkeyed_element("div"), unkeyed_element("span")];
     let new: Vec<VirtualNode> = vec![];
-    let ops = diff_positional(&old, &new);
+    let ops: Vec<DiffOp> = diff_positional(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Remove { index: 1 }, DiffOp::Remove { index: 0 },]
@@ -194,7 +194,7 @@ fn positional_empty_to_empty() {
 fn keyed_no_change() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = old.clone();
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Update { index: 1 },]
@@ -209,7 +209,7 @@ fn keyed_insert_at_tail() {
         keyed_element("b", "span"),
         keyed_element("c", "p"),
     ];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -231,7 +231,7 @@ fn keyed_insert_at_head() {
         keyed_element("a", "div"),
         keyed_element("b", "span"),
     ];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -249,7 +249,7 @@ fn keyed_insert_at_head() {
 fn keyed_remove_from_tail() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("a", "div")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Remove { index: 1 },]
@@ -260,7 +260,7 @@ fn keyed_remove_from_tail() {
 fn keyed_remove_from_head() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("b", "span")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Remove { index: 0 },]
@@ -271,7 +271,7 @@ fn keyed_remove_from_head() {
 fn keyed_swap_two() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("b", "span"), keyed_element("a", "div")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Update { index: 0 }, DiffOp::Update { index: 1 },]
@@ -290,7 +290,7 @@ fn keyed_reorder_three() {
         keyed_element("a", "div"),
         keyed_element("b", "span"),
     ];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -305,7 +305,7 @@ fn keyed_reorder_three() {
 fn keyed_insert_and_remove() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("c", "p")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -323,7 +323,7 @@ fn keyed_insert_and_remove() {
 fn keyed_replace_all() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("x", "h1"), keyed_element("y", "p")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -345,7 +345,7 @@ fn keyed_replace_all() {
 fn keyed_empty_to_non_empty() {
     let old: Vec<VirtualNode> = vec![];
     let new: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -365,7 +365,7 @@ fn keyed_empty_to_non_empty() {
 fn keyed_non_empty_to_empty() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![DiffOp::Remove { index: 1 }, DiffOp::Remove { index: 0 },]
@@ -383,7 +383,7 @@ fn keyed_single_element_no_change() {
 fn keyed_single_element_replaced() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div")];
     let new: Vec<VirtualNode> = vec![keyed_element("b", "span")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -408,7 +408,7 @@ fn keyed_move_from_tail_to_head() {
         keyed_element("a", "div"),
         keyed_element("b", "span"),
     ];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![
@@ -423,7 +423,7 @@ fn keyed_move_from_tail_to_head() {
 fn keyed_keeps_ops_in_walk_order() {
     let old: Vec<VirtualNode> = vec![keyed_element("a", "div"), keyed_element("b", "span")];
     let new: Vec<VirtualNode> = vec![keyed_element("b", "span"), keyed_element("c", "p")];
-    let ops = diff_keyed(&old, &new);
+    let ops: Vec<DiffOp> = diff_keyed(&old, &new);
     assert_eq!(
         ops,
         vec![

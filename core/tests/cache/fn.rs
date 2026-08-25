@@ -45,7 +45,7 @@ fn put_evicts_least_recently_used_when_full() {
     let mut cache: LruCache<String, i32> = LruCache::new(2);
     cache.put("a".to_string(), 1);
     cache.put("b".to_string(), 2);
-    let evicted = cache.put("c".to_string(), 3);
+    let evicted: Option<(String, i32)> = cache.put("c".to_string(), 3);
     assert_eq!(evicted, Some(("a".to_string(), 1)));
     assert_eq!(cache.len(), 2);
     assert!(!cache.contains(&"a".to_string()));
@@ -59,7 +59,7 @@ fn get_promotes_key_so_it_is_not_evicted_next() {
     cache.put("a".to_string(), 1);
     cache.put("b".to_string(), 2);
     let _ = cache.get(&"a".to_string());
-    let evicted = cache.put("c".to_string(), 3);
+    let evicted: Option<(String, i32)> = cache.put("c".to_string(), 3);
     assert_eq!(evicted, Some(("b".to_string(), 2)));
     assert!(cache.contains(&"a".to_string()));
     assert!(cache.contains(&"c".to_string()));
@@ -69,7 +69,7 @@ fn get_promotes_key_so_it_is_not_evicted_next() {
 fn remove_drops_entry() {
     let mut cache: LruCache<String, i32> = LruCache::new(10);
     cache.put("a".to_string(), 1);
-    let removed = cache.remove(&"a".to_string());
+    let removed: Option<i32> = cache.remove(&"a".to_string());
     assert_eq!(removed, Some(1));
     assert_eq!(cache.len(), 0);
     assert!(!cache.contains(&"a".to_string()));
@@ -116,14 +116,14 @@ fn contains_does_not_update_recency() {
     cache.put("a".to_string(), 1);
     cache.put("b".to_string(), 2);
     assert!(cache.contains(&"a".to_string()));
-    let evicted = cache.put("c".to_string(), 3);
+    let evicted: Option<(String, i32)> = cache.put("c".to_string(), 3);
     assert_eq!(evicted, Some(("a".to_string(), 1)));
 }
 
 #[test]
 fn capacity_zero_silently_drops_puts() {
     let mut cache: LruCache<String, i32> = LruCache::new(0);
-    let evicted = cache.put("a".to_string(), 1);
+    let evicted: Option<(String, i32)> = cache.put("a".to_string(), 1);
     assert_eq!(evicted, None);
     assert_eq!(cache.len(), 0);
 }
@@ -133,7 +133,7 @@ fn capacity_one_holds_exactly_one_entry() {
     let mut cache: LruCache<String, i32> = LruCache::new(1);
     cache.put("a".to_string(), 1);
     assert!(cache.is_full());
-    let evicted = cache.put("b".to_string(), 2);
+    let evicted: Option<(String, i32)> = cache.put("b".to_string(), 2);
     assert_eq!(evicted, Some(("a".to_string(), 1)));
     assert_eq!(cache.len(), 1);
     assert!(!cache.contains(&"a".to_string()));
@@ -219,7 +219,7 @@ fn peek_does_not_update_recency() {
     cache.put("a".to_string(), 1);
     cache.put("b".to_string(), 2);
     let _ = cache.peek(&"a".to_string());
-    let evicted = cache.put("c".to_string(), 3);
+    let evicted: Option<(String, i32)> = cache.put("c".to_string(), 3);
     assert_eq!(evicted, Some(("a".to_string(), 1)));
 }
 
@@ -244,6 +244,6 @@ fn integer_key_works() {
     cache.put(1, String::from("one"));
     cache.put(2, String::from("two"));
     assert_eq!(cache.get(&1), Some(&String::from("one")));
-    let evicted = cache.put(3, String::from("three"));
+    let evicted: Option<(i32, String)> = cache.put(3, String::from("three"));
     assert_eq!(evicted, Some((2, String::from("two"))));
 }
