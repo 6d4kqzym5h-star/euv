@@ -233,6 +233,15 @@ impl DrawList {
         self.get_commands().len()
     }
 
+    /// Returns the recorded commands as a slice for replay iteration.
+    ///
+    /// # Returns
+    ///
+    /// - `&[DrawCommand]` - The commands in the order they were recorded.
+    pub fn commands(&self) -> &[DrawCommand] {
+        self.get_commands().as_slice()
+    }
+
     /// Removes all recorded commands, keeping the allocated capacity for reuse
     /// on the next frame.
     pub fn clear(&mut self) {
@@ -530,7 +539,7 @@ impl CanvasRenderer {
             }
         }
 
-        for command in self_commands(list) {
+        for command in list.commands() {
             let key: Option<(u8, Color, f64)> = batch_key(command);
             // Close the open run if this command breaks it or starts a new style.
             if run_open && key != run_key {

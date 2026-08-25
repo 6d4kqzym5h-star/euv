@@ -1,3 +1,5 @@
+use super::*;
+
 /// Represents the available tag types for the dynamic tag demo page.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub(crate) enum DynamicTagType {

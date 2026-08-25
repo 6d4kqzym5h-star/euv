@@ -433,3 +433,190 @@ fn native_fire_handle_fire_does_not_panic() {
     .map_err(|_| ());
     assert!(result.is_ok());
 }
+
+// =====================================================================
+// Signal::<String>::try_reclaim_inactive — SPA orphan bridge reclamation
+// =====================================================================
+
+#[test]
+fn try_reclaim_inactive_returns_zero_when_no_orphans() {
+    // No bridges have been created yet (or all have source subscribers),
+    // so the sweep has nothing to do and must report 0.
+    let freed: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    assert_eq!(freed, 0);
+}
+
+#[test]
+fn try_reclaim_inactive_zero_max_freed_is_noop() {
+    // Passing max_freed = 0 short-circuits the scan — verifies the
+    // function respects the cap without burning a HashMap walk.
+    let freed: usize = Signal::<String>::try_reclaim_inactive(0);
+    assert_eq!(freed, 0);
+}
+
+#[test]
+fn try_reclaim_inactive_reclaims_orphan_after_clear_listeners() {
+    // The canonical orphan case: a bridge is created (via
+    // BridgeRefsCell::track), its source never deactivates, the bridge
+    // itself is detached (clear_listeners removes it from the registry).
+    // Without try_reclaim_inactive, the bridge heap would stay parked
+    // in BridgeRefsCell with an empty dep set until the page unloads.
+    let source: Signal<i32> = Signal::create(0);
+    let bridge: Signal<String> = Signal::create(String::from("init"));
+    let bridge_addr: usize = bridge.get_inner();
+    BridgeRefsCell::track(bridge_addr, source.get_inner());
+    // Simulate the orphan invariant directly: empty the bridge's
+    // dep set (as `Signal::deactivate` would) without invoking
+    // the atomic free step, then detach the DOM via clear_listeners.
+    // After this, the bridge sits in BridgeRefsCell with an empty
+    // dep set and is not in SIGNAL_INNER_REGISTRY — exactly the
+    // state the SPA sweep reclaims.
+    BridgeRefsCell::map_mut()
+        .get_mut(&bridge_addr)
+        .expect("bridge should be tracked")
+        .remove(&source.get_inner());
+    Signal::<String>::clear_listeners(bridge_addr);
+    // Sanity: the bridge is no longer in the registry.
+    assert!(
+        !Signal::<String>::is_alive(bridge_addr),
+        "clear_listeners must remove the bridge from SIGNAL_INNER_REGISTRY"
+    );
+    // Sanity: the bridge is still parked in BridgeRefsCell with an
+    // empty dep set — the orphan invariant.
+    assert!(
+        BridgeRefsCell::map_mut()
+            .get(&bridge_addr)
+            .map(|s| s.is_empty())
+            .unwrap_or(false),
+        "bridge must still be parked in BridgeRefsCell with an empty dep set"
+    );
+    // Sweep. The bridge satisfies both invariants, so it must be reclaimed.
+    let freed: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    assert_eq!(
+        freed, 1,
+        "orphan bridge must be reclaimed in a single sweep"
+    );
+    // Post-sweep: the bridge is removed from BridgeRefsCell.
+    assert!(
+        !BridgeRefsCell::map_mut().contains_key(&bridge_addr),
+        "reclaimed bridge must be removed from BridgeRefsCell"
+    );
+}
+
+#[test]
+fn try_reclaim_inactive_skips_bridge_with_live_source() {
+    // A bridge whose source still claims it (dep set non-empty) must
+    // NOT be reclaimed — reclaiming would let a stale subscriber
+    // dereference a freed pointer. We construct the canonical
+    // "DOM-detached, source-still-listening" state: clear_listeners
+    // ran (so bridge is out of registry) but the bridge's entry in
+    // BridgeRefsCell still records `source_addr`.
+    let source: Signal<i32> = Signal::create(0);
+    let bridge: Signal<String> = Signal::create(String::from("init"));
+    let bridge_addr: usize = bridge.get_inner();
+    BridgeRefsCell::track(bridge_addr, source.get_inner());
+    Signal::<String>::clear_listeners(bridge_addr);
+    // Sanity: bridge is out of registry, dep set still claims source.
+    assert!(!Signal::<String>::is_alive(bridge_addr));
+    assert_eq!(
+        BridgeRefsCell::map_mut()
+            .get(&bridge_addr)
+            .map(|s| s.len())
+            .unwrap_or(0),
+        1,
+        "dep set should still record the source subscriber"
+    );
+    let freed: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    assert_eq!(
+        freed, 0,
+        "bridge with non-empty dep set must not be reclaimed"
+    );
+    // The bridge is still tracked in BridgeRefsCell (sweep correctly
+    // left it alone).
+    assert!(BridgeRefsCell::map_mut().contains_key(&bridge_addr));
+}
+
+#[test]
+fn try_reclaim_inactive_skips_bridge_still_in_registry() {
+    // A bridge whose address is still in SIGNAL_INNER_REGISTRY (i.e.
+    // its DOM element is still attached) must NOT be reclaimed — the
+    // handler might still be invoked via the live data-euv-id lookup,
+    // and freeing the heap would be undefined behaviour.
+    let source: Signal<i32> = Signal::create(0);
+    let bridge: Signal<String> = Signal::create(String::from("init"));
+    let bridge_addr: usize = bridge.get_inner();
+    BridgeRefsCell::track(bridge_addr, source.get_inner());
+    // Note: clear_listeners NOT called — bridge is still in registry.
+    // Also drop the source subscriber entry by hand so the dep set
+    // would otherwise be empty if we forgot the registry check.
+    BridgeRefsCell::map_mut().remove(&bridge_addr);
+    BridgeRefsCell::track(bridge_addr, source.get_inner());
+    BridgeRefsCell::map_mut()
+        .get_mut(&bridge_addr)
+        .unwrap()
+        .remove(&source.get_inner());
+    let freed: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    assert_eq!(
+        freed, 0,
+        "bridge still in SIGNAL_INNER_REGISTRY must not be reclaimed"
+    );
+}
+
+#[test]
+fn try_reclaim_inactive_respects_max_freed_cap() {
+    // With two reclaimable orphans and max_freed = 1, the sweep must
+    // reclaim exactly 1 and leave the other for a subsequent call.
+    let source_a: Signal<i32> = Signal::create(0);
+    let source_b: Signal<i32> = Signal::create(1);
+    let bridge_a: Signal<String> = Signal::create(String::from("a"));
+    let bridge_b: Signal<String> = Signal::create(String::from("b"));
+    let addr_a: usize = bridge_a.get_inner();
+    let addr_b: usize = bridge_b.get_inner();
+    BridgeRefsCell::track(addr_a, source_a.get_inner());
+    BridgeRefsCell::track(addr_b, source_b.get_inner());
+    // Empty both dep sets to create the orphan invariant.
+    BridgeRefsCell::map_mut()
+        .get_mut(&addr_a)
+        .unwrap()
+        .remove(&source_a.get_inner());
+    BridgeRefsCell::map_mut()
+        .get_mut(&addr_b)
+        .unwrap()
+        .remove(&source_b.get_inner());
+    Signal::<String>::clear_listeners(addr_a);
+    Signal::<String>::clear_listeners(addr_b);
+    let freed: usize = Signal::<String>::try_reclaim_inactive(1);
+    assert_eq!(freed, 1, "max_freed = 1 must cap reclaim count");
+    // Second sweep finishes the job.
+    let freed_rest: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    assert_eq!(
+        freed_rest, 1,
+        "remaining orphan must be reclaimed on the next sweep"
+    );
+    // Final state: neither bridge is in BridgeRefsCell.
+    let remaining: usize = BridgeRefsCell::map_mut()
+        .iter()
+        .filter(|(addr, _)| **addr == addr_a || **addr == addr_b)
+        .count();
+    assert_eq!(remaining, 0);
+}
+
+#[test]
+fn try_reclaim_inactive_idempotent() {
+    // Calling the sweep twice must reclaim the same orphans only once.
+    // The second call must observe an empty dep-set + not-in-registry
+    // set and return 0.
+    let source: Signal<i32> = Signal::create(0);
+    let bridge: Signal<String> = Signal::create(String::from("once"));
+    let bridge_addr: usize = bridge.get_inner();
+    BridgeRefsCell::track(bridge_addr, source.get_inner());
+    BridgeRefsCell::map_mut()
+        .get_mut(&bridge_addr)
+        .unwrap()
+        .remove(&source.get_inner());
+    Signal::<String>::clear_listeners(bridge_addr);
+    let first: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    let second: usize = Signal::<String>::try_reclaim_inactive(usize::MAX);
+    assert_eq!(first, 1);
+    assert_eq!(second, 0, "second sweep must find nothing left to reclaim");
+}

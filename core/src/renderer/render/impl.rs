@@ -407,45 +407,13 @@ impl Renderer {
         new_children: &[VirtualNode],
     ) {
         let old_has_keys: bool =
-            !old_children.is_empty() && old_children.iter().all(Self::node_has_key);
+            !old_children.is_empty() && old_children.iter().all(VirtualNode::has_key);
         let new_has_keys: bool =
-            !new_children.is_empty() && new_children.iter().all(Self::node_has_key);
+            !new_children.is_empty() && new_children.iter().all(VirtualNode::has_key);
         if old_has_keys && new_has_keys {
             self.patch_children_keyed(parent, old_children, new_children);
         } else {
             self.patch_children_positional(parent, old_children, new_children);
-        }
-    }
-
-    /// Returns `true` if the virtual node has a non-empty key.
-    ///
-    /// # Arguments
-    ///
-    /// - `&VirtualNode` - The node to check.
-    ///
-    /// # Returns
-    ///
-    /// - `bool` - Whether the node has a key.
-    fn node_has_key(node: &VirtualNode) -> bool {
-        match node {
-            VirtualNode::Element { key, .. } => key.is_some(),
-            _ => false,
-        }
-    }
-
-    /// Extracts the key from a virtual node.
-    ///
-    /// # Arguments
-    ///
-    /// - `&VirtualNode` - The node to extract the key from.
-    ///
-    /// # Returns
-    ///
-    /// - `Option<&str>` - The key string, if present.
-    fn get_node_key(node: &VirtualNode) -> Option<&str> {
-        match node {
-            VirtualNode::Element { key, .. } => key.as_deref(),
-            _ => None,
         }
     }
 
@@ -480,7 +448,7 @@ impl Renderer {
         let mut old_key_to_node: HashMap<&str, (usize, Node)> =
             HashMap::with_capacity(old_children.len());
         for (index, old_child) in old_children.iter().enumerate() {
-            if let Some(key) = Self::get_node_key(old_child) {
+            if let Some(key) = old_child.key() {
                 let dom_index: u32 = index as u32;
                 if dom_index < dom_child_count
                     && let Some(node) = child_nodes.get(dom_index)
@@ -491,12 +459,12 @@ impl Renderer {
         }
         let mut new_key_set: HashSet<&str> = HashSet::with_capacity(new_children.len());
         for new_child in new_children.iter() {
-            if let Some(key) = Self::get_node_key(new_child) {
+            if let Some(key) = new_child.key() {
                 new_key_set.insert(key);
             }
         }
         for (index, old_child) in old_children.iter().enumerate() {
-            if let Some(key) = Self::get_node_key(old_child) {
+            if let Some(key) = old_child.key() {
                 if !new_key_set.contains(key)
                     && let Some((_old_index, dom_node)) = old_key_to_node.remove(key)
                 {
@@ -518,7 +486,7 @@ impl Renderer {
             }
         }
         for (new_index, new_child) in new_children.iter().enumerate() {
-            let new_key: &str = Self::get_node_key(new_child).unwrap_or_default();
+            let new_key: &str = new_child.key().unwrap_or_default();
             let target_index: u32 = new_index as u32;
             // OPT 3: same hoisted NodeList, no re-fetch.
             let current_at_target: Option<Node> = child_nodes.get(target_index);

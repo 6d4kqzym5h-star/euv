@@ -1,10 +1,5 @@
 use super::*;
 
-/// Returns the command slice of a `DrawList` for replay iteration.
-pub(crate) fn self_commands(list: &DrawList) -> &[DrawCommand] {
-    list.get_commands().as_slice()
-}
-
 /// Draws a transformed sprite immediately with a single `set_transform`.
 ///
 /// Mirrors the `SpriteSheet::draw_frame` fast path: the TRS matrix is composed

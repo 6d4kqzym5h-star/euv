@@ -1,3 +1,5 @@
+use super::*;
+
 /// Represents a standard mouse button identifier.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum MouseButton {

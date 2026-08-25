@@ -1,3 +1,5 @@
+use super::*;
+
 /// The complete set of Robert Penner easing functions used to warp a linear
 /// interpolation parameter into an accelerated / decelerated curve.
 ///

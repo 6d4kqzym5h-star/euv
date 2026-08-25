@@ -1,3 +1,5 @@
+use super::*;
+
 /// Defines how an animation behaves when it reaches the last frame.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum AnimationMode {

@@ -1,3 +1,5 @@
+use super::*;
+
 /// Categorizes the type of a game asset for appropriate loading and storage.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum AssetType {

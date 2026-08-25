@@ -127,11 +127,20 @@ impl Registry {
     /// find the nearest element with a `data-euv-id` attribute, then
     /// invoking the matching handler from the global registry.
     ///
+    /// `max_depth` caps the ancestor walk at this many `parent_element`
+    /// hops. The walk counts `event.target()` itself as depth 0. Pass
+    /// `usize::MAX` for an unbounded walk (the original behaviour).
+    /// Events named in `HIGH_FREQUENCY_EVENTS` use a smaller cap
+    /// (see `MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ`) because their handlers
+    /// almost always live within a handful of ancestors of the target
+    /// (e.g. a `mousemove` listener attached to a scroll container).
+    ///
     /// # Arguments
     ///
     /// - `&Event` - The DOM event to dispatch.
     /// - `&'static str` - The event name (e.g., "click", "input").
-    fn dispatch_delegated_event(event: &Event, event_name: &'static str) {
+    /// - `usize` - Upper bound on ancestor walk depth; `usize::MAX` for unbounded.
+    fn dispatch_delegated_event(event: &Event, event_name: &'static str, max_depth: usize) {
         let target: EventTarget = match event.target() {
             Some(event_target) => event_target,
             None => return,
@@ -142,7 +151,19 @@ impl Registry {
                 .and_then(|node: &Node| node.parent_node())
                 .and_then(|parent: Node| parent.dyn_ref::<Element>().cloned())
         });
+        // Bound the ancestor walk so high-frequency events
+        // (mousemove / touchmove / pointermove / scroll / wheel /
+        // mousewheel) don't pay the cost of `get_attribute` +
+        // `parse::<usize>` + HashMap lookup at every intermediate DOM
+        // node between the target and the handler. The cap is wide
+        // enough to reach a typical scroll/drag container (a few levels
+        // above the deepest leaf) while keeping the worst case
+        // proportional to constant time rather than DOM depth.
+        let mut depth: usize = 0;
         while let Some(element) = current {
+            if depth >= max_depth {
+                break;
+            }
             if let Some(euv_id_str) = element.get_attribute(DATA_EUV_ID)
                 && let Ok(euv_id) = euv_id_str.parse::<usize>()
             {
@@ -161,6 +182,7 @@ impl Registry {
                 }
             }
             current = element.parent_element();
+            depth += 1;
         }
     }
 
@@ -178,8 +200,18 @@ impl Registry {
         if Self::is_delegated(event_name) {
             return;
         }
+        // Compute the depth cap for this event name once at registration
+        // time and capture it in the closure — avoids re-computing on
+        // every event dispatch. Events listed in HIGH_FREQUENCY_EVENTS
+        // get a bounded walk (see MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ);
+        // everything else gets the original unbounded behaviour.
+        let max_depth: usize = if HIGH_FREQUENCY_EVENTS.contains(&event_name) {
+            MAX_ANCESTOR_DEPTH_FOR_HIGH_FREQ
+        } else {
+            usize::MAX
+        };
         let closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
-            Self::dispatch_delegated_event(&event, event_name);
+            Self::dispatch_delegated_event(&event, event_name, max_depth);
         }));
         let window: Window = match window() {
             Some(window_instance) => window_instance,
