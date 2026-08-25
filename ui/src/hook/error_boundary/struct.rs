@@ -13,7 +13,7 @@ use super::*;
 /// closure's return value (if it didn't panic) is
 /// returned to the caller; if it panicked, an `Err`
 /// is returned containing the panic message.
-#[derive(Clone, Debug)]
+#[derive(Clone, Data, Debug)]
 pub struct ErrorBoundary {
     /// The phase signal.
     pub(crate) phase: Signal<ErrorBoundaryPhase>,

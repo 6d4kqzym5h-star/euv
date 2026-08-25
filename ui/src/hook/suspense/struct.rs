@@ -8,7 +8,7 @@ use super::*;
 /// thing that can mutate the phase, via
 /// `resolve_sync` (every target) or `resolve_async`
 /// (wasm-only).
-#[derive(Clone, Debug)]
+#[derive(Clone, Data, Debug)]
 pub struct SuspenseHandle<T: Clone + PartialEq + 'static> {
     /// The phase signal.
     pub(crate) phase: Signal<SuspensePhase<T>>,

@@ -11,22 +11,22 @@ impl ErrorBoundary {
 
     /// Returns the underlying phase signal.
     pub fn phase(&self) -> Signal<ErrorBoundaryPhase> {
-        self.phase
+        *self.get_phase()
     }
 
     /// Returns a snapshot of the current phase.
     pub fn current(&self) -> ErrorBoundaryPhase {
-        self.phase.get()
+        self.get_phase().get()
     }
 
     /// Returns `true` if no child has thrown yet.
     pub fn is_healthy(&self) -> bool {
-        matches!(self.phase.get(), ErrorBoundaryPhase::Healthy)
+        matches!(self.get_phase().get(), ErrorBoundaryPhase::Healthy)
     }
 
     /// Returns `true` if a child has thrown.
     pub fn is_caught(&self) -> bool {
-        matches!(self.phase.get(), ErrorBoundaryPhase::Caught(_))
+        matches!(self.get_phase().get(), ErrorBoundaryPhase::Caught(_))
     }
 
     /// Runs a closure and, if it panics, transitions
@@ -45,7 +45,7 @@ impl ErrorBoundary {
             Err(payload) => {
                 let message = extract_message(&payload);
                 let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    self.phase.set(ErrorBoundaryPhase::Caught(message.clone()));
+                    self.get_phase().set(ErrorBoundaryPhase::Caught(message.clone()));
                 }));
                 Err(message)
             }
@@ -57,7 +57,7 @@ impl ErrorBoundary {
     /// after a retry).
     pub fn reset(&self) {
         let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            self.phase.set(ErrorBoundaryPhase::Healthy);
+            self.get_phase().set(ErrorBoundaryPhase::Healthy);
         }));
     }
 }
@@ -70,7 +70,7 @@ impl Default for ErrorBoundary {
 
 impl std::fmt::Display for ErrorBoundary {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(formatter, "ErrorBoundary({:?})", self.phase.get())
+        write!(formatter, "ErrorBoundary({:?})", self.get_phase().get())
     }
 }
 

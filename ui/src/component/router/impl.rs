@@ -78,11 +78,11 @@ impl NestedRouteConfig {
 
     /// Returns the component closure.
     pub fn component(&self) -> Rc<dyn Fn() -> VirtualNode> {
-        self.component.clone()
+        self.get_component().clone()
     }
 
     /// Returns the child routes.
     pub fn children(&self) -> &[NestedRouteConfig] {
-        &self.children
+        self.get_children()
     }
 }

@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn fresh_handle_starts_in_loading_state() {
-    let handle: UseAsyncHandle<u32> = UseAsyncHandle::default();
+    let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
     match handle.state() {
         AsyncState::Loading(()) => {}
         other => panic!("expected AsyncState::Loading(()), got {other:?}"),
@@ -11,7 +11,7 @@ fn fresh_handle_starts_in_loading_state() {
 
 #[test]
 fn set_state_transitions_to_ok() {
-    let handle: UseAsyncHandle<String> = UseAsyncHandle::default();
+    let handle: UseAsyncHandle<String, ()> = UseAsyncHandle::default();
     handle.set_state(AsyncState::Ok(String::from("payload")));
     match handle.state() {
         AsyncState::Ok(value) => assert_eq!(value, "payload"),
@@ -21,7 +21,7 @@ fn set_state_transitions_to_ok() {
 
 #[test]
 fn set_state_transitions_to_err() {
-    let handle: UseAsyncHandle<u32> = UseAsyncHandle::default();
+    let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
     handle.set_state(AsyncState::Err(String::from("network down")));
     match handle.state() {
         AsyncState::Err(msg) => assert_eq!(msg, "network down"),
@@ -64,7 +64,7 @@ fn async_state_debug_names_variant() {
 
 #[test]
 fn handle_default_is_stable_across_state_calls() {
-    let handle: UseAsyncHandle<u32> = UseAsyncHandle::default();
+    let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
     assert!(matches!(handle.state(), AsyncState::Loading(())));
     assert!(matches!(handle.state(), AsyncState::Loading(())));
     assert!(matches!(handle.state(), AsyncState::Loading(())));
@@ -72,8 +72,8 @@ fn handle_default_is_stable_across_state_calls() {
 
 #[test]
 fn handle_clone_is_cheap_and_shares_state() {
-    let handle: UseAsyncHandle<String> = UseAsyncHandle::default();
-    let twin: UseAsyncHandle<String> = handle.clone();
+    let handle: UseAsyncHandle<String, ()> = UseAsyncHandle::default();
+    let twin: UseAsyncHandle<String, ()> = handle.clone();
     handle.set_state(AsyncState::Ok(String::from("shared")));
     match twin.state() {
         AsyncState::Ok(value) => assert_eq!(value, "shared"),
@@ -83,7 +83,7 @@ fn handle_clone_is_cheap_and_shares_state() {
 
 #[test]
 fn loading_hint_empty_default_for_unit() {
-    let handle: UseAsyncHandle<u32> = UseAsyncHandle::default();
+    let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
     match handle.state() {
         AsyncState::Loading(()) => {}
         other => panic!("expected Loading(()), got {other:?}"),
@@ -92,7 +92,7 @@ fn loading_hint_empty_default_for_unit() {
 
 #[test]
 fn handle_debug_hides_raw_address() {
-    let handle: UseAsyncHandle<u32> = UseAsyncHandle::default();
+    let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
     let formatted: String = format!("{handle:?}");
     assert!(
         formatted.contains("UseAsyncHandle"),
@@ -102,8 +102,8 @@ fn handle_debug_hides_raw_address() {
 
 #[test]
 fn two_default_handles_have_independent_slots() {
-    let a: UseAsyncHandle<u32> = UseAsyncHandle::default();
-    let b: UseAsyncHandle<u32> = UseAsyncHandle::default();
+    let a: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
+    let b: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
     a.set_state(AsyncState::Ok(1));
     b.set_state(AsyncState::Ok(2));
     match (a.state(), b.state()) {
@@ -114,8 +114,8 @@ fn two_default_handles_have_independent_slots() {
 
 #[test]
 fn handle_is_copy_when_payload_is_copy() {
-    let handle: UseAsyncHandle<u32> = UseAsyncHandle::default();
-    let _copy: UseAsyncHandle<u32> = handle; // moves
-    let again: UseAsyncHandle<u32> = UseAsyncHandle::default();
-    let _also: UseAsyncHandle<u32> = again; // moves again
+    let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
+    let _copy: UseAsyncHandle<u32, ()> = handle; // moves
+    let again: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
+    let _also: UseAsyncHandle<u32, ()> = again; // moves again
 }

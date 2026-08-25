@@ -71,8 +71,8 @@ impl TransitionConfig {
     /// (`Entered`, `Exited`) — these don't tick.
     pub fn duration_for(&self, phase: TransitionPhase) -> u32 {
         match phase {
-            TransitionPhase::Entering => self.enter_ms,
-            TransitionPhase::Exiting => self.exit_ms,
+            TransitionPhase::Entering => self.get_enter_ms(),
+            TransitionPhase::Exiting => self.get_exit_ms(),
             TransitionPhase::Entered | TransitionPhase::Exited => 0,
         }
     }

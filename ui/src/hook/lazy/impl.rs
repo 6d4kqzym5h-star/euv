@@ -26,20 +26,20 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// transitions from `Pending` → `Loading` → `Loaded`
     /// (or `Failed`).
     pub fn state(&self) -> Signal<LoadState<T>> {
-        self.state
+        *self.get_state()
     }
 
     /// Returns the current state snapshot (no factory
     /// call).
     pub fn current(&self) -> LoadState<T> {
-        self.state.get()
+        self.get_state().get()
     }
 
     /// Returns `true` if the factory has produced a
     /// value (or failed).
     pub fn is_resolved(&self) -> bool {
         matches!(
-            self.state.get(),
+            self.get_state().get(),
             LoadState::Loaded(_) | LoadState::Failed(_)
         )
     }
@@ -47,15 +47,15 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Returns `true` if the factory is still pending or
     /// loading.
     pub fn is_pending(&self) -> bool {
-        matches!(self.state.get(), LoadState::Pending)
+        matches!(self.get_state().get(), LoadState::Pending)
     }
 
     /// Triggers the factory without reading the value.
     /// Idempotent: calling `prefetch()` twice does not
     /// run the factory twice.
     pub fn prefetch(&self) {
-        if let LoadState::Pending = self.state.get() {
-            self.state.set(LoadState::Loading);
+        if let LoadState::Pending = self.get_state().get() {
+            self.get_state().set(LoadState::Loading);
             // For sync factories, transition
             // Pending → Loading → Loaded in one call.
             // (Async factories would `set` to
@@ -67,12 +67,12 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Reads the value, calling the factory on the first
     /// call. Subsequent calls return the cached value.
     pub fn get(&self) -> Option<T> {
-        match self.state.get() {
+        match self.get_state().get() {
             LoadState::Loaded(value) => Some(value),
             LoadState::Failed(_) => None,
             LoadState::Pending | LoadState::Loading => {
                 self.invoke_factory();
-                match self.state.get() {
+                match self.get_state().get() {
                     LoadState::Loaded(value) => Some(value),
                     _ => None,
                 }
@@ -89,7 +89,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// know the value was loaded and you want to inspect
     /// it without triggering a synchronous factory call.
     pub fn loaded(&self) -> Option<T> {
-        match self.state.get() {
+        match self.get_state().get() {
             LoadState::Loaded(value) => Some(value),
             LoadState::Pending | LoadState::Loading | LoadState::Failed(_) => None,
         }
@@ -98,7 +98,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Resets the lazy component to `Pending`. The next
     /// `get()` call will re-run the factory.
     pub fn reset(&self) {
-        self.state.set(LoadState::Pending);
+        self.get_state().set(LoadState::Pending);
     }
 
     /// Replaces the factory. The state is reset to
@@ -117,10 +117,10 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
 
     fn invoke_factory(&self) {
         let result: Result<T, Box<dyn std::any::Any + Send>> =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| (self.factory)()));
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| (self.get_factory())()));
         match result {
             Ok(value) => {
-                self.state.set(LoadState::Loaded(value));
+                self.get_state().set(LoadState::Loaded(value));
             }
             Err(payload) => {
                 let message: String = if let Some(s) = payload.downcast_ref::<&'static str>() {
@@ -130,17 +130,8 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
                 } else {
                     String::from("factory panicked")
                 };
-                self.state.set(LoadState::Failed(message));
+                self.get_state().set(LoadState::Failed(message));
             }
-        }
-    }
-}
-
-impl<T: Clone + PartialEq + 'static> Clone for LazyComponent<T> {
-    fn clone(&self) -> Self {
-        Self {
-            state: self.state,
-            factory: self.factory.clone(),
         }
     }
 }
@@ -148,7 +139,7 @@ impl<T: Clone + PartialEq + 'static> Clone for LazyComponent<T> {
 impl<T: Clone + PartialEq + std::fmt::Debug + 'static> std::fmt::Debug for LazyComponent<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LazyComponent")
-            .field("state", &self.state.get())
+            .field("state", &self.get_state().get())
             .finish()
     }
 }

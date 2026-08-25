@@ -10,7 +10,7 @@ where
         // happens to fire `state.set(...)` *while* `drop` is
         // running still sees the cancellation before its write
         // commits.
-        self.cancel.set(true);
+        self.get_cancel().set(true);
         // The `state` signal's own `Drop` impl is enough to release
         // its subscriptions; no extra cleanup needed here.
     }
@@ -49,7 +49,7 @@ where
     /// [`Self::release`] for the explicit teardown path used by
     /// `HookContext::clear`.
     unsafe fn slot(&self) -> &UseAsyncSlot<T, L> {
-        unsafe { &*(self.inner as *const UseAsyncSlot<T, L>) }
+        unsafe { &*(*self.get_inner() as *const UseAsyncSlot<T, L>) }
     }
 }
 
@@ -156,7 +156,7 @@ where
         // address is meaningless to users and could collide with
         // string-formatted `AsyncState` payloads.
         f.debug_struct("UseAsyncHandle")
-            .field("inner", &format_args!("<opaque 0x{:x}>", self.inner))
+            .field("inner", &format_args!("<opaque 0x{:x}>", *self.get_inner()))
             .finish()
     }
 }

@@ -17,6 +17,7 @@ use super::*;
 /// stored as `Rc<dyn Fn() -> T>` (not `Box<dyn Fn>`) so
 /// `LazyComponent` can be cloned cheaply and shared
 /// between hook contexts.
+#[derive(Clone, Data)]
 pub struct LazyComponent<T: Clone + PartialEq + 'static> {
     pub(crate) state: Signal<LoadState<T>>,
     pub(crate) factory: Rc<dyn Fn() -> T>,
