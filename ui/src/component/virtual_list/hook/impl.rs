@@ -115,12 +115,8 @@ impl UseVirtualList {
     ///
     /// - `Option<Element>` - The container element, if found in the document.
     pub fn try_get_container() -> Option<Element> {
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         document_value.get_element_by_id(VIRTUAL_LIST_CONTAINER_ID)
     }
 
@@ -137,12 +133,8 @@ impl UseVirtualList {
     where
         C: AsRef<str>,
     {
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         document_value.get_element_by_id(container_id.as_ref())
     }
 

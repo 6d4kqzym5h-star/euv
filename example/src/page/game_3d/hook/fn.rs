@@ -388,9 +388,7 @@ pub(crate) fn interpolate_cubes(
 ///
 /// - `Option<SsaaCanvas>` - The SSAA canvas, or `None` if unavailable.
 pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
-    let Some(window_value): Option<Window> = window() else {
-        return None;
-    };
+    let window_value: Window = window()?;
     let is_mobile: bool = window_value
         .inner_width()
         .ok()
@@ -426,12 +424,8 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
 ///
 /// - `Option<CanvasGuardEntry>` - The listener closures and element for cleanup, or `None` if the canvas was not found.
 pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<CanvasGuardEntry> {
-    let Some(window): Option<Window> = window() else {
-        return None;
-    };
-    let Some(document): Option<Document> = window.document() else {
-        return None;
-    };
+    let window: Window = window()?;
+    let document: Document = window.document()?;
     let canvas: Element = document.query_selector(canvas_selector).ok().flatten()?;
     let wheel_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         event.prevent_default();

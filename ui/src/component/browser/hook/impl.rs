@@ -24,9 +24,7 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let Some(window) = window() else {
-            return None;
-        };
+        let window: Window = window()?;
         let storage: Storage = window.local_storage().ok()??;
         storage.get_item(key.as_ref()).ok()?
     }
@@ -84,9 +82,7 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let Some(window) = window() else {
-            return None;
-        };
+        let window: Window = window()?;
         let storage: Storage = window.session_storage().ok()??;
         storage.get_item(key.as_ref()).ok()?
     }

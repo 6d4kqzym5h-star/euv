@@ -6,9 +6,10 @@
 ///   Render the loaded content.
 /// - `Failed(String)` — the data load failed with the
 ///   given message. Render an error boundary.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum SuspensePhase<T> {
     /// The data is still loading.
+    #[default]
     Pending,
     /// The data has loaded.
     Resolved(T),

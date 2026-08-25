@@ -8,9 +8,10 @@
 ///   `T::clone()` returns it.
 /// - `Failed(String)` — the factory panicked or returned
 ///   an error message; UI should show an error state.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum LoadState<T> {
     /// The factory has not been called yet.
+    #[default]
     Pending,
     /// The factory is running (set by `prefetch()`).
     Loading,

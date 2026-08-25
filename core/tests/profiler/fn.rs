@@ -124,10 +124,10 @@ fn profiler_handle_measure_forwards_closure_return_value() {
     assert_eq!(captured.as_deref(), Some("hello"));
     let mut captured_tuple: Option<(i32, f64)> = None;
     let ran_clean: bool = run_with_signal_capture(|| {
-        captured_tuple = Some(handle.measure("build-tuple", || (7, 3.14)));
+        captured_tuple = Some(handle.measure("build-tuple", || (7, std::f64::consts::PI)));
     });
     assert!(ran_clean);
-    assert_eq!(captured_tuple, Some((7, 3.14)));
+    assert_eq!(captured_tuple, Some((7, std::f64::consts::PI)));
 }
 
 #[test]

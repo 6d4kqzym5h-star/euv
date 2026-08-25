@@ -74,12 +74,6 @@ impl std::fmt::Display for ErrorBoundary {
     }
 }
 
-impl Default for ErrorBoundaryPhase {
-    fn default() -> Self {
-        ErrorBoundaryPhase::Healthy
-    }
-}
-
 impl PartialEq for ErrorBoundaryPhase {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {

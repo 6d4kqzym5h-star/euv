@@ -1,11 +1,5 @@
 use super::*;
 
-impl<T> Default for LoadState<T> {
-    fn default() -> Self {
-        LoadState::Pending
-    }
-}
-
 impl<T: PartialEq> PartialEq for LoadState<T> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {

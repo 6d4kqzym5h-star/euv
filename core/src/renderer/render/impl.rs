@@ -375,7 +375,6 @@ impl Renderer {
     /// OPT 4: removed `try_get_child_node` — its sole call site in
     /// `patch_children_positional` now reads from the hoisted NodeList
     /// directly.
-
     /// Patches children of an element using a keyed diff algorithm when keys
     /// are available, falling back to positional diff when no keys exist.
     ///

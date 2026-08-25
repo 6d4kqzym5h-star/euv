@@ -379,12 +379,8 @@ impl CanvasRenderer {
     where
         S: AsRef<str>,
     {
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         let element: Element = document_value
             .query_selector(canvas_selector.as_ref())
             .ok()
@@ -1091,12 +1087,8 @@ impl SsaaCanvas {
     where
         S: AsRef<str>,
     {
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         let element: Element = document_value
             .query_selector(canvas_selector.as_ref())
             .ok()
@@ -3960,6 +3952,7 @@ impl WebGpuRenderer {
     /// - `f32` - Viewport height in pixels.
     /// - `f32` - Minimum depth, clamped to `[0, 1]`. Pass `0.0` to disable.
     /// - `f32` - Maximum depth, clamped to `[0, 1]`. Pass `1.0` to disable.
+    #[allow(clippy::too_many_arguments)]
     pub fn set_viewport(
         &self,
         pass: &JsValue,

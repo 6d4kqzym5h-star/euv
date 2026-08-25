@@ -55,14 +55,6 @@ impl RawHtml {
     }
 }
 
-impl Default for RawHtml {
-    fn default() -> Self {
-        Self {
-            content: String::new(),
-        }
-    }
-}
-
 impl std::fmt::Display for RawHtml {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(formatter, "{}", self.content)

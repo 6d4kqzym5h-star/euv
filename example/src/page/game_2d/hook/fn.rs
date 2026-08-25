@@ -449,9 +449,7 @@ pub(crate) fn render_balls_with_ssaa(ssaa_canvas: &SsaaCanvas, balls: &[Ball]) {
 /// - `Option<(HtmlCanvasElement, SsaaCanvas)>` - The display canvas plus
 ///   the SSAA wrapper, or `None` if the canvas element was not found.
 pub(crate) fn acquire_game_2d_ssaa_canvas() -> Option<(HtmlCanvasElement, SsaaCanvas)> {
-    let Some(window_value): Option<Window> = window() else {
-        return None;
-    };
+    let window_value: Window = window()?;
     let is_mobile: bool = window_value
         .inner_width()
         .ok()
@@ -464,9 +462,7 @@ pub(crate) fn acquire_game_2d_ssaa_canvas() -> Option<(HtmlCanvasElement, SsaaCa
         GAME_2D_CANVAS_HEIGHT,
         scale_factor,
     )?;
-    let Some(document_value): Option<Document> = window_value.document() else {
-        return None;
-    };
+    let document_value: Document = window_value.document()?;
     let element: Element = document_value
         .query_selector(GAME_2D_CANVAS_SELECTOR)
         .ok()
@@ -822,12 +818,8 @@ pub(crate) fn use_game_2d_webgl_state() -> UseGame2DWebGl {
 ///
 /// - `Option<HtmlCanvasElement>` - The canvas element, if present.
 pub(crate) fn game_2d_canvas_element(canvas_selector: &str) -> Option<HtmlCanvasElement> {
-    let Some(window_value): Option<Window> = window() else {
-        return None;
-    };
-    let Some(document_value): Option<Document> = window_value.document() else {
-        return None;
-    };
+    let window_value: Window = window()?;
+    let document_value: Document = window_value.document()?;
     let element: Element = document_value
         .query_selector(canvas_selector)
         .ok()
