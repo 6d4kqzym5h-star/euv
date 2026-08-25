@@ -61,17 +61,6 @@ impl ProfilerHandle {
         ProfilerMark::new(label.to_string(), now_ms(), *self.get_entries())
     }
 
-    /// Returns a clone of the entries signal so subscribers
-    /// outside this handle can react to new measurements.
-    ///
-    /// `Signal<T>` is `Copy`-by-pointer (the inner state is
-    /// heap-allocated and the handle stores a raw address),
-    /// so cloning is cheap. Subscribers call `.get()` inside
-    /// their render closure to subscribe to new entries.
-    pub fn entries(&self) -> Signal<Vec<ProfileEntry>> {
-        *self.get_entries()
-    }
-
     /// Empties the entries vector. Useful between benchmarks
     /// ("measure just this call, not the previous ones too")
     /// and in tests ("start from a clean slate").

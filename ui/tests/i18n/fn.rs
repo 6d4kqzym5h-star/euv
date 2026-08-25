@@ -34,8 +34,8 @@ fn seeded_i18n() -> I18n {
 #[test]
 fn fresh_i18n_defaults_to_en_locale_and_empty_messages() {
     let i18n: I18n = fresh_i18n();
-    assert_eq!(i18n.locale().get(), "en");
-    assert_eq!(i18n.fallback_locale().get(), "en");
+    assert_eq!(i18n.get_locale().get(), "en");
+    assert_eq!(i18n.get_fallback_locale().get(), "en");
     assert_eq!(i18n.locale_count(), 0);
     assert_eq!(i18n.active_message_count(), 0);
 }
@@ -50,14 +50,14 @@ fn fresh_i18n_returns_key_for_missing_translation() {
 #[test]
 fn locale_and_fallback_locale_accessors_return_signal_clones() {
     let i18n: I18n = fresh_i18n();
-    let _locale: Signal<String> = i18n.locale();
-    let _fallback: Signal<String> = i18n.fallback_locale();
+    let _locale: Signal<String> = *i18n.get_locale();
+    let _fallback: Signal<String> = *i18n.get_fallback_locale();
 }
 
 #[test]
 fn reactive_read_via_subscribed_locale_signal_matches_initial_value() {
     let i18n: I18n = fresh_i18n();
-    let subscribed: Signal<String> = i18n.locale();
+    let subscribed: Signal<String> = *i18n.get_locale();
     assert_eq!(subscribed.get(), "en");
 }
 
@@ -85,7 +85,7 @@ fn i18n_clone_shares_internal_signals() {
     let i18n: I18n = seeded_i18n();
     let twin: I18n = i18n.clone();
     assert_eq!(twin.t("hello"), "Hello");
-    assert_eq!(twin.locale().get(), "en");
+    assert_eq!(twin.get_locale().get(), "en");
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn change_locale_updates_active_locale_set_path() {
         i18n.change_locale("zh-CN");
     });
     if ran {
-        assert_eq!(i18n.locale().get(), "zh-CN");
+        assert_eq!(i18n.get_locale().get(), "zh-CN");
         assert_eq!(i18n.t("hello"), "你好");
     }
 }

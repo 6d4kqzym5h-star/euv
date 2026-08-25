@@ -19,10 +19,10 @@ fn fresh_form() -> FormState {
 #[test]
 fn fresh_form_signals_are_empty_and_submitting_false() {
     let form: FormState = fresh_form();
-    assert!(form.values().get().is_empty());
-    assert!(form.errors().get().is_empty());
-    assert!(form.touched().get().is_empty());
-    assert!(!form.submitting().get());
+    assert!(form.get_values().get().is_empty());
+    assert!(form.get_errors().get().is_empty());
+    assert!(form.get_touched().get().is_empty());
+    assert!(!form.get_submitting().get());
     assert_eq!(form.error_count(), 0);
 }
 
@@ -98,10 +98,10 @@ fn error_count_handles_all_empty_messages() {
 #[test]
 fn values_errors_touched_submitting_accessors_return_clones_of_signals() {
     let form: FormState = fresh_form();
-    let _values: Signal<HashMap<&'static str, String>> = form.values();
-    let _errors: Signal<HashMap<&'static str, String>> = form.errors();
-    let _touched: Signal<HashSet<&'static str>> = form.touched();
-    let _submitting: Signal<bool> = form.submitting();
+    let _values: Signal<HashMap<&'static str, String>> = *form.get_values();
+    let _errors: Signal<HashMap<&'static str, String>> = *form.get_errors();
+    let _touched: Signal<HashSet<&'static str>> = *form.get_touched();
+    let _submitting: Signal<bool> = *form.get_submitting();
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn form_state_clone_shares_all_four_signals() {
     let twin: FormState = form.clone();
     assert_eq!(twin.field("email"), "alice@example.com");
     assert!(twin.is_touched("email"));
-    assert!(!twin.submitting().get());
+    assert!(!twin.get_submitting().get());
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn reactive_read_via_subscribed_signal_matches_initial_value() {
         Signal::create(HashSet::new()),
         Signal::create(false),
     );
-    let subscribed: Signal<HashMap<&'static str, String>> = form.errors();
+    let subscribed: Signal<HashMap<&'static str, String>> = *form.get_errors();
     assert_eq!(
         subscribed.get().get("email"),
         Some(&String::from("required"))
@@ -180,18 +180,18 @@ fn set_field_inserts_value_marks_touched_clears_error_set_path() {
     let ran: bool = run_with_signal_capture(|| {
         let mut seed: HashMap<&'static str, String> = HashMap::new();
         seed.insert("email", String::from("required"));
-        form.errors().set(seed);
+        form.get_errors().set(seed);
 
         form.set_field("email", "alice@example.com");
     });
     if ran {
         assert_eq!(
-            form.values().get().get("email"),
+            form.get_values().get().get("email"),
             Some(&String::from("alice@example.com"))
         );
-        assert!(form.touched().get().contains("email"));
+        assert!(form.get_touched().get().contains("email"));
         assert!(
-            !form.errors().get().contains_key("email"),
+            !form.get_errors().get().contains_key("email"),
             "set_field must clear any prior error for the field"
         );
     }
@@ -205,7 +205,7 @@ fn set_field_overwrites_previous_value_set_path() {
         form.set_field("name", "Bob");
     });
     if ran {
-        assert_eq!(form.values().get().get("name"), Some(&String::from("Bob")));
+        assert_eq!(form.get_values().get().get("name"), Some(&String::from("Bob")));
     }
 }
 
@@ -218,8 +218,8 @@ fn touch_inserts_field_into_touched_set_idempotently_set_path() {
         form.touch("phone");
     });
     if ran {
-        assert_eq!(form.touched().get().len(), 1);
-        assert!(form.touched().get().contains("phone"));
+        assert_eq!(form.get_touched().get().len(), 1);
+        assert!(form.get_touched().get().contains("phone"));
     }
 }
 
@@ -239,7 +239,7 @@ fn validate_with_no_validators_returns_true_set_path() {
         assert_eq!(result.get(), Some(true));
     }
     if let Some(true) = result.get() {
-        assert!(form.errors().get().is_empty());
+        assert!(form.get_errors().get().is_empty());
     }
 }
 
@@ -263,7 +263,7 @@ fn validate_populates_errors_for_failing_validators_set_path() {
     });
     if ran {
         assert_eq!(
-            form.errors().get().get("email"),
+            form.get_errors().get().get("email"),
             Some(&String::from("Email is required"))
         );
         assert_eq!(form.error_count(), 1);
@@ -296,7 +296,7 @@ fn validate_returns_true_when_all_validators_pass_set_path() {
         assert_eq!(result.get(), Some(true));
     }
     if let Some(true) = result.get() {
-        assert!(form.errors().get().is_empty());
+        assert!(form.get_errors().get().is_empty());
         assert_eq!(form.error_count(), 0);
     }
 }
@@ -312,7 +312,7 @@ fn validate_skips_fields_without_validator_set_path() {
         let _ = form.validate(&validators);
     });
     if ran {
-        assert!(!form.errors().get().contains_key("phone"));
+        assert!(!form.get_errors().get().contains_key("phone"));
     }
 }
 
@@ -334,7 +334,7 @@ fn submit_with_empty_validators_invokes_handler_set_path() {
     if ran {
         assert!(invoked.get());
         assert_eq!(captured.take(), Some(String::from("alice@example.com")));
-        assert!(!form.submitting().get());
+        assert!(!form.get_submitting().get());
     }
 }
 
@@ -389,8 +389,8 @@ fn submit_with_failing_validator_skips_handler_set_path() {
 #[test]
 fn reset_post_state_matches_fresh_form_invariant() {
     let form: FormState = fresh_form();
-    assert!(form.values().get().is_empty());
-    assert!(form.errors().get().is_empty());
-    assert!(form.touched().get().is_empty());
-    assert!(!form.submitting().get());
+    assert!(form.get_values().get().is_empty());
+    assert!(form.get_errors().get().is_empty());
+    assert!(form.get_touched().get().is_empty());
+    assert!(!form.get_submitting().get());
 }

@@ -37,21 +37,21 @@ fn error_boundary_phase_partial_eq_healthy_vs_caught() {
 #[test]
 fn new_is_healthy() {
     let boundary = ErrorBoundary::new();
-    assert!(boundary.is_healthy());
-    assert!(!boundary.is_caught());
-    assert!(matches!(boundary.current(), ErrorBoundaryPhase::Healthy));
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
+    assert!(!matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn default_is_healthy() {
     let boundary = ErrorBoundary::default();
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn phase_returns_signal_with_healthy_value() {
     let boundary = ErrorBoundary::new();
-    let signal = boundary.phase();
+    let signal = boundary.get_phase();
     assert!(matches!(signal.get(), ErrorBoundaryPhase::Healthy));
 }
 
@@ -75,7 +75,7 @@ fn try_with_success_returns_value() {
     let boundary = ErrorBoundary::new();
     let result: Result<i32, String> = boundary.try_with(|| 42);
     assert_eq!(result, Ok(42));
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn try_with_success_string_value() {
     let boundary = ErrorBoundary::new();
     let result: Result<String, String> = boundary.try_with(|| "hello".to_string());
     assert_eq!(result, Ok("hello".to_string()));
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn try_with_success_complex_value() {
     let boundary = ErrorBoundary::new();
     let result: Result<Vec<i32>, String> = boundary.try_with(|| vec![1, 2, 3]);
     assert_eq!(result, Ok(vec![1, 2, 3]));
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn try_with_success_unit() {
     let boundary = ErrorBoundary::new();
     let result: Result<(), String> = boundary.try_with(|| {});
     assert_eq!(result, Ok(()));
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
@@ -110,7 +110,7 @@ fn try_with_static_str_panic() {
     });
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "static str panic");
-    assert!(boundary.is_caught());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn try_with_string_panic() {
     });
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "owned string panic");
-    assert!(boundary.is_caught());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn try_with_non_string_panic() {
     });
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), "<non-string panic payload>");
-    assert!(boundary.is_caught());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
 }
 
 #[test]
@@ -141,33 +141,33 @@ fn reset_from_caught_returns_to_healthy() {
     let _ = boundary.try_with(|| {
         panic!("boom");
     });
-    assert!(boundary.is_caught());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
     boundary.reset();
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn reset_from_healthy_is_noop() {
     let boundary = ErrorBoundary::new();
     boundary.reset();
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }
 
 #[test]
 fn clone_shares_state() {
     let boundary = ErrorBoundary::new();
     let cloned = boundary.clone();
-    assert!(cloned.is_healthy());
+    assert!(matches!(cloned.get_phase().get(), ErrorBoundaryPhase::Healthy));
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         boundary.reset();
     }));
-    let _ = cloned.current();
+    let _ = cloned.get_phase().get();
 }
 
 #[test]
 fn phase_signal_is_reactive() {
     let boundary = ErrorBoundary::new();
-    let signal = boundary.phase();
+    let signal = boundary.get_phase();
     assert!(matches!(signal.get(), ErrorBoundaryPhase::Healthy));
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let _: Result<(), String> = boundary.try_with(|| {
@@ -190,8 +190,8 @@ fn multiple_panics_overwrite_message() {
     let _ = boundary.try_with(|| {
         panic!("second");
     });
-    assert!(boundary.is_caught());
-    if let ErrorBoundaryPhase::Caught(message) = boundary.current() {
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
+    if let ErrorBoundaryPhase::Caught(message) = boundary.get_phase().get() {
         assert_eq!(message, "second");
     } else {
         panic!("expected Caught");
@@ -204,10 +204,10 @@ fn panic_then_reset_then_success() {
     let _ = boundary.try_with(|| {
         panic!("boom");
     });
-    assert!(boundary.is_caught());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Caught(_)));
     boundary.reset();
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
     let result: Result<i32, String> = boundary.try_with(|| 42);
     assert_eq!(result, Ok(42));
-    assert!(boundary.is_healthy());
+    assert!(matches!(boundary.get_phase().get(), ErrorBoundaryPhase::Healthy));
 }

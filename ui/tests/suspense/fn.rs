@@ -39,22 +39,22 @@ fn suspense_phase_partial_eq_different_variants() {
 #[test]
 fn new_is_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
-    assert!(handle.is_pending());
-    assert!(!handle.is_resolved());
-    assert!(!handle.is_failed());
-    assert!(matches!(handle.current(), SuspensePhase::Pending));
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
+    assert!(!matches!(handle.get_phase().get(), SuspensePhase::Resolved(_)));
+    assert!(!matches!(handle.get_phase().get(), SuspensePhase::Failed(_)));
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
 #[test]
 fn default_is_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::default();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
 #[test]
 fn state_returns_signal_with_same_value() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
-    let signal = handle.state();
+    let signal: &Signal<SuspensePhase<i32>> = handle.get_phase();
     assert!(matches!(signal.get(), SuspensePhase::Pending));
 }
 
@@ -77,8 +77,8 @@ fn display_format_works() {
 fn resolve_sync_transitions_to_resolved() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     handle.resolve_sync(42);
-    assert!(handle.is_resolved());
-    assert_eq!(handle.current(), SuspensePhase::Resolved(42));
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Resolved(_)));
+    assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(42));
 }
 
 #[test]
@@ -86,7 +86,7 @@ fn resolve_sync_with_string() {
     let handle: SuspenseHandle<String> = SuspenseHandle::new();
     handle.resolve_sync("hello".to_string());
     assert_eq!(
-        handle.current(),
+        handle.get_phase().get(),
         SuspensePhase::Resolved("hello".to_string())
     );
 }
@@ -95,16 +95,16 @@ fn resolve_sync_with_string() {
 fn resolve_sync_with_vec() {
     let handle: SuspenseHandle<Vec<i32>> = SuspenseHandle::new();
     handle.resolve_sync(vec![1, 2, 3]);
-    assert_eq!(handle.current(), SuspensePhase::Resolved(vec![1, 2, 3]));
+    assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(vec![1, 2, 3]));
 }
 
 #[test]
 fn fail_transitions_to_failed() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     handle.fail("network error".to_string());
-    assert!(handle.is_failed());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Failed(_)));
     assert_eq!(
-        handle.current(),
+        handle.get_phase().get(),
         SuspensePhase::Failed("network error".to_string())
     );
 }
@@ -114,7 +114,7 @@ fn reset_from_resolved_returns_to_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     handle.resolve_sync(42);
     handle.reset();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
 #[test]
@@ -122,38 +122,38 @@ fn reset_from_failed_returns_to_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     handle.fail("oops".to_string());
     handle.reset();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
 #[test]
 fn phase_transitions_pending_resolved_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
     handle.resolve_sync(1);
-    assert!(handle.is_resolved());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Resolved(_)));
     handle.reset();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
 #[test]
 fn phase_transitions_pending_failed_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
     handle.fail("x".to_string());
-    assert!(handle.is_failed());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Failed(_)));
     handle.reset();
-    assert!(handle.is_pending());
+    assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
 #[test]
 fn multiple_resolve_calls_update_value() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     handle.resolve_sync(1);
-    assert_eq!(handle.current(), SuspensePhase::Resolved(1));
+    assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(1));
     handle.resolve_sync(2);
-    assert_eq!(handle.current(), SuspensePhase::Resolved(2));
+    assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(2));
     handle.resolve_sync(3);
-    assert_eq!(handle.current(), SuspensePhase::Resolved(3));
+    assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(3));
 }
 
 #[test]
@@ -163,14 +163,14 @@ fn clone_shares_state() {
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         handle.resolve_sync(99);
     }));
-    let current: SuspensePhase<i32> = cloned.current();
+    let current: SuspensePhase<i32> = cloned.get_phase().get();
     let _ = current;
 }
 
 #[test]
 fn state_signal_is_reactive() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
-    let signal = handle.state();
+    let signal: &Signal<SuspensePhase<i32>> = handle.get_phase();
     assert!(matches!(signal.get(), SuspensePhase::Pending));
     let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         handle.resolve_sync(42);

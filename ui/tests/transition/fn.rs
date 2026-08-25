@@ -104,10 +104,10 @@ fn transition_config_equality() {
 #[test]
 fn fresh_state_is_exited_with_zero_progress() {
     let state: TransitionState = fresh_state();
-    assert_eq!(state.current_phase(), TransitionPhase::Exited);
-    assert_eq!(state.current_progress(), 0.0);
-    assert!(state.is_exited());
-    assert!(!state.is_entered());
+    assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+    assert_eq!(state.get_progress().get(), 0.0);
+    assert!(state.get_phase().get() == TransitionPhase::Exited);
+    assert!(state.get_phase().get() != TransitionPhase::Entered);
     assert!(!state.is_animating());
     assert_eq!(state.remaining_ms(), 0);
 }
@@ -115,26 +115,26 @@ fn fresh_state_is_exited_with_zero_progress() {
 #[test]
 fn seeded_state_reflects_initial_values() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.5);
-    assert_eq!(state.current_phase(), TransitionPhase::Entering);
-    assert_eq!(state.current_progress(), 0.5);
+    assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+    assert_eq!(state.get_progress().get(), 0.5);
     assert!(state.is_animating());
-    assert!(!state.is_entered());
-    assert!(!state.is_exited());
+    assert!(state.get_phase().get() != TransitionPhase::Entered);
+    assert!(state.get_phase().get() != TransitionPhase::Exited);
 }
 
 #[test]
 fn accessors_return_signal_clones() {
     let state: TransitionState = fresh_state();
-    let _phase: Signal<TransitionPhase> = state.phase();
-    let _progress: Signal<f64> = state.progress();
-    let _config: Signal<TransitionConfig> = state.config();
+    let _phase: Signal<TransitionPhase> = *state.get_phase();
+    let _progress: Signal<f64> = *state.get_progress();
+    let _config: Signal<TransitionConfig> = *state.get_config();
 }
 
 #[test]
 fn reactive_read_via_subscribed_signals_matches_initial() {
     let state: TransitionState = fresh_state();
-    let phase_signal: Signal<TransitionPhase> = state.phase();
-    let progress_signal: Signal<f64> = state.progress();
+    let phase_signal: Signal<TransitionPhase> = *state.get_phase();
+    let progress_signal: Signal<f64> = *state.get_progress();
     assert_eq!(phase_signal.get(), TransitionPhase::Exited);
     assert_eq!(progress_signal.get(), 0.0);
 }
@@ -143,14 +143,14 @@ fn reactive_read_via_subscribed_signals_matches_initial() {
 fn state_clone_shares_internal_signals() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
     let twin: TransitionState = state.clone();
-    assert_eq!(twin.current_phase(), TransitionPhase::Entered);
-    assert_eq!(twin.current_progress(), 1.0);
+    assert_eq!(twin.get_phase().get(), TransitionPhase::Entered);
+    assert_eq!(twin.get_progress().get(), 1.0);
 }
 
 #[test]
 fn seeded_entered_state_is_entered_not_animating() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
-    assert!(state.is_entered());
+    assert!(state.get_phase().get() == TransitionPhase::Entered);
     assert!(!state.is_animating());
     assert_eq!(state.remaining_ms(), 0);
 }
@@ -158,7 +158,7 @@ fn seeded_entered_state_is_entered_not_animating() {
 #[test]
 fn seeded_exited_state_is_exited_not_animating() {
     let state: TransitionState = seeded_state(TransitionPhase::Exited, 0.0);
-    assert!(state.is_exited());
+    assert!(state.get_phase().get() == TransitionPhase::Exited);
     assert!(!state.is_animating());
     assert_eq!(state.remaining_ms(), 0);
 }
@@ -170,8 +170,8 @@ fn enter_from_exited_starts_entering_with_zero_progress_set_path() {
         state.enter();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert_eq!(state.get_progress().get(), 0.0);
         assert!(state.is_animating());
     }
 }
@@ -183,8 +183,8 @@ fn enter_from_entering_is_noop_set_path() {
         state.enter();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert_eq!(state.current_progress(), 0.5);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert_eq!(state.get_progress().get(), 0.5);
     }
 }
 
@@ -195,8 +195,8 @@ fn enter_from_entered_is_noop_set_path() {
         state.enter();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -207,8 +207,8 @@ fn enter_from_exiting_starts_entering_set_path() {
         state.enter();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -219,8 +219,8 @@ fn exit_from_entered_starts_exiting_with_full_progress_set_path() {
         state.exit();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exiting);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
+        assert_eq!(state.get_progress().get(), 1.0);
         assert!(state.is_animating());
     }
 }
@@ -232,8 +232,8 @@ fn exit_from_entering_starts_exiting_set_path() {
         state.exit();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exiting);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -244,8 +244,8 @@ fn exit_from_exiting_is_noop_set_path() {
         state.exit();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exiting);
-        assert_eq!(state.current_progress(), 0.5);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
+        assert_eq!(state.get_progress().get(), 0.5);
     }
 }
 
@@ -256,8 +256,8 @@ fn exit_from_exited_is_noop_set_path() {
         state.exit();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -268,8 +268,8 @@ fn toggle_flips_entered_to_exiting_set_path() {
         state.toggle();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exiting);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -280,8 +280,8 @@ fn toggle_flips_exited_to_entering_set_path() {
         state.toggle();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -292,8 +292,8 @@ fn toggle_flips_entering_to_exiting_set_path() {
         state.toggle();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exiting);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -304,8 +304,8 @@ fn toggle_flips_exiting_to_entering_set_path() {
         state.toggle();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -316,8 +316,8 @@ fn tick_on_entered_phase_is_noop_set_path() {
         state.tick(50);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -328,8 +328,8 @@ fn tick_on_exited_phase_is_noop_set_path() {
         state.tick(50);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -340,8 +340,8 @@ fn tick_on_entering_advances_progress_set_path() {
         state.tick(25);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert!((state.current_progress() - 0.25).abs() < f64::EPSILON);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert!((state.get_progress().get() - 0.25).abs() < f64::EPSILON);
     }
 }
 
@@ -352,8 +352,8 @@ fn tick_on_entering_to_completion_advances_phase_set_path() {
         state.tick(100);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -364,8 +364,8 @@ fn tick_on_entering_overshoots_to_completion_set_path() {
         state.tick(200);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -376,8 +376,8 @@ fn tick_on_exiting_advances_progress_set_path() {
         state.tick(50);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exiting);
-        assert!((state.current_progress() - 0.75).abs() < f64::EPSILON);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
+        assert!((state.get_progress().get() - 0.75).abs() < f64::EPSILON);
     }
 }
 
@@ -388,8 +388,8 @@ fn tick_on_exiting_to_completion_advances_phase_set_path() {
         state.tick(200);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -404,8 +404,8 @@ fn tick_with_zero_duration_enter_jumps_to_entered_set_path() {
         state.tick(50);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -420,8 +420,8 @@ fn tick_with_zero_duration_exit_jumps_to_exited_set_path() {
         state.tick(50);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -432,8 +432,8 @@ fn tick_with_zero_elapsed_does_not_advance_set_path() {
         state.tick(0);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entering);
-        assert_eq!(state.current_progress(), 0.3);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
+        assert_eq!(state.get_progress().get(), 0.3);
     }
 }
 
@@ -444,9 +444,9 @@ fn reset_returns_state_to_exited_set_path() {
         state.reset();
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
-        assert!(state.is_exited());
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
+        assert!(state.get_phase().get() == TransitionPhase::Exited);
     }
 }
 
@@ -457,8 +457,8 @@ fn change_config_updates_durations_set_path() {
         state.change_config(TransitionConfig::with_durations(500, 1000));
     });
     if ran {
-        assert_eq!(state.current_config().enter_ms, 500);
-        assert_eq!(state.current_config().exit_ms, 1000);
+        assert_eq!(state.get_config().get().enter_ms, 500);
+        assert_eq!(state.get_config().get().exit_ms, 1000);
     }
 }
 
@@ -493,8 +493,8 @@ fn tick_until_done_advances_to_entered_set_path() {
         state.tick_until_done(10);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -505,8 +505,8 @@ fn tick_until_done_advances_to_exited_set_path() {
         state.tick_until_done(10);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -517,8 +517,8 @@ fn tick_until_done_on_terminal_phase_is_noop_set_path() {
         state.tick_until_done(10);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
@@ -534,8 +534,8 @@ fn full_lifecycle_enter_tick_complete_exit_tick_complete_set_path() {
         state.tick(100);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Exited);
-        assert_eq!(state.current_progress(), 0.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
+        assert_eq!(state.get_progress().get(), 0.0);
     }
 }
 
@@ -551,15 +551,15 @@ fn multiple_enter_exit_cycles_work_set_path() {
         state.tick_until_done(10);
     });
     if ran {
-        assert_eq!(state.current_phase(), TransitionPhase::Entered);
-        assert_eq!(state.current_progress(), 1.0);
+        assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
+        assert_eq!(state.get_progress().get(), 1.0);
     }
 }
 
 #[test]
 fn reactively_subscribed_phase_signal_reflects_enter_set_path() {
     let state: TransitionState = fresh_state();
-    let phase_signal: Signal<TransitionPhase> = state.phase();
+    let phase_signal: Signal<TransitionPhase> = *state.get_phase();
     assert_eq!(phase_signal.get(), TransitionPhase::Exited);
     let ran: bool = run_with_signal_capture(|| {
         state.enter();

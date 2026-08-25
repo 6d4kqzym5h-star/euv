@@ -59,7 +59,7 @@ fn profile_entry_partial_eq_compares_field_by_field() {
 #[test]
 fn profiler_handle_new_starts_with_empty_entries() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
-    let entries: Vec<ProfileEntry> = handle.entries().get();
+    let entries: Vec<ProfileEntry> = handle.get_entries().get();
     assert!(entries.is_empty());
 }
 
@@ -71,8 +71,8 @@ fn profiler_handle_clone_shares_entries_signal() {
         handle.measure("first", || 42);
     });
     if ran_clean {
-        assert_eq!(twin.entries().get().len(), 1);
-        assert_eq!(twin.entries().get()[0].get_label(), "first");
+        assert_eq!(twin.get_entries().get().len(), 1);
+        assert_eq!(twin.get_entries().get()[0].get_label(), "first");
     }
 }
 
@@ -86,7 +86,7 @@ fn profiler_handle_measure_pushes_entry_with_nonzero_label() {
     assert!(ran_clean, "native Signal::set panic should be caught");
     assert_eq!(captured, Some(42), "closure return value must be forwarded");
     if ran_clean {
-        let entries: Vec<ProfileEntry> = handle.entries().get();
+        let entries: Vec<ProfileEntry> = handle.get_entries().get();
         assert_eq!(entries.len(), 1);
         let entry: &ProfileEntry = &entries[0];
         assert_eq!(entry.get_label(), "compute");
@@ -105,7 +105,7 @@ fn profiler_handle_measure_accumulates_multiple_entries() {
     });
     assert!(ran_clean, "native Signal::set panic should be caught");
     if ran_clean {
-        let entries: Vec<ProfileEntry> = handle.entries().get();
+        let entries: Vec<ProfileEntry> = handle.get_entries().get();
         assert_eq!(entries.len(), 5);
         for (i, entry) in entries.iter().enumerate() {
             assert_eq!(entry.get_label(), format!("op-{}", i).as_str());
@@ -139,15 +139,15 @@ fn profiler_handle_clear_empties_entries() {
     });
     assert!(ran_clean);
     if ran_clean {
-        assert_eq!(handle.entries().get().len(), 2);
+        assert_eq!(handle.get_entries().get().len(), 2);
         handle.clear();
-        assert!(handle.entries().get().is_empty());
+        assert!(handle.get_entries().get().is_empty());
         let ran_clean_post: bool = run_with_signal_capture(|| {
             handle.measure("third", || ());
         });
         assert!(ran_clean_post);
-        assert_eq!(handle.entries().get().len(), 1);
-        assert_eq!(handle.entries().get()[0].get_label(), "third");
+        assert_eq!(handle.get_entries().get().len(), 1);
+        assert_eq!(handle.get_entries().get()[0].get_label(), "third");
     }
 }
 
@@ -164,7 +164,7 @@ fn profiler_handle_begin_end_push_entry_with_nonzero_elapsed() {
         mark.end();
     });
     if ran_clean {
-        let entries: Vec<ProfileEntry> = handle.entries().get();
+        let entries: Vec<ProfileEntry> = handle.get_entries().get();
         assert_eq!(entries.len(), 1);
         let entry: &ProfileEntry = &entries[0];
         assert_eq!(entry.get_label(), "interval");
@@ -176,7 +176,7 @@ fn profiler_handle_begin_end_push_entry_with_nonzero_elapsed() {
 #[test]
 fn profiler_handle_entries_signal_is_subscribable() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
-    let subscriber_signal: Signal<Vec<ProfileEntry>> = handle.entries();
+    let subscriber_signal: Signal<Vec<ProfileEntry>> = *handle.get_entries();
     assert!(subscriber_signal.get().is_empty());
     let ran_clean: bool = run_with_signal_capture(|| {
         handle.measure("first", || ());
@@ -198,7 +198,7 @@ fn profiler_mark_drop_without_end_discards_silently() {
     {
         let _mark: ProfilerMark = handle.begin("discard");
     }
-    assert!(handle.entries().get().is_empty());
+    assert!(handle.get_entries().get().is_empty());
 }
 
 #[test]
@@ -210,7 +210,7 @@ fn profiler_handle_measure_records_distinct_timestamps() {
     });
     assert!(ran_clean);
     if ran_clean {
-        let entries: Vec<ProfileEntry> = handle.entries().get();
+        let entries: Vec<ProfileEntry> = handle.get_entries().get();
         assert!(entries[0].get_timestamp_ms() <= entries[1].get_timestamp_ms());
     }
 }

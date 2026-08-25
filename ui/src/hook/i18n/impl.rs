@@ -14,18 +14,6 @@ impl HookContextI18nExt for HookContext {
 }
 
 impl I18n {
-    /// Returns a `Signal<String>` clone of the active
-    /// locale. Read with `.get()` inside a render closure
-    /// to subscribe to locale changes.
-    pub fn locale(&self) -> Signal<String> {
-        *self.get_locale()
-    }
-
-    /// Returns a `Signal<String>` clone of the fallback
-    /// locale.
-    pub fn fallback_locale(&self) -> Signal<String> {
-        *self.get_fallback_locale()
-    }
 
     /// Sets the active locale to `locale`. Triggers a
     /// reactive update so any reactive `t(key)` read

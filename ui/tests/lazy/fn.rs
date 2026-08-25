@@ -3,9 +3,9 @@ use super::*;
 #[test]
 fn new_is_pending() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 42);
-    assert_eq!(lazy.current(), LoadState::Pending);
-    assert!(lazy.is_pending());
-    assert!(!lazy.is_resolved());
+    assert_eq!(lazy.get_state().get(), LoadState::Pending);
+    assert!(matches!(lazy.get_state().get(), LoadState::Pending));
+    assert!(!matches!(lazy.get_state().get(), LoadState::Loaded(_) | LoadState::Failed(_)));
 }
 
 #[test]
@@ -38,8 +38,8 @@ fn get_returns_cached_value_on_subsequent_calls() {
 fn prefetch_runs_factory() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 7);
     lazy.prefetch();
-    assert!(lazy.is_resolved());
-    assert!(matches!(lazy.current(), LoadState::Loaded(7)));
+    assert!(matches!(lazy.get_state().get(), LoadState::Loaded(_) | LoadState::Failed(_)));
+    assert!(matches!(lazy.get_state().get(), LoadState::Loaded(7)));
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn reset_returns_to_pending() {
     });
     let _ = lazy.get();
     lazy.reset();
-    assert_eq!(lazy.current(), LoadState::Pending);
+    assert_eq!(lazy.get_state().get(), LoadState::Pending);
     let _ = lazy.get();
     assert_eq!(counter.get(), 2);
 }
@@ -98,7 +98,7 @@ fn change_factory_resets_state() {
         let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
         let _ = lazy.get();
         lazy.change_factory(|| 2);
-        assert_eq!(lazy.current(), LoadState::Pending);
+        assert_eq!(lazy.get_state().get(), LoadState::Pending);
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -126,7 +126,7 @@ fn clone_shares_state_and_factory() {
 #[test]
 fn state_signal_is_reactive() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 99);
-    let signal = lazy.state();
+    let signal = lazy.get_state();
     assert_eq!(signal.get(), LoadState::Pending);
     let _ = lazy.get();
     assert!(matches!(signal.get(), LoadState::Loaded(99)));
@@ -136,7 +136,7 @@ fn state_signal_is_reactive() {
 fn panic_in_factory_marks_failed() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| -> i32 { panic!("boom") });
     let _ = lazy.get();
-    match lazy.current() {
+    match lazy.get_state().get() {
         LoadState::Failed(msg) => {
             assert!(msg.contains("boom"));
         }
@@ -151,7 +151,7 @@ fn panic_string_factory_is_caught() {
         panic!("{}", s)
     });
     let _ = lazy.get();
-    match lazy.current() {
+    match lazy.get_state().get() {
         LoadState::Failed(msg) => {
             assert!(msg.contains("explicit-string-panic"));
         }
@@ -178,7 +178,7 @@ fn reset_after_panic_allows_recovery() {
         100
     });
     let _ = lazy.get();
-    assert!(matches!(lazy.current(), LoadState::Failed(_)));
+    assert!(matches!(lazy.get_state().get(), LoadState::Failed(_)));
     lazy.reset();
     assert_eq!(lazy.get(), Some(100));
     assert_eq!(calls.get(), 2);
@@ -217,7 +217,7 @@ fn vec_value_works() {
 fn is_pending_after_reset() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
     let _ = lazy.get();
-    assert!(!lazy.is_pending());
+    assert!(!matches!(lazy.get_state().get(), LoadState::Pending));
     lazy.reset();
-    assert!(lazy.is_pending());
+    assert!(matches!(lazy.get_state().get(), LoadState::Pending));
 }

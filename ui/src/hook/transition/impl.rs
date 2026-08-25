@@ -87,38 +87,6 @@ impl Default for TransitionConfig {
 }
 
 impl TransitionState {
-    /// Returns a `Signal<TransitionPhase>` clone of the
-    /// current phase.
-    pub fn phase(&self) -> Signal<TransitionPhase> {
-        *self.get_phase()
-    }
-
-    /// Returns a `Signal<f64>` clone of the current
-    /// progress.
-    pub fn progress(&self) -> Signal<f64> {
-        *self.get_progress()
-    }
-
-    /// Returns a `Signal<TransitionConfig>` clone of the
-    /// current config.
-    pub fn config(&self) -> Signal<TransitionConfig> {
-        *self.get_config()
-    }
-
-    /// Returns the current phase as a snapshot value.
-    pub fn current_phase(&self) -> TransitionPhase {
-        self.get_phase().get()
-    }
-
-    /// Returns the current progress as a snapshot value.
-    pub fn current_progress(&self) -> f64 {
-        self.get_progress().get()
-    }
-
-    /// Returns the current config as a snapshot value.
-    pub fn current_config(&self) -> TransitionConfig {
-        self.get_config().get()
-    }
 
     /// Returns `true` if the element is currently
     /// animating (i.e. `Entering` or `Exiting`).
@@ -127,18 +95,6 @@ impl TransitionState {
             self.get_phase().get(),
             TransitionPhase::Entering | TransitionPhase::Exiting
         )
-    }
-
-    /// Returns `true` if the element is fully on-screen
-    /// (`Entered`).
-    pub fn is_entered(&self) -> bool {
-        self.get_phase().get() == TransitionPhase::Entered
-    }
-
-    /// Returns `true` if the element is fully off-screen
-    /// (`Exited`).
-    pub fn is_exited(&self) -> bool {
-        self.get_phase().get() == TransitionPhase::Exited
     }
 
     /// Replaces the duration config.

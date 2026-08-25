@@ -9,26 +9,6 @@ impl ErrorBoundary {
         }
     }
 
-    /// Returns the underlying phase signal.
-    pub fn phase(&self) -> Signal<ErrorBoundaryPhase> {
-        *self.get_phase()
-    }
-
-    /// Returns a snapshot of the current phase.
-    pub fn current(&self) -> ErrorBoundaryPhase {
-        self.get_phase().get()
-    }
-
-    /// Returns `true` if no child has thrown yet.
-    pub fn is_healthy(&self) -> bool {
-        matches!(self.get_phase().get(), ErrorBoundaryPhase::Healthy)
-    }
-
-    /// Returns `true` if a child has thrown.
-    pub fn is_caught(&self) -> bool {
-        matches!(self.get_phase().get(), ErrorBoundaryPhase::Caught(_))
-    }
-
     /// Runs a closure and, if it panics, transitions
     /// the boundary to `Caught` and returns `Err`.
     ///

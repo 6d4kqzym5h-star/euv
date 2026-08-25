@@ -9,32 +9,6 @@ impl<T: Clone + PartialEq + 'static> SuspenseHandle<T> {
         }
     }
 
-    /// Returns the underlying phase signal.
-    pub fn state(&self) -> Signal<SuspensePhase<T>> {
-        *self.get_phase()
-    }
-
-    /// Returns a snapshot of the current phase (no
-    /// signal read).
-    pub fn current(&self) -> SuspensePhase<T> {
-        self.get_phase().get()
-    }
-
-    /// Returns `true` if the phase is `Pending`.
-    pub fn is_pending(&self) -> bool {
-        matches!(self.get_phase().get(), SuspensePhase::Pending)
-    }
-
-    /// Returns `true` if the phase is `Resolved`.
-    pub fn is_resolved(&self) -> bool {
-        matches!(self.get_phase().get(), SuspensePhase::Resolved(_))
-    }
-
-    /// Returns `true` if the phase is `Failed`.
-    pub fn is_failed(&self) -> bool {
-        matches!(self.get_phase().get(), SuspensePhase::Failed(_))
-    }
-
     /// Transitions the phase to `Resolved(value)`. Works
     /// on every target.
     pub fn resolve_sync(&self, value: T) {

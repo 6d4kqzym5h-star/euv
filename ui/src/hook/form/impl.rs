@@ -15,40 +15,13 @@ impl HookContextFormExt for HookContext {
 }
 
 impl FormState {
-    /// Returns a `Signal` clone of the `values` map.
-    ///
-    /// Read with `.get()` inside a render closure to
-    /// subscribe to value changes. Callers needing a
-    /// single field's value should use
-    /// `FormState::field(name)` instead, which is a
-    /// convenience that avoids re-reading the whole map.
-    pub fn values(&self) -> Signal<HashMap<&'static str, String>> {
-        *self.get_values()
-    }
-
-    /// Returns a `Signal` clone of the `errors` map.
-    pub fn errors(&self) -> Signal<HashMap<&'static str, String>> {
-        *self.get_errors()
-    }
-
-    /// Returns a `Signal` clone of the `touched` set.
-    pub fn touched(&self) -> Signal<HashSet<&'static str>> {
-        *self.get_touched()
-    }
-
-    /// Returns a `Signal<bool>` clone of the `submitting`
-    /// flag.
-    pub fn submitting(&self) -> Signal<bool> {
-        *self.get_submitting()
-    }
-
     /// Returns the current value of the named field, or
     /// `""` if the field has never been set.
     ///
     /// This is a snapshot read, not a subscription —
     /// callers inside a render closure that want to
     /// re-render on value changes should use
-    /// `state.values().get().get(name).cloned().unwrap_or_default()`
+    /// `state.get_values().get().get(name).cloned().unwrap_or_default()`
     /// instead, so the closure actually subscribes.
     pub fn field(&self, name: &'static str) -> String {
         self.get_values()
@@ -148,7 +121,7 @@ impl FormState {
     /// validators pass.
     ///
     /// Sets `submitting` to `true` for the duration of the
-    /// call (so a `disabled={state.submitting().get()}`
+    /// call (so a `disabled={state.get_submitting().get()}`
     /// button stays disabled until the handler returns),
     /// then resets it to `false`. If validators were
     /// supplied AND at least one field failed validation,

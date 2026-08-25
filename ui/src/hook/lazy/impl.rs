@@ -22,34 +22,6 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
         }
     }
 
-    /// Returns the reactive state signal. Subscribers see
-    /// transitions from `Pending` → `Loading` → `Loaded`
-    /// (or `Failed`).
-    pub fn state(&self) -> Signal<LoadState<T>> {
-        *self.get_state()
-    }
-
-    /// Returns the current state snapshot (no factory
-    /// call).
-    pub fn current(&self) -> LoadState<T> {
-        self.get_state().get()
-    }
-
-    /// Returns `true` if the factory has produced a
-    /// value (or failed).
-    pub fn is_resolved(&self) -> bool {
-        matches!(
-            self.get_state().get(),
-            LoadState::Loaded(_) | LoadState::Failed(_)
-        )
-    }
-
-    /// Returns `true` if the factory is still pending or
-    /// loading.
-    pub fn is_pending(&self) -> bool {
-        matches!(self.get_state().get(), LoadState::Pending)
-    }
-
     /// Triggers the factory without reading the value.
     /// Idempotent: calling `prefetch()` twice does not
     /// run the factory twice.
