@@ -43,7 +43,7 @@ impl App {
     ///
     /// # Arguments
     ///
-    /// - `FnOnce() -> R` - The closure to execute with batched updates.
+    /// - `F: FnOnce() -> R` - The closure to execute with batched updates.
     ///
     /// # Returns
     ///

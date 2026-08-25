@@ -6,7 +6,7 @@ use super::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvBadgeProps>` - The props node containing text, outline, and on_click.
+/// - `VirtualNode<EuvBadgeProps>` - The props node.
 ///
 /// # Returns
 ///

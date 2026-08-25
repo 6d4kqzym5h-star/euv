@@ -194,7 +194,7 @@ impl HookContext {
     /// # Arguments
     ///
     /// - `HookContext` - The hook context to set as active during closure execution.
-    /// - `FnOnce() -> R` - The closure to execute with the given context.
+    /// - `F: FnOnce() -> R` - The closure to execute with the given context.
     ///
     /// # Returns
     ///
@@ -403,13 +403,14 @@ impl HookContext {
     ///
     /// # Arguments
     ///
-    /// - `F` - Constructor that produces a fresh value of type
-    ///   `T` when the slot has never been written.
+    /// - `F: FnOnce() -> T` - Constructor that produces a fresh value
+    ///   of type `T` when the slot has never been written.
     ///
     /// # Returns
     ///
-    /// - `T` - Either the previously-stored value (cheap clone /
-    ///   copy) or a fresh one from `factory`.
+    /// - `T: Clone + 'static` - Either the previously-stored
+    ///   value (cheap clone / copy) or a fresh one from
+    ///   `factory`.
     pub fn use_hook<T, F>(factory: F) -> T
     where
         F: FnOnce() -> T,

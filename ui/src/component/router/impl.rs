@@ -62,7 +62,7 @@ impl NestedRouteConfig {
     /// # Arguments
     ///
     /// - `impl Into<String>` - The route path.
-    /// - `F` - The component closure.
+    /// - `F: Fn() -> VirtualNode + 'static` - The component closure.
     /// - `Vec<NestedRouteConfig>` - The child
     ///   routes.
     pub fn new<F>(path: impl Into<String>, component: F, children: Vec<NestedRouteConfig>) -> Self

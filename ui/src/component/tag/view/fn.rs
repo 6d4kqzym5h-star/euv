@@ -6,7 +6,7 @@ use super::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode<EuvTagProps>` - The props node containing color, variant, text, and on_click.
+/// - `VirtualNode<EuvTagProps>` - The props node.
 ///
 /// # Returns
 ///

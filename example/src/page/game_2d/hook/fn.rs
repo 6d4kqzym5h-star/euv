@@ -922,7 +922,7 @@ pub(crate) fn game_2d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f6
 ///
 /// # Returns
 ///
-/// - `([f32; 4], [f32; 4])` - The `pos_radius` and `color` vec4s.
+/// - `([f32; 4], [f32; 4])` - Position-and-radius and color vec4s.
 fn game_2d_ball_gpu_record(ball: &Ball) -> ([f32; 4], [f32; 4]) {
     let (r, g, b) = game_2d_hex_to_rgb(&ball.color);
     (
@@ -978,7 +978,7 @@ fn pack_game_2d_balls_webgpu(balls: &[Ball]) -> Vec<f32> {
 ///
 /// # Returns
 ///
-/// - `(Vec<f32>, Vec<f32>)` - The `pos_radius` and `color` arrays.
+/// - `(Vec<f32>, Vec<f32>)` - Position-and-radius and color arrays.
 fn pack_game_2d_balls_webgl(balls: &[Ball]) -> (Vec<f32>, Vec<f32>) {
     let mut pos_radius: Vec<f32> = Vec::with_capacity(balls.len() * 4);
     let mut colors: Vec<f32> = Vec::with_capacity(balls.len() * 4);

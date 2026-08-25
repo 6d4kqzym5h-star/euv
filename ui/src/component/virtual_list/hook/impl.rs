@@ -154,9 +154,9 @@ impl UseVirtualList {
     ///
     /// # Returns
     ///
-    /// - `(usize, usize, usize, usize)` - A tuple of (visible_start, visible_end, render_start, render_end).
-    ///   visible_start/visible_end represent the actual visible range without overscan.
-    ///   render_start/render_end represent the rendering range including overscan.
+    /// - `(usize, usize, usize, usize)` - The first pair is the actual
+    ///   visible range without overscan; the second pair is the
+    ///   rendering range including overscan.
     pub(crate) fn compute_visible_range(
         scroll_offset: i32,
         viewport_height: i32,
