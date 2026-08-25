@@ -1,40 +1,16 @@
-//! `App::use_form` and the matching `HookContext::form`
-//! factory. Identical pattern to the profiler factory —
-//! see `reactive/profiler/handle.rs` for prior art and the
-//! reasoning behind the downcast-ref + index-increment
-//! implementation.
+//! `HookContext::form` factory — backed by `HookContext::use_hook`.
 use super::*;
 
 impl HookContextFormExt for HookContext {
     fn form() -> FormState {
-        let hook_context: HookContext = Self::current();
-        let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
-            return FormState::new(
+        HookContext::use_hook(|| {
+            FormState::new(
                 Signal::create(HashMap::new()),
                 Signal::create(HashMap::new()),
                 Signal::create(HashSet::new()),
                 Signal::create(false),
-            );
-        };
-        let index: usize = inner.get_hook_index();
-        inner.set_hook_index(index + 1);
-        if index < inner.get_hooks().len()
-            && let Some(existing) = inner.get_hooks()[index].downcast_ref::<FormState>()
-        {
-            return existing.clone();
-        }
-        let state: FormState = FormState::new(
-            Signal::create(HashMap::new()),
-            Signal::create(HashMap::new()),
-            Signal::create(HashSet::new()),
-            Signal::create(false),
-        );
-        if index < inner.get_hooks().len() {
-            inner.get_mut_hooks()[index] = Box::new(state.clone());
-        } else {
-            inner.get_mut_hooks().push(Box::new(state.clone()));
-        }
-        state
+            )
+        })
     }
 }
 

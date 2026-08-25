@@ -1,7 +1,6 @@
-//! `App::use_transition` and the matching
-//! `HookContext::transition` factory. Same pattern as the
-//! profiler / form / i18n factories.
-
+//! `HookContext::transition` factory — uses the
+//! `HookContext::use_hook` pattern plus a per-slot config refresh
+//! when the hook slot is already populated.
 use super::*;
 
 impl HookContextTransitionExt for HookContext {
@@ -19,25 +18,17 @@ impl HookContextTransitionExt for HookContext {
         if index < inner.get_hooks().len()
             && let Some(existing) = inner.get_hooks()[index].downcast_ref::<TransitionState>()
         {
-            // Slot already has a state — refresh its
-            // config but leave the existing phase /
-            // progress intact. (Callers that want to
-            // reset explicitly should call
-            // `TransitionState::reset`.)
             existing.change_config(config);
             return existing.clone();
         }
-        let state: TransitionState = TransitionState::new(
-            Signal::create(TransitionPhase::Exited),
-            Signal::create(0.0_f64),
-            Signal::create(config),
-        );
-        if index < inner.get_hooks().len() {
-            inner.get_mut_hooks()[index] = Box::new(state.clone());
-        } else {
-            inner.get_mut_hooks().push(Box::new(state.clone()));
-        }
-        state
+        drop(inner);
+        HookContext::use_hook(|| {
+            TransitionState::new(
+                Signal::create(TransitionPhase::Exited),
+                Signal::create(0.0_f64),
+                Signal::create(config),
+            )
+        })
     }
 }
 

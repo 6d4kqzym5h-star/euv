@@ -22,10 +22,9 @@ pub(crate) use renderer::*;
 use std::{
     any::Any,
     borrow::Cow,
-    cell::{Cell, Ref, RefCell, UnsafeCell},
+    cell::{Ref, RefCell, UnsafeCell},
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
-    future::Future,
     iter::Iterator,
     marker::PhantomData,
     mem::{swap, take},

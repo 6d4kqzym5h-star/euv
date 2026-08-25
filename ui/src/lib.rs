@@ -4,9 +4,10 @@
 //! providing buttons, cards, modals, inputs, theme management, and more.
 
 mod component;
+mod hook;
 mod style;
 
-pub use {component::*, style::*};
+pub use {component::*, hook::*, style::*};
 
 use euv::*;
 
