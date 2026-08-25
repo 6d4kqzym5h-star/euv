@@ -42,13 +42,13 @@ impl I18n {
     /// locale. Read with `.get()` inside a render closure
     /// to subscribe to locale changes.
     pub fn locale(&self) -> Signal<String> {
-        self.get_locale().clone()
+        *self.get_locale()
     }
 
     /// Returns a `Signal<String>` clone of the fallback
     /// locale.
     pub fn fallback_locale(&self) -> Signal<String> {
-        self.get_fallback_locale().clone()
+        *self.get_fallback_locale()
     }
 
     /// Sets the active locale to `locale`. Triggers a

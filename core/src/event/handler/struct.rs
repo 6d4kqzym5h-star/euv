@@ -9,7 +9,7 @@ use super::*;
 #[derive(Clone, CustomDebug, Data, New)]
 pub struct NativeEventHandler {
     /// The name of the event (e.g., "click", "input").
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) event_name: &'static str,

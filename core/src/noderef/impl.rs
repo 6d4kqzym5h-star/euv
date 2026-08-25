@@ -34,16 +34,6 @@ impl<T: ?Sized> NodeRef<T> {
     /// failed cast is reported as `None` rather than panicking, which
     /// matches React/Yew behaviour and avoids crashing the renderer on
     /// ref misuse.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let input_ref: NodeRef<HtmlInputElement> = App::use_node_ref();
-    /// html! { input { ref: input_ref.clone() } }
-    /// if let Some(el) = input_ref.get_cloned() {
-    ///     el.focus();
-    /// }
-    /// ```
     pub fn get_cloned(&self) -> Option<T>
     where
         T: JsCast,

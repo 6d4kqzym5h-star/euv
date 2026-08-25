@@ -1,13 +1,13 @@
 use super::*;
 
 /// Global auto-incrementing ID counter for DOM elements.
-pub(crate) static NEXT_EUV_ID: AtomicUsize = AtomicUsize::new(0);
+pub static NEXT_EUV_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Global auto-incrementing ID counter for DynamicNode placeholder elements.
-pub(crate) static NEXT_EUV_DYNAMIC_ID: AtomicUsize = AtomicUsize::new(0);
+pub static NEXT_EUV_DYNAMIC_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Whether `dispatch_updates` is currently executing.
-pub(crate) static SIGNAL_UPDATE_DISPATCHING: AtomicBool = AtomicBool::new(false);
+pub static SIGNAL_UPDATE_DISPATCHING: AtomicBool = AtomicBool::new(false);
 
 /// Set of dynamic node IDs marked dirty since the last dispatch drain.
 ///
@@ -42,7 +42,7 @@ pub(crate) static mut SIGNAL_UPDATE_REGISTRY: LazyLock<SignalUpdateRegistryCell>
     LazyLock::new(|| SignalUpdateRegistryCell(UnsafeCell::new(HashMap::new())));
 
 /// Global auto-incrementing ID counter for window event handler entries.
-pub(crate) static NEXT_WINDOW_HANDLER_ID: AtomicUsize = AtomicUsize::new(0);
+pub static NEXT_WINDOW_HANDLER_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Global window event proxy registry, mapping event names to handler lists.
 pub(crate) static mut WINDOW_EVENT_REGISTRY: LazyLock<WindowEventRegistryCell> =

@@ -11,7 +11,7 @@ impl<T: Clone + PartialEq + 'static> SuspenseHandle<T> {
 
     /// Returns the underlying phase signal.
     pub fn state(&self) -> Signal<SuspensePhase<T>> {
-        self.phase.clone()
+        self.phase
     }
 
     /// Returns a snapshot of the current phase (no

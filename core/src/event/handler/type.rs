@@ -3,7 +3,7 @@ use super::*;
 /// Type alias for an event callback closure.
 ///
 /// A boxed `FnMut(Event)` invoked whenever the associated DOM event fires.
-pub(crate) type EventCallback = Box<dyn FnMut(Event)>;
+pub type EventCallback = Box<dyn FnMut(Event)>;
 
 /// Type alias for the shared, interior-mutable storage of an event callback.
 ///
@@ -13,4 +13,4 @@ pub(crate) type EventCallback = Box<dyn FnMut(Event)>;
 ///
 /// SAFETY: Only accessed from the main thread in the WASM single-threaded
 /// context; no concurrent access is possible.
-pub(crate) type SharedEventCallback = Rc<UnsafeCell<EventCallback>>;
+pub type SharedEventCallback = Rc<UnsafeCell<EventCallback>>;

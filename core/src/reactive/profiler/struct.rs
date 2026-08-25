@@ -28,7 +28,7 @@ use super::*;
 ///   when they were committed, not by when the user started
 ///   the timer — which matters when entries are kept around
 ///   for "last N measurements" readouts.
-#[derive(Clone, Debug, PartialEq, Data, New)]
+#[derive(Clone, Data, Debug, New, PartialEq)]
 pub struct ProfileEntry {
     /// The free-form label passed to `measure` / `begin`.
     pub label: String,

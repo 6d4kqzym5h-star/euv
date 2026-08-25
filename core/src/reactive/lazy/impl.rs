@@ -32,7 +32,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// transitions from `Pending` → `Loading` → `Loaded`
     /// (or `Failed`).
     pub fn state(&self) -> Signal<LoadState<T>> {
-        self.state.clone()
+        self.state
     }
 
     /// Returns the current state snapshot (no factory
@@ -60,16 +60,13 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Idempotent: calling `prefetch()` twice does not
     /// run the factory twice.
     pub fn prefetch(&self) {
-        match self.state.get() {
-            LoadState::Pending => {
-                self.state.set(LoadState::Loading);
-                // For sync factories, transition
-                // Pending → Loading → Loaded in one call.
-                // (Async factories would `set` to
-                // Loaded after the future resolves.)
-                self.invoke_factory();
-            }
-            _ => {}
+        if let LoadState::Pending = self.state.get() {
+            self.state.set(LoadState::Loading);
+            // For sync factories, transition
+            // Pending → Loading → Loaded in one call.
+            // (Async factories would `set` to
+            // Loaded after the future resolves.)
+            self.invoke_factory();
         }
     }
 
@@ -148,7 +145,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
 impl<T: Clone + PartialEq + 'static> Clone for LazyComponent<T> {
     fn clone(&self) -> Self {
         Self {
-            state: self.state.clone(),
+            state: self.state,
             factory: self.factory.clone(),
         }
     }

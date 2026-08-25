@@ -58,11 +58,10 @@ pub fn find_active_route<'a>(
         if normalized == normalized_request {
             // Try to find a deeper match in the
             // children of this route.
-            if !route.children.is_empty() {
-                if let Some(child_match) = find_active_route(path, &route.children) {
+            if !route.children.is_empty()
+                && let Some(child_match) = find_active_route(path, &route.children) {
                     return Some(child_match);
                 }
-            }
             return Some(route);
         }
     }
@@ -73,11 +72,10 @@ pub fn find_active_route<'a>(
     // return the parent.
     for route in routes.iter() {
         if route_matches(&route.path, path) && route.path != normalize_path(path) {
-            if !route.children.is_empty() {
-                if let Some(child_match) = find_active_route(path, &route.children) {
+            if !route.children.is_empty()
+                && let Some(child_match) = find_active_route(path, &route.children) {
                     return Some(child_match);
                 }
-            }
             return Some(route);
         }
     }

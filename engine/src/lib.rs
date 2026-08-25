@@ -24,9 +24,6 @@ mod spatial;
 mod sprite;
 mod timer;
 
-#[cfg(test)]
-mod tests;
-
 mod tween;
 
 use wasm_bindgen::JsValue;

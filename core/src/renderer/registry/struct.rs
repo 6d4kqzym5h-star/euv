@@ -43,14 +43,14 @@ pub(crate) struct SignalUpdateSlot {
     #[set(pub(crate))]
     pub(crate) callback: Option<Box<dyn FnMut()>>,
     /// Whether this slot has been marked for removal.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) removed: bool,
     /// Whether this slot has pending changes that need dispatching.
     /// Only dirty slots are invoked during dispatch, avoiding O(N)
     /// broadcast to all dynamic nodes when only one signal changed.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) dirty: bool,
@@ -68,7 +68,7 @@ pub(crate) struct HandlerRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HandlerRegistryMap>,
+    pub UnsafeCell<HandlerRegistryMap>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashSet` access.
@@ -83,7 +83,7 @@ pub(crate) struct DelegatedEventsCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HashSet<&'static str>>,
+    pub UnsafeCell<HashSet<&'static str>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashMap` access.
@@ -98,7 +98,7 @@ pub(crate) struct SignalUpdateRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HashMap<usize, SignalUpdateEntry>>,
+    pub UnsafeCell<HashMap<usize, SignalUpdateEntry>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashSet` access used by
@@ -114,7 +114,7 @@ pub(crate) struct DirtyUpdateIdsCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HashSet<usize>>,
+    pub UnsafeCell<HashSet<usize>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `WindowEventRegistryMap` access.
@@ -129,7 +129,7 @@ pub(crate) struct WindowEventRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<WindowEventRegistryMap>,
+    pub UnsafeCell<WindowEventRegistryMap>,
 );
 
 /// A zero-sized struct providing static methods for managing

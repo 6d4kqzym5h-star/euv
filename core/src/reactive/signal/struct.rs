@@ -25,7 +25,7 @@ where
     /// complete no-ops (no value update, no listener invocation, no
     /// dispatch scheduling), ensuring stale closures like orphaned
     /// `setInterval` handlers or pending `spawn_local` futures become harmless.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) alive: bool,
@@ -46,7 +46,7 @@ where
     /// flag, `update_and_notify` would incorrectly merge the old
     /// listeners back with the new ones, defeating `replace_subscribe`'s
     /// replacement semantics and causing listener accumulation.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     #[new(skip)]
@@ -69,14 +69,14 @@ where
 {
     /// Address of the heap-allocated inner state (`*mut SignalInner<T>`).
     #[debug(skip)]
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: usize,
     /// Marker for the generic type parameter (uses fn pointer to be `Copy`
     /// regardless of `T`).
     #[debug(skip)]
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) _marker: PhantomData<fn() -> T>,
@@ -113,7 +113,7 @@ pub(crate) struct SignalInnerRegistryCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HashSet<usize>>,
+    pub UnsafeCell<HashSet<usize>>,
 );
 
 /// A `Sync` wrapper for single-threaded global `HashMap` access.
@@ -128,7 +128,7 @@ pub(crate) struct BridgeRefsCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HashMap<usize, HashSet<usize>>>,
+    pub UnsafeCell<HashMap<usize, HashSet<usize>>>,
 );
 
 /// A handle to a leaked `FnMut()` closure, stored as the closure's heap address.
@@ -147,7 +147,7 @@ pub(crate) struct BridgeRefsCell(
 #[derive(Clone, Copy, CustomDebug, Data, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct FireHandle {
     /// Address of the leaked `Box<dyn FnMut()>` allocation.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) inner: usize,

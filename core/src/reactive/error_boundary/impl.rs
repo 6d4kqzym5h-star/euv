@@ -11,7 +11,7 @@ impl ErrorBoundary {
 
     /// Returns the underlying phase signal.
     pub fn phase(&self) -> Signal<ErrorBoundaryPhase> {
-        self.phase.clone()
+        self.phase
     }
 
     /// Returns a snapshot of the current phase.

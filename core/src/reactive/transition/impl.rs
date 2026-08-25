@@ -99,19 +99,19 @@ impl TransitionState {
     /// Returns a `Signal<TransitionPhase>` clone of the
     /// current phase.
     pub fn phase(&self) -> Signal<TransitionPhase> {
-        self.get_phase().clone()
+        *self.get_phase()
     }
 
     /// Returns a `Signal<f64>` clone of the current
     /// progress.
     pub fn progress(&self) -> Signal<f64> {
-        self.get_progress().clone()
+        *self.get_progress()
     }
 
     /// Returns a `Signal<TransitionConfig>` clone of the
     /// current config.
     pub fn config(&self) -> Signal<TransitionConfig> {
-        self.get_config().clone()
+        *self.get_config()
     }
 
     /// Returns the current phase as a snapshot value.

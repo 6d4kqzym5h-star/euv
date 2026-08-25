@@ -1635,12 +1635,6 @@ impl WebGpuRenderer {
     /// Probes whether a WebGPU adapter can actually be acquired.
     ///
     /// Mirrors Three.js' canonical capability probe exactly:
-    /// ```text
-    /// isAvailable = (navigator.gpu !== undefined)
-    /// if (isAvailable) {
-    ///     isAvailable = Boolean(await navigator.gpu.requestAdapter())
-    /// }
-    /// ```
     ///
     /// Wraps the adapter request in the same `Promise.race` timeout used
     /// by [`Self::init`] so that browsers which leave the adapter promise

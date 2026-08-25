@@ -69,12 +69,11 @@ where
 
     /// Overrides the slot's state directly.
     ///
-    /// Bypasses the future machinery. Exists so unit tests in
-    /// `core/src/tests/use_async/` can exercise the `match`
-    /// arms produced by users without needing a live browser
-    /// to run the future.
-    #[cfg(test)]
-    pub(crate) fn set_state(&self, next: AsyncState<T, L>) {
+    /// Bypasses the future machinery. Exists so the
+    /// integration tests in `core/tests/use_async/` can
+    /// exercise the `match` arms produced by users without
+    /// needing a live browser to run the future.
+    pub fn set_state(&self, next: AsyncState<T, L>) {
         unsafe { self.slot().state.set(next) }
     }
 
@@ -112,7 +111,7 @@ where
         // but adds enough bookkeeping to make the slot a lot
         // bigger. Documented in the PR description.
         cancel.set(false);
-        let state: Signal<AsyncState<T, L>> = unsafe { self.slot().state.clone() };
+        let state: Signal<AsyncState<T, L>> = unsafe { self.slot().state };
         let cancel_for_task: Rc<Cell<bool>> = Rc::clone(&cancel);
         let task_fut: Fut = factory();
         let task: core::pin::Pin<Box<dyn Future<Output = ()>>> = Box::pin(async move {

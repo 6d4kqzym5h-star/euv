@@ -186,17 +186,6 @@ impl App {
     /// # Returns
     ///
     /// - `NodeRef<T>` - A reactive handle to the eventual DOM element.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let input_ref: NodeRef<HtmlInputElement> = App::use_node_ref();
-    /// html! {
-    ///     input { ref: input_ref.clone() type: "text" }
-    /// }
-    /// // Later, in an event handler or another component:
-    /// input_ref.get_cloned().map(|el| el.focus());
-    /// ```
     pub fn use_node_ref<T>() -> NodeRef<T>
     where
         T: ?Sized + 'static,

@@ -47,23 +47,23 @@ impl FormState {
     /// `FormState::field(name)` instead, which is a
     /// convenience that avoids re-reading the whole map.
     pub fn values(&self) -> Signal<HashMap<&'static str, String>> {
-        self.get_values().clone()
+        *self.get_values()
     }
 
     /// Returns a `Signal` clone of the `errors` map.
     pub fn errors(&self) -> Signal<HashMap<&'static str, String>> {
-        self.get_errors().clone()
+        *self.get_errors()
     }
 
     /// Returns a `Signal` clone of the `touched` set.
     pub fn touched(&self) -> Signal<HashSet<&'static str>> {
-        self.get_touched().clone()
+        *self.get_touched()
     }
 
     /// Returns a `Signal<bool>` clone of the `submitting`
     /// flag.
     pub fn submitting(&self) -> Signal<bool> {
-        self.get_submitting().clone()
+        *self.get_submitting()
     }
 
     /// Returns the current value of the named field, or

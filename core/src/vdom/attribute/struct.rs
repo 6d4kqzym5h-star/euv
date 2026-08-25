@@ -133,7 +133,7 @@ pub struct EventNamedAdapter<T> {
     #[set(pub(crate))]
     pub(crate) inner: T,
     /// The event name (e.g., "click", "mouseover").
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) event_name: &'static str,
@@ -197,7 +197,7 @@ pub struct CallbackNamedAdapter<T> {
     #[set(pub(crate))]
     pub(crate) inner: T,
     /// The custom attribute name (e.g., "on-increment", "on-change").
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) name: &'static str,
@@ -216,5 +216,5 @@ pub(crate) struct InjectedClassesCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<HashSet<String>>,
+    pub UnsafeCell<HashSet<String>>,
 );

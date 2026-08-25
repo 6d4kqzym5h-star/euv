@@ -1,18 +1,5 @@
 use super::*;
 
-/// Integration tests for the `RawHtml` primitive and
-/// the `unsafe_no_inline!` macro semantics.
-///
-/// The `unsafe_no_inline!` macro lives in `euv-macros`
-/// (proc-macro crate). It expands to
-/// `::euv::vdom::RawHtml::new(value.to_string())`.
-/// These tests verify that `RawHtml` is constructed
-/// correctly with the same observable behavior the macro
-/// would produce, by going through `RawHtml::new` directly.
-/// The macro itself is tested in `euv-example` where the
-/// `euv` umbrella crate is a dependency (so `::euv::vdom::RawHtml`
-/// resolves); here we test the data type the macro emits.
-
 #[test]
 fn raw_html_stores_content_verbatim() {
     let raw: RawHtml = RawHtml::new("<svg viewBox=\"0 0 10 10\"/>".to_string());

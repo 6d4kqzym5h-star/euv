@@ -8,10 +8,7 @@ mod event;
 mod noderef;
 mod reactive;
 mod renderer;
-pub mod vdom;
-
-#[cfg(test)]
-mod tests;
+mod vdom;
 
 pub use std::{
     collections::hash_map::DefaultHasher,

@@ -58,7 +58,7 @@ impl ProfilerHandle {
     ///   to push the `ProfileEntry`; drop without `end()` to
     ///   discard the measurement.
     pub fn begin(&self, label: &str) -> ProfilerMark {
-        ProfilerMark::new(label.to_string(), now_ms(), self.get_entries().clone())
+        ProfilerMark::new(label.to_string(), now_ms(), *self.get_entries())
     }
 
     /// Returns a clone of the entries signal so subscribers
@@ -69,7 +69,7 @@ impl ProfilerHandle {
     /// so cloning is cheap. Subscribers call `.get()` inside
     /// their render closure to subscribe to new entries.
     pub fn entries(&self) -> Signal<Vec<ProfileEntry>> {
-        self.get_entries().clone()
+        *self.get_entries()
     }
 
     /// Empties the entries vector. Useful between benchmarks

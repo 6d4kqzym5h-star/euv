@@ -15,12 +15,12 @@ pub(crate) struct HookContextInner {
     #[set(pub(crate))]
     pub(crate) hooks: Vec<Box<dyn Any>>,
     /// The match arm index from the last render.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) arm_changed: usize,
     /// Current hook index, incremented on each hook call and reset per render.
-    #[get(pub(crate), type(copy))]
+    #[get(pub, type(copy))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
     pub(crate) hook_index: usize,

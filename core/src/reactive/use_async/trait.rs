@@ -9,17 +9,6 @@
 /// The trait has a single associated constant — a zero-sized marker
 /// so the type can be used as a default type parameter — and one
 /// method that produces the "no prior data, no hint" sentinel.
-///
-/// # Examples
-///
-/// ```ignore
-/// #[derive(Clone)]
-/// struct Hint { previous: Option<MyData>, last_fetched_ms: u64 }
-///
-/// impl HasLoadingHint for Hint {
-///     fn empty() -> Self { Hint { previous: None, last_fetched_ms: 0 } }
-/// }
-/// ```
 pub trait HasLoadingHint: Clone + 'static {
     /// The sentinel value representing "no prior data is available".
     /// `use_async` slots this in for the first render so that

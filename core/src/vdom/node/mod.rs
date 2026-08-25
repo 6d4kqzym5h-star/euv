@@ -5,6 +5,6 @@ mod r#trait;
 
 pub use {r#enum::*, r#struct::*};
 
-pub(crate) use r#trait::*;
+pub use r#trait::*;
 
 use super::*;
