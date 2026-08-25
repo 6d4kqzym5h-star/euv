@@ -10,7 +10,7 @@ fn new_is_pending() {
 
 #[test]
 fn get_runs_factory_on_first_call() {
-    let counter: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let counter_clone = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
@@ -22,7 +22,7 @@ fn get_runs_factory_on_first_call() {
 
 #[test]
 fn get_returns_cached_value_on_subsequent_calls() {
-    let counter: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let counter_clone = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
@@ -44,7 +44,7 @@ fn prefetch_runs_factory() {
 
 #[test]
 fn prefetch_is_idempotent() {
-    let counter: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let counter_clone = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
@@ -58,7 +58,7 @@ fn prefetch_is_idempotent() {
 
 #[test]
 fn prefetch_after_resolved_is_no_op() {
-    let counter: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let counter_clone = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
@@ -71,7 +71,7 @@ fn prefetch_after_resolved_is_no_op() {
 
 #[test]
 fn reset_returns_to_pending() {
-    let counter: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let counter_clone = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
@@ -111,7 +111,7 @@ fn change_factory_resets_state() {
 
 #[test]
 fn clone_shares_state_and_factory() {
-    let counter: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let counter: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let counter_clone = counter.clone();
     let lazy: LazyComponent<u32> = LazyComponent::new(move || {
         counter_clone.set(counter_clone.get() + 1);
@@ -167,7 +167,7 @@ fn get_after_panic_returns_none() {
 
 #[test]
 fn reset_after_panic_allows_recovery() {
-    let calls: std::rc::Rc<std::cell::Cell<u32>> = std::rc::Rc::new(std::cell::Cell::new(0));
+    let calls: Rc<Cell<u32>> = Rc::new(Cell::new(0));
     let calls_clone = calls.clone();
     let lazy: LazyComponent<i32> = LazyComponent::new(move || {
         let n = calls_clone.get();

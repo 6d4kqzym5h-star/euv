@@ -4,9 +4,7 @@ mod hook;
 mod schedule;
 mod signal;
 
-pub use {
-    cache::*, hook::*, signal::*,
-};
+pub use {cache::*, hook::*, signal::*};
 
 pub(crate) use schedule::*;
 

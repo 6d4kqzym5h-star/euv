@@ -403,7 +403,7 @@ impl HookContext {
     ///
     /// # Arguments
     ///
-    /// - `factory: F` - Constructor that produces a fresh value of type
+    /// - `F` - Constructor that produces a fresh value of type
     ///   `T` when the slot has never been written.
     ///
     /// # Returns

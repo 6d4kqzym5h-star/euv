@@ -13,7 +13,7 @@ use euv::*;
 
 use std::{
     cell::{Cell, RefCell, RefMut, UnsafeCell},
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     ops::Deref,
     rc::Rc,
     sync::{

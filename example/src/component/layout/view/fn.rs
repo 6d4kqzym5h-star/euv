@@ -472,7 +472,7 @@ async fn try_notify_native_once() -> Result<(UpdateStatus, UpdateResultPayload),
 ///
 /// # Arguments
 ///
-/// - `millis: u32` — Number of milliseconds to sleep.
+/// - `u32` — Number of milliseconds to sleep.
 ///
 /// # Returns
 ///

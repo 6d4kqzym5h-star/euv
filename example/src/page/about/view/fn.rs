@@ -8,7 +8,7 @@ use super::*;
 ///
 /// # Arguments
 ///
-/// - `current_route: &str` - The current route path to find.
+/// - `&str` - The current route path to find.
 ///
 /// # Returns
 ///

@@ -1,8 +1,5 @@
 use super::*;
 
-use euv_core::{I18n, MessageEntry, Signal};
-use std::collections::HashMap;
-
 fn run_with_signal_capture<F>(f: F) -> bool
 where
     F: FnOnce(),
