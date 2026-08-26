@@ -113,7 +113,7 @@ fn attribute_entry_debug_format_works() {
 
 #[test]
 fn native_css_construct_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let _: Css = Css::default();
         let _: PseudoRule = PseudoRule::default();
         let _: MediaRule = MediaRule::default();
@@ -124,7 +124,7 @@ fn native_css_construct_does_not_panic() {
 
 #[test]
 fn native_pseudo_rule_clone_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let rule: PseudoRule = PseudoRule::default();
         let cloned: PseudoRule = rule.clone();
         assert_eq!(rule, cloned);
@@ -135,7 +135,7 @@ fn native_pseudo_rule_clone_does_not_panic() {
 
 #[test]
 fn native_media_rule_clone_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let rule: MediaRule = MediaRule::default();
         let cloned: MediaRule = rule.clone();
         assert_eq!(rule, cloned);

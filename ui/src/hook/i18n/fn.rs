@@ -10,7 +10,7 @@ use super::*;
 /// start of a placeholder.
 pub(crate) fn interpolate(template: &str, vars: &HashMap<&'static str, &'static str>) -> String {
     let mut output: String = String::with_capacity(template.len());
-    let mut chars: std::str::Chars<'_> = template.chars();
+    let mut chars: Chars<'_> = template.chars();
     while let Some(c) = chars.next() {
         if c != '{' {
             output.push(c);

@@ -38,7 +38,6 @@ fn interval_handle_clone() {
 
 #[test]
 fn interval_handle_is_hash() {
-    use std::collections::hash_map::DefaultHasher;
     let handle: IntervalHandle = IntervalHandle::default();
     let mut hasher: DefaultHasher = DefaultHasher::new();
     handle.hash(&mut hasher);

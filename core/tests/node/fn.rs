@@ -58,7 +58,6 @@ fn tag_equality_different_inner_values() {
 
 #[test]
 fn tag_hash_same_for_equal_tags() {
-    use std::collections::hash_map::DefaultHasher;
     let a: Tag = Tag::Element(Cow::Borrowed("div"));
     let b: Tag = Tag::Element(Cow::Borrowed("div"));
     let mut h1: DefaultHasher = DefaultHasher::new();
@@ -267,7 +266,7 @@ fn virtual_node_element_debug_format_includes_tag() {
 
 #[test]
 fn native_virtual_node_empty_construction_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let _: VirtualNode = VirtualNode::Empty;
     }))
     .map_err(|_| "panic".to_string());
@@ -276,7 +275,7 @@ fn native_virtual_node_empty_construction_does_not_panic() {
 
 #[test]
 fn native_virtual_node_element_construction_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let _: VirtualNode = VirtualNode::Element {
             tag: Tag::Element(Cow::Borrowed("div")),
             attributes: Vec::new(),
@@ -291,7 +290,7 @@ fn native_virtual_node_element_construction_does_not_panic() {
 
 #[test]
 fn native_text_node_construction_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let _: TextNode = TextNode::new(String::from("x"), None);
     }))
     .map_err(|_| "panic".to_string());
@@ -300,7 +299,7 @@ fn native_text_node_construction_does_not_panic() {
 
 #[test]
 fn native_tag_construction_does_not_panic() {
-    let result: Result<(), String> = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let result: Result<(), String> = catch_unwind(AssertUnwindSafe(|| {
         let _: Tag = Tag::Element(Cow::Borrowed("div"));
         let _: Tag = Tag::Component(Cow::Borrowed("Foo"));
     }))

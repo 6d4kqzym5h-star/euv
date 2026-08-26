@@ -9,6 +9,13 @@ mod style;
 
 use {component::*, page::*, style::*};
 
+pub use std::{
+    cmp::Ordering,
+    collections::HashSet,
+    fmt::{Debug, Display, Formatter, Result as FmtResult},
+    ops::Range,
+};
+
 use std::{
     cell::{Cell, RefCell},
     collections::HashMap,

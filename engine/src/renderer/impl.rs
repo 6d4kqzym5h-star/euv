@@ -4618,14 +4618,14 @@ impl WebGpuInitError {
     }
 }
 
-/// Implements `std::fmt::Display` for `WebGpuInitError`.
+/// Implements `Display` for `WebGpuInitError`.
 ///
 /// The formatted message is intended for end-user diagnostic output
 /// (typically forwarded to `Console::error` by the calling application)
 /// and includes the variant code plus a human-readable description. When
 /// the variant carries a JS error, its `Debug` form is appended.
-impl std::fmt::Display for WebGpuInitError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for WebGpuInitError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::NavigatorLookup(err) => write!(
                 formatter,
@@ -4741,7 +4741,7 @@ impl std::fmt::Display for WebGpuInitError {
 /// representation when present, otherwise returns `None`. The engine never
 /// logs or prints anything; this impl exists solely so the error composes
 /// with `Result`-based APIs and `?` operator chains.
-impl std::error::Error for WebGpuInitError {}
+impl Error for WebGpuInitError {}
 
 /// Implements `WebGlRenderer` context acquisition, shader program management,
 /// and per-frame drawing.
@@ -5032,12 +5032,12 @@ impl WebGlInitError {
     }
 }
 
-/// Implements `std::fmt::Display` for `WebGlInitError`.
+/// Implements `Display` for `WebGlInitError`.
 ///
 /// The formatted message includes the variant code plus a human-readable
 /// description; variants carrying a JS error append its rendered form.
-impl std::fmt::Display for WebGlInitError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for WebGlInitError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::CanvasNotFound(selector) => write!(
                 formatter,
@@ -5071,15 +5071,12 @@ impl std::fmt::Display for WebGlInitError {
     }
 }
 
-/// Implements the standard `std::error::Error` trait for `WebGlInitError`.
-impl std::error::Error for WebGlInitError {}
-
-/// Implements `std::fmt::Display` for `WebGlProgramError`.
+/// Implements `Display` for `WebGlProgramError`.
 ///
 /// The formatted message includes the browser-provided info log so GLSL
 /// diagnostics are visible verbatim in the console.
-impl std::fmt::Display for WebGlProgramError {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for WebGlProgramError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::ShaderCompile(log) => write!(formatter, "shader compilation failed: {log}"),
             Self::ProgramLink(log) => write!(formatter, "program link failed: {log}"),
@@ -5087,8 +5084,8 @@ impl std::fmt::Display for WebGlProgramError {
     }
 }
 
-/// Implements the standard `std::error::Error` trait for `WebGlProgramError`.
-impl std::error::Error for WebGlProgramError {}
+/// Implements the standard `Error` trait for `WebGlProgramError`.
+impl Error for WebGlProgramError {}
 
 /// Default-construction helper for `Texture2DDescriptor`.
 impl Texture2DDescriptor {

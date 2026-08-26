@@ -1,4 +1,7 @@
 use super::*;
+// Disambiguate `PI` against the engine-root re-export of `std::f64::consts::PI`
+// and the local `math::r#const::PI` exposed through `pub use {r#const::*, ...}`.
+use r#const::PI;
 
 /// Implements static math utility methods on the `Numeric` namespace struct.
 impl Numeric {
@@ -909,7 +912,7 @@ impl Color {
         let green: i32 = (self.get_green() * 255.0).round() as i32;
         let blue: i32 = (self.get_blue() * 255.0).round() as i32;
         let alpha: f64 = self.get_alpha();
-        let _: std::fmt::Result = write!(buffer, "rgba({red}, {green}, {blue}, {alpha})");
+        let _: FmtResult = write!(buffer, "rgba({red}, {green}, {blue}, {alpha})");
     }
 
     /// Returns black (0, 0, 0, 1).

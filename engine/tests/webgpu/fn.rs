@@ -50,10 +50,10 @@ fn create_shader_module_with_label_signature_pinned() {
 fn read_buffer_is_async() {
     fn assert_future<F>(_: F)
     where
-        F: std::future::Future,
+        F: Future,
     {
     }
-    let fut: std::future::Ready<Option<Vec<u8>>> = std::future::ready(None);
+    let fut: Ready<Option<Vec<u8>>> = ready(None);
     assert_future(fut);
 }
 

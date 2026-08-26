@@ -155,7 +155,6 @@ fn eq_different_content() {
 
 #[test]
 fn hash_consistent_with_eq() {
-    use std::collections::hash_map::DefaultHasher;
     let mut h1: DefaultHasher = DefaultHasher::new();
     let mut h2: DefaultHasher = DefaultHasher::new();
     RawHtml::new("<p>".to_string()).hash(&mut h1);

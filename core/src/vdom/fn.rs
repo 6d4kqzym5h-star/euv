@@ -89,8 +89,7 @@ pub fn diff_children(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
 pub fn diff_keyed(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     let mut ops: Vec<DiffOp> = Vec::new();
     // Build a set of new keys for fast removal check.
-    let mut new_key_set: std::collections::HashSet<&str> =
-        std::collections::HashSet::with_capacity(new.len());
+    let mut new_key_set: HashSet<&str> = HashSet::with_capacity(new.len());
     for new_child in new.iter() {
         if let Some(key) = new_child.key() {
             new_key_set.insert(key);

@@ -14,7 +14,7 @@ fn now_ms_is_non_decreasing_and_non_negative() {
     for i in 0..10_000_u64 {
         sink = sink.wrapping_add(i);
     }
-    std::hint::black_box(sink);
+    black_box(sink);
     let b: f64 = now_ms();
     assert!(a >= 0.0, "now_ms must be non-negative, got {}", a);
     assert!(b >= a, "now_ms must be monotonic, got {} then {}", a, b);
@@ -27,7 +27,7 @@ fn now_ms_two_calls_typically_differ() {
     for i in 0..1_000_000_u64 {
         sink = sink.wrapping_mul(i.wrapping_add(1));
     }
-    std::hint::black_box(sink);
+    black_box(sink);
     let b: f64 = now_ms();
     assert!(b >= a);
 }
@@ -124,10 +124,10 @@ fn profiler_handle_measure_forwards_closure_return_value() {
     assert_eq!(captured.as_deref(), Some("hello"));
     let mut captured_tuple: Option<(i32, f64)> = None;
     let ran_clean: bool = run_with_signal_capture(|| {
-        captured_tuple = Some(handle.measure("build-tuple", || (7, std::f64::consts::PI)));
+        captured_tuple = Some(handle.measure("build-tuple", || (7, PI)));
     });
     assert!(ran_clean);
-    assert_eq!(captured_tuple, Some((7, std::f64::consts::PI)));
+    assert_eq!(captured_tuple, Some((7, PI)));
 }
 
 #[test]
@@ -159,7 +159,7 @@ fn profiler_handle_begin_end_push_entry_with_nonzero_elapsed() {
     for i in 0..10_000_u64 {
         sink = sink.wrapping_add(i);
     }
-    std::hint::black_box(sink);
+    black_box(sink);
     let ran_clean: bool = run_with_signal_capture(|| {
         mark.end();
     });

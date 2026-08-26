@@ -18,14 +18,15 @@ impl ErrorBoundary {
     /// have to satisfy `UnwindSafe`.
     pub fn try_with<F, R>(&self, closure: F) -> Result<R, String>
     where
-        F: FnOnce() -> R + std::panic::UnwindSafe,
+        F: FnOnce() -> R + UnwindSafe,
     {
-        match std::panic::catch_unwind(closure) {
+        match catch_unwind(closure) {
             Ok(value) => Ok(value),
             Err(payload) => {
                 let message: String = extract_message(&payload);
-                let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                    self.get_phase().set(ErrorBoundaryPhase::Caught(message.clone()));
+                let _ = catch_unwind(AssertUnwindSafe(|| {
+                    self.get_phase()
+                        .set(ErrorBoundaryPhase::Caught(message.clone()));
                 }));
                 Err(message)
             }
@@ -36,7 +37,7 @@ impl ErrorBoundary {
     /// Useful when invalidating the cache (e.g.,
     /// after a retry).
     pub fn reset(&self) {
-        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let _ = catch_unwind(AssertUnwindSafe(|| {
             self.get_phase().set(ErrorBoundaryPhase::Healthy);
         }));
     }
@@ -48,8 +49,8 @@ impl Default for ErrorBoundary {
     }
 }
 
-impl std::fmt::Display for ErrorBoundary {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for ErrorBoundary {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "ErrorBoundary({:?})", self.get_phase().get())
     }
 }

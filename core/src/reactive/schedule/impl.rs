@@ -170,7 +170,7 @@ impl Scheduler {
             // in the loop body below. (`HashSet::drain` requires the
             // `RangeFull` pattern which Rust 2024 reserves as the
             // struct-update syntax shorthand.)
-            let dirty_keys: HashSet<usize> = std::mem::take(Registry::get_mut_dirty_update_ids());
+            let dirty_keys: HashSet<usize> = take(Registry::get_mut_dirty_update_ids());
             if dirty_keys.is_empty() {
                 break;
             }

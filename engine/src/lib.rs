@@ -33,12 +33,19 @@ pub use {
     timer::*, tween::*,
 };
 
+pub use std::{
+    error::Error,
+    f64::consts::{FRAC_PI_2, PI, TAU},
+    fmt::{self, Debug, Display, Formatter, Result as FmtResult, Write as _},
+    future::{Future, Ready, ready},
+    mem::{self, replace},
+};
+
 use euv::*;
 
 use std::{
     cell::UnsafeCell,
     collections::{HashMap, HashSet},
-    fmt::Debug,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
     rc::Rc,
     sync::atomic::{AtomicU64, Ordering},

@@ -4,6 +4,8 @@
 //! Same shape on every platform, so test assertions and
 //! production code can read the same `f64` without
 //! `#[cfg(target_arch = "wasm32")]` branches in user code.
+use super::*;
+
 /// Returns a monotonic millisecond timestamp suitable for
 /// profiling measurements.
 ///
@@ -13,7 +15,7 @@
 ///   all `Worker` scopes in the same browsing context.
 /// - On every other target (used by `cargo test` and
 ///   downstream consumers that don't have a `Window`),
-///   delegates to `std::time::Instant::now()` translated to
+///   delegates to `Instant::now()` translated to
 ///   milliseconds since the process start. The exact
 ///   reference is irrelevant for relative timing — only the
 ///   delta between two `now_ms()` calls matters.
@@ -41,13 +43,12 @@ pub fn now_ms() -> f64 {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        use std::time::Instant;
         // Process-local reference: a `static` Instant captured
         // on the first call. This avoids the awkward
         // `Instant::now() - process_start()` arithmetic at
         // every call site, and gives us a stable reference
         // across the lifetime of the process.
-        static PROCESS_START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+        static PROCESS_START: OnceLock<Instant> = OnceLock::new();
         let start: &Instant = PROCESS_START.get_or_init(Instant::now);
         start.elapsed().as_secs_f64() * 1000.0
     }

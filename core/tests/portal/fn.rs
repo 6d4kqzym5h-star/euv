@@ -26,7 +26,6 @@ fn portal_tag_partial_eq_distinguishes_selectors() {
 
 #[test]
 fn portal_tag_is_hashable() {
-    use std::collections::HashSet;
     let mut set: HashSet<Tag> = HashSet::new();
     set.insert(Tag::Portal(Cow::Borrowed("#a")));
     set.insert(Tag::Portal(Cow::Borrowed("#a")));

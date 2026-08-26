@@ -1,3 +1,5 @@
+use super::*;
+
 /// A fixed-capacity LRU cache.
 ///
 /// The cache holds at most `capacity` entries. When a
@@ -20,14 +22,14 @@
 #[derive(Clone, Debug)]
 pub struct LruCache<K, V>
 where
-    K: Clone + Eq + std::hash::Hash,
+    K: Clone + Eq + Hash,
 {
     /// The maximum number of entries before eviction
     /// kicks in.
     pub(crate) capacity: usize,
     /// The current entries, keyed by K.
-    pub(crate) map: std::collections::HashMap<K, V>,
+    pub(crate) map: HashMap<K, V>,
     /// The MRU-first order. Front = most recently used,
     /// back = least recently used.
-    pub(crate) order: std::collections::VecDeque<K>,
+    pub(crate) order: VecDeque<K>,
 }

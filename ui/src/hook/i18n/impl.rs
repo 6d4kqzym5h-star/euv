@@ -14,7 +14,6 @@ impl HookContextI18nExt for HookContext {
 }
 
 impl I18n {
-
     /// Sets the active locale to `locale`. Triggers a
     /// reactive update so any reactive `t(key)` read
     /// re-evaluates.

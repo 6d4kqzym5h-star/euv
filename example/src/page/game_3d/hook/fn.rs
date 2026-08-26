@@ -193,7 +193,7 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
         .collect();
     cube_batches.sort_by(
         |a: &(f64, &Cube3D, Vec<Vector3D>), b: &(f64, &Cube3D, Vec<Vector3D>)| {
-            a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal)
+            a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
         },
     );
     for (_cube_depth, cube, world_vertices) in &cube_batches {
@@ -212,7 +212,7 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
             face_batches.push((depth, face_world));
         }
         face_batches.sort_by(|a: &(f64, Vec<Vector3D>), b: &(f64, Vec<Vector3D>)| {
-            a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal)
+            a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
         });
         let _ = Reflect::set(
             context,
@@ -273,8 +273,7 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
 ///
 /// - `Vec<(usize, usize)>` - The list of unique visible edge index pairs.
 fn collect_visible_edges(world_vertices: &[Vector3D], camera: &Camera3D) -> Vec<(usize, usize)> {
-    let mut visible_face_edges: std::collections::HashSet<(usize, usize)> =
-        std::collections::HashSet::new();
+    let mut visible_face_edges: HashSet<(usize, usize)> = HashSet::new();
     for (i0, i1, i2, i3) in GAME_3D_CUBE_FACES {
         let face_world: Vec<Vector3D> = vec![
             world_vertices[i0],
@@ -1076,7 +1075,7 @@ pub(crate) fn use_game_3d_webgl_state() -> UseGame3DWebGl {
 /// - `(f32, f32, f32)` - The `(r, g, b)` channels in 0.0-1.0 range.
 pub(crate) fn game_3d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
     let hex: &str = color.strip_prefix('#').unwrap_or(color);
-    let channel = |range: std::ops::Range<usize>| -> f32 {
+    let channel = |range: Range<usize>| -> f32 {
         hex.get(range)
             .and_then(|part: &str| u8::from_str_radix(part, 16).ok())
             .map(|value: u8| f32::from(value) / 255.0)
@@ -1164,9 +1163,7 @@ fn pack_game_3d_cubes_uniform(cubes: &[Cube3D], camera: &Camera3D) -> Vec<f32> {
     sorted.sort_by(|a: &(&Cube3D, f64), b: &(&Cube3D, f64)| {
         let (_, depth_a) = *a;
         let (_, depth_b) = *b;
-        depth_a
-            .partial_cmp(&depth_b)
-            .unwrap_or(std::cmp::Ordering::Equal)
+        depth_a.partial_cmp(&depth_b).unwrap_or(Ordering::Equal)
     });
     let view_proj_elements: [f64; 16] = camera.view_proj_matrix().get_elements();
     let mut data: Vec<f32> = view_proj_elements

@@ -12,7 +12,11 @@ mod vdom;
 
 pub use std::{
     collections::hash_map::DefaultHasher,
+    collections::{HashMap, HashSet, VecDeque},
+    fmt::{self, Debug, Display, Formatter, Result as FmtResult},
     hash::{Hash, Hasher},
+    marker::PhantomData,
+    mem::{swap, take, zeroed},
     panic::{AssertUnwindSafe, catch_unwind},
 };
 pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
@@ -23,11 +27,7 @@ use std::{
     any::Any,
     borrow::Cow,
     cell::{Ref, RefCell, UnsafeCell},
-    collections::{HashMap, HashSet},
-    fmt::{self, Display, Formatter},
     iter::Iterator,
-    marker::PhantomData,
-    mem::{swap, take},
     num::ParseIntError,
     ops::Deref,
     rc::Rc,

@@ -88,8 +88,8 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     }
 
     fn invoke_factory(&self) {
-        let result: Result<T, Box<dyn std::any::Any + Send>> =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| (self.get_factory())()));
+        let result: Result<T, Box<dyn Any + Send>> =
+            catch_unwind(AssertUnwindSafe(|| (self.get_factory())()));
         match result {
             Ok(value) => {
                 self.get_state().set(LoadState::Loaded(value));
@@ -108,8 +108,8 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     }
 }
 
-impl<T: Clone + PartialEq + std::fmt::Debug + 'static> std::fmt::Debug for LazyComponent<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T: Clone + PartialEq + Debug + 'static> Debug for LazyComponent<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         f.debug_struct("LazyComponent")
             .field("state", &self.get_state().get())
             .finish()

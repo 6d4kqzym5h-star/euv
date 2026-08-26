@@ -118,8 +118,8 @@ impl<T: ?Sized> Default for NodeRef<T> {
     }
 }
 
-impl<T: ?Sized> std::fmt::Debug for NodeRef<T> {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T: ?Sized> Debug for NodeRef<T> {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("NodeRef")
             .field("is_set", &self.is_set())

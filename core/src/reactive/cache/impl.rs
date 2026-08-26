@@ -2,7 +2,7 @@ use super::*;
 
 impl<K, V> LruCache<K, V>
 where
-    K: Clone + Eq + std::hash::Hash,
+    K: Clone + Eq + Hash,
 {
     /// Creates a new LRU cache with the given capacity.
     /// Capacity of 0 is allowed; the cache will accept
@@ -10,8 +10,8 @@ where
     pub fn new(capacity: usize) -> Self {
         Self {
             capacity,
-            map: std::collections::HashMap::new(),
-            order: std::collections::VecDeque::new(),
+            map: HashMap::new(),
+            order: VecDeque::new(),
         }
     }
 

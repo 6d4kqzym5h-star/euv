@@ -90,10 +90,9 @@ fn fire_handle_is_copy() {
 
 #[test]
 fn fire_handle_default_inner_is_zero() {
-    let a: FireHandle = unsafe { std::mem::zeroed() };
-    let b: FireHandle = unsafe { std::mem::zeroed() };
+    let a: FireHandle = unsafe { zeroed() };
+    let b: FireHandle = unsafe { zeroed() };
     assert_eq!(a, b);
-    use std::collections::hash_map::DefaultHasher;
     let mut h1: DefaultHasher = DefaultHasher::new();
     let mut h2: DefaultHasher = DefaultHasher::new();
     a.hash(&mut h1);

@@ -69,7 +69,7 @@ impl Renderer {
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = Self::unwrap_component_owned(vnode);
-        let old_tree: Option<VirtualNode> = std::mem::take(self.get_mut_current_tree());
+        let old_tree: Option<VirtualNode> = take(self.get_mut_current_tree());
         if let Some(old_vnode) = old_tree.as_ref() {
             self.patch_root(old_vnode, &new_unwrapped);
         } else {

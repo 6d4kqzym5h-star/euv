@@ -161,8 +161,8 @@ impl Console {
 }
 
 /// Implements the Display trait for LogFilter to render filter button labels.
-impl std::fmt::Display for LogFilter {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for LogFilter {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let label: &str = match self {
             LogFilter::All => "All",
             LogFilter::Log => "Log",

@@ -275,7 +275,7 @@ impl<T: Interpolable + Copy> Clone for Tween<T> {
 }
 
 impl<T: Interpolable + Copy + Debug> Debug for Tween<T> {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("Tween")
             .field("from", &self.from)

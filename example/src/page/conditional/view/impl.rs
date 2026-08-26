@@ -17,7 +17,7 @@ impl ConditionalUserType {
 }
 
 /// Implements `Display` for `ConditionalTab` to provide human-readable tab labels.
-impl std::fmt::Display for ConditionalTab {
+impl Display for ConditionalTab {
     /// Formats the tab variant as its display label string.
     ///
     /// # Arguments
@@ -27,7 +27,7 @@ impl std::fmt::Display for ConditionalTab {
     /// # Returns
     ///
     /// - `Result` - Whether the formatting succeeded.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let display_text: &str = match self {
             ConditionalTab::Info => "Info",
             ConditionalTab::Settings => "Settings",
@@ -38,7 +38,7 @@ impl std::fmt::Display for ConditionalTab {
 }
 
 /// Implements `Display` for `ConditionalUserType` to provide human-readable role labels.
-impl std::fmt::Display for ConditionalUserType {
+impl Display for ConditionalUserType {
     /// Formats the user type variant as its display label string.
     ///
     /// # Arguments
@@ -48,7 +48,7 @@ impl std::fmt::Display for ConditionalUserType {
     /// # Returns
     ///
     /// - `Result` - Whether the formatting succeeded.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let display_text: &str = match self {
             ConditionalUserType::Guest => "Guest",
             ConditionalUserType::User => "User",

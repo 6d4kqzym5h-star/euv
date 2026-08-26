@@ -6,6 +6,7 @@
 //! every engine error code referenced here lives in [`super::r#const`]
 //! so renaming or localizing the banners is a single-file edit.
 use super::*;
+use euv_engine::WebGpuRenderer;
 
 /// Maps the WebGPU init state plus the engine's stable error code to
 /// the banner text shown next to "Status: ".
@@ -46,9 +47,7 @@ pub(crate) fn webgpu_status_text(
     if active {
         return WEBGPU_STATUS_ACTIVE;
     }
-    if !euv_engine::WebGpuRenderer::is_available()
-        || init_error_code == WEBGPU_CODE_NAVIGATOR_GPU_MISSING
-    {
+    if !WebGpuRenderer::is_available() || init_error_code == WEBGPU_CODE_NAVIGATOR_GPU_MISSING {
         return WEBGPU_STATUS_NEEDS_HTTPS_OR_LOCALHOST;
     }
     match init_error_code {

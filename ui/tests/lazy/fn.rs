@@ -5,7 +5,10 @@ fn new_is_pending() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 42);
     assert_eq!(lazy.get_state().get(), LoadState::Pending);
     assert!(matches!(lazy.get_state().get(), LoadState::Pending));
-    assert!(!matches!(lazy.get_state().get(), LoadState::Loaded(_) | LoadState::Failed(_)));
+    assert!(!matches!(
+        lazy.get_state().get(),
+        LoadState::Loaded(_) | LoadState::Failed(_)
+    ));
 }
 
 #[test]
@@ -38,7 +41,10 @@ fn get_returns_cached_value_on_subsequent_calls() {
 fn prefetch_runs_factory() {
     let lazy: LazyComponent<i32> = LazyComponent::new(|| 7);
     lazy.prefetch();
-    assert!(matches!(lazy.get_state().get(), LoadState::Loaded(_) | LoadState::Failed(_)));
+    assert!(matches!(
+        lazy.get_state().get(),
+        LoadState::Loaded(_) | LoadState::Failed(_)
+    ));
     assert!(matches!(lazy.get_state().get(), LoadState::Loaded(7)));
 }
 
@@ -102,7 +108,7 @@ fn change_factory_resets_state() {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let _ = std::panic::catch_unwind(|| {
+        let _ = catch_unwind(|| {
             let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
             let _ = lazy.get();
         });

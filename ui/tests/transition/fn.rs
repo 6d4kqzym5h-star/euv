@@ -466,7 +466,7 @@ fn change_config_updates_durations_set_path() {
 fn remaining_ms_on_entering_returns_full_minus_elapsed_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.3);
     let ran: bool = run_with_signal_capture(|| {
-        let _ = std::panic::AssertUnwindSafe(());
+        let _ = AssertUnwindSafe(());
     });
     assert_eq!(state.remaining_ms(), 70);
     assert!(ran); // ran should be true since we didn't actually set.

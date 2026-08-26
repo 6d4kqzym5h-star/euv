@@ -87,7 +87,6 @@ impl Default for TransitionConfig {
 }
 
 impl TransitionState {
-
     /// Returns `true` if the element is currently
     /// animating (i.e. `Entering` or `Exiting`).
     pub fn is_animating(&self) -> bool {

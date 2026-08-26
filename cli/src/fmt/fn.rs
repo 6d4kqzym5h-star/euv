@@ -1399,7 +1399,7 @@ async fn collect_rs_files(path: &Path) -> Result<Vec<PathBuf>, EuvError> {
                 }
             } else if entry_path
                 .extension()
-                .is_some_and(|ext: &std::ffi::OsStr| ext == RS_EXTENSION)
+                .is_some_and(|ext: &OsStr| ext == RS_EXTENSION)
             {
                 result.push(entry_path);
             }

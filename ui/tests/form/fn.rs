@@ -205,7 +205,10 @@ fn set_field_overwrites_previous_value_set_path() {
         form.set_field("name", "Bob");
     });
     if ran {
-        assert_eq!(form.get_values().get().get("name"), Some(&String::from("Bob")));
+        assert_eq!(
+            form.get_values().get().get("name"),
+            Some(&String::from("Bob"))
+        );
     }
 }
 

@@ -861,7 +861,7 @@ pub(crate) fn game_2d_canvas_detached(canvas_selector: &str) -> bool {
 /// - `(f32, f32, f32)` - The `(r, g, b)` channels in 0.0-1.0 range.
 pub(crate) fn game_2d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
     let hex: &str = color.strip_prefix('#').unwrap_or(color);
-    let channel = |range: std::ops::Range<usize>| -> f32 {
+    let channel = |range: Range<usize>| -> f32 {
         hex.get(range)
             .and_then(|part: &str| u8::from_str_radix(part, 16).ok())
             .map(|value: u8| f32::from(value) / 255.0)

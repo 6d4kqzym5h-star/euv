@@ -35,8 +35,8 @@ impl<T: Clone + PartialEq + 'static> Default for SuspenseHandle<T> {
     }
 }
 
-impl<T: Clone + PartialEq + std::fmt::Debug + 'static> std::fmt::Display for SuspenseHandle<T> {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T: Clone + PartialEq + Debug + 'static> Display for SuspenseHandle<T> {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "SuspenseHandle({:?})", self.get_phase().get())
     }
 }

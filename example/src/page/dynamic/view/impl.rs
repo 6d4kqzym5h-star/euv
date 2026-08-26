@@ -19,17 +19,17 @@ impl DynamicTagType {
 
 /// Implements `Display` for `DynamicTagType` to provide the tag name string used
 /// by the html! macro's dynamic tag syntax.
-impl std::fmt::Display for DynamicTagType {
+impl Display for DynamicTagType {
     /// Formats the tag type variant as its tag name string.
     ///
     /// # Arguments
     ///
-    /// - `&mut Formatter<'_>` - The formatter to write the tag name string into.
+    /// - `f` - The formatter to write into.
     ///
     /// # Returns
     ///
     /// - `Result` - Whether the formatting succeeded.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let tag_name: &str = match self {
             DynamicTagType::Div => "div",
             DynamicTagType::Span => "span",

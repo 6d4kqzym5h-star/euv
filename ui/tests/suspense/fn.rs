@@ -40,8 +40,14 @@ fn suspense_phase_partial_eq_different_variants() {
 fn new_is_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
-    assert!(!matches!(handle.get_phase().get(), SuspensePhase::Resolved(_)));
-    assert!(!matches!(handle.get_phase().get(), SuspensePhase::Failed(_)));
+    assert!(!matches!(
+        handle.get_phase().get(),
+        SuspensePhase::Resolved(_)
+    ));
+    assert!(!matches!(
+        handle.get_phase().get(),
+        SuspensePhase::Failed(_)
+    ));
     assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
 
@@ -77,7 +83,10 @@ fn display_format_works() {
 fn resolve_sync_transitions_to_resolved() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     handle.resolve_sync(42);
-    assert!(matches!(handle.get_phase().get(), SuspensePhase::Resolved(_)));
+    assert!(matches!(
+        handle.get_phase().get(),
+        SuspensePhase::Resolved(_)
+    ));
     assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(42));
 }
 
@@ -95,7 +104,10 @@ fn resolve_sync_with_string() {
 fn resolve_sync_with_vec() {
     let handle: SuspenseHandle<Vec<i32>> = SuspenseHandle::new();
     handle.resolve_sync(vec![1, 2, 3]);
-    assert_eq!(handle.get_phase().get(), SuspensePhase::Resolved(vec![1, 2, 3]));
+    assert_eq!(
+        handle.get_phase().get(),
+        SuspensePhase::Resolved(vec![1, 2, 3])
+    );
 }
 
 #[test]
@@ -130,7 +142,10 @@ fn phase_transitions_pending_resolved_pending() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
     handle.resolve_sync(1);
-    assert!(matches!(handle.get_phase().get(), SuspensePhase::Resolved(_)));
+    assert!(matches!(
+        handle.get_phase().get(),
+        SuspensePhase::Resolved(_)
+    ));
     handle.reset();
     assert!(matches!(handle.get_phase().get(), SuspensePhase::Pending));
 }
@@ -160,7 +175,7 @@ fn multiple_resolve_calls_update_value() {
 fn clone_shares_state() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     let cloned: SuspenseHandle<i32> = handle.clone();
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let _ = catch_unwind(AssertUnwindSafe(|| {
         handle.resolve_sync(99);
     }));
     let current: SuspensePhase<i32> = cloned.get_phase().get();
@@ -172,7 +187,7 @@ fn state_signal_is_reactive() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     let signal: &Signal<SuspensePhase<i32>> = handle.get_phase();
     assert!(matches!(signal.get(), SuspensePhase::Pending));
-    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+    let _ = catch_unwind(AssertUnwindSafe(|| {
         handle.resolve_sync(42);
     }));
     let value: SuspensePhase<i32> = signal.get();
