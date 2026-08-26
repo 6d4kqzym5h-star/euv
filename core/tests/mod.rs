@@ -12,7 +12,8 @@ mod vdom;
 mod vdom_node;
 
 use euv_core::*;
-
 use std::{borrow::Cow, cell::Cell, rc::Rc};
-
 use wasm_bindgen::JsValue;
+
+#[cfg(all(target_arch = "wasm32", test))]
+pub(crate) use wasm_bindgen_test::wasm_bindgen_test;

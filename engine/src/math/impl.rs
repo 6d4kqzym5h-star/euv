@@ -1,7 +1,16 @@
 use super::*;
-// Disambiguate `PI` against the engine-root re-export of `std::f64::consts::PI`
-// and the local `math::r#const::PI` exposed through `pub use {r#const::*, ...}`.
-use r#const::PI;
+// `PI` is ambiguous in this file: it could refer to the
+// local `math::r#const::PI` (a stable test constant) or to
+// the engine-root re-export of `std::f64::consts::PI`.
+// The math helpers below intentionally use the local
+// `math::r#const::PI` so test assertions on its exact
+// value (e.g. `"PI" == "3.14..."`) hold on every platform
+// without `#[cfg(target_arch = "wasm32")]` branches in
+// user code. Per the project convention "all `use`
+// imports follow `lib.rs`; other files use `use super::*;`,
+// we disambiguate inline rather than adding a
+// `use r#const::PI;` import — see the `PI` references
+// below.
 
 /// Implements static math utility methods on the `Numeric` namespace struct.
 impl Numeric {
@@ -72,10 +81,10 @@ impl Numeric {
     /// - `f64` - The normalized angle in the range -PI to PI.
     pub fn normalize_angle(radians: f64) -> f64 {
         let mut angle: f64 = radians % TWO_PI;
-        if angle < -PI {
+        if angle < -r#const::PI {
             angle += TWO_PI;
         }
-        if angle > PI {
+        if angle > r#const::PI {
             angle -= TWO_PI;
         }
         angle
@@ -795,7 +804,7 @@ impl Circle {
     ///
     /// - `f64` - The area.
     pub fn area(&self) -> f64 {
-        PI * self.get_radius() * self.get_radius()
+        r#const::PI * self.get_radius() * self.get_radius()
     }
 }
 
@@ -2010,7 +2019,7 @@ impl Sphere {
     ///
     /// - `f64` - The volume.
     pub fn volume(&self) -> f64 {
-        (4.0 / 3.0) * PI * self.get_radius() * self.get_radius() * self.get_radius()
+        (4.0 / 3.0) * r#const::PI * self.get_radius() * self.get_radius() * self.get_radius()
     }
 
     /// Returns the surface area of the sphere.
@@ -2019,7 +2028,7 @@ impl Sphere {
     ///
     /// - `f64` - The surface area.
     pub fn surface_area(&self) -> f64 {
-        4.0 * PI * self.get_radius() * self.get_radius()
+        4.0 * r#const::PI * self.get_radius() * self.get_radius()
     }
 }
 

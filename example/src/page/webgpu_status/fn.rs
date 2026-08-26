@@ -1,5 +1,4 @@
 use super::*;
-use euv_engine::WebGpuRenderer;
 
 /// Maps the WebGPU init state plus the engine's stable error code to
 /// the banner text shown next to "Status: ".

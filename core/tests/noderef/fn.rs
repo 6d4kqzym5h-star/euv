@@ -1,6 +1,4 @@
 use super::*;
-#[cfg(all(target_arch = "wasm32", test))]
-use wasm_bindgen_test::wasm_bindgen_test;
 
 #[test]
 fn default_ref_is_empty() {

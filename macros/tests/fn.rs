@@ -1,12 +1,15 @@
-use std::panic::{AssertUnwindSafe, catch_unwind};
-
 // `macros/tests/fn.rs` is a sub-module included from the
 // integration test root (`macros/tests/mod.rs`) via
 // `mod r#fn; pub(crate) use r#fn::*;`. Cargo also compiles
 // this file as its own standalone test binary (because
 // it's a top-level `tests/*.rs`), so we silence the
 // dead-code lint that fires when the standalone binary
-// has no callers.
+// has no callers. `catch_unwind` / `AssertUnwindSafe`
+// references are written with their full
+// `::std::panic::` path so this standalone binary does
+// not need a `use` import (it is not allowed under the
+// "all `use` imports follow `lib.rs`; other files use
+// `use super::*;`" convention).
 
 /// Wraps signal-mutating code in `catch_unwind` so the
 /// test survives the wasm-bound `Scheduler::update` path
@@ -26,7 +29,7 @@ pub(crate) fn run_with_signal_capture<F>(f: F) -> bool
 where
     F: FnOnce(),
 {
-    catch_unwind(AssertUnwindSafe(f)).is_ok()
+    ::std::panic::catch_unwind(::std::panic::AssertUnwindSafe(f)).is_ok()
 }
 
 /// Wraps a closure in `catch_unwind` so the test survives
@@ -40,5 +43,5 @@ pub(crate) fn run_with_window_capture<F>(f: F) -> bool
 where
     F: FnOnce(),
 {
-    catch_unwind(AssertUnwindSafe(f)).is_ok()
+    ::std::panic::catch_unwind(::std::panic::AssertUnwindSafe(f)).is_ok()
 }

@@ -9,11 +9,4 @@ mod watch;
 
 use euv::*;
 
-// Proc-macros defined in this crate (e.g. `class!`,
-// `vars!`, `watch!`, `computed!`, `unsafe_no_inline!`,
-// `#[component]`) are resolved by their absolute path
-// within the integration test root — no explicit `use`
-// is needed. The previous `use euv_macros::*;` was
-// rejected by clippy as an unused import.
-
 pub(crate) use r#fn::*;
