@@ -16,6 +16,16 @@ use super::*;
 /// and flips to `Some(value)` after the first record.
 /// Render code can branch on the `Option` for
 /// "first render vs subsequent".
+///
+/// # Lombok caveat
+///
+/// `Previous` cannot use Lombok `New` because the
+/// `previous: Signal<Option<T>>` field would require
+/// `T: Default` to satisfy `Signal::default()`. The
+/// struct intentionally keeps `T: Clone + PartialEq +
+/// 'static` (no `Default`), and the constructor is
+/// hand-written in `impl.rs` to wrap the field with
+/// `Signal::create(None)`.
 #[derive(Clone, Data, Debug)]
 pub struct Previous<T: Clone + PartialEq + 'static> {
     /// The previous-value signal. `None` until the first

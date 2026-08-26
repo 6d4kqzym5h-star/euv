@@ -2,6 +2,7 @@ use super::*;
 
 impl<T: Clone + PartialEq + 'static> Previous<T> {
     /// Creates a new `Previous` with no recorded value.
+    /// The `previous` signal starts at `None`.
     pub fn new() -> Self {
         Self {
             previous: Signal::create(None),
@@ -9,7 +10,7 @@ impl<T: Clone + PartialEq + 'static> Previous<T> {
     }
 
     /// Records `current` as the new previous value. The
-    /// next call to `get_previous()` will return
+    /// next call to `get_previous_snapshot()` will return
     /// `Some(current)`.
     ///
     /// This is typically called at the top of a render
