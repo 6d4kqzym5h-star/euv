@@ -9,8 +9,9 @@ impl NestedRouteConfig {
     /// - `F: Fn() -> VirtualNode + 'static` - The component closure.
     /// - `Vec<NestedRouteConfig>` - The child
     ///   routes.
-    pub fn new<F>(path: impl Into<String>, component: F, children: Vec<NestedRouteConfig>) -> Self
+    pub fn new<P, F>(path: P, component: F, children: Vec<NestedRouteConfig>) -> Self
     where
+        P: Into<String>,
         F: Fn() -> VirtualNode + 'static,
     {
         Self {

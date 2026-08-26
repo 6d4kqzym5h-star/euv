@@ -1,12 +1,5 @@
 use super::*;
 
-fn run_with_signal_capture<F>(f: F) -> bool
-where
-    F: FnOnce(),
-{
-    catch_unwind(AssertUnwindSafe(f)).is_ok()
-}
-
 fn fresh_form() -> FormState {
     FormState::new(
         Signal::create(HashMap::new()),
@@ -177,13 +170,13 @@ fn validators_hashmap_supports_multiple_keys() {
 #[test]
 fn set_field_inserts_value_marks_touched_clears_error_set_path() {
     let form: FormState = fresh_form();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         let mut seed: HashMap<&'static str, String> = HashMap::new();
         seed.insert("email", String::from("required"));
         form.get_errors().set(seed);
-
         form.set_field("email", "alice@example.com");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(
             form.get_values().get().get("email"),
@@ -200,10 +193,11 @@ fn set_field_inserts_value_marks_touched_clears_error_set_path() {
 #[test]
 fn set_field_overwrites_previous_value_set_path() {
     let form: FormState = fresh_form();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("name", "Alice");
         form.set_field("name", "Bob");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(
             form.get_values().get().get("name"),
@@ -215,11 +209,12 @@ fn set_field_overwrites_previous_value_set_path() {
 #[test]
 fn touch_inserts_field_into_touched_set_idempotently_set_path() {
     let form: FormState = fresh_form();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.touch("phone");
         form.touch("phone");
         form.touch("phone");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(form.get_touched().get().len(), 1);
         assert!(form.get_touched().get().contains("phone"));
@@ -231,13 +226,14 @@ fn validate_with_no_validators_returns_true_set_path() {
     let form: FormState = fresh_form();
     let result: Rc<Cell<Option<bool>>> = Rc::new(Cell::new(None));
     let result_clone: Rc<Cell<Option<bool>>> = Rc::clone(&result);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         let validators: HashMap<&'static str, Validator> = HashMap::new();
         let _ = catch_unwind(AssertUnwindSafe(|| {
             let r: bool = form.validate(&validators);
             result_clone.set(Some(r));
         }));
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(result.get(), Some(true));
     }
@@ -249,7 +245,7 @@ fn validate_with_no_validators_returns_true_set_path() {
 #[test]
 fn validate_populates_errors_for_failing_validators_set_path() {
     let form: FormState = fresh_form();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("email", "");
         let mut validators: HashMap<&'static str, Validator> = HashMap::new();
         validators.insert(
@@ -263,7 +259,8 @@ fn validate_populates_errors_for_failing_validators_set_path() {
             }),
         );
         let _ = form.validate(&validators);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(
             form.get_errors().get().get("email"),
@@ -278,7 +275,7 @@ fn validate_returns_true_when_all_validators_pass_set_path() {
     let form: FormState = fresh_form();
     let result: Rc<Cell<Option<bool>>> = Rc::new(Cell::new(None));
     let result_clone: Rc<Cell<Option<bool>>> = Rc::clone(&result);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("email", "alice@example.com");
         let mut validators: HashMap<&'static str, Validator> = HashMap::new();
         validators.insert(
@@ -294,7 +291,8 @@ fn validate_returns_true_when_all_validators_pass_set_path() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
             result_clone.set(Some(form.validate(&validators)));
         }));
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(result.get(), Some(true));
     }
@@ -307,13 +305,14 @@ fn validate_returns_true_when_all_validators_pass_set_path() {
 #[test]
 fn validate_skips_fields_without_validator_set_path() {
     let form: FormState = fresh_form();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("email", "alice@example.com");
         form.set_field("phone", "");
         let mut validators: HashMap<&'static str, Validator> = HashMap::new();
         validators.insert("email", Box::new(|_: &str| -> Option<String> { None }));
         let _ = form.validate(&validators);
-    });
+    }))
+    .is_ok();
     if ran {
         assert!(!form.get_errors().get().contains_key("phone"));
     }
@@ -326,14 +325,15 @@ fn submit_with_empty_validators_invokes_handler_set_path() {
     let captured: Rc<Cell<Option<String>>> = Rc::new(Cell::new(None));
     let invoked_clone: Rc<Cell<bool>> = Rc::clone(&invoked);
     let captured_clone: Rc<Cell<Option<String>>> = Rc::clone(&captured);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("email", "alice@example.com");
         let validators: HashMap<&'static str, Validator> = HashMap::new();
         let _ = form.submit(&validators, |values: &HashMap<_, _>| {
             invoked_clone.set(true);
             captured_clone.set(values.get("email").cloned());
         });
-    });
+    }))
+    .is_ok();
     if ran {
         assert!(invoked.get());
         assert_eq!(captured.take(), Some(String::from("alice@example.com")));
@@ -346,14 +346,15 @@ fn submit_with_passing_validators_invokes_handler_set_path() {
     let form: FormState = fresh_form();
     let invoked: Rc<Cell<bool>> = Rc::new(Cell::new(false));
     let invoked_clone: Rc<Cell<bool>> = Rc::clone(&invoked);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("email", "alice@example.com");
         let mut validators: HashMap<&'static str, Validator> = HashMap::new();
         validators.insert("email", Box::new(|_: &str| -> Option<String> { None }));
         let _ = form.submit(&validators, |_| {
             invoked_clone.set(true);
         });
-    });
+    }))
+    .is_ok();
     if ran {
         assert!(invoked.get());
     }
@@ -366,7 +367,7 @@ fn submit_with_failing_validator_skips_handler_set_path() {
     let did_submit: Rc<Cell<Option<bool>>> = Rc::new(Cell::new(None));
     let invoked_clone: Rc<Cell<bool>> = Rc::clone(&invoked);
     let did_submit_clone: Rc<Cell<Option<bool>>> = Rc::clone(&did_submit);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         form.set_field("email", "");
         let mut validators: HashMap<&'static str, Validator> = HashMap::new();
         validators.insert(
@@ -382,7 +383,8 @@ fn submit_with_failing_validator_skips_handler_set_path() {
         let _ = catch_unwind(AssertUnwindSafe(|| {
             did_submit_clone.set(Some(form.submit(&validators, |_| invoked_clone.set(true))));
         }));
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(did_submit.get(), Some(false));
         assert!(!invoked.get());

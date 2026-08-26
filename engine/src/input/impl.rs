@@ -35,7 +35,7 @@ impl Input {
         .ok()
         .and_then(|value: JsValue| value.as_f64())
         .map(|float: f64| float as i32)
-        .unwrap_or(0);
+        .unwrap_or_default();
         match button_value {
             0 => MouseButton::Left,
             1 => MouseButton::Middle,
@@ -60,12 +60,12 @@ impl Input {
             Reflect::get(event.as_ref(), &JsValue::from_str(INPUT_CLIENT_X_PROPERTY))
                 .ok()
                 .and_then(|value: JsValue| value.as_f64())
-                .unwrap_or(0.0);
+                .unwrap_or_default();
         let client_y: f64 =
             Reflect::get(event.as_ref(), &JsValue::from_str(INPUT_CLIENT_Y_PROPERTY))
                 .ok()
                 .and_then(|value: JsValue| value.as_f64())
-                .unwrap_or(0.0);
+                .unwrap_or_default();
         Vector2D::new(client_x, client_y)
     }
 }

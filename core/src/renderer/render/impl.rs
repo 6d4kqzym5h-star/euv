@@ -862,7 +862,7 @@ impl Renderer {
             .get_inner()
             .try_borrow()
             .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
-            .unwrap_or(0);
+            .unwrap_or_default();
         let last_arm_owned: OwnedPtr<usize> = OwnedPtr::new(Box::into_raw(Box::new(initial_arm)));
         let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
@@ -879,7 +879,7 @@ impl Renderer {
                 .get_inner()
                 .try_borrow()
                 .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
-                .unwrap_or(0);
+                .unwrap_or_default();
             let arm_switched: bool = prev_arm != current_arm;
             unsafe {
                 *last_arm_owned.get() = current_arm;

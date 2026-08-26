@@ -123,7 +123,7 @@ pub(crate) fn cross_on_input_celsius(signal: Signal<f64>) -> Option<Rc<dyn Fn(Ev
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
-            let parsed: f64 = input.value().parse().unwrap_or(0.0);
+            let parsed: f64 = input.value().parse().unwrap_or_default();
             pending_value.set(parsed);
             if raf_id.get().is_some() {
                 return;
@@ -139,7 +139,7 @@ pub(crate) fn cross_on_input_celsius(signal: Signal<f64>) -> Option<Rc<dyn Fn(Ev
             }));
             let id: i32 = window_value
                 .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             raf_id.set(Some(id));
             raf_closure.forget();
         }
@@ -169,7 +169,7 @@ pub(crate) fn cross_on_input_fahrenheit(signal: Signal<f64>) -> Option<Rc<dyn Fn
         if let Some(target) = event.target()
             && let Ok(input) = target.clone().dyn_into::<HtmlInputElement>()
         {
-            let parsed: f64 = input.value().parse().unwrap_or(0.0);
+            let parsed: f64 = input.value().parse().unwrap_or_default();
             pending_value.set(parsed);
             if raf_id.get().is_some() {
                 return;
@@ -185,7 +185,7 @@ pub(crate) fn cross_on_input_fahrenheit(signal: Signal<f64>) -> Option<Rc<dyn Fn
             }));
             let id: i32 = window_value
                 .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             raf_id.set(Some(id));
             raf_closure.forget();
         }
@@ -237,7 +237,7 @@ pub(crate) fn cross_on_input_i32(signal: Signal<i32>) -> Option<Rc<dyn Fn(Event)
             }));
             let id: i32 = window_value
                 .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             raf_id.set(Some(id));
             raf_closure.forget();
         }

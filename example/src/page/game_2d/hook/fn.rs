@@ -676,7 +676,7 @@ pub(crate) fn start_game_2d_loop(
         };
         let next_id: i32 = window_value
             .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_clone.set(Some(next_id));
     }));
     let _: Result<(), _> = closure_cell.try_set(raf_closure);
@@ -696,7 +696,7 @@ pub(crate) fn start_game_2d_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_for_start.set(Some(start_id));
     }));
     let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
@@ -709,7 +709,7 @@ pub(crate) fn start_game_2d_loop(
             &start_callback,
             GAME_2D_LOOP_START_DELAY_MILLIS,
         )
-        .unwrap_or(0);
+        .unwrap_or_default();
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_2d_loading(GAME_2D_CANVAS_SELECTOR, GAME_2D_CANVAS_SELECTOR);
@@ -907,9 +907,9 @@ pub(crate) fn game_2d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f6
     let mut channels = inner
         .split(',')
         .filter_map(|part: &str| part.trim().parse::<f64>().ok());
-    let r: f64 = channels.next().unwrap_or(0.0) / 255.0;
-    let g: f64 = channels.next().unwrap_or(0.0) / 255.0;
-    let b: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let r: f64 = channels.next().unwrap_or_default() / 255.0;
+    let g: f64 = channels.next().unwrap_or_default() / 255.0;
+    let b: f64 = channels.next().unwrap_or_default() / 255.0;
     (r, g, b)
 }
 
@@ -1280,7 +1280,7 @@ pub(crate) fn start_game_2d_webgpu_loop(
             };
             let next_id: i32 = window_value
                 .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
             } else {
@@ -1297,7 +1297,7 @@ pub(crate) fn start_game_2d_webgpu_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(start_id));
     });
 }
@@ -1557,7 +1557,7 @@ pub(crate) fn start_game_2d_webgl_loop(
             };
             let next_id: i32 = window_value
                 .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
             } else {
@@ -1574,7 +1574,7 @@ pub(crate) fn start_game_2d_webgl_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(start_id));
     });
 }

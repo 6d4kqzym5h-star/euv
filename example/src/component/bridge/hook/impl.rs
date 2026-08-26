@@ -123,7 +123,7 @@ impl UseEuvNativeBridge {
                 &JsValue::from_str(BRIDGE_GROUP_KEY),
                 &JsValue::from_str(BRIDGE_GROUP_ALL),
             )
-            .unwrap_or(false);
+            .unwrap_or_default();
             let permissions_result: Result<JsValue, String> = match BridgeConfig::invoke(
                 INVOKE_RESOLVE_BRIDGE_GROUP_PERMISSIONS,
                 Some(&args_obj),

@@ -125,6 +125,6 @@ impl I18n {
             .get()
             .get(&active)
             .map(|m: &HashMap<String, String>| m.len())
-            .unwrap_or(0)
+            .unwrap_or_default()
     }
 }

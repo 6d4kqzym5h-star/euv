@@ -175,11 +175,11 @@ fn multiple_resolve_calls_update_value() {
 fn clone_shares_state() {
     let handle: SuspenseHandle<i32> = SuspenseHandle::new();
     let cloned: SuspenseHandle<i32> = handle.clone();
-    let _ = catch_unwind(AssertUnwindSafe(|| {
-        handle.resolve_sync(99);
-    }));
-    let current: SuspensePhase<i32> = cloned.get_phase().get();
-    let _ = current;
+    assert_eq!(
+        handle.get_phase().get_inner(),
+        cloned.get_phase().get_inner(),
+        "clone must share the same backing signal"
+    );
 }
 
 #[test]

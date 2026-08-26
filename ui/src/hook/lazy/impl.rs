@@ -15,7 +15,10 @@ impl<T: PartialEq> PartialEq for LoadState<T> {
 impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Creates a new lazy component with the given
     /// factory. The factory is NOT called yet.
-    pub fn new(factory: impl Fn() -> T + 'static) -> Self {
+    pub fn new<F>(factory: F) -> Self
+    where
+        F: Fn() -> T + 'static,
+    {
         Self {
             state: Signal::create(LoadState::Pending),
             factory: Rc::new(factory),
@@ -76,7 +79,10 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Replaces the factory. The state is reset to
     /// `Pending` so the next `get()` runs the new
     /// factory.
-    pub fn change_factory(&self, factory: impl Fn() -> T + 'static) {
+    pub fn change_factory<F>(&self, factory: F)
+    where
+        F: Fn() -> T + 'static,
+    {
         // `factory` itself can't be mutated through a
         // shared reference, so we wrap it in a different
         // LazyComponent. To keep the public API simple

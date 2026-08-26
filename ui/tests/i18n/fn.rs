@@ -1,12 +1,5 @@
 use super::*;
 
-fn run_with_signal_capture<F>(f: F) -> bool
-where
-    F: FnOnce(),
-{
-    catch_unwind(AssertUnwindSafe(f)).is_ok()
-}
-
 fn fresh_i18n() -> I18n {
     I18n::new(
         Signal::create(String::from("en")),
@@ -91,9 +84,10 @@ fn i18n_clone_shares_internal_signals() {
 #[test]
 fn change_locale_updates_active_locale_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.change_locale("zh-CN");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.get_locale().get(), "zh-CN");
         assert_eq!(i18n.t("hello"), "你好");
@@ -103,9 +97,10 @@ fn change_locale_updates_active_locale_set_path() {
 #[test]
 fn change_locale_falls_back_when_key_missing_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.change_locale("zh-CN");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.t("hello"), "你好");
         assert_eq!(
@@ -119,9 +114,10 @@ fn change_locale_falls_back_when_key_missing_set_path() {
 #[test]
 fn change_locale_returns_key_when_neither_locale_has_it_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.change_locale("zh-CN");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(
             i18n.t("nonexistent"),
@@ -134,10 +130,11 @@ fn change_locale_returns_key_when_neither_locale_has_it_set_path() {
 #[test]
 fn change_fallback_locale_changes_fallback_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.change_fallback_locale("zh-CN");
         i18n.change_locale("ja");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.t("goodbye"), "goodbye");
     }
@@ -146,10 +143,11 @@ fn change_fallback_locale_changes_fallback_set_path() {
 #[test]
 fn add_messages_inserts_new_locale_set_path() {
     let i18n: I18n = fresh_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         let entries: &[MessageEntry] = &[("hello", "Bonjour"), ("goodbye", "Au revoir")];
         i18n.add_messages("fr", entries);
-    });
+    }))
+    .is_ok();
     if ran {
         i18n.change_locale("fr");
         assert_eq!(i18n.t("hello"), "Bonjour");
@@ -160,10 +158,11 @@ fn add_messages_inserts_new_locale_set_path() {
 #[test]
 fn add_messages_overwrites_existing_entry_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         let entries: &[MessageEntry] = &[("hello", "Howdy")];
         i18n.add_messages("en", entries);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.t("hello"), "Howdy");
     }
@@ -172,10 +171,11 @@ fn add_messages_overwrites_existing_entry_set_path() {
 #[test]
 fn add_messages_supports_empty_batch_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         let entries: &[MessageEntry] = &[];
         i18n.add_messages("es", entries);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.locale_count(), 3);
         assert_eq!(i18n.active_message_count(), 2);
@@ -185,9 +185,10 @@ fn add_messages_supports_empty_batch_set_path() {
 #[test]
 fn remove_locale_drops_locale_from_table_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.remove_locale("zh-CN");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.locale_count(), 1);
     }
@@ -196,9 +197,10 @@ fn remove_locale_drops_locale_from_table_set_path() {
 #[test]
 fn remove_locale_absent_locale_is_noop_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.remove_locale("ja");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.locale_count(), 2);
     }
@@ -207,9 +209,10 @@ fn remove_locale_absent_locale_is_noop_set_path() {
 #[test]
 fn remove_message_drops_single_key_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.remove_message("en", "goodbye");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.t("goodbye"), "goodbye");
         assert_eq!(i18n.t("hello"), "Hello");
@@ -219,9 +222,10 @@ fn remove_message_drops_single_key_set_path() {
 #[test]
 fn remove_message_absent_key_is_noop_set_path() {
     let i18n: I18n = seeded_i18n();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         i18n.remove_message("en", "nonexistent");
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(i18n.t("hello"), "Hello");
         assert_eq!(i18n.t("goodbye"), "Goodbye");

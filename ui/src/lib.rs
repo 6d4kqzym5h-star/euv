@@ -20,7 +20,7 @@ use std::{
     rc::Rc,
     str::Chars,
     sync::{
-        LazyLock, OnceLock,
+        LazyLock,
         atomic::{AtomicBool, Ordering},
     },
     time::Instant,

@@ -99,20 +99,10 @@ fn unwrap_returns_loaded_value() {
 
 #[test]
 fn change_factory_resets_state() {
-    #[cfg(target_arch = "wasm32")]
-    {
-        let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
-        let _ = lazy.get();
-        lazy.change_factory(|| 2);
-        assert_eq!(lazy.get_state().get(), LoadState::Pending);
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let _ = catch_unwind(|| {
-            let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
-            let _ = lazy.get();
-        });
-    }
+    let lazy: LazyComponent<i32> = LazyComponent::new(|| 1);
+    let _ = lazy.get();
+    lazy.change_factory(|| 2);
+    assert_eq!(lazy.get_state().get(), LoadState::Pending);
 }
 
 #[test]

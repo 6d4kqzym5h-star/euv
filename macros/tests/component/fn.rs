@@ -35,8 +35,5 @@ fn component_attribute_preserves_generic_function() {
 
 #[test]
 fn component_attribute_does_not_alter_function_name() {
-    // The `#[component]` attribute is a pass-through —
-    // the function's name is preserved so other macros
-    // (`html!`) can reference it.
     assert_eq!(my_component(), 42);
 }

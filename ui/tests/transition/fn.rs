@@ -1,12 +1,5 @@
 use super::*;
 
-fn run_with_signal_capture<F>(f: F) -> bool
-where
-    F: FnOnce(),
-{
-    catch_unwind(AssertUnwindSafe(f)).is_ok()
-}
-
 fn fresh_state() -> TransitionState {
     TransitionState::new(
         Signal::create(TransitionPhase::Exited),
@@ -31,7 +24,7 @@ fn transition_phase_exited_returns_exited() {
 #[test]
 fn transition_phase_is_copy_and_eq() {
     let a: TransitionPhase = TransitionPhase::Entering;
-    let b: TransitionPhase = a; // Copy semantics
+    let b: TransitionPhase = a;
     assert_eq!(a, b);
 }
 
@@ -85,7 +78,7 @@ fn transition_config_duration_for_returns_correct_phase_duration() {
 #[test]
 fn transition_config_clone_preserves_values() {
     let cfg: TransitionConfig = TransitionConfig::with_durations(100, 200);
-    let copy: TransitionConfig = cfg; // Copy semantics
+    let copy: TransitionConfig = cfg;
     assert_eq!(cfg, copy);
 }
 
@@ -127,7 +120,6 @@ fn accessors_return_signal_clones() {
     let state: TransitionState = fresh_state();
     let _phase: Signal<TransitionPhase> = *state.get_phase();
     let _progress: Signal<f64> = *state.get_progress();
-    let _config: Signal<TransitionConfig> = *state.get_config();
 }
 
 #[test]
@@ -166,9 +158,10 @@ fn seeded_exited_state_is_exited_not_animating() {
 #[test]
 fn enter_from_exited_starts_entering_with_zero_progress_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -179,9 +172,10 @@ fn enter_from_exited_starts_entering_with_zero_progress_set_path() {
 #[test]
 fn enter_from_entering_is_noop_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.5);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert_eq!(state.get_progress().get(), 0.5);
@@ -191,9 +185,10 @@ fn enter_from_entering_is_noop_set_path() {
 #[test]
 fn enter_from_entered_is_noop_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -203,9 +198,10 @@ fn enter_from_entered_is_noop_set_path() {
 #[test]
 fn enter_from_exiting_starts_entering_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 0.3);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -215,9 +211,10 @@ fn enter_from_exiting_starts_entering_set_path() {
 #[test]
 fn exit_from_entered_starts_exiting_with_full_progress_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.exit();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -228,9 +225,10 @@ fn exit_from_entered_starts_exiting_with_full_progress_set_path() {
 #[test]
 fn exit_from_entering_starts_exiting_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.7);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.exit();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -240,9 +238,10 @@ fn exit_from_entering_starts_exiting_set_path() {
 #[test]
 fn exit_from_exiting_is_noop_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 0.5);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.exit();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
         assert_eq!(state.get_progress().get(), 0.5);
@@ -252,9 +251,10 @@ fn exit_from_exiting_is_noop_set_path() {
 #[test]
 fn exit_from_exited_is_noop_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.exit();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -264,9 +264,10 @@ fn exit_from_exited_is_noop_set_path() {
 #[test]
 fn toggle_flips_entered_to_exiting_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.toggle();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -276,9 +277,10 @@ fn toggle_flips_entered_to_exiting_set_path() {
 #[test]
 fn toggle_flips_exited_to_entering_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.toggle();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -288,9 +290,10 @@ fn toggle_flips_exited_to_entering_set_path() {
 #[test]
 fn toggle_flips_entering_to_exiting_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.5);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.toggle();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -300,9 +303,10 @@ fn toggle_flips_entering_to_exiting_set_path() {
 #[test]
 fn toggle_flips_exiting_to_entering_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 0.5);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.toggle();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -312,9 +316,10 @@ fn toggle_flips_exiting_to_entering_set_path() {
 #[test]
 fn tick_on_entered_phase_is_noop_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(50);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -324,9 +329,10 @@ fn tick_on_entered_phase_is_noop_set_path() {
 #[test]
 fn tick_on_exited_phase_is_noop_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(50);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -336,9 +342,10 @@ fn tick_on_exited_phase_is_noop_set_path() {
 #[test]
 fn tick_on_entering_advances_progress_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(25);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert!((state.get_progress().get() - 0.25).abs() < f64::EPSILON);
@@ -348,9 +355,10 @@ fn tick_on_entering_advances_progress_set_path() {
 #[test]
 fn tick_on_entering_to_completion_advances_phase_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(100);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -360,9 +368,10 @@ fn tick_on_entering_to_completion_advances_phase_set_path() {
 #[test]
 fn tick_on_entering_overshoots_to_completion_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(200);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -372,9 +381,10 @@ fn tick_on_entering_overshoots_to_completion_set_path() {
 #[test]
 fn tick_on_exiting_advances_progress_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(50);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exiting);
         assert!((state.get_progress().get() - 0.75).abs() < f64::EPSILON);
@@ -384,9 +394,10 @@ fn tick_on_exiting_advances_progress_set_path() {
 #[test]
 fn tick_on_exiting_to_completion_advances_phase_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(200);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -400,9 +411,10 @@ fn tick_with_zero_duration_enter_jumps_to_entered_set_path() {
         Signal::create(0.0_f64),
         Signal::create(TransitionConfig::with_ms(0)),
     );
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(50);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -416,9 +428,10 @@ fn tick_with_zero_duration_exit_jumps_to_exited_set_path() {
         Signal::create(1.0_f64),
         Signal::create(TransitionConfig::with_ms(0)),
     );
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(50);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -428,9 +441,10 @@ fn tick_with_zero_duration_exit_jumps_to_exited_set_path() {
 #[test]
 fn tick_with_zero_elapsed_does_not_advance_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.3);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick(0);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entering);
         assert_eq!(state.get_progress().get(), 0.3);
@@ -440,9 +454,10 @@ fn tick_with_zero_elapsed_does_not_advance_set_path() {
 #[test]
 fn reset_returns_state_to_exited_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 0.5);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.reset();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -453,9 +468,10 @@ fn reset_returns_state_to_exited_set_path() {
 #[test]
 fn change_config_updates_durations_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.change_config(TransitionConfig::with_durations(500, 1000));
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_config().get().enter_ms, 500);
         assert_eq!(state.get_config().get().exit_ms, 1000);
@@ -465,11 +481,12 @@ fn change_config_updates_durations_set_path() {
 #[test]
 fn remaining_ms_on_entering_returns_full_minus_elapsed_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.3);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         let _ = AssertUnwindSafe(());
-    });
+    }))
+    .is_ok();
     assert_eq!(state.remaining_ms(), 70);
-    assert!(ran); // ran should be true since we didn't actually set.
+    assert!(ran);
 }
 
 #[test]
@@ -489,9 +506,10 @@ fn remaining_ms_on_terminal_phases_is_zero() {
 #[test]
 fn tick_until_done_advances_to_entered_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entering, 0.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick_until_done(10);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -501,9 +519,10 @@ fn tick_until_done_advances_to_entered_set_path() {
 #[test]
 fn tick_until_done_advances_to_exited_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Exiting, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick_until_done(10);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -513,9 +532,10 @@ fn tick_until_done_advances_to_exited_set_path() {
 #[test]
 fn tick_until_done_on_terminal_phase_is_noop_set_path() {
     let state: TransitionState = seeded_state(TransitionPhase::Entered, 1.0);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.tick_until_done(10);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -525,14 +545,15 @@ fn tick_until_done_on_terminal_phase_is_noop_set_path() {
 #[test]
 fn full_lifecycle_enter_tick_complete_exit_tick_complete_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
         state.tick(50);
         state.tick(50);
         state.exit();
         state.tick(100);
         state.tick(100);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Exited);
         assert_eq!(state.get_progress().get(), 0.0);
@@ -542,14 +563,15 @@ fn full_lifecycle_enter_tick_complete_exit_tick_complete_set_path() {
 #[test]
 fn multiple_enter_exit_cycles_work_set_path() {
     let state: TransitionState = fresh_state();
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
         state.tick_until_done(10);
         state.exit();
         state.tick_until_done(10);
         state.enter();
         state.tick_until_done(10);
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(state.get_phase().get(), TransitionPhase::Entered);
         assert_eq!(state.get_progress().get(), 1.0);
@@ -561,9 +583,10 @@ fn reactively_subscribed_phase_signal_reflects_enter_set_path() {
     let state: TransitionState = fresh_state();
     let phase_signal: Signal<TransitionPhase> = *state.get_phase();
     assert_eq!(phase_signal.get(), TransitionPhase::Exited);
-    let ran: bool = run_with_signal_capture(|| {
+    let ran: bool = catch_unwind(AssertUnwindSafe(|| {
         state.enter();
-    });
+    }))
+    .is_ok();
     if ran {
         assert_eq!(phase_signal.get(), TransitionPhase::Entering);
     }

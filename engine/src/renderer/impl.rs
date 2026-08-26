@@ -2092,8 +2092,16 @@ impl WebGpuRenderer {
     pub fn sync_to_current_canvas(&mut self) -> bool {
         let canvas_width: u32 = self.get_canvas().width();
         let canvas_height: u32 = self.get_canvas().height();
-        let client_width: u32 = self.get_canvas().client_width().try_into().unwrap_or(0);
-        let client_height: u32 = self.get_canvas().client_height().try_into().unwrap_or(0);
+        let client_width: u32 = self
+            .get_canvas()
+            .client_width()
+            .try_into()
+            .unwrap_or_default();
+        let client_height: u32 = self
+            .get_canvas()
+            .client_height()
+            .try_into()
+            .unwrap_or_default();
         // Prefer the CSS layout box when it is non-zero. If the canvas
         // is hidden the client box collapses to 0; in that case fall
         // back to the current backing-store size so we do not
@@ -4861,7 +4869,7 @@ impl WebGlRenderer {
             .context
             .get_program_parameter(&program, WebGl2RenderingContext::LINK_STATUS)
             .as_bool()
-            .unwrap_or(false);
+            .unwrap_or_default();
         if !linked {
             let log: String = self
                 .context
@@ -4898,7 +4906,7 @@ impl WebGlRenderer {
             .context
             .get_shader_parameter(&shader, WebGl2RenderingContext::COMPILE_STATUS)
             .as_bool()
-            .unwrap_or(false);
+            .unwrap_or_default();
         if !compiled {
             let log: String = self
                 .context

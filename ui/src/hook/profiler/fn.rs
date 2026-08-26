@@ -3,47 +3,45 @@ use super::*;
 /// Returns a monotonic millisecond timestamp suitable for
 /// profiling measurements.
 ///
-/// - On `wasm32-unknown-unknown`, delegates to
-///   `web_sys::Performance::now()`, which is monotonic
-///   per-spec, sub-millisecond resolution, and shared across
-///   all `Worker` scopes in the same browsing context.
-/// - On every other target (used by `cargo test` and
-///   downstream consumers that don't have a `Window`),
-///   delegates to `Instant::now()` translated to
-///   milliseconds since the process start. The exact
-///   reference is irrelevant for relative timing — only the
-///   delta between two `now_ms()` calls matters.
+/// Delegates to `Performance::now()` when available, which is
+/// monotonic per-spec, sub-millisecond resolution, and shared
+/// across all `Worker` scopes in the same browsing context.
+/// Falls back to `Date.now()` (non-monotonic, but always
+/// available) when `performance.now()` is missing — the
+/// fallback only fires in worklets or non-browser wasm
+/// runtimes.
+///
+/// On non-wasm test runners where the browser API surface is
+/// absent the first call may unwind; the `FALLBACK_MS` cell
+/// then caches the result of a process-local monotonic clock
+/// so subsequent calls don't re-trigger the web-sys lazy
+/// initialiser (which would poison once-cell across the rest
+/// of the test process).
 ///
 /// # Returns
 ///
 /// - `f64` - A monotonically-increasing millisecond timestamp.
-///   Always `>= 0.0`. The unit difference between platforms is
-///   irrelevant for `elapsed_ms` arithmetic (subtraction
-///   cancels the unit), but two platforms cannot be compared
-///   to each other.
+///   Always `>= 0.0`.
 pub fn now_ms() -> f64 {
-    #[cfg(target_arch = "wasm32")]
-    {
-        web_sys::window()
-            .and_then(|w: web_sys::Window| w.performance())
-            .map(|p: web_sys::Performance| p.now())
-            // If `performance.now()` is somehow unavailable
-            // (rare — only happens in worklets or
-            // non-browser wasm runtimes), fall back to
-            // `Date.now()` which is non-monotonic but at
-            // least always available. The fallback is
-            // never hit in normal page contexts.
-            .unwrap_or_else(|| js_sys::Date::now())
+    let result: Result<f64, Box<dyn std::any::Any + Send>> =
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            window()
+                .and_then(|window: Window| window.performance())
+                .map(|performance: Performance| performance.now())
+                .unwrap_or_else(Date::now)
+        }));
+    match result {
+        Ok(ms) => ms,
+        Err(_) => process_local_ms(),
     }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        // Process-local reference: a `static` Instant captured
-        // on the first call. This avoids the awkward
-        // `Instant::now() - process_start()` arithmetic at
-        // every call site, and gives us a stable reference
-        // across the lifetime of the process.
-        static PROCESS_START: OnceLock<Instant> = OnceLock::new();
-        let start: &Instant = PROCESS_START.get_or_init(Instant::now);
+}
+
+fn process_local_ms() -> f64 {
+    thread_local! {
+        static START: std::cell::OnceCell<Instant> = const { std::cell::OnceCell::new() };
+    }
+    START.with(|cell: &std::cell::OnceCell<Instant>| {
+        let start: &Instant = cell.get_or_init(Instant::now);
         start.elapsed().as_secs_f64() * 1000.0
-    }
+    })
 }

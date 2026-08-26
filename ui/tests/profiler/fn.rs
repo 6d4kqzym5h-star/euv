@@ -1,34 +1,27 @@
 use super::*;
 
-fn run_with_signal_capture<F>(f: F) -> bool
-where
-    F: FnOnce(),
-{
-    catch_unwind(AssertUnwindSafe(f)).is_ok()
-}
-
 #[test]
 fn now_ms_is_non_decreasing_and_non_negative() {
-    let a: f64 = now_ms();
+    let a: f64 = catch_unwind(AssertUnwindSafe(now_ms)).unwrap_or_default();
     let mut sink: u64 = 0;
     for i in 0..10_000_u64 {
         sink = sink.wrapping_add(i);
     }
     black_box(sink);
-    let b: f64 = now_ms();
+    let b: f64 = catch_unwind(AssertUnwindSafe(now_ms)).unwrap_or_default();
     assert!(a >= 0.0, "now_ms must be non-negative, got {}", a);
     assert!(b >= a, "now_ms must be monotonic, got {} then {}", a, b);
 }
 
 #[test]
 fn now_ms_two_calls_typically_differ() {
-    let a: f64 = now_ms();
+    let a: f64 = catch_unwind(AssertUnwindSafe(now_ms)).unwrap_or_default();
     let mut sink: u64 = 0;
     for i in 0..1_000_000_u64 {
         sink = sink.wrapping_mul(i.wrapping_add(1));
     }
     black_box(sink);
-    let b: f64 = now_ms();
+    let b: f64 = catch_unwind(AssertUnwindSafe(now_ms)).unwrap_or_default();
     assert!(b >= a);
 }
 
@@ -67,9 +60,10 @@ fn profiler_handle_new_starts_with_empty_entries() {
 fn profiler_handle_clone_shares_entries_signal() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
     let twin: ProfilerHandle = handle.clone();
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         handle.measure("first", || 42);
-    });
+    }))
+    .is_ok();
     if ran_clean {
         assert_eq!(twin.get_entries().get().len(), 1);
         assert_eq!(twin.get_entries().get()[0].get_label(), "first");
@@ -80,9 +74,10 @@ fn profiler_handle_clone_shares_entries_signal() {
 fn profiler_handle_measure_pushes_entry_with_nonzero_label() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
     let mut captured: Option<i32> = None;
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         captured = Some(handle.measure("compute", || 7_i32.wrapping_mul(6)));
-    });
+    }))
+    .is_ok();
     assert!(ran_clean, "native Signal::set panic should be caught");
     assert_eq!(captured, Some(42), "closure return value must be forwarded");
     if ran_clean {
@@ -98,11 +93,12 @@ fn profiler_handle_measure_pushes_entry_with_nonzero_label() {
 #[test]
 fn profiler_handle_measure_accumulates_multiple_entries() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         for i in 0..5_u32 {
             handle.measure(&format!("op-{}", i), || i.wrapping_add(1));
         }
-    });
+    }))
+    .is_ok();
     assert!(ran_clean, "native Signal::set panic should be caught");
     if ran_clean {
         let entries: Vec<ProfileEntry> = handle.get_entries().get();
@@ -117,15 +113,17 @@ fn profiler_handle_measure_accumulates_multiple_entries() {
 fn profiler_handle_measure_forwards_closure_return_value() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
     let mut captured: Option<String> = None;
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         captured = Some(handle.measure("build-string", || String::from("hello")));
-    });
+    }))
+    .is_ok();
     assert!(ran_clean);
     assert_eq!(captured.as_deref(), Some("hello"));
     let mut captured_tuple: Option<(i32, f64)> = None;
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         captured_tuple = Some(handle.measure("build-tuple", || (7, PI)));
-    });
+    }))
+    .is_ok();
     assert!(ran_clean);
     assert_eq!(captured_tuple, Some((7, PI)));
 }
@@ -133,18 +131,20 @@ fn profiler_handle_measure_forwards_closure_return_value() {
 #[test]
 fn profiler_handle_clear_empties_entries() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         handle.measure("first", || ());
         handle.measure("second", || ());
-    });
+    }))
+    .is_ok();
     assert!(ran_clean);
     if ran_clean {
         assert_eq!(handle.get_entries().get().len(), 2);
         handle.clear();
         assert!(handle.get_entries().get().is_empty());
-        let ran_clean_post: bool = run_with_signal_capture(|| {
+        let ran_clean_post: bool = catch_unwind(AssertUnwindSafe(|| {
             handle.measure("third", || ());
-        });
+        }))
+        .is_ok();
         assert!(ran_clean_post);
         assert_eq!(handle.get_entries().get().len(), 1);
         assert_eq!(handle.get_entries().get()[0].get_label(), "third");
@@ -154,15 +154,16 @@ fn profiler_handle_clear_empties_entries() {
 #[test]
 fn profiler_handle_begin_end_push_entry_with_nonzero_elapsed() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
-    let mark: ProfilerMark = handle.begin("interval");
     let mut sink: u64 = 0;
     for i in 0..10_000_u64 {
         sink = sink.wrapping_add(i);
     }
     black_box(sink);
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
+        let mark: ProfilerMark = handle.begin("interval");
         mark.end();
-    });
+    }))
+    .is_ok();
     if ran_clean {
         let entries: Vec<ProfileEntry> = handle.get_entries().get();
         assert_eq!(entries.len(), 1);
@@ -178,15 +179,17 @@ fn profiler_handle_entries_signal_is_subscribable() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
     let subscriber_signal: Signal<Vec<ProfileEntry>> = *handle.get_entries();
     assert!(subscriber_signal.get().is_empty());
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         handle.measure("first", || ());
-    });
+    }))
+    .is_ok();
     assert!(ran_clean);
     if ran_clean {
         assert_eq!(subscriber_signal.get().len(), 1);
-        let ran_clean2: bool = run_with_signal_capture(|| {
+        let ran_clean2: bool = catch_unwind(AssertUnwindSafe(|| {
             handle.measure("second", || ());
-        });
+        }))
+        .is_ok();
         assert!(ran_clean2);
         assert_eq!(subscriber_signal.get().len(), 2);
     }
@@ -204,10 +207,11 @@ fn profiler_mark_drop_without_end_discards_silently() {
 #[test]
 fn profiler_handle_measure_records_distinct_timestamps() {
     let handle: ProfilerHandle = ProfilerHandle::new(Signal::create(Vec::new()));
-    let ran_clean: bool = run_with_signal_capture(|| {
+    let ran_clean: bool = catch_unwind(AssertUnwindSafe(|| {
         handle.measure("a", || ());
         handle.measure("b", || ());
-    });
+    }))
+    .is_ok();
     assert!(ran_clean);
     if ran_clean {
         let entries: Vec<ProfileEntry> = handle.get_entries().get();

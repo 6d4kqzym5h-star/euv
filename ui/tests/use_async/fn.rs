@@ -115,7 +115,8 @@ fn two_default_handles_have_independent_slots() {
 #[test]
 fn handle_is_copy_when_payload_is_copy() {
     let handle: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
-    let _copy: UseAsyncHandle<u32, ()> = handle; // moves
-    let again: UseAsyncHandle<u32, ()> = UseAsyncHandle::default();
-    let _also: UseAsyncHandle<u32, ()> = again; // moves again
+    let copy: UseAsyncHandle<u32, ()> = handle;
+    let state_from_handle: AsyncState<u32, ()> = handle.state();
+    let state_from_copy: AsyncState<u32, ()> = copy.state();
+    assert_eq!(state_from_handle, state_from_copy);
 }

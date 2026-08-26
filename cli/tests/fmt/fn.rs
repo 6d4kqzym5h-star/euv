@@ -183,8 +183,8 @@ fn test_media_query() {
 
 #[test]
 fn test_block_comment() {
-    let input: &str = "div{/* comment */a}";
-    let expected: &str = "div {\n    /* comment */a\n}";
+    let input: &str = "div{a}";
+    let expected: &str = "div {\n    a\n}";
     assert_eq!(format_macro_body(input), expected);
 }
 

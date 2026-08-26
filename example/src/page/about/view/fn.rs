@@ -18,7 +18,7 @@ pub(crate) fn get_next_route(current_route: &str) -> &'static str {
     let current_index: usize = nav_items
         .iter()
         .position(|item: &(&str, &str, &str)| item.2 == current_route)
-        .unwrap_or(0);
+        .unwrap_or_default();
     let next_index: usize = (current_index + 1) % nav_items.len();
     nav_items[next_index].2
 }

@@ -78,14 +78,14 @@ fn tag_debug_format_works() {
 #[test]
 fn virtual_node_empty_constructs() {
     let node: VirtualNode = VirtualNode::Empty;
-    let _: VirtualNode = node;
+    assert!(matches!(node, VirtualNode::Empty));
 }
 
 #[test]
 fn virtual_node_empty_clone_is_identical() {
     let node: VirtualNode = VirtualNode::Empty;
     let cloned: VirtualNode = node.clone();
-    matches!(cloned, VirtualNode::Empty);
+    assert!(matches!(cloned, VirtualNode::Empty));
 }
 
 #[test]

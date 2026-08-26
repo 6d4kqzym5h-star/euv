@@ -72,7 +72,7 @@ where
                         let last_newline_pos: usize = result
                             .rfind(CHAR_NEWLINE)
                             .map(|position: usize| position + 1)
-                            .unwrap_or(0);
+                            .unwrap_or_default();
                         let macro_indent: usize = result[last_newline_pos..]
                             .chars()
                             .take_while(|character: &char| *character == CHAR_SPACE)
@@ -86,7 +86,7 @@ where
                                     .count()
                             })
                             .min()
-                            .unwrap_or(0);
+                            .unwrap_or_default();
                         let base_indent: usize = if min_indent > 0 {
                             min_indent
                         } else {
@@ -931,7 +931,6 @@ fn add_indentation(body: &str) -> String {
         result.push(chars[index]);
         index += 1;
     }
-
     result
 }
 

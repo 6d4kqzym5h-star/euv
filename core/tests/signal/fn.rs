@@ -68,13 +68,13 @@ fn signal_clone_via_copy_is_idempotent() {
 #[test]
 fn fire_handle_new_yields_valid_handle() {
     let handle: FireHandle = FireHandle::new(|| {});
-    let _: FireHandle = handle;
+    assert_ne!(usize::from(handle), 0);
 }
 
 #[test]
 fn fire_handle_from_closure() {
     let handle: FireHandle = FireHandle::from(|| {});
-    let _: FireHandle = handle;
+    assert_ne!(usize::from(handle), 0);
 }
 
 #[test]

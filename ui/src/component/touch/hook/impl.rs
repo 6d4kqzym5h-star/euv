@@ -42,37 +42,37 @@ impl NativeTouchPoint {
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let client_x: i32 = Reflect::get(&touch, &JsValue::from_str("clientX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let client_y: i32 = Reflect::get(&touch, &JsValue::from_str("clientY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let screen_x: i32 = Reflect::get(&touch, &JsValue::from_str("screenX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let screen_y: i32 = Reflect::get(&touch, &JsValue::from_str("screenY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let page_x: i32 = Reflect::get(&touch, &JsValue::from_str("pageX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let page_y: i32 = Reflect::get(&touch, &JsValue::from_str("pageY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let offset_x: i32 = (client_x as f64 - rect_left).round() as i32;
                 let offset_y: i32 = (client_y as f64 - rect_top).round() as i32;
                 NativeTouchPoint {
@@ -131,37 +131,37 @@ impl NativeTouchPoint {
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let client_x: i32 = Reflect::get(&touch, &JsValue::from_str("clientX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let client_y: i32 = Reflect::get(&touch, &JsValue::from_str("clientY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let screen_x: i32 = Reflect::get(&touch, &JsValue::from_str("screenX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let screen_y: i32 = Reflect::get(&touch, &JsValue::from_str("screenY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let page_x: i32 = Reflect::get(&touch, &JsValue::from_str("pageX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let page_y: i32 = Reflect::get(&touch, &JsValue::from_str("pageY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let offset_x: i32 = (client_x as f64 - rect_left).round() as i32;
                 let offset_y: i32 = (client_y as f64 - rect_top).round() as i32;
                 NativeTouchPoint {
@@ -217,31 +217,31 @@ impl NativeTouchPointF64 {
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
                     .map(|value: f64| value as i32)
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let client_x: f64 = Reflect::get(&touch, &JsValue::from_str("clientX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
-                    .unwrap_or(0.0);
+                    .unwrap_or_default();
                 let client_y: f64 = Reflect::get(&touch, &JsValue::from_str("clientY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
-                    .unwrap_or(0.0);
+                    .unwrap_or_default();
                 let screen_x: f64 = Reflect::get(&touch, &JsValue::from_str("screenX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
-                    .unwrap_or(0.0);
+                    .unwrap_or_default();
                 let screen_y: f64 = Reflect::get(&touch, &JsValue::from_str("screenY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
-                    .unwrap_or(0.0);
+                    .unwrap_or_default();
                 let page_x: f64 = Reflect::get(&touch, &JsValue::from_str("pageX"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
-                    .unwrap_or(0.0);
+                    .unwrap_or_default();
                 let page_y: f64 = Reflect::get(&touch, &JsValue::from_str("pageY"))
                     .ok()
                     .and_then(|value: JsValue| value.as_f64())
-                    .unwrap_or(0.0);
+                    .unwrap_or_default();
                 let offset_x: f64 = client_x - rect_left;
                 let offset_y: f64 = client_y - rect_top;
                 NativeTouchPointF64 {

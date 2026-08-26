@@ -167,7 +167,7 @@ impl SchedulerHandle {
                 };
                 let id: i32 = window_value
                     .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-                    .unwrap_or(0);
+                    .unwrap_or_default();
                 let state_ref_id: &mut SchedulerState = state_clone.get_mut();
                 state_ref_id.set_raf_id(Some(id));
             }
@@ -182,7 +182,7 @@ impl SchedulerHandle {
         };
         let id: i32 = window_value
             .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         let state_ref_id: &mut SchedulerState = state.get_mut();
         state_ref_id.set_raf_id(Some(id));
         let _ = closure_cell.try_set(raf_closure);

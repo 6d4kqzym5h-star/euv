@@ -1,16 +1,4 @@
 use super::*;
-// `PI` is ambiguous in this file: it could refer to the
-// local `math::r#const::PI` (a stable test constant) or to
-// the engine-root re-export of `std::f64::consts::PI`.
-// The math helpers below intentionally use the local
-// `math::r#const::PI` so test assertions on its exact
-// value (e.g. `"PI" == "3.14..."`) hold on every platform
-// without `#[cfg(target_arch = "wasm32")]` branches in
-// user code. Per the project convention "all `use`
-// imports follow `lib.rs`; other files use `use super::*;`,
-// we disambiguate inline rather than adding a
-// `use r#const::PI;` import — see the `PI` references
-// below.
 
 /// Implements static math utility methods on the `Numeric` namespace struct.
 impl Numeric {

@@ -682,7 +682,7 @@ pub(crate) fn start_game_3d_loop(
         };
         let next_id: i32 = window_value
             .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_clone.set(Some(next_id));
     }));
     let _: Result<(), _> = closure_cell.try_set(raf_closure);
@@ -704,7 +704,7 @@ pub(crate) fn start_game_3d_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_for_start.set(Some(start_id));
     }));
     let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
@@ -717,7 +717,7 @@ pub(crate) fn start_game_3d_loop(
             &start_callback,
             GAME_3D_LOOP_START_DELAY_MILLIS,
         )
-        .unwrap_or(0);
+        .unwrap_or_default();
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_3d_loading(GAME_3D_CANVAS_SELECTOR, GAME_3D_CANVAS_SELECTOR);
@@ -855,11 +855,11 @@ pub(crate) fn game_3d_on_pointer_move(
         let client_x: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientX"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         let client_y: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientY"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         let dx: f64 = client_x - last_x;
         let dy: f64 = client_y - last_y;
         last_pointer.set(Some((client_x, client_y)));
@@ -889,11 +889,11 @@ pub(crate) fn game_3d_on_pointer_down(
         let client_x: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientX"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         let client_y: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientY"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         last_pointer.set(Some((client_x, client_y)));
     }))
 }
@@ -943,11 +943,11 @@ pub(crate) fn extract_first_touch_client(event: &Event) -> (f64, f64) {
     let client_x: f64 = Reflect::get(&touch, &JsValue::from_str(GAME_3D_EVENT_PROPERTY_CLIENT_X))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+        .unwrap_or_default();
     let client_y: f64 = Reflect::get(&touch, &JsValue::from_str(GAME_3D_EVENT_PROPERTY_CLIENT_Y))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+        .unwrap_or_default();
     (client_x, client_y)
 }
 
@@ -1121,9 +1121,9 @@ pub(crate) fn game_3d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f6
     let mut channels = inner
         .split(',')
         .filter_map(|part: &str| part.trim().parse::<f64>().ok());
-    let r: f64 = channels.next().unwrap_or(0.0) / 255.0;
-    let g: f64 = channels.next().unwrap_or(0.0) / 255.0;
-    let b: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let r: f64 = channels.next().unwrap_or_default() / 255.0;
+    let g: f64 = channels.next().unwrap_or_default() / 255.0;
+    let b: f64 = channels.next().unwrap_or_default() / 255.0;
     (r, g, b)
 }
 
@@ -1510,7 +1510,7 @@ pub(crate) fn start_game_3d_webgpu_loop(
             };
             let next_id: i32 = window_value
                 .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
             } else {
@@ -1527,7 +1527,7 @@ pub(crate) fn start_game_3d_webgpu_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(start_id));
     });
 }
@@ -1794,7 +1794,7 @@ pub(crate) fn start_game_3d_webgl_loop(
             };
             let next_id: i32 = window_value
                 .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
             } else {
@@ -1811,7 +1811,7 @@ pub(crate) fn start_game_3d_webgl_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(start_id));
     });
 }

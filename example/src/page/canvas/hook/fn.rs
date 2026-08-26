@@ -282,11 +282,11 @@ pub(crate) fn get_pointer_offset(event: &Event) -> (f64, f64) {
     let offset_x: f64 = Reflect::get(&target, &JsValue::from_str(CANVAS_EVENT_PROPERTY_OFFSET_X))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+        .unwrap_or_default();
     let offset_y: f64 = Reflect::get(&target, &JsValue::from_str(CANVAS_EVENT_PROPERTY_OFFSET_Y))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+        .unwrap_or_default();
     (offset_x, offset_y)
 }
 
@@ -311,14 +311,14 @@ pub(crate) fn get_mouse_client(event: &Event) -> (f64, f64) {
     )
     .ok()
     .and_then(|value: JsValue| value.as_f64())
-    .unwrap_or(0.0);
+    .unwrap_or_default();
     let client_y: f64 = Reflect::get(
         event.as_ref(),
         &JsValue::from_str(CANVAS_EVENT_PROPERTY_CLIENT_Y),
     )
     .ok()
     .and_then(|value: JsValue| value.as_f64())
-    .unwrap_or(0.0);
+    .unwrap_or_default();
     (client_x, client_y)
 }
 
@@ -837,7 +837,7 @@ pub(crate) fn canvas_on_line_width_input(state: UseCanvas) -> Option<Rc<dyn Fn(E
         }));
         let id: i32 = window_value
             .request_animation_frame(raf_closure.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(id));
         raf_closure.forget();
     }))

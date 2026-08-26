@@ -1,95 +1,130 @@
+#![allow(unreachable_code)]
+
 use super::*;
+
+fn new_counter() -> &'static Cell<i32> {
+    static POOL: AtomicUsize = AtomicUsize::new(0);
+    const CAP: usize = 16;
+    static mut SLOTS: [Cell<i32>; CAP] = [const { Cell::new(0) }; CAP];
+    let index: usize = POOL.fetch_add(1, Ordering::Relaxed) % CAP;
+    unsafe {
+        let slot: *mut Cell<i32> = &mut SLOTS[index];
+        (*slot).set(0);
+        &*slot
+    }
+}
 
 #[test]
 fn watch_macro_runs_initial_body_under_hook_context() {
+    let counter: &'static Cell<i32> = new_counter();
     let hook_context: HookContext = HookContext::current();
-    let counter: Signal<i32> = Signal::create(7);
-
-    let ran: bool = run_with_signal_capture(|| {
+    let source: Signal<i32> = Signal::create(7);
+    let body_panicked: bool = catch_unwind(AssertUnwindSafe(|| {
         HookContext::with(hook_context, || {
-            // `Signal<i32>` is `Copy` — no `.clone()` needed.
-            watch!(counter, |value: i32| {
-                let _observed: i32 = value;
+            watch!(source, |value: i32| {
+                counter.set(counter.get() + 1);
+                if value != 7 {
+                    panic!("watch arg != source.get(): got {value}");
+                }
+                panic!("body ran for value={value}");
             });
         });
-    });
-
-    // The signal still exists after the `with` block.
-    let _: i32 = counter.get();
-    let _ = ran;
+    }))
+    .is_err();
+    assert!(body_panicked, "watch body must have executed and panicked");
+    assert_eq!(
+        counter.get(),
+        1,
+        "watch body must run exactly once per hook context"
+    );
+    assert_eq!(source.get(), 7);
 }
 
 #[test]
 fn watch_macro_supports_multiple_signal_sources() {
+    let counter: &'static Cell<i32> = new_counter();
     let hook_context: HookContext = HookContext::current();
     let a: Signal<i32> = Signal::create(1);
     let b: Signal<i32> = Signal::create(2);
-
-    let ran: bool = run_with_signal_capture(|| {
+    let body_panicked: bool = catch_unwind(AssertUnwindSafe(|| {
         HookContext::with(hook_context, || {
             watch!(a, b, |x: i32, y: i32| {
-                let _sum: i32 = x + y;
+                counter.set(counter.get() + 1);
+                assert_eq!(x, 1, "first watch arg must equal a.get()");
+                assert_eq!(y, 2, "second watch arg must equal b.get()");
+                panic!("body ran for x={x},y={y}");
             });
         });
-    });
-
-    let _: i32 = a.get() + b.get();
-    let _ = ran;
+    }))
+    .is_err();
+    assert!(body_panicked);
+    assert_eq!(counter.get(), 1);
+    assert_eq!(a.get(), 1);
+    assert_eq!(b.get(), 2);
 }
 
 #[test]
 fn watch_macro_supports_anonymous_parameters() {
+    let counter: &'static Cell<i32> = new_counter();
     let hook_context: HookContext = HookContext::current();
-    let s: Signal<i32> = Signal::create(0);
-
-    let ran: bool = run_with_signal_capture(|| {
+    let s: Signal<i32> = Signal::create(11);
+    let body_panicked: bool = catch_unwind(AssertUnwindSafe(|| {
         HookContext::with(hook_context, || {
             watch!(s, |_: i32| {
-                // Body intentionally empty. Anonymous
-                // parameters must parse and bind.
+                counter.set(counter.get() + 1);
+                unreachable!("body ran with anonymous param");
+                counter.set(counter.get());
             });
         });
-    });
-    let _ = ran;
+    }))
+    .is_err();
+    assert!(body_panicked);
+    assert_eq!(counter.get(), 1);
 }
 
 #[test]
 fn watch_macro_expansion_evaluates_to_unit() {
-    let hook_context: HookContext = HookContext::current();
-    let s: Signal<i32> = Signal::create(0);
-
-    // The `watch!` expansion evaluates to a block that
-    // returns `()`. Asserting that the call site
-    // produces no panic proves the block's return type.
-    let ran: bool = run_with_signal_capture(|| {
-        HookContext::with(hook_context, || {
-            watch!(s, |v: i32| {
-                let _: i32 = v;
+    let _: () = {
+        let hook_context: HookContext = HookContext::current();
+        let s: Signal<i32> = Signal::create(0);
+        let counter: &'static Cell<i32> = new_counter();
+        let body_panicked: bool = catch_unwind(AssertUnwindSafe(|| {
+            HookContext::with(hook_context, || {
+                watch!(s, |v: i32| {
+                    counter.set(counter.get() + 1);
+                    let _: i32 = v;
+                    panic!("unit body ran with v={v}");
+                });
             });
-        });
-    });
-    let _ = ran;
+        }))
+        .is_err();
+        assert!(body_panicked, "unit-returning body must execute");
+        assert_eq!(
+            counter.get(),
+            1,
+            "unit-returning body must run exactly once"
+        );
+    };
 }
 
 #[test]
 fn watch_macro_does_not_move_signal_expression() {
-    // The signal expression in `watch!(signal, ...)` must
-    // NOT be moved — the macro clones internally so the
-    // caller can keep using the original signal after
-    // the macro expansion.
+    let counter: &'static Cell<i32> = new_counter();
     let hook_context: HookContext = HookContext::current();
-    let counter: Signal<i32> = Signal::create(0);
-
-    let ran: bool = run_with_signal_capture(|| {
+    let source: Signal<i32> = Signal::create(13);
+    let source_addr_before: usize = source.get_inner();
+    let body_panicked: bool = catch_unwind(AssertUnwindSafe(|| {
         HookContext::with(hook_context, || {
-            watch!(counter, |v: i32| {
-                let _: i32 = v;
+            watch!(source, |v: i32| {
+                counter.set(counter.get() + 1);
+                assert_eq!(v, 13);
+                panic!("body ran with v={v}");
             });
         });
-    });
-
-    // The original signal is still usable outside the
-    // hook-context block.
-    let _: i32 = counter.get();
-    let _ = ran;
+    }))
+    .is_err();
+    assert!(body_panicked);
+    assert_eq!(counter.get(), 1);
+    assert_eq!(source.get_inner(), source_addr_before);
+    assert_eq!(source.get(), 13);
 }

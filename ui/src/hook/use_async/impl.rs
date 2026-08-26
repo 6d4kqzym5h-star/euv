@@ -125,20 +125,7 @@ where
             };
             state.set(next);
         });
-        #[cfg(target_arch = "wasm32")]
-        {
-            wasm_bindgen_futures::spawn_local(task);
-        }
-        // On non-wasm32 targets we drop the future. This is
-        // intentional: `use_async` exists to bridge async APIs
-        // (fetch, IndexedDB, ...) that only exist in the browser,
-        // so silently no-op'ing in tests keeps the production code
-        // path simple. Tests that need to drive the state machine
-        // directly should use `UseAsyncHandle::set_state`.
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            drop(task);
-        }
+        spawn_local(task);
     }
 }
 

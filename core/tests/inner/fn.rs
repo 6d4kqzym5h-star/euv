@@ -83,7 +83,10 @@ fn inner_html_adapter_from_signal_produces_signal_variant() {
 
 #[test]
 fn existing_variants_still_construct() {
-    let _text: AttributeValue = AttributeValue::Text(String::from("ok"));
-    let _signal: AttributeValue = AttributeValue::Signal(Signal::create(String::from("ok")));
-    let _dynamic: AttributeValue = AttributeValue::Dynamic(String::from("ok"));
+    let text: AttributeValue = AttributeValue::Text(String::from("ok"));
+    assert!(matches!(text, AttributeValue::Text(_)));
+    let signal: AttributeValue = AttributeValue::Signal(Signal::create(String::from("ok")));
+    assert!(matches!(signal, AttributeValue::Signal(_)));
+    let dynamic: AttributeValue = AttributeValue::Dynamic(String::from("ok"));
+    assert!(matches!(dynamic, AttributeValue::Dynamic(_)));
 }

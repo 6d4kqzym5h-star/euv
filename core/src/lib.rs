@@ -10,6 +10,8 @@ mod reactive;
 mod renderer;
 mod vdom;
 
+pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
+
 pub use std::{
     collections::hash_map::DefaultHasher,
     collections::{HashMap, HashSet, VecDeque},
@@ -19,7 +21,6 @@ pub use std::{
     mem::{swap, take, zeroed},
     panic::{AssertUnwindSafe, catch_unwind},
 };
-pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
 
 pub(crate) use renderer::*;
 
