@@ -19,17 +19,32 @@ use super::*;
 ///   silently drops the entry).
 /// - `capacity = 1` - the cache holds exactly one entry.
 ///   Every `put` evicts the previous entry.
-#[derive(Clone, Debug)]
+///
+/// # Lombok `New` derivation
+///
+/// `#[derive(New)]` generates `LruCache::new(capacity)` —
+/// the `map` and `order` fields are skipped with
+/// `#[new(skip)]` so Lombok falls back to
+/// `<HashMap as Default>::default()` and
+/// `<VecDeque as Default>::default()` (which both call
+/// `new()` internally), preserving the canonical
+/// single-argument call site.
+#[derive(Clone, Data, Debug, New)]
 pub struct LruCache<K, V>
 where
     K: Clone + Eq + Hash,
 {
     /// The maximum number of entries before eviction
     /// kicks in.
+    #[get(pub(crate))]
     pub(crate) capacity: usize,
-    /// The current entries, keyed by K.
+    /// The current entries, keyed by K. Default-initialised
+    /// via `#[new(skip)]` (`HashMap::new()`).
+    #[new(skip)]
     pub(crate) map: HashMap<K, V>,
     /// The MRU-first order. Front = most recently used,
-    /// back = least recently used.
+    /// back = least recently used. Default-initialised
+    /// via `#[new(skip)]` (`VecDeque::new()`).
+    #[new(skip)]
     pub(crate) order: VecDeque<K>,
 }

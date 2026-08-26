@@ -33,7 +33,7 @@ use super::*;
 /// setter / mut-getter are kept crate-internal so the
 /// content is set at construction (preferably through
 /// `unsafe_no_inline!`) and not mutated after.
-#[derive(Clone, Data, Debug, Default, Eq, Hash, PartialEq, New)]
+#[derive(Clone, Data, Debug, Default, Eq, Hash, New, PartialEq)]
 pub struct RawHtml {
     /// The unescaped HTML content.
     #[get(pub)]
