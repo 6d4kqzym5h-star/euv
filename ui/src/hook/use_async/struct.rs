@@ -28,11 +28,6 @@ where
     pub(crate) _marker: core::marker::PhantomData<fn() -> (T, L)>,
 }
 
-/// Helper alias for the common case with the empty
-/// `LoadingHint` default. Use this unless the future
-/// wants to surface a typed loading indicator.
-pub type DefaultLoadingHandle<T> = UseAsyncHandle<T, ()>;
-
 /// Heap-allocated state backing a [`super::UseAsyncHandle`].
 ///
 /// Reachable only through the raw address stored in the handle.

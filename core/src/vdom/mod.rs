@@ -2,6 +2,7 @@ mod attribute;
 mod cast;
 mod r#enum;
 mod r#fn;
+mod r#impl;
 mod node;
 mod r#struct;
 

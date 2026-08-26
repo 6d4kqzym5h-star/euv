@@ -41,9 +41,3 @@ pub struct RawHtml {
     #[set(pub(crate))]
     pub(crate) content: String,
 }
-
-impl Display for RawHtml {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}", self.get_content())
-    }
-}
