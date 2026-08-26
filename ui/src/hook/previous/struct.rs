@@ -1,0 +1,24 @@
+use super::*;
+
+/// Tracks the previously observed value of some external
+/// reactive source.
+///
+/// Typical use: in a render closure, call
+/// `previous.record(current)` at the top, then read
+/// `previous.get_previous().get()` to find out what the
+/// value was on the previous render. The two reads are
+/// decoupled so callers can record and read independently.
+///
+/// # Why a `Signal<Option<T>>`?
+///
+/// Because the very first call to `record` has no
+/// "previous" to report. The signal starts at `None`
+/// and flips to `Some(value)` after the first record.
+/// Render code can branch on the `Option` for
+/// "first render vs subsequent".
+#[derive(Clone, Data, Debug)]
+pub struct Previous<T: Clone + PartialEq + 'static> {
+    /// The previous-value signal. `None` until the first
+    /// `record` call.
+    pub(crate) previous: Signal<Option<T>>,
+}
