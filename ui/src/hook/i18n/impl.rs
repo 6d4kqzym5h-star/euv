@@ -1,4 +1,3 @@
-//! `HookContext::i18n` factory — backed by `HookContext::use_hook`.
 use super::*;
 
 impl HookContextI18nExt for HookContext {

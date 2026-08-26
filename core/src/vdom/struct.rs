@@ -1,22 +1,3 @@
-//! Raw HTML escape-hatch primitive.
-//!
-//! `RawHtml` wraps an unprocessed HTML string for
-//! advanced users who need to embed markup the `html!`
-//! macro cannot express (inline SVG fragments, Markdown-
-//! rendered HTML, third-party widget blobs).
-//!
-//! `RawHtml` does NOT escape its content — embedding
-//! untrusted strings here is equivalent to
-//! `Element.innerHTML`. The companion macro
-//! `unsafe_no_inline!` reinforces this by prefixing the
-//! name with `unsafe_no_` so the security implication is
-//! loud at the call site.
-//!
-//! The `content` field is `pub(crate)` with a public
-//! getter and a private setter / mut-getter, so the
-//! unescaped string is set at construction and read
-//! thereafter — there is no way to mutate it from
-//! outside the crate.
 use super::*;
 
 /// A raw HTML string that the renderer must insert

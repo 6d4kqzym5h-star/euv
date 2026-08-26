@@ -1,4 +1,3 @@
-//! `HookContext::form` factory — backed by `HookContext::use_hook`.
 use super::*;
 
 impl HookContextFormExt for HookContext {

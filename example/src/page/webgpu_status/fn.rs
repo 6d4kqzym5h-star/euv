@@ -1,10 +1,3 @@
-//! Diagnostic banner mapping for the WebGPU demo tabs.
-//!
-//! The decision tree mirrors Three.js' canonical WebGPU capability
-//! probe (`examples/jsm/capabilities/WebGPU.js`) plus
-//! `euv_engine::WebGpuInitError::code()`. Every banner string and
-//! every engine error code referenced here lives in [`super::r#const`]
-//! so renaming or localizing the banners is a single-file edit.
 use super::*;
 use euv_engine::WebGpuRenderer;
 

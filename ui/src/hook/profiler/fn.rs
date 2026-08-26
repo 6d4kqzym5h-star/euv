@@ -1,9 +1,3 @@
-//! Time-source abstraction for the profiler.
-//!
-//! `now_ms()` returns a monotonic millisecond timestamp.
-//! Same shape on every platform, so test assertions and
-//! production code can read the same `f64` without
-//! `#[cfg(target_arch = "wasm32")]` branches in user code.
 use super::*;
 
 /// Returns a monotonic millisecond timestamp suitable for

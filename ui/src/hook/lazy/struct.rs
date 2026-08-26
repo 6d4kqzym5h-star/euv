@@ -1,5 +1,3 @@
-//! `LazyComponent<T>` implementation.
-
 use super::*;
 
 /// A lazy component that defers factory invocation until

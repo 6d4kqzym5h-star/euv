@@ -1,6 +1,3 @@
-//! `HookContext::transition` factory — uses the
-//! `HookContext::use_hook` pattern plus a per-slot config refresh
-//! when the hook slot is already populated.
 use super::*;
 
 impl HookContextTransitionExt for HookContext {

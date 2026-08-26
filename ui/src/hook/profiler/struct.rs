@@ -1,7 +1,3 @@
-//! Profiler data types.
-//!
-//! Data containers for the profiler (`ProfileEntry`, `ProfilerHandle`,
-//! `ProfilerMark`).
 use super::*;
 
 /// A single recorded measurement.

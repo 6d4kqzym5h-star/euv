@@ -1,5 +1,3 @@
-//! `unsafe_no_inline!` macro parser entry point.
-
 use super::*;
 
 /// Parses the input of the `unsafe_no_inline!` macro.

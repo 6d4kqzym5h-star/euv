@@ -1,9 +1,3 @@
-//! HMR preserved-state types.
-
-//!
-//! Serializable bag of state entries captured before a hot reload and
-//! restored after the new module instance mounts.
-
 use super::*;
 
 /// A serializable bag of preserved state entries.

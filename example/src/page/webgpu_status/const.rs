@@ -1,11 +1,3 @@
-//! Stable diagnostic banners shown by the WebGPU demo tabs.
-//!
-//! Centralizing the strings here makes localization, copy review, and
-//! future renames a single-file edit. The codes referenced by these
-//! banners are produced by `euv_engine::WebGpuInitError::code()` and
-//! by `euv_engine::WebGpuRenderer::is_available()`; keep them in
-//! sync if either side renames an error variant.
-
 /// Banner shown while `WebGpuRenderer::init` is still in flight.
 pub(crate) const WEBGPU_STATUS_INITIALIZING: &str = "Initializing...";
 
