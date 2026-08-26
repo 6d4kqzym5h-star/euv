@@ -1,13 +1,6 @@
 use super::*;
 
 impl Toggle {
-    /// Creates a new `Toggle` initialised to `initial`.
-    pub fn new(initial: bool) -> Self {
-        Self {
-            value: Signal::create(initial),
-        }
-    }
-
     /// Sets the value to `true`.
     pub fn set_true(&self) {
         self.get_value().set(true);
@@ -33,12 +26,6 @@ impl Toggle {
     /// Returns the current value as a snapshot.
     pub fn get(&self) -> bool {
         self.get_value().get()
-    }
-}
-
-impl Default for Toggle {
-    fn default() -> Self {
-        Self::new(false)
     }
 }
 

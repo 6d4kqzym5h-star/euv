@@ -21,95 +21,37 @@ where
 use super::*;
 
 #[test]
-fn counter_default_starts_at_zero_with_step_one() {
+fn counter_default_starts_at_zero() {
     let counter: Counter = Counter::default();
     assert_eq!(counter.get(), 0);
 }
 
 #[test]
-fn counter_new_uses_supplied_initial() {
-    let counter: Counter = Counter::new(7);
-    assert_eq!(counter.get(), 7);
-}
-
-#[test]
-fn counter_with_bounds_clamps_initial_into_range() {
-    let counter: Counter = Counter::with_bounds(100, 0, 10, 1);
-    assert_eq!(counter.get(), 10);
-}
-
-#[test]
-fn counter_with_bounds_negative_initial_clamps_up() {
-    let counter: Counter = Counter::with_bounds(-5, 0, 10, 1);
+fn counter_new_starts_at_zero_with_step_one() {
+    let counter: Counter = Counter::new(None, None, 1);
     assert_eq!(counter.get(), 0);
 }
 
 #[test]
-fn counter_with_bounds_zero_step_falls_back_to_one() {
-    let counter: Counter = Counter::with_bounds(0, 0, 10, 0);
+fn counter_new_with_bounds_starts_at_zero() {
+    let counter: Counter = Counter::new(Some(0), Some(10), 1);
+    assert_eq!(counter.get(), 0);
+}
+
+#[test]
+fn counter_set_initial_value() {
+    let counter: Counter = Counter::new(None, None, 1);
     let ran: bool = run_with_signal_capture(|| {
-        counter.increment();
+        counter.set(7);
     });
     if ran {
-        assert_eq!(counter.get(), 1);
+        assert_eq!(counter.get(), 7);
     }
 }
 
 #[test]
-fn counter_increment_unbounded_adds_step() {
-    let counter: Counter = Counter::new(0);
-    let ran: bool = run_with_signal_capture(|| {
-        counter.increment();
-        counter.increment();
-    });
-    if ran {
-        assert_eq!(counter.get(), 2);
-    }
-}
-
-#[test]
-fn counter_decrement_unbounded_subtracts_step() {
-    let counter: Counter = Counter::new(5);
-    let ran: bool = run_with_signal_capture(|| {
-        counter.decrement();
-    });
-    if ran {
-        assert_eq!(counter.get(), 4);
-    }
-}
-
-#[test]
-fn counter_increment_caps_at_max() {
-    let counter: Counter = Counter::with_bounds(0, 0, 3, 1);
-    let ran: bool = run_with_signal_capture(|| {
-        counter.increment();
-        counter.increment();
-        counter.increment();
-        counter.increment();
-        counter.increment();
-    });
-    if ran {
-        assert_eq!(counter.get(), 3);
-        assert!(counter.is_at_max());
-    }
-}
-
-#[test]
-fn counter_decrement_floors_at_min() {
-    let counter: Counter = Counter::with_bounds(0, 0, 3, 1);
-    let ran: bool = run_with_signal_capture(|| {
-        counter.decrement();
-        counter.decrement();
-    });
-    if ran {
-        assert_eq!(counter.get(), 0);
-        assert!(counter.is_at_min());
-    }
-}
-
-#[test]
-fn counter_set_clamps_into_range() {
-    let counter: Counter = Counter::with_bounds(0, 0, 10, 1);
+fn counter_set_into_bounds_clamps() {
+    let counter: Counter = Counter::new(Some(0), Some(10), 1);
     let ran: bool = run_with_signal_capture(|| {
         counter.set(100);
         counter.set(-100);
@@ -122,7 +64,7 @@ fn counter_set_clamps_into_range() {
 
 #[test]
 fn counter_set_unbounded_does_not_clamp() {
-    let counter: Counter = Counter::new(0);
+    let counter: Counter = Counter::new(None, None, 1);
     let ran: bool = run_with_signal_capture(|| {
         counter.set(1_000_000);
     });
@@ -138,33 +80,90 @@ fn counter_set_unbounded_does_not_clamp() {
 }
 
 #[test]
+fn counter_increment_unbounded_adds_step() {
+    let counter: Counter = Counter::new(None, None, 1);
+    let ran: bool = run_with_signal_capture(|| {
+        counter.increment();
+        counter.increment();
+    });
+    if ran {
+        assert_eq!(counter.get(), 2);
+    }
+}
+
+#[test]
+fn counter_decrement_unbounded_subtracts_step() {
+    let counter: Counter = Counter::new(None, None, 1);
+    let ran: bool = run_with_signal_capture(|| {
+        counter.set(5);
+    });
+    if ran {
+        let ran: bool = run_with_signal_capture(|| {
+            counter.decrement();
+        });
+        if ran {
+            assert_eq!(counter.get(), 4);
+        }
+    }
+}
+
+#[test]
+fn counter_increment_caps_at_max() {
+    let counter: Counter = Counter::new(Some(0), Some(3), 1);
+    let ran: bool = run_with_signal_capture(|| {
+        counter.increment();
+        counter.increment();
+        counter.increment();
+        counter.increment();
+        counter.increment();
+    });
+    if ran {
+        assert_eq!(counter.get(), 3);
+        assert!(counter.is_at_max());
+    }
+}
+
+#[test]
+fn counter_decrement_floors_at_min() {
+    let counter: Counter = Counter::new(Some(0), Some(3), 1);
+    let ran: bool = run_with_signal_capture(|| {
+        counter.decrement();
+        counter.decrement();
+    });
+    if ran {
+        assert_eq!(counter.get(), 0);
+        assert!(counter.is_at_min());
+    }
+}
+
+#[test]
 fn counter_is_at_min_is_false_when_unbounded() {
-    let counter: Counter = Counter::new(0);
+    let counter: Counter = Counter::new(None, None, 1);
     assert!(!counter.is_at_min());
 }
 
 #[test]
 fn counter_is_at_max_is_false_when_unbounded() {
-    let counter: Counter = Counter::new(0);
+    let counter: Counter = Counter::new(None, None, 1);
     assert!(!counter.is_at_max());
 }
 
 #[test]
 fn counter_clone_shares_state() {
-    let original: Counter = Counter::new(5);
+    let original: Counter = Counter::new(None, None, 1);
     let clone: Counter = original.clone();
     let ran: bool = run_with_signal_capture(|| {
         clone.increment();
     });
     if ran {
-        assert_eq!(original.get(), 6);
-        assert_eq!(clone.get(), 6);
+        assert_eq!(original.get(), 1);
+        assert_eq!(clone.get(), 1);
     }
 }
 
 #[test]
 fn counter_reactive_read_via_subscribed_signal_matches() {
-    let counter: Counter = Counter::new(0);
+    let counter: Counter = Counter::new(None, None, 1);
     let initial: i32 = counter.get_value().get();
     assert_eq!(initial, 0);
     let ran: bool = run_with_signal_capture(|| {
@@ -178,19 +177,45 @@ fn counter_reactive_read_via_subscribed_signal_matches() {
 
 #[test]
 fn counter_display_format_works() {
-    let counter: Counter = Counter::new(42);
-    let formatted: String = format!("{counter}");
-    assert_eq!(formatted, "Counter(42)");
+    let counter: Counter = Counter::new(None, None, 1);
+    let ran: bool = run_with_signal_capture(|| {
+        counter.set(42);
+    });
+    if ran {
+        let formatted: String = format!("{counter}");
+        assert_eq!(formatted, "Counter(42)");
+    }
 }
 
 #[test]
 fn counter_increment_with_custom_step() {
-    let counter: Counter = Counter::with_bounds(0, 0, 100, 5);
+    let counter: Counter = Counter::new(Some(0), Some(100), 5);
     let ran: bool = run_with_signal_capture(|| {
         counter.increment();
         counter.increment();
     });
     if ran {
         assert_eq!(counter.get(), 10);
+    }
+}
+
+#[test]
+fn counter_set_unchecked_bypasses_bounds() {
+    let counter: Counter = Counter::new(Some(0), Some(10), 1);
+    let ran: bool = run_with_signal_capture(|| {
+        counter.set_unchecked(100);
+    });
+    if ran {
+        assert_eq!(counter.get(), 100);
+        // The value sits *above* `max` because
+        // `set_unchecked` ignored the bound. The
+        // read-side helpers (`is_at_max`, `is_at_min`)
+        // compare to the configured bounds regardless,
+        // so they will report "at max" here. That is the
+        // intentional behavior — the bounds describe
+        // where the counter is *clamped to*; bypassing
+        // them puts the counter outside the clamped
+        // range.
+        assert!(counter.get() > counter.get_max());
     }
 }

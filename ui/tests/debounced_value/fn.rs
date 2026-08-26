@@ -24,16 +24,30 @@ fn base_time() -> Instant {
     Instant::now()
 }
 
+/// Seed a debounced value with an initial emit. Constructed
+/// via Lombok `New` (which leaves the value at
+/// `T::default()`), then drive `tick` past the cooldown to
+/// commit the seed.
+fn seed_debounced<T: Clone + PartialEq + Default + 'static>(
+    debounced: &DebouncedValue<T>,
+    initial: T,
+    delay_ms: u32,
+    now: Instant,
+) {
+    debounced.set(initial, now);
+    debounced.tick(now + Duration::from_millis(u64::from(delay_ms) + 1));
+}
+
 #[test]
-fn debounced_value_starts_with_initial() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+fn debounced_value_starts_at_default() {
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     assert_eq!(debounced.get(), 0);
     assert!(!debounced.is_pending());
 }
 
 #[test]
 fn debounced_value_set_marks_pending() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         debounced.set(5, now);
@@ -45,8 +59,8 @@ fn debounced_value_set_marks_pending() {
 }
 
 #[test]
-fn debounced_value_tick_before_delay_keeps_initial() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+fn debounced_value_tick_before_delay_keeps_default() {
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         debounced.set(5, now);
@@ -61,7 +75,7 @@ fn debounced_value_tick_before_delay_keeps_initial() {
 
 #[test]
 fn debounced_value_tick_at_delay_emits_pending() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let later: Instant = now + Duration::from_millis(100);
     let ran: bool = run_with_signal_capture(|| {
@@ -77,7 +91,7 @@ fn debounced_value_tick_at_delay_emits_pending() {
 
 #[test]
 fn debounced_value_tick_past_delay_emits_pending() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let later: Instant = now + Duration::from_millis(250);
     let ran: bool = run_with_signal_capture(|| {
@@ -92,7 +106,7 @@ fn debounced_value_tick_past_delay_emits_pending() {
 
 #[test]
 fn debounced_value_rapid_sets_only_last_wins() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let t0: Instant = base_time();
     let t_emit: Instant = t0 + Duration::from_millis(150);
     let ran: bool = run_with_signal_capture(|| {
@@ -109,7 +123,7 @@ fn debounced_value_rapid_sets_only_last_wins() {
 
 #[test]
 fn debounced_value_cancel_drops_pending() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         debounced.set(5, now);
@@ -123,7 +137,7 @@ fn debounced_value_cancel_drops_pending() {
 
 #[test]
 fn debounced_value_zero_delay_emits_immediately() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 0);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(0);
     let now: Instant = base_time();
     let _ran: bool = run_with_signal_capture(|| {
         debounced.set(5, now);
@@ -135,16 +149,16 @@ fn debounced_value_zero_delay_emits_immediately() {
 
 #[test]
 fn debounced_value_tick_when_idle_is_noop() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(42, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let emitted: bool = debounced.tick(now);
     assert!(!emitted);
-    assert_eq!(debounced.get(), 42);
+    assert_eq!(debounced.get(), 0);
 }
 
 #[test]
 fn debounced_value_two_pending_cycles() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(0, 50);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(50);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         debounced.set(1, t0);
@@ -168,7 +182,7 @@ fn debounced_value_two_pending_cycles() {
 
 #[test]
 fn debounced_value_clone_shares_state() {
-    let original: DebouncedValue<i32> = DebouncedValue::new(0, 100);
+    let original: DebouncedValue<i32> = DebouncedValue::new(100);
     let clone: DebouncedValue<i32> = original.clone();
     let now: Instant = base_time();
     let later: Instant = now + Duration::from_millis(150);
@@ -184,7 +198,7 @@ fn debounced_value_clone_shares_state() {
 
 #[test]
 fn debounced_value_string_round_trip() {
-    let debounced: DebouncedValue<String> = DebouncedValue::new(String::new(), 10);
+    let debounced: DebouncedValue<String> = DebouncedValue::new(10);
     let now: Instant = base_time();
     let later: Instant = now + Duration::from_millis(20);
     let ran: bool = run_with_signal_capture(|| {
@@ -198,14 +212,14 @@ fn debounced_value_string_round_trip() {
 
 #[test]
 fn debounced_value_display_idle() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(7, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let formatted: String = format!("{debounced}");
-    assert_eq!(formatted, "DebouncedValue(7)");
+    assert_eq!(formatted, "DebouncedValue(0)");
 }
 
 #[test]
 fn debounced_value_display_pending() {
-    let debounced: DebouncedValue<i32> = DebouncedValue::new(7, 100);
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(100);
     let now: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         debounced.set(99, now);
@@ -213,5 +227,18 @@ fn debounced_value_display_pending() {
     if ran {
         let formatted: String = format!("{debounced}");
         assert_eq!(formatted, "DebouncedValue(pending=99)");
+    }
+}
+
+#[test]
+fn debounced_value_seed_helper_commits_immediately() {
+    let debounced: DebouncedValue<i32> = DebouncedValue::new(10);
+    let now: Instant = base_time();
+    let ran: bool = run_with_signal_capture(|| {
+        seed_debounced(&debounced, 42, 10, now);
+    });
+    if ran {
+        assert_eq!(debounced.get(), 42);
+        assert!(!debounced.is_pending());
     }
 }

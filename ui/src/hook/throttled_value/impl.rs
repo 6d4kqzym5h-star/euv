@@ -1,20 +1,6 @@
 use super::*;
 
-impl<T: Clone + PartialEq + 'static> ThrottledValue<T> {
-    /// Creates a new throttled value starting at `initial`
-    /// with a `interval_ms` window between commits.
-    ///
-    /// `interval_ms = 0` collapses to "every `set` is
-    /// immediately committed, no cooldown".
-    pub fn new(initial: T, interval_ms: u32) -> Self {
-        Self {
-            value: Signal::create(initial),
-            pending: Signal::create(None),
-            state: Signal::create(ThrottleState::Idle),
-            interval_ms,
-        }
-    }
-
+impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
     /// Sends `next` through the throttle.
     ///
     /// - If the throttle is idle (no cooldown active), the
@@ -100,7 +86,7 @@ impl<T: Clone + PartialEq + 'static> ThrottledValue<T> {
     }
 }
 
-impl<T: Clone + PartialEq + Debug + 'static> Display for ThrottledValue<T> {
+impl<T: Clone + PartialEq + Debug + Default + 'static> Display for ThrottledValue<T> {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match &self.get_state().get() {
             ThrottleState::Idle => {

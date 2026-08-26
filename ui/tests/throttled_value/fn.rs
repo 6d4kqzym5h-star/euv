@@ -24,16 +24,28 @@ fn base_time() -> Instant {
     Instant::now()
 }
 
+/// Seed a throttled value with an initial emit. Constructed
+/// via Lombok `New` (which leaves the value at
+/// `T::default()`); `set` immediately emits because the
+/// throttle is idle on construction.
+fn seed_throttled<T: Clone + PartialEq + Default + 'static>(
+    throttled: &ThrottledValue<T>,
+    initial: T,
+    now: Instant,
+) {
+    throttled.set(initial, now);
+}
+
 #[test]
-fn throttled_value_starts_with_initial() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+fn throttled_value_starts_at_default() {
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     assert_eq!(throttled.get(), 0);
     assert!(!throttled.is_throttling());
 }
 
 #[test]
 fn throttled_value_set_when_idle_emits_immediately() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let now: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(5, now);
@@ -46,7 +58,7 @@ fn throttled_value_set_when_idle_emits_immediately() {
 
 #[test]
 fn throttled_value_set_during_cooldown_buffers_pending() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(5, t0);
@@ -59,7 +71,7 @@ fn throttled_value_set_during_cooldown_buffers_pending() {
 
 #[test]
 fn throttled_value_tick_during_cooldown_keeps_state() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(5, t0);
@@ -74,7 +86,7 @@ fn throttled_value_tick_during_cooldown_keeps_state() {
 
 #[test]
 fn throttled_value_tick_at_interval_commits_pending() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(5, t0);
@@ -90,7 +102,7 @@ fn throttled_value_tick_at_interval_commits_pending() {
 
 #[test]
 fn throttled_value_tick_at_interval_with_no_pending_lapses_cooldown() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(5, t0);
@@ -105,7 +117,7 @@ fn throttled_value_tick_at_interval_with_no_pending_lapses_cooldown() {
 
 #[test]
 fn throttled_value_tick_after_interval_reopens_window() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 50);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(50);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(1, t0);
@@ -125,7 +137,7 @@ fn throttled_value_tick_after_interval_reopens_window() {
 
 #[test]
 fn throttled_value_multiple_buffered_sets_only_last_wins() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(1, t0);
@@ -142,7 +154,7 @@ fn throttled_value_multiple_buffered_sets_only_last_wins() {
 
 #[test]
 fn throttled_value_cancel_drops_pending_and_cooldown() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(5, t0);
@@ -161,7 +173,7 @@ fn throttled_value_cancel_drops_pending_and_cooldown() {
 
 #[test]
 fn throttled_value_zero_interval_emits_every_set() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(0, 0);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(0);
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(1, t0);
@@ -176,17 +188,17 @@ fn throttled_value_zero_interval_emits_every_set() {
 
 #[test]
 fn throttled_value_tick_when_idle_is_noop() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(42, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let now: Instant = base_time();
     let committed: bool = throttled.tick(now);
     assert!(!committed);
-    assert_eq!(throttled.get(), 42);
+    assert_eq!(throttled.get(), 0);
     assert!(!throttled.is_throttling());
 }
 
 #[test]
 fn throttled_value_clone_shares_state() {
-    let original: ThrottledValue<i32> = ThrottledValue::new(0, 100);
+    let original: ThrottledValue<i32> = ThrottledValue::new(100);
     let clone: ThrottledValue<i32> = original.clone();
     let t0: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
@@ -200,14 +212,14 @@ fn throttled_value_clone_shares_state() {
 
 #[test]
 fn throttled_value_display_idle() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(7, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let formatted: String = format!("{throttled}");
-    assert_eq!(formatted, "ThrottledValue(7)");
+    assert_eq!(formatted, "ThrottledValue(0)");
 }
 
 #[test]
 fn throttled_value_display_cooldown() {
-    let throttled: ThrottledValue<i32> = ThrottledValue::new(7, 100);
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
     let now: Instant = base_time();
     let ran: bool = run_with_signal_capture(|| {
         throttled.set(99, now);
@@ -215,5 +227,18 @@ fn throttled_value_display_cooldown() {
     if ran {
         let formatted: String = format!("{throttled}");
         assert_eq!(formatted, "ThrottledValue(cooldown=99)");
+    }
+}
+
+#[test]
+fn throttled_value_seed_helper_commits_immediately() {
+    let throttled: ThrottledValue<i32> = ThrottledValue::new(100);
+    let now: Instant = base_time();
+    let ran: bool = run_with_signal_capture(|| {
+        seed_throttled(&throttled, 42, now);
+    });
+    if ran {
+        assert_eq!(throttled.get(), 42);
+        assert!(throttled.is_throttling());
     }
 }

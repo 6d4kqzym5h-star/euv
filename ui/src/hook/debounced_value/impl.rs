@@ -1,25 +1,12 @@
 use super::*;
 
-impl<T: Clone + PartialEq + 'static> DebouncedValue<T> {
-    /// Creates a new debounced value starting at `initial`
-    /// with the given quiet-period `delay_ms`.
-    ///
-    /// `delay_ms = 0` collapses to "every `set` is
-    /// immediately committed".
-    pub fn new(initial: T, delay_ms: u32) -> Self {
-        Self {
-            value: Signal::create(initial),
-            state: Signal::create(DebounceState::Idle),
-            delay_ms,
-        }
-    }
-
+impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
     /// Schedules `next` to become the emitted value. The
     /// commit happens on the next `tick` call at or after
     /// `now + delay_ms`.
     ///
     /// Calling `set` repeatedly within `delay_ms` of each
-    /// other only the last value wins — that's the
+    /// other means only the last value wins — that's the
     /// "debounce" contract.
     pub fn set(&self, next: T, now: Instant) {
         self.get_state().set(DebounceState::Pending(now, next));
@@ -73,7 +60,7 @@ impl<T: Clone + PartialEq + 'static> DebouncedValue<T> {
     }
 }
 
-impl<T: Clone + PartialEq + Debug + 'static> Display for DebouncedValue<T> {
+impl<T: Clone + PartialEq + Debug + Default + 'static> Display for DebouncedValue<T> {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let pending: &DebounceState<T> = &self.get_state().get();
         match pending {
