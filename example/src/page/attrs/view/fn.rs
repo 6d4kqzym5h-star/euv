@@ -90,10 +90,9 @@ pub(crate) fn page_custom_attrs(node: VirtualNode<PageCustomAttrsProps>) -> Virt
                     oninput: attrs_on_input_value(class_prop_value)
                 }
                 div {
-                    class: c_attrs_dynamic_demo(&class_prop_key.get(), &class_prop_value.get())
                     p {
-                        class: c_demo_text()
-                        "This div uses a class with a dynamic CSS property key and value."
+                        class: c_attrs_dynamic_demo(&class_prop_key.get(), &class_prop_value.get())
+                        "This paragraph uses a class with a dynamic CSS property key and value."
                     }
                     if { !class_prop_key.get().is_empty() } {
                         p {

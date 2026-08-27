@@ -162,11 +162,22 @@ pub(crate) fn expand_var_macros_in_tokens(
     result.into_iter().collect()
 }
 
-/// Collects parameter names that are wrapped in `{}` anywhere in a class definition.
+/// Collects parameter names that should drive the generated class name.
 ///
-/// A wrapped parameter is treated as a dynamic class parameter: its value contributes
-/// to the generated class name, allowing every distinct value to inject its own CSS rule.
-/// Bare parameters keep the existing type-based class-name behavior.
+/// Two cases register a parameter as dynamic:
+///
+/// 1. A function-style class definition like `pub c_demo(prop_key: &str,
+///    prop_value: &str) { ... }` — every parameter is supplied by the
+///    caller at render time, so every parameter must influence the class
+///    name hash to keep different invocations on distinct CSS rules.
+/// 2. A property, selector block, at-rule block, or `extends` argument
+///    that contains an identifier inside `{ ... }` — the braces mark the
+///    value as the runtime substitution site, so the bare identifier
+///    inside must contribute to the class name hash too.
+///
+/// A parameter registered as dynamic emits `Css::param_class_name(&value)`
+/// at expansion time; everything else emits `type_name_of_val(&param)`
+/// instead.
 ///
 /// # Arguments
 ///
@@ -174,9 +185,26 @@ pub(crate) fn expand_var_macros_in_tokens(
 ///
 /// # Returns
 ///
-/// - `Vec<String>` - Unique names of parameters wrapped in `{}`.
+/// - `Vec<String>` - Unique names of dynamic parameters, in registration
+///   order (function-style parameters first, then brace-scanned ones).
 pub(crate) fn collect_dynamic_param_names(class_def: &ClassDef) -> Vec<String> {
     let mut dynamic_param_names: Vec<String> = Vec::new();
+    // A function-style class definition like `pub c_demo(prop_key: &str,
+    // prop_value: &str) { ... }` is intrinsically dynamic — every parameter
+    // is supplied by the caller at render time and must therefore influence
+    // the generated class name (so two `c_demo("color", "red")` and
+    // `c_demo("background-color", "red")` invocations produce different
+    // hashes and therefore different rules). Register every parameter name
+    // up front; the property/selector/at-rule walkers below will then skip
+    // them (because they are already in the set) but the class name
+    // builder will still consult the set to decide between the
+    // `Css::param_class_name(&(name).to_string())` and
+    // `type_name_of_val(&name).to_string()` emission branches.
+    if !class_def.get_params().is_empty() {
+        for param in class_def.get_params() {
+            push_unique_param_name(&mut dynamic_param_names, param.get_name().to_string());
+        }
+    }
     collect_dynamic_param_names_from_properties(
         class_def.get_properties(),
         &mut dynamic_param_names,
