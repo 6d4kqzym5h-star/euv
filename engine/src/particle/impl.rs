@@ -60,6 +60,7 @@ impl ParticleRng {
 
 /// Implements `Default` for `ParticleRng` using the default seed.
 impl Default for ParticleRng {
+    /// Constructs a default [`ParticleRng`] value.
     fn default() -> ParticleRng {
         ParticleRng::with_seed(PARTICLE_DEFAULT_RNG_SEED)
     }
@@ -67,6 +68,7 @@ impl Default for ParticleRng {
 
 /// Implements `Default` for `ParticleConfig` with sensible engine defaults.
 impl Default for ParticleConfig {
+    /// Constructs a default [`ParticleConfig`] value.
     fn default() -> ParticleConfig {
         ParticleConfig {
             emission_rate: PARTICLE_DEFAULT_EMISSION_RATE,
@@ -235,6 +237,7 @@ impl ParticleEmitter {
 /// emitters can participate in the same generic update loop as entities,
 /// animators, scenes, and physics worlds.
 impl Updatable for ParticleEmitter {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         ParticleEmitter::update(self, delta_time);
     }

@@ -269,7 +269,9 @@ impl SpatialHashGrid3D {
         }
     }
 }
+/// Default-construction for [`SpatialHashGrid2D`].
 impl Default for SpatialHashGrid2D {
+    /// Constructs a default [`SpatialHashGrid2D`] value.
     fn default() -> SpatialHashGrid2D {
         SpatialHashGrid2D::with_default_size()
     }
@@ -277,6 +279,7 @@ impl Default for SpatialHashGrid2D {
 
 /// Implements `Default` for `SpatialHashGrid3D` with the default cell size.
 impl Default for SpatialHashGrid3D {
+    /// Constructs a default [`SpatialHashGrid3D`] value.
     fn default() -> SpatialHashGrid3D {
         SpatialHashGrid3D::with_default_size()
     }

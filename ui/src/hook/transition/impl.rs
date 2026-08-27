@@ -1,6 +1,8 @@
 use super::*;
 
+/// Implements [`HookContextTransitionExt`] for [`HookContext`].
 impl HookContextTransitionExt for HookContext {
+    /// Returns a fresh [`TransitionState`] driven by `config`.
     fn transition(config: TransitionConfig) -> TransitionState {
         let hook_context: HookContext = Self::current();
         let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
@@ -29,6 +31,7 @@ impl HookContextTransitionExt for HookContext {
     }
 }
 
+/// Inherent implementation of [`TransitionPhase`].
 impl TransitionPhase {
     /// Returns a fresh `TransitionPhase` value of
     /// `Exited`. Convenience for `Signal::create` call
@@ -38,6 +41,7 @@ impl TransitionPhase {
     }
 }
 
+/// Inherent implementation of [`TransitionConfig`].
 impl TransitionConfig {
     /// Returns a config with both enter and exit durations
     /// set to `ms`.
@@ -75,7 +79,9 @@ impl TransitionConfig {
     }
 }
 
+/// Default-construction for [`TransitionConfig`].
 impl Default for TransitionConfig {
+    /// Constructs a default [`TransitionConfig`] value.
     fn default() -> Self {
         // Matches the CSS defaults used elsewhere in
         // euv-ui (var!(duration-normal) ≈ 200ms).
@@ -83,6 +89,7 @@ impl Default for TransitionConfig {
     }
 }
 
+/// Inherent implementation of [`TransitionState`].
 impl TransitionState {
     /// Returns `true` if the element is currently
     /// animating (i.e. `Entering` or `Exiting`).

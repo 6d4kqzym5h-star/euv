@@ -29,6 +29,7 @@ const ENV_KEY_EUV_BUILD_TIMESTAMP_KEY: &str = "EUV_BUILD_TIMESTAMP";
 /// File name of the build state marker written to `OUT_DIR`.
 const BUILD_STATE_FILE_NAME: &str = ".euv_build_state";
 
+/// Entry point of the build script.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir: String = env!("CARGO_MANIFEST_DIR").to_string();
     let out_dir: String = var("OUT_DIR")?;

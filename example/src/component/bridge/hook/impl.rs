@@ -12,6 +12,7 @@ use super::*;
 /// visitor has to drive a real `Deserializer` rather than just match a
 /// `String`.
 impl<'de> Deserialize<'de> for UpdateStatus {
+    /// Deserializes from the supplied reader.
     fn deserialize<Reader>(reader: Reader) -> Result<Self, Reader::Error>
     where
         Reader: serde::Deserializer<'de>,
@@ -21,12 +22,14 @@ impl<'de> Deserialize<'de> for UpdateStatus {
         impl<'de> serde::de::Visitor<'de> for TagVisitor {
             type Value = UpdateStatus;
 
+            /// Writes the expected value description into the formatter.
             fn expecting(&self, formatter: &mut Formatter<'_>) -> FmtResult {
                 formatter.write_str(&format!(
                     "an `UpdateStatus` wire tag ({UPDATE_RESULT_SUCCESS:?} / {UPDATE_RESULT_FAILED:?})"
                 ))
             }
 
+            /// Deserializes a borrowed string slice into `Self::Value`.
             fn visit_str<Error>(self, value: &str) -> Result<Self::Value, Error>
             where
                 Error: serde::de::Error,
@@ -48,7 +51,9 @@ impl<'de> Deserialize<'de> for UpdateStatus {
     }
 }
 
+/// Formatting / debug-printing for [`UpdateStatus`].
 impl Display for UpdateStatus {
+    /// Formats the [`UpdateStatus`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let tag: &'static str = match self {
             UpdateStatus::Success => UPDATE_RESULT_SUCCESS,

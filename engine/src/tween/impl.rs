@@ -252,12 +252,14 @@ impl<T: Interpolable + Copy> Tween<T> {
 /// participate in the same generic update loop as entities, animators,
 /// scenes, and physics worlds.
 impl<T: Interpolable + Copy> Updatable for Tween<T> {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         let _: T = Tween::update(self, delta_time);
     }
 }
 
 impl<T: Interpolable + Copy> Clone for Tween<T> {
+    /// Clones the [`Tween`] by reusing shared, cheap-to-clone state where possible.
     fn clone(&self) -> Tween<T> {
         Tween {
             from: self.from,
@@ -275,6 +277,7 @@ impl<T: Interpolable + Copy> Clone for Tween<T> {
 }
 
 impl<T: Interpolable + Copy + Debug> Debug for Tween<T> {
+    /// Formats the [`Tween`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("Tween")

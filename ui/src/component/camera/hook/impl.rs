@@ -515,6 +515,7 @@ impl UseEuvCamera {
 
 /// Default implementation for `EuvCameraConfig`.
 impl Default for EuvCameraConfig {
+    /// Constructs a default [`EuvCameraConfig`] value.
     fn default() -> Self {
         EuvCameraConfig {
             video_selector: CAMERA_VIDEO_SELECTOR,

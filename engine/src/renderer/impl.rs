@@ -79,6 +79,7 @@ impl Camera2D {
 
 /// Implements `Default` for `Camera2D` as a camera at the origin with 800x600 viewport.
 impl Default for Camera2D {
+    /// Constructs a default [`Camera2D`] value.
     fn default() -> Camera2D {
         Camera2D::create(800.0, 600.0)
     }
@@ -359,6 +360,7 @@ impl DrawList {
     }
 }
 
+/// Inherent implementation of [`CanvasRenderer`].
 impl CanvasRenderer {
     /// Creates a new renderer from a canvas element selector and viewport dimensions.
     ///
@@ -486,6 +488,7 @@ impl CanvasRenderer {
 
         // Returns the style key for a path-batchable command, or `None` for
         // commands that break a run (sprites, images, text, state changes).
+        /// Computes the batching key for a [`DrawCommand`].
         fn batch_key(command: &DrawCommand) -> Option<(u8, Color, f64)> {
             match command {
                 DrawCommand::FillRect { color, .. } | DrawCommand::FillCircle { color, .. } => {
@@ -505,6 +508,7 @@ impl CanvasRenderer {
         }
 
         // Emits a single path-batchable command's geometry into the open path.
+        /// Emits the geometry for the supplied [`DrawCommand`] into the canvas context.
         fn emit_geometry(context: &CanvasRenderingContext2d, command: &DrawCommand) {
             match command {
                 DrawCommand::FillRect {
@@ -1033,6 +1037,7 @@ impl Camera3D {
 
 /// Implements `Default` for `Camera3D` as a camera at (0, 0, 5) looking at the origin.
 impl Default for Camera3D {
+    /// Constructs a default [`Camera3D`] value.
     fn default() -> Camera3D {
         Camera3D::create(Vector3D::new(0.0, 0.0, 5.0), Vector3D::zero(), 800.0, 600.0)
     }
@@ -1335,6 +1340,7 @@ impl ShadowConfig {
 
 /// Implements `Default` for `ShadowConfig` with default shadow values.
 impl Default for ShadowConfig {
+    /// Constructs a default [`ShadowConfig`] value.
     fn default() -> ShadowConfig {
         ShadowConfig::create()
     }
@@ -4633,6 +4639,7 @@ impl WebGpuInitError {
 /// and includes the variant code plus a human-readable description. When
 /// the variant carries a JS error, its `Debug` form is appended.
 impl Display for WebGpuInitError {
+    /// Formats the [`WebGpuInitError`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::NavigatorLookup(err) => write!(
@@ -5045,6 +5052,7 @@ impl WebGlInitError {
 /// The formatted message includes the variant code plus a human-readable
 /// description; variants carrying a JS error append its rendered form.
 impl Display for WebGlInitError {
+    /// Formats the [`WebGlInitError`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::CanvasNotFound(selector) => write!(
@@ -5084,6 +5092,7 @@ impl Display for WebGlInitError {
 /// The formatted message includes the browser-provided info log so GLSL
 /// diagnostics are visible verbatim in the console.
 impl Display for WebGlProgramError {
+    /// Formats the [`WebGlProgramError`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::ShaderCompile(log) => write!(formatter, "shader compilation failed: {log}"),
@@ -5287,6 +5296,7 @@ impl TextureWriteDescriptor {
 // `BindGroupEntry::binding` are still callable exactly the same way
 // from the rest of the engine and from the public `euv` crate.
 
+/// Inherent implementation of [`VertexStepMode`].
 impl VertexStepMode {
     /// Returns the WGSL / WebGPU string representation.
     pub fn as_str(&self) -> &'static str {
@@ -5297,6 +5307,7 @@ impl VertexStepMode {
     }
 }
 
+/// Inherent implementation of [`BindGroupEntry`].
 impl BindGroupEntry {
     /// Returns the `@binding(N)` slot this entry occupies. The renderer
     /// uses this when assembling the bind-group descriptor so the
@@ -5344,6 +5355,7 @@ impl BindGroupEntry {
 // sound here, and what would have to change for multi-threaded targets).
 // ============================================================================
 
+/// Inherent implementation of [`PendingErrorCell`].
 impl PendingErrorCell {
     /// Construct a new, empty pending-error slot.
     ///
@@ -5370,7 +5382,9 @@ impl PendingErrorCell {
     }
 }
 
+/// Default-construction for [`PendingErrorCell`].
 impl Default for PendingErrorCell {
+    /// Constructs a default [`PendingErrorCell`] value.
     fn default() -> Self {
         Self::new()
     }

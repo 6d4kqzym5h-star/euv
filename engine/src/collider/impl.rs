@@ -115,18 +115,22 @@ impl AabbCollider {
 
 /// Implements the `Collider` trait for `AabbCollider`.
 impl Collider for AabbCollider {
+    /// Returns the concrete shape variant of the collider.
     fn shape(&self) -> ColliderShape {
         ColliderShape::Aabb
     }
 
+    /// Returns the axis-aligned bounding rectangle (2D) or box (3D) of the collider.
     fn bounding_box(&self) -> Rect {
         self.get_rect()
     }
 
+    /// Returns `true` when the supplied point lies inside the collider.
     fn contains_point(&self, point: Vector2D) -> bool {
         self.get_rect().contains(point)
     }
 
+    /// Returns the geometric center of the collider.
     fn center(&self) -> Vector2D {
         self.get_rect().center()
     }
@@ -180,20 +184,24 @@ impl CircleCollider {
 
 /// Implements the `Collider` trait for `CircleCollider`.
 impl Collider for CircleCollider {
+    /// Returns the concrete shape variant of the collider.
     fn shape(&self) -> ColliderShape {
         ColliderShape::Circle
     }
 
+    /// Returns the axis-aligned bounding rectangle (2D) or box (3D) of the collider.
     fn bounding_box(&self) -> Rect {
         let circle: Circle = self.get_circle();
         let diameter: f64 = circle.get_radius() * 2.0;
         Rect::from_center(circle.get_center(), diameter, diameter)
     }
 
+    /// Returns `true` when the supplied point lies inside the collider.
     fn contains_point(&self, point: Vector2D) -> bool {
         self.get_circle().contains(point)
     }
 
+    /// Returns the geometric center of the collider.
     fn center(&self) -> Vector2D {
         self.get_circle().get_center()
     }
@@ -343,18 +351,22 @@ impl AabbCollider3D {
 
 /// Implements the `Collider3D` trait for `AabbCollider3D`.
 impl Collider3D for AabbCollider3D {
+    /// Returns the concrete shape variant of the collider.
     fn shape(&self) -> ColliderShape3D {
         ColliderShape3D::Aabb
     }
 
+    /// Returns the axis-aligned bounding rectangle (2D) or box (3D) of the collider.
     fn bounding_box(&self) -> AABB3D {
         self.get_aabb()
     }
 
+    /// Returns `true` when the supplied point lies inside the collider.
     fn contains_point(&self, point: Vector3D) -> bool {
         self.get_aabb().contains(point)
     }
 
+    /// Returns the geometric center of the collider.
     fn center(&self) -> Vector3D {
         self.get_aabb().center()
     }
@@ -408,20 +420,24 @@ impl SphereCollider3D {
 
 /// Implements the `Collider3D` trait for `SphereCollider3D`.
 impl Collider3D for SphereCollider3D {
+    /// Returns the concrete shape variant of the collider.
     fn shape(&self) -> ColliderShape3D {
         ColliderShape3D::Sphere
     }
 
+    /// Returns the axis-aligned bounding rectangle (2D) or box (3D) of the collider.
     fn bounding_box(&self) -> AABB3D {
         let sphere: Sphere = self.get_sphere();
         let diameter: f64 = sphere.get_radius() * 2.0;
         AABB3D::from_center(sphere.get_center(), diameter, diameter, diameter)
     }
 
+    /// Returns `true` when the supplied point lies inside the collider.
     fn contains_point(&self, point: Vector3D) -> bool {
         self.get_sphere().contains(point)
     }
 
+    /// Returns the geometric center of the collider.
     fn center(&self) -> Vector3D {
         self.get_sphere().get_center()
     }

@@ -87,6 +87,7 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
 }
 
 impl<T: Clone + PartialEq + Debug + Default + 'static> Display for ThrottledValue<T> {
+    /// Formats the [`ThrottledValue`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match &self.get_state().get() {
             ThrottleState::Idle => {

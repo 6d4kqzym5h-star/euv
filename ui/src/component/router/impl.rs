@@ -1,5 +1,6 @@
 use super::*;
 
+/// Inherent implementation of [`NestedRouteConfig`].
 impl NestedRouteConfig {
     /// Creates a new nested route configuration.
     ///

@@ -1,6 +1,7 @@
 use super::*;
 
 impl<T: PartialEq> PartialEq for LoadState<T> {
+    /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (LoadState::Pending, LoadState::Pending) => true,
@@ -93,6 +94,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
         self.reset();
     }
 
+    /// Lazily invokes the factory and caches the result.
     fn invoke_factory(&self) {
         let result: Result<T, Box<dyn Any + Send>> =
             catch_unwind(AssertUnwindSafe(|| (self.get_factory())()));
@@ -115,6 +117,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
 }
 
 impl<T: Clone + PartialEq + Debug + 'static> Debug for LazyComponent<T> {
+    /// Formats the [`LazyComponent`] via the supplied formatter.
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         f.debug_struct("LazyComponent")
             .field("state", &self.get_state().get())

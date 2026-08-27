@@ -243,11 +243,13 @@ struct VertexOutput {
     @location(4) edge_color: vec3<f32>,
 };
 
+/// Rotates vector `v` by unit quaternion `q`.
 fn quat_rotate(q: vec4<f32>, v: vec3<f32>) -> vec3<f32> {
     return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
 }
 
 @vertex
+/// WGSL vertex shader entry point.
 fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
     let cube = u_scene.cubes[vi / 36u];
     let face_index = (vi % 36u) / 6u;
@@ -269,6 +271,7 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
 }
 
 @fragment
+/// WGSL fragment shader entry point.
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let view_dir = normalize(in.world_pos - u_scene.camera_pos.xyz);
     if dot(in.normal, view_dir) >= 0.0 {

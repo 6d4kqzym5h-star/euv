@@ -1,5 +1,6 @@
 use super::*;
 
+/// Inherent implementation of [`Toggle`].
 impl Toggle {
     /// Sets the value to `true`.
     pub fn set_true(&self) {
@@ -29,13 +30,17 @@ impl Toggle {
     }
 }
 
+/// Formatting / debug-printing for [`Toggle`].
 impl Display for Toggle {
+    /// Formats the [`Toggle`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "Toggle({})", self.get_value().get())
     }
 }
 
+/// Equality comparison for [`Toggle`].
 impl PartialEq for Toggle {
+    /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
     fn eq(&self, other: &Self) -> bool {
         self.get_value().get() == other.get_value().get()
     }

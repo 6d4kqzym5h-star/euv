@@ -2,6 +2,7 @@ use super::*;
 
 /// Implements `Default` for `BodyCollider`, returning an AABB collider with default values.
 impl Default for BodyCollider {
+    /// Constructs a default [`BodyCollider`] value.
     fn default() -> BodyCollider {
         BodyCollider::Aabb(AabbCollider::default())
     }
@@ -9,6 +10,7 @@ impl Default for BodyCollider {
 
 /// Implements `Default` for `BodyCollider3D`, returning a 3D AABB collider with default values.
 impl Default for BodyCollider3D {
+    /// Constructs a default [`BodyCollider3D`] value.
     fn default() -> BodyCollider3D {
         BodyCollider3D::Aabb(AabbCollider3D::default())
     }
@@ -16,6 +18,7 @@ impl Default for BodyCollider3D {
 
 /// Implements default configuration for `PhysicsConfig`.
 impl Default for PhysicsConfig {
+    /// Constructs a default [`PhysicsConfig`] value.
     fn default() -> PhysicsConfig {
         PhysicsConfig::new(
             Vector2D::new(0.0, DEFAULT_GRAVITY),
@@ -220,6 +223,7 @@ impl PhysicsWorld2D {
 
 /// Implements `Default` for `PhysicsWorld2D` as an empty world.
 impl Default for PhysicsWorld2D {
+    /// Constructs a default [`PhysicsWorld2D`] value.
     fn default() -> PhysicsWorld2D {
         PhysicsWorld2D::with_config(PhysicsConfig::default())
     }
@@ -430,6 +434,7 @@ impl PhysicsWorld2D {
 /// The inherent call resolves first when both are in scope, so there is no
 /// recursion.
 impl Updatable for PhysicsWorld2D {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         PhysicsWorld2D::step(self, delta_time);
     }
@@ -437,6 +442,7 @@ impl Updatable for PhysicsWorld2D {
 
 /// Implements default configuration for `PhysicsConfig3D`.
 impl Default for PhysicsConfig3D {
+    /// Constructs a default [`PhysicsConfig3D`] value.
     fn default() -> PhysicsConfig3D {
         PhysicsConfig3D::new(
             Vector3D::new(0.0, DEFAULT_GRAVITY_3D, 0.0),
@@ -864,6 +870,7 @@ impl PhysicsWorld3D {
 /// exists purely for trait dispatch. The inherent call resolves first when
 /// both are in scope, so there is no recursion.
 impl Updatable for PhysicsWorld3D {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         PhysicsWorld3D::step(self, delta_time);
     }
@@ -871,6 +878,7 @@ impl Updatable for PhysicsWorld3D {
 
 /// Implements `Default` for `PhysicsWorld3D` as an empty world.
 impl Default for PhysicsWorld3D {
+    /// Constructs a default [`PhysicsWorld3D`] value.
     fn default() -> PhysicsWorld3D {
         PhysicsWorld3D::with_config(PhysicsConfig3D::default())
     }

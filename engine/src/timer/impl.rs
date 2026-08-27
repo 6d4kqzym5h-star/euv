@@ -116,6 +116,7 @@ impl Timer {
 /// participate in the same generic update loop as entities, animators,
 /// scenes, and physics worlds.
 impl Updatable for Timer {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         let _: u32 = Timer::update(self, delta_time);
     }

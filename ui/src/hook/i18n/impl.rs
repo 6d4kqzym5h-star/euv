@@ -1,6 +1,8 @@
 use super::*;
 
+/// Implements [`HookContextI18nExt`] for [`HookContext`].
 impl HookContextI18nExt for HookContext {
+    /// Returns a fresh [`I18n`] bound to the current component scope.
     fn i18n() -> I18n {
         HookContext::use_hook(|| {
             I18n::new(
@@ -12,6 +14,7 @@ impl HookContextI18nExt for HookContext {
     }
 }
 
+/// Inherent implementation of [`I18n`].
 impl I18n {
     /// Sets the active locale to `locale`. Triggers a
     /// reactive update so any reactive `t(key)` read

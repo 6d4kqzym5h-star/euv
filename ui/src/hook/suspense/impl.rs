@@ -30,18 +30,21 @@ impl<T: Clone + PartialEq + 'static> SuspenseHandle<T> {
 }
 
 impl<T: Clone + PartialEq + 'static> Default for SuspenseHandle<T> {
+    /// Constructs a default [`SuspenseHandle`] value.
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<T: Clone + PartialEq + Debug + 'static> Display for SuspenseHandle<T> {
+    /// Formats the [`SuspenseHandle`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "SuspenseHandle({:?})", self.get_phase().get())
     }
 }
 
 impl<T: PartialEq> PartialEq for SuspensePhase<T> {
+    /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (SuspensePhase::Pending, SuspensePhase::Pending) => true,

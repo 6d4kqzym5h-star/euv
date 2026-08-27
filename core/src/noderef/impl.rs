@@ -94,6 +94,7 @@ impl<T: ?Sized> NodeRef<T> {
 /// requires `T: Clone`) cannot be used. `Rc` clone is cheap and shares
 /// the underlying cell with all clones.
 impl<T: ?Sized> Clone for NodeRef<T> {
+    /// Clones the [`NodeRef`] by reusing shared, cheap-to-clone state where possible.
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
@@ -119,6 +120,7 @@ impl<T: ?Sized> Default for NodeRef<T> {
 }
 
 impl<T: ?Sized> Debug for NodeRef<T> {
+    /// Formats the [`NodeRef`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("NodeRef")

@@ -262,6 +262,7 @@ impl Animator {
 /// this impl exists purely for trait dispatch. The inherent call resolves
 /// first when both are in scope, so there is no recursion.
 impl Updatable for Animator {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         Animator::update(self, delta_time);
     }
@@ -326,6 +327,7 @@ impl Animator {
 
 /// Implements `Default` for `Animator` as a new idle animator.
 impl Default for Animator {
+    /// Constructs a default [`Animator`] value.
     fn default() -> Animator {
         Animator::create()
     }

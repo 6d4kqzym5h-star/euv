@@ -251,6 +251,7 @@ impl Numeric {
 
 /// Implements the `Interpolable` trait for `f64`.
 impl Interpolable for f64 {
+    /// Linearly interpolates toward `other` by the supplied `factor`.
     fn lerp(&self, other: f64, factor: f64) -> f64 {
         *self + (other - *self) * factor
     }
@@ -264,30 +265,37 @@ impl Interpolable for f64 {
 /// `angle_to`, `rotated`, `rotate`, `distance_to`, `distance_squared_to`,
 /// `direction_to`, `scale`, and `normalize`. These remain inherent.
 impl Vector for Vector2D {
+    /// Returns the zero vector of this dimension.
     fn zero() -> Vector2D {
         Vector2D::zero()
     }
 
+    /// Returns the dot product of `self` and `other`.
     fn dot(&self, other: Vector2D) -> f64 {
         Vector2D::dot(self, other)
     }
 
+    /// Returns the Euclidean magnitude (length) of the vector.
     fn magnitude(&self) -> f64 {
         Vector2D::magnitude(self)
     }
 
+    /// Returns the squared magnitude (no square-root) of the vector.
     fn magnitude_squared(&self) -> f64 {
         Vector2D::magnitude_squared(self)
     }
 
+    /// Returns the unit-length direction along `self`.
     fn normalized(&self) -> Vector2D {
         Vector2D::normalized(self)
     }
 
+    /// Returns the vector multiplied by `scalar`.
     fn scaled(&self, scalar: f64) -> Vector2D {
         Vector2D::scaled(self, scalar)
     }
 
+    /// Linearly interpolates toward `other` by the supplied `factor`.
     fn lerp(&self, other: Vector2D, factor: f64) -> Vector2D {
         Vector2D::lerp(self, other, factor)
     }
@@ -555,6 +563,7 @@ impl Vector2D {
 
 /// Implements `Interpolable` for `Vector2D`.
 impl Interpolable for Vector2D {
+    /// Linearly interpolates toward `other` by the supplied `factor`.
     fn lerp(&self, other: Vector2D, factor: f64) -> Vector2D {
         Vector2D::lerp(self, other, factor)
     }
@@ -563,6 +572,7 @@ impl Interpolable for Vector2D {
 /// Implements vector addition.
 impl Add for Vector2D {
     type Output = Vector2D;
+    /// Adds `other` to `self`.
     fn add(self, other: Vector2D) -> Vector2D {
         Vector2D::new(self.get_x() + other.get_x(), self.get_y() + other.get_y())
     }
@@ -571,6 +581,7 @@ impl Add for Vector2D {
 /// Implements vector subtraction.
 impl Sub for Vector2D {
     type Output = Vector2D;
+    /// Subtracts `other` from `self`.
     fn sub(self, other: Vector2D) -> Vector2D {
         Vector2D::new(self.get_x() - other.get_x(), self.get_y() - other.get_y())
     }
@@ -579,6 +590,7 @@ impl Sub for Vector2D {
 /// Implements scalar multiplication.
 impl Mul<f64> for Vector2D {
     type Output = Vector2D;
+    /// Multiplies `self` and `other` (or `scalar`).
     fn mul(self, scalar: f64) -> Vector2D {
         Vector2D::new(self.get_x() * scalar, self.get_y() * scalar)
     }
@@ -587,6 +599,7 @@ impl Mul<f64> for Vector2D {
 /// Implements vector negation.
 impl Neg for Vector2D {
     type Output = Vector2D;
+    /// Negates `self`.
     fn neg(self) -> Vector2D {
         Vector2D::new(-self.get_x(), -self.get_y())
     }
@@ -594,6 +607,7 @@ impl Neg for Vector2D {
 
 /// Implements in-place vector addition.
 impl AddAssign for Vector2D {
+    /// Adds `other` to `self` in place.
     fn add_assign(&mut self, other: Vector2D) {
         self.set_x(self.get_x() + other.get_x());
         self.set_y(self.get_y() + other.get_y());
@@ -602,6 +616,7 @@ impl AddAssign for Vector2D {
 
 /// Implements in-place vector subtraction.
 impl SubAssign for Vector2D {
+    /// Subtracts `other` from `self` in place.
     fn sub_assign(&mut self, other: Vector2D) {
         self.set_x(self.get_x() - other.get_x());
         self.set_y(self.get_y() - other.get_y());
@@ -610,6 +625,7 @@ impl SubAssign for Vector2D {
 
 /// Implements in-place scalar multiplication.
 impl MulAssign<f64> for Vector2D {
+    /// Multiplies `self` by `scalar` in place.
     fn mul_assign(&mut self, scalar: f64) {
         self.set_x(self.get_x() * scalar);
         self.set_y(self.get_y() * scalar);
@@ -857,6 +873,7 @@ impl Transform2D {
 
 /// Implements `Default` for `Transform2D` as the identity transform.
 impl Default for Transform2D {
+    /// Constructs a default [`Transform2D`] value.
     fn default() -> Transform2D {
         Transform2D::identity()
     }
@@ -962,6 +979,7 @@ impl Color {
 
 /// Implements `Interpolable` for `Color`.
 impl Interpolable for Color {
+    /// Linearly interpolates toward `other` by the supplied `factor`.
     fn lerp(&self, other: Color, factor: f64) -> Color {
         Color::lerp(self, other, factor)
     }
@@ -969,6 +987,7 @@ impl Interpolable for Color {
 
 /// Implements `Default` for `Color` as opaque black.
 impl Default for Color {
+    /// Constructs a default [`Color`] value.
     fn default() -> Color {
         Color::black()
     }
@@ -981,30 +1000,37 @@ impl Default for Color {
 /// trait surface: `cross` (returning `Vector3D`), `direction_to`,
 /// `distance_to`, `scale`, and `normalize`. These remain inherent.
 impl Vector for Vector3D {
+    /// Returns the zero vector of this dimension.
     fn zero() -> Vector3D {
         Vector3D::zero()
     }
 
+    /// Returns the dot product of `self` and `other`.
     fn dot(&self, other: Vector3D) -> f64 {
         Vector3D::dot(self, other)
     }
 
+    /// Returns the Euclidean magnitude (length) of the vector.
     fn magnitude(&self) -> f64 {
         Vector3D::magnitude(self)
     }
 
+    /// Returns the squared magnitude (no square-root) of the vector.
     fn magnitude_squared(&self) -> f64 {
         Vector3D::magnitude_squared(self)
     }
 
+    /// Returns the unit-length direction along `self`.
     fn normalized(&self) -> Vector3D {
         Vector3D::normalized(self)
     }
 
+    /// Returns the vector multiplied by `scalar`.
     fn scaled(&self, scalar: f64) -> Vector3D {
         Vector3D::scaled(self, scalar)
     }
 
+    /// Linearly interpolates toward `other` by the supplied `factor`.
     fn lerp(&self, other: Vector3D, factor: f64) -> Vector3D {
         Vector3D::lerp(self, other, factor)
     }
@@ -1233,6 +1259,7 @@ impl Vector3D {
 
 /// Implements `Interpolable` for `Vector3D`.
 impl Interpolable for Vector3D {
+    /// Linearly interpolates toward `other` by the supplied `factor`.
     fn lerp(&self, other: Vector3D, factor: f64) -> Vector3D {
         Vector3D::lerp(self, other, factor)
     }
@@ -1241,6 +1268,7 @@ impl Interpolable for Vector3D {
 /// Implements vector addition.
 impl Add for Vector3D {
     type Output = Vector3D;
+    /// Adds `other` to `self`.
     fn add(self, other: Vector3D) -> Vector3D {
         Vector3D::new(
             self.get_x() + other.get_x(),
@@ -1253,6 +1281,7 @@ impl Add for Vector3D {
 /// Implements vector subtraction.
 impl Sub for Vector3D {
     type Output = Vector3D;
+    /// Subtracts `other` from `self`.
     fn sub(self, other: Vector3D) -> Vector3D {
         Vector3D::new(
             self.get_x() - other.get_x(),
@@ -1265,6 +1294,7 @@ impl Sub for Vector3D {
 /// Implements scalar multiplication.
 impl Mul<f64> for Vector3D {
     type Output = Vector3D;
+    /// Multiplies `self` and `other` (or `scalar`).
     fn mul(self, scalar: f64) -> Vector3D {
         Vector3D::new(
             self.get_x() * scalar,
@@ -1277,6 +1307,7 @@ impl Mul<f64> for Vector3D {
 /// Implements vector negation.
 impl Neg for Vector3D {
     type Output = Vector3D;
+    /// Negates `self`.
     fn neg(self) -> Vector3D {
         Vector3D::new(-self.get_x(), -self.get_y(), -self.get_z())
     }
@@ -1284,6 +1315,7 @@ impl Neg for Vector3D {
 
 /// Implements in-place vector addition.
 impl AddAssign for Vector3D {
+    /// Adds `other` to `self` in place.
     fn add_assign(&mut self, other: Vector3D) {
         self.set_x(self.get_x() + other.get_x());
         self.set_y(self.get_y() + other.get_y());
@@ -1293,6 +1325,7 @@ impl AddAssign for Vector3D {
 
 /// Implements in-place vector subtraction.
 impl SubAssign for Vector3D {
+    /// Subtracts `other` from `self` in place.
     fn sub_assign(&mut self, other: Vector3D) {
         self.set_x(self.get_x() - other.get_x());
         self.set_y(self.get_y() - other.get_y());
@@ -1302,6 +1335,7 @@ impl SubAssign for Vector3D {
 
 /// Implements in-place scalar multiplication.
 impl MulAssign<f64> for Vector3D {
+    /// Multiplies `self` by `scalar` in place.
     fn mul_assign(&mut self, scalar: f64) {
         self.set_x(self.get_x() * scalar);
         self.set_y(self.get_y() * scalar);
@@ -1477,6 +1511,7 @@ impl Quaternion {
 /// Implements quaternion multiplication.
 impl Mul for Quaternion {
     type Output = Quaternion;
+    /// Multiplies `self` and `other` (or `scalar`).
     fn mul(self, other: Quaternion) -> Quaternion {
         Quaternion::new(
             self.get_w() * other.get_x()
@@ -1782,6 +1817,7 @@ impl Matrix4x4 {
 
 /// Implements `Default` for `Quaternion` as the identity quaternion.
 impl Default for Quaternion {
+    /// Constructs a default [`Quaternion`] value.
     fn default() -> Quaternion {
         Quaternion::identity()
     }
@@ -1789,6 +1825,7 @@ impl Default for Quaternion {
 
 /// Implements `Default` for `Matrix4x4` as the identity matrix.
 impl Default for Matrix4x4 {
+    /// Constructs a default [`Matrix4x4`] value.
     fn default() -> Matrix4x4 {
         Matrix4x4::identity()
     }
@@ -1874,6 +1911,7 @@ impl Transform3D {
 
 /// Implements `Default` for `Transform3D` as the identity transform.
 impl Default for Transform3D {
+    /// Constructs a default [`Transform3D`] value.
     fn default() -> Transform3D {
         Transform3D::identity()
     }

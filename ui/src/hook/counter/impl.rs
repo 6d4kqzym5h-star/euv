@@ -1,5 +1,6 @@
 use super::*;
 
+/// Inherent implementation of [`Counter`].
 impl Counter {
     /// Adds `step` to the value, clamping into `[min, max]`
     /// afterwards. If the counter is already at `max`, the
@@ -77,7 +78,9 @@ impl Counter {
     }
 }
 
+/// Formatting / debug-printing for [`Counter`].
 impl Display for Counter {
+    /// Formats the [`Counter`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "Counter({})", self.get_value().get())
     }

@@ -549,6 +549,7 @@ impl UseEuvBrowser {
 
 /// Default implementation for `UseEuvBrowser`.
 impl Default for UseEuvBrowser {
+    /// Constructs a default [`UseEuvBrowser`] value.
     fn default() -> Self {
         let window_size_val: String = {
             let (width, height): (i32, i32) = UseEuvBrowser::window_inner_size();

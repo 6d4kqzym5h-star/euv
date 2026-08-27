@@ -1,6 +1,8 @@
 use super::*;
 
+/// Implements [`HookContextFormExt`] for [`HookContext`].
 impl HookContextFormExt for HookContext {
+    /// Returns a fresh [`FormState`] bound to the current component scope.
     fn form() -> FormState {
         HookContext::use_hook(|| {
             FormState::new(
@@ -13,6 +15,7 @@ impl HookContextFormExt for HookContext {
     }
 }
 
+/// Inherent implementation of [`FormState`].
 impl FormState {
     /// Returns the current value of the named field, or
     /// `""` if the field has never been set.

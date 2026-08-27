@@ -61,6 +61,7 @@ impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
 }
 
 impl<T: Clone + PartialEq + Debug + Default + 'static> Display for DebouncedValue<T> {
+    /// Formats the [`DebouncedValue`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let pending: &DebounceState<T> = &self.get_state().get();
         match pending {

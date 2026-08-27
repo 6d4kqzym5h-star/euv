@@ -1,5 +1,6 @@
 use super::*;
 
+/// Builds the human-readable log line for a render-count snapshot.
 fn create_log_data(times: i32) -> String {
     format!("Updated: render count = {times}")
 }

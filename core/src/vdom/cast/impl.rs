@@ -10,6 +10,7 @@ use super::*;
 /// - `VirtualNode` - A `VirtualNode::Fragment` containing the nodes, or
 ///   `VirtualNode::Empty` if the vector is empty.
 impl From<Vec<VirtualNode>> for VirtualNode {
+    /// Lifts a `Vec<VirtualNode>` into a single [`VirtualNode`] via wrapping or unwrapping.
     fn from(nodes: Vec<VirtualNode>) -> Self {
         if nodes.is_empty() {
             VirtualNode::Empty
@@ -27,6 +28,7 @@ impl From<Vec<VirtualNode>> for VirtualNode {
 ///
 /// - `VirtualNode` - The inner node if `Some`, otherwise `VirtualNode::Empty`.
 impl From<Option<VirtualNode>> for VirtualNode {
+    /// Lifts an `Option<VirtualNode>` into a [`VirtualNode`] (unwraps or falls back to empty).
     fn from(node: Option<VirtualNode>) -> Self {
         match node {
             Some(node) => node,
@@ -45,6 +47,7 @@ impl From<Option<VirtualNode>> for VirtualNode {
 /// - `VirtualNode` - A `VirtualNode::Fragment` if `Some` with nodes,
 ///   `VirtualNode::Empty` if `None` or the vector is empty.
 impl From<Option<Vec<VirtualNode>>> for VirtualNode {
+    /// Lifts an `Option<Vec<VirtualNode>>` into a [`VirtualNode`] (unwraps or falls back to empty).
     fn from(nodes: Option<Vec<VirtualNode>>) -> Self {
         match nodes {
             Some(nodes) => nodes.into(),
@@ -423,6 +426,7 @@ where
     }
 }
 
+/// Generic-parameterised implementation for [`AttrValueAdapter`].
 impl AttrValueAdapter<NativeEventHandler> {
     /// Converts the wrapped handler into a callback `AttributeValue` with a
     /// custom event name for component props.
@@ -515,6 +519,7 @@ impl From<InnerHtmlAdapter<String>> for AttributeValue {
     }
 }
 
+/// `From` conversion into [`AttributeValue`].
 impl From<InnerHtmlAdapter<&str>> for AttributeValue {
     /// Wraps the static `&str` payload by allocating a new `String`
     /// so the renderer owns the data independently of the caller's
@@ -524,6 +529,7 @@ impl From<InnerHtmlAdapter<&str>> for AttributeValue {
     }
 }
 
+/// `From` conversion into [`AttributeValue`].
 impl From<InnerHtmlAdapter<Signal<String>>> for AttributeValue {
     /// Wraps the reactive payload in an `AttributeValue::InnerHtmlSignal`
     /// so the renderer subscribes to the signal and re-applies
