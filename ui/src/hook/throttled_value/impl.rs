@@ -19,7 +19,7 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: Clone + PartialEq + Default + 'static` - A generic type parameter.
     /// - `Instant` - A monotonic instant in time (`Instant`).
     pub fn set(&self, next: T, now: Instant) {
         if self.interval_ms == 0 {

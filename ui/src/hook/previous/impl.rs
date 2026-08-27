@@ -18,7 +18,7 @@ impl<T: Clone + PartialEq + 'static> Previous<T> {
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: Clone + PartialEq + 'static` - A generic type parameter.
     pub fn record(&self, current: T) {
         self.get_previous().set(Some(current));
     }

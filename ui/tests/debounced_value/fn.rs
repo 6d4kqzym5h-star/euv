@@ -14,7 +14,7 @@ fn base_time() -> Instant {
 /// # Arguments
 ///
 /// - `&DebouncedValue<T>` - Shared reference to a `DebouncedValue<T>`.
-/// - `T` - A generic type parameter.
+/// - `T: Clone + PartialEq + Default + 'static` - A generic type parameter.
 /// - `u32` - A 32-bit unsigned integer (`u32`).
 /// - `Instant` - A monotonic instant in time (`Instant`).
 fn seed_debounced<T: Clone + PartialEq + Default + 'static>(

@@ -14,7 +14,7 @@ impl<T: Clone + PartialEq + 'static> SuspenseHandle<T> {
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: Clone + PartialEq + 'static` - A generic type parameter.
     pub fn resolve_sync(&self, value: T) {
         self.get_phase().set(SuspensePhase::Resolved(value));
     }

@@ -174,7 +174,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: Clone + PartialEq + 'static` - A generic type parameter.
     ///
     /// # Returns
     ///

@@ -349,10 +349,10 @@ impl DrawList {
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: AsRef<str>` - A generic type parameter.
     /// - `Vector2D` - 2D vector (`Vector2D`).
     /// - `Color` - A `Color` parameter.
-    /// - `F` - A generic type parameter.
+    /// - `F: AsRef<str>` - A generic type parameter.
     pub fn fill_text<T, F>(&mut self, text: T, position: Vector2D, color: Color, font: F)
     where
         T: AsRef<str>,
@@ -1581,7 +1581,7 @@ impl RenderBackend for CanvasRenderer {
     ///
     /// # Arguments
     ///
-    /// - `C` - A `C` parameter.
+    /// - `C: AsRef<str>` - A generic type parameter.
     fn clear_color<C>(&self, color: C)
     where
         C: AsRef<str>,

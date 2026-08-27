@@ -27,7 +27,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     ///
     /// # Arguments
     ///
-    /// - `F` - A generic type parameter.
+    /// - `F: Fn() -> T + 'static` - A generic type parameter.
     pub fn new<F>(factory: F) -> Self
     where
         F: Fn() -> T + 'static,
@@ -103,7 +103,7 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     ///
     /// # Arguments
     ///
-    /// - `F` - A generic type parameter.
+    /// - `F: Fn() -> T + 'static` - A generic type parameter.
     pub fn change_factory<F>(&self, factory: F)
     where
         F: Fn() -> T + 'static,

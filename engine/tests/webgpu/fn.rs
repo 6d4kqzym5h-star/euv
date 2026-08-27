@@ -63,7 +63,7 @@ fn read_buffer_is_async() {
     ///
     /// # Arguments
     ///
-    /// - `F` - A generic type parameter.
+    /// - `F: Future` - A generic type parameter.
     fn assert_future<F>(_: F)
     where
         F: Future,
@@ -105,7 +105,7 @@ fn create_render_pipeline_full_signature_pinned() {
     /// # Arguments
     ///
     /// - `&WebGpuRenderer` - Shared reference to a `WebGpuRenderer`.
-    /// - `S` - A `S` parameter.
+    /// - `S: AsRef<str>` - A generic type parameter.
     /// - `&[VertexBufferLayout]` - Shared reference to a `[VertexBufferLayout]`.
     /// - `&str` - Shared reference to a `str`.
     /// - `&str` - Shared reference to a `str`.

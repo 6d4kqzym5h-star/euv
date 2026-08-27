@@ -105,7 +105,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `F` - A generic type parameter.
+    /// - `F: FnOnce() -> Fut + 'static` - A generic type parameter.
     pub fn refetch<F, Fut, E>(&self, factory: F)
     where
         F: FnOnce() -> Fut + 'static,

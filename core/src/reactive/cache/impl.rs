@@ -99,7 +99,7 @@ where
     ///
     /// # Arguments
     ///
-    /// - `K` - A `K` parameter.
+    /// - `K: Clone + Eq + Hash` - A generic type parameter.
     /// - `V` - A `V` parameter.
     ///
     /// # Returns

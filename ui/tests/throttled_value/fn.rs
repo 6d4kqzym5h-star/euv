@@ -14,7 +14,7 @@ fn base_time() -> Instant {
 /// # Arguments
 ///
 /// - `&ThrottledValue<T>` - Shared reference to a `ThrottledValue<T>`.
-/// - `T` - A generic type parameter.
+/// - `T: Clone + PartialEq + Default + 'static` - A generic type parameter.
 /// - `Instant` - A monotonic instant in time (`Instant`).
 fn seed_throttled<T: Clone + PartialEq + Default + 'static>(
     throttled: &ThrottledValue<T>,

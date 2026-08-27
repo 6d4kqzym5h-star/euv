@@ -11,7 +11,7 @@ impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: Clone + PartialEq + Default + 'static` - A generic type parameter.
     /// - `Instant` - A monotonic instant in time (`Instant`).
     pub fn set(&self, next: T, now: Instant) {
         self.get_state().set(DebounceState::Pending(now, next));

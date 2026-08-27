@@ -143,7 +143,7 @@ impl<T: ?Sized> EngineCell<T> {
     ///
     /// # Arguments
     ///
-    /// - `T` - A generic type parameter.
+    /// - `T: Sized` - A generic type parameter.
     pub fn new(value: T) -> Self
     where
         T: Sized,
