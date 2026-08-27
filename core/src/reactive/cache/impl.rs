@@ -6,16 +6,28 @@ where
 {
     /// Returns the current number of entries in the
     /// cache.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - The number of items in the collection.
     pub fn len(&self) -> usize {
         self.map.len()
     }
 
     /// Returns `true` if the cache is empty.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when the collection is empty.
     pub fn is_empty(&self) -> bool {
         self.map.is_empty()
     }
 
     /// Returns `true` if the cache is at capacity.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     pub fn is_full(&self) -> bool {
         self.map.len() >= self.capacity
     }
@@ -23,6 +35,14 @@ where
     /// Returns `true` if the cache contains a value for
     /// the given key. Does NOT update the recency (use
     /// `get` for that).
+    ///
+    /// # Arguments
+    ///
+    /// - `&K` - Shared reference to a `K`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     pub fn contains(&self, key: &K) -> bool {
         self.map.contains_key(key)
     }
@@ -32,6 +52,14 @@ where
     /// used.
     ///
     /// Returns `None` if the key is not in the cache.
+    ///
+    /// # Arguments
+    ///
+    /// - `&K` - Shared reference to a `K`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<V>` - The current value (or a snapshot thereof).
     pub fn get(&mut self, key: &K) -> Option<&V> {
         if self.map.contains_key(key) {
             // Promote the key to the front of the
@@ -48,6 +76,14 @@ where
     /// Returns the value for the given key without
     /// updating the recency. Useful for "is this cached?"
     /// checks that should not affect eviction order.
+    ///
+    /// # Arguments
+    ///
+    /// - `&K` - Shared reference to a `K`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<V>` - `Some(...)` on success, `None` otherwise.
     pub fn peek(&self, key: &K) -> Option<&V> {
         self.map.get(key)
     }
@@ -60,6 +96,15 @@ where
     /// evicted first.
     ///
     /// Returns the evicted entry, if any.
+    ///
+    /// # Arguments
+    ///
+    /// - `K: Clone + Eq + Hash` - A generic type parameter.
+    /// - `V` - A `V` parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<(K, V)>` - `Some(...)` on success, `None` otherwise.
     pub fn put(&mut self, key: K, value: V) -> Option<(K, V)> {
         // Capacity of 0 — silently drop.
         if self.capacity == 0 {
@@ -90,6 +135,14 @@ where
 
     /// Removes the entry for the given key, returning
     /// the removed value if any.
+    ///
+    /// # Arguments
+    ///
+    /// - `&K` - Shared reference to a `K`.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<V>` - `Some(...)` on success, `None` otherwise.
     pub fn remove(&mut self, key: &K) -> Option<V> {
         self.order.retain(|k: &K| k != key);
         self.map.remove(key)
@@ -103,6 +156,10 @@ where
 
     /// Returns an iterator over the entries in
     /// most-recently-used-first order.
+    ///
+    /// # Returns
+    ///
+    /// - `impl Iterator<Item` - A `impl Iterator<Item` value.
     pub fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
         // We can't return the VecDeque order directly
         // because the entries would be in order-deque
@@ -117,12 +174,20 @@ where
 
     /// Returns an iterator over the keys in
     /// most-recently-used-first order.
+    ///
+    /// # Returns
+    ///
+    /// - `impl Iterator<Item` - A `impl Iterator<Item` value.
     pub fn keys(&self) -> impl Iterator<Item = &K> {
         self.order.iter()
     }
 
     /// Returns an iterator over the values in
     /// most-recently-used-first order.
+    ///
+    /// # Returns
+    ///
+    /// - `impl Iterator<Item` - A `impl Iterator<Item` value.
     pub fn values(&self) -> impl Iterator<Item = &V> {
         self.order.iter().filter_map(|k: &K| self.map.get(k))
     }
@@ -132,6 +197,10 @@ where
     /// If the new capacity is smaller than the current
     /// size, the least-recently-used entries are
     /// evicted until the cache fits.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - A non-negative integer (`usize`).
     pub fn resize(&mut self, new_capacity: usize) {
         self.capacity = new_capacity;
         while self.map.len() > self.capacity {

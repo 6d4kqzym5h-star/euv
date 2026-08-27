@@ -336,6 +336,12 @@ impl Renderer {
     /// from `new_attrs`) and detaches them. The element's `data-euv-id`
     /// was read once by the caller (`patch_attributes`) and passed in
     /// here so this path does no extra attribute parsing.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[AttributeEntry]` - Shared reference to a `[AttributeEntry]`.
+    /// - `&HashMap<&str, &AttributeValue>` - Shared reference to a `HashMap<&str, &AttributeValue>`.
+    /// - `usize` - A non-negative integer (`usize`).
     fn detach_removed_event_handlers(
         &self,
         old_attrs: &[AttributeEntry],

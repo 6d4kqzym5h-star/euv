@@ -465,6 +465,11 @@ pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<Canv
 /// canvas shows a loading message instead of being blank. Uses an
 /// `SsaaCanvas` with a 2x scale factor on desktop and 1x on mobile for
 /// crisp text rendering.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&str` - Shared reference to a `str`.
 pub(crate) fn draw_game_3d_loading(target_selector: &str, color_source_selector: &str) {
     let Some(window_value): Option<Window> = window() else {
         return;

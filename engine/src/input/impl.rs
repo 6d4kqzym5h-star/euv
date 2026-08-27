@@ -491,6 +491,10 @@ impl InputState {
 /// Implements `Default` for `InputState` as a fresh empty state.
 impl Default for InputState {
     /// Constructs a default [`InputState`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `InputState` - A default-constructed instance with the documented initial state.
     fn default() -> InputState {
         InputState::new()
     }

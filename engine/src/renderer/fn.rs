@@ -4,6 +4,13 @@ use super::*;
 ///
 /// Mirrors the `SpriteSheet::draw_frame` fast path: the TRS matrix is composed
 /// in Rust (scale signs flip) and applied once, then reset to identity.
+///
+/// # Arguments
+///
+/// - `&CanvasRenderingContext2d` - Shared reference to a `CanvasRenderingContext2d`.
+/// - `&HtmlImageElement` - Shared reference to a `HtmlImageElement`.
+/// - `&Rect` - Shared reference to a `Rect`.
+/// - `&Transform2D` - Shared reference to a `Transform2D`.
 pub(crate) fn draw_sprite_immediate(
     context: &CanvasRenderingContext2d,
     image: &HtmlImageElement,
@@ -39,6 +46,14 @@ pub(crate) fn draw_sprite_immediate(
 }
 
 /// Renders the JS-side error into a `String` when present, otherwise `"<none>"`.
+///
+/// # Arguments
+///
+/// - `&JsValue` - Shared reference to a `JsValue`.
+///
+/// # Returns
+///
+/// - `String` - A `String` value.
 pub(crate) fn js_error_to_string(value: &JsValue) -> String {
     if let Some(s) = value.as_string() {
         s
@@ -58,6 +73,15 @@ pub(crate) fn js_error_to_string(value: &JsValue) -> String {
 /// (`depth16unorm`, `depth32float`, `depth24plus`) stay reachable
 /// from inside the engine even if a particular 2D-UI scene only
 /// picks one.
+///
+/// # Arguments
+///
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+///
+/// # Returns
+///
+/// - `'static str` - A `'static str` value.
 pub(crate) fn pick_depth_format(high_precision: bool, with_stencil: bool) -> &'static str {
     if with_stencil {
         WEBGPU_DEPTH_FORMAT_DEPTH24_PLUS_STENCIL8
@@ -80,6 +104,14 @@ pub(crate) fn pick_depth_format(high_precision: bool, with_stencil: bool) -> &'s
 /// (no further read-back, no MSAA resolve, no future sampling),
 /// otherwise returns the safe default `store` so the contents
 /// survive the pass.
+///
+/// # Arguments
+///
+/// - `bool` - A boolean (`bool`).
+///
+/// # Returns
+///
+/// - `'static str` - A `'static str` value.
 pub(crate) fn default_color_store_op(transient: bool) -> &'static str {
     if transient {
         WEBGPU_STORE_OP_DISCARD
@@ -92,6 +124,15 @@ pub(crate) fn default_color_store_op(transient: bool) -> &'static str {
 /// `GPUMapMode.READ` (`1`) and `GPUMapMode.WRITE` (`2`) can be OR'd
 /// together per the WebGPU spec; this helper centralises the
 /// combination so the integer constants stay reachable.
+///
+/// # Arguments
+///
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+///
+/// # Returns
+///
+/// - `u32` - A 32-bit unsigned integer.
 pub(crate) fn map_mode_for(read: bool, write: bool) -> u32 {
     let mut mode: u32 = 0;
     if read {
@@ -109,6 +150,18 @@ pub(crate) fn map_mode_for(read: bool, write: bool) -> u32 {
 /// caller asks for the corresponding capability. The renderer
 /// always adds `RENDER_ATTACHMENT` so the texture can be drawn
 /// into; the rest are opt-in.
+///
+/// # Arguments
+///
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+///
+/// # Returns
+///
+/// - `u32` - A 32-bit unsigned integer.
 pub(crate) fn texture_usage(
     render_target: bool,
     copy_src: bool,

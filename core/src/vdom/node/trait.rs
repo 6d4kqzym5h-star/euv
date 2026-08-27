@@ -5,5 +5,9 @@ use super::*;
 /// Signals implement this to produce a text node that auto-updates.
 pub trait AsReactiveText {
     /// Converts this value into a `VirtualNode::Text` with reactive signal binding.
+    ///
+    /// # Returns
+    ///
+    /// - `VirtualNode` - A `VirtualNode` value.
     fn as_reactive_text(&self) -> VirtualNode;
 }

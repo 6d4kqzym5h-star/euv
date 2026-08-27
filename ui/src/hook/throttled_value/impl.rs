@@ -16,6 +16,11 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
     /// `interval_ms = 0` collapses to "every `set` is
     /// immediately committed" — the cooldown branch is
     /// never taken.
+    ///
+    /// # Arguments
+    ///
+    /// - `T: Clone + PartialEq + Default + 'static` - A generic type parameter.
+    /// - `Instant` - A monotonic instant in time (`Instant`).
     pub fn set(&self, next: T, now: Instant) {
         if self.interval_ms == 0 {
             self.get_value().set(next);
@@ -45,6 +50,14 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
     ///
     /// Returns `true` when a pending value was committed,
     /// `false` otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// - `Instant` - A monotonic instant in time (`Instant`).
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     pub fn tick(&self, now: Instant) -> bool {
         match self.get_state().get() {
             ThrottleState::Idle => false,
@@ -74,6 +87,10 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
     }
 
     /// Returns the currently emitted value as a snapshot.
+    ///
+    /// # Returns
+    ///
+    /// - `T` - The current value (or a snapshot thereof).
     pub fn get(&self) -> T {
         self.get_value().get()
     }
@@ -81,6 +98,10 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
     /// Returns `true` when the throttle is in a cooldown
     /// window (recent `set` that has not yet had a chance
     /// to commit any pending follow-up).
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when a throttle delay is active.
     pub fn is_throttling(&self) -> bool {
         matches!(self.get_state().get(), ThrottleState::Cooldown(_))
     }
@@ -88,6 +109,14 @@ impl<T: Clone + PartialEq + Default + 'static> ThrottledValue<T> {
 
 impl<T: Clone + PartialEq + Debug + Default + 'static> Display for ThrottledValue<T> {
     /// Formats the [`ThrottledValue`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match &self.get_state().get() {
             ThrottleState::Idle => {

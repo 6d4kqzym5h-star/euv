@@ -201,6 +201,15 @@ pub fn euv_vconsole_drawer(node: VirtualNode<EuvVconsoleDrawerProps>) -> Virtual
 /// Always renders both the empty-state and the log-list containers, toggling
 /// visibility with CSS `height` + `overflow` so that the `if` arm-switch never triggers
 /// `render_full_replace` when the first log entry arrives.
+///
+/// # Arguments
+///
+/// - `Signal<Vec<ConsoleEntry>>` - A `Signal<Vec<ConsoleEntry>>` parameter.
+/// - `Signal<LogFilter>` - A `Signal<LogFilter>` parameter.
+///
+/// # Returns
+///
+/// - `VirtualNode` - A `VirtualNode` value.
 fn build_vconsole_log_nodes(
     logs: Signal<Vec<ConsoleEntry>>,
     filter: Signal<LogFilter>,

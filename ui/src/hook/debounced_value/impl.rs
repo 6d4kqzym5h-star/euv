@@ -8,6 +8,11 @@ impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
     /// Calling `set` repeatedly within `delay_ms` of each
     /// other means only the last value wins — that's the
     /// "debounce" contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `T: Clone + PartialEq + Default + 'static` - A generic type parameter.
+    /// - `Instant` - A monotonic instant in time (`Instant`).
     pub fn set(&self, next: T, now: Instant) {
         self.get_state().set(DebounceState::Pending(now, next));
     }
@@ -23,6 +28,14 @@ impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
     ///
     /// Returns `true` when a pending value was emitted,
     /// `false` otherwise.
+    ///
+    /// # Arguments
+    ///
+    /// - `Instant` - A monotonic instant in time (`Instant`).
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     pub fn tick(&self, now: Instant) -> bool {
         match self.get_state().get() {
             DebounceState::Idle => false,
@@ -49,12 +62,20 @@ impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
     }
 
     /// Returns the currently emitted value as a snapshot.
+    ///
+    /// # Returns
+    ///
+    /// - `T` - The current value (or a snapshot thereof).
     pub fn get(&self) -> T {
         self.get_value().get()
     }
 
     /// Returns `true` when a value is waiting to be
     /// emitted.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when a value is waiting to be emitted.
     pub fn is_pending(&self) -> bool {
         matches!(self.get_state().get(), DebounceState::Pending(_, _))
     }
@@ -62,6 +83,14 @@ impl<T: Clone + PartialEq + Default + 'static> DebouncedValue<T> {
 
 impl<T: Clone + PartialEq + Debug + Default + 'static> Display for DebouncedValue<T> {
     /// Formats the [`DebouncedValue`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let pending: &DebounceState<T> = &self.get_state().get();
         match pending {

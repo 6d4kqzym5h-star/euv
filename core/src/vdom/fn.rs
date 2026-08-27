@@ -5,6 +5,14 @@ use super::*;
 /// Returns `false` if the slice is empty (an empty list
 /// trivially has no keys; treating it as keyed would
 /// cause a fallback when both sides are empty).
+///
+/// # Arguments
+///
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+///
+/// # Returns
+///
+/// - `bool` - A boolean.
 pub fn all_have_keys(children: &[VirtualNode]) -> bool {
     !children.is_empty() && children.iter().all(VirtualNode::has_key)
 }
@@ -13,6 +21,15 @@ pub fn all_have_keys(children: &[VirtualNode]) -> bool {
 ///
 /// Dispatches to `diff_keyed` when both lists have keys
 /// on every node, otherwise falls back to `diff_positional`.
+///
+/// # Arguments
+///
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+///
+/// # Returns
+///
+/// - `Vec<DiffOp>` - A `Vec<DiffOp>` value.
 pub fn diff_children(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     if all_have_keys(old) && all_have_keys(new) {
         diff_keyed(old, new)
@@ -24,6 +41,15 @@ pub fn diff_children(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
 /// Keyed diff. Both slices must have keys on every node;
 /// nodes without keys are skipped (they are not eligible
 /// for keyed diffing).
+///
+/// # Arguments
+///
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+///
+/// # Returns
+///
+/// - `Vec<DiffOp>` - A `Vec<DiffOp>` value.
 pub fn diff_keyed(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     let mut ops: Vec<DiffOp> = Vec::new();
     // Build a set of new keys for fast removal check.
@@ -76,6 +102,15 @@ pub fn diff_keyed(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
 
 /// Positional diff. Patches in place by index, then
 /// inserts/removes at the tail.
+///
+/// # Arguments
+///
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+/// - `&[VirtualNode]` - Shared reference to a `[VirtualNode]`.
+///
+/// # Returns
+///
+/// - `Vec<DiffOp>` - A `Vec<DiffOp>` value.
 pub fn diff_positional(old: &[VirtualNode], new: &[VirtualNode]) -> Vec<DiffOp> {
     let mut ops: Vec<DiffOp> = Vec::new();
     let common_len: usize = old.len().min(new.len());

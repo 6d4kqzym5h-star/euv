@@ -1,6 +1,15 @@
 use super::*;
 
 /// Builds the human-readable log line for a render-count snapshot.
+/// Helper body of the `create_log_data` free function.
+///
+/// # Arguments
+///
+/// - `i32` - A 32-bit signed integer (`i32`).
+///
+/// # Returns
+///
+/// - `String` - A `String` value.
 fn create_log_data(times: i32) -> String {
     format!("Updated: render count = {times}")
 }

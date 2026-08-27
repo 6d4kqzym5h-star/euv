@@ -216,6 +216,10 @@ fn game_2d_canvas_tab() -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - The WebGPU tab virtual DOM tree.
+///
+/// # Arguments
+///
+/// - `UseGame2DWebGpu` - A `UseGame2DWebGpu` parameter.
 fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
     let game: UseGame2D = use_game_2d_state();
     let balls_store: Signal<BallStore> = App::use_signal(|| {
@@ -371,6 +375,10 @@ fn webgl_status_text(loaded: bool, active: bool, init_error_code: &str) -> &'sta
 /// # Returns
 ///
 /// - `VirtualNode` - The WebGL tab virtual DOM tree.
+///
+/// # Arguments
+///
+/// - `UseGame2DWebGl` - A `UseGame2DWebGl` parameter.
 fn game_2d_webgl_tab(state: UseGame2DWebGl) -> VirtualNode {
     let game: UseGame2D = use_game_2d_state();
     let balls_store: Signal<BallStore> = App::use_signal(|| {

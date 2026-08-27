@@ -789,6 +789,10 @@ impl HtmlDynamicTag {
     /// dynamic tag. The result is shared between the native-element fallback
     /// arm and each component arm (which may splice its non-prop entries
     /// back into the component's element).
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<proc_macro2::TokenStream>` - A `Vec<proc_macro2::TokenStream>` value.
     fn attribute_entry_tokens(&self) -> Vec<proc_macro2::TokenStream> {
         self.get_attributes()
             .iter()
@@ -813,6 +817,17 @@ impl HtmlDynamicTag {
     /// attributes that map to props fields, then splices any remaining
     /// entries (class / style / event handlers) into the returned element's
     /// attribute list.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Shared reference to a `str`.
+    /// - `&ComponentInfo` - Shared reference to a `ComponentInfo`.
+    /// - `&[proc_macro2::TokenStream]` - Shared reference to a `[proc_macro2::TokenStream]`.
+    /// - `&[proc_macro2::TokenStream]` - Shared reference to a `[proc_macro2::TokenStream]`.
+    ///
+    /// # Returns
+    ///
+    /// - `proc_macro2::TokenStream` - A `proc_macro2::TokenStream` value.
     fn component_match_arm_tokens(
         &self,
         fn_name: &str,
@@ -869,6 +884,15 @@ impl HtmlDynamicTag {
     /// Builds the `field: expr` tokens for the props literal of a single
     /// dynamic-tag component, filtering attributes down to the props fields
     /// and converting each via the standard per-variant helpers.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[String]` - Shared reference to a `[String]`.
+    /// - `&HashMap<String, String>` - Shared reference to a `HashMap<String, String>`.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<proc_macro2::TokenStream>` - A `Vec<proc_macro2::TokenStream>` value.
     fn dyn_prop_field_tokens(
         &self,
         props_fields: &[String],
@@ -895,6 +919,14 @@ impl HtmlDynamicTag {
     /// Selects the non-prop attribute entries (class, style, event handlers)
     /// by indexing into the shared `attr_tokens` vec, so the emitted code
     /// reuses the already-built `AttributeEntry` literals.
+    ///
+    /// # Arguments
+    ///
+    /// - `&[proc_macro2::TokenStream]` - Shared reference to a `[proc_macro2::TokenStream]`.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<proc_macro2::TokenStream>` - A `Vec<proc_macro2::TokenStream>` value.
     fn dyn_non_prop_attr_tokens(
         &self,
         attr_tokens: &[proc_macro2::TokenStream],
@@ -978,6 +1010,10 @@ impl HtmlElement {
     /// appending each child node to the resolved target element
     /// (rather than to the placeholder marker that lives in the
     /// declared position).
+    ///
+    /// # Returns
+    ///
+    /// - `proc_macro2::TokenStream` - A `proc_macro2::TokenStream` value.
     fn portal_element_tokens(&self) -> proc_macro2::TokenStream {
         // Find the `target:` attribute. We refuse to silently fall
         // back to `"body"` here because that would mask wiring
@@ -1057,6 +1093,16 @@ impl HtmlElement {
     /// Produces a `<component-name>(VirtualNode::Element { ... })` invocation
     /// where the element wraps the props struct initialization and the
     /// element's own children.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Shared reference to a `str`.
+    /// - `&Ident` - Shared reference to a `Ident`.
+    /// - `Span` - A `Span` parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `proc_macro2::TokenStream` - A `proc_macro2::TokenStream` value.
     fn component_call_tokens(
         &self,
         tag_name: &str,
@@ -1092,6 +1138,14 @@ impl HtmlElement {
     /// Builds the `field: value` pairs used inside the Props struct literal
     /// for a component element. Each attribute value is converted via the
     /// appropriate helper so the resulting literal is well-typed.
+    ///
+    /// # Arguments
+    ///
+    /// - `&HashMap<String, String>` - Shared reference to a `HashMap<String, String>`.
+    ///
+    /// # Returns
+    ///
+    /// - `Vec<proc_macro2::TokenStream>` - A `Vec<proc_macro2::TokenStream>` value.
     fn prop_field_tokens(
         &self,
         props_field_types: &HashMap<String, String>,
@@ -1110,6 +1164,14 @@ impl HtmlElement {
     ///
     /// Produces a `VirtualNode::Element { ... }` literal with the tag name,
     /// collected attribute entries, flattened children, and optional `key`.
+    ///
+    /// # Arguments
+    ///
+    /// - `&proc_macro2::TokenStream` - Shared reference to a `proc_macro2::TokenStream`.
+    ///
+    /// # Returns
+    ///
+    /// - `proc_macro2::TokenStream` - A `proc_macro2::TokenStream` value.
     fn native_element_tokens(
         &self,
         tag_literal: &proc_macro2::TokenStream,

@@ -1,5 +1,10 @@
 use super::*;
 
+/// Helper body of the `fresh_state` free function.
+///
+/// # Returns
+///
+/// - `TransitionState` - A `TransitionState` value.
 fn fresh_state() -> TransitionState {
     TransitionState::new(
         Signal::create(TransitionPhase::Exited),
@@ -8,6 +13,16 @@ fn fresh_state() -> TransitionState {
     )
 }
 
+/// Helper body of the `seeded_state` free function.
+///
+/// # Arguments
+///
+/// - `TransitionPhase` - A `TransitionPhase` parameter.
+/// - `f64` - A 64-bit float (`f64`).
+///
+/// # Returns
+///
+/// - `TransitionState` - A `TransitionState` value.
 fn seeded_state(phase: TransitionPhase, progress: f64) -> TransitionState {
     TransitionState::new(
         Signal::create(phase),

@@ -17,6 +17,14 @@ impl ErrorBoundary {
     /// returned wrapped in `Ok`. The closure is
     /// wrapped in `AssertUnwindSafe` so it does not
     /// have to satisfy `UnwindSafe`.
+    ///
+    /// # Arguments
+    ///
+    /// - `F: FnOnce() -> R + UnwindSafe` - A generic type parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<R, String>` - Result of the operation; an `Err` variant on failure.
     pub fn try_with<F, R>(&self, closure: F) -> Result<R, String>
     where
         F: FnOnce() -> R + UnwindSafe,
@@ -55,6 +63,14 @@ impl Default for ErrorBoundary {
 /// Formatting / debug-printing for [`ErrorBoundary`].
 impl Display for ErrorBoundary {
     /// Formats the [`ErrorBoundary`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "ErrorBoundary({:?})", self.get_phase().get())
     }
@@ -63,6 +79,14 @@ impl Display for ErrorBoundary {
 /// Equality comparison for [`ErrorBoundaryPhase`].
 impl PartialEq for ErrorBoundaryPhase {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (ErrorBoundaryPhase::Healthy, ErrorBoundaryPhase::Healthy) => true,

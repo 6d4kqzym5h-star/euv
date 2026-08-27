@@ -2,6 +2,14 @@ use super::*;
 
 impl<T: PartialEq> PartialEq for LoadState<T> {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (LoadState::Pending, LoadState::Pending) => true,
@@ -16,6 +24,10 @@ impl<T: PartialEq> PartialEq for LoadState<T> {
 impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Creates a new lazy component with the given
     /// factory. The factory is NOT called yet.
+    ///
+    /// # Arguments
+    ///
+    /// - `F: Fn() -> T + 'static` - A generic type parameter.
     pub fn new<F>(factory: F) -> Self
     where
         F: Fn() -> T + 'static,
@@ -42,6 +54,10 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
 
     /// Reads the value, calling the factory on the first
     /// call. Subsequent calls return the cached value.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<T>` - The current value (or a snapshot thereof).
     pub fn get(&self) -> Option<T> {
         match self.get_state().get() {
             LoadState::Loaded(value) => Some(value),
@@ -64,6 +80,10 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// This method is for the rare case where you already
     /// know the value was loaded and you want to inspect
     /// it without triggering a synchronous factory call.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<T>` - `Some(value)` when an asynchronously-loaded value is available, otherwise `None`.
     pub fn loaded(&self) -> Option<T> {
         match self.get_state().get() {
             LoadState::Loaded(value) => Some(value),
@@ -80,6 +100,10 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
     /// Replaces the factory. The state is reset to
     /// `Pending` so the next `get()` runs the new
     /// factory.
+    ///
+    /// # Arguments
+    ///
+    /// - `F: Fn() -> T + 'static` - A generic type parameter.
     pub fn change_factory<F>(&self, factory: F)
     where
         F: Fn() -> T + 'static,
@@ -118,6 +142,14 @@ impl<T: Clone + PartialEq + 'static> LazyComponent<T> {
 
 impl<T: Clone + PartialEq + Debug + 'static> Debug for LazyComponent<T> {
     /// Formats the [`LazyComponent`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         f.debug_struct("LazyComponent")
             .field("state", &self.get_state().get())

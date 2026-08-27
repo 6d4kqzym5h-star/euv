@@ -5,5 +5,9 @@ use super::*;
 pub trait HookContextI18nExt {
     /// Returns the `I18n` for the current hook context
     /// slot.
+    ///
+    /// # Returns
+    ///
+    /// - `I18n` - A `I18n` value.
     fn i18n() -> I18n;
 }

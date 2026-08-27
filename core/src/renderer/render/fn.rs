@@ -11,6 +11,10 @@ use super::*;
 /// OPT 8: per-page `Document` cache via `thread_local!`. The lazy
 /// `OnceCell`-style fallback makes this safe even before
 /// `App::mount` has finished initialising.
+///
+/// # Returns
+///
+/// - `Option<Document>` - `Some(...)` on success, `None` otherwise.
 pub(crate) fn cached_document() -> Option<Document> {
     DOCUMENT_CACHE.with(|cell: &UnsafeCell<Option<Document>>| {
         let cached_ptr: *mut Option<Document> = cell.get();

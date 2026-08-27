@@ -263,6 +263,10 @@ impl Animator {
 /// first when both are in scope, so there is no recursion.
 impl Updatable for Animator {
     /// Advances the simulation by `delta_time` seconds.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - Seconds elapsed since the previous update.
     fn update(&mut self, delta_time: f64) {
         Animator::update(self, delta_time);
     }
@@ -328,6 +332,10 @@ impl Animator {
 /// Implements `Default` for `Animator` as a new idle animator.
 impl Default for Animator {
     /// Constructs a default [`Animator`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `Animator` - A default-constructed instance with the documented initial state.
     fn default() -> Animator {
         Animator::create()
     }

@@ -8,6 +8,15 @@ use super::*;
 /// literal `{name}` token. No escaping is performed — the
 /// literal text `{` in a translation is treated as the
 /// start of a placeholder.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&HashMap<&'static str, &'static str>` - Shared reference to a `HashMap<&'static str, &'static str>`.
+///
+/// # Returns
+///
+/// - `String` - A `String` value.
 pub(crate) fn interpolate(template: &str, vars: &HashMap<&'static str, &'static str>) -> String {
     let mut output: String = String::with_capacity(template.len());
     let mut chars: Chars<'_> = template.chars();

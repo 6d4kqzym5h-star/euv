@@ -218,6 +218,10 @@ fn game_3d_canvas_tab() -> VirtualNode {
 /// # Returns
 ///
 /// - `VirtualNode` - The WebGPU tab virtual DOM tree.
+///
+/// # Arguments
+///
+/// - `UseGame3DWebGpu` - A `UseGame3DWebGpu` parameter.
 fn game_3d_webgpu_tab(state: UseGame3DWebGpu) -> VirtualNode {
     let game: UseGame3D = use_game_3d_state();
     let cubes_store: Signal<CubeStore> = App::use_signal(|| {
@@ -374,6 +378,10 @@ fn webgl_status_text(loaded: bool, active: bool, init_error_code: &str) -> &'sta
 /// # Returns
 ///
 /// - `VirtualNode` - The WebGL tab virtual DOM tree.
+///
+/// # Arguments
+///
+/// - `UseGame3DWebGl` - A `UseGame3DWebGl` parameter.
 fn game_3d_webgl_tab(state: UseGame3DWebGl) -> VirtualNode {
     let game: UseGame3D = use_game_3d_state();
     let cubes_store: Signal<CubeStore> = App::use_signal(|| {

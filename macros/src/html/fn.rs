@@ -1863,6 +1863,17 @@ pub(crate) fn attr_value_to_entry_value_tokens(
 /// expression for the component's Props struct field. Used by both
 /// `HtmlElement::to_tokens` (for direct component tags) and
 /// `HtmlDynamicTag::to_tokens` (for dynamic tags dispatched to a component).
+///
+/// # Arguments
+///
+/// - `&Ident` - Shared reference to a `Ident`.
+/// - `&str` - Shared reference to a `str`.
+/// - `&HtmlAttrValue` - Shared reference to a `HtmlAttrValue`.
+/// - `&HashMap<String, String>` - Shared reference to a `HashMap<String, String>`.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - A `proc_macro2::TokenStream` value.
 pub(crate) fn prop_field_token(
     field_ident: &Ident,
     key_string: &str,

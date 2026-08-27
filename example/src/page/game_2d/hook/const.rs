@@ -139,6 +139,15 @@ struct VertexOutput {
 
 @vertex
 /// WGSL vertex shader entry point.
+/// Helper body of the `vs_main` free function.
+///
+/// # Arguments
+///
+/// - `u32` - A 32-bit unsigned integer (`u32`).
+///
+/// # Returns
+///
+/// - `VertexOutput` - A `VertexOutput` value.
 fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
     var corners = array<vec2<f32>, 6>(
         vec2<f32>(-1.0, -1.0),
@@ -164,6 +173,15 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
 
 @fragment
 /// WGSL fragment shader entry point.
+/// Helper body of the `fs_main` free function.
+///
+/// # Arguments
+///
+/// - `VertexOutput` - A `VertexOutput` parameter.
+///
+/// # Returns
+///
+/// - `@location(0) vec4<f32>` - A `@location(0) vec4<f32>` value.
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if dot(in.uv, in.uv) > 1.0 {
         discard;

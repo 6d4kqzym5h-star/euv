@@ -482,6 +482,11 @@ pub(crate) fn acquire_game_2d_ssaa_canvas() -> Option<(HtmlCanvasElement, SsaaCa
 /// matches the surrounding theme. The two selectors coincide for the
 /// Canvas 2D tab; for the GPU tabs the overlay canvas is the target
 /// while the GPU canvas is the colour source.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&str` - Shared reference to a `str`.
 pub(crate) fn draw_game_2d_loading(target_selector: &str, color_source_selector: &str) {
     let Some(window_value): Option<Window> = window() else {
         return;
@@ -776,6 +781,10 @@ pub(crate) fn start_game_2d_loop(
 /// 3. active
 /// 4. loop_started
 /// 5. init_error_code
+///
+/// # Returns
+///
+/// - `UseGame2DWebGpu` - A `UseGame2DWebGpu` value.
 pub(crate) fn use_game_2d_webgpu_state() -> UseGame2DWebGpu {
     UseGame2DWebGpu {
         fps: App::use_signal(|| 0.0),

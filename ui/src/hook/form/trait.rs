@@ -9,5 +9,9 @@ use super::*;
 pub trait HookContextFormExt {
     /// Returns the `FormState` for the current hook
     /// context slot.
+    ///
+    /// # Returns
+    ///
+    /// - `FormState` - A `FormState` value.
     fn form() -> FormState;
 }

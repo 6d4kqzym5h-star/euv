@@ -20,11 +20,19 @@ impl Toggle {
     }
 
     /// Replaces the value with `next`.
+    ///
+    /// # Arguments
+    ///
+    /// - `bool` - A boolean (`bool`).
     pub fn set(&self, next: bool) {
         self.get_value().set(next);
     }
 
     /// Returns the current value as a snapshot.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - The current value (or a snapshot thereof).
     pub fn get(&self) -> bool {
         self.get_value().get()
     }
@@ -33,6 +41,14 @@ impl Toggle {
 /// Formatting / debug-printing for [`Toggle`].
 impl Display for Toggle {
     /// Formats the [`Toggle`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "Toggle({})", self.get_value().get())
     }
@@ -41,6 +57,14 @@ impl Display for Toggle {
 /// Equality comparison for [`Toggle`].
 impl PartialEq for Toggle {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, other: &Self) -> bool {
         self.get_value().get() == other.get_value().get()
     }

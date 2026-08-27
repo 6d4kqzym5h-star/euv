@@ -30,6 +30,11 @@ const ENV_KEY_EUV_BUILD_TIMESTAMP_KEY: &str = "EUV_BUILD_TIMESTAMP";
 const BUILD_STATE_FILE_NAME: &str = ".euv_build_state";
 
 /// Entry point of the build script.
+/// Helper body of the `main` free function.
+///
+/// # Returns
+///
+/// - `Result<(), Box<dyn std::error::Error>>` - Result of the operation; an `Err` variant on failure.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir: String = env!("CARGO_MANIFEST_DIR").to_string();
     let out_dir: String = var("OUT_DIR")?;

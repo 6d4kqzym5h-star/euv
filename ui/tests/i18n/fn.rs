@@ -1,5 +1,10 @@
 use super::*;
 
+/// Helper body of the `fresh_i18n` free function.
+///
+/// # Returns
+///
+/// - `I18n` - A `I18n` value.
 fn fresh_i18n() -> I18n {
     I18n::new(
         Signal::create(String::from("en")),
@@ -8,6 +13,11 @@ fn fresh_i18n() -> I18n {
     )
 }
 
+/// Helper body of the `seeded_i18n` free function.
+///
+/// # Returns
+///
+/// - `I18n` - A `I18n` value.
 fn seeded_i18n() -> I18n {
     let mut messages: HashMap<String, HashMap<String, String>> = HashMap::new();
     let mut en: HashMap<String, String> = HashMap::new();
