@@ -797,12 +797,21 @@ impl HtmlDynamicTag {
         self.get_attributes()
             .iter()
             .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = extract_attr_key_string(key);
-                // OPT 2: literal attribute keys become `Cow::Borrowed`,
-                // matching the static-element fast path.
+                // OPT 2: emit a runtime expression for the attribute name so
+                // dynamic braced keys like `{key_signal.get()}` evaluate to
+                // the current value at render time. Static literal/ident keys
+                // produce the same `Cow::Owned(#name.to_string())` shape and
+                // collapse to the same string the compiler used to embed.
+                let key_name_token: proc_macro2::TokenStream = extract_attr_key_tokens(key);
                 let attr_name_token: proc_macro2::TokenStream =
-                    quote! { ::std::borrow::Cow::Borrowed(#key_string) };
-                let ctx: AttrEntryContext<'_> = AttrEntryContext::new(value, &key_string);
+                    quote! { ::std::borrow::Cow::Owned(#key_name_token) };
+                // `key_str` is only consulted to detect special keys
+                // (`class`, `style`, `on*`, `children`, `inner_html`) inside
+                // `attr_value_to_entry_value_tokens`; a dynamic braced key
+                // cannot match any of those (none of them start with `{`), so
+                // passing the empty fallback is safe.
+                let key_str: String = extract_attr_key_string(key);
+                let ctx: AttrEntryContext<'_> = AttrEntryContext::new(value, &key_str);
                 let value_tokens: proc_macro2::TokenStream = attr_value_to_entry_value_tokens(&ctx);
                 quote! {
                     ::euv::AttributeEntry::new(#attr_name_token, #value_tokens)
@@ -1181,16 +1190,19 @@ impl HtmlElement {
             .get_attributes()
             .iter()
             .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                let key_string: String = extract_attr_key_string(key);
-                // OPT 2: emit `Cow::Borrowed("class")` for literal
-                // attribute keys so the entire DOM tree shares a single
-                // static-string slice per attribute name. The `Cow`
-                // widening keeps the door open for runtime-built keys
-                // (none currently exist in the framework, but the
-                // `html!` macro is the only place that constructs
-                // `AttributeEntry` so this is a safe extension point).
+                // OPT 2: emit a runtime expression for the attribute name so
+                // dynamic braced keys like `{key_signal.get()}` evaluate to
+                // the current value at render time. Static literal/ident keys
+                // produce `Cow::Owned(#name.to_string())`, which the browser
+                // happily treats the same as `Cow::Borrowed(#name)` after the
+                // single `String::from` allocation.
+                let key_name_token: proc_macro2::TokenStream = extract_attr_key_tokens(key);
                 let attr_name_token: proc_macro2::TokenStream =
-                    quote! { ::std::borrow::Cow::Borrowed(#key_string) };
+                    quote! { ::std::borrow::Cow::Owned(#key_name_token) };
+                // `key_string` is still needed to route the well-known keys
+                // (`key`, `class`, `style`, `on*`, `children`, `inner_html`)
+                // through their specialised branches below.
+                let key_string: String = extract_attr_key_string(key);
                 if key_string == ATTR_KEY_KEY {
                     if let HtmlAttrValue::Expr(expr) = value {
                         key_expr = Some(quote! { Some((#expr).into()) });

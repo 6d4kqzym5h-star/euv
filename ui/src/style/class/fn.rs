@@ -1319,17 +1319,21 @@ class! {
     // ═══════════════════════════════════════════════════════════════════════════
 
     pub c_custom_attrs_demo {
-        color: "inherit";
+        // Use the theme foreground token (not `inherit`) so the text inside
+        // the dynamic demo block stays readable when the block itself
+        // applies a user-supplied background (e.g. `background-color: #000000`)
+        // that otherwise paints the inherited text the same colour.
+        color: var!(foreground);
         box-sizing: "border-box";
     }
 
     pub c_demo_text {
-        color: "inherit";
+        color: var!(foreground);
         margin-bottom: var!(gap-component);
     }
 
     pub c_demo_text_muted {
-        color: "inherit";
+        color: var!(foreground);
         opacity: "1";
         font-size: var!(font-base);
         margin-bottom: "0px";
@@ -2864,7 +2868,12 @@ class! {
         }
         : prop_value;
         margin-top: var!(gap-component);
-        color: "inherit";
+        // Pin text colour to the theme foreground instead of inheriting it,
+        // because the user-supplied dynamic property often changes the
+        // background (e.g. `background-color: #000000`); `inherit` would
+        // then paint the text the same colour and make the demo body
+        // invisible.
+        color: var!(foreground);
         margin-top: var!(space-md);
     }
 
