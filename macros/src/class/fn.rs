@@ -210,7 +210,15 @@ fn collect_dynamic_param_names_from_properties(
 ) {
     for (key, value) in properties {
         if let ClassPropKey::Dynamic(tokens) = key {
-            collect_braced_idents(tokens, dynamic_param_names);
+            // The parser strips the surrounding `{ }` when building a dynamic
+            // key (see `parse_class_prop_key`), so the bare ident token stream
+            // it stores no longer has a brace group for `collect_braced_idents`
+            // to latch onto. Scan the ident stream directly here so a key like
+            // `{prop_key}` still registers `prop_key` as a dynamic class
+            // parameter; without this the macro would emit a non-unique
+            // type-based class name (e.g. `c_demo-&str-&str`) that browsers
+            // cannot match.
+            collect_all_idents(tokens, dynamic_param_names);
         }
         let ClassPropValue::Expr(tokens) = value;
         collect_braced_idents(tokens, dynamic_param_names);

@@ -1778,9 +1778,10 @@ pub(crate) fn style_value_to_attribute_value_tokens(
 
 /// Extracts the clean attribute key string from a token stream.
 ///
-/// Handles two token formats:
-/// - `Ident` tokens: `key.to_string()` may include `r#` prefix which is stripped.
-/// - `LitStr` tokens: `key.to_string()` includes surrounding quotes which are stripped.
+/// For a static literal/ident key (e.g. `"data-foo"` or `class`) the result is
+/// the literal text. For a dynamic braced key (e.g. `{expr}`) the result is
+/// the empty string — the runtime attribute name is computed from `expr` and
+/// is therefore unknowable at macro-expansion time.
 ///
 /// # Arguments
 ///
@@ -1790,13 +1791,53 @@ pub(crate) fn style_value_to_attribute_value_tokens(
 ///
 /// - `String` - The clean attribute key string.
 pub(crate) fn extract_attr_key_string(key: &proc_macro2::TokenStream) -> String {
+    // A dynamic braced key keeps no brace group in its token stream (the
+    // parser strips the surrounding `{ }` before storing the inner `Expr`),
+    // so we cannot distinguish it from a bare ident here on shape alone.
+    // Distinguish by checking whether the very first token is a string
+    // literal (only the literal/ident parser branches produce quoted keys);
+    // anything else falls through to the raw token text, which the caller
+    // matches against known special key names (`class`, `style`, `on*`,
+    // `target`, ...). A braced dynamic key such as `{dynamic_key.get()}`
+    // therefore yields the empty string, signalling "no compile-time name".
     let raw: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
     if raw.starts_with(CHAR_DOUBLE_QUOTE) && raw.ends_with(CHAR_DOUBLE_QUOTE) {
         raw[1..raw.len() - 1].to_string()
+    } else if raw.starts_with(CHAR_DOUBLE_QUOTE) {
+        raw[1..].to_string()
+    } else if raw.is_empty() {
+        raw
     } else {
         raw.strip_prefix(RAW_IDENT_PREFIX)
             .unwrap_or(&raw)
             .to_string()
+    }
+}
+
+/// Builds a token stream that evaluates to the runtime attribute name as a
+/// `String`.
+///
+/// - Static literal/ident keys produce `#name.to_string()`.
+/// - Dynamic braced keys produce `( #inner_expr ).to_string()`, which is
+///   evaluated at runtime so the attribute name tracks the current signal
+///   value.
+///
+/// The result is intended to be wrapped in `Cow::Owned` at the call site so
+/// every key path produces an owned name; for the static case this is
+/// equivalent to `Cow::Borrowed` after one `String::from`.
+pub(crate) fn extract_attr_key_tokens(key: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    let raw: String = key.to_string().replace(CHAR_SPACE, STR_EMPTY);
+    if raw.starts_with(CHAR_DOUBLE_QUOTE) && raw.ends_with(CHAR_DOUBLE_QUOTE) {
+        let inner: String = raw[1..raw.len() - 1].to_string();
+        quote! { #inner.to_string() }
+    } else if raw.is_empty() {
+        quote! { String::new() }
+    } else {
+        // Either a bare ident key (`class`, `style`, `onclick`, ...) or a
+        // dynamic braced key whose surrounding braces were stripped by the
+        // parser. Both are valid Rust expressions that evaluate to a name at
+        // runtime when wrapped in `(#key).to_string()`.
+        quote! { (#key).to_string() }
     }
 }
 
