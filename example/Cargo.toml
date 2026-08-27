@@ -23,16 +23,16 @@ exclude = [
 
 [dependencies]
 euv = { workspace = true }
-euv-engine = { workspace = true }
 euv-ui = { workspace = true }
+euv-engine = { workspace = true }
 
 serde = { workspace = true }
+qrcode = { workspace = true, features = ["svg"] }
 serde_json = { workspace = true }
 lombok-macros = { workspace = true }
 compare_version = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 console_error_panic_hook = { workspace = true }
-qrcode = { workspace = true, features = ["svg"] }
 
 [build-dependencies]
 toml = { workspace = true }
