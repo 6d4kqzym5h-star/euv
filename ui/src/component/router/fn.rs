@@ -2,6 +2,14 @@ use super::*;
 
 /// Normalizes a path by stripping a trailing `/` (except
 /// for the root path `/`, which stays as `/`).
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+///
+/// # Returns
+///
+/// - `String` - A `String` value.
 pub fn normalize_path(path: &str) -> String {
     if path == "/" {
         return "/".to_string();
@@ -18,6 +26,15 @@ pub fn normalize_path(path: &str) -> String {
 ///   (so `/settings` matches `/settings/profile`).
 /// - The root route `/` matches everything except the
 ///   empty string.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&str` - Shared reference to a `str`.
+///
+/// # Returns
+///
+/// - `bool` - A boolean.
 pub fn route_matches(route_path: &str, request_path: &str) -> bool {
     let normalized_route: String = normalize_path(route_path);
     let normalized_request: String = normalize_path(request_path);
@@ -47,6 +64,15 @@ pub fn route_matches(route_path: &str, request_path: &str) -> bool {
 /// existing "first match wins" semantics).
 ///
 /// Returns `None` if no route matches.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&'a [NestedRouteConfig]` - Shared reference to a `'a [NestedRouteConfig]`.
+///
+/// # Returns
+///
+/// - `Option<'a NestedRouteConfig>` - `Some(...)` on success, `None` otherwise.
 pub fn find_active_route<'a>(
     path: &str,
     routes: &'a [NestedRouteConfig],
@@ -90,6 +116,15 @@ pub fn find_active_route<'a>(
 /// This is the "breadcrumb" chain that the layout
 /// component walks to render `<Outlet>` for each parent.
 /// Returns an empty vec if no route matches.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&'a [NestedRouteConfig]` - Shared reference to a `'a [NestedRouteConfig]`.
+///
+/// # Returns
+///
+/// - `Vec<'a NestedRouteConfig>` - A `Vec<'a NestedRouteConfig>` value.
 pub fn route_chain<'a>(path: &str, routes: &'a [NestedRouteConfig]) -> Vec<&'a NestedRouteConfig> {
     let mut chain: Vec<&'a NestedRouteConfig> = Vec::new();
     build_chain(path, routes, &mut chain);

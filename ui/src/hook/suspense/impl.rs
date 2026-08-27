@@ -11,12 +11,20 @@ impl<T: Clone + PartialEq + 'static> SuspenseHandle<T> {
 
     /// Transitions the phase to `Resolved(value)`. Works
     /// on every target.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - A generic type parameter.
     pub fn resolve_sync(&self, value: T) {
         self.get_phase().set(SuspensePhase::Resolved(value));
     }
 
     /// Transitions the phase to `Failed(message)`. Works
     /// on every target.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - A `String` parameter.
     pub fn fail(&self, message: String) {
         self.get_phase().set(SuspensePhase::Failed(message));
     }
@@ -38,6 +46,14 @@ impl<T: Clone + PartialEq + 'static> Default for SuspenseHandle<T> {
 
 impl<T: Clone + PartialEq + Debug + 'static> Display for SuspenseHandle<T> {
     /// Formats the [`SuspenseHandle`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "SuspenseHandle({:?})", self.get_phase().get())
     }
@@ -45,6 +61,14 @@ impl<T: Clone + PartialEq + Debug + 'static> Display for SuspenseHandle<T> {
 
 impl<T: PartialEq> PartialEq for SuspensePhase<T> {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (SuspensePhase::Pending, SuspensePhase::Pending) => true,

@@ -174,6 +174,10 @@ impl SceneManager {
 /// first when both are in scope, so there is no recursion.
 impl Updatable for SceneManager {
     /// Advances the simulation by `delta_time` seconds.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - Seconds elapsed since the previous update.
     fn update(&mut self, delta_time: f64) {
         SceneManager::update(self, delta_time);
     }
@@ -182,6 +186,10 @@ impl Updatable for SceneManager {
 /// Implements `Default` for `SceneManager` as a new empty manager.
 impl Default for SceneManager {
     /// Constructs a default [`SceneManager`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `SceneManager` - A default-constructed instance with the documented initial state.
     fn default() -> SceneManager {
         SceneManager::new()
     }

@@ -80,6 +80,10 @@ impl Camera2D {
 /// Implements `Default` for `Camera2D` as a camera at the origin with 800x600 viewport.
 impl Default for Camera2D {
     /// Constructs a default [`Camera2D`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `Camera2D` - A default-constructed instance with the documented initial state.
     fn default() -> Camera2D {
         Camera2D::create(800.0, 600.0)
     }
@@ -250,6 +254,13 @@ impl DrawList {
     }
 
     /// Records a fill-rectangle command.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `Color` - A `Color` parameter.
     pub fn fill_rect(&mut self, position: Vector2D, width: f64, height: f64, color: Color) {
         self.get_mut_commands().push(DrawCommand::FillRect {
             position,
@@ -260,6 +271,14 @@ impl DrawList {
     }
 
     /// Records a stroke-rectangle command.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `Color` - A `Color` parameter.
+    /// - `f64` - A 64-bit float (`f64`).
     pub fn stroke_rect(
         &mut self,
         position: Vector2D,
@@ -278,6 +297,12 @@ impl DrawList {
     }
 
     /// Records a fill-circle command.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `Color` - A `Color` parameter.
     pub fn fill_circle(&mut self, center: Vector2D, radius: f64, color: Color) {
         self.get_mut_commands().push(DrawCommand::FillCircle {
             center,
@@ -287,6 +312,13 @@ impl DrawList {
     }
 
     /// Records a stroke-circle command.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `Color` - A `Color` parameter.
+    /// - `f64` - A 64-bit float (`f64`).
     pub fn stroke_circle(&mut self, center: Vector2D, radius: f64, color: Color, line_width: f64) {
         self.get_mut_commands().push(DrawCommand::StrokeCircle {
             center,
@@ -297,6 +329,13 @@ impl DrawList {
     }
 
     /// Records a line-segment command.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `Color` - A `Color` parameter.
+    /// - `f64` - A 64-bit float (`f64`).
     pub fn draw_line(&mut self, start: Vector2D, end: Vector2D, color: Color, line_width: f64) {
         self.get_mut_commands().push(DrawCommand::Line {
             start,
@@ -307,6 +346,13 @@ impl DrawList {
     }
 
     /// Records a fill-text command.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - A generic type parameter.
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `Color` - A `Color` parameter.
+    /// - `F` - A generic type parameter.
     pub fn fill_text<T, F>(&mut self, text: T, position: Vector2D, color: Color, font: F)
     where
         T: AsRef<str>,
@@ -321,6 +367,12 @@ impl DrawList {
     }
 
     /// Records a transformed sprite draw command.
+    ///
+    /// # Arguments
+    ///
+    /// - `&HtmlImageElement` - Shared reference to a `HtmlImageElement`.
+    /// - `Rect` - A `Rect` parameter.
+    /// - `Transform2D` - A `Transform2D` parameter.
     pub fn draw_sprite(&mut self, image: &HtmlImageElement, source: Rect, transform: Transform2D) {
         self.get_mut_commands().push(DrawCommand::DrawSprite {
             image: image.clone(),
@@ -330,6 +382,14 @@ impl DrawList {
     }
 
     /// Records an image sub-region draw command (no rotation).
+    ///
+    /// # Arguments
+    ///
+    /// - `&HtmlImageElement` - Shared reference to a `HtmlImageElement`.
+    /// - `Rect` - A `Rect` parameter.
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `f64` - A 64-bit float (`f64`).
     pub fn draw_image_rect(
         &mut self,
         image: &HtmlImageElement,
@@ -348,12 +408,20 @@ impl DrawList {
     }
 
     /// Records a global-alpha state change.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - A 64-bit float (`f64`).
     pub fn set_global_alpha(&mut self, alpha: f64) {
         self.get_mut_commands()
             .push(DrawCommand::SetGlobalAlpha { alpha });
     }
 
     /// Records a blend-mode state change.
+    ///
+    /// # Arguments
+    ///
+    /// - `BlendMode` - A `BlendMode` parameter.
     pub fn set_blend_mode(&mut self, mode: BlendMode) {
         self.get_mut_commands()
             .push(DrawCommand::SetBlendMode { mode });
@@ -489,6 +557,14 @@ impl CanvasRenderer {
         // Returns the style key for a path-batchable command, or `None` for
         // commands that break a run (sprites, images, text, state changes).
         /// Computes the batching key for a [`DrawCommand`].
+        ///
+        /// # Arguments
+        ///
+        /// - `&DrawCommand` - Shared reference to a `DrawCommand`.
+        ///
+        /// # Returns
+        ///
+        /// - `Option<(u8, Color, f64)>` - `Some(...)` on success, `None` otherwise.
         fn batch_key(command: &DrawCommand) -> Option<(u8, Color, f64)> {
             match command {
                 DrawCommand::FillRect { color, .. } | DrawCommand::FillCircle { color, .. } => {
@@ -509,6 +585,11 @@ impl CanvasRenderer {
 
         // Emits a single path-batchable command's geometry into the open path.
         /// Emits the geometry for the supplied [`DrawCommand`] into the canvas context.
+        ///
+        /// # Arguments
+        ///
+        /// - `&CanvasRenderingContext2d` - Shared reference to a `CanvasRenderingContext2d`.
+        /// - `&DrawCommand` - Shared reference to a `DrawCommand`.
         fn emit_geometry(context: &CanvasRenderingContext2d, command: &DrawCommand) {
             match command {
                 DrawCommand::FillRect {
@@ -1038,6 +1119,10 @@ impl Camera3D {
 /// Implements `Default` for `Camera3D` as a camera at (0, 0, 5) looking at the origin.
 impl Default for Camera3D {
     /// Constructs a default [`Camera3D`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `Camera3D` - A default-constructed instance with the documented initial state.
     fn default() -> Camera3D {
         Camera3D::create(Vector3D::new(0.0, 0.0, 5.0), Vector3D::zero(), 800.0, 600.0)
     }
@@ -1341,6 +1426,10 @@ impl ShadowConfig {
 /// Implements `Default` for `ShadowConfig` with default shadow values.
 impl Default for ShadowConfig {
     /// Constructs a default [`ShadowConfig`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `ShadowConfig` - A default-constructed instance with the documented initial state.
     fn default() -> ShadowConfig {
         ShadowConfig::create()
     }
@@ -1489,6 +1578,10 @@ impl RenderBackend for CanvasRenderer {
     }
 
     /// Forwards to [`CanvasRenderer::clear_color`].
+    ///
+    /// # Arguments
+    ///
+    /// - `C` - A `C` parameter.
     fn clear_color<C>(&self, color: C)
     where
         C: AsRef<str>,
@@ -1507,31 +1600,55 @@ impl RenderBackend for CanvasRenderer {
     }
 
     /// Forwards to [`CanvasRenderer::set_fill_color`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Shared reference to a `str`.
     fn set_fill_color(&self, color: &str) {
         self.set_fill_color(color);
     }
 
     /// Forwards to [`CanvasRenderer::set_stroke_color`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Shared reference to a `str`.
     fn set_stroke_color(&self, color: &str) {
         self.set_stroke_color(color);
     }
 
     /// Forwards to [`CanvasRenderer::set_line_width`].
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - A 64-bit float (`f64`).
     fn set_line_width(&self, width: f64) {
         self.set_line_width(width);
     }
 
     /// Forwards to [`CanvasRenderer::set_global_alpha`].
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - A 64-bit float (`f64`).
     fn set_global_alpha(&self, alpha: f64) {
         self.set_global_alpha(alpha);
     }
 
     /// Forwards to [`CanvasRenderer::set_blend_mode`].
+    ///
+    /// # Arguments
+    ///
+    /// - `BlendMode` - A `BlendMode` parameter.
     fn set_blend_mode(&self, mode: BlendMode) {
         self.set_blend_mode(mode);
     }
 
     /// Forwards to [`CanvasRenderer::set_shadow`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&ShadowConfig` - Shared reference to a `ShadowConfig`.
     fn set_shadow(&self, config: &ShadowConfig) {
         self.set_shadow(config);
     }
@@ -1542,51 +1659,102 @@ impl RenderBackend for CanvasRenderer {
     }
 
     /// Forwards to [`CanvasRenderer::fill_rect`].
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `f64` - A 64-bit float (`f64`).
     fn fill_rect(&self, position: Vector2D, width: f64, height: f64) {
         self.fill_rect(position, width, height);
     }
 
     /// Forwards to [`CanvasRenderer::stroke_rect`].
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `f64` - A 64-bit float (`f64`).
     fn stroke_rect(&self, position: Vector2D, width: f64, height: f64) {
         self.stroke_rect(position, width, height);
     }
 
     /// Forwards to [`CanvasRenderer::fill_circle`].
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
     fn fill_circle(&self, center: Vector2D, radius: f64) {
         self.fill_circle(center, radius);
     }
 
     /// Forwards to [`CanvasRenderer::stroke_circle`].
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
     fn stroke_circle(&self, center: Vector2D, radius: f64) {
         self.stroke_circle(center, radius);
     }
 
     /// Forwards to [`CanvasRenderer::draw_line`].
+    ///
+    /// # Arguments
+    ///
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `Vector2D` - 2D vector (`Vector2D`).
     fn draw_line(&self, start: Vector2D, end: Vector2D) {
         self.draw_line(start, end);
     }
 
     /// Forwards to [`CanvasRenderer::fill_text`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Shared reference to a `str`.
+    /// - `Vector2D` - 2D vector (`Vector2D`).
     fn fill_text(&self, text: &str, position: Vector2D) {
         self.fill_text(text, position);
     }
 
     /// Forwards to [`CanvasRenderer::set_font`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Shared reference to a `str`.
     fn set_font(&self, font: &str) {
         self.set_font(font);
     }
 
     /// Forwards to [`CanvasRenderer::draw_image`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&HtmlImageElement` - Shared reference to a `HtmlImageElement`.
+    /// - `Vector2D` - 2D vector (`Vector2D`).
+    /// - `f64` - A 64-bit float (`f64`).
+    /// - `f64` - A 64-bit float (`f64`).
     fn draw_image(&self, image: &HtmlImageElement, position: Vector2D, width: f64, height: f64) {
         self.draw_image(image, position, width, height);
     }
 
     /// Forwards to [`CanvasRenderer::set_linear_gradient_fill`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&LinearGradient` - Shared reference to a `LinearGradient`.
     fn set_linear_gradient_fill(&self, gradient: &LinearGradient) {
         self.set_linear_gradient_fill(gradient);
     }
 
     /// Forwards to [`CanvasRenderer::set_radial_gradient_fill`].
+    ///
+    /// # Arguments
+    ///
+    /// - `&RadialGradient` - Shared reference to a `RadialGradient`.
     fn set_radial_gradient_fill(&self, gradient: &RadialGradient) {
         self.set_radial_gradient_fill(gradient);
     }
@@ -1739,6 +1907,14 @@ impl WebGpuRenderer {
     ///
     /// Calls `Promise.race` via reflection because wasm-bindgen does not
     /// currently expose the static `race` method on `Promise`.
+    ///
+    /// # Arguments
+    ///
+    /// - `Promise` - A `Promise` parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `Promise` - A `Promise` value.
     fn race_with_timeout(promise: Promise) -> Promise {
         let array: Array = Array::of2(&promise, &Self::timeout_promise());
         Promise::race(&array)
@@ -2981,6 +3157,10 @@ impl WebGpuRenderer {
     /// - `self` - the renderer; the call borrows immutably because
     ///   the `Rc<PendingErrorCell>` slot lets the spawned future
     ///   mutate the inner value without an exclusive borrow.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<JsValue>` - The most recent error popped, or `None`.
     pub fn pop_error_sync(&self) -> Option<JsValue> {
         let pop_fn: Function = Reflect::get(
             self.get_device(),
@@ -3040,6 +3220,10 @@ impl WebGpuRenderer {
     /// Returns `None` if no error was reported since the last
     /// `take_last_error` call (or since the renderer was
     /// constructed).
+    ///
+    /// # Returns
+    ///
+    /// - `Option<JsValue>` - The last captured error, or `None`.
     pub fn take_last_error(&self) -> Option<JsValue> {
         // SAFETY: the WASM single-threaded scheduler ensures no
         // other writer is alive at the same time. The only other
@@ -3252,6 +3436,14 @@ impl WebGpuRenderer {
     ///
     /// Used by [`WebGpuRenderer::create_offline_render_target`]; the
     /// texture must have been created with the right usage flags.
+    ///
+    /// # Arguments
+    ///
+    /// - `&JsValue` - Shared reference to a `JsValue`.
+    ///
+    /// # Returns
+    ///
+    /// - `JsValue` - A `JsValue` value.
     pub fn create_texture_view(&self, texture: &JsValue) -> JsValue {
         let fn_: Function = Reflect::get(texture, &JsValue::from_str(WEBGPU_METHOD_CREATE_VIEW))
             .unwrap_or(JsValue::UNDEFINED)
@@ -4640,6 +4832,14 @@ impl WebGpuInitError {
 /// the variant carries a JS error, its `Debug` form is appended.
 impl Display for WebGpuInitError {
     /// Formats the [`WebGpuInitError`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::NavigatorLookup(err) => write!(
@@ -5053,6 +5253,14 @@ impl WebGlInitError {
 /// description; variants carrying a JS error append its rendered form.
 impl Display for WebGlInitError {
     /// Formats the [`WebGlInitError`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::CanvasNotFound(selector) => write!(
@@ -5093,6 +5301,14 @@ impl Display for WebGlInitError {
 /// diagnostics are visible verbatim in the console.
 impl Display for WebGlProgramError {
     /// Formats the [`WebGlProgramError`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self {
             Self::ShaderCompile(log) => write!(formatter, "shader compilation failed: {log}"),
@@ -5156,6 +5372,10 @@ impl GpuSamplerDescriptor {
 /// `RenderPassColorAttachment`.
 impl RenderPassColorAttachment {
     /// Returns the load op that the renderer should use.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A `'static str` value.
     pub(crate) fn effective_load_op(&self) -> &'static str {
         match (self.load_op, self.clear_value) {
             (Some(op), _) => op,
@@ -5174,6 +5394,10 @@ impl RenderPassColorAttachment {
     /// [`default_color_store_op`] centralises that "transient?"
     /// decision so the [`WEBGPU_STORE_OP_DISCARD`] constant stays
     /// reachable from inside the engine.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A `'static str` value.
     pub(crate) fn effective_store_op(&self) -> &'static str {
         self.store_op.unwrap_or_else(|| {
             default_color_store_op(/* transient = */ false)
@@ -5185,6 +5409,10 @@ impl RenderPassColorAttachment {
 /// defaults for `RenderPassDepthStencilAttachment`.
 impl RenderPassDepthStencilAttachment {
     /// Returns the depth load op that the renderer should use.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A `'static str` value.
     pub(crate) fn effective_depth_load_op(&self) -> &'static str {
         match (self.depth_load_op, self.depth_clear_value) {
             (Some(op), _) => op,
@@ -5194,6 +5422,10 @@ impl RenderPassDepthStencilAttachment {
     }
 
     /// Returns the depth store op that the renderer should use.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A `'static str` value.
     pub(crate) fn effective_depth_store_op(&self) -> &'static str {
         self.depth_store_op.unwrap_or(WEBGPU_STORE_OP_STORE)
     }
@@ -5221,6 +5453,10 @@ impl TextureViewDescriptor {
     /// We default `None` to `"2d"` instead of omitting the key, because
     /// every other descriptor in the engine uses the explicit-string
     /// form, and a few browsers reject `dimension: undefined`.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A `'static str` value.
     pub(crate) fn effective_dimension(&self) -> &'static str {
         self.dimension.unwrap_or(WEBGPU_TEXTURE_VIEW_DIMENSION_2D)
     }
@@ -5229,6 +5465,10 @@ impl TextureViewDescriptor {
     ///
     /// Defaults to `"all"`, which is the spec's "expose every channel"
     /// option and the only correct choice for color textures.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A `'static str` value.
     pub(crate) fn effective_aspect(&self) -> &'static str {
         self.aspect.unwrap_or(WEBGPU_TEXTURE_ASPECT_ALL)
     }
@@ -5236,6 +5476,10 @@ impl TextureViewDescriptor {
     /// Returns a descriptor that selects a single mip level of the texture.
     /// Useful when you want to read back a specific mip (e.g. the half-res
     /// blur output of a downsampling pass) without exposing the rest.
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - A 32-bit unsigned integer (`u32`).
     pub fn mip(level: u32) -> Self {
         Self {
             format: None,
@@ -5271,6 +5515,12 @@ impl TextureWriteDescriptor {
     /// - `data`: packed pixel bytes (format-dependent).
     /// - `bytes_per_row`: row stride of `data`, must be a multiple of 256.
     /// - `texture`: the destination `GpuTexture` handle.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vec<u8>` - A `Vec<u8>` parameter.
+    /// - `u32` - A 32-bit unsigned integer (`u32`).
+    /// - `JsValue` - A `JsValue` parameter.
     pub fn for_2d(data: Vec<u8>, bytes_per_row: u32, texture: JsValue) -> Self {
         Self {
             data,
@@ -5299,6 +5549,10 @@ impl TextureWriteDescriptor {
 /// Inherent implementation of [`VertexStepMode`].
 impl VertexStepMode {
     /// Returns the WGSL / WebGPU string representation.
+    ///
+    /// # Returns
+    ///
+    /// - `'static str` - A static `&str` representation.
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Vertex => "vertex",
@@ -5312,6 +5566,10 @@ impl BindGroupEntry {
     /// Returns the `@binding(N)` slot this entry occupies. The renderer
     /// uses this when assembling the bind-group descriptor so the
     /// caller does not need to know the JS-side `binding` field name.
+    ///
+    /// # Returns
+    ///
+    /// - `u32` - The bind-group slot index.
     pub(crate) fn binding(&self) -> u32 {
         match self {
             Self::Buffer { binding, .. }
@@ -5377,6 +5635,10 @@ impl PendingErrorCell {
     /// `PendingErrorCell` concurrently — this is enforced by the
     /// single-threaded scheduler: the spawned future is drained
     /// before the next render tick's `take_last_error` runs.
+    ///
+    /// # Returns
+    ///
+    /// - `*mut Option<JsValue>` - Raw pointer to the inner storage.
     pub fn as_ptr(&self) -> *mut Option<JsValue> {
         self.0.get()
     }

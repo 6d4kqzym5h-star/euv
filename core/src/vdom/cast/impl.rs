@@ -11,6 +11,10 @@ use super::*;
 ///   `VirtualNode::Empty` if the vector is empty.
 impl From<Vec<VirtualNode>> for VirtualNode {
     /// Lifts a `Vec<VirtualNode>` into a single [`VirtualNode`] via wrapping or unwrapping.
+    ///
+    /// # Arguments
+    ///
+    /// - `Vec<VirtualNode>` - Input value to convert from.
     fn from(nodes: Vec<VirtualNode>) -> Self {
         if nodes.is_empty() {
             VirtualNode::Empty
@@ -29,6 +33,10 @@ impl From<Vec<VirtualNode>> for VirtualNode {
 /// - `VirtualNode` - The inner node if `Some`, otherwise `VirtualNode::Empty`.
 impl From<Option<VirtualNode>> for VirtualNode {
     /// Lifts an `Option<VirtualNode>` into a [`VirtualNode`] (unwraps or falls back to empty).
+    ///
+    /// # Arguments
+    ///
+    /// - `Option<VirtualNode>` - Input value to convert from.
     fn from(node: Option<VirtualNode>) -> Self {
         match node {
             Some(node) => node,
@@ -48,6 +56,10 @@ impl From<Option<VirtualNode>> for VirtualNode {
 ///   `VirtualNode::Empty` if `None` or the vector is empty.
 impl From<Option<Vec<VirtualNode>>> for VirtualNode {
     /// Lifts an `Option<Vec<VirtualNode>>` into a [`VirtualNode`] (unwraps or falls back to empty).
+    ///
+    /// # Arguments
+    ///
+    /// - `Option<Vec<VirtualNode>>` - Input value to convert from.
     fn from(nodes: Option<Vec<VirtualNode>>) -> Self {
         match nodes {
             Some(nodes) => nodes.into(),
@@ -69,6 +81,10 @@ where
     /// # Returns
     ///
     /// - `VirtualNode` - A dynamic virtual node wrapping this closure.
+    ///
+    /// # Arguments
+    ///
+    /// - `F` - Input value to convert from.
     fn from(render_fn: F) -> Self {
         VirtualNode::create_dynamic(render_fn)
     }
@@ -81,6 +97,10 @@ impl From<String> for VirtualNode {
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - Input value to convert from.
     fn from(text: String) -> Self {
         VirtualNode::Text(TextNode::new(text, None))
     }
@@ -93,6 +113,10 @@ impl From<&str> for VirtualNode {
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Input value to convert from.
     fn from(text: &str) -> Self {
         VirtualNode::Text(TextNode::new(text.to_string(), None))
     }
@@ -105,6 +129,10 @@ impl From<i32> for VirtualNode {
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `i32` - Input value to convert from.
     fn from(value: i32) -> Self {
         VirtualNode::Text(TextNode::new(value.to_string(), None))
     }
@@ -117,6 +145,10 @@ impl From<usize> for VirtualNode {
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - Input value to convert from.
     fn from(value: usize) -> Self {
         VirtualNode::Text(TextNode::new(value.to_string(), None))
     }
@@ -129,6 +161,10 @@ impl From<bool> for VirtualNode {
     /// # Returns
     ///
     /// - `VirtualNode` - A text virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `bool` - Input value to convert from.
     fn from(value: bool) -> Self {
         VirtualNode::Text(TextNode::new(value.to_string(), None))
     }
@@ -144,6 +180,10 @@ where
     /// # Returns
     ///
     /// - `VirtualNode` - A reactive text virtual node.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<T>` - Input value to convert from.
     fn from(signal: Signal<T>) -> Self {
         signal.as_reactive_text()
     }
@@ -223,6 +263,10 @@ where
     /// # Returns
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
+    ///
+    /// # Arguments
+    ///
+    /// - `EventNamedAdapter<F>` - Input value to convert from.
     fn from(adapter: EventNamedAdapter<F>) -> Self {
         AttributeValue::Event(NativeEventHandler::create(
             adapter.get_event_name(),
@@ -238,6 +282,10 @@ impl From<EventNamedAdapter<NativeEventHandler>> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - An `AttributeValue::Event` wrapping the handler.
+    ///
+    /// # Arguments
+    ///
+    /// - `EventNamedAdapter<NativeEventHandler>` - Input value to convert from.
     fn from(mut adapter: EventNamedAdapter<NativeEventHandler>) -> Self {
         let event_name: &'static str = adapter.get_event_name();
         adapter.get_mut_inner().set_event_name(event_name);
@@ -256,6 +304,10 @@ impl From<EventNamedAdapter<Option<Rc<dyn Fn(Event)>>>> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute if `Some`, otherwise an empty text attribute.
+    ///
+    /// # Arguments
+    ///
+    /// - `EventNamedAdapter<Option<Rc<dyn Fn(Event)>>>` - Input value to convert from.
     fn from(adapter: EventNamedAdapter<Option<Rc<dyn Fn(Event)>>>) -> Self {
         let event_name: &'static str = adapter.get_event_name();
         match adapter.inner {
@@ -418,6 +470,10 @@ where
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value with the custom name.
+    ///
+    /// # Arguments
+    ///
+    /// - `CallbackNamedAdapter<F>` - Input value to convert from.
     fn from(adapter: CallbackNamedAdapter<F>) -> Self {
         AttributeValue::Event(NativeEventHandler::create(
             adapter.get_name(),
@@ -427,6 +483,7 @@ where
 }
 
 /// Generic-parameterised implementation for [`AttrValueAdapter`].
+/// Implements `impl AttrValueAdapter<NativeEventHandler>`.
 impl AttrValueAdapter<NativeEventHandler> {
     /// Converts the wrapped handler into a callback `AttributeValue` with a
     /// custom event name for component props.
@@ -491,6 +548,10 @@ where
     /// # Returns
     ///
     /// - `AttributeValue` - The reactive attribute value.
+    ///
+    /// # Arguments
+    ///
+    /// - `AttrValueAdapter<T>` - Input value to convert from.
     fn from(adapter: AttrValueAdapter<T>) -> Self {
         adapter.into_inner().into()
     }
@@ -514,6 +575,10 @@ impl From<InnerHtmlAdapter<String>> for AttributeValue {
     /// Wraps the static `String` payload in an
     /// `AttributeValue::InnerHtml` variant so the renderer can call
     /// `Element::set_inner_html` on it.
+    ///
+    /// # Arguments
+    ///
+    /// - `InnerHtmlAdapter<String>` - Input value to convert from.
     fn from(adapter: InnerHtmlAdapter<String>) -> Self {
         AttributeValue::InnerHtml(adapter.into_inner())
     }
@@ -524,6 +589,10 @@ impl From<InnerHtmlAdapter<&str>> for AttributeValue {
     /// Wraps the static `&str` payload by allocating a new `String`
     /// so the renderer owns the data independently of the caller's
     /// borrow lifetime.
+    ///
+    /// # Arguments
+    ///
+    /// - `InnerHtmlAdapter<&str>` - Input value to convert from.
     fn from(adapter: InnerHtmlAdapter<&str>) -> Self {
         AttributeValue::InnerHtml(adapter.into_inner().to_owned())
     }
@@ -534,6 +603,10 @@ impl From<InnerHtmlAdapter<Signal<String>>> for AttributeValue {
     /// Wraps the reactive payload in an `AttributeValue::InnerHtmlSignal`
     /// so the renderer subscribes to the signal and re-applies
     /// `set_inner_html` on every change.
+    ///
+    /// # Arguments
+    ///
+    /// - `InnerHtmlAdapter<Signal<String>>` - Input value to convert from.
     fn from(adapter: InnerHtmlAdapter<Signal<String>>) -> Self {
         AttributeValue::InnerHtmlSignal(adapter.into_inner())
     }
@@ -554,6 +627,10 @@ impl<T: ?Sized> From<NodeRef<T>> for AttributeValue {
     ///
     /// - `AttributeValue` - A ref variant carrying the (still empty)
     ///   handle.
+    ///
+    /// # Arguments
+    ///
+    /// - `NodeRef<T>` - Input value to convert from.
     fn from(node_ref: NodeRef<T>) -> Self {
         // Erase the typed phantom marker to a `NodeRef<JsValue>` so the
         // `AttributeValue::Ref` payload is uniform. The `JsValue` cell

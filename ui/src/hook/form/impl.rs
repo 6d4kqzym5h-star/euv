@@ -3,6 +3,10 @@ use super::*;
 /// Implements [`HookContextFormExt`] for [`HookContext`].
 impl HookContextFormExt for HookContext {
     /// Returns a fresh [`FormState`] bound to the current component scope.
+    ///
+    /// # Returns
+    ///
+    /// - `FormState` - A `FormState` value.
     fn form() -> FormState {
         HookContext::use_hook(|| {
             FormState::new(
@@ -25,6 +29,14 @@ impl FormState {
     /// re-render on value changes should use
     /// `state.get_values().get().get(name).cloned().unwrap_or_default()`
     /// instead, so the closure actually subscribes.
+    ///
+    /// # Arguments
+    ///
+    /// - `&'static str` - Shared reference to a `'static str`.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - A `String` value.
     pub fn field(&self, name: &'static str) -> String {
         self.get_values()
             .get()
@@ -38,6 +50,14 @@ impl FormState {
     ///
     /// Snapshot read — see `field` for the subscription
     /// caveat.
+    ///
+    /// # Arguments
+    ///
+    /// - `&'static str` - Shared reference to a `'static str`.
+    ///
+    /// # Returns
+    ///
+    /// - `String` - A `String` value.
     pub fn error(&self, name: &'static str) -> String {
         self.get_errors()
             .get()
@@ -48,6 +68,14 @@ impl FormState {
 
     /// Returns `true` if the user has interacted with the
     /// named field.
+    ///
+    /// # Arguments
+    ///
+    /// - `&'static str` - Field name.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when the field has been touched.
     pub fn is_touched(&self, name: &'static str) -> bool {
         self.get_touched().get().contains(name)
     }
@@ -60,6 +88,11 @@ impl FormState {
     /// clear is a UX choice — the next `validate` call
     /// will repopulate it if the new value is still
     /// invalid.
+    ///
+    /// # Arguments
+    ///
+    /// - `&'static str` - Shared reference to a `'static str`.
+    /// - `&str` - Shared reference to a `str`.
     pub fn set_field(&self, name: &'static str, value: &str) {
         let mut current: HashMap<&'static str, String> = self.get_values().get();
         current.insert(name, value.to_string());
@@ -77,6 +110,10 @@ impl FormState {
     /// Marks the named field as touched without changing
     /// its value. Used by `onblur` handlers — "the user
     /// left this field, so it counts as interacted".
+    ///
+    /// # Arguments
+    ///
+    /// - `&'static str` - Shared reference to a `'static str`.
     pub fn touch(&self, name: &'static str) {
         let mut touched: HashSet<&'static str> = self.get_touched().get();
         touched.insert(name);
@@ -102,6 +139,10 @@ impl FormState {
     ///   Per-field validator map. Each validator is a
     ///   closure that takes the current value and
     ///   returns `Some(error_message)` or `None`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     pub fn validate(&self, validators: &HashMap<&'static str, Validator>) -> bool {
         let values: HashMap<&'static str, String> = self.get_values().get();
         let mut next_errors: HashMap<&'static str, String> = HashMap::new();
@@ -144,6 +185,10 @@ impl FormState {
     ///   The submit handler. Receives the current values
     ///   map by reference — clone what you need to keep
     ///   past the call.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     pub fn submit<F>(&self, validators: &HashMap<&'static str, Validator>, on_submit: F) -> bool
     where
         F: FnOnce(&HashMap<&'static str, String>),
@@ -179,6 +224,10 @@ impl FormState {
     /// a non-empty error. Useful for "submit button stays
     /// disabled until form is valid" without re-running
     /// validation.
+    ///
+    /// # Returns
+    ///
+    /// - `usize` - Count of currently-registered errors.
     pub fn error_count(&self) -> usize {
         self.get_errors()
             .get()

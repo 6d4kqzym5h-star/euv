@@ -372,6 +372,11 @@ async fn check_docs_update() -> UpdateResult {
 ///
 /// - `UpdateResult` — UI-facing snapshot carrying docs.rs context plus
 ///   the most recent `data` / `message` reported by the native side.
+///
+/// # Arguments
+///
+/// - `bool` - A boolean (`bool`).
+/// - `String` - A `String` parameter.
 async fn notify_native_with_retry(doc_status: bool, version: String) -> UpdateResult {
     let mut attempt: u32 = 0;
     loop {

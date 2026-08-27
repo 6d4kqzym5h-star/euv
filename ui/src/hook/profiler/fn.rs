@@ -37,6 +37,11 @@ pub fn now_ms() -> f64 {
 }
 
 /// Fallback millisecond clock anchored at this thread's first call.
+/// Helper body of the `process_local_ms` free function.
+///
+/// # Returns
+///
+/// - `f64` - A non-negative monotonically-increasing millisecond value.
 fn process_local_ms() -> f64 {
     thread_local! {
         static START: std::cell::OnceCell<Instant> = const { std::cell::OnceCell::new() };

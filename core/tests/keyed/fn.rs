@@ -1,5 +1,15 @@
 use super::*;
 
+/// Helper body of the `keyed_element` free function.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+/// - `&str` - Shared reference to a `str`.
+///
+/// # Returns
+///
+/// - `VirtualNode` - A `VirtualNode` value.
 fn keyed_element(key: &str, tag: &str) -> VirtualNode {
     VirtualNode::Element {
         tag: Tag::Element(Cow::Owned(tag.to_string())),
@@ -9,6 +19,15 @@ fn keyed_element(key: &str, tag: &str) -> VirtualNode {
         props: None,
     }
 }
+/// Helper body of the `unkeyed_element` free function.
+///
+/// # Arguments
+///
+/// - `&str` - Shared reference to a `str`.
+///
+/// # Returns
+///
+/// - `VirtualNode` - A `VirtualNode` value.
 fn unkeyed_element(tag: &str) -> VirtualNode {
     VirtualNode::Element {
         tag: Tag::Element(Cow::Owned(tag.to_string())),

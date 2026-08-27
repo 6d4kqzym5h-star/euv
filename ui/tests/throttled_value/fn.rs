@@ -1,9 +1,21 @@
 use super::*;
 
+/// Helper body of the `base_time` free function.
+///
+/// # Returns
+///
+/// - `Instant` - A monotonic instant in time.
 fn base_time() -> Instant {
     Instant::now()
 }
 
+/// Helper body of the `seed_throttled` free function.
+///
+/// # Arguments
+///
+/// - `&ThrottledValue<T>` - Shared reference to a `ThrottledValue<T>`.
+/// - `T` - A generic type parameter.
+/// - `Instant` - A monotonic instant in time (`Instant`).
 fn seed_throttled<T: Clone + PartialEq + Default + 'static>(
     throttled: &ThrottledValue<T>,
     initial: T,

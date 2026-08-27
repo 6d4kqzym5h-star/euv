@@ -182,6 +182,10 @@ impl Entity {
 /// first when both are in scope, so there is no recursion.
 impl Updatable for Entity {
     /// Advances the simulation by `delta_time` seconds.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - Seconds elapsed since the previous update.
     fn update(&mut self, delta_time: f64) {
         Entity::update(self, delta_time);
     }
@@ -282,6 +286,10 @@ impl EventBus {
 /// Implements `Default` for `EventBus` as a new empty bus.
 impl Default for EventBus {
     /// Constructs a default [`EventBus`] value.
+    ///
+    /// # Returns
+    ///
+    /// - `EventBus` - A default-constructed instance with the documented initial state.
     fn default() -> EventBus {
         EventBus::create()
     }

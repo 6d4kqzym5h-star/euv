@@ -34,6 +34,10 @@ impl Counter {
 
     /// Replaces the value with `next`, clamping into
     /// `[min, max]` if bounds are set.
+    ///
+    /// # Arguments
+    ///
+    /// - `i32` - A 32-bit signed integer (`i32`).
     pub fn set(&self, next: i32) {
         let clamped: i32 = match (self.min, self.max) {
             (Some(min), Some(max)) => next.clamp(min, max),
@@ -50,12 +54,20 @@ impl Counter {
     /// its configured range (e.g., to "reset to a
     /// deliberately out-of-range sentinel" or to recover
     /// from an invalid configuration).
+    ///
+    /// # Arguments
+    ///
+    /// - `i32` - A 32-bit signed integer (`i32`).
     pub fn set_unchecked(&self, next: i32) {
         self.get_value().set(next);
     }
 
     /// Returns `true` when the value is at the configured
     /// `max` (or always `false` if unbounded above).
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when the value is at the configured maximum.
     pub fn is_at_max(&self) -> bool {
         match self.max {
             Some(max) => self.get_value().get() >= max,
@@ -65,6 +77,10 @@ impl Counter {
 
     /// Returns `true` when the value is at the configured
     /// `min` (or always `false` if unbounded below).
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when the value is at the configured minimum.
     pub fn is_at_min(&self) -> bool {
         match self.min {
             Some(min) => self.get_value().get() <= min,
@@ -73,6 +89,10 @@ impl Counter {
     }
 
     /// Returns the current value as a snapshot.
+    ///
+    /// # Returns
+    ///
+    /// - `i32` - The current value (or a snapshot thereof).
     pub fn get(&self) -> i32 {
         self.get_value().get()
     }
@@ -81,6 +101,14 @@ impl Counter {
 /// Formatting / debug-printing for [`Counter`].
 impl Display for Counter {
     /// Formats the [`Counter`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "Counter({})", self.get_value().get())
     }

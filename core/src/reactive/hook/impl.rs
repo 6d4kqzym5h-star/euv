@@ -70,6 +70,10 @@ impl HookContext {
     /// as `Signal::signal` above. Note that two calls at the same hook
     /// index with different `T` would still match (both are `NodeRef<...>`)
     /// because the `downcast_ref` ignores the phantom parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `NodeRef<T>` - A `NodeRef<T>` value.
     pub fn noderef<T>() -> NodeRef<T>
     where
         T: ?Sized + 'static,

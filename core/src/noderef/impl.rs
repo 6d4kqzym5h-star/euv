@@ -19,6 +19,10 @@ impl<T: ?Sized> NodeRef<T> {
     /// JS interop function). For type-safe access, use [`get_cloned`].
     ///
     /// [`get_cloned`]: NodeRef::get_cloned
+    ///
+    /// # Returns
+    ///
+    /// - `Option<JsValue>` - The current value (or a snapshot thereof).
     pub fn get(&self) -> Option<JsValue> {
         // SAFETY: we never hand out `&mut Option<JsValue>`; the only mutating
         // access goes through `set` / `clear`, both of which `take` the
@@ -34,6 +38,10 @@ impl<T: ?Sized> NodeRef<T> {
     /// failed cast is reported as `None` rather than panicking, which
     /// matches React/Yew behaviour and avoids crashing the renderer on
     /// ref misuse.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<T>` - A cloned copy of the inner value, if present.
     pub fn get_cloned(&self) -> Option<T>
     where
         T: JsCast,
@@ -48,6 +56,10 @@ impl<T: ?Sized> NodeRef<T> {
     /// users should not normally need to call it directly. Setting the
     /// value clears any previous element first — multiple mounts of the
     /// same `NodeRef` therefore always reflect the most recent element.
+    ///
+    /// # Arguments
+    ///
+    /// - `JsValue` - A `JsValue` parameter.
     pub fn set(&self, value: JsValue) {
         // SAFETY: `set` replaces the inner value wholesale via `replace`
         // (which uses `mem::swap` under the hood), so we never hold an
@@ -74,6 +86,10 @@ impl<T: ?Sized> NodeRef<T> {
     }
 
     /// Returns `true` if an element is currently attached to this handle.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when the value has been initialised.
     pub fn is_set(&self) -> bool {
         let cell: *const Option<JsValue> = self.inner.get();
         // SAFETY: only `is_some()` is called — no `&mut`, no mutation.
@@ -121,6 +137,14 @@ impl<T: ?Sized> Default for NodeRef<T> {
 
 impl<T: ?Sized> Debug for NodeRef<T> {
     /// Formats the [`NodeRef`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `fmt::Result` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("NodeRef")

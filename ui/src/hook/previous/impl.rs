@@ -15,12 +15,20 @@ impl<T: Clone + PartialEq + 'static> Previous<T> {
     ///
     /// This is typically called at the top of a render
     /// closure so the signal stores the value just seen.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - A generic type parameter.
     pub fn record(&self, current: T) {
         self.get_previous().set(Some(current));
     }
 
     /// Returns a snapshot of the previously recorded
     /// value, or `None` if no value has been recorded yet.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<T>` - The previous captured value, or `None`.
     pub fn get_previous_snapshot(&self) -> Option<T> {
         self.get_previous().get()
     }
@@ -34,6 +42,14 @@ impl<T: Clone + PartialEq + 'static> Previous<T> {
 
 impl<T: Clone + PartialEq + Debug + 'static> Display for Previous<T> {
     /// Formats the [`Previous`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self.get_previous().get() {
             Some(value) => write!(formatter, "Previous(Some({value:?}))"),

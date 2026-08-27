@@ -28,6 +28,16 @@ use super::*;
 ///   [`WEBGPU_STATUS_INIT_FAILED_BROWSER_API`].
 /// - anything else (empty or unknown code) returns
 ///   [`WEBGPU_STATUS_NOT_SUPPORTED`].
+///
+/// # Arguments
+///
+/// - `bool` - A boolean (`bool`).
+/// - `bool` - A boolean (`bool`).
+/// - `&str` - Shared reference to a `str`.
+///
+/// # Returns
+///
+/// - `'static str` - A `'static str` value.
 pub(crate) fn webgpu_status_text(
     loaded: bool,
     active: bool,

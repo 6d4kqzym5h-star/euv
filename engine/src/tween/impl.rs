@@ -253,6 +253,10 @@ impl<T: Interpolable + Copy> Tween<T> {
 /// scenes, and physics worlds.
 impl<T: Interpolable + Copy> Updatable for Tween<T> {
     /// Advances the simulation by `delta_time` seconds.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - Seconds elapsed since the previous update.
     fn update(&mut self, delta_time: f64) {
         let _: T = Tween::update(self, delta_time);
     }
@@ -260,6 +264,10 @@ impl<T: Interpolable + Copy> Updatable for Tween<T> {
 
 impl<T: Interpolable + Copy> Clone for Tween<T> {
     /// Clones the [`Tween`] by reusing shared, cheap-to-clone state where possible.
+    ///
+    /// # Returns
+    ///
+    /// - `Tween<T>` - A clone that shares the same underlying storage where applicable.
     fn clone(&self) -> Tween<T> {
         Tween {
             from: self.from,
@@ -278,6 +286,14 @@ impl<T: Interpolable + Copy> Clone for Tween<T> {
 
 impl<T: Interpolable + Copy + Debug> Debug for Tween<T> {
     /// Formats the [`Tween`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("Tween")

@@ -7,6 +7,10 @@ impl From<String> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A text attribute value containing this string.
+    ///
+    /// # Arguments
+    ///
+    /// - `String` - Input value to convert from.
     fn from(value: String) -> Self {
         AttributeValue::Text(value)
     }
@@ -19,6 +23,10 @@ impl From<&str> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A text attribute value containing the owned string.
+    ///
+    /// # Arguments
+    ///
+    /// - `&str` - Input value to convert from.
     fn from(value: &str) -> Self {
         AttributeValue::Text(value.to_string())
     }
@@ -31,6 +39,10 @@ impl From<Signal<String>> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A signal-backed attribute value.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<String>` - Input value to convert from.
     fn from(signal: Signal<String>) -> Self {
         AttributeValue::Signal(signal)
     }
@@ -46,6 +58,10 @@ impl From<Signal<bool>> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A signal-backed attribute value yielding `"true"` or `"false"`.
+    ///
+    /// # Arguments
+    ///
+    /// - `Signal<bool>` - Input value to convert from.
     fn from(signal: Signal<bool>) -> Self {
         AttributeValue::bool_to_attr(signal)
     }
@@ -61,6 +77,10 @@ impl From<bool> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A dynamic attribute value containing the boolean string.
+    ///
+    /// # Arguments
+    ///
+    /// - `bool` - Input value to convert from.
     fn from(value: bool) -> Self {
         AttributeValue::Dynamic(value.to_string())
     }
@@ -76,6 +96,10 @@ impl From<i32> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A dynamic attribute value containing the integer string.
+    ///
+    /// # Arguments
+    ///
+    /// - `i32` - Input value to convert from.
     fn from(value: i32) -> Self {
         AttributeValue::Dynamic(value.to_string())
     }
@@ -91,6 +115,10 @@ impl From<f64> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A dynamic attribute value containing the float string.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - Input value to convert from.
     fn from(value: f64) -> Self {
         AttributeValue::Dynamic(value.to_string())
     }
@@ -103,6 +131,10 @@ impl From<Css> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A CSS class attribute value.
+    ///
+    /// # Arguments
+    ///
+    /// - `Css` - Input value to convert from.
     fn from(css: Css) -> Self {
         AttributeValue::Css(css)
     }
@@ -115,6 +147,10 @@ impl From<&'static Css> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A CSS class attribute value.
+    ///
+    /// # Arguments
+    ///
+    /// - `&'static Css` - Input value to convert from.
     fn from(css: &'static Css) -> Self {
         AttributeValue::Css(css.clone())
     }
@@ -130,6 +166,10 @@ where
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value wrapping this closure.
+    ///
+    /// # Arguments
+    ///
+    /// - `F` - Input value to convert from.
     fn from(closure: F) -> Self {
         AttributeValue::Event(NativeEventHandler::create(CALLBACK_EVENT_NAME, closure))
     }
@@ -146,6 +186,10 @@ impl From<NativeEventHandler> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value with a generic callback event name.
+    ///
+    /// # Arguments
+    ///
+    /// - `NativeEventHandler` - Input value to convert from.
     fn from(handler: NativeEventHandler) -> Self {
         AttrValueAdapter::new(handler).into()
     }
@@ -162,6 +206,10 @@ impl From<Option<NativeEventHandler>> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - An event attribute value if `Some`, otherwise an empty text attribute.
+    ///
+    /// # Arguments
+    ///
+    /// - `Option<NativeEventHandler>` - Input value to convert from.
     fn from(handler: Option<NativeEventHandler>) -> Self {
         match handler {
             Some(event_handler) => AttrValueAdapter::new(event_handler).into(),
@@ -181,6 +229,10 @@ impl From<Option<Signal<String>>> for AttributeValue {
     /// # Returns
     ///
     /// - `AttributeValue` - A signal-backed attribute value if `Some`, otherwise an empty text attribute.
+    ///
+    /// # Arguments
+    ///
+    /// - `Option<Signal<String>>` - Input value to convert from.
     fn from(signal: Option<Signal<String>>) -> Self {
         match signal {
             Some(string_signal) => AttributeValue::Signal(string_signal),

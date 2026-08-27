@@ -15,6 +15,14 @@ impl Default for CameraAngles {
 /// the actual values live inside `Cell`s that bypass the reactivity system.
 impl PartialEq for CameraAngles {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, _other: &Self) -> bool {
         true
     }
@@ -24,6 +32,14 @@ impl PartialEq for CameraAngles {
 /// so `PartialEq` always returns `true` to avoid unnecessary re-renders.
 impl PartialEq for CubeStore {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, _other: &Self) -> bool {
         true
     }

@@ -23,11 +23,19 @@ impl NestedRouteConfig {
     }
 
     /// Returns the component closure.
+    ///
+    /// # Returns
+    ///
+    /// - `Rc<dyn Fn() -> VirtualNode>` - A shared closure producing the route's component node.
     pub fn component(&self) -> Rc<dyn Fn() -> VirtualNode> {
         self.get_component().clone()
     }
 
     /// Returns the child routes.
+    ///
+    /// # Returns
+    ///
+    /// - `[NestedRouteConfig]` - Slice of all child route configs.
     pub fn children(&self) -> &[NestedRouteConfig] {
         self.get_children()
     }

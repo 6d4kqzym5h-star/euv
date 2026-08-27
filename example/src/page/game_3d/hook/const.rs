@@ -244,12 +244,31 @@ struct VertexOutput {
 };
 
 /// Rotates vector `v` by unit quaternion `q`.
+/// Helper body of the `quat_rotate` free function.
+///
+/// # Arguments
+///
+/// - `vec4<f32>` - A `vec4<f32>` parameter.
+/// - `vec3<f32>` - A `vec3<f32>` parameter.
+///
+/// # Returns
+///
+/// - `vec3<f32>` - A `vec3<f32>` value.
 fn quat_rotate(q: vec4<f32>, v: vec3<f32>) -> vec3<f32> {
     return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
 }
 
 @vertex
 /// WGSL vertex shader entry point.
+/// Helper body of the `vs_main` free function.
+///
+/// # Arguments
+///
+/// - `u32` - A 32-bit unsigned integer (`u32`).
+///
+/// # Returns
+///
+/// - `VertexOutput` - A `VertexOutput` value.
 fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
     let cube = u_scene.cubes[vi / 36u];
     let face_index = (vi % 36u) / 6u;
@@ -272,6 +291,15 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
 
 @fragment
 /// WGSL fragment shader entry point.
+/// Helper body of the `fs_main` free function.
+///
+/// # Arguments
+///
+/// - `VertexOutput` - A `VertexOutput` parameter.
+///
+/// # Returns
+///
+/// - `@location(0) vec4<f32>` - A `@location(0) vec4<f32>` value.
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let view_dir = normalize(in.world_pos - u_scene.camera_pos.xyz);
     if dot(in.normal, view_dir) >= 0.0 {

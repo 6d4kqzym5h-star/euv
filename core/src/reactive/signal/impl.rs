@@ -171,6 +171,14 @@ where
     /// `Vec`, drops the mutable reference to inner state, then invokes each
     /// listener. After invocation, listeners are moved back. This prevents
     /// issues with re-entrant access during listener callbacks.
+    ///
+    /// # Arguments
+    ///
+    /// - `T` - A generic type parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - A boolean.
     fn update(&self, value: T) -> bool {
         let inner: &mut SignalInner<T> = Self::inner_mut(self.get_inner());
         if !inner.get_alive() {
@@ -272,12 +280,28 @@ where
     /// to a `SignalInner<T>` that is kept alive by the global registry. Since
     /// WASM is single-threaded, the pointer is always valid as long as the
     /// signal has not been explicitly freed.
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - A non-negative integer (`usize`).
+    ///
+    /// # Returns
+    ///
+    /// - `'static mut SignalInner<T>` - A `'static mut SignalInner<T>` value.
     fn inner_mut(addr: usize) -> &'static mut SignalInner<T> {
         unsafe { &mut *(addr as *mut SignalInner<T>) }
     }
 
     /// Returns whether the signal allocation at `addr` is still present
     /// in the global registry (i.e. has not been freed).
+    ///
+    /// # Arguments
+    ///
+    /// - `usize` - Raw address to test.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when the address still refers to live data.
     pub(crate) fn is_alive(addr: usize) -> bool {
         Self::registry().contains(&addr)
     }
@@ -659,6 +683,10 @@ where
     /// # Returns
     ///
     /// - `FireHandle` - A handle holding the leaked closure's address.
+    ///
+    /// # Arguments
+    ///
+    /// - `F` - Input value to convert from.
     fn from(fire: F) -> Self {
         Self::new(fire)
     }
@@ -674,6 +702,10 @@ impl From<FireHandle> for usize {
     /// # Returns
     ///
     /// - `usize` - The address held by this handle.
+    ///
+    /// # Arguments
+    ///
+    /// - `FireHandle` - Input value to convert from.
     fn from(handle: FireHandle) -> Self {
         handle.get_inner()
     }

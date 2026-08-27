@@ -117,6 +117,10 @@ impl Timer {
 /// scenes, and physics worlds.
 impl Updatable for Timer {
     /// Advances the simulation by `delta_time` seconds.
+    ///
+    /// # Arguments
+    ///
+    /// - `f64` - Seconds elapsed since the previous update.
     fn update(&mut self, delta_time: f64) {
         let _: u32 = Timer::update(self, delta_time);
     }

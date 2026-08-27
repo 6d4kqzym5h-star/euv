@@ -6,6 +6,14 @@ use super::*;
 /// because it does not affect visual output.
 impl PartialEq for TextNode {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, other: &Self) -> bool {
         self.get_content() == other.get_content()
     }
@@ -42,6 +50,14 @@ impl<T: Clone> Clone for VirtualNode<T> {
 /// Skips `Dynamic` inner details and `props` for brevity.
 impl<T: Debug> Debug for VirtualNode<T> {
     /// Formats the [`VirtualNode`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `fmt::Result` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Element {
@@ -85,6 +101,14 @@ impl<T> Default for VirtualNode<T> {
 /// patching when the dynamic content actually changes.
 impl<T: PartialEq> PartialEq for VirtualNode<T> {
     /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
+    ///
+    /// # Arguments
+    ///
+    /// - `&Self` - The other value to compare against `self`.
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when `self` and `other` are equivalent by the trait contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,

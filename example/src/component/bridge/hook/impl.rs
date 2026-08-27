@@ -13,6 +13,14 @@ use super::*;
 /// `String`.
 impl<'de> Deserialize<'de> for UpdateStatus {
     /// Deserializes from the supplied reader.
+    ///
+    /// # Arguments
+    ///
+    /// - `Reader` - Reader to read from.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<Self, Reader::Error>` - `Ok(Self)` on success, or the reader's error.
     fn deserialize<Reader>(reader: Reader) -> Result<Self, Reader::Error>
     where
         Reader: serde::Deserializer<'de>,
@@ -23,6 +31,14 @@ impl<'de> Deserialize<'de> for UpdateStatus {
             type Value = UpdateStatus;
 
             /// Writes the expected value description into the formatter.
+            ///
+            /// # Arguments
+            ///
+            /// - `&mut Formatter<'_>` - The formatter receiving the expected-value description.
+            ///
+            /// # Returns
+            ///
+            /// - `FmtResult` - Result of the formatting operation.
             fn expecting(&self, formatter: &mut Formatter<'_>) -> FmtResult {
                 formatter.write_str(&format!(
                     "an `UpdateStatus` wire tag ({UPDATE_RESULT_SUCCESS:?} / {UPDATE_RESULT_FAILED:?})"
@@ -30,6 +46,14 @@ impl<'de> Deserialize<'de> for UpdateStatus {
             }
 
             /// Deserializes a borrowed string slice into `Self::Value`.
+            ///
+            /// # Arguments
+            ///
+            /// - `&str` - Borrowed string slice to deserialise.
+            ///
+            /// # Returns
+            ///
+            /// - `Result<Self::Value, Error>` - `Result<Self::Value, Error>` from the deserialiser.
             fn visit_str<Error>(self, value: &str) -> Result<Self::Value, Error>
             where
                 Error: serde::de::Error,
@@ -54,6 +78,14 @@ impl<'de> Deserialize<'de> for UpdateStatus {
 /// Formatting / debug-printing for [`UpdateStatus`].
 impl Display for UpdateStatus {
     /// Formats the [`UpdateStatus`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `FmtResult` - Result of the formatting operation.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let tag: &'static str = match self {
             UpdateStatus::Success => UPDATE_RESULT_SUCCESS,

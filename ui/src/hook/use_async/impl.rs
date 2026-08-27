@@ -49,6 +49,10 @@ where
     /// leaked at allocation time, never dropped) — see
     /// [`Self::release`] for the explicit teardown path used by
     /// `HookContext::clear`.
+    ///
+    /// # Returns
+    ///
+    /// - `UseAsyncSlot<T, L>` - A `UseAsyncSlot<T, L>` value.
     unsafe fn slot(&self) -> &UseAsyncSlot<T, L> {
         unsafe { &*(*self.get_inner() as *const UseAsyncSlot<T, L>) }
     }
@@ -60,6 +64,10 @@ where
     L: Clone + PartialEq + HasLoadingHint + 'static,
 {
     /// Returns the current reactive state.
+    ///
+    /// # Returns
+    ///
+    /// - `AsyncState<T, L>` - The current `AsyncState`, owned.
     pub fn state(&self) -> AsyncState<T, L> {
         // SAFETY: handle either owns the slot (fallback path) or
         // borrows a slot whose lifetime is bounded by the hook
@@ -74,6 +82,10 @@ where
     /// integration tests in `core/tests/use_async/` can
     /// exercise the `match` arms produced by users without
     /// needing a live browser to run the future.
+    ///
+    /// # Arguments
+    ///
+    /// - `AsyncState<T, L>` - A `AsyncState<T, L>` parameter.
     pub fn set_state(&self, next: AsyncState<T, L>) {
         unsafe { self.slot().state.set(next) }
     }
@@ -90,6 +102,10 @@ where
     /// (rather than `String` or a dedicated `AsyncError` trait) so
     /// `Result<T, JsValue>`, `Result<T, MyDomainError>`, and
     /// `Result<T, String>` all work without an adapter layer.
+    ///
+    /// # Arguments
+    ///
+    /// - `F` - A generic type parameter.
     pub fn refetch<F, Fut, E>(&self, factory: F)
     where
         F: FnOnce() -> Fut + 'static,
@@ -142,6 +158,14 @@ where
     L: Clone + PartialEq + HasLoadingHint + 'static,
 {
     /// Formats the [`UseAsyncHandle`] via the supplied formatter.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut core::fmt::Formatter<'_>` - The formatter receiving the formatted output.
+    ///
+    /// # Returns
+    ///
+    /// - `core::fmt::Result` - Result of the formatting operation.
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         // Avoid touching the inner pointer in `Debug` output — the
         // address is meaningless to users and could collide with

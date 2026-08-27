@@ -3,6 +3,14 @@ use super::*;
 /// Implements [`HookContextTransitionExt`] for [`HookContext`].
 impl HookContextTransitionExt for HookContext {
     /// Returns a fresh [`TransitionState`] driven by `config`.
+    ///
+    /// # Arguments
+    ///
+    /// - `TransitionConfig` - A `TransitionConfig` parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `TransitionState` - A `TransitionState` value.
     fn transition(config: TransitionConfig) -> TransitionState {
         let hook_context: HookContext = Self::current();
         let Ok(mut inner) = hook_context.get_inner().try_borrow_mut() else {
@@ -54,6 +62,10 @@ impl TransitionConfig {
     /// keeping the struct `Copy` and writing it via
     /// `TransitionConfig { enter_ms, exit_ms }` is
     /// simpler.)
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - A 32-bit unsigned integer (`u32`).
     pub const fn with_ms(ms: u32) -> Self {
         Self {
             enter_ms: ms,
@@ -63,6 +75,11 @@ impl TransitionConfig {
 
     /// Returns a config with separate enter and exit
     /// durations. See `with_ms` for the naming note.
+    ///
+    /// # Arguments
+    ///
+    /// - `u32` - A 32-bit unsigned integer (`u32`).
+    /// - `u32` - A 32-bit unsigned integer (`u32`).
     pub const fn with_durations(enter_ms: u32, exit_ms: u32) -> Self {
         Self { enter_ms, exit_ms }
     }
@@ -70,6 +87,14 @@ impl TransitionConfig {
     /// Returns the duration (in ms) corresponding to the
     /// given phase. Returns `0` for terminal phases
     /// (`Entered`, `Exited`) — these don't tick.
+    ///
+    /// # Arguments
+    ///
+    /// - `TransitionPhase` - A `TransitionPhase` parameter.
+    ///
+    /// # Returns
+    ///
+    /// - `u32` - A 32-bit unsigned integer.
     pub fn duration_for(&self, phase: TransitionPhase) -> u32 {
         match phase {
             TransitionPhase::Entering => self.get_enter_ms(),
@@ -93,6 +118,10 @@ impl Default for TransitionConfig {
 impl TransitionState {
     /// Returns `true` if the element is currently
     /// animating (i.e. `Entering` or `Exiting`).
+    ///
+    /// # Returns
+    ///
+    /// - `bool` - `true` when an animation is currently running.
     pub fn is_animating(&self) -> bool {
         matches!(
             self.get_phase().get(),
@@ -105,6 +134,10 @@ impl TransitionState {
     /// Named `change_config` (not `set_config`) to avoid
     /// colliding with the `set_config` setter generated
     /// by `#[derive(Data)]` on the struct field.
+    ///
+    /// # Arguments
+    ///
+    /// - `TransitionConfig` - A `TransitionConfig` parameter.
     pub fn change_config(&self, config: TransitionConfig) {
         self.get_config().set(config);
     }
@@ -249,6 +282,10 @@ impl TransitionState {
     /// Returns the time remaining (in ms) until the
     /// current transition completes. Returns `0` for
     /// terminal phases.
+    ///
+    /// # Returns
+    ///
+    /// - `u32` - Milliseconds remaining before the transition ends.
     pub fn remaining_ms(&self) -> u32 {
         match self.get_phase().get() {
             TransitionPhase::Exited | TransitionPhase::Entered => 0,
