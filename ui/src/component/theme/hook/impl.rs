@@ -99,7 +99,7 @@ impl ThemeState {
             .ok()
             .flatten()
             .map(|mql: MediaQueryList| mql.matches())
-            .unwrap_or(false);
+            .unwrap_or_default();
         if is_dark {
             THEME_DARK.to_string()
         } else {

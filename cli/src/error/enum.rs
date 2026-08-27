@@ -27,7 +27,7 @@ pub enum EuvError {
         /// A human-readable description of the UTF-8 decoding failure.
         message: String,
         /// The underlying UTF-8 error.
-        error: std::string::FromUtf8Error,
+        error: FromUtf8Error,
     },
     /// A server error from the hyperlane framework.
     Server(String),

@@ -115,12 +115,8 @@ impl UseVirtualList {
     ///
     /// - `Option<Element>` - The container element, if found in the document.
     pub fn try_get_container() -> Option<Element> {
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         document_value.get_element_by_id(VIRTUAL_LIST_CONTAINER_ID)
     }
 
@@ -137,12 +133,8 @@ impl UseVirtualList {
     where
         C: AsRef<str>,
     {
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         document_value.get_element_by_id(container_id.as_ref())
     }
 
@@ -162,9 +154,9 @@ impl UseVirtualList {
     ///
     /// # Returns
     ///
-    /// - `(usize, usize, usize, usize)` - A tuple of (visible_start, visible_end, render_start, render_end).
-    ///   visible_start/visible_end represent the actual visible range without overscan.
-    ///   render_start/render_end represent the rendering range including overscan.
+    /// - `(usize, usize, usize, usize)` - The first pair is the actual
+    ///   visible range without overscan; the second pair is the
+    ///   rendering range including overscan.
     pub(crate) fn compute_visible_range(
         scroll_offset: i32,
         viewport_height: i32,

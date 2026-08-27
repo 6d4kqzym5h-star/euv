@@ -32,7 +32,7 @@ pub(crate) use {
     about::*, animation::*, r#async::*, attrs::*, badge::*, binding::*, browser::*, camera::*,
     canvas::*, conditional::*, counter::*, dynamic::*, event::*, file::*, form::*, game_2d::*,
     game_3d::*, keep_alive::*, lifecycle::*, list::*, modal::*, not_found::*, observer::*,
-    select::*, sse::*, timer::*, virtual_list::*, websocket::*,
+    select::*, sse::*, timer::*, virtual_list::*, webgpu_status::*, websocket::*,
 };
 
 use super::*;

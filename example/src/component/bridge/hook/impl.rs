@@ -21,7 +21,7 @@ impl<'de> Deserialize<'de> for UpdateStatus {
         impl<'de> serde::de::Visitor<'de> for TagVisitor {
             type Value = UpdateStatus;
 
-            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            fn expecting(&self, formatter: &mut Formatter<'_>) -> FmtResult {
                 formatter.write_str(&format!(
                     "an `UpdateStatus` wire tag ({UPDATE_RESULT_SUCCESS:?} / {UPDATE_RESULT_FAILED:?})"
                 ))
@@ -48,8 +48,8 @@ impl<'de> Deserialize<'de> for UpdateStatus {
     }
 }
 
-impl std::fmt::Display for UpdateStatus {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for UpdateStatus {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let tag: &'static str = match self {
             UpdateStatus::Success => UPDATE_RESULT_SUCCESS,
             UpdateStatus::Failed => UPDATE_RESULT_FAILED,
@@ -123,7 +123,7 @@ impl UseEuvNativeBridge {
                 &JsValue::from_str(BRIDGE_GROUP_KEY),
                 &JsValue::from_str(BRIDGE_GROUP_ALL),
             )
-            .unwrap_or(false);
+            .unwrap_or_default();
             let permissions_result: Result<JsValue, String> = match BridgeConfig::invoke(
                 INVOKE_RESOLVE_BRIDGE_GROUP_PERMISSIONS,
                 Some(&args_obj),

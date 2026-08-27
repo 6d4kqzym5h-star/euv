@@ -7,7 +7,7 @@ use super::*;
 ///
 /// # Arguments
 ///
-/// - `VirtualNode` - The props node containing disabled (bool) and max_count (i32).
+/// - `VirtualNode` - The props node.
 ///
 /// # Returns
 ///

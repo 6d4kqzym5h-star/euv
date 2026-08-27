@@ -69,10 +69,10 @@ impl Numeric {
     /// - `f64` - The normalized angle in the range -PI to PI.
     pub fn normalize_angle(radians: f64) -> f64 {
         let mut angle: f64 = radians % TWO_PI;
-        if angle < -PI {
+        if angle < -r#const::PI {
             angle += TWO_PI;
         }
-        if angle > PI {
+        if angle > r#const::PI {
             angle -= TWO_PI;
         }
         angle
@@ -792,7 +792,7 @@ impl Circle {
     ///
     /// - `f64` - The area.
     pub fn area(&self) -> f64 {
-        PI * self.get_radius() * self.get_radius()
+        r#const::PI * self.get_radius() * self.get_radius()
     }
 }
 
@@ -909,7 +909,7 @@ impl Color {
         let green: i32 = (self.get_green() * 255.0).round() as i32;
         let blue: i32 = (self.get_blue() * 255.0).round() as i32;
         let alpha: f64 = self.get_alpha();
-        let _: std::fmt::Result = write!(buffer, "rgba({red}, {green}, {blue}, {alpha})");
+        let _: FmtResult = write!(buffer, "rgba({red}, {green}, {blue}, {alpha})");
     }
 
     /// Returns black (0, 0, 0, 1).
@@ -2007,7 +2007,7 @@ impl Sphere {
     ///
     /// - `f64` - The volume.
     pub fn volume(&self) -> f64 {
-        (4.0 / 3.0) * PI * self.get_radius() * self.get_radius() * self.get_radius()
+        (4.0 / 3.0) * r#const::PI * self.get_radius() * self.get_radius() * self.get_radius()
     }
 
     /// Returns the surface area of the sphere.
@@ -2016,7 +2016,7 @@ impl Sphere {
     ///
     /// - `f64` - The surface area.
     pub fn surface_area(&self) -> f64 {
-        4.0 * PI * self.get_radius() * self.get_radius()
+        4.0 * r#const::PI * self.get_radius() * self.get_radius()
     }
 }
 

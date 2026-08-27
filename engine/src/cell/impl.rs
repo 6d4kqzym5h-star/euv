@@ -47,7 +47,7 @@ impl<T> MaybeEngineCell<T> {
     ///
     /// # Arguments
     ///
-    /// - `val: UnsafeCell<Option<T>>` - The new backing storage to
+    /// - `UnsafeCell<Option<T>>` - The new backing storage to
     ///   install.
     ///
     /// # Returns
@@ -71,7 +71,7 @@ impl<T> MaybeEngineCell<T> {
         // when `T` is. The borrow of `self.inner` is the single
         // mutable access point under the cell's single-threaded
         // contract.
-        std::mem::replace(&mut self.inner, val)
+        mem::replace(&mut self.inner, val)
     }
 }
 

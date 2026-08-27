@@ -1,3 +1,5 @@
+use super::*;
+
 /// Type alias for the formatter that produces the displayable string
 /// for an `euv_debug` component.
 ///
@@ -15,4 +17,4 @@
 ///
 /// The closure is wrapped in `Option` so the props struct can
 /// derive `Default` — see `EuvDebugProps` for the rationale.
-pub type DebugValueFormatter = std::rc::Rc<dyn Fn() -> String>;
+pub type DebugValueFormatter = Rc<dyn Fn() -> String>;

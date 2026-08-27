@@ -2,25 +2,8 @@ use super::*;
 
 impl<K, V> LruCache<K, V>
 where
-    K: Clone + Eq + std::hash::Hash,
+    K: Clone + Eq + Hash,
 {
-    /// Creates a new LRU cache with the given capacity.
-    /// Capacity of 0 is allowed; the cache will accept
-    /// no entries.
-    pub fn new(capacity: usize) -> Self {
-        Self {
-            capacity,
-            map: std::collections::HashMap::new(),
-            order: std::collections::VecDeque::new(),
-        }
-    }
-
-    /// Returns the maximum number of entries the cache
-    /// can hold before eviction kicks in.
-    pub fn capacity(&self) -> usize {
-        self.capacity
-    }
-
     /// Returns the current number of entries in the
     /// cache.
     pub fn len(&self) -> usize {

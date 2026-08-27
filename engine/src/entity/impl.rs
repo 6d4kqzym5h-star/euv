@@ -254,7 +254,7 @@ impl EventBus {
         self.get_handlers()
             .get(event_name.as_ref())
             .map(|handlers: &Vec<EventHandler>| handlers.len())
-            .unwrap_or(0)
+            .unwrap_or_default()
     }
 
     /// Derives the event channel name from an `EntityEvent` variant.

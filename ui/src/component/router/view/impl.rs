@@ -127,7 +127,7 @@ impl Router {
             .inner_width()
             .ok()
             .map(|value: JsValue| Number::from(value).value_of())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         width < MOBILE_BREAKPOINT as f64
     }
 }

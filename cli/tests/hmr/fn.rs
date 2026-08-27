@@ -1,7 +1,5 @@
 use super::*;
 
-// --- HmrState basics ---
-
 #[test]
 fn new_is_empty() {
     let state: HmrState = HmrState::new();
@@ -111,14 +109,6 @@ fn from_entries_empty() {
     let state: HmrState = HmrState::from_entries(Vec::<(String, String)>::new());
     assert!(state.is_empty());
 }
-
-// --- JSON serialization ---
-
-// --- JSON deserialization ---
-
-// --- Round-trip ---
-
-// --- Clone + Debug ---
 
 #[test]
 fn clone_preserves_entries() {

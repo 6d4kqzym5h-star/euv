@@ -13,10 +13,17 @@ mod mode;
 mod server;
 
 use log::SetLoggerError;
-use std::collections::HashMap;
+pub use std::{
+    error::Error,
+    ffi::OsStr,
+    fmt::{Display, Formatter},
+    io::Error as IoError,
+    string::FromUtf8Error,
+};
 pub use {build::*, error::*, fmt::*, hmr::*, logger::*, mode::*, server::*};
 
 use std::{
+    collections::HashMap,
     ffi,
     fmt::Arguments,
     io,

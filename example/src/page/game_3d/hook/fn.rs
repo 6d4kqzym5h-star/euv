@@ -193,7 +193,7 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
         .collect();
     cube_batches.sort_by(
         |a: &(f64, &Cube3D, Vec<Vector3D>), b: &(f64, &Cube3D, Vec<Vector3D>)| {
-            a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal)
+            a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
         },
     );
     for (_cube_depth, cube, world_vertices) in &cube_batches {
@@ -212,7 +212,7 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
             face_batches.push((depth, face_world));
         }
         face_batches.sort_by(|a: &(f64, Vec<Vector3D>), b: &(f64, Vec<Vector3D>)| {
-            a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal)
+            a.0.partial_cmp(&b.0).unwrap_or(Ordering::Equal)
         });
         let _ = Reflect::set(
             context,
@@ -273,8 +273,7 @@ pub(crate) fn render_scene(ssaa_canvas: &SsaaCanvas, cubes: &[Cube3D], camera: &
 ///
 /// - `Vec<(usize, usize)>` - The list of unique visible edge index pairs.
 fn collect_visible_edges(world_vertices: &[Vector3D], camera: &Camera3D) -> Vec<(usize, usize)> {
-    let mut visible_face_edges: std::collections::HashSet<(usize, usize)> =
-        std::collections::HashSet::new();
+    let mut visible_face_edges: HashSet<(usize, usize)> = HashSet::new();
     for (i0, i1, i2, i3) in GAME_3D_CUBE_FACES {
         let face_world: Vec<Vector3D> = vec![
             world_vertices[i0],
@@ -388,9 +387,7 @@ pub(crate) fn interpolate_cubes(
 ///
 /// - `Option<SsaaCanvas>` - The SSAA canvas, or `None` if unavailable.
 pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
-    let Some(window_value): Option<Window> = window() else {
-        return None;
-    };
+    let window_value: Window = window()?;
     let is_mobile: bool = window_value
         .inner_width()
         .ok()
@@ -426,12 +423,8 @@ pub(crate) fn acquire_game_3d_ssaa_canvas() -> Option<SsaaCanvas> {
 ///
 /// - `Option<CanvasGuardEntry>` - The listener closures and element for cleanup, or `None` if the canvas was not found.
 pub(crate) fn register_canvas_scroll_guard(canvas_selector: &str) -> Option<CanvasGuardEntry> {
-    let Some(window): Option<Window> = window() else {
-        return None;
-    };
-    let Some(document): Option<Document> = window.document() else {
-        return None;
-    };
+    let window: Window = window()?;
+    let document: Document = window.document()?;
     let canvas: Element = document.query_selector(canvas_selector).ok().flatten()?;
     let wheel_closure: Closure<dyn FnMut(Event)> = Closure::wrap(Box::new(move |event: Event| {
         event.prevent_default();
@@ -689,7 +682,7 @@ pub(crate) fn start_game_3d_loop(
         };
         let next_id: i32 = window_value
             .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_clone.set(Some(next_id));
     }));
     let _: Result<(), _> = closure_cell.try_set(raf_closure);
@@ -711,7 +704,7 @@ pub(crate) fn start_game_3d_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_for_start.set(Some(start_id));
     }));
     let start_callback: Function = start_closure.as_ref().unchecked_ref::<Function>().clone();
@@ -724,7 +717,7 @@ pub(crate) fn start_game_3d_loop(
             &start_callback,
             GAME_3D_LOOP_START_DELAY_MILLIS,
         )
-        .unwrap_or(0);
+        .unwrap_or_default();
     start_timeout_clone.set(Some(timeout_id));
     let loading_closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
         draw_game_3d_loading(GAME_3D_CANVAS_SELECTOR, GAME_3D_CANVAS_SELECTOR);
@@ -862,11 +855,11 @@ pub(crate) fn game_3d_on_pointer_move(
         let client_x: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientX"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         let client_y: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientY"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         let dx: f64 = client_x - last_x;
         let dy: f64 = client_y - last_y;
         last_pointer.set(Some((client_x, client_y)));
@@ -896,11 +889,11 @@ pub(crate) fn game_3d_on_pointer_down(
         let client_x: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientX"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         let client_y: f64 = Reflect::get(event.as_ref(), &JsValue::from_str("clientY"))
             .ok()
             .and_then(|value: JsValue| value.as_f64())
-            .unwrap_or(0.0);
+            .unwrap_or_default();
         last_pointer.set(Some((client_x, client_y)));
     }))
 }
@@ -950,11 +943,11 @@ pub(crate) fn extract_first_touch_client(event: &Event) -> (f64, f64) {
     let client_x: f64 = Reflect::get(&touch, &JsValue::from_str(GAME_3D_EVENT_PROPERTY_CLIENT_X))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+        .unwrap_or_default();
     let client_y: f64 = Reflect::get(&touch, &JsValue::from_str(GAME_3D_EVENT_PROPERTY_CLIENT_Y))
         .ok()
         .and_then(|value: JsValue| value.as_f64())
-        .unwrap_or(0.0);
+        .unwrap_or_default();
     (client_x, client_y)
 }
 
@@ -1082,7 +1075,7 @@ pub(crate) fn use_game_3d_webgl_state() -> UseGame3DWebGl {
 /// - `(f32, f32, f32)` - The `(r, g, b)` channels in 0.0-1.0 range.
 pub(crate) fn game_3d_hex_to_rgb(color: &str) -> (f32, f32, f32) {
     let hex: &str = color.strip_prefix('#').unwrap_or(color);
-    let channel = |range: std::ops::Range<usize>| -> f32 {
+    let channel = |range: Range<usize>| -> f32 {
         hex.get(range)
             .and_then(|part: &str| u8::from_str_radix(part, 16).ok())
             .map(|value: u8| f32::from(value) / 255.0)
@@ -1128,9 +1121,9 @@ pub(crate) fn game_3d_canvas_clear_color(canvas_selector: &str) -> (f64, f64, f6
     let mut channels = inner
         .split(',')
         .filter_map(|part: &str| part.trim().parse::<f64>().ok());
-    let r: f64 = channels.next().unwrap_or(0.0) / 255.0;
-    let g: f64 = channels.next().unwrap_or(0.0) / 255.0;
-    let b: f64 = channels.next().unwrap_or(0.0) / 255.0;
+    let r: f64 = channels.next().unwrap_or_default() / 255.0;
+    let g: f64 = channels.next().unwrap_or_default() / 255.0;
+    let b: f64 = channels.next().unwrap_or_default() / 255.0;
     (r, g, b)
 }
 
@@ -1170,9 +1163,7 @@ fn pack_game_3d_cubes_uniform(cubes: &[Cube3D], camera: &Camera3D) -> Vec<f32> {
     sorted.sort_by(|a: &(&Cube3D, f64), b: &(&Cube3D, f64)| {
         let (_, depth_a) = *a;
         let (_, depth_b) = *b;
-        depth_a
-            .partial_cmp(&depth_b)
-            .unwrap_or(std::cmp::Ordering::Equal)
+        depth_a.partial_cmp(&depth_b).unwrap_or(Ordering::Equal)
     });
     let view_proj_elements: [f64; 16] = camera.view_proj_matrix().get_elements();
     let mut data: Vec<f32> = view_proj_elements
@@ -1519,7 +1510,7 @@ pub(crate) fn start_game_3d_webgpu_loop(
             };
             let next_id: i32 = window_value
                 .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
             } else {
@@ -1536,7 +1527,7 @@ pub(crate) fn start_game_3d_webgpu_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(start_id));
     });
 }
@@ -1803,7 +1794,7 @@ pub(crate) fn start_game_3d_webgl_loop(
             };
             let next_id: i32 = window_value
                 .request_animation_frame(raf_closure_ref.as_ref().unchecked_ref())
-                .unwrap_or(0);
+                .unwrap_or_default();
             if cancelled_for_loop.get() {
                 raf_clone.set(None);
             } else {
@@ -1820,7 +1811,7 @@ pub(crate) fn start_game_3d_webgl_loop(
         };
         let start_id: i32 = start_window
             .request_animation_frame(start_raf_ref.as_ref().unchecked_ref())
-            .unwrap_or(0);
+            .unwrap_or_default();
         raf_id.set(Some(start_id));
     });
 }

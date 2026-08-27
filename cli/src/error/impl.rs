@@ -1,17 +1,17 @@
 use super::*;
 
 /// Implements `Display` for `EuvError` to provide human-readable error messages.
-impl std::fmt::Display for EuvError {
+impl Display for EuvError {
     /// Formats the error message based on the variant.
     ///
     /// # Arguments
     ///
-    /// - `&mut std::fmt::Formatter` - The formatter.
+    /// - `&mut Formatter` - The formatter.
     ///
     /// # Returns
     ///
     /// - `FmtResult` - The result of the formatting operation.
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             EuvError::Io { message, error } => write!(formatter, "{message}: {error}"),
             EuvError::IoPath {
@@ -30,13 +30,13 @@ impl std::fmt::Display for EuvError {
 }
 
 /// Implements `Error` for `EuvError` so it integrates with the Rust error ecosystem.
-impl std::error::Error for EuvError {
+impl Error for EuvError {
     /// Returns the lower-level source of this error, if any.
     ///
     /// # Returns
     ///
-    /// - `Option<&(dyn std::error::Error + 'static)>` - The underlying error source.
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+    /// - `Option<&(dyn Error + 'static)>` - The underlying error source.
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             EuvError::Io { error, .. } => Some(error),
             EuvError::IoPath { error, .. } => Some(error),

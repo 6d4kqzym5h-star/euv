@@ -139,8 +139,8 @@ impl UseEuvInput {
                     .unwrap_or_else(|| {
                         window_clone
                             .inner_height()
-                            .map(|height: JsValue| height.as_f64().unwrap_or(0.0))
-                            .unwrap_or(0.0)
+                            .map(|height: JsValue| height.as_f64().unwrap_or_default())
+                            .unwrap_or_default()
                     });
                 let visible_bottom: f64 = viewport_height - KEYBOARD_FOCUS_GAP;
                 if input_bottom > visible_bottom {

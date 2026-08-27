@@ -7,31 +7,31 @@ use super::*;
 /// when toggled, the hook array is cleared to prevent signal leakage
 /// between different match arms.
 #[derive(CustomDebug, Data, Default, New)]
-pub(crate) struct HookContextInner {
+pub struct HookContextInner {
     /// Storage for hook state values (signals, etc.).
     #[debug(skip)]
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) hooks: Vec<Box<dyn Any>>,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub hooks: Vec<Box<dyn Any>>,
     /// The match arm index from the last render.
-    #[get(pub(crate), type(copy))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) arm_changed: usize,
+    #[get(pub, type(copy))]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub arm_changed: usize,
     /// Current hook index, incremented on each hook call and reset per render.
-    #[get(pub(crate), type(copy))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) hook_index: usize,
+    #[get(pub, type(copy))]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub hook_index: usize,
     /// Cleanup closures registered by hooks (e.g., `use_signal`) that must
     /// be executed when the hook context is cleared due to a `match` arm
     /// switch.
     #[debug(skip)]
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) cleanups: Vec<Box<dyn FnOnce()>>,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub cleanups: Vec<Box<dyn FnOnce()>>,
 }
 
 /// Manages hook state across render cycles for a DynamicNode.
@@ -45,10 +45,10 @@ pub(crate) struct HookContextInner {
 pub struct HookContext {
     /// Shared reference to the heap-allocated hook context inner state.
     #[debug(skip)]
-    #[get(pub(crate))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
-    pub(crate) inner: Rc<RefCell<HookContextInner>>,
+    #[get(pub)]
+    #[get_mut(pub)]
+    #[set(pub)]
+    pub inner: Rc<RefCell<HookContextInner>>,
 }
 
 /// A handle to a browser interval timer created by `use_interval`.
@@ -59,7 +59,7 @@ pub struct HookContext {
 pub struct IntervalHandle {
     /// The interval ID assigned by the browser.
     #[get(type(copy))]
-    #[get_mut(pub(crate))]
-    #[set(pub(crate))]
+    #[get_mut(pub)]
+    #[set(pub)]
     pub(crate) interval_id: i32,
 }

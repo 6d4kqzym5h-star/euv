@@ -257,8 +257,7 @@ fn game_2d_webgpu_tab(state: UseGame2DWebGpu) -> VirtualNode {
     let loaded: bool = state.get_loaded().get();
     let active: bool = state.get_active().get();
     let init_error_code: &str = state.get_init_error_code().get();
-    let status_text: &str =
-        crate::page::webgpu_status::webgpu_status_text(loaded, active, init_error_code);
+    let status_text: &str = webgpu_status_text(loaded, active, init_error_code);
     let pause_label: &str = if game.get_running().get() {
         "Pause"
     } else {

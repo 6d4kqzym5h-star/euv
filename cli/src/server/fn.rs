@@ -48,7 +48,7 @@ pub(crate) async fn generate_html(config: &HtmlConfig) -> Result<String, EuvErro
                     path: custom_path.to_path_buf(),
                     error,
                 })?;
-        String::from_utf8(bytes).map_err(|error: std::string::FromUtf8Error| EuvError::Utf8 {
+        String::from_utf8(bytes).map_err(|error: FromUtf8Error| EuvError::Utf8 {
             message: String::from("Custom index.html is not valid UTF-8"),
             error,
         })?

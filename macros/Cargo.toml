@@ -22,3 +22,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 proc-macro2 = { workspace = true }
 lombok-macros = { workspace = true }
+
+[dev-dependencies]
+euv = { workspace = true }

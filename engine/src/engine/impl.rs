@@ -231,12 +231,8 @@ impl EngineHandle {
         if let Some(existing) = self.try_get_input_cell() {
             return Some(existing.clone());
         }
-        let Some(window_value) = window() else {
-            return None;
-        };
-        let Some(document_value) = window_value.document() else {
-            return None;
-        };
+        let window_value: Window = window()?;
+        let document_value: Document = window_value.document()?;
         let render_config: &RenderConfig = &self.get_config().get_render();
         let canvas_selector: String = render_config.get_canvas_selector();
         let element: Element = document_value

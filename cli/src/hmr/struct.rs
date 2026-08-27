@@ -1,9 +1,3 @@
-//! HMR preserved-state types.
-
-//!
-//! Serializable bag of state entries captured before a hot reload and
-//! restored after the new module instance mounts.
-
 use super::*;
 
 /// A serializable bag of preserved state entries.
@@ -18,7 +12,7 @@ use super::*;
 /// ```json
 /// {"entries": {"k1": "v1", "k2": "v2"}}
 /// ```
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct HmrState {
     /// The preserved entries, keyed by name.
     pub(crate) entries: HashMap<String, String>,

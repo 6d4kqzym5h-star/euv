@@ -3,7 +3,7 @@
 /// Since Rust's orphan rules prevent adding inherent methods to foreign types like
 /// `web_sys::Element`, this trait provides the same functionality through an extension
 /// trait pattern. All methods are available on any `Element` reference via trait dispatch.
-pub(crate) trait ElementExt {
+pub trait ElementExt {
     /// Removes or clears a DOM attribute/property, depending on the attribute name.
     ///
     /// For `value`, sets the DOM property to an empty string rather than calling

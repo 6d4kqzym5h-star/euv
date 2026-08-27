@@ -6,7 +6,7 @@ impl SceneManager {
     ///
     /// # Arguments
     ///
-    /// - `T` - The concrete scene type implementing `Scene`.
+    /// - `T: Scene + 'static` - The concrete scene type.
     ///
     /// # Returns
     ///

@@ -24,9 +24,7 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let Some(window) = window() else {
-            return None;
-        };
+        let window: Window = window()?;
         let storage: Storage = window.local_storage().ok()??;
         storage.get_item(key.as_ref()).ok()?
     }
@@ -84,9 +82,7 @@ impl UseEuvBrowser {
     where
         K: AsRef<str>,
     {
-        let Some(window) = window() else {
-            return None;
-        };
+        let window: Window = window()?;
         let storage: Storage = window.session_storage().ok()??;
         storage.get_item(key.as_ref()).ok()?
     }
@@ -189,7 +185,7 @@ impl UseEuvBrowser {
     ///
     /// # Returns
     ///
-    /// - `(i32, i32)` - A tuple of (inner_width, inner_height).
+    /// - `(i32, i32)` - The viewport's inner width and height in CSS pixels.
     pub(crate) fn window_inner_size() -> (i32, i32) {
         let Some(window) = window() else {
             return (0, 0);

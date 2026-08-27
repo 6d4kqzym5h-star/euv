@@ -17,7 +17,7 @@ mod raw_html;
 mod var;
 mod watch;
 
-pub(crate) use {class::*, computed::*, html::*, ident::*, var::*, watch::*};
+pub(crate) use {class::*, computed::*, html::*, ident::*, raw_html::*, var::*, watch::*};
 
 use std::{
     collections::HashMap,
@@ -35,8 +35,8 @@ use {
     proc_macro2::{Span, TokenTree},
     quote::{ToTokens, quote, quote_spanned},
     syn::{
-        Attribute, Expr, Field, File, Generics, Ident, Item, LitStr, Path, Stmt, Token, Type,
-        Visibility, WhereClause, braced, parenthesized, parse,
+        Attribute, Block, Expr, Field, File, Generics, Ident, Item, LitStr, Path, Stmt, Token,
+        Type, Visibility, WhereClause, braced, parenthesized, parse,
         parse::{Parse, ParseBuffer, ParseStream},
         parse_file, parse2,
         token::{Brace, Colon, Paren, Semi},
@@ -47,18 +47,6 @@ use {
 ///
 /// This macro accepts a syntax similar to Dioxus HTML:
 ///
-/// ```ignore
-/// html! {
-///     div {
-///         class: c_container()
-///         h1 { "Hello, euv!" }
-///         button {
-///             onclick: move |_| { /* handle click */ },
-///             "Click me"
-///         }
-///     }
-/// }
-/// ```
 #[proc_macro]
 pub fn html(input: TokenStream) -> TokenStream {
     parse_html(input)
@@ -75,23 +63,6 @@ pub fn html(input: TokenStream) -> TokenStream {
 /// by value; parameters referenced without braces keep the default
 /// type-based class name.
 ///
-/// ```ignore
-/// class! {
-///     pub container {
-///         max_width: "800px";
-///         margin: "0 auto";
-///     }
-///     pub color_preview(color: &str) {
-///         background: {color};
-///     }
-///     pub(crate) header {
-///         font_size: "28px";
-///     }
-///     hidden {
-///         display: "none";
-///     }
-/// }
-/// ```
 #[proc_macro]
 pub fn class(input: TokenStream) -> TokenStream {
     parse_class(input)
@@ -110,13 +81,6 @@ pub fn class(input: TokenStream) -> TokenStream {
 /// corresponding signal. Parameter types are optional and can be annotated
 /// after a colon.
 ///
-/// ```ignore
-/// let count = App::use_signal(|| 0_i32);
-/// let name = App::use_signal(|| String::from("euv"));
-/// watch!(count, name, |count_val: i32, name_val: String| {
-///     web_sys::console::log_1(&format!("count={count_val}, name={name_val}").into());
-/// });
-/// ```
 #[proc_macro]
 pub fn watch(input: TokenStream) -> TokenStream {
     parse_watch(input)
@@ -137,13 +101,6 @@ pub fn watch(input: TokenStream) -> TokenStream {
 /// to mark its dependents dirty precisely. The initial value is computed immediately
 /// during first render.
 ///
-/// ```ignore
-/// let first_name = App::use_signal(|| String::from("John"));
-/// let last_name = App::use_signal(|| String::from("Doe"));
-/// let full_name: Signal<String> = computed!(first_name, last_name, |first: String, last: String| -> String {
-///     format!("{first} {last}")
-/// });
-/// ```
 #[proc_macro]
 pub fn computed(input: TokenStream) -> TokenStream {
     parse_computed(input)
@@ -158,14 +115,6 @@ pub fn computed(input: TokenStream) -> TokenStream {
 /// Variable names can be written as unquoted kebab-case identifiers
 /// (e.g., `bg-primary`) or as quoted string literals (e.g., `"bg-primary"`).
 ///
-/// ```ignore
-/// vars! {
-///     pub c_theme_light {
-///         bg-primary: "#f8f9fb";
-///         text-primary: "#1a1a2e";
-///     }
-/// }
-/// ```
 #[proc_macro]
 pub fn vars(input: TokenStream) -> TokenStream {
     parse_vars(input)
@@ -177,18 +126,6 @@ pub fn vars(input: TokenStream) -> TokenStream {
 /// (e.g., `bg-primary`) or as a quoted string literal (e.g., `"bg-primary"`),
 /// and expands to the CSS string `"var(--bg-primary)"`.
 ///
-/// ```ignore
-/// vars! {
-///     pub c_theme {
-///         bg-primary: "#f8f9fb";
-///     }
-/// }
-/// class! {
-///     pub c_container {
-///         background: var!(bg-primary);
-///     }
-/// }
-/// ```
 #[proc_macro]
 pub fn var(input: TokenStream) -> TokenStream {
     parse_var(input)
@@ -201,15 +138,9 @@ pub fn var(input: TokenStream) -> TokenStream {
 /// deliberately loud warning that the string is NOT escaped; treat
 /// it like `Element.innerHTML` in JavaScript.
 ///
-/// ```ignore
-/// use euv::vdom::RawHtml;
-///
-/// let raw: RawHtml = unsafe_no_inline!("<svg viewBox=\"0 0 10 10\"/>");
-/// assert_eq!(raw.content(), "<svg viewBox=\"0 0 10 10\"/>");
-/// ```
 #[proc_macro]
 pub fn unsafe_no_inline(input: TokenStream) -> TokenStream {
-    crate::raw_html::parse_unsafe_no_inline(input)
+    parse_unsafe_no_inline(input)
 }
 
 /// The `component` attribute macro for marking component functions.

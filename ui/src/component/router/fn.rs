@@ -58,10 +58,10 @@ pub fn find_active_route<'a>(
         if normalized == normalized_request {
             // Try to find a deeper match in the
             // children of this route.
-            if !route.children.is_empty() {
-                if let Some(child_match) = find_active_route(path, &route.children) {
-                    return Some(child_match);
-                }
+            if !route.children.is_empty()
+                && let Some(child_match) = find_active_route(path, &route.children)
+            {
+                return Some(child_match);
             }
             return Some(route);
         }
@@ -73,10 +73,10 @@ pub fn find_active_route<'a>(
     // return the parent.
     for route in routes.iter() {
         if route_matches(&route.path, path) && route.path != normalize_path(path) {
-            if !route.children.is_empty() {
-                if let Some(child_match) = find_active_route(path, &route.children) {
-                    return Some(child_match);
-                }
+            if !route.children.is_empty()
+                && let Some(child_match) = find_active_route(path, &route.children)
+            {
+                return Some(child_match);
             }
             return Some(route);
         }
@@ -96,6 +96,24 @@ pub fn route_chain<'a>(path: &str, routes: &'a [NestedRouteConfig]) -> Vec<&'a N
     chain
 }
 
+/// Recursively walks the route tree looking for the deepest
+/// match for `path`. Each matching route is appended to
+/// `chain` in nesting order, so the layout component can
+/// render `<Outlet>` for every parent. Returns `true` as
+/// soon as a match is appended so callers can short-circuit
+/// the second pass.
+///
+/// # Arguments
+///
+/// - `&str` - The current request path.
+/// - `&'a [NestedRouteConfig]` - The slice of routes to search.
+/// - `&mut Vec<&'a NestedRouteConfig>` - Out-parameter that
+///   accumulates the matched parent chain.
+///
+/// # Returns
+///
+/// - `bool` - `true` when a route was appended to `chain`,
+///   `false` otherwise.
 pub(crate) fn build_chain<'a>(
     path: &str,
     routes: &'a [NestedRouteConfig],

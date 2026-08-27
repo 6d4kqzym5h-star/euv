@@ -44,7 +44,7 @@ where
         let ptr: *mut SignalInner<T> = Box::into_raw(boxed);
         let addr: usize = ptr as usize;
         Self::registry_mut().insert(addr);
-        let mut signal: Self = Self::new(0, std::marker::PhantomData);
+        let mut signal: Self = Self::new(0, PhantomData);
         signal.set_inner(addr);
         signal
     }

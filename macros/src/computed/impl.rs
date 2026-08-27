@@ -55,11 +55,16 @@ impl Parse for ComputedInput {
         let return_type: Type = input.parse::<Type>()?;
         let body_content: ParseBuffer<'_>;
         braced!(body_content in input);
-        let mut body: Vec<Stmt> = Vec::new();
-        while !body_content.is_empty() {
-            let stmt: Stmt = body_content.parse()?;
-            body.push(stmt);
-        }
+        // `Block::parse_within` returns the parsed
+        // statements, allowing the trailing
+        // expression-statement to omit the semicolon.
+        // Using `Stmt::parse` directly here would reject
+        // `x * 2` (no trailing `;`) with "unexpected end
+        // of input, expected semicolon", forcing callers
+        // into a `return x * 2;` workaround that still
+        // hits a type-inference edge case in the
+        // generated `use_signal` closure body.
+        let body: Vec<Stmt> = body_content.call(Block::parse_within)?;
         if signals.len() != param_names.len() {
             return Err(input.error(ERR_SIGNAL_PARAM_MISMATCH));
         }
@@ -137,11 +142,11 @@ impl ToTokens for ComputedInput {
             })
             .collect();
         tokens.extend(quote! {{
-            #(let #signals: ::euv::Signal<_> = #signal_exprs;)*
-            let #result_ident: ::euv::Signal<#return_type> = ::euv::App::use_signal(|| {
-                #(#all_gets)*
-                { #(#body)* }
-            });
+                    #(let #signals: ::euv::Signal<_> = #signal_exprs;)*
+                    let #result_ident: ::euv::Signal<#return_type> = ::euv::App::use_signal::<#return_type, _>(|| -> #return_type {
+                        #(#all_gets)*
+                        { #(#body)* }
+                    });
             let __euv_computed_subscribed: ::euv::Signal<bool> = ::euv::App::use_signal(|| false);
             if !__euv_computed_subscribed.get() {
                 let __euv_computed_fire_addr: usize = ::euv::FireHandle::new(move || {

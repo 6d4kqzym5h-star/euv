@@ -8,30 +8,27 @@ mod event;
 mod noderef;
 mod reactive;
 mod renderer;
-pub mod vdom;
+mod vdom;
 
-#[cfg(test)]
-mod tests;
+pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
 
 pub use std::{
     collections::hash_map::DefaultHasher,
+    collections::{HashMap, HashSet, VecDeque},
+    fmt::{self, Debug, Display, Formatter, Result as FmtResult},
     hash::{Hash, Hasher},
+    marker::PhantomData,
+    mem::{swap, take, zeroed},
     panic::{AssertUnwindSafe, catch_unwind},
 };
-pub use {app::*, event::*, noderef::*, reactive::*, vdom::*};
 
 pub(crate) use renderer::*;
 
 use std::{
     any::Any,
     borrow::Cow,
-    cell::{Cell, Ref, RefCell, UnsafeCell},
-    collections::{HashMap, HashSet},
-    fmt::{self, Display, Formatter},
-    future::Future,
+    cell::{Ref, RefCell, UnsafeCell},
     iter::Iterator,
-    marker::PhantomData,
-    mem::{swap, take},
     num::ParseIntError,
     ops::Deref,
     rc::Rc,

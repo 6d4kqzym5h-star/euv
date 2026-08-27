@@ -69,7 +69,7 @@ impl Renderer {
     /// - `VirtualNode` - The new virtual DOM tree to render.
     pub fn render(&mut self, vnode: VirtualNode) {
         let new_unwrapped: VirtualNode = Self::unwrap_component_owned(vnode);
-        let old_tree: Option<VirtualNode> = std::mem::take(self.get_mut_current_tree());
+        let old_tree: Option<VirtualNode> = take(self.get_mut_current_tree());
         if let Some(old_vnode) = old_tree.as_ref() {
             self.patch_root(old_vnode, &new_unwrapped);
         } else {
@@ -375,7 +375,6 @@ impl Renderer {
     /// OPT 4: removed `try_get_child_node` — its sole call site in
     /// `patch_children_positional` now reads from the hoisted NodeList
     /// directly.
-
     /// Patches children of an element using a keyed diff algorithm when keys
     /// are available, falling back to positional diff when no keys exist.
     ///
@@ -863,7 +862,7 @@ impl Renderer {
             .get_inner()
             .try_borrow()
             .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
-            .unwrap_or(0);
+            .unwrap_or_default();
         let last_arm_owned: OwnedPtr<usize> = OwnedPtr::new(Box::into_raw(Box::new(initial_arm)));
         let callback: Box<dyn FnMut()> = Box::new(move || {
             if placeholder_clone.parent_node().is_none() {
@@ -880,7 +879,7 @@ impl Renderer {
                 .get_inner()
                 .try_borrow()
                 .map(|inner: Ref<HookContextInner>| inner.get_arm_changed())
-                .unwrap_or(0);
+                .unwrap_or_default();
             let arm_switched: bool = prev_arm != current_arm;
             unsafe {
                 *last_arm_owned.get() = current_arm;

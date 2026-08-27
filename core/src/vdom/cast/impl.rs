@@ -498,10 +498,10 @@ where
 ///
 /// The two blanket impls below cover the user-visible call sites:
 ///
-/// - `inner_html: "<b>hi</b>"` produces
-///   `AttributeValue::InnerHtml(String::from("<b>hi</b>"))`.
-/// - `inner_html: html_signal` produces
-///   `AttributeValue::InnerHtmlSignal(html_signal)`.
+/// - `String` produces
+///   `AttributeValue::InnerHtml(String::from("..."))`.
+/// - `Signal<String>` produces
+///   `AttributeValue::InnerHtmlSignal(signal)`.
 ///
 /// Each impl only requires its specific source type, so the compiler
 /// picks the right one based on the inferred `T` at the call site

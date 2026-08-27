@@ -22,7 +22,11 @@ impl HmrState {
 
     /// Sets a key-value pair. Overwrites any existing
     /// value for the key.
-    pub fn set(&mut self, key: impl Into<String>, value: impl Into<String>) {
+    pub fn set<K, V>(&mut self, key: K, value: V)
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
         self.entries.insert(key.into(), value.into());
     }
 

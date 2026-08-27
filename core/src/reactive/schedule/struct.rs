@@ -26,7 +26,7 @@ pub(crate) struct MicrotaskCacheCell(
     /// `queue_microtask` once and reuse it on subsequent calls.
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
-    pub(crate) UnsafeCell<MicrotaskCache>,
+    pub UnsafeCell<MicrotaskCache>,
 );
 
 /// A `Sync` wrapper for single-threaded global `Option<HookContextRc>` access.
@@ -41,7 +41,7 @@ pub(crate) struct CurrentHookContextCell(
     #[get(pub(crate))]
     #[get_mut(pub(crate))]
     #[set(pub(crate))]
-    pub(crate) UnsafeCell<Option<HookContextRc>>,
+    pub UnsafeCell<Option<HookContextRc>>,
 );
 
 /// A zero-sized struct providing static methods for scheduling

@@ -9,13 +9,13 @@ impl<T: Interpolable + Copy> Tween<T> {
     ///
     /// # Arguments
     ///
-    /// - `T` - The start value.
-    /// - `T` - The end value.
+    /// - `T: Interpolable + Copy` - The start value.
+    /// - `T: Interpolable + Copy` - The end value.
     /// - `f64` - The interpolation duration in seconds.
     ///
     /// # Returns
     ///
-    /// - `Tween<T>` - The new tween.
+    /// - `Tween<T: Interpolable + Copy>` - The new tween.
     pub fn create(from: T, to: T, duration: f64) -> Tween<T> {
         Tween {
             from,
@@ -104,7 +104,7 @@ impl<T: Interpolable + Copy> Tween<T> {
     ///
     /// # Returns
     ///
-    /// - `T` - The current interpolated value.
+    /// - `T: Interpolable + Copy` - The current interpolated value.
     pub fn update(&mut self, delta_time: f64) -> T {
         if self.state == TweenState::Paused || self.state == TweenState::Finished {
             return self.value();
@@ -127,7 +127,7 @@ impl<T: Interpolable + Copy> Tween<T> {
     ///
     /// # Returns
     ///
-    /// - `T` - The current eased value.
+    /// - `T: Interpolable + Copy` - The current eased value.
     pub fn value(&self) -> T {
         let progress: f64 = self.eased_progress();
         if self.direction == TWEEN_DIRECTION_BACKWARD {
@@ -275,7 +275,7 @@ impl<T: Interpolable + Copy> Clone for Tween<T> {
 }
 
 impl<T: Interpolable + Copy + Debug> Debug for Tween<T> {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         formatter
             .debug_struct("Tween")
             .field("from", &self.from)

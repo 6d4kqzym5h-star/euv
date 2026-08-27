@@ -34,16 +34,6 @@ impl<T: ?Sized> NodeRef<T> {
     /// failed cast is reported as `None` rather than panicking, which
     /// matches React/Yew behaviour and avoids crashing the renderer on
     /// ref misuse.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let input_ref: NodeRef<HtmlInputElement> = App::use_node_ref();
-    /// html! { input { ref: input_ref.clone() } }
-    /// if let Some(el) = input_ref.get_cloned() {
-    ///     el.focus();
-    /// }
-    /// ```
     pub fn get_cloned(&self) -> Option<T>
     where
         T: JsCast,
@@ -65,7 +55,7 @@ impl<T: ?Sized> NodeRef<T> {
         // the new one is stored.
         let cell: *mut Option<JsValue> = self.inner.get();
         unsafe {
-            let _ = (*cell).replace(value);
+            let _: Option<JsValue> = (*cell).replace(value);
         }
     }
 
@@ -79,7 +69,7 @@ impl<T: ?Sized> NodeRef<T> {
     pub fn clear(&self) {
         let cell: *mut Option<JsValue> = self.inner.get();
         unsafe {
-            let _ = (*cell).take();
+            let _: Option<JsValue> = (*cell).take();
         }
     }
 
@@ -128,8 +118,8 @@ impl<T: ?Sized> Default for NodeRef<T> {
     }
 }
 
-impl<T: ?Sized> std::fmt::Debug for NodeRef<T> {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T: ?Sized> Debug for NodeRef<T> {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         formatter
             .debug_struct("NodeRef")
             .field("is_set", &self.is_set())

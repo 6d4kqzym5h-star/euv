@@ -38,7 +38,7 @@ impl<T: Clone> Clone for VirtualNode<T> {
 /// Debug formatting for `VirtualNode<T>`.
 ///
 /// Skips `Dynamic` inner details and `props` for brevity.
-impl<T: std::fmt::Debug> std::fmt::Debug for VirtualNode<T> {
+impl<T: Debug> Debug for VirtualNode<T> {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Element {

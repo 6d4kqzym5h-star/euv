@@ -6,7 +6,7 @@ use super::*;
 /// component (the "layout" or "page") and zero or more
 /// child routes. The path of a child route is resolved
 /// against the parent path during matching.
-#[derive(Clone, CustomDebug)]
+#[derive(Clone, CustomDebug, Data)]
 pub struct NestedRouteConfig {
     /// The route path (e.g. `/settings/profile`).
     pub path: String,
