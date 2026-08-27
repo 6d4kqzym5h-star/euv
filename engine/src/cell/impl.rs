@@ -111,6 +111,7 @@ impl<T: Default> Default for EngineCell<T> {
 
 /// `Default` impl for [`MaybeEngineCell`].
 impl<T> Default for MaybeEngineCell<T> {
+    /// Constructs a default [`MaybeEngineCell`] value.
     fn default() -> Self {
         Self::new()
     }

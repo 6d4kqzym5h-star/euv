@@ -109,6 +109,7 @@ impl HookContext {
 ///
 /// - `Self` - A new `HookContext` sharing the same inner state.
 impl Clone for HookContext {
+    /// Clones the [`HookContext`] by reusing shared, cheap-to-clone state where possible.
     fn clone(&self) -> Self {
         Self::new(self.get_inner().clone())
     }
@@ -123,6 +124,7 @@ impl Clone for HookContext {
 ///
 /// - `Self` - A new `HookContext` with default inner state.
 impl Default for HookContext {
+    /// Constructs a default [`HookContext`] value.
     fn default() -> Self {
         Self::new(Rc::new(RefCell::new(HookContextInner::default())))
     }
@@ -389,6 +391,7 @@ impl HookContext {
     }
 }
 
+/// Inherent implementation of [`HookContext`].
 impl HookContext {
     /// Registers a hook value with the current hook context and returns
     /// the existing instance if one was stored at this index from a

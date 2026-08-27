@@ -181,6 +181,7 @@ impl Entity {
 /// this impl exists purely for trait dispatch. The inherent call resolves
 /// first when both are in scope, so there is no recursion.
 impl Updatable for Entity {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         Entity::update(self, delta_time);
     }
@@ -280,6 +281,7 @@ impl EventBus {
 
 /// Implements `Default` for `EventBus` as a new empty bus.
 impl Default for EventBus {
+    /// Constructs a default [`EventBus`] value.
     fn default() -> EventBus {
         EventBus::create()
     }

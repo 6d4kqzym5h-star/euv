@@ -71,6 +71,7 @@ impl AssetCache {
 
 /// Implements `Default` for `AssetCache` as a new empty cache.
 impl Default for AssetCache {
+    /// Constructs a default [`AssetCache`] value.
     fn default() -> AssetCache {
         AssetCache::new()
     }
@@ -172,6 +173,7 @@ impl AssetLoader {
 
 /// Implements `Default` for `AssetLoader` as a new empty loader.
 impl Default for AssetLoader {
+    /// Constructs a default [`AssetLoader`] value.
     fn default() -> AssetLoader {
         AssetLoader::new()
     }

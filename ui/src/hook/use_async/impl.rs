@@ -5,6 +5,7 @@ where
     T: Clone + PartialEq + 'static,
     L: Clone + PartialEq + HasLoadingHint + 'static,
 {
+    /// Drops the instance, releasing any owned resources.
     fn drop(&mut self) {
         // Flipping the flag first means an in-flight future that
         // happens to fire `state.set(...)` *while* `drop` is
@@ -129,7 +130,9 @@ where
     }
 }
 
+/// Implements `impl HasLoadingHint for ()`.
 impl HasLoadingHint for () {
+    /// Constructs an empty `AsyncData` value (no data, no error).
     fn empty() -> Self {}
 }
 
@@ -138,6 +141,7 @@ where
     T: Clone + PartialEq + 'static,
     L: Clone + PartialEq + HasLoadingHint + 'static,
 {
+    /// Formats the [`UseAsyncHandle`] via the supplied formatter.
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         // Avoid touching the inner pointer in `Debug` output — the
         // address is meaningless to users and could collide with
@@ -153,6 +157,7 @@ where
     T: Clone + PartialEq + 'static,
     L: Clone + PartialEq + HasLoadingHint + 'static,
 {
+    /// Constructs a default [`UseAsyncHandle`] value.
     fn default() -> Self {
         // Same fallback path as `App::use_signal` when the hook
         // context is unavailable: a fresh state handle that points

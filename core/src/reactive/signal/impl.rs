@@ -296,6 +296,7 @@ impl<T> Default for Signal<T>
 where
     T: Clone + Default + PartialEq + 'static,
 {
+    /// Constructs a default [`Signal`] value.
     fn default() -> Self {
         Self::create(T::default())
     }
@@ -312,6 +313,7 @@ impl<T> Clone for Signal<T>
 where
     T: Clone + PartialEq + 'static,
 {
+    /// Clones the [`Signal`] by reusing shared, cheap-to-clone state where possible.
     fn clone(&self) -> Self {
         *self
     }
@@ -387,6 +389,7 @@ impl<T> Default for SignalCell<T>
 where
     T: Clone + PartialEq + 'static,
 {
+    /// Constructs a default [`SignalCell`] value.
     fn default() -> Self {
         Self::new(UnsafeCell::new(None))
     }

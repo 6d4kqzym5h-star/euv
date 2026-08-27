@@ -2,6 +2,7 @@ use super::*;
 
 /// Implements `Default` for `RenderConfig` with sensible default values.
 impl Default for RenderConfig {
+    /// Constructs a default [`RenderConfig`] value.
     fn default() -> RenderConfig {
         RenderConfig {
             backend: RenderBackendType::default(),
@@ -18,6 +19,7 @@ impl Default for RenderConfig {
 
 /// Implements `Default` for `EngineConfig` with default render and scheduler configs.
 impl Default for EngineConfig {
+    /// Constructs a default [`EngineConfig`] value.
     fn default() -> EngineConfig {
         EngineConfig {
             render: RenderConfig::default(),

@@ -1,5 +1,6 @@
 use super::*;
 
+/// Inherent implementation of [`ProfilerHandle`].
 impl ProfilerHandle {
     /// Records a fresh measurement around the given closure.
     ///
@@ -69,6 +70,7 @@ impl ProfilerHandle {
     }
 }
 
+/// Inherent implementation of [`ProfilerMark`].
 impl ProfilerMark {
     /// Closes the measurement started by `begin()` and pushes
     /// the resulting `ProfileEntry` into the entries signal.

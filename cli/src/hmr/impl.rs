@@ -1,5 +1,6 @@
 use super::*;
 
+/// Inherent implementation of [`HmrState`].
 impl HmrState {
     /// Creates a new empty `HmrState`.
     pub fn new() -> Self {

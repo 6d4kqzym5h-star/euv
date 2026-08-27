@@ -1,5 +1,6 @@
 use super::*;
 
+/// Inherent implementation of [`ErrorBoundary`].
 impl ErrorBoundary {
     /// Creates a new `ErrorBoundary` in the `Healthy`
     /// phase.
@@ -43,19 +44,25 @@ impl ErrorBoundary {
     }
 }
 
+/// Default-construction for [`ErrorBoundary`].
 impl Default for ErrorBoundary {
+    /// Constructs a default [`ErrorBoundary`] value.
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Formatting / debug-printing for [`ErrorBoundary`].
 impl Display for ErrorBoundary {
+    /// Formats the [`ErrorBoundary`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         write!(formatter, "ErrorBoundary({:?})", self.get_phase().get())
     }
 }
 
+/// Equality comparison for [`ErrorBoundaryPhase`].
 impl PartialEq for ErrorBoundaryPhase {
+    /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (ErrorBoundaryPhase::Healthy, ErrorBoundaryPhase::Healthy) => true,

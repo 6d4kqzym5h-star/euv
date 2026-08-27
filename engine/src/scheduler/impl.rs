@@ -2,6 +2,7 @@ use super::*;
 
 /// Implements default configuration and state initialization for scheduler types.
 impl Default for SchedulerConfig {
+    /// Constructs a default [`SchedulerConfig`] value.
     fn default() -> SchedulerConfig {
         SchedulerConfig::new(DEFAULT_FIXED_TIMESTEP, DEFAULT_MAX_FRAME_TIME)
     }
@@ -9,6 +10,7 @@ impl Default for SchedulerConfig {
 
 /// Implements `Default` for `SchedulerState` as a freshly created stopped state.
 impl Default for SchedulerState {
+    /// Constructs a default [`SchedulerState`] value.
     fn default() -> SchedulerState {
         SchedulerState::new(UNINITIALIZED_TIME)
     }

@@ -783,6 +783,7 @@ impl ToTokens for HtmlDynamicTag {
     }
 }
 
+/// Inherent implementation of [`HtmlDynamicTag`].
 impl HtmlDynamicTag {
     /// Builds `AttributeEntry::new(...)` tokens for each attribute of the
     /// dynamic tag. The result is shared between the native-element fallback
@@ -964,6 +965,7 @@ impl ToTokens for HtmlElement {
     }
 }
 
+/// Inherent implementation of [`HtmlElement`].
 impl HtmlElement {
     /// Emits the tokens for a `portal { target: "..." } children` element.
     ///

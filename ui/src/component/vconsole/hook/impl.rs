@@ -162,6 +162,7 @@ impl Console {
 
 /// Implements the Display trait for LogFilter to render filter button labels.
 impl Display for LogFilter {
+    /// Formats the [`LogFilter`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         let label: &str = match self {
             LogFilter::All => "All",

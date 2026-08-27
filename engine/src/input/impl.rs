@@ -490,6 +490,7 @@ impl InputState {
 
 /// Implements `Default` for `InputState` as a fresh empty state.
 impl Default for InputState {
+    /// Constructs a default [`InputState`] value.
     fn default() -> InputState {
         InputState::new()
     }

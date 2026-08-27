@@ -5,6 +5,7 @@ use super::*;
 /// Only compares the text content; the backing signal is not considered
 /// because it does not affect visual output.
 impl PartialEq for TextNode {
+    /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
     fn eq(&self, other: &Self) -> bool {
         self.get_content() == other.get_content()
     }
@@ -12,6 +13,7 @@ impl PartialEq for TextNode {
 
 /// Clones a `VirtualNode<T>` by deep-copying all fields.
 impl<T: Clone> Clone for VirtualNode<T> {
+    /// Clones the [`VirtualNode`] by reusing shared, cheap-to-clone state where possible.
     fn clone(&self) -> Self {
         match self {
             Self::Element {
@@ -39,6 +41,7 @@ impl<T: Clone> Clone for VirtualNode<T> {
 ///
 /// Skips `Dynamic` inner details and `props` for brevity.
 impl<T: Debug> Debug for VirtualNode<T> {
+    /// Formats the [`VirtualNode`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Element {
@@ -65,6 +68,7 @@ impl<T: Debug> Debug for VirtualNode<T> {
 
 /// Default implementation returns `VirtualNode::Empty`.
 impl<T> Default for VirtualNode<T> {
+    /// Constructs a default [`VirtualNode`] value.
     fn default() -> Self {
         Self::Empty
     }
@@ -80,6 +84,7 @@ impl<T> Default for VirtualNode<T> {
 /// variants are always considered equal — the inner renderer handles
 /// patching when the dynamic content actually changes.
 impl<T: PartialEq> PartialEq for VirtualNode<T> {
+    /// Returns `true` when `self` and `other` are equivalent by the [`PartialEq`] contract.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (VirtualNode::Text(old_text), VirtualNode::Text(new_text)) => old_text == new_text,
@@ -131,6 +136,7 @@ impl<T: PartialEq> PartialEq for VirtualNode<T> {
 
 /// Provides a default empty dynamic node with a no-op render function.
 impl Default for DynamicNode {
+    /// Constructs a default [`DynamicNode`] value.
     fn default() -> Self {
         let render_fn_inner: Rc<UnsafeCell<RenderFnInner>> = Rc::new(UnsafeCell::new(
             RenderFnInner::new(Box::new(|_: &mut HookContext| VirtualNode::Empty)),

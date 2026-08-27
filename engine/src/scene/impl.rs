@@ -173,6 +173,7 @@ impl SceneManager {
 /// this impl exists purely for trait dispatch. The inherent call resolves
 /// first when both are in scope, so there is no recursion.
 impl Updatable for SceneManager {
+    /// Advances the simulation by `delta_time` seconds.
     fn update(&mut self, delta_time: f64) {
         SceneManager::update(self, delta_time);
     }
@@ -180,6 +181,7 @@ impl Updatable for SceneManager {
 
 /// Implements `Default` for `SceneManager` as a new empty manager.
 impl Default for SceneManager {
+    /// Constructs a default [`SceneManager`] value.
     fn default() -> SceneManager {
         SceneManager::new()
     }

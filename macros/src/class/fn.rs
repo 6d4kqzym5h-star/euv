@@ -197,6 +197,7 @@ pub(crate) fn collect_dynamic_param_names(class_def: &ClassDef) -> Vec<String> {
     dynamic_param_names
 }
 
+/// Collects dynamic parameter identifiers from the supplied `properties` slice.
 fn collect_dynamic_param_names_from_properties(
     properties: &[(ClassPropKey, ClassPropValue)],
     dynamic_param_names: &mut Vec<String>,
@@ -210,6 +211,7 @@ fn collect_dynamic_param_names_from_properties(
     }
 }
 
+/// Collects dynamic parameter identifiers from the supplied `selector_blocks` slice.
 fn collect_dynamic_param_names_from_selector_blocks(
     selector_blocks: &[SelectorBlock],
     dynamic_param_names: &mut Vec<String>,
@@ -226,6 +228,7 @@ fn collect_dynamic_param_names_from_selector_blocks(
     }
 }
 
+/// Collects dynamic parameter identifiers from the supplied `at_rule_blocks` slice.
 fn collect_dynamic_param_names_from_at_rule_blocks(
     at_rule_blocks: &[AtRuleBlock],
     dynamic_param_names: &mut Vec<String>,
@@ -246,6 +249,7 @@ fn collect_dynamic_param_names_from_at_rule_blocks(
     }
 }
 
+/// Recursively descends into every brace-delimited group of the token stream.
 fn collect_braced_idents(tokens: &proc_macro2::TokenStream, dynamic_param_names: &mut Vec<String>) {
     for token in tokens.clone() {
         if let TokenTree::Group(group) = token {
@@ -257,6 +261,7 @@ fn collect_braced_idents(tokens: &proc_macro2::TokenStream, dynamic_param_names:
     }
 }
 
+/// Collects every identifier-shaped token (recursively into groups).
 fn collect_all_idents(tokens: &proc_macro2::TokenStream, dynamic_param_names: &mut Vec<String>) {
     for token in tokens.clone() {
         match token {
@@ -269,6 +274,7 @@ fn collect_all_idents(tokens: &proc_macro2::TokenStream, dynamic_param_names: &m
     }
 }
 
+/// Appends `param_name` only when it is not already present.
 fn push_unique_param_name(dynamic_param_names: &mut Vec<String>, param_name: String) {
     if !dynamic_param_names.contains(&param_name) {
         dynamic_param_names.push(param_name);

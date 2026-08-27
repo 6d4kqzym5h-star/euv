@@ -33,6 +33,7 @@ impl<T: Clone + PartialEq + 'static> Previous<T> {
 }
 
 impl<T: Clone + PartialEq + Debug + 'static> Display for Previous<T> {
+    /// Formats the [`Previous`] via the supplied formatter.
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
         match self.get_previous().get() {
             Some(value) => write!(formatter, "Previous(Some({value:?}))"),
@@ -42,6 +43,7 @@ impl<T: Clone + PartialEq + Debug + 'static> Display for Previous<T> {
 }
 
 impl<T: Clone + PartialEq + 'static> Default for Previous<T> {
+    /// Constructs a default [`Previous`] value.
     fn default() -> Self {
         Self::new()
     }
