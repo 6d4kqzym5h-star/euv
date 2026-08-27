@@ -1841,6 +1841,87 @@ pub(crate) fn extract_attr_key_tokens(key: &proc_macro2::TokenStream) -> proc_ma
     }
 }
 
+/// Returns `true` when the attribute key token stream is a static literal or
+/// identifier (e.g. `"data-foo"`, `class`, `onclick`, `r#type`) that can be
+/// embedded as a `Cow::Borrowed(&'static str)` to avoid the per-render
+/// `String` allocation that `extract_attr_key_tokens` would otherwise incur.
+///
+/// Returns `false` for any token stream that contains a punctuation, group,
+/// or non-literal/ident token — in particular a dynamic braced key such as
+/// `{dynamic_key.get()}` collapses to a bare expression token stream after
+/// parsing, which only this predicate can distinguish from a plain ident key
+/// like `class`. Static keys keep their zero-allocation fast path; dynamic
+/// keys take the `Cow::Owned` runtime-evaluate path.
+///
+/// # Arguments
+///
+/// - `&proc_macro2::TokenStream` - The token stream representing the
+///   attribute key, exactly as the parser stored it.
+///
+/// # Returns
+///
+/// - `bool` - `true` if every token is either a literal (string, char,
+///   numeric) or a plain identifier (including raw idents like `r#type`),
+///   `false` otherwise.
+pub(crate) fn is_static_attr_key_token(key: &proc_macro2::TokenStream) -> bool {
+    use proc_macro2::TokenTree;
+    let mut has_token: bool = false;
+    for token in key.clone() {
+        has_token = true;
+        match token {
+            TokenTree::Ident(_) | TokenTree::Literal(_) => continue,
+            _ => return false,
+        }
+    }
+    has_token
+}
+
+/// Constructs a `Cow::Borrowed(&'static str)` token stream for a static
+/// attribute key whose compile-time value is `key_str`.
+///
+/// The caller must guarantee `is_static_attr_key_token(key)` is `true` and
+/// that `extract_attr_key_string(key)` equals `key_str`. Together those
+/// preconditions let the macro emit a shared `&'static str` for the
+/// attribute name across the whole rendered DOM, instead of allocating a
+/// fresh `String` per element on every render.
+///
+/// # Arguments
+///
+/// - `&str` - The compile-time attribute key, e.g. `"class"`, `"data-foo"`,
+///   `"onclick"`.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - A token stream that evaluates to
+///   `Cow::Borrowed(key_str)` at runtime.
+pub(crate) fn borrowed_attr_name_token(key_str: &str) -> proc_macro2::TokenStream {
+    quote! { ::std::borrow::Cow::Borrowed(#key_str) }
+}
+
+/// Constructs a `Cow::Owned(String)` token stream for a dynamic attribute
+/// key that must be evaluated at runtime, given the inner expression
+/// tokens.
+///
+/// The inner expression is wrapped in `( ... ).to_string()` so any Rust
+/// expression (an ident, a method call, a path, etc.) produces a `String`
+/// at render time. The caller must guarantee
+/// `!is_static_attr_key_token(key)` so this path is only used for keys
+/// that genuinely depend on runtime state.
+///
+/// # Arguments
+///
+/// - `&proc_macro2::TokenStream` - The original attribute key token stream,
+///   exactly as the parser stored it.
+///
+/// # Returns
+///
+/// - `proc_macro2::TokenStream` - A token stream that evaluates to
+///   `Cow::Owned((#key).to_string())` at runtime.
+pub(crate) fn owned_attr_name_token(key: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    let key_name_token: proc_macro2::TokenStream = extract_attr_key_tokens(key);
+    quote! { ::std::borrow::Cow::Owned(#key_name_token) }
+}
+
 /// Converts an `HtmlAttrValue` into a token stream that produces an `AttributeValue`
 /// for use inside an `AttributeEntry::new()` call.
 ///
