@@ -21,6 +21,7 @@ pub fn euv_sidebar(node: VirtualNode<EuvSidebarProps>) -> VirtualNode {
         collapsed,
         items,
         prefix,
+        on_navigate,
     }: EuvSidebarProps = node.try_get_props().unwrap_or_default();
     html! {
         div {
@@ -30,6 +31,7 @@ pub fn euv_sidebar(node: VirtualNode<EuvSidebarProps>) -> VirtualNode {
                     collapsed
                     item: *item
                     prefix: prefix.clone()
+                    on_navigate: on_navigate.clone()
                 }
             }
         }
@@ -52,6 +54,7 @@ pub fn euv_sidebar_item(node: VirtualNode<EuvSidebarItemProps>) -> VirtualNode {
         collapsed,
         item,
         prefix,
+        on_navigate,
     }: EuvSidebarItemProps = node.try_get_props().unwrap_or_default();
     let route: String = route_signal.get();
     let path: &str = strip_hash_anchor(&route);
@@ -73,7 +76,7 @@ pub fn euv_sidebar_item(node: VirtualNode<EuvSidebarItemProps>) -> VirtualNode {
                     link_class()
                 }
                 href: format!("#{link}")
-                onclick: Router::link_handler(link)
+                onclick: navigate_link(on_navigate.clone(), link)
                 {
                     item.text
                 }
@@ -91,7 +94,7 @@ pub fn euv_sidebar_item(node: VirtualNode<EuvSidebarItemProps>) -> VirtualNode {
         Some(link) => html! {
             a {
                 href: format!("#{link}")
-                onclick: navigate_without_toggle(link)
+                onclick: navigate_group_link(on_navigate.clone(), link)
                 {
                     item.text
                 }
@@ -125,6 +128,7 @@ pub fn euv_sidebar_item(node: VirtualNode<EuvSidebarItemProps>) -> VirtualNode {
                         collapsed
                         items: item.children
                         prefix: key.clone()
+                        on_navigate: on_navigate.clone()
                     }
                 }
             }
@@ -132,23 +136,57 @@ pub fn euv_sidebar_item(node: VirtualNode<EuvSidebarItemProps>) -> VirtualNode {
     }
 }
 
-/// Navigates to a group index page without toggling the group.
-///
-/// Stops event propagation so the parent row's toggle handler does not also
-/// fire when the link is clicked.
+/// Builds the leaf-link click handler: the interceptor when set, otherwise
+/// the default hash-router navigation.
 ///
 /// # Arguments
 ///
+/// - `Option<Rc<dyn Fn(&'static str)>>` - The navigation interceptor.
+/// - `&'static str` - The target link.
+///
+/// # Returns
+///
+/// - `Option<Rc<dyn Fn(Event)>>` - The click handler.
+fn navigate_link(
+    on_navigate: Option<Rc<dyn Fn(&'static str)>>,
+    link: &'static str,
+) -> Option<Rc<dyn Fn(Event)>> {
+    match on_navigate {
+        Some(interceptor) => Some(Rc::new(move |event: Event| {
+            event.prevent_default();
+            interceptor(link);
+        })),
+        None => Some(Rc::new(move |event: Event| {
+            event.prevent_default();
+            Router::navigate(link);
+        })),
+    }
+}
+
+/// Navigates to a group index page without toggling the group.
+///
+/// Stops event propagation so the parent row's toggle handler does not also
+/// fire when the link is clicked. Uses the interceptor when set.
+///
+/// # Arguments
+///
+/// - `Option<Rc<dyn Fn(&'static str)>>` - The navigation interceptor.
 /// - `&'static str` - The target route.
 ///
 /// # Returns
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - The click handler.
-fn navigate_without_toggle(link: &'static str) -> Option<Rc<dyn Fn(Event)>> {
+fn navigate_group_link(
+    on_navigate: Option<Rc<dyn Fn(&'static str)>>,
+    link: &'static str,
+) -> Option<Rc<dyn Fn(Event)>> {
     Some(Rc::new(move |event: Event| {
         event.prevent_default();
         event.stop_propagation();
-        Router::navigate(link);
+        match &on_navigate {
+            Some(interceptor) => interceptor(link),
+            None => Router::navigate(link),
+        }
     }))
 }
 

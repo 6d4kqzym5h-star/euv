@@ -33,6 +33,11 @@ pub struct EuvSidebarProps {
     pub items: &'static [EuvSidebarItem],
     /// The group key prefix (internal recursion state, leave default).
     pub prefix: String,
+    /// Optional navigation interceptor receiving the target link; when set it
+    /// replaces the default `Router::navigate` (used by drawers to close via
+    /// the overlay stack).
+    #[debug(skip)]
+    pub on_navigate: Option<Rc<dyn Fn(&'static str)>>,
 }
 
 /// Props of the [`euv_sidebar_item`] component.
@@ -46,4 +51,7 @@ pub struct EuvSidebarItemProps {
     pub item: EuvSidebarItem,
     /// The group key prefix of the parent.
     pub prefix: String,
+    /// Optional navigation interceptor (see [`EuvSidebarProps::on_navigate`]).
+    #[debug(skip)]
+    pub on_navigate: Option<Rc<dyn Fn(&'static str)>>,
 }
