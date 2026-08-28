@@ -1891,9 +1891,15 @@ pub(crate) fn extract_attr_key_string(key: &proc_macro2::TokenStream) -> String 
 /// `String`.
 ///
 /// - Static literal/ident keys produce `#name.to_string()`.
-/// - Dynamic braced keys produce `( #inner_expr ).to_string()`, which is
-///   evaluated at runtime so the attribute name tracks the current signal
-///   value.
+/// - Dynamic braced keys produce `Into::<String>::into(#inner_expr)`, which
+///   is evaluated at runtime so the attribute name tracks the current signal
+///   value. `Into` is used instead of `ToString` on purpose: the dominant
+///   expression shape is `some_signal.get()` on a `Signal<String>`, which
+///   already yields an owned `String`. `Into::<String>::into` on a `String`
+///   is the identity conversion (a move, zero allocation), whereas
+///   `.to_string()` would route through `Display` and allocate a second,
+///   redundant copy. `&str` and `&String` expressions still allocate exactly
+///   once, same as before.
 ///
 /// The result is intended to be wrapped in `Cow::Owned` at the call site so
 /// every key path produces an owned name; for the static case this is
@@ -1908,9 +1914,12 @@ pub(crate) fn extract_attr_key_tokens(key: &proc_macro2::TokenStream) -> proc_ma
     } else {
         // Either a bare ident key (`class`, `style`, `onclick`, ...) or a
         // dynamic braced key whose surrounding braces were stripped by the
-        // parser. Both are valid Rust expressions that evaluate to a name at
-        // runtime when wrapped in `(#key).to_string()`.
-        quote! { (#key).to_string() }
+        // parser. Both are valid Rust expressions convertible into a `String`
+        // at runtime. `Into::<String>::into` avoids the redundant `Display`
+        // round-trip (and its extra allocation) when the expression already
+        // produces an owned `String`, which is the common case for
+        // `signal.get()` on `Signal<String>`.
+        quote! { ::std::convert::Into::<String>::into(#key) }
     }
 }
 
@@ -1975,9 +1984,10 @@ pub(crate) fn borrowed_attr_name_token(key_str: &str) -> proc_macro2::TokenStrea
 /// key that must be evaluated at runtime, given the inner expression
 /// tokens.
 ///
-/// The inner expression is wrapped in `( ... ).to_string()` so any Rust
-/// expression (an ident, a method call, a path, etc.) produces a `String`
-/// at render time. The caller must guarantee
+/// The inner expression is converted via `Into::<String>::into(...)`, which
+/// is a zero-allocation move when the expression already yields an owned
+/// `String` (the common `signal.get()` case) and a single allocation for
+/// `&str` / `&String` / `Cow<str>`. The caller must guarantee
 /// `!is_static_attr_key_token(key)` so this path is only used for keys
 /// that genuinely depend on runtime state.
 ///
@@ -1989,7 +1999,7 @@ pub(crate) fn borrowed_attr_name_token(key_str: &str) -> proc_macro2::TokenStrea
 /// # Returns
 ///
 /// - `proc_macro2::TokenStream` - A token stream that evaluates to
-///   `Cow::Owned((#key).to_string())` at runtime.
+///   `Cow::Owned(Into::<String>::into(#key))` at runtime.
 pub(crate) fn owned_attr_name_token(key: &proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     let key_name_token: proc_macro2::TokenStream = extract_attr_key_tokens(key);
     quote! { ::std::borrow::Cow::Owned(#key_name_token) }
