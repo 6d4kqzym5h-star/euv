@@ -296,6 +296,13 @@ class! {
         }
     }
 
+    // Optional row in the nav column / drawer for locale switchers or similar
+    // widgets, placed between the brand header and the section label.
+    pub c_nav_locale_row {
+        padding: format!("{} {}", var!(space-md), var!(space-xl));
+        flex-shrink: "0";
+    }
+
     pub c_nav_theme_button {
         width: "100%";
         height: "36px";
@@ -3543,7 +3550,7 @@ class! {
         align-items: "center";
         justify-content: "space-between";
         width: "100%";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-sm), var!(space-xl));
         font-size: var!(font-sm);
         font-weight: "600";
         cursor: "pointer";
@@ -3570,7 +3577,7 @@ class! {
     }
     pub c_euv_sidebar_link {
         display: "block";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-sm), var!(space-xl));
         font-size: var!(font-sm);
         color: var!(foreground);
         cursor: "pointer";
@@ -3583,7 +3590,7 @@ class! {
     }
     pub c_euv_sidebar_link_active {
         display: "block";
-        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        padding: format!("{} {}", var!(space-sm), var!(space-xl));
         font-size: var!(font-sm);
         background: var!(accent);
         color: var!(text-on-accent);
@@ -3770,6 +3777,7 @@ class! {
         width: "100%";
         min-width: "0px";
         max-width: "1080px";
+        margin: "0px auto";
     }
     pub c_euv_doc_content {
         flex: "1";
