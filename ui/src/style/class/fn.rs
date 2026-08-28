@@ -2867,14 +2867,12 @@ class! {
             prop_key
         }
         : prop_value;
-        margin-top: var!(gap-component);
-        // Pin text colour to the theme foreground instead of inheriting it,
-        // because the user-supplied dynamic property often changes the
-        // background (e.g. `background-color: #000000`); `inherit` would
-        // then paint the text the same colour and make the demo body
-        // invisible.
-        color: var!(foreground);
-        margin-top: var!(space-md);
+        // No layout defaults: this class lives on a `<p>` whose own margin /
+        // spacing is controlled by its parent's typography rules, and pinning
+        // any colour here would shadow the user-supplied dynamic property.
+        // Users are expected to set `color` / `background` / `font-*` /
+        // etc. via the two CSS Property Key / Value inputs above; whatever
+        // they type becomes the literal CSS rule applied to the paragraph.
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

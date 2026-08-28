@@ -797,14 +797,18 @@ impl HtmlDynamicTag {
         self.get_attributes()
             .iter()
             .map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                // OPT 2: emit a runtime expression for the attribute name so
-                // dynamic braced keys like `{key_signal.get()}` evaluate to
-                // the current value at render time. Static literal/ident keys
-                // produce the same `Cow::Owned(#name.to_string())` shape and
-                // collapse to the same string the compiler used to embed.
-                let key_name_token: proc_macro2::TokenStream = extract_attr_key_tokens(key);
-                let attr_name_token: proc_macro2::TokenStream =
-                    quote! { ::std::borrow::Cow::Owned(#key_name_token) };
+                // Dispatch on the key shape: a static literal/ident keeps the
+                // zero-allocation `Cow::Borrowed(&'static str)` fast path
+                // (shared across the whole rendered DOM), while a dynamic
+                // braced key like `{key_signal.get()}` falls through to
+                // `Cow::Owned((...).to_string())` so the runtime attribute
+                // name tracks the current signal value.
+                let attr_name_token: proc_macro2::TokenStream = if is_static_attr_key_token(key) {
+                    let key_str: String = extract_attr_key_string(key);
+                    borrowed_attr_name_token(&key_str)
+                } else {
+                    owned_attr_name_token(key)
+                };
                 // `key_str` is only consulted to detect special keys
                 // (`class`, `style`, `on*`, `children`, `inner_html`) inside
                 // `attr_value_to_entry_value_tokens`; a dynamic braced key
@@ -1190,19 +1194,20 @@ impl HtmlElement {
             .get_attributes()
             .iter()
             .filter_map(|(key, value): &(proc_macro2::TokenStream, HtmlAttrValue)| {
-                // OPT 2: emit a runtime expression for the attribute name so
-                // dynamic braced keys like `{key_signal.get()}` evaluate to
-                // the current value at render time. Static literal/ident keys
-                // produce `Cow::Owned(#name.to_string())`, which the browser
-                // happily treats the same as `Cow::Borrowed(#name)` after the
-                // single `String::from` allocation.
-                let key_name_token: proc_macro2::TokenStream = extract_attr_key_tokens(key);
-                let attr_name_token: proc_macro2::TokenStream =
-                    quote! { ::std::borrow::Cow::Owned(#key_name_token) };
+                // Dispatch on the key shape: a static literal/ident keeps
+                // `Cow::Borrowed(&'static str)` (shared across the whole DOM),
+                // while a dynamic braced key like `{key_signal.get()}` falls
+                // through to `Cow::Owned((...).to_string())` so the runtime
+                // attribute name tracks the current signal value.
+                let key_string: String = extract_attr_key_string(key);
+                let attr_name_token: proc_macro2::TokenStream = if is_static_attr_key_token(key) {
+                    borrowed_attr_name_token(&key_string)
+                } else {
+                    owned_attr_name_token(key)
+                };
                 // `key_string` is still needed to route the well-known keys
                 // (`key`, `class`, `style`, `on*`, `children`, `inner_html`)
                 // through their specialised branches below.
-                let key_string: String = extract_attr_key_string(key);
                 if key_string == ATTR_KEY_KEY {
                     if let HtmlAttrValue::Expr(expr) = value {
                         key_expr = Some(quote! { Some((#expr).into()) });
