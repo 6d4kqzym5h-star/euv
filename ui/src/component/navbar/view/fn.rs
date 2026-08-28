@@ -27,8 +27,12 @@ pub fn euv_navbar(node: VirtualNode<EuvNavbarProps>) -> VirtualNode {
     let menu_button: VirtualNode = match drawer_open {
         Some(signal) => html! {
             button {
-                class: c_euv_navbar_menu_button()
-                onclick: toggle_drawer(signal)
+                class: if { signal } {
+                    c_euv_navbar_menu_button_active()
+                } else {
+                    c_euv_navbar_menu_button()
+                }
+                onclick: UseEuvLayout::use_drawer_toggle(signal)
                 "≡"
             }
         },
@@ -121,19 +125,6 @@ pub fn euv_navbar_link(node: VirtualNode<EuvNavbarLinkProps>) -> VirtualNode {
             }
         }
     }
-}
-
-/// Toggles the mobile drawer.
-///
-/// # Arguments
-///
-/// - `Signal<bool>` - The drawer-open signal.
-///
-/// # Returns
-///
-/// - `Option<Rc<dyn Fn(Event)>>` - The click handler.
-fn toggle_drawer(drawer_open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_| drawer_open.set(!drawer_open.get())))
 }
 
 /// Strips the `#anchor` suffix from a hash route.

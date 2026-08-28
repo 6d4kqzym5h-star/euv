@@ -3477,6 +3477,21 @@ class! {
         justify-content: "center";
         font-size: var!(font-xl);
         cursor: "pointer";
+        transition: format!("background {} {}", var!(duration-fast), var!(ease-out));
+        @media ((max-width: 767px)) {
+            display: "flex";
+        }
+    }
+    pub c_euv_navbar_menu_button_active {
+        display: "none";
+        width: "40px";
+        height: "40px";
+        align-items: "center";
+        justify-content: "center";
+        font-size: var!(font-xl);
+        cursor: "pointer";
+        background: var!(accent-muted);
+        transition: format!("background {} {}", var!(duration-fast), var!(ease-out));
         @media ((max-width: 767px)) {
             display: "flex";
         }
@@ -3551,6 +3566,7 @@ class! {
         padding-left: var!(space-md);
         border-left: format!("1px dashed {}", var!(border));
         margin-left: var!(space-sm);
+        animation: format!("euv-fade-in {} {}", var!(duration-normal), var!(ease-out));
     }
     pub c_euv_sidebar_link {
         display: "block";

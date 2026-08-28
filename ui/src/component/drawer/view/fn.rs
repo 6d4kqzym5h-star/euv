@@ -1,11 +1,13 @@
 use super::*;
 
 /// A generic left-side mobile drawer with overlay, aligned with common
-/// component libraries.
+/// component libraries and the euv example's overlay-stack behaviour.
 ///
 /// The drawer and overlay are always mounted and slide/fade via reactive
 /// classes driven by the caller-owned `open` signal; clicking the overlay
-/// closes the drawer.
+/// closes the drawer through [`Router::overlay_stack_close`], so the browser
+/// / system back gesture history entry pushed when the drawer opened is
+/// consumed and stays in sync.
 ///
 /// # Arguments
 ///
@@ -40,7 +42,11 @@ pub fn euv_drawer(node: VirtualNode<EuvDrawerProps>) -> VirtualNode {
     }
 }
 
-/// Closes the drawer.
+/// Closes the drawer, consuming its overlay history entry.
+///
+/// Mirrors the euv example: `Router::overlay_stack_close()` pops the overlay
+/// stack and consumes the history entry pushed when the drawer opened (see
+/// [`Router::use_overlay_history`]), then the signal is set.
 ///
 /// # Arguments
 ///
@@ -50,5 +56,8 @@ pub fn euv_drawer(node: VirtualNode<EuvDrawerProps>) -> VirtualNode {
 ///
 /// - `Option<Rc<dyn Fn(Event)>>` - The click handler.
 fn close_drawer(open: Signal<bool>) -> Option<Rc<dyn Fn(Event)>> {
-    Some(Rc::new(move |_| open.set(false)))
+    Some(Rc::new(move |_| {
+        Router::overlay_stack_close();
+        open.set(false);
+    }))
 }
