@@ -6,6 +6,7 @@ mod camera;
 mod card;
 mod checkbox;
 mod debug;
+mod doc_layout;
 mod drawer;
 mod dropdown;
 mod field;
@@ -21,6 +22,7 @@ mod modal;
 mod nav;
 mod navbar;
 mod pagination;
+mod result;
 mod router;
 mod sidebar;
 mod tag;
@@ -32,9 +34,10 @@ mod virtual_list;
 
 pub use {
     alert::*, badge::*, browser::*, button::*, camera::*, card::*, checkbox::*, debug::*,
-    drawer::*, dropdown::*, field::*, header::*, hero::*, info::*, input::*, layout::*, loading::*,
-    logo::*, markdown::*, modal::*, nav::*, navbar::*, pagination::*, router::*, sidebar::*,
-    tag::*, theme::*, toc::*, touch::*, vconsole::*, virtual_list::*,
+    doc_layout::*, drawer::*, dropdown::*, field::*, header::*, hero::*, info::*, input::*,
+    layout::*, loading::*, logo::*, markdown::*, modal::*, nav::*, navbar::*, pagination::*,
+    result::*, router::*, sidebar::*, tag::*, theme::*, toc::*, touch::*, vconsole::*,
+    virtual_list::*,
 };
 
 use super::*;
