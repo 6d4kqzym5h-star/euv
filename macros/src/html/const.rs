@@ -101,3 +101,18 @@ pub(crate) const PATH_KEY: &str = "path";
 
 /// Workspace field key in dependency table.
 pub(crate) const WORKSPACE_KEY: &str = "workspace";
+
+/// Environment variable holding the cargo home directory.
+pub(crate) const CARGO_HOME_ENV: &str = "CARGO_HOME";
+
+/// Environment variable holding the user home directory.
+pub(crate) const HOME_ENV: &str = "HOME";
+
+/// Cargo home directory name under the user home.
+pub(crate) const CARGO_DIR: &str = ".cargo";
+
+/// Registry directory name under the cargo home.
+pub(crate) const REGISTRY_DIR: &str = "registry";
+
+/// Extracted registry sources directory name under the registry directory.
+pub(crate) const REGISTRY_SRC_DIR: &str = "src";
