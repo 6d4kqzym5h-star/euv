@@ -3,7 +3,8 @@ use super::*;
 /// A generic dropdown menu aligned with common component libraries.
 ///
 /// The trigger element is supplied as children and toggles the caller-owned
-/// `open` signal; the menu lists `items` and closes after a selection.
+/// `open` signal; the menu lists `items` and closes after a selection. The
+/// menu is always mounted and toggled via reactive classes.
 ///
 /// # Arguments
 ///
@@ -20,24 +21,32 @@ pub fn euv_dropdown(node: VirtualNode<EuvDropdownProps>) -> VirtualNode {
         on_select,
     }: EuvDropdownProps = node.try_get_props().unwrap_or_default();
     let children: VirtualNode = node.get_child_node();
+    let menu_items: Vec<VirtualNode> = items
+        .into_iter()
+        .map(|item: EuvDropdownItem| {
+            html! {
+                button {
+                    class: c_euv_dropdown_item()
+                    onclick: select_item(open, on_select.clone(), item.value)
+                    {
+                        item.label
+                    }
+                }
+            }
+        })
+        .collect();
     html! {
         div {
             class: c_euv_dropdown()
             children
-            if { open } {
-                div {
-                    class: c_euv_dropdown_menu()
-                    for item in items.iter() {
-                        button {
-                            class: c_euv_dropdown_item()
-                            key: item.value
-                            onclick: select_item(open, on_select.clone(), item.value)
-                            {
-                                item.label
-                            }
-                        }
-                    }
+            div {
+                class: c_euv_dropdown_menu()
+                class: if { open } {
+                    c_euv_dropdown_menu_open()
+                } else {
+                    c_euv_dropdown_menu_closed()
                 }
+                menu_items
             }
         }
     }

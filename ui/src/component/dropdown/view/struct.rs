@@ -22,7 +22,7 @@ pub struct EuvDropdownProps {
     /// The open state signal toggled by the trigger children.
     pub open: Signal<bool>,
     /// The menu items.
-    pub items: &'static [EuvDropdownItem],
+    pub items: Vec<EuvDropdownItem>,
     /// Optional select callback receiving the chosen item value.
     #[debug(skip)]
     pub on_select: Option<Rc<dyn Fn(&'static str)>>,

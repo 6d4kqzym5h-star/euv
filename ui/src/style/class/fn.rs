@@ -3497,9 +3497,14 @@ class! {
         background: var!(background);
         border: format!("1px solid {}", var!(border));
         box-shadow: var!(shadow-accent-lg);
-        display: "flex";
         flex-direction: "column";
         z-index: "101";
+    }
+    pub c_euv_dropdown_menu_open {
+        display: "flex";
+    }
+    pub c_euv_dropdown_menu_closed {
+        display: "none";
     }
     pub c_euv_dropdown_item {
         padding: format!("{} {}", var!(space-sm), var!(space-lg));
