@@ -3375,4 +3375,336 @@ class! {
         color: var!(foreground);
         margin: "0px";
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_navbar
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_navbar {
+        position: "fixed";
+        top: "0px";
+        left: "0px";
+        right: "0px";
+        height: "56px";
+        display: "flex";
+        align-items: "center";
+        gap: var!(gap-element);
+        padding: format!("0px {}", var!(padding-main-horizontal));
+        border-bottom: format!("1px solid {}", var!(border));
+        background: var!(background);
+        z-index: "100";
+        @media ((max-width: 767px)) {
+            padding: format!("0px {}", var!(padding-main-horizontal-mobile));
+        }
+    }
+    pub c_euv_navbar_brand {
+        display: "flex";
+        align-items: "center";
+        gap: var!(gap-element);
+        font-size: var!(font-lg);
+        font-weight: "700";
+        letter-spacing: "-0.02em";
+        color: var!(foreground);
+        cursor: "pointer";
+        flex-shrink: "0";
+    }
+    pub c_euv_navbar_logo {
+        width: "32px";
+        height: "32px";
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        background: var!(accent);
+        color: var!(text-on-accent);
+        font-size: var!(font-lg);
+        flex-shrink: "0";
+    }
+    pub c_euv_navbar_links {
+        display: "flex";
+        align-items: "center";
+        gap: var!(gap-section);
+        margin-left: "auto";
+        @media ((max-width: 767px)) {
+            display: "none";
+        }
+    }
+    pub c_euv_navbar_link {
+        font-size: var!(font-sm);
+        font-weight: "500";
+        color: var!(foreground);
+        padding: format!("{} {}", var!(space-xs), var!(space-sm));
+        border-bottom: "2px solid transparent";
+        cursor: "pointer";
+        hover {
+            color: var!(accent);
+        }
+    }
+    pub c_euv_navbar_link_active {
+        font-size: var!(font-sm);
+        font-weight: "600";
+        color: var!(accent);
+        padding: format!("{} {}", var!(space-xs), var!(space-sm));
+        border-bottom: format!("2px solid {}", var!(accent));
+        cursor: "pointer";
+    }
+    pub c_euv_navbar_actions {
+        display: "flex";
+        align-items: "center";
+        gap: var!(gap-element);
+        margin-left: var!(gap-section);
+        @media ((max-width: 767px)) {
+            margin-left: "auto";
+        }
+    }
+    pub c_euv_navbar_icon_button {
+        width: "36px";
+        height: "36px";
+        display: "flex";
+        align-items: "center";
+        justify-content: "center";
+        border: format!("1px dashed {}", var!(border));
+        cursor: "pointer";
+        font-size: var!(font-base);
+        hover {
+            background: var!(accent-muted);
+        }
+    }
+    pub c_euv_navbar_menu_button {
+        display: "none";
+        width: "40px";
+        height: "40px";
+        align-items: "center";
+        justify-content: "center";
+        font-size: var!(font-xl);
+        cursor: "pointer";
+        @media ((max-width: 767px)) {
+            display: "flex";
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_dropdown
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_dropdown {
+        position: "relative";
+    }
+    pub c_euv_dropdown_menu {
+        position: "absolute";
+        top: "44px";
+        right: "0px";
+        min-width: "140px";
+        background: var!(background);
+        border: format!("1px solid {}", var!(border));
+        box-shadow: var!(shadow-accent-lg);
+        display: "flex";
+        flex-direction: "column";
+        z-index: "101";
+    }
+    pub c_euv_dropdown_item {
+        padding: format!("{} {}", var!(space-sm), var!(space-lg));
+        font-size: var!(font-sm);
+        text-align: "left";
+        cursor: "pointer";
+        hover {
+            background: var!(accent-muted);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_sidebar
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_sidebar_group {
+        margin-bottom: var!(space-xs);
+    }
+    pub c_euv_sidebar_group_title {
+        display: "flex";
+        align-items: "center";
+        justify-content: "space-between";
+        width: "100%";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        font-size: var!(font-sm);
+        font-weight: "600";
+        cursor: "pointer";
+        text-align: "left";
+        hover {
+            background: var!(accent-muted);
+        }
+    }
+    pub c_euv_sidebar_group_arrow {
+        font-size: var!(font-xs);
+        color: var!(muted-foreground);
+        transition: format!("transform {} {}", var!(duration-fast), var!(ease-out));
+    }
+    pub c_euv_sidebar_group_arrow_open {
+        transform: "rotate(90deg)";
+    }
+    pub c_euv_sidebar_children {
+        display: "flex";
+        flex-direction: "column";
+        padding-left: var!(space-md);
+        border-left: format!("1px dashed {}", var!(border));
+        margin-left: var!(space-sm);
+    }
+    pub c_euv_sidebar_link {
+        display: "block";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        font-size: var!(font-sm);
+        color: var!(foreground);
+        cursor: "pointer";
+        transition: format!("background {} {}", var!(duration-fast), var!(ease-out));
+        hover {
+            background: var!(accent-muted);
+            color: var!(accent);
+            box-shadow: format!("inset 4px 0px 0px {}", var!(accent));
+        }
+    }
+    pub c_euv_sidebar_link_active {
+        display: "block";
+        padding: format!("{} {}", var!(space-sm), var!(space-md));
+        font-size: var!(font-sm);
+        background: var!(accent);
+        color: var!(text-on-accent);
+        font-weight: "600";
+        cursor: "pointer";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_toc
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_toc {
+        position: "sticky";
+        top: "76px";
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(space-xs);
+        border-left: format!("1px solid {}", var!(border));
+        padding-left: var!(space-lg);
+    }
+    pub c_euv_toc_title {
+        font-size: var!(font-xs);
+        font-weight: "700";
+        text-transform: "uppercase";
+        letter-spacing: "0.08em";
+        color: var!(muted-foreground);
+        margin-bottom: var!(space-xs);
+    }
+    pub c_euv_toc_link {
+        font-size: var!(font-sm);
+        color: var!(muted-foreground);
+        cursor: "pointer";
+        line-height: "1.5";
+        hover {
+            color: var!(accent);
+        }
+    }
+    pub c_euv_toc_link_nested {
+        padding-left: var!(space-lg);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_pagination
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_pagination {
+        display: "flex";
+        justify-content: "space-between";
+        gap: var!(gap-component);
+        margin-top: var!(space-4xl);
+        @media ((max-width: 767px)) {
+            flex-direction: "column";
+        }
+    }
+    pub c_euv_pagination_link {
+        flex: "1";
+        border: format!("1px solid {}", var!(border));
+        padding: var!(space-lg);
+        cursor: "pointer";
+        display: "flex";
+        flex-direction: "column";
+        gap: var!(space-2xs);
+        hover {
+            border-color: var!(accent);
+        }
+    }
+    pub c_euv_pagination_label {
+        font-size: var!(font-xs);
+        color: var!(muted-foreground);
+        text-transform: "uppercase";
+        letter-spacing: "0.08em";
+    }
+    pub c_euv_pagination_text {
+        font-size: var!(font-base);
+        font-weight: "600";
+        color: var!(accent);
+    }
+    pub c_euv_pagination_next {
+        text-align: "right";
+    }
+    pub c_euv_pagination_spacer {
+        flex: "1";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_drawer
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_drawer_overlay {
+        position: "fixed";
+        top: "0px";
+        left: "0px";
+        right: "0px";
+        bottom: "0px";
+        background: var!(bg-overlay);
+        z-index: "200";
+        transition: format!("opacity {} {}, visibility {} {}", var!(duration-overlay), var!(ease-out), var!(duration-overlay), var!(ease-out));
+    }
+    pub c_euv_drawer_overlay_open {
+        opacity: "1";
+        visibility: "visible";
+    }
+    pub c_euv_drawer_overlay_closed {
+        opacity: "0";
+        visibility: "hidden";
+    }
+    pub c_euv_drawer {
+        position: "fixed";
+        top: "0px";
+        left: "0px";
+        bottom: "0px";
+        width: "260px";
+        background: var!(background);
+        border-right: format!("1px solid {}", var!(border));
+        z-index: "201";
+        overflow-y: "auto";
+        padding: var!(space-xl);
+        transition: format!("transform {} {}, visibility {} {}", var!(duration-normal), var!(ease-out), var!(duration-normal), var!(ease-out));
+    }
+    pub c_euv_drawer_open {
+        transform: "translateX(0px)";
+        visibility: "visible";
+    }
+    pub c_euv_drawer_closed {
+        transform: "translateX(-100%)";
+        visibility: "hidden";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // euv_markdown / euv_footer
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    pub c_euv_markdown {
+        width: "100%";
+        min-width: "0px";
+    }
+    pub c_euv_footer {
+        margin-top: var!(space-7xl);
+        padding: format!("{} 0px", var!(space-2xl));
+        border-top: format!("1px dashed {}", var!(border));
+        text-align: "center";
+        font-size: var!(font-sm);
+        color: var!(muted-foreground);
+    }
 }
