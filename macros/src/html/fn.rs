@@ -270,18 +270,28 @@ pub(crate) fn load_component_registry() -> HashMap<String, ComponentInfo> {
         collect_rs_files(&dep_src_dir, &mut rust_source_files);
     }
     let fingerprint: String = compute_fingerprint(&rust_source_files);
-    if let Ok(out_dir) = env::var(ENV_OUT_DIR) {
-        let cache_path: PathBuf = PathBuf::from(out_dir).join(REGISTRY_CACHE_FILE_NAME);
-        if let Some(cached) = try_load_cache(&cache_path, &fingerprint) {
-            return cached;
-        }
-        let registry: HashMap<String, ComponentInfo> =
-            build_registry_from_files(&rust_source_files);
-        try_save_cache(&cache_path, &fingerprint, &registry);
-        registry
-    } else {
-        build_registry_from_files(&rust_source_files)
+    // `OUT_DIR` only exists for crates with a build script; without a cache
+    // every `html!` invocation would rescan and reparse all sources. Fall back
+    // to a per-manifest directory under the system temp dir so crates without
+    // a build script are cached too.
+    let cache_dir: PathBuf =
+        env::var(ENV_OUT_DIR)
+            .map(PathBuf::from)
+            .unwrap_or_else(|_: std::env::VarError| {
+                let mut hasher: std::collections::hash_map::DefaultHasher =
+                    std::collections::hash_map::DefaultHasher::new();
+                std::hash::Hash::hash(&manifest_dir, &mut hasher);
+                let hash: u64 = std::hash::Hasher::finish(&hasher);
+                std::env::temp_dir().join(format!("euv_registry_{hash:x}"))
+            });
+    let _: std::io::Result<()> = std::fs::create_dir_all(&cache_dir);
+    let cache_path: PathBuf = cache_dir.join(REGISTRY_CACHE_FILE_NAME);
+    if let Some(cached) = try_load_cache(&cache_path, &fingerprint) {
+        return cached;
     }
+    let registry: HashMap<String, ComponentInfo> = build_registry_from_files(&rust_source_files);
+    try_save_cache(&cache_path, &fingerprint, &registry);
+    registry
 }
 
 /// Computes a fingerprint string from the sorted list of source file paths
@@ -384,6 +394,7 @@ fn collect_local_dep_src_dirs(manifest_dir: &str) -> Vec<PathBuf> {
         return Vec::new();
     };
     let mut dep_dirs: Vec<PathBuf> = Vec::new();
+    let mut registry_dep_names: Vec<String> = Vec::new();
     let manifest_dir_path: PathBuf = PathBuf::from(manifest_dir);
     let workspace_root: PathBuf = find_workspace_root(manifest_dir);
     let workspace_toml: Option<toml::Value> = if workspace_root != manifest_dir_path {
@@ -434,6 +445,68 @@ fn collect_local_dep_src_dirs(manifest_dir: &str) -> Vec<PathBuf> {
                 } else {
                     manifest_dir_path.join(path_str).join(SRC_DIR)
                 };
+                if dep_dir.is_dir() {
+                    dep_dirs.push(dep_dir);
+                }
+            } else {
+                // Registry (`crates.io`) dependencies are resolved into
+                // `$CARGO_HOME/registry/src/<registry-hash>/<name>-<version>/`;
+                // remember the name so their sources can be located below.
+                registry_dep_names.push(name.clone());
+            }
+        }
+    }
+    dep_dirs.extend(collect_registry_dep_src_dirs(&registry_dep_names));
+    dep_dirs
+}
+
+/// Locates the `src/` directories of registry (crates.io) dependencies.
+///
+/// Proc macros cannot query cargo metadata, so this walks
+/// `$CARGO_HOME/registry/src/<registry-hash>/` and matches extracted sources
+/// by `<name>-<version>` directory prefix. Multiple versions of the same
+/// crate are all included; the registry deduplicates component names.
+///
+/// # Arguments
+///
+/// - `&[String]` - The dependency names without a `path` source.
+///
+/// # Returns
+///
+/// - `Vec<PathBuf>` - The located dependency `src/` directories.
+fn collect_registry_dep_src_dirs(dep_names: &[String]) -> Vec<PathBuf> {
+    let mut dep_dirs: Vec<PathBuf> = Vec::new();
+    if dep_names.is_empty() {
+        return dep_dirs;
+    }
+    let cargo_home: PathBuf =
+        env::var(CARGO_HOME_ENV)
+            .map(PathBuf::from)
+            .unwrap_or_else(|_: std::env::VarError| {
+                env::var(HOME_ENV)
+                    .map(|home: String| PathBuf::from(home).join(CARGO_DIR))
+                    .unwrap_or_default()
+            });
+    let registry_src: PathBuf = cargo_home.join(REGISTRY_DIR).join(REGISTRY_SRC_DIR);
+    let Ok(registry_entries) = std::fs::read_dir(&registry_src) else {
+        return dep_dirs;
+    };
+    for registry_entry in registry_entries.flatten() {
+        let Ok(package_entries) = std::fs::read_dir(registry_entry.path()) else {
+            continue;
+        };
+        for package_entry in package_entries.flatten() {
+            let package_dir_name: String = package_entry.file_name().to_string_lossy().to_string();
+            let matched: bool = dep_names.iter().any(|name: &String| {
+                package_dir_name.starts_with(&format!("{name}-"))
+                    && package_dir_name[name.len() + 1..]
+                        .chars()
+                        .next()
+                        .map(|c: char| c.is_ascii_digit())
+                        .unwrap_or(false)
+            });
+            if matched {
+                let dep_dir: PathBuf = package_entry.path().join(SRC_DIR);
                 if dep_dir.is_dir() {
                     dep_dirs.push(dep_dir);
                 }
